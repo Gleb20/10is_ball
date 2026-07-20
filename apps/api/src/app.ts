@@ -123,7 +123,7 @@ export async function buildApp(opts: {
       ip: req.ip,
       userAgent: req.headers["user-agent"],
     });
-    if (!result.ok) {
+    if (result.ok === false) {
       const status =
         result.code === "RATE_LIMITED"
           ? 429
@@ -185,7 +185,7 @@ export async function buildApp(opts: {
         sessionId: req.authSessionId!,
         newPassword: body.newPassword ?? "",
       });
-      if (!result.ok) {
+      if (result.ok === false) {
         return reply.code(400).send({
           code: result.code,
           message: messageFor(result.code),
@@ -210,7 +210,7 @@ export async function buildApp(opts: {
         currentPassword: body.currentPassword ?? "",
         newPassword: body.newPassword ?? "",
       });
-      if (!result.ok) {
+      if (result.ok === false) {
         return reply.code(400).send({
           code: result.code,
           message: messageFor(result.code),
