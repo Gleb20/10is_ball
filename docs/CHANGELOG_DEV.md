@@ -1,5 +1,25 @@
 # Dev Changelog
 
+## 2026-07-20 — Phase 10 UI-4 Judge immersive (v1.3.0)
+
+### Added
+- `judgeUi.ts` — side labels, servingSide, landscape hint
+- JudgePage: immersive layout, serve badge, rotate hint, more-menu (confirm/revert/release)
+- API client: heartbeatJudge, releaseJudge, revertFinish
+- Tests: `judgeUi.test.ts`, `JudgePage.test.tsx`
+
+### Changed
+- Immersive shell CSS + landscape compact board
+- Product version **1.2.0 → 1.3.0** (b)
+
+### How to verify
+```bash
+pnpm --filter @tab10/web test
+pnpm run ci
+pnpm dev
+# open /matches/:id/judge
+```
+
 ## 2026-07-20 — Phase 10 UI-3 key screens (v1.2.0)
 
 ### Added

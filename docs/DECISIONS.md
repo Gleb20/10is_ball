@@ -34,7 +34,7 @@
 
 **Git:** каждый коммит — детальное тело по [`.cursor/rules/git-commits.mdc`](../.cursor/rules/git-commits.mdc).
 
-**Current release:** 1.2.0
+**Current release:** 1.3.0
 
 ## D5 — Mobile shell IA (2026-07-20)
 

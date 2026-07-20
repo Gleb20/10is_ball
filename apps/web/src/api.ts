@@ -94,6 +94,12 @@ export const api = {
     ),
   acquireJudge: (id: string) =>
     request(`/api/v1/matches/${id}/judge/acquire`, { method: "POST" }),
+  heartbeatJudge: (id: string) =>
+    request(`/api/v1/matches/${id}/judge/heartbeat`, { method: "POST" }),
+  releaseJudge: (id: string) =>
+    request<{ ok: boolean }>(`/api/v1/matches/${id}/judge/release`, {
+      method: "POST",
+    }),
   awardPoint: (
     id: string,
     side: "A" | "B",
@@ -120,6 +126,11 @@ export const api = {
   confirmFinish: (id: string) =>
     request<{ match: Record<string, unknown> }>(
       `/api/v1/matches/${id}/confirm-finish`,
+      { method: "POST" },
+    ),
+  revertFinish: (id: string) =>
+    request<{ match: Record<string, unknown> }>(
+      `/api/v1/matches/${id}/revert-finish`,
       { method: "POST" },
     ),
   rankings: (period = "all_time") =>

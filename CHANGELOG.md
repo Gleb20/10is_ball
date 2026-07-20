@@ -2,6 +2,16 @@
 
 Формат версий: [docs/VERSIONING.md](docs/VERSIONING.md).
 
+## [1.3.0] — 2026-07-20
+
+### Changed (b — judge UI)
+
+- Judge immersive full-bleed (без bottom nav, тёмный shell)
+- Подсказка landscape на портретном телефоне
+- Индикатор подачи на стороне текущего сервера
+- Touch targets ≥ 44px; Undo / Ещё / release; heartbeat 30s
+- Landscape CSS: крупные зоны счёта на низком viewport
+
 ## [1.2.0] — 2026-07-20
 
 ### Changed (b — key screens)
