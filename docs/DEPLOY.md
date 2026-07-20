@@ -41,20 +41,36 @@ Browser ──► Vercel (apps/web) ──rewrite /api──► Render (apps/api
 
 ---
 
-## 2. Backend — Render (бесплатный Web Service)
+## 2. Backend — Render (подробно)
 
-1. https://render.com → New → **Web Service** → Connect GitHub repo `10is_ball` (или ваш fork).  
-2. Можно импортировать [`render.yaml`](../render.yaml) (**Blueprint**), либо вручную:
+Нужно заранее: аккаунт [Render](https://dashboard.render.com), GitHub с репо `10is_ball`, строка `DATABASE_URL` из Neon.
 
-| Field | Value |
-|-------|--------|
-| Runtime | Node |
-| Root Directory | *(пусто — корень monorepo)* |
-| Build Command | см. ниже |
-| Start Command | см. ниже |
-| Instance | Free |
+### 2.1. Войти и GitHub
 
-**Build Command:**
+1. https://dashboard.render.com — войдите (лучше через GitHub).
+2. Разрешите доступ к репозиторию **10is_ball**.
+
+### 2.2. Создать Web Service
+
+1. **New +** (справа сверху) → **Web Service**  
+   (не Static Site, не PostgreSQL — БД уже в Neon).
+2. **Build and deploy from a Git repository** → **Next**.
+3. Репозиторий **10is_ball** → **Connect**.  
+   Если нет в списке → Configure account / доступ к GitHub → обновить страницу.
+
+### 2.3. Поля формы
+
+| Поле | Значение |
+|------|----------|
+| **Name** | `tab10-api` (URL станет `https://tab10-api.onrender.com`) |
+| **Region** | **Frankfurt** (рядом с Neon eu-central-1) |
+| **Root Directory** | **пусто** |
+| **Runtime** | **Node** |
+| **Build Command** | блок ниже целиком |
+| **Start Command** | `pnpm --filter @tab10/api start` |
+| **Instance Type** | **Free** |
+
+**Build Command** (одна строка):
 
 ```bash
 corepack enable && corepack prepare pnpm@9.15.0 --activate && pnpm install && pnpm --filter @tab10/shared build && pnpm --filter @tab10/test-utils build && pnpm --filter @tab10/api build
@@ -66,23 +82,42 @@ corepack enable && corepack prepare pnpm@9.15.0 --activate && pnpm install && pn
 pnpm --filter @tab10/api start
 ```
 
-**Environment variables (Render → Environment):**
+### 2.4. Environment Variables (до Create)
+
+На этой же странице или после создания → **Environment** → **Add**:
 
 | Key | Value |
 |-----|--------|
 | `NODE_ENV` | `production` |
-| `DATABASE_URL` | строка из Neon |
 | `HOST` | `0.0.0.0` |
-| `SEED_ADMIN` | `1` (или `0` после первого деплоя) |
-| `SEED_ADMIN_EMAIL` | ваш email (опционально) |
-| `SEED_ADMIN_PASSWORD` | сильный пароль (смените дефолт!) |
-| `WEB_ORIGIN` | позже: `https://ВАШ-ПРОЕКТ.vercel.app` (нужен, если фронт бьёт в API **напрямую**; при rewrite на Vercel можно не ставить) |
+| `DATABASE_URL` | вся строка Neon `postgresql://…?sslmode=require` |
+| `SEED_ADMIN` | `1` |
+| `SEED_ADMIN_EMAIL` | `admin@tab10.local` (или ваш) |
+| `SEED_ADMIN_PASSWORD` | свой надёжный пароль |
 
-3. Deploy → дождитесь **Live**.  
-4. Откройте `https://ВАШ-СЕРВИС.onrender.com/health` → `{"ok":true,...}`.  
-5. Скопируйте URL сервиса (без слэша в конце), например `https://tab10-api.onrender.com`.
+Пока **не** ставьте `WEB_ORIGIN` / `COOKIE_SAME_SITE` (нужны только при прямом вызове API без Vercel rewrite).
 
-> Free tier на Render **засыпает** после простоя (~15 мин). Первый запрос может идти 30–60 с.
+`DATABASE_URL` — без кавычек и пробелов по краям.
+
+### 2.5. Deploy
+
+1. **Create Web Service**.
+2. Ждите лог 3–10 мин → статус **Live**.
+3. Если **Failed** — скопируйте хвост лога (последние ~30 строк).
+
+### 2.6. Проверка
+
+1. URL сервиса: `https://tab10-api.onrender.com` (или как назвали).
+2. Откройте `https://…onrender.com/health` → JSON с `ok`.
+3. Первый запрос на Free может идти до ~1 минуты (cold start).
+
+Сохраните этот URL — он понадобится для Vercel.
+
+### 2.7. Опционально: Blueprint
+
+**New +** → **Blueprint** → репо с `render.yaml` → Apply → в Environment вручную задайте `DATABASE_URL` и пароль админа → Manual Deploy.
+
+> Render крутит **только API**, не сайт. Сайт — на Vercel (раздел 3).
 
 ---
 
