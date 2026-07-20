@@ -1,5 +1,24 @@
 # Dev Changelog
 
+## 2026-07-20 — Phase 10 UI-5 Auth + Admin polish (v1.3.1)
+
+### Added
+- `authUi.tsx` — AuthLayout, TempPasswordPanel
+- `copyText.ts` — clipboard helper
+- ic-kit `Dialog` re-export; admin confirm + temp password dialogs
+- Tests: AdminPage.test.tsx, copyText.test.ts
+
+### Changed
+- Login / FirstPassword на AuthLayout
+- Product version **1.3.0 → 1.3.1** (c)
+
+### How to verify
+```bash
+pnpm --filter @tab10/web test
+pnpm run ci
+pnpm dev
+```
+
 ## 2026-07-20 — Phase 10 UI-4 Judge immersive (v1.3.0)
 
 ### Added

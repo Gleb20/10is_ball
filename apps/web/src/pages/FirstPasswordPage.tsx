@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button, TextField } from "../ui";
+import { AuthLayout } from "../authUi";
 import { api } from "../api";
 import { useAuth } from "../auth";
 
@@ -26,10 +27,15 @@ export function FirstPasswordPage() {
   }
 
   return (
-    <div className="login-page">
-      <h1 className="page-title">Смена пароля</h1>
-      <p className="muted">Задайте новый пароль при первом входе</p>
-      <form className="stack" onSubmit={onSubmit}>
+    <AuthLayout
+      title="Смена пароля"
+      subtitle="Задайте новый пароль при первом входе"
+    >
+      <form
+        className="stack"
+        onSubmit={onSubmit}
+        aria-label="Форма смены пароля"
+      >
         <TextField
           label="Новый пароль"
           type="password"
@@ -37,6 +43,7 @@ export function FirstPasswordPage() {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setPassword(e.target.value)
           }
+          autoComplete="new-password"
           required
         />
         <p className="muted">
@@ -49,6 +56,6 @@ export function FirstPasswordPage() {
         )}
         <Button type="submit">Сохранить</Button>
       </form>
-    </div>
+    </AuthLayout>
   );
 }

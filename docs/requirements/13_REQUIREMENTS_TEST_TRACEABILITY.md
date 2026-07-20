@@ -4,8 +4,8 @@
 
 | Requirement group | Primary tests | Test layers | Critical |
 |---|---|---|---|
-| AUTH-001..008 | AT-AUTH-001..008 | unit, integration, API, E2E | yes |
-| ADM-001..008 | AT-ADM-001..005 | integration, API, E2E | yes |
+| AUTH-001..008 | AT-AUTH-001..008; REQ_ui__auth_layout (UI-5) | unit, integration, API, E2E, component | yes |
+| ADM-001..008 | AT-ADM-001..005; REQ_ui__temp_password_copy, admin_confirm_dialogs (UI-5) | integration, API, E2E, component | yes |
 | HOME-001..006 | AT-EMPTY-001, AT-RANK-*; shell IA = ADR D5; AsyncState/ListRow/StatusChip; Home hero+podium (UI-3) | component, API, E2E | medium |
 | MATCH create picker | API_GET_users_directory; REQ_ui__match_create_autocomplete | API, component | high |
 | PROFILE-001..006 | profile contract tests | unit, API, component | medium |

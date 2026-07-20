@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Alert, Button, TextField } from "../ui";
+import { Alert, Button, Dialog, TextField } from "../ui";
 import { PageLayout } from "../layout";
 import { AsyncState, StatusChip } from "../patterns";
+import { TempPasswordPanel } from "../authUi";
 import { api, type User } from "../api";
 import { useAuth } from "../auth";
+
+type ConfirmKind = "block" | "reset" | null;
 
 export function AdminPage() {
   const { user } = useAuth();
@@ -14,6 +17,11 @@ export function AdminPage() {
   const [lastName, setLastName] = useState("");
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<{
+    kind: ConfirmKind;
+    target: User | null;
+  }>({ kind: null, target: null });
+  const [busy, setBusy] = useState(false);
 
   async function load() {
     const res = await api.listUsers();
@@ -41,9 +49,48 @@ export function AdminPage() {
     }
   }
 
+  async function runConfirm() {
+    const target = confirm.target;
+    const kind = confirm.kind;
+    if (!target || !kind) return;
+    setBusy(true);
+    setError(null);
+    try {
+      if (kind === "block") {
+        await api.blockUser(target.id);
+        await load();
+      } else {
+        const r = await api.resetPassword(target.id);
+        setTempPassword(r.temporaryPassword);
+      }
+      setConfirm({ kind: null, target: null });
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const confirmTitle =
+    confirm.kind === "block"
+      ? "Заблокировать пользователя?"
+      : confirm.kind === "reset"
+        ? "Сбросить пароль?"
+        : "";
+  const confirmBody =
+    confirm.kind === "block"
+      ? `Сессии ${confirm.target?.email ?? ""} будут отозваны. Продолжить?`
+      : confirm.kind === "reset"
+        ? `Будет выдан новый временный пароль для ${confirm.target?.email ?? ""}.`
+        : "";
+
   return (
     <PageLayout title="Админка">
-      <form className="card stack" onSubmit={create}>
+      <form
+        className="card stack"
+        onSubmit={create}
+        aria-label="Создание пользователя"
+      >
         <h2 className="section-title">Новый пользователь</h2>
         <TextField
           label="Email"
@@ -70,14 +117,6 @@ export function AdminPage() {
           required
         />
         <Button type="submit">Создать</Button>
-        {tempPassword && (
-          <Alert
-            type="success"
-            variant="tonal"
-            title="Временный пароль"
-            description={tempPassword}
-          />
-        )}
         {error && (
           <Alert
             type="error"
@@ -117,24 +156,14 @@ export function AdminPage() {
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() =>
-                    api
-                      .blockUser(u.id)
-                      .then(load)
-                      .catch((e) => setError(e.message))
-                  }
+                  onClick={() => setConfirm({ kind: "block", target: u })}
                 >
                   Блок
                 </Button>
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() =>
-                    api
-                      .resetPassword(u.id)
-                      .then((r) => setTempPassword(r.temporaryPassword))
-                      .catch((e) => setError(e.message))
-                  }
+                  onClick={() => setConfirm({ kind: "reset", target: u })}
                 >
                   Сброс
                 </Button>
@@ -143,6 +172,35 @@ export function AdminPage() {
           ))}
         </div>
       </AsyncState>
+
+      <Dialog
+        open={confirm.kind !== null}
+        onClose={() => !busy && setConfirm({ kind: null, target: null })}
+        title={confirmTitle}
+        width="sm"
+        secondaryButtonLabel="Отмена"
+        onSecondaryButton={() => setConfirm({ kind: null, target: null })}
+        mainButtonLabel={busy ? "…" : "Подтвердить"}
+        onMainButton={() => void runConfirm()}
+      >
+        <p>{confirmBody}</p>
+      </Dialog>
+
+      <Dialog
+        open={tempPassword !== null}
+        onClose={() => setTempPassword(null)}
+        title="Временный пароль"
+        width="sm"
+        mainButtonLabel="Готово"
+        onMainButton={() => setTempPassword(null)}
+      >
+        {tempPassword ? (
+          <TempPasswordPanel
+            password={tempPassword}
+            onDismiss={() => setTempPassword(null)}
+          />
+        ) : null}
+      </Dialog>
     </PageLayout>
   );
 }

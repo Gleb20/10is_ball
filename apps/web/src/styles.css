@@ -533,6 +533,74 @@ body {
   padding: 24px;
 }
 
+.auth-layout {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  padding-top: calc(24px + env(safe-area-inset-top));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(91, 159, 255, 0.12), transparent 55%),
+    radial-gradient(ellipse at 90% 100%, rgba(0, 0, 0, 0.04), transparent 50%),
+    var(--color-bg-primary, #f5f5f5);
+}
+
+.auth-layout__card {
+  width: min(400px, 100%);
+  padding: 28px 22px;
+  border-radius: 16px;
+  background: var(--color-bg-secondary, #fff);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.auth-layout__brand {
+  margin: 0 0 4px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.auth-layout__title {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.auth-layout__subtitle {
+  margin: 0 0 20px;
+  color: var(--color-text-secondary, #666);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.temp-password {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.temp-password__label {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary, #666);
+}
+
+.temp-password__value {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--color-bg-primary, #f5f5f5);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 16px;
+  font-weight: 600;
+  word-break: break-all;
+  user-select: all;
+}
+
 @media (min-width: 768px) {
   .app-shell:not(.app-shell--immersive) {
     max-width: 560px;

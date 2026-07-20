@@ -2,6 +2,14 @@
 
 Формат версий: [docs/VERSIONING.md](docs/VERSIONING.md).
 
+## [1.3.1] — 2026-07-20
+
+### Changed (c — auth/admin polish)
+
+- AuthLayout для login / first-password (бренд Tab-10)
+- Временный пароль: Dialog + CTA «Скопировать»
+- Admin: confirm Dialog для блок/сброс пароля
+
 ## [1.3.0] — 2026-07-20
 
 ### Changed (b — judge UI)

@@ -20,6 +20,7 @@ describe("LoginPage states", () => {
         </AuthProvider>
       </MemoryRouter>,
     );
+    expect(screen.getByTestId("auth-layout")).toBeInTheDocument();
     expect(screen.getByLabelText(/форма входа/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /войти/i })).toBeInTheDocument();
   });

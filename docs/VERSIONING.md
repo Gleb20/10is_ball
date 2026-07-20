@@ -36,4 +36,4 @@ Phase 10 (UI polish): выравнивание bottom bar под [`05_UX_FLOWS.m
 
 ## Текущая версия
 
-**1.3.0** — Phase 10 UI-4: Judge immersive, landscape hint, serve indicator.
+**1.3.1** — Phase 10 UI-5: Auth layout, temp password copy, admin dialogs.

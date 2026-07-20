@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, TextField } from "../ui";
+import { AuthLayout } from "../authUi";
 import { api } from "../api";
 import { useAuth } from "../auth";
 
@@ -33,9 +34,10 @@ export function LoginPage() {
   }
 
   return (
-    <div className="login-page">
-      <h1 className="page-title">Tab-10</h1>
-      <p className="muted">Вход в сервис настольного тенниса</p>
+    <AuthLayout
+      title="Вход"
+      subtitle="Сервис настольного тенниса для закрытой группы"
+    >
       <form className="stack" onSubmit={onSubmit} aria-label="Форма входа">
         <TextField
           label="Email"
@@ -68,6 +70,6 @@ export function LoginPage() {
           {pending ? "Вход…" : "Войти"}
         </Button>
       </form>
-    </div>
+    </AuthLayout>
   );
 }
