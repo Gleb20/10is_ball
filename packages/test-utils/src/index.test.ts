@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { FakeClock, SeededRng, SequentialIdGenerator } from "./index.js";
+import {
+  FakeClock,
+  percentile,
+  SeededRng,
+  SequentialIdGenerator,
+} from "./index.js";
 
 describe("REQ_shared__deterministic_clock", () => {
   it("returns fixed time and advances deterministically", () => {
@@ -19,6 +24,13 @@ describe("REQ_shared__seeded_rng", () => {
       b.next(),
       b.int(1, 10),
     ]);
+  });
+});
+
+describe("REQ_shared__percentile", () => {
+  it("computes nearest-rank p95", () => {
+    expect(percentile([100, 200, 300, 400, 500], 95)).toBe(500);
+    expect(percentile([], 95)).toBe(0);
   });
 });
 

@@ -442,6 +442,23 @@ export class AuthService {
     );
   }
 
+  /** Public directory for opponent/participant pickers (no email/admin fields). */
+  async listDirectory(opts: { q?: string; excludeUserId?: string } = {}) {
+    const all = await this.listUsers(opts.q);
+    return all
+      .filter(
+        (u) =>
+          u.status === "active" &&
+          (!opts.excludeUserId || u.id !== opts.excludeUserId),
+      )
+      .map((u) => ({
+        id: u.id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        displayName: `${u.lastName} ${u.firstName}`,
+      }));
+  }
+
   async updateProfile(
     userId: string,
     patch: Partial<{

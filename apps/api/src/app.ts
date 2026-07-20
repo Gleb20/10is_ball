@@ -602,6 +602,20 @@ export async function buildApp(opts: {
     },
   );
 
+  // --- User directory (opponent picker) ---
+  app.get(
+    "/api/v1/users/directory",
+    { preHandler: requireAuth },
+    async (req) => {
+      const q = (req.query as { q?: string }).q;
+      const users = await services.auth.listDirectory({
+        q,
+        excludeUserId: req.authUser!.id,
+      });
+      return { users };
+    },
+  );
+
   // --- Rankings / Home ---
   app.get(
     "/api/v1/rankings",
@@ -618,10 +632,22 @@ export async function buildApp(opts: {
     const matches = await services.matches.listMatches(5);
     const rankings = await services.matches.getRankings("all_time");
     const unread = await services.notifications.unread(req.authUser!.id);
+    const myRankIndex = rankings.findIndex(
+      (r) => r && r.userId === req.authUser!.id,
+    );
+    const myEntry = myRankIndex >= 0 ? rankings[myRankIndex] : null;
     return {
       lastMatches: matches,
       topRankings: rankings.slice(0, 5),
       unreadNotifications: unread.slice(0, 5),
+      myStats: myEntry
+        ? {
+            rank: myRankIndex + 1,
+            wins: myEntry.wins,
+            losses: myEntry.losses,
+            displayName: myEntry.displayName,
+          }
+        : null,
       hero: rankings[0]
         ? {
             type: "leader",
@@ -886,6 +912,9 @@ function openApiSpec() {
         post: { summary: "Create tournament" },
       },
       "/api/v1/rankings": { get: { summary: "Rankings" } },
+      "/api/v1/users/directory": {
+        get: { summary: "User directory for pickers" },
+      },
       "/api/v1/home": { get: { summary: "Home dashboard" } },
     },
   };

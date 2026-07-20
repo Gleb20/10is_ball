@@ -17,7 +17,7 @@
 - **Monorepo:** pnpm workspaces, Node.js ≥ 20
 - **API:** Fastify + Drizzle + PostgreSQL (PGlite в тестах)
 - **Web:** Vite + React 19 + [ic-kit](https://github.com/icdesign-bt/ic-kit)
-- **Tests:** Vitest (34 теста)
+- **Tests:** Vitest (50 тестов)
 
 ## Быстрый старт
 

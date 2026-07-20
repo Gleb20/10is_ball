@@ -46,6 +46,15 @@ export const api = {
       body: JSON.stringify({ newPassword }),
     }),
   home: () => request<Record<string, unknown>>("/api/v1/home"),
+  directory: (q?: string) =>
+    request<{
+      users: Array<{
+        id: string;
+        firstName: string;
+        lastName: string;
+        displayName: string;
+      }>;
+    }>(`/api/v1/users/directory${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   listUsers: (q?: string) =>
     request<{ users: User[] }>(
       `/api/v1/admin/users${q ? `?q=${encodeURIComponent(q)}` : ""}`,

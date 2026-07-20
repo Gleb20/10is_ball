@@ -34,4 +34,50 @@
 
 **Git:** каждый коммит — детальное тело по [`.cursor/rules/git-commits.mdc`](../.cursor/rules/git-commits.mdc).
 
-**Current release:** 1.0.0
+**Current release:** 1.2.0
+
+## D5 — Mobile shell IA (2026-07-20)
+
+**Decision:** Bottom navigation = вариант **A** (полный UX-spec из [`05_UX_FLOWS.md`](requirements/05_UX_FLOWS.md) §1), не вариант B (текущие табы прототипа Матчи/Турниры).
+
+### Primary tabs (ровно 5)
+
+| Tab | Назначение | Типовой route |
+|-----|------------|---------------|
+| Главная | Home, hero, активные события, топ-3, вход в уведомления | `/` |
+| История | Лента матчей/турниров, поиск и фильтры | `/history` |
+| «Начать» | Hub создания: Матч · Турнир · Challenge | `/start` |
+| Рейтинг | All-time / неделя / месяц | `/rankings` |
+| Профиль | Профиль, сессии, команды, помощь, выход | `/profile` |
+
+### Secondary (не в bottom bar)
+
+| Destination | Откуда |
+|-------------|--------|
+| Матчи (список/детали/создание) | «Начать» → Матч; История; карточки Home |
+| Турниры | «Начать» → Турнир; История; Home |
+| Команды, Help, Onboarding | Профиль (и онбординг после first password) |
+| Админка | только `role=admin`, пункт в Профиле (или CTA на Home), **не** в main tabs |
+| Judge mode | из карточки матча; **без** bottom nav (immersive) |
+| Auth (login / first password) | вне authenticated shell |
+
+### Related UI defaults (закрыты вместе с A)
+
+| ID | Decision | Why |
+|----|----------|-----|
+| Q-UI-2 Create match | Отдельный route `/matches/new` (wizard), не modal поверх списка | Согласовано с «Начать» → «Матч» (`05_UX_FLOWS` §5) |
+| Q-UI-3 Desktop | База — колонка ~360–480px; ≥768px шире контент, **тот же** порядок табов и действий | `05_UX_FLOWS` §15 |
+| Q-UI-4 Design source | Нет отдельного Figma MVP; визуал = ic-kit (`data-brand=ic`) + токены | D1 stack |
+
+### Explicit non-goals (чтобы не противоречить прототипу)
+
+- Табы «Матчи» и «Турниры» в bottom bar — **устаревший прототип** (`apps/web` до Phase 10); целевое состояние — таблица выше.
+- Не добавлять 6-й tab для уведомлений: вход с Home и Profile (`HOME-001`, `NOTIF-005`).
+
+### Versioning for Phase 10
+
+- Выравнивание shell под IA выше + Start/History как primary → **b** (переписывание shell под уже заявленный MVP-флоу, без нового продуктового домена).
+- Чистая визуальная полировка / отступы / тексты без смены IA → **c**.
+- Новый продуктовый сценарий вне `05_UX_FLOWS` → **a** (см. [`VERSIONING.md`](VERSIONING.md)).
+
+**Why:** Канон UX и PRD (`HOME-001`, `ONB-002`) уже описывают Главная / История / «Начать» / Рейтинг / Профиль. Вариант B закреплял бы drift прототипа.

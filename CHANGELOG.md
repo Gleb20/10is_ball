@@ -2,6 +2,33 @@
 
 Формат версий: [docs/VERSIONING.md](docs/VERSIONING.md).
 
+## [1.2.0] — 2026-07-20
+
+### Changed (b — key screens)
+
+- Home: hero с моей статистикой, лидер, топ-3, индикатор уведомлений
+- `/matches/new`: выбор Гость / Игрок + Autocomplete соперника
+- `GET /api/v1/users/directory` — directory для picker’ов
+- Rankings: пьедестал топ-3 + CTA «Вызов»
+- Profile: avatar, chip роли, разделы через ListRow
+
+## [1.1.1] — 2026-07-20
+
+### Changed (c — UX patterns)
+
+- `ListRow`, `StatusChip`, `AsyncState`, `FilterBar` — единые паттерны списков и состояний
+- Статусы матчей/турниров/пользователей на русском (Chip)
+- Применено на Home, History, Matches, Rankings, Tournaments, Admin, Teams, Help, Profile, Match/Tournament detail
+
+## [1.1.0] — 2026-07-20
+
+### Changed (b — shell IA)
+
+- Bottom nav по ADR D5: Главная · История · «Начать» · Рейтинг · Профиль
+- Hub `/start`, лента `/history`, создание матча `/matches/new`
+- Админка только из профиля; judge без bottom nav
+- PageLayout, ic-kit EmptyState/Skeleton/ButtonGroup, safe-area
+
 ## [1.0.0] — 2026-07-20
 
 ### Added (a — новые флоу)

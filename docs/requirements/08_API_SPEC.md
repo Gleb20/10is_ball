@@ -58,6 +58,7 @@ Errors:
 ## 4. Home / profile
 
 - `GET /home`
+- `GET /users/directory?q=` — список активных пользователей для выбора соперника/участника (id, имя; без email)
 - `GET /profile/me`
 - `PATCH /profile/me`
 - `POST /profile/me/avatar/regenerate`
@@ -65,7 +66,7 @@ Errors:
 - `GET /players/{userId}`
 - `POST /profile/onboarding/restart`
 
-`GET /home` возвращает hero stats, active summaries, last five, ranking top, rival summaries, notification indicator.
+`GET /home` возвращает hero stats, active summaries, last five, ranking top, rival summaries, notification indicator, `myStats`.
 
 ## 5. Rankings / history
 

@@ -21,6 +21,8 @@
 
 > Пример из обсуждения «новая фича / глобальная переработка с 1.1.1» по правилу сброса даёт **`2.0.0`**, не `2.2.0`.
 
+Phase 10 (UI polish): выравнивание bottom bar под [`05_UX_FLOWS.md`](requirements/05_UX_FLOWS.md) §1 считается **b** (переписывание shell под уже заявленный MVP), не **a** — см. ADR D5 в [`DECISIONS.md`](DECISIONS.md).
+
 ## Где фиксируется версия
 
 - Корневой [`package.json`](../package.json) — поле `version` (источник для релиза)
@@ -34,4 +36,4 @@
 
 ## Текущая версия
 
-**1.0.0** — первая интегрированная сборка MVP (monorepo, auth, матчи, судейство, турниры, команды, рейтинг, онбординг).
+**1.2.0** — Phase 10 UI-3: Home hero, match Autocomplete, Rankings podium, Profile.

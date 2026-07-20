@@ -67,6 +67,14 @@ export class SequentialIdGenerator implements IdGenerator {
   }
 }
 
+/** Nearest-rank percentile (0–100). Empty array returns 0. */
+export function percentile(values: number[], p: number): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const rank = Math.ceil((p / 100) * sorted.length) - 1;
+  return sorted[Math.max(0, Math.min(rank, sorted.length - 1))]!;
+}
+
 export class UlidGenerator implements IdGenerator {
   private counter = 0;
   constructor(

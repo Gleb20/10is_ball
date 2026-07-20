@@ -1,8 +1,33 @@
 import {
+  Alert,
+  Autocomplete,
+  Avatar,
   Button as IcButton,
+  ButtonGroup,
+  Chip,
+  EmptyState,
+  Icon,
+  IconButton,
   Input,
+  Skeleton,
+  Text,
+  type ButtonGroupOption,
   type ButtonProps as IcButtonProps,
 } from "ic-kit";
+
+export {
+  Alert,
+  Autocomplete,
+  Avatar,
+  ButtonGroup,
+  Chip,
+  EmptyState,
+  Icon,
+  IconButton,
+  Skeleton,
+  Text,
+};
+export type { ButtonGroupOption };
 
 export const TextField = Input;
 

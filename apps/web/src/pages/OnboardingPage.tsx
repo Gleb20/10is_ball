@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../ui";
+import { PageLayout } from "../layout";
 import { api } from "../api";
 
 export function OnboardingPage() {
@@ -8,8 +9,7 @@ export function OnboardingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="stack">
-      <h1 className="page-title">Онбординг</h1>
+    <PageLayout title="Онбординг">
       <div className="card stack">
         <p>
           Tab-10 помогает быстро создавать матчи, вести счёт и проводить
@@ -19,28 +19,30 @@ export function OnboardingPage() {
           Потренируйтесь с «Призрачным Олегом» — учебный матч не влияет на
           рейтинг.
         </p>
-        <Button
-          onClick={() =>
-            api.tutorial().then((r) => {
-              navigate(`/matches/${r.match.id}/judge`);
-            })
-          }
-        >
-          Матч с Призрачным Олегом
-        </Button>
-        <Button
-          variant="secondary"
-          onClick={() =>
-            api.completeOnboarding().then(() => {
-              setDone(true);
-              navigate("/");
-            })
-          }
-        >
-          Пропустить
-        </Button>
+        <div className="stack stack--actions">
+          <Button
+            onClick={() =>
+              api.tutorial().then((r) => {
+                navigate(`/matches/${r.match.id}/judge`);
+              })
+            }
+          >
+            Матч с Призрачным Олегом
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              api.completeOnboarding().then(() => {
+                setDone(true);
+                navigate("/");
+              })
+            }
+          >
+            Пропустить
+          </Button>
+        </div>
         {done && <p role="status">Готово</p>}
       </div>
-    </div>
+    </PageLayout>
   );
 }

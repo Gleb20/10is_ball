@@ -1,7 +1,7 @@
 {
   "name": "10is-ball",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Tab-10 — closed table tennis tournament web service",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
@@ -12,6 +12,8 @@
     "test": "pnpm -r run test",
     "test:unit": "pnpm -r --filter './packages/*' --filter @tab10/api run test:unit",
     "test:integration": "pnpm --filter @tab10/api run test:integration",
+    "test:load": "pnpm --filter @tab10/api run test:load",
+    "backup:rehearsal": "bash scripts/backup-rehearsal.sh",
     "ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "db:generate": "pnpm --filter @tab10/api run db:generate",
     "db:migrate": "pnpm --filter @tab10/api run db:migrate"

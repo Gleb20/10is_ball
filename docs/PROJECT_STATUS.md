@@ -1,9 +1,9 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-20  
-**Product version:** 1.0.0  
-Current phase: 9 (hardening baseline done)  
-Next step: Phase 9 optional — load test 10 parallel matches, backup rehearsal
+**Product version:** 1.2.0  
+Current phase: 10 (UI-0…UI-3 done)  
+Next step: Phase 10 UI-4 — Judge immersive + landscape
 
 ## Progress
 
@@ -18,22 +18,37 @@ Next step: Phase 9 optional — load test 10 parallel matches, backup rehearsal
 | 6 Tournaments | done | 9/9 (core bracket; match wiring partial) |
 | 7 Teams & Notifications | done | 4/4 |
 | 8 Onboarding / Help | done | 4/4 |
-| 9 Hardening | partial | CI + OpenAPI baseline; load test pending |
+| 9 Hardening | partial | CI + OpenAPI; load test; backup rehearsal; optional: security / mutation / observability |
+| 10 UI polish (mobile-first) | partial | UI-0…UI-3 done; UI-4…UI-6 pending |
+
+## Phase 10 plan (summary)
+
+| Slice | Фокус | Status | Version digit |
+|-------|--------|--------|---------------|
+| UI-0 | Layout primitives, ic-kit exports, safe-area | done | b (с UI-1) |
+| UI-1 | Bottom bar + Start hub + History (D5) | done | b → 1.1.0 |
+| UI-2 | ListRow, StatusChip, AsyncState, FilterBar | done | c → 1.1.1 |
+| UI-3 | Home, Matches flow, Rankings, Profile polish | done | b → 1.2.0 |
+| UI-4 | Judge immersive + landscape | next | b |
+| UI-5 | Auth + Admin polish | pending | c / b |
+| UI-6 | Visual/a11y QA | pending | c |
 
 ## Step log (latest)
 
-### Versioning & commit rules — done
-- `docs/VERSIONING.md`, `CHANGELOG.md`, `.cursor/rules/git-commits.mdc`
-- Product version **1.0.0**
+### Phase 10 UI-3 — key screens — done (v1.2.0)
+- Home hero: myStats, leader, top-3 compact podium, unread CTA
+- Match create: Гость/Игрок + Autocomplete via `GET /users/directory`
+- Rankings podium + Challenge CTA; Profile avatar + ListRow sections
+- Tests: directory API, MatchCreate modes, rankingUi splitPodium
+- `pnpm run ci` — green (50 tests)
 
-### MVP bootstrap — done
-- Monorepo, API, Web (ic-kit), domain tests, integration tests (PGlite)
-- `pnpm run ci` — green (34 tests)
+### Phase 10 UI-2 — shared patterns — done (v1.1.1)
+### Phase 10 UI-0 + UI-1 — done (v1.1.0)
 
 ## Manual smoke
 
 ```bash
-export PATH="/opt/homebrew/opt/node@20/bin:$PWD/.tools/node_modules/.bin:$PATH"
-pnpm install && pnpm dev
+pnpm dev
 # admin@tab10.local / AdminPass1!
+# Home: hero + podium; Start → Матч → Игрок (Autocomplete); Rankings podium
 ```

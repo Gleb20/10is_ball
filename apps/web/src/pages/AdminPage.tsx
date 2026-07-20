@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Button, TextField } from "../ui";
+import { Alert, Button, TextField } from "../ui";
+import { PageLayout } from "../layout";
+import { AsyncState, StatusChip } from "../patterns";
 import { api, type User } from "../api";
 import { useAuth } from "../auth";
 
 export function AdminPage() {
   const { user } = useAuth();
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[] | null>(null);
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -40,10 +42,9 @@ export function AdminPage() {
   }
 
   return (
-    <div className="stack">
-      <h1 className="page-title">Админка</h1>
+    <PageLayout title="Админка">
       <form className="card stack" onSubmit={create}>
-        <h2>Новый пользователь</h2>
+        <h2 className="section-title">Новый пользователь</h2>
         <TextField
           label="Email"
           value={email}
@@ -70,45 +71,78 @@ export function AdminPage() {
         />
         <Button type="submit">Создать</Button>
         {tempPassword && (
-          <p role="status">
-            Временный пароль (показывается один раз): <code>{tempPassword}</code>
-          </p>
+          <Alert
+            type="success"
+            variant="tonal"
+            title="Временный пароль"
+            description={tempPassword}
+          />
         )}
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <Alert
+            type="error"
+            variant="tonal"
+            title="Ошибка"
+            description={error}
+          />
+        )}
       </form>
 
-      <h2>Пользователи</h2>
-      {users.map((u) => (
-        <div className="card row" key={u.id}>
-          <div style={{ flex: 1 }}>
-            <strong>
-              {u.lastName} {u.firstName}
-            </strong>
-            <div className="muted">
-              {u.email} · {u.role} · {(u as User & { status?: string }).status}
+      <h2 className="section-title">Пользователи</h2>
+      <AsyncState
+        loading={users === null && !error}
+        empty={users !== null && users.length === 0}
+        emptyTitle="Нет пользователей"
+        emptyDescription="Добавьте первого пользователя формой выше."
+      >
+        <div className="stack">
+          {(users ?? []).map((u) => (
+            <div
+              key={u.id}
+              className="list-row list-row--static list-row--admin"
+            >
+              <div className="list-row__body">
+                <strong>
+                  {u.lastName} {u.firstName}
+                </strong>
+                <span className="muted">
+                  {u.email} · {u.role}
+                </span>
+              </div>
+              <StatusChip
+                status={(u as User & { status?: string }).status ?? "active"}
+                domain="user"
+              />
+              <div className="row">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() =>
+                    api
+                      .blockUser(u.id)
+                      .then(load)
+                      .catch((e) => setError(e.message))
+                  }
+                >
+                  Блок
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() =>
+                    api
+                      .resetPassword(u.id)
+                      .then((r) => setTempPassword(r.temporaryPassword))
+                      .catch((e) => setError(e.message))
+                  }
+                >
+                  Сброс
+                </Button>
+              </div>
             </div>
-          </div>
-          <Button
-            variant="secondary"
-            onClick={() =>
-              api.blockUser(u.id).then(load).catch((e) => setError(e.message))
-            }
-          >
-            Блок
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() =>
-              api
-                .resetPassword(u.id)
-                .then((r) => setTempPassword(r.temporaryPassword))
-                .catch((e) => setError(e.message))
-            }
-          >
-            Сброс
-          </Button>
+          ))}
         </div>
-      ))}
-    </div>
+      </AsyncState>
+    </PageLayout>
   );
 }

@@ -253,4 +253,38 @@ describe("auth and admin integration", () => {
     });
     expect(expired.statusCode).toBe(401);
   });
+
+  it("API_GET_users_directory__lists_active_excludes_self", async () => {
+    const adminToken = await loginAsAdmin();
+    await app.inject({
+      method: "POST",
+      url: "/api/v1/admin/users",
+      cookies: { tab10_session: adminToken },
+      payload: {
+        email: "picker@tab10.local",
+        firstName: "Pick",
+        lastName: "Er",
+      },
+    });
+    const dir = await app.inject({
+      method: "GET",
+      url: "/api/v1/users/directory",
+      cookies: { tab10_session: adminToken },
+    });
+    expect(dir.statusCode).toBe(200);
+    const users = dir.json().users as Array<{
+      id: string;
+      displayName: string;
+      email?: string;
+    }>;
+    expect(users.some((u) => u.displayName.includes("Er"))).toBe(true);
+    expect(users.every((u) => !("email" in u && u.email))).toBe(true);
+    const adminMe = await app.inject({
+      method: "GET",
+      url: "/api/v1/auth/me",
+      cookies: { tab10_session: adminToken },
+    });
+    const adminId = adminMe.json().user.id as string;
+    expect(users.every((u) => u.id !== adminId)).toBe(true);
+  });
 });

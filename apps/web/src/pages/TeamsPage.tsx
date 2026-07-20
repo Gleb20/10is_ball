@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
 import { Button, TextField } from "../ui";
+import { PageLayout } from "../layout";
+import { AsyncState, ListRow } from "../patterns";
 import { api } from "../api";
 
 export function TeamsPage() {
-  const [teams, setTeams] = useState<Array<Record<string, unknown>>>([]);
+  const [teams, setTeams] = useState<Array<Record<string, unknown>> | null>(
+    null,
+  );
+  const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
 
   async function load() {
@@ -12,20 +17,22 @@ export function TeamsPage() {
   }
 
   useEffect(() => {
-    void load();
+    void load().catch((e) => setError(e.message));
   }, []);
 
   return (
-    <div className="stack">
-      <h1 className="page-title">Команды</h1>
+    <PageLayout title="Команды">
       <form
         className="card stack"
         onSubmit={(e) => {
           e.preventDefault();
-          void api.createTeam({ name }).then(() => {
-            setName("");
-            return load();
-          });
+          void api
+            .createTeam({ name })
+            .then(() => {
+              setName("");
+              return load();
+            })
+            .catch((err) => setError((err as Error).message));
         }}
       >
         <TextField
@@ -38,15 +45,26 @@ export function TeamsPage() {
         />
         <Button type="submit">Создать</Button>
       </form>
-      {teams.map((t) => (
-        <div className="card" key={String(t.id)}>
-          <strong>{String(t.name)}</strong>
-          <div className="muted">
-            Участников:{" "}
-            {Array.isArray(t.members) ? t.members.length : 0}
-          </div>
+
+      <AsyncState
+        loading={teams === null && !error}
+        error={error}
+        empty={teams !== null && teams.length === 0}
+        emptyTitle="Нет команд"
+        emptyDescription="Создайте команду формой выше."
+      >
+        <div className="stack">
+          {(teams ?? []).map((t) => (
+            <ListRow
+              key={String(t.id)}
+              title={String(t.name)}
+              subtitle={`Участников: ${
+                Array.isArray(t.members) ? t.members.length : 0
+              }`}
+            />
+          ))}
         </div>
-      ))}
-    </div>
+      </AsyncState>
+    </PageLayout>
   );
 }

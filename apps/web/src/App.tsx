@@ -1,10 +1,13 @@
-import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth";
+import { AppShell, shouldShowBottomNav } from "./layout";
+import { Skeleton } from "./ui";
 import { LoginPage } from "./pages/LoginPage";
 import { FirstPasswordPage } from "./pages/FirstPasswordPage";
 import { HomePage } from "./pages/HomePage";
 import { AdminPage } from "./pages/AdminPage";
 import { MatchesPage } from "./pages/MatchesPage";
+import { MatchCreatePage } from "./pages/MatchCreatePage";
 import { MatchDetailPage } from "./pages/MatchDetailPage";
 import { JudgePage } from "./pages/JudgePage";
 import { RankingsPage } from "./pages/RankingsPage";
@@ -14,30 +17,12 @@ import { TeamsPage } from "./pages/TeamsPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { HelpPage } from "./pages/HelpPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
-
-function Shell({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-  return (
-    <div className="app-shell">
-      <main className="app-main">{children}</main>
-      {user && !user.mustChangePassword && (
-        <nav className="bottom-nav" aria-label="Основная навигация">
-          <NavLink to="/" end>
-            Главная
-          </NavLink>
-          <NavLink to="/matches">Матчи</NavLink>
-          <NavLink to="/tournaments">Турниры</NavLink>
-          <NavLink to="/rankings">Рейтинг</NavLink>
-          <NavLink to="/profile">Профиль</NavLink>
-        </nav>
-      )}
-    </div>
-  );
-}
+import { HistoryPage } from "./pages/HistoryPage";
+import { StartPage } from "./pages/StartPage";
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <p className="muted">Загрузка…</p>;
+  if (loading) return <Skeleton variant="rectangular" height={120} />;
   if (!user) return <Navigate to="/login" replace />;
   if (user.mustChangePassword) return <Navigate to="/first-password" replace />;
   return <>{children}</>;
@@ -45,20 +30,32 @@ function Protected({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const showNav = shouldShowBottomNav(location.pathname, {
+    authenticated: Boolean(user),
+    mustChangePassword: Boolean(user?.mustChangePassword),
+  });
+
   if (loading) {
     return (
-      <Shell>
-        <p className="muted">Загрузка…</p>
-      </Shell>
+      <AppShell showNav={false}>
+        <Skeleton variant="rectangular" height={120} />
+      </AppShell>
     );
   }
 
   return (
-    <Shell>
+    <AppShell showNav={showNav}>
       <Routes>
         <Route
           path="/login"
-          element={user && !user.mustChangePassword ? <Navigate to="/" /> : <LoginPage />}
+          element={
+            user && !user.mustChangePassword ? (
+              <Navigate to="/" />
+            ) : (
+              <LoginPage />
+            )
+          }
         />
         <Route path="/first-password" element={<FirstPasswordPage />} />
         <Route
@@ -70,10 +67,34 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/history"
+          element={
+            <Protected>
+              <HistoryPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/start"
+          element={
+            <Protected>
+              <StartPage />
+            </Protected>
+          }
+        />
+        <Route
           path="/admin"
           element={
             <Protected>
               <AdminPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/matches/new"
+          element={
+            <Protected>
+              <MatchCreatePage />
             </Protected>
           }
         />
@@ -158,7 +179,7 @@ function AppRoutes() {
           }
         />
       </Routes>
-    </Shell>
+    </AppShell>
   );
 }
 
