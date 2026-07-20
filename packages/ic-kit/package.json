@@ -1,0 +1,37 @@
+{
+  "name": "ic-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vendored prebuilt ic-kit (github:icdesign-bt/ic-kit#v0.1.0) — avoid git prepare on CI",
+  "type": "module",
+  "license": "SEE LICENSE IN LICENSE",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "main": "./dist/ic-kit.js",
+  "module": "./dist/ic-kit.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/ic-kit.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./styles.css": "./dist/ic-kit.css"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "scripts": {
+    "build": "echo 'ic-kit vendored; no build'",
+    "lint": "echo 'ic-kit vendored; skip'",
+    "typecheck": "echo 'ic-kit vendored; skip'",
+    "test": "echo 'ic-kit vendored; skip'"
+  }
+}

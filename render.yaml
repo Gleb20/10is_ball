@@ -9,7 +9,7 @@ services:
     plan: free
     region: frankfurt
     healthCheckPath: /health
-    buildCommand: npm install -g pnpm@9.15.0 --prefix "$HOME/.local" && export PATH="$HOME/.local/bin:$PATH" && pnpm install && pnpm --filter @tab10/shared build && pnpm --filter @tab10/test-utils build && pnpm --filter @tab10/api build
+    buildCommand: npm install -g pnpm@9.15.0 --prefix "$HOME/.local" && export PATH="$HOME/.local/bin:$PATH" && pnpm install --filter "@tab10/api..." && pnpm --filter @tab10/shared build && pnpm --filter @tab10/test-utils build && pnpm --filter @tab10/api build
     startCommand: export PATH="$HOME/.local/bin:$PATH" && pnpm --filter @tab10/api start
     envVars:
       - key: NODE_ENV

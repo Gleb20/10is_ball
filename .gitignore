@@ -2,6 +2,8 @@
 **/.DS_Store
 node_modules
 dist
+!packages/ic-kit/dist/
+!packages/ic-kit/dist/**
 build
 coverage
 .env

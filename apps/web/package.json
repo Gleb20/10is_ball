@@ -13,7 +13,7 @@
     "test:unit": "vitest run"
   },
   "dependencies": {
-    "ic-kit": "github:icdesign-bt/ic-kit#v0.1.0",
+    "ic-kit": "workspace:*",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-router-dom": "^6.28.0"

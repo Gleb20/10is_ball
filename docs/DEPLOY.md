@@ -73,10 +73,14 @@ Browser ──► Vercel (apps/web) ──rewrite /api──► Render (apps/api
 **Build Command** (одна строка):
 
 ```bash
-npm install -g pnpm@9.15.0 --prefix "$HOME/.local" && export PATH="$HOME/.local/bin:$PATH" && pnpm install && pnpm --filter @tab10/shared build && pnpm --filter @tab10/test-utils build && pnpm --filter @tab10/api build
+npm install -g pnpm@9.15.0 --prefix "$HOME/.local" && export PATH="$HOME/.local/bin:$PATH" && pnpm install --filter "@tab10/api..." && pnpm --filter @tab10/shared build && pnpm --filter @tab10/test-utils build && pnpm --filter @tab10/api build
 ```
 
 > Не используйте `corepack prepare …` на Render: он пишет в `/usr/bin/pnpm` и падает с `EROFS: read-only file system`.
+>
+> `--filter "@tab10/api..."` ставит только API и его зависимости (без `apps/web` / сборки git-`ic-kit`).
+>
+> UI-kit лежит в `packages/ic-kit` (vendored dist), чтобы Vercel/CI не гоняли `prepare` из GitHub.
 
 **Start Command:**
 
