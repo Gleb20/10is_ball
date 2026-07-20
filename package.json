@@ -1,0 +1,22 @@
+{
+  "name": "10is-ball",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Tab-10 — closed table tennis tournament web service",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "pnpm run --parallel --filter @tab10/api --filter @tab10/web dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "test:unit": "pnpm -r --filter './packages/*' --filter @tab10/api run test:unit",
+    "test:integration": "pnpm --filter @tab10/api run test:integration",
+    "ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "db:generate": "pnpm --filter @tab10/api run db:generate",
+    "db:migrate": "pnpm --filter @tab10/api run db:migrate"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

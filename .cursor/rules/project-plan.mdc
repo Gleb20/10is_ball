@@ -1,0 +1,21 @@
+---
+description: Tab-10 plan-driven workflow — read status before acting
+alwaysApply: true
+---
+
+# Tab-10 / 10is_ball project plan rule
+
+При любом запросе по этому проекту:
+
+1. Прочитать `docs/PROJECT_STATUS.md`, `docs/DECISIONS.md` и `docs/requirements/00_README.md`.
+2. Оценить, что уже сделано относительно фаз плана (Phase 0–9).
+3. На фразы вроде «выполни следующий шаг» / «continue» / «next step»:
+   - показать конкретный шаг из `PROJECT_STATUS.md` (ID, requirement IDs, Red tests);
+   - только затем писать код по TDD (Red → Green → Refactor);
+   - обновить `PROJECT_STATUS.md`, `CHANGELOG_DEV.md` и traceability.
+4. Не добавлять scope вне MVP без явного согласия пользователя.
+5. При неоднозначности — предложить 2–3 опции (AskQuestion), зафиксировать выбор в `DECISIONS.md`.
+6. Источники истины: PRD → Acceptance catalog → Data model / API → UX flows → TDD strategy.
+7. UI: ic-kit (`import 'ic-kit/styles.css'`), бренд `ic`, без Ant Design / MUI.
+8. Версионирование: `docs/VERSIONING.md` — формат `a.b.c`, сброс правых цифр при росте левой.
+9. Git-коммиты: `.cursor/rules/git-commits.mdc` — детальное описание всех изменений в теле коммита.

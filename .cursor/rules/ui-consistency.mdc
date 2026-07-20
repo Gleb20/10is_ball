@@ -1,0 +1,13 @@
+---
+description: UI consistency — shared patterns for forms, tables, filters, dialogs; visual hierarchy; system variants; state coverage and reuse on new screens.
+globs: "**/*.{tsx,ts,jsx,js,vue,svelte,css}"
+alwaysApply: false
+---
+
+# UI Consistency Rules
+
+- Similar problems should use the same interaction pattern.
+- Forms, tables, filters, dialogs, toasts, and navigation must follow shared patterns.
+- Respect hierarchy: page > section > group > component > element.
+- Default to system variants before introducing custom styling.
+- Audit all new screens for state coverage and component reuse.

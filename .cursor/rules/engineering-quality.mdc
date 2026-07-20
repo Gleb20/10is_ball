@@ -1,0 +1,13 @@
+---
+description: Engineering quality — modular UI, isolated logic, reuse primitives, small composable components, run build/typecheck/tests after substantive changes, avoid over-abstraction.
+globs: "**/*.{ts,tsx,js,jsx,mjs,cjs,vue,svelte}"
+alwaysApply: false
+---
+
+# Engineering Quality Rules
+
+- Build modular components and isolate business logic from presentation.
+- Reuse existing primitives before creating new abstractions.
+- Keep components small and composable.
+- After a meaningful set of changes: run build, typecheck, and tests.
+- Prefer file-local clarity over over-abstraction.

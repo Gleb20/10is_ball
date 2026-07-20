@@ -1,0 +1,97 @@
+{
+  "package": "tab10_tdd_simplified",
+  "version": "2.0",
+  "date": "2026-07-20",
+  "files": [
+    {
+      "name": "00_README.md",
+      "sha256": "bd010d61a73ea4cce67c84b2f689cd7f740291227275339bad791769f14907a7",
+      "bytes": 5194,
+      "lines": 96
+    },
+    {
+      "name": "01_PRODUCT_BRIEF.md",
+      "sha256": "e1634f4b544d1b38a77c70e70476ea6fc8a05403b79ed320f257750046a72660",
+      "bytes": 5472,
+      "lines": 98
+    },
+    {
+      "name": "02_PROBLEM_STATEMENT.md",
+      "sha256": "edc6623470c947a13a560b375ceb0ed53a84c89eca7a4562e079ea0afd033663",
+      "bytes": 4349,
+      "lines": 88
+    },
+    {
+      "name": "03_JTBD_SEGMENTS_ICP.md",
+      "sha256": "c4fc6fe0144c0e90ae8bee4e139218a382a2aaf15b2d8e8b4d64696004c61457",
+      "bytes": 4818,
+      "lines": 80
+    },
+    {
+      "name": "04_PRD.md",
+      "sha256": "a8349df3b7757a0452ab74b19fd4b29b1c382abe82e41c15df5de6fc26b4a073",
+      "bytes": 30648,
+      "lines": 588
+    },
+    {
+      "name": "05_UX_FLOWS.md",
+      "sha256": "88424d6927ec77e29e7e44948e1aae4b9b09d0c5f78790dbcc7fd081975d03ff",
+      "bytes": 9174,
+      "lines": 166
+    },
+    {
+      "name": "06_NFR_CONSTRAINTS.md",
+      "sha256": "2c727cb4300c135e44447b0fa21ebc7b54c044fbe3d9e653b659f251e9bb88cf",
+      "bytes": 5677,
+      "lines": 129
+    },
+    {
+      "name": "07_DATA_MODEL.md",
+      "sha256": "7252a938565c7d4005453132b23ef11b815ddef8ddbecebdf2d5428a16764d8d",
+      "bytes": 8876,
+      "lines": 363
+    },
+    {
+      "name": "08_API_SPEC.md",
+      "sha256": "b594a870d6db5c6d1dea98fc31bf5c66f32f42d52e498d5e1c0c0a647a0cbada",
+      "bytes": 5615,
+      "lines": 206
+    },
+    {
+      "name": "09_LOCAL_AUTH_AND_TENNIS_ADMIN.md",
+      "sha256": "12a1f2df19a55efcbc6141f7b82920bb91e7c02850916e537d969c87b0c6b524",
+      "bytes": 4633,
+      "lines": 109
+    },
+    {
+      "name": "10_TDD_STRATEGY.md",
+      "sha256": "b00e47ad2c362035ef215f42c7a42990ae66757c85b239086e66f4b1f59470ce",
+      "bytes": 5499,
+      "lines": 164
+    },
+    {
+      "name": "11_ACCEPTANCE_TEST_CATALOG.md",
+      "sha256": "2cc292ec4c13f3476543ab5efcea69fd2d50b8449d856afbb1c58e06677241a9",
+      "bytes": 10995,
+      "lines": 217
+    },
+    {
+      "name": "12_IMPLEMENTATION_ROADMAP_TDD.md",
+      "sha256": "288bf1e2740ca4afc7e118d1c603c911172c5d257376daf722212ab3e82698b7",
+      "bytes": 3825,
+      "lines": 146
+    },
+    {
+      "name": "13_REQUIREMENTS_TEST_TRACEABILITY.md",
+      "sha256": "493af11de24f4778553153130e22edf9079c9d514ad8b7bed133fb52667d1683",
+      "bytes": 1723,
+      "lines": 36
+    },
+    {
+      "name": "14_CURSOR_INSTRUCTIONS.md",
+      "sha256": "2fe239aef333fb187c84a2f53f0cebe5c3bc9c1c9ed01d3b9a1a088006c52b87",
+      "bytes": 3232,
+      "lines": 69
+    }
+  ]
+}

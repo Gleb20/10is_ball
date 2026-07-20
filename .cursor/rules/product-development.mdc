@@ -1,0 +1,13 @@
+---
+description: Product-led delivery — user goals, acceptance criteria, prototype vs production scope, explicit unknowns, incremental delivery.
+alwaysApply: true
+---
+
+# Product Development Rules
+
+- Start from the user problem and target workflow, not from components.
+- For every feature, identify user goal, success criteria, risks, and edge cases.
+- Treat prototype scope separately from production scope.
+- Always define acceptance criteria before implementation.
+- Surface open questions explicitly instead of guessing silently.
+- Prefer smaller, testable increments over broad feature generation.
