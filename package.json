@@ -19,6 +19,6 @@
     "db:migrate": "pnpm --filter @tab10/api run db:migrate"
   },
   "engines": {
-    "node": ">=20"
+    "node": "20.x"
   }
 }

@@ -96,6 +96,7 @@ export PATH="$HOME/.local/bin:$PATH" && pnpm --filter @tab10/api start
 |-----|--------|
 | `NODE_ENV` | `production` |
 | `HOST` | `0.0.0.0` |
+| `NODE_VERSION` | `20` (важно: не Node 26) |
 | `DATABASE_URL` | вся строка Neon `postgresql://…?sslmode=require` |
 | `SEED_ADMIN` | `1` |
 | `SEED_ADMIN_EMAIL` | `admin@tab10.local` (или ваш) |
