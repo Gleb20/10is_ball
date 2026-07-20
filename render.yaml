@@ -1,0 +1,30 @@
+# Render Blueprint — Tab-10 API
+# https://render.com/docs/blueprint-spec
+# После создания: подставьте DATABASE_URL (Neon) и при необходимости WEB_ORIGIN в Dashboard.
+
+services:
+  - type: web
+    name: tab10-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    healthCheckPath: /health
+    buildCommand: corepack enable && corepack prepare pnpm@9.15.0 --activate && pnpm install && pnpm --filter @tab10/shared build && pnpm --filter @tab10/test-utils build && pnpm --filter @tab10/api build
+    startCommand: pnpm --filter @tab10/api start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: "0.0.0.0"
+      - key: SEED_ADMIN
+        value: "1"
+      - key: DATABASE_URL
+        sync: false
+      - key: WEB_ORIGIN
+        sync: false
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: COOKIE_SAME_SITE
+        sync: false

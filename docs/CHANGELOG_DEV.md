@@ -1,5 +1,20 @@
 # Dev Changelog
 
+## 2026-07-20 — Deploy readiness (Neon / Render / Vercel)
+
+### Added
+- `docs/DEPLOY.md` — пошаговый бесплатный хостинг
+- `render.yaml`, `apps/web/vercel.json`, `vercel.rewrites.example.json`
+- `.env.example` для api/web
+- API: `WEB_ORIGIN` CORS, `COOKIE_SAME_SITE`, schema on Postgres boot
+- Web: `VITE_API_BASE_URL` prefix
+
+### How to verify
+```bash
+pnpm run ci
+# follow docs/DEPLOY.md
+```
+
 ## 2026-07-20 — Phase 10 UI-6 Visual/a11y QA (v1.3.2)
 
 ### Added

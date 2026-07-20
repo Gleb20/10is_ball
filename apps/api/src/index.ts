@@ -1,8 +1,35 @@
-import { createPgliteDb, createPostgresDb } from "./db/client.js";
+import {
+  applySchemaSql,
+  createPgliteDb,
+  createPostgresDb,
+} from "./db/client.js";
 import { buildApp } from "./app.js";
+
+async function ensurePostgresSchema(url: string) {
+  if (process.env.MIGRATE_ON_BOOT === "0") return;
+  const postgres = (await import("postgres")).default;
+  const sql = postgres(url, { max: 1 });
+  try {
+    await applySchemaSql(
+      {
+        exec: async (q) => {
+          await sql.unsafe(q);
+        },
+      },
+      { withPgcrypto: true },
+    );
+    console.log("Postgres schema ensured");
+  } finally {
+    await sql.end({ timeout: 5 });
+  }
+}
 
 async function main() {
   const url = process.env.DATABASE_URL;
+  if (url) {
+    await ensurePostgresSchema(url);
+  }
+
   const { db, close } = url
     ? await createPostgresDb(url)
     : await createPgliteDb();
@@ -30,6 +57,9 @@ async function main() {
 
   await app.listen({ port, host });
   console.log(`Tab-10 API listening on http://${host}:${port}`);
+  if (process.env.WEB_ORIGIN) {
+    console.log(`CORS WEB_ORIGIN=${process.env.WEB_ORIGIN}`);
+  }
 }
 
 main().catch((err) => {

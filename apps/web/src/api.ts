@@ -7,6 +7,12 @@ export type User = {
   lastName?: string;
 };
 
+/** Production: set VITE_API_BASE_URL to API origin (no trailing slash). Dev: empty + Vite proxy. */
+const API_BASE = String(import.meta.env.VITE_API_BASE_URL ?? "").replace(
+  /\/$/,
+  "",
+);
+
 async function request<T>(
   path: string,
   init: RequestInit = {},
@@ -15,7 +21,7 @@ async function request<T>(
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  const res = await fetch(path, {
+  const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers,
     credentials: "include",

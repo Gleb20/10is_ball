@@ -4,6 +4,7 @@
 |------|------------|
 | [PROJECT_STATUS.md](PROJECT_STATUS.md) | Статус фаз, следующий шаг |
 | [A11Y_CHECKLIST.md](A11Y_CHECKLIST.md) | A11y / visual QA checklist (UI-6) |
+| [DEPLOY.md](DEPLOY.md) | Бесплатный деплой: Neon + Render + Vercel |
 | [DECISIONS.md](DECISIONS.md) | ADR (в т.ч. D5 — mobile shell IA) |
 | [VERSIONING.md](VERSIONING.md) | Правила версий `a.b.c` |
 | [CHANGELOG_DEV.md](CHANGELOG_DEV.md) | Технический журнал изменений |

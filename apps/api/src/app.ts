@@ -20,6 +20,27 @@ import { TournamentService } from "./modules/tournaments/tournament-service.js";
 const COOKIE = "tab10_session";
 const CSRF_COOKIE = "tab10_csrf";
 
+/** Cookie flags: use COOKIE_SAME_SITE=none when browser talks to API on another site. Prefer Vercel /api rewrite (same-site) instead. */
+function sessionCookieOptions(httpOnly: boolean) {
+  const crossSite = process.env.COOKIE_SAME_SITE === "none";
+  return {
+    path: "/",
+    httpOnly,
+    sameSite: (crossSite ? "none" : "lax") as "none" | "lax",
+    secure: process.env.NODE_ENV === "production" || crossSite,
+  };
+}
+
+function corsOrigin(): boolean | string | string[] {
+  const raw = process.env.WEB_ORIGIN?.trim();
+  if (!raw) return true;
+  const list = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return list.length === 1 ? list[0]! : list;
+}
+
 export type AppServices = {
   auth: AuthService;
   matches: MatchService;
@@ -54,7 +75,7 @@ export async function buildApp(opts: {
 
   const app = Fastify({ logger: false });
   await app.register(cors, {
-    origin: true,
+    origin: corsOrigin(),
     credentials: true,
   });
   await app.register(cookie);
@@ -135,19 +156,9 @@ export async function buildApp(opts: {
         message: messageFor(result.code),
       });
     }
-    reply.setCookie(COOKIE, result.sessionToken, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
+    reply.setCookie(COOKIE, result.sessionToken, sessionCookieOptions(true));
     const csrf = cryptoRandom();
-    reply.setCookie(CSRF_COOKIE, csrf, {
-      path: "/",
-      httpOnly: false,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
+    reply.setCookie(CSRF_COOKIE, csrf, sessionCookieOptions(false));
     return {
       user: {
         id: result.user.id,
@@ -166,7 +177,7 @@ export async function buildApp(opts: {
     { preHandler: requireAuth },
     async (req, reply) => {
       if (req.authSessionId) await services.auth.logout(req.authSessionId);
-      reply.clearCookie(COOKIE, { path: "/" });
+      reply.clearCookie(COOKIE, sessionCookieOptions(true));
       return { ok: true };
     },
   );

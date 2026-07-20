@@ -11,6 +11,7 @@
 | Версионирование `a.b.c` | [`docs/VERSIONING.md`](docs/VERSIONING.md) |
 | Changelog релизов | [`CHANGELOG.md`](CHANGELOG.md) |
 | Решения (ADR) | [`docs/DECISIONS.md`](docs/DECISIONS.md) |
+| **Деплой (Neon + Render + Vercel)** | [`docs/DEPLOY.md`](docs/DEPLOY.md) |
 
 ## Стек
 
