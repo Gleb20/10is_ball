@@ -5,7 +5,7 @@ import Fastify, {
   type FastifyReply,
   type FastifyRequest,
 } from "fastify";
-import { FakeClock, type Clock } from "@tab10/test-utils";
+import type { Clock } from "@tab10/test-utils";
 import type { Db } from "./db/client.js";
 import { authSessions, users } from "./db/schema.js";
 import { AuthService, type AuthUser } from "./modules/auth/auth-service.js";
@@ -62,7 +62,7 @@ export async function buildApp(opts: {
   db: Db;
   clock?: Clock;
 }): Promise<{ app: FastifyInstance; services: AppServices }> {
-  const clock = opts.clock ?? new FakeClock();
+  const clock = opts.clock ?? { now: () => new Date() };
   const services: AppServices = {
     auth: new AuthService(opts.db, clock),
     matches: new MatchService(opts.db, clock),
