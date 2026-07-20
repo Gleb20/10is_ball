@@ -1,5 +1,22 @@
 # Dev Changelog
 
+## 2026-07-20 — Phase 10 UI-6 Visual/a11y QA (v1.3.2)
+
+### Added
+- `docs/A11Y_CHECKLIST.md`
+- `a11y.smoke.test.tsx` — 360px nav, skip-link, AT-EMPTY-001, auth width, CSS floors
+- Skip-link в AppShell; global `:focus-visible`; `prefers-reduced-motion`
+
+### Changed
+- Product version **1.3.1 → 1.3.2** (c)
+- Phase 10 UI polish marked **done**
+
+### How to verify
+```bash
+pnpm --filter @tab10/web test
+pnpm run ci
+```
+
 ## 2026-07-20 — Phase 10 UI-5 Auth + Admin polish (v1.3.1)
 
 ### Added

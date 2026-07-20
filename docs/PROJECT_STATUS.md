@@ -1,9 +1,9 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-20  
-**Product version:** 1.3.1  
-Current phase: 10 (UI-0…UI-5 done)  
-Next step: Phase 10 UI-6 — Visual/a11y QA
+**Product version:** 1.3.2  
+Current phase: 10 (UI polish complete)  
+Next step: Phase 9 remaining (security / mutation / observability) или продуктовый backlog вне UI-polish
 
 ## Progress
 
@@ -19,7 +19,7 @@ Next step: Phase 10 UI-6 — Visual/a11y QA
 | 7 Teams & Notifications | done | 4/4 |
 | 8 Onboarding / Help | done | 4/4 |
 | 9 Hardening | partial | CI + OpenAPI; load test; backup rehearsal; optional: security / mutation / observability |
-| 10 UI polish (mobile-first) | partial | UI-0…UI-5 done; UI-6 pending |
+| 10 UI polish (mobile-first) | done | UI-0…UI-6 |
 
 ## Phase 10 plan (summary)
 
@@ -31,24 +31,22 @@ Next step: Phase 10 UI-6 — Visual/a11y QA
 | UI-3 | Home, Matches flow, Rankings, Profile polish | done | b → 1.2.0 |
 | UI-4 | Judge immersive + landscape | done | b → 1.3.0 |
 | UI-5 | Auth + Admin polish | done | c → 1.3.1 |
-| UI-6 | Visual/a11y QA | next | c |
+| UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
 
-### Phase 10 UI-5 — Auth + Admin polish — done (v1.3.1)
-- AuthLayout; TempPasswordPanel + copy CTA; admin confirm Dialogs
-- Tests: REQ_ui__auth_layout, temp_password_copy, admin_confirm_dialogs
-- `pnpm run ci` — green (60 tests)
+### Phase 10 UI-6 — Visual/a11y QA — done (v1.3.2)
+- `docs/A11Y_CHECKLIST.md`; skip-link; focus-visible; reduced-motion
+- Smoke tests 360px + AT-EMPTY-001 CTA
+- `pnpm run ci` — green
 
+### Phase 10 UI-5 — Auth + Admin polish — done (v1.3.1)
 ### Phase 10 UI-4 — Judge immersive — done (v1.3.0)
-### Phase 10 UI-3 — key screens — done (v1.2.0)
-### Phase 10 UI-2 — shared patterns — done (v1.1.1)
-### Phase 10 UI-0 + UI-1 — done (v1.1.0)
+### Phase 10 UI-0…UI-3 — done
 
 ## Manual smoke
 
 ```bash
 pnpm dev
-# /login — AuthLayout с брендом Tab-10
-# /admin — Создать пользователя → Dialog + «Скопировать»; Блок/Сброс с confirm
+# 360×640: tabs + Tab focus; /login skip→main; judge immersive
 ```

@@ -18,7 +18,8 @@
 | NOTIF-001..006 | AT-NOTIF-001..004 | integration, API, component | medium |
 | ONB-001..005 | AT-ONB-001..002, AT-MATCH-012; highlight tabs per ADR D5 | integration, E2E | medium |
 | HELP-001..003 | feedback/FAQ contract tests | API, component | low |
-| EMPTY | AT-EMPTY-001 | component, visual | medium |
+| EMPTY | AT-EMPTY-001; REQ_ui__a11y_360_smoke (UI-6) | component, visual | medium |
+| NFR a11y §9–10 | docs/A11Y_CHECKLIST.md; skip-link / focus-visible / 360px smoke | component, docs | medium |
 | AUDIT | audit integration tests | integration | high |
 | NFR-002 perf | INT_load__ten_parallel_matches_meet_slo | integration (load) | yes |
 | NFR-007 backup | scripts/backup-rehearsal.sh | ops script | high |

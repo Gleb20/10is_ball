@@ -2,6 +2,14 @@
 
 Формат версий: [docs/VERSIONING.md](docs/VERSIONING.md).
 
+## [1.3.2] — 2026-07-20
+
+### Changed (c — a11y / visual QA)
+
+- Skip-link «К содержимому», `:focus-visible`, reduced-motion
+- Touch floors на bottom nav; overflow-x clip
+- `docs/A11Y_CHECKLIST.md` + `a11y.smoke.test.tsx` (360px, AT-EMPTY-001)
+
 ## [1.3.1] — 2026-07-20
 
 ### Changed (c — auth/admin polish)

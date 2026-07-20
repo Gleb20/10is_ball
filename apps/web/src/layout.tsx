@@ -87,7 +87,14 @@ export function AppShell({
         immersive ? "app-shell app-shell--immersive" : "app-shell"
       }
     >
+      {!immersive ? (
+        <a className="skip-link" href="#main-content">
+          К содержимому
+        </a>
+      ) : null}
       <main
+        id="main-content"
+        tabIndex={-1}
         className={
           showNav ? "app-main" : "app-main app-main--no-nav"
         }
