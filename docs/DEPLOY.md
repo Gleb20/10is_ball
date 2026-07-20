@@ -73,13 +73,15 @@ Browser ──► Vercel (apps/web) ──rewrite /api──► Render (apps/api
 **Build Command** (одна строка):
 
 ```bash
-corepack enable && corepack prepare pnpm@9.15.0 --activate && pnpm install && pnpm --filter @tab10/shared build && pnpm --filter @tab10/test-utils build && pnpm --filter @tab10/api build
+npm install -g pnpm@9.15.0 --prefix "$HOME/.local" && export PATH="$HOME/.local/bin:$PATH" && pnpm install && pnpm --filter @tab10/shared build && pnpm --filter @tab10/test-utils build && pnpm --filter @tab10/api build
 ```
+
+> Не используйте `corepack prepare …` на Render: он пишет в `/usr/bin/pnpm` и падает с `EROFS: read-only file system`.
 
 **Start Command:**
 
 ```bash
-pnpm --filter @tab10/api start
+export PATH="$HOME/.local/bin:$PATH" && pnpm --filter @tab10/api start
 ```
 
 ### 2.4. Environment Variables (до Create)
