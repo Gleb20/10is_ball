@@ -410,6 +410,46 @@ export class AuthService {
     return { temporaryPassword };
   }
 
+  async updateUserRole(
+    actorAdminId: string,
+    userId: string,
+    role: "admin" | "user",
+  ): Promise<AuthUser> {
+    if (userId === actorAdminId) {
+      throw Object.assign(new Error("SELF_ROLE_CHANGE_FORBIDDEN"), {
+        code: "SELF_ROLE_CHANGE_FORBIDDEN",
+      });
+    }
+    const target = await this.db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+    if (!target) {
+      throw Object.assign(new Error("USER_NOT_FOUND"), {
+        code: "USER_NOT_FOUND",
+      });
+    }
+    if (target.role === role) {
+      return toAuthUser(target);
+    }
+    if (target.role === "admin" && role === "user") {
+      await this.ensureNotLastAdmin(userId);
+    }
+    const now = this.clock.now();
+    const [row] = await this.db
+      .update(users)
+      .set({ role, updatedAt: now })
+      .where(eq(users.id, userId))
+      .returning();
+    await this.revokeAllSessions(userId, "role_changed");
+    await this.db.insert(auditLogs).values({
+      actorUserId: actorAdminId,
+      action: "user.role_changed",
+      entityType: "user",
+      entityId: userId,
+    });
+    return toAuthUser(row!);
+  }
+
   async ensureNotLastAdmin(userId: string): Promise<void> {
     const user = await this.db.query.users.findFirst({
       where: eq(users.id, userId),

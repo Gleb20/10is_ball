@@ -7,7 +7,7 @@ import { TempPasswordPanel } from "../authUi";
 import { api, type User } from "../api";
 import { useAuth } from "../auth";
 
-type ConfirmKind = "block" | "reset" | null;
+type ConfirmKind = "block" | "reset" | "promote" | "demote" | null;
 
 export function AdminPage() {
   const { user } = useAuth();
@@ -15,6 +15,7 @@ export function AdminPage() {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [role, setRole] = useState<"admin" | "user">("user");
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{
@@ -38,11 +39,12 @@ export function AdminPage() {
     e.preventDefault();
     setError(null);
     try {
-      const res = await api.createUser({ email, firstName, lastName });
+      const res = await api.createUser({ email, firstName, lastName, role });
       setTempPassword(res.temporaryPassword);
       setEmail("");
       setFirstName("");
       setLastName("");
+      setRole("user");
       await load();
     } catch (err) {
       setError((err as Error).message);
@@ -59,9 +61,15 @@ export function AdminPage() {
       if (kind === "block") {
         await api.blockUser(target.id);
         await load();
-      } else {
+      } else if (kind === "reset") {
         const r = await api.resetPassword(target.id);
         setTempPassword(r.temporaryPassword);
+      } else if (kind === "promote") {
+        await api.updateUserRole(target.id, "admin");
+        await load();
+      } else if (kind === "demote") {
+        await api.updateUserRole(target.id, "user");
+        await load();
       }
       setConfirm({ kind: null, target: null });
     } catch (err) {
@@ -76,13 +84,19 @@ export function AdminPage() {
       ? "Заблокировать пользователя?"
       : confirm.kind === "reset"
         ? "Сбросить пароль?"
-        : "";
+        : confirm.kind === "promote"
+          ? "Сделать администратором?"
+          : confirm.kind === "demote"
+            ? "Снять права администратора?"
+            : "";
   const confirmBody =
     confirm.kind === "block"
       ? `Сессии ${confirm.target?.email ?? ""} будут отозваны. Продолжить?`
       : confirm.kind === "reset"
         ? `Будет выдан новый временный пароль для ${confirm.target?.email ?? ""}.`
-        : "";
+        : confirm.kind === "promote" || confirm.kind === "demote"
+          ? `Роль ${confirm.target?.email ?? ""} будет изменена. Все сессии пользователя будут сброшены — потребуется повторный вход.`
+          : "";
 
   return (
     <PageLayout title="Админка">
@@ -116,6 +130,19 @@ export function AdminPage() {
           }
           required
         />
+        <label className="stack" style={{ gap: 4 }}>
+          <span>Роль</span>
+          <select
+            aria-label="Роль"
+            value={role}
+            onChange={(e) =>
+              setRole(e.target.value === "admin" ? "admin" : "user")
+            }
+          >
+            <option value="user">Игрок (user)</option>
+            <option value="admin">Админ (admin)</option>
+          </select>
+        </label>
         <Button type="submit">Создать</Button>
         {error && (
           <Alert
@@ -135,41 +162,65 @@ export function AdminPage() {
         emptyDescription="Добавьте первого пользователя формой выше."
       >
         <div className="stack">
-          {(users ?? []).map((u) => (
-            <div
-              key={u.id}
-              className="list-row list-row--static list-row--admin"
-            >
-              <div className="list-row__body">
-                <strong>
-                  {u.lastName} {u.firstName}
-                </strong>
-                <span className="muted">
-                  {u.email} · {u.role}
-                </span>
+          {(users ?? []).map((u) => {
+            const isSelf = u.id === user?.id;
+            return (
+              <div
+                key={u.id}
+                className="list-row list-row--static list-row--admin"
+              >
+                <div className="list-row__body">
+                  <strong>
+                    {u.lastName} {u.firstName}
+                  </strong>
+                  <span className="muted">
+                    {u.email} · {u.role}
+                    {isSelf ? " · вы" : ""}
+                  </span>
+                </div>
+                <StatusChip
+                  status={(u as User & { status?: string }).status ?? "active"}
+                  domain="user"
+                />
+                <div className="row">
+                  {!isSelf && u.role === "user" ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() =>
+                        setConfirm({ kind: "promote", target: u })
+                      }
+                    >
+                      Сделать админом
+                    </Button>
+                  ) : null}
+                  {!isSelf && u.role === "admin" ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setConfirm({ kind: "demote", target: u })}
+                    >
+                      Снять админа
+                    </Button>
+                  ) : null}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setConfirm({ kind: "block", target: u })}
+                  >
+                    Блок
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setConfirm({ kind: "reset", target: u })}
+                  >
+                    Сброс
+                  </Button>
+                </div>
               </div>
-              <StatusChip
-                status={(u as User & { status?: string }).status ?? "active"}
-                domain="user"
-              />
-              <div className="row">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setConfirm({ kind: "block", target: u })}
-                >
-                  Блок
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setConfirm({ kind: "reset", target: u })}
-                >
-                  Сброс
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </AsyncState>
 

@@ -1,5 +1,24 @@
 # Dev Changelog
 
+## 2026-07-20 — Admin role create / promote / demote (v1.4.0)
+
+### Added
+- `AuthService.updateUserRole` — self-forbid, last-admin, revoke sessions, audit `user.role_changed`
+- `PATCH /api/v1/admin/users/:userId` body `{ role }`
+- Admin UI: role select on create; «Сделать админом» / «Снять админа» + confirm
+- Tests: `INT_admin__role_create_promote_demote_guards`; AdminPage role UI
+
+### Changed
+- Product version **1.3.2 → 1.4.0** (b)
+- ADR D6 — no self role change; revoke sessions on role change
+
+### How to verify
+```bash
+pnpm --filter @tab10/api test
+pnpm --filter @tab10/web test
+pnpm run ci
+```
+
 ## 2026-07-20 — Deploy readiness (Neon / Render / Vercel)
 
 ### Added

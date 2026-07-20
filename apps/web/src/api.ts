@@ -75,6 +75,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  updateUserRole: (userId: string, role: "admin" | "user") =>
+    request<{ user: User }>(`/api/v1/admin/users/${userId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    }),
   blockUser: (userId: string) =>
     request<{ ok: boolean }>(`/api/v1/admin/users/${userId}/block`, {
       method: "POST",

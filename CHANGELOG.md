@@ -2,6 +2,15 @@
 
 Формат версий: [docs/VERSIONING.md](docs/VERSIONING.md).
 
+## [1.4.0] — 2026-07-20
+
+### Added (b — admin roles)
+
+- Создание пользователя с выбором роли `user` / `admin`
+- Смена роли существующего пользователя (promote / demote) с confirm-диалогом
+- `PATCH /api/v1/admin/users/:userId` — только `role`; нельзя менять свою роль; revoke сессий цели
+- Защита последнего активного admin (AT-AUTH-008)
+
 ## [1.3.2] — 2026-07-20
 
 ### Changed (c — a11y / visual QA)

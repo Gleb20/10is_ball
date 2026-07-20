@@ -287,4 +287,135 @@ describe("auth and admin integration", () => {
     const adminId = adminMe.json().user.id as string;
     expect(users.every((u) => u.id !== adminId)).toBe(true);
   });
+
+  it("INT_admin__role_create_promote_demote_guards", async () => {
+    const adminToken = await loginAsAdmin();
+    const adminMe = await app.inject({
+      method: "GET",
+      url: "/api/v1/auth/me",
+      cookies: { tab10_session: adminToken },
+    });
+    const seedAdminId = adminMe.json().user.id as string;
+
+    const createdAdmin = await app.inject({
+      method: "POST",
+      url: "/api/v1/admin/users",
+      cookies: { tab10_session: adminToken },
+      payload: {
+        email: "second-admin@tab10.local",
+        firstName: "Second",
+        lastName: "Admin",
+        role: "admin",
+      },
+    });
+    expect(createdAdmin.statusCode).toBe(200);
+    expect(createdAdmin.json().user.role).toBe("admin");
+    const secondAdminId = createdAdmin.json().user.id as string;
+
+    const createdUser = await app.inject({
+      method: "POST",
+      url: "/api/v1/admin/users",
+      cookies: { tab10_session: adminToken },
+      payload: {
+        email: "promote@tab10.local",
+        firstName: "Pro",
+        lastName: "Mote",
+        role: "user",
+      },
+    });
+    expect(createdUser.statusCode).toBe(200);
+    expect(createdUser.json().user.role).toBe("user");
+    const promoteTemp = createdUser.json().temporaryPassword as string;
+    const promoteId = createdUser.json().user.id as string;
+
+    const userLogin = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: { email: "promote@tab10.local", password: promoteTemp },
+    });
+    const userSession = userLogin.cookies.find(
+      (c) => c.name === "tab10_session",
+    )!.value;
+    await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/password/first-change",
+      cookies: { tab10_session: userSession },
+      payload: { newPassword: "PromotePass1!" },
+    });
+    const userLogin2 = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: { email: "promote@tab10.local", password: "PromotePass1!" },
+    });
+    const activeUserSession = userLogin2.cookies.find(
+      (c) => c.name === "tab10_session",
+    )!.value;
+
+    const forbiddenPatch = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/admin/users/${promoteId}`,
+      cookies: { tab10_session: activeUserSession },
+      payload: { role: "admin" },
+    });
+    expect(forbiddenPatch.statusCode).toBe(403);
+
+    const promote = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/admin/users/${promoteId}`,
+      cookies: { tab10_session: adminToken },
+      payload: { role: "admin" },
+    });
+    expect(promote.statusCode).toBe(200);
+    expect(promote.json().user.role).toBe("admin");
+
+    const revokedMe = await app.inject({
+      method: "GET",
+      url: "/api/v1/auth/me",
+      cookies: { tab10_session: activeUserSession },
+    });
+    expect(revokedMe.statusCode).toBe(401);
+
+    const selfChange = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/admin/users/${seedAdminId}`,
+      cookies: { tab10_session: adminToken },
+      payload: { role: "user" },
+    });
+    expect(selfChange.statusCode).toBe(403);
+    expect(selfChange.json().code).toBe("SELF_ROLE_CHANGE_FORBIDDEN");
+
+    const demoteSecond = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/admin/users/${secondAdminId}`,
+      cookies: { tab10_session: adminToken },
+      payload: { role: "user" },
+    });
+    expect(demoteSecond.statusCode).toBe(200);
+    expect(demoteSecond.json().user.role).toBe("user");
+
+    await app.inject({
+      method: "PATCH",
+      url: `/api/v1/admin/users/${promoteId}`,
+      cookies: { tab10_session: adminToken },
+      payload: { role: "user" },
+    });
+
+    // Sole active admin cannot be demoted (AT-AUTH-008); HTTP self-demote is SELF_*.
+    await expect(
+      services.auth.updateUserRole(
+        "00000000-0000-4000-8000-000000000099",
+        seedAdminId,
+        "user",
+      ),
+    ).rejects.toMatchObject({ code: "LAST_ADMIN" });
+
+    const lastViaHttp = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/admin/users/${seedAdminId}`,
+      cookies: { tab10_session: adminToken },
+      payload: { role: "user" },
+    });
+    expect(lastViaHttp.statusCode).toBe(403);
+    expect(lastViaHttp.json().code).toBe("SELF_ROLE_CHANGE_FORBIDDEN");
+  });
 });

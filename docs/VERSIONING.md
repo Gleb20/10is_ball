@@ -36,4 +36,4 @@ Phase 10 (UI polish): выравнивание bottom bar под [`05_UX_FLOWS.m
 
 ## Текущая версия
 
-**1.3.2** — Phase 10 UI-6: a11y checklist, 360px smoke, skip-link / focus.
+**1.4.0** — Admin: создание с ролью admin; promote/demote других пользователей.

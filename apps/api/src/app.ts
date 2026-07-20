@@ -320,6 +320,50 @@ export async function buildApp(opts: {
     },
   );
 
+  app.patch(
+    "/api/v1/admin/users/:userId",
+    { preHandler: requireAdmin },
+    async (req, reply) => {
+      const { userId } = req.params as { userId: string };
+      const body = req.body as { role?: "admin" | "user" };
+      if (body?.role !== "admin" && body?.role !== "user") {
+        return reply.code(400).send({
+          code: "VALIDATION",
+          message: "role должен быть admin или user",
+        });
+      }
+      try {
+        const user = await services.auth.updateUserRole(
+          req.authUser!.id,
+          userId,
+          body.role,
+        );
+        return { user };
+      } catch (e) {
+        const err = e as { code?: string };
+        if (err.code === "SELF_ROLE_CHANGE_FORBIDDEN") {
+          return reply.code(403).send({
+            code: "SELF_ROLE_CHANGE_FORBIDDEN",
+            message: "Нельзя менять собственную роль",
+          });
+        }
+        if (err.code === "LAST_ADMIN") {
+          return reply.code(409).send({
+            code: "LAST_ADMIN",
+            message: "Нельзя понизить последнего администратора",
+          });
+        }
+        if (err.code === "USER_NOT_FOUND") {
+          return reply.code(404).send({
+            code: "USER_NOT_FOUND",
+            message: "Пользователь не найден",
+          });
+        }
+        throw e;
+      }
+    },
+  );
+
   app.post(
     "/api/v1/admin/users/:userId/block",
     { preHandler: requireAdmin },
@@ -913,6 +957,9 @@ function openApiSpec() {
       "/api/v1/admin/users": {
         get: { summary: "List users" },
         post: { summary: "Create user" },
+      },
+      "/api/v1/admin/users/{userId}": {
+        patch: { summary: "Update user role (admin only)" },
       },
       "/api/v1/matches": {
         get: { summary: "List matches" },

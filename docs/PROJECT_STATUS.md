@@ -1,16 +1,16 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-20  
-**Product version:** 1.3.2  
-Current phase: 10 (UI polish complete)  
-Next step: Phase 9 remaining (security / mutation / observability) или продуктовый backlog вне UI-polish
+**Product version:** 1.4.0  
+Current phase: 10 (UI polish complete) + admin role management  
+Next step: Phase 9 remaining (security / mutation / observability) или продуктовый backlog
 
 ## Progress
 
 | Phase | Status | Steps done |
 |-------|--------|------------|
 | 0 Foundation | done | 5/5 |
-| 1 Auth & Admin | done | 8/8 |
+| 1 Auth & Admin | done | 8/8 (+ role PATCH / UI) |
 | 2 Shell & Profiles | done | 4/4 |
 | 3 Match domain | done | 6/6 |
 | 4 Judge concurrency | done | 5/5 |
@@ -35,11 +35,12 @@ Next step: Phase 9 remaining (security / mutation / observability) или про
 
 ## Step log (latest)
 
-### Phase 10 UI-6 — Visual/a11y QA — done (v1.3.2)
-- `docs/A11Y_CHECKLIST.md`; skip-link; focus-visible; reduced-motion
-- Smoke tests 360px + AT-EMPTY-001 CTA
-- `pnpm run ci` — green
+### Admin role management — done (v1.4.0)
+- Create with role `user`/`admin`; PATCH role for others (not self)
+- Confirm dialog; revoke sessions on role change; last-admin guard
+- Deploy: API (Render) first, then Web (Vercel)
 
+### Phase 10 UI-6 — Visual/a11y QA — done (v1.3.2)
 ### Phase 10 UI-5 — Auth + Admin polish — done (v1.3.1)
 ### Phase 10 UI-4 — Judge immersive — done (v1.3.0)
 ### Phase 10 UI-0…UI-3 — done
@@ -49,4 +50,5 @@ Next step: Phase 9 remaining (security / mutation / observability) или про
 ```bash
 pnpm dev
 # 360×640: tabs + Tab focus; /login skip→main; judge immersive
+# /admin: создать с ролью admin; promote существующего user → confirm → re-login
 ```
