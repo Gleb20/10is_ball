@@ -1,5 +1,12 @@
 # Dev Changelog
 
+## 2026-07-20 — Repo layout cleanup
+
+### Changed
+- Удалены дубликаты требований из корня (`00–14`, `MANIFEST.json`) — канон: `docs/requirements/`
+- Добавлен [`docs/README.md`](README.md), обновлён корневой [`README.md`](../README.md)
+- `.gitignore`: `.DS_Store`, `apps/api/dist`, `.pnpm-store`
+
 ## 2026-07-20 — Versioning & commit conventions
 
 ### Added
@@ -28,11 +35,7 @@
 
 ### How to test
 ```bash
-export PATH="$PWD/.tools/node_modules/.bin:$PATH"
-pnpm install
-pnpm test
-pnpm --filter @tab10/api dev   # :3001, seed admin@tab10.local / AdminPass1!
-pnpm --filter @tab10/web dev   # :5173
+corepack enable && pnpm install && pnpm run ci && pnpm dev
 ```
 
 ### Manual smoke

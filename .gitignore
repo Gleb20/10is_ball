@@ -1,3 +1,5 @@
+.DS_Store
+**/.DS_Store
 node_modules
 dist
 build
@@ -5,10 +7,10 @@ coverage
 .env
 .env.local
 *.log
-.DS_Store
 .tools
 apps/api/data
 apps/api/uploads
+apps/api/dist
 apps/web/dist
 playwright-report
 test-results
