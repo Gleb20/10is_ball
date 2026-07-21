@@ -21,6 +21,7 @@ export function RankingsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setError(null);
     setRankings(null);
     void api
       .rankings(period)
@@ -77,7 +78,11 @@ export function RankingsPage() {
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => navigate("/matches/new")}
+                        onClick={() =>
+                          navigate(
+                            `/matches/new?opponentId=${encodeURIComponent(r.userId)}&opponentName=${encodeURIComponent(r.displayName)}`,
+                          )
+                        }
                       >
                         Вызов
                       </Button>

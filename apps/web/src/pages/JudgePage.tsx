@@ -1,33 +1,109 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "../ui";
 import { api } from "../api";
+import { TableTennisRacketIcon } from "../icons/TableTennisRacketIcon";
 import {
+  boardSides,
+  elapsedMs,
+  formatMatchDuration,
+  judgeAcquireErrorMessage,
+  needsJudgeSetup,
   servingSide,
   shouldShowLandscapeHint,
   sideDisplayName,
   type JudgeMatchLike,
+  type JudgeParticipant,
 } from "../judgeUi";
 import { statusLabel } from "../statusLabels";
 
 type MatchState = Record<string, unknown> & JudgeMatchLike;
+type Phase =
+  | "loading"
+  | "blocked"
+  | "setup"
+  | "scoring"
+  | "readonly";
+
+function ServeBadge({ active }: { active: boolean }) {
+  if (!active) {
+    return <span className="judge-serve-badge judge-serve-badge--empty" />;
+  }
+  return (
+    <span className="judge-serve-badge" aria-live="polite">
+      <TableTennisRacketIcon size={16} />
+      Подача
+    </span>
+  );
+}
 
 export function JudgePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const readonlyMode = searchParams.get("mode") === "readonly";
+
   const [match, setMatch] = useState<MatchState | null>(null);
+  const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [flashSide, setFlashSide] = useState<"A" | "B" | null>(null);
+  const [undoPending, setUndoPending] = useState(false);
+  const [now, setNow] = useState(() => new Date());
   const [viewport, setViewport] = useState(() => ({
     w: typeof window !== "undefined" ? window.innerWidth : 800,
     h: typeof window !== "undefined" ? window.innerHeight : 600,
   }));
 
-  async function load() {
+  const [firstServerId, setFirstServerId] = useState("");
+  const [swapSides, setSwapSides] = useState(false);
+  const [setupPending, setSetupPending] = useState(false);
+
+  const load = useCallback(async () => {
     const res = await api.getMatch(id!);
     setMatch(res.match as MatchState);
-  }
+    return res.match as MatchState;
+  }, [id]);
+
+  const initJudge = useCallback(async () => {
+    if (!id) return;
+    setPhase("loading");
+    setError(null);
+    try {
+      const detail = await load();
+      if (readonlyMode) {
+        setPhase("readonly");
+        return;
+      }
+      await api.acquireJudge(id);
+      const refreshed = await load();
+      if (needsJudgeSetup(refreshed)) {
+        const participants = (refreshed.participants ?? []) as JudgeParticipant[];
+        setFirstServerId(
+          String(
+            refreshed.currentServerParticipantId ??
+              participants[0]?.id ??
+              "",
+          ),
+        );
+        setSwapSides(false);
+        setPhase("setup");
+      } else {
+        setPhase("scoring");
+      }
+    } catch (e) {
+      const err = e as Error & {
+        code?: string;
+        details?: { currentJudge?: { userId?: string; displayName: string } };
+      };
+      setError(judgeAcquireErrorMessage(err));
+      setPhase("blocked");
+    }
+  }, [id, load, readonlyMode]);
+
+  useEffect(() => {
+    void initJudge();
+  }, [initJudge]);
 
   useEffect(() => {
     const onResize = () =>
@@ -41,32 +117,71 @@ export function JudgePage() {
   }, []);
 
   useEffect(() => {
-    void (async () => {
-      try {
-        const detail = await api.getMatch(id!);
-        setMatch(detail.match as MatchState);
-        if (detail.match.status === "waiting") {
-          await api.startMatch(id!);
-        }
-        await api.acquireJudge(id!);
-        setReady(true);
-        await load();
-      } catch (e) {
-        setError((e as Error).message);
-      }
-    })();
-  }, [id]);
+    if (phase !== "scoring" && phase !== "readonly") return;
+    const tick = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(tick);
+  }, [phase]);
 
   useEffect(() => {
-    if (!ready || !id) return;
+    if (!id || (phase !== "scoring" && phase !== "readonly")) return;
+    const poll = window.setInterval(() => {
+      void load().catch(() => undefined);
+    }, phase === "readonly" ? 30_000 : 60_000);
+    return () => window.clearInterval(poll);
+  }, [id, load, phase]);
+
+  useEffect(() => {
+    if (phase !== "scoring" || !id) return;
     const tick = window.setInterval(() => {
       void api.heartbeatJudge(id).catch(() => undefined);
     }, 30_000);
     return () => window.clearInterval(tick);
-  }, [ready, id]);
+  }, [phase, id]);
+
+  function previewMatchFrom(base: MatchState): JudgeMatchLike {
+    const participants = (base.participants ?? []) as JudgeParticipant[];
+    return {
+      ...base,
+      scoreA: 0,
+      scoreB: 0,
+      participants: swapSides
+        ? participants.map((p) => ({
+            ...p,
+            side: p.side === "A" ? "B" : "A",
+          }))
+        : participants,
+      currentServerParticipantId: firstServerId || null,
+    };
+  }
+
+  function pickServerForSide(side: "A" | "B", preview: JudgeMatchLike) {
+    const p = (preview.participants ?? []).find((x) => x.side === side);
+    if (p) setFirstServerId(p.id);
+  }
+
+  async function confirmSetup() {
+    if (!id || !firstServerId) return;
+    setSetupPending(true);
+    setError(null);
+    try {
+      if (match?.status === "waiting") {
+        await api.startMatch(id, { firstServerParticipantId: firstServerId });
+      }
+      const res = await api.judgeSetup(id, {
+        firstServerParticipantId: firstServerId,
+        swapSides,
+      });
+      setMatch(res.match as MatchState);
+      setPhase("scoring");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSetupPending(false);
+    }
+  }
 
   async function point(side: "A" | "B") {
-    if (!match) return;
+    if (!match || phase !== "scoring") return;
     try {
       const res = await api.awardPoint(
         id!,
@@ -76,6 +191,8 @@ export function JudgePage() {
       );
       setMatch(res.match as MatchState);
       setError(null);
+      setFlashSide(side);
+      window.setTimeout(() => setFlashSide(null), 350);
     } catch (e) {
       setError((e as Error).message);
       await load();
@@ -83,7 +200,8 @@ export function JudgePage() {
   }
 
   async function undo() {
-    if (!match) return;
+    if (!match || undoPending) return;
+    setUndoPending(true);
     try {
       const res = await api.undoPoint(
         id!,
@@ -94,23 +212,76 @@ export function JudgePage() {
       setError(null);
     } catch (e) {
       setError((e as Error).message);
+      await load();
+    } finally {
+      setUndoPending(false);
     }
   }
 
   async function releaseAndExit() {
     try {
       await api.releaseJudge(id!);
-    } catch {
-      /* still leave UI */
+      navigate(id ? `/matches/${id}` : "/history");
+    } catch (e) {
+      setError((e as Error).message);
     }
-    navigate(id ? `/matches/${id}` : "/history");
   }
 
-  if (error && !match) {
+  async function onConfirmFinish() {
+    try {
+      await api.confirmFinish(id!);
+      navigate(`/matches/${id}`);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
+  async function toggleDisplayFlip() {
+    if (!id || !match) return;
+    const next = !match.judgeDisplayFlipped;
+    try {
+      const res = await api.judgeSetup(id, { displayFlipped: next });
+      setMatch(res.match as MatchState);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
+  if (phase === "loading") {
+    return (
+      <div className="judge-screen judge-screen--loading">
+        <p className="judge-screen__status">Подключение судьи…</p>
+      </div>
+    );
+  }
+
+  if (phase === "blocked") {
+    return (
+      <div className="judge-screen judge-screen--error" data-testid="judge-blocked">
+        <p className="judge-screen__status" role="alert">
+          {error}
+        </p>
+        <div className="judge-blocked-actions">
+          <Button onClick={() => void initJudge()}>Повторить</Button>
+          <Button
+            variant="secondary"
+            onClick={() => navigate(`/matches/${id}/judge?mode=readonly`)}
+          >
+            Смотреть счёт
+          </Button>
+          <Button variant="secondary" onClick={() => navigate(`/matches/${id}`)}>
+            Назад к матчу
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!match) {
     return (
       <div className="judge-screen judge-screen--error">
-        <p className="error" role="alert">
-          {error}
+        <p className="judge-screen__status" role="alert">
+          Матч не найден
         </p>
         <Button variant="secondary" onClick={() => navigate(-1)}>
           Назад
@@ -119,23 +290,104 @@ export function JudgePage() {
     );
   }
 
-  if (!match || !ready) {
+  const isSetup = phase === "setup";
+  const locked =
+    match.status === "pending_confirmation" || match.status === "finished";
+  const readonly = phase === "readonly";
+  const boardMatch = isSetup ? previewMatchFrom(match) : match;
+  const serve = isSetup
+    ? (() => {
+        const p = (boardMatch.participants ?? []).find(
+          (x) => x.id === firstServerId,
+        );
+        return p?.side === "A" || p?.side === "B" ? p.side : null;
+      })()
+    : servingSide(match);
+  const showHint = shouldShowLandscapeHint(viewport.w, viewport.h);
+  const { left, right } = boardSides(boardMatch);
+  const duration = formatMatchDuration(
+    elapsedMs(
+      match.startedAt as string | undefined,
+      now,
+      match.finishedAt as string | undefined,
+      String(match.status),
+    ),
+  );
+
+  function renderSide(side: "A" | "B", matchState: MatchState) {
+    const label = sideDisplayName(boardMatch, side);
+    const score = isSetup
+      ? "0"
+      : side === "A"
+        ? String(matchState.scoreA)
+        : String(matchState.scoreB);
+    const serving = serve === side;
+    const flash = !isSetup && flashSide === side;
+
     return (
-      <div className="judge-screen judge-screen--loading">
-        <p className="muted">Подключение судьи…</p>
+      <div
+        key={side}
+        className={[
+          "judge-side",
+          serving ? "judge-side--serving" : "",
+          flash ? "judge-side--flash" : "",
+          isSetup ? "judge-side--setup" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        data-testid={`judge-side-${side}`}
+        role={isSetup ? "button" : undefined}
+        tabIndex={isSetup ? 0 : undefined}
+        onClick={
+          isSetup
+            ? () => pickServerForSide(side, boardMatch)
+            : undefined
+        }
+        onKeyDown={
+          isSetup
+            ? (e: KeyboardEvent) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  pickServerForSide(side, boardMatch);
+                }
+              }
+            : undefined
+        }
+        aria-label={
+          isSetup
+            ? `Сторона ${label}${serving ? ", подаёт" : ""}. Нажмите, чтобы выбрать подающего`
+            : undefined
+        }
+      >
+        <span className="judge-side__name">{label}</span>
+        <span className="judge-side__score">{score}</span>
+        <ServeBadge active={Boolean(serving)} />
+        {isSetup ? (
+          <span className="judge-point-spacer" aria-hidden />
+        ) : !readonly ? (
+          <Button
+            className="judge-point-btn judge-touch"
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              void point(side);
+            }}
+            disabled={locked}
+            aria-label={`+1 очко: ${label}`}
+          >
+            +1
+          </Button>
+        ) : (
+          <span className="judge-point-spacer" aria-hidden />
+        )}
       </div>
     );
   }
 
-  const locked =
-    match.status === "pending_confirmation" || match.status === "finished";
-  const serve = servingSide(match);
-  const showHint = shouldShowLandscapeHint(viewport.w, viewport.h);
-  const labelA = sideDisplayName(match, "A");
-  const labelB = sideDisplayName(match, "B");
-
   return (
-    <div className="judge-screen" data-testid="judge-screen">
+    <div
+      className="judge-screen"
+      data-testid={isSetup ? "judge-setup" : "judge-screen"}
+    >
       {showHint ? (
         <p className="judge-rotate-hint" role="status">
           Поверните устройство горизонтально для удобного судейства
@@ -145,54 +397,96 @@ export function JudgePage() {
       <header className="judge-toolbar">
         <div className="judge-toolbar__meta">
           <span className="judge-status">
-            {statusLabel(String(match.status), "match")}
+            {isSetup
+              ? "Перед стартом"
+              : statusLabel(String(match.status), "match")}
           </span>
-          {match.deuceMode ? (
+          {!isSetup && match.startedAt ? (
+            <span className="judge-timer" aria-live="off">
+              {duration}
+            </span>
+          ) : null}
+          {match.deuceMode && !isSetup ? (
             <span className="judge-deuce">Deuce</span>
+          ) : null}
+          {readonly ? (
+            <span className="judge-readonly-badge">Только просмотр</span>
           ) : null}
         </div>
         <div className="judge-toolbar__actions">
-          <Button
-            variant="secondary"
-            className="judge-touch"
-            onClick={() => void undo()}
-            disabled={locked}
-            aria-label="Отменить последнее очко"
-          >
-            Undo
-          </Button>
-          <Button
-            variant="secondary"
-            className="judge-touch"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-expanded={menuOpen}
-            aria-controls="judge-more-menu"
-          >
-            Ещё
-          </Button>
+          {isSetup ? (
+            <Button
+              variant="secondary"
+              className="judge-touch"
+              onClick={() => navigate(`/matches/${id}`)}
+            >
+              Отмена
+            </Button>
+          ) : !readonly ? (
+            <>
+              <Button
+                variant="secondary"
+                className="judge-touch"
+                onClick={() => void undo()}
+                disabled={locked || undoPending}
+                aria-label="Отменить последнее очко"
+              >
+                Undo
+              </Button>
+              <Button
+                variant="secondary"
+                className="judge-touch"
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-expanded={menuOpen}
+                aria-controls="judge-more-menu"
+              >
+                Ещё
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="secondary"
+              className="judge-touch"
+              onClick={() => navigate(`/matches/${id}`)}
+            >
+              К матчу
+            </Button>
+          )}
         </div>
       </header>
 
-      {menuOpen ? (
+      {isSetup ? (
+        <p className="judge-screen__hint">
+          Нажмите на сторону, чтобы выбрать, кто подаёт первым. ↔ меняет стороны
+          стола.
+        </p>
+      ) : null}
+
+      {menuOpen && !readonly && !isSetup ? (
         <div
           id="judge-more-menu"
           className="judge-more"
           role="menu"
           aria-label="Действия судьи"
         >
+          <Button
+            variant="secondary"
+            className="judge-touch"
+            onClick={() => void toggleDisplayFlip()}
+            disabled={locked}
+          >
+            {match.judgeDisplayFlipped
+              ? "Вернуть порядок на экране"
+              : "Поменять местами на экране"}
+          </Button>
           {match.status === "pending_confirmation" ? (
             <>
               <Button
                 className="judge-touch"
-                onClick={() =>
-                  void api
-                    .confirmFinish(id!)
-                    .then((r) => {
-                      setMatch(r.match as MatchState);
-                      setMenuOpen(false);
-                    })
-                    .catch((e) => setError(e.message))
-                }
+                onClick={() => {
+                  setMenuOpen(false);
+                  void onConfirmFinish();
+                }}
               >
                 Подтвердить результат
               </Button>
@@ -229,58 +523,45 @@ export function JudgePage() {
         </p>
       ) : null}
 
-      <div className="judge-board" role="group" aria-label="Счёт матча">
-        <button
-          type="button"
-          className={
-            serve === "A" ? "judge-side judge-side--serving" : "judge-side"
-          }
-          onClick={() => void point("A")}
-          disabled={locked}
-          aria-label={`Очко стороне A: ${labelA}`}
-        >
-          <span className="judge-side__name">{labelA}</span>
-          <span className="judge-side__score">{String(match.scoreA)}</span>
-          {serve === "A" ? (
-            <span className="judge-serve-badge" aria-live="polite">
-              Подача
-            </span>
-          ) : (
-            <span className="judge-serve-badge judge-serve-badge--empty" />
-          )}
-        </button>
-        <button
-          type="button"
-          className={
-            serve === "B" ? "judge-side judge-side--serving" : "judge-side"
-          }
-          onClick={() => void point("B")}
-          disabled={locked}
-          aria-label={`Очко стороне B: ${labelB}`}
-        >
-          <span className="judge-side__name">{labelB}</span>
-          <span className="judge-side__score">{String(match.scoreB)}</span>
-          {serve === "B" ? (
-            <span className="judge-serve-badge" aria-live="polite">
-              Подача
-            </span>
-          ) : (
-            <span className="judge-serve-badge judge-serve-badge--empty" />
-          )}
-        </button>
+      <div
+        className={["judge-board", isSetup ? "judge-board--setup" : ""]
+          .filter(Boolean)
+          .join(" ")}
+        role="group"
+        aria-label={isSetup ? "Расположение и подача" : "Счёт матча"}
+      >
+        {renderSide(left, match)}
+        {isSetup ? (
+          <Button
+            variant="secondary"
+            className="judge-touch judge-setup__swap-btn"
+            aria-label="Поменять стороны"
+            onClick={() => setSwapSides((v) => !v)}
+          >
+            ↔
+          </Button>
+        ) : null}
+        {renderSide(right, match)}
       </div>
 
-      {match.status === "pending_confirmation" && !menuOpen ? (
+      {isSetup ? (
         <div className="judge-confirm-bar">
           <Button
             className="judge-touch"
-            onClick={() =>
-              void api
-                .confirmFinish(id!)
-                .then((r) => setMatch(r.match as MatchState))
-                .catch((e) => setError(e.message))
-            }
+            disabled={setupPending || !firstServerId}
+            onClick={() => void confirmSetup()}
           >
+            {setupPending ? "Сохранение…" : "Начать матч"}
+          </Button>
+        </div>
+      ) : null}
+
+      {match.status === "pending_confirmation" &&
+      !menuOpen &&
+      !readonly &&
+      !isSetup ? (
+        <div className="judge-confirm-bar">
+          <Button className="judge-touch" onClick={() => void onConfirmFinish()}>
             Подтвердить результат
           </Button>
           <Button

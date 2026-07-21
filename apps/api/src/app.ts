@@ -122,6 +122,31 @@ export async function buildApp(opts: {
     }
   };
 
+  const csrfExemptPaths = [
+    "/health",
+    "/api/v1/openapi.json",
+    "/api/v1/auth/login",
+  ];
+
+  if (process.env.NODE_ENV !== "test") {
+    app.addHook("preHandler", async (req, reply) => {
+      if (!["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) return;
+      if (csrfExemptPaths.some((p) => req.url.startsWith(p))) return;
+      const cookieToken = req.cookies[CSRF_COOKIE];
+      const headerToken = req.headers["x-csrf-token"];
+      if (
+        !cookieToken ||
+        typeof headerToken !== "string" ||
+        cookieToken !== headerToken
+      ) {
+        return reply.code(403).send({
+          code: "CSRF_INVALID",
+          message: "Недействительный CSRF-токен",
+        });
+      }
+    });
+  }
+
   app.get("/health", async () => ({
     status: "ok",
     time: clock.now().toISOString(),
@@ -526,10 +551,44 @@ export async function buildApp(opts: {
   app.post(
     "/api/v1/matches/:matchId/judge/release",
     { preHandler: requireAuth },
-    async (req) => {
-      const { matchId } = req.params as { matchId: string };
-      await services.matches.releaseJudge(matchId);
-      return { ok: true };
+    async (req, reply) => {
+      try {
+        const { matchId } = req.params as { matchId: string };
+        await services.matches.releaseJudge(
+          matchId,
+          req.authUser!.id,
+          req.authSessionId!,
+        );
+        return { ok: true };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
+    "/api/v1/matches/:matchId/judge/setup",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { matchId } = req.params as { matchId: string };
+        const body = req.body as {
+          firstServerParticipantId?: string;
+          swapSides?: boolean;
+          displayFlipped?: boolean;
+        };
+        const match = await services.matches.judgeSetup({
+          matchId,
+          userId: req.authUser!.id,
+          authSessionId: req.authSessionId!,
+          firstServerParticipantId: body?.firstServerParticipantId,
+          swapSides: body?.swapSides,
+          displayFlipped: body?.displayFlipped,
+        });
+        return { match };
+      } catch (e) {
+        return sendError(reply, e);
+      }
     },
   );
 
@@ -543,13 +602,17 @@ export async function buildApp(opts: {
           side: "A" | "B";
           expectedVersion: number;
         };
-        const idempotencyKey =
-          (req.headers["idempotency-key"] as string) ||
-          `${req.authSessionId}-${Date.now()}`;
+        const idempotencyKey = req.headers["idempotency-key"];
+        if (typeof idempotencyKey !== "string" || !idempotencyKey.trim()) {
+          return reply.code(400).send({
+            code: "IDEMPOTENCY_KEY_REQUIRED",
+            message: "Заголовок Idempotency-Key обязателен",
+          });
+        }
         const match = await services.matches.awardPoint({
           matchId,
           side: body.side,
-          idempotencyKey,
+          idempotencyKey: idempotencyKey.trim(),
           expectedVersion: body.expectedVersion,
           judgeUserId: req.authUser!.id,
           authSessionId: req.authSessionId!,
@@ -568,12 +631,16 @@ export async function buildApp(opts: {
       try {
         const { matchId } = req.params as { matchId: string };
         const body = req.body as { expectedVersion: number };
-        const idempotencyKey =
-          (req.headers["idempotency-key"] as string) ||
-          `undo-${req.authSessionId}-${Date.now()}`;
+        const idempotencyKey = req.headers["idempotency-key"];
+        if (typeof idempotencyKey !== "string" || !idempotencyKey.trim()) {
+          return reply.code(400).send({
+            code: "IDEMPOTENCY_KEY_REQUIRED",
+            message: "Заголовок Idempotency-Key обязателен",
+          });
+        }
         const match = await services.matches.undoPoint({
           matchId,
-          idempotencyKey,
+          idempotencyKey: idempotencyKey.trim(),
           expectedVersion: body.expectedVersion,
           judgeUserId: req.authUser!.id,
           authSessionId: req.authSessionId!,
@@ -676,9 +743,17 @@ export async function buildApp(opts: {
     "/api/v1/rankings",
     { preHandler: requireAuth },
     async (req) => {
-      const period = ((req.query as { period?: string }).period ??
-        "all_time") as "all_time" | "week" | "month";
-      const rankings = await services.matches.getRankings(period);
+      const q = req.query as { period?: string; scope?: string };
+      const raw = q.scope ?? q.period ?? "all_time";
+      const scopeMap: Record<string, "all_time" | "week" | "month"> = {
+        all_time: "all_time",
+        week: "week",
+        month: "month",
+        calendar_week: "week",
+        calendar_month: "month",
+      };
+      const scope = scopeMap[raw] ?? "all_time";
+      const rankings = await services.matches.getRankings(scope);
       return { rankings };
     },
   );
@@ -914,7 +989,10 @@ function messageFor(code: string): string {
     NOT_FOUND: "Не найдено",
     FORBIDDEN: "Недостаточно прав",
     JUDGE_TAKEN: "Судейская сессия занята",
+    JUDGE_BUSY: "Вы уже судите другой матч",
     JUDGE_REQUIRED: "Требуется судейская сессия",
+    CSRF_INVALID: "Недействительный CSRF-токен",
+    IDEMPOTENCY_KEY_REQUIRED: "Нужен заголовок Idempotency-Key",
     VERSION_CONFLICT: "Конфликт версии",
     PLAYER_BUSY: "Игрок уже в активном матче",
     TOO_FEW: "Нужно минимум 3 участника",
@@ -924,7 +1002,12 @@ function messageFor(code: string): string {
 }
 
 function sendError(reply: FastifyReply, e: unknown) {
-  const err = e as { code?: string; state?: unknown; message?: string };
+  const err = e as {
+    code?: string;
+    state?: unknown;
+    message?: string;
+    currentJudge?: { userId: string; displayName: string };
+  };
   const code = err.code ?? "INTERNAL";
   const status =
     code === "NOT_FOUND"
@@ -934,10 +1017,17 @@ function sendError(reply: FastifyReply, e: unknown) {
         : code === "VERSION_CONFLICT" || code === "JUDGE_TAKEN"
           ? 409
           : 400;
+  const details: Record<string, unknown> = {};
+  if (err.state) details.state = err.state;
+  if (err.currentJudge) details.currentJudge = err.currentJudge;
+  const message =
+    code === "JUDGE_TAKEN" && err.currentJudge
+      ? `Этот матч уже судит «${err.currentJudge.displayName}», два судьи у матча — дело к драке. Давай не будем.`
+      : messageFor(code);
   return reply.code(status).send({
     code,
-    message: messageFor(code),
-    details: err.state ? { state: err.state } : undefined,
+    message,
+    details: Object.keys(details).length > 0 ? details : undefined,
   });
 }
 

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Alert, Autocomplete, Button, TextField } from "../ui";
 import { PageLayout } from "../layout";
 import { FilterBar } from "../patterns";
@@ -8,12 +8,29 @@ import { useAuth } from "../auth";
 
 type OpponentMode = "user" | "guest";
 
+function defaultMatchTitle() {
+  const d = new Date();
+  return `Матч ${d.toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
+}
+
+function defaultMercyPoints(pointsToWin: 11 | 21): number {
+  return pointsToWin === 21 ? 10 : 5;
+}
+
 /** Create match wizard — ADR D5 Q-UI-2 `/matches/new`. */
 export function MatchCreatePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [title, setTitle] = useState("Матч");
-  const [mode, setMode] = useState<OpponentMode>("guest");
+  const [searchParams] = useSearchParams();
+  const [title, setTitle] = useState(defaultMatchTitle);
+  const [pointsToWin, setPointsToWin] = useState<11 | 21>(11);
+  const [mercyEnabled, setMercyEnabled] = useState(true);
+  const [mode, setMode] = useState<OpponentMode>("user");
   const [opponentId, setOpponentId] = useState("");
   const [guestName, setGuestName] = useState("");
   const [options, setOptions] = useState<
@@ -22,19 +39,40 @@ export function MatchCreatePage() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  const mercyPoints = defaultMercyPoints(pointsToWin);
+
+  const challengeHint = useMemo(() => {
+    const name = searchParams.get("opponentName");
+    return name ? `Вызов: ${name}` : null;
+  }, [searchParams]);
+
+  useEffect(() => {
+    const opp = searchParams.get("opponentId");
+    const name = searchParams.get("opponentName");
+    if (opp) {
+      setMode("user");
+      setOpponentId(opp);
+    }
+    if (name) {
+      setTitle(`Матч vs ${name}`);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     void api
       .directory()
       .then((res) =>
         setOptions(
-          res.users.map((u) => ({
-            value: u.id,
-            label: u.displayName,
-          })),
+          res.users
+            .filter((u) => u.id !== user?.id)
+            .map((u) => ({
+              value: u.id,
+              label: u.displayName,
+            })),
         ),
       )
-      .catch(() => setOptions([]));
-  }, []);
+      .catch(() => setError("Не удалось загрузить список игроков"));
+  }, [user?.id]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -65,6 +103,9 @@ export function MatchCreatePage() {
       const res = await api.createMatch({
         title,
         format: "1v1",
+        pointsToWin,
+        mercyEnabled,
+        mercyPoints: mercyEnabled ? mercyPoints : null,
         participants,
       });
       navigate(`/matches/${res.match.id}`);
@@ -77,6 +118,7 @@ export function MatchCreatePage() {
 
   return (
     <PageLayout title="Новый матч">
+      {challengeHint ? <p className="muted">{challengeHint}</p> : null}
       <form className="card stack" onSubmit={create} aria-label="Создание матча">
         <TextField
           label="Название"
@@ -86,6 +128,23 @@ export function MatchCreatePage() {
           }
           required
         />
+        <FilterBar
+          label="Очков до победы"
+          value={String(pointsToWin)}
+          onChange={(v) => setPointsToWin(Number(v) as 11 | 21)}
+          options={[
+            { value: "11", label: "11" },
+            { value: "21", label: "21" },
+          ]}
+        />
+        <label className="match-create__check">
+          <input
+            type="checkbox"
+            checked={mercyEnabled}
+            onChange={(e) => setMercyEnabled(e.target.checked)}
+          />
+          Сухая победа при счёте {mercyPoints}:0
+        </label>
         <FilterBar
           label="Тип соперника"
           value={mode}
@@ -119,9 +178,18 @@ export function MatchCreatePage() {
             required
           />
         )}
-        <Button type="submit" disabled={pending}>
-          {pending ? "Создание…" : "Создать матч"}
-        </Button>
+        <div className="stack stack--actions">
+          <Button type="submit" disabled={pending}>
+            {pending ? "Создание…" : "Создать матч"}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => navigate(searchParams.get("opponentId") ? "/rankings" : "/start")}
+          >
+            Отмена
+          </Button>
+        </div>
         {error && (
           <Alert type="error" variant="tonal" title="Ошибка" description={error} />
         )}

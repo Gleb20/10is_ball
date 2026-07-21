@@ -127,6 +127,7 @@ export const matches = pgTable("matches", {
   stopReasonText: text("stop_reason_text"),
   eventLog: jsonb("event_log").notNull().default([]),
   idempotencyKeys: jsonb("idempotency_keys").notNull().default([]),
+  judgeDisplayFlipped: boolean("judge_display_flipped").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

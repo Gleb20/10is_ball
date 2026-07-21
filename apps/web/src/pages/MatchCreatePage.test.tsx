@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { MatchCreatePage } from "./MatchCreatePage";
@@ -27,10 +27,26 @@ vi.mock("../api", () => ({
 
 describe("REQ_ui__match_create_autocomplete", () => {
   beforeEach(() => {
+    cleanup();
     directory.mockResolvedValue({
       users: [{ id: "u2", firstName: "B", lastName: "Rival", displayName: "Rival B" }],
     });
     createMatch.mockResolvedValue({ match: { id: "m1" } });
+  });
+
+  it("defaults to player mode with opponent autocomplete", async () => {
+    render(
+      <MemoryRouter>
+        <AuthProvider>
+          <MatchCreatePage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+    expect(
+      await screen.findByRole("form", { name: /создание матча/i }),
+    ).toBeInTheDocument();
+    expect(await screen.findByText(/соперник/i)).toBeInTheDocument();
+    expect(screen.getByText(/сухая победа при счёте 5:0/i)).toBeInTheDocument();
   });
 
   it("offers guest and player modes", async () => {
@@ -45,7 +61,9 @@ describe("REQ_ui__match_create_autocomplete", () => {
     expect(
       await screen.findByRole("form", { name: /создание матча/i }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(/гость/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^гость$/i }));
+    expect(await screen.findByLabelText(/гость/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /^игрок$/i }));
     expect(await screen.findByText(/соперник/i)).toBeInTheDocument();

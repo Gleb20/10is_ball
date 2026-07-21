@@ -21,6 +21,15 @@ async function request<T>(
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
+  const method = (init.method ?? "GET").toUpperCase();
+  if (method !== "GET" && method !== "HEAD" && typeof document !== "undefined") {
+    const csrf = document.cookie
+      .split(";")
+      .map((c) => c.trim())
+      .find((c) => c.startsWith("tab10_csrf="))
+      ?.slice("tab10_csrf=".length);
+    if (csrf) headers.set("X-CSRF-Token", decodeURIComponent(csrf));
+  }
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers,
@@ -98,10 +107,22 @@ export const api = {
     }),
   getMatch: (id: string) =>
     request<{ match: Record<string, unknown> }>(`/api/v1/matches/${id}`),
-  startMatch: (id: string) =>
+  startMatch: (id: string, body?: { firstServerParticipantId?: string }) =>
     request<{ match: Record<string, unknown> }>(
       `/api/v1/matches/${id}/start`,
-      { method: "POST", body: "{}" },
+      { method: "POST", body: JSON.stringify(body ?? {}) },
+    ),
+  judgeSetup: (
+    id: string,
+    body: {
+      firstServerParticipantId?: string;
+      swapSides?: boolean;
+      displayFlipped?: boolean;
+    },
+  ) =>
+    request<{ match: Record<string, unknown> }>(
+      `/api/v1/matches/${id}/judge/setup`,
+      { method: "POST", body: JSON.stringify(body) },
     ),
   acquireJudge: (id: string) =>
     request(`/api/v1/matches/${id}/judge/acquire`, { method: "POST" }),
@@ -144,6 +165,14 @@ export const api = {
       `/api/v1/matches/${id}/revert-finish`,
       { method: "POST" },
     ),
+  stopMatch: (
+    id: string,
+    payload: { winnerSide: "A" | "B"; reasonCode: string; reasonText?: string },
+  ) =>
+    request<{ match: Record<string, unknown> }>(`/api/v1/matches/${id}/stop`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   rankings: (period = "all_time") =>
     request<{ rankings: Array<Record<string, unknown>> }>(
       `/api/v1/rankings?period=${period}`,
@@ -178,6 +207,18 @@ export const api = {
   notifications: () =>
     request<{ notifications: Array<Record<string, unknown>> }>(
       "/api/v1/notifications",
+    ),
+  markNotificationRead: (id: string) =>
+    request<{ ok: boolean }>(`/api/v1/notifications/${id}/read`, {
+      method: "POST",
+    }),
+  respondTeamInvitation: (invitationId: string, accept: boolean) =>
+    request<{ ok?: boolean; team?: Record<string, unknown> }>(
+      `/api/v1/team-invitations/${invitationId}/respond`,
+      {
+        method: "POST",
+        body: JSON.stringify({ accept }),
+      },
     ),
   faq: () =>
     request<{ articles: Array<Record<string, unknown>> }>("/api/v1/faq"),

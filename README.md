@@ -31,19 +31,19 @@ pnpm test        # или pnpm run ci
 pnpm dev
 ```
 
+**Локальная БД (по конфигам репозитория):**
+
+| Режим | Когда | Команда |
+|-------|--------|---------|
+| **PGlite (по умолчанию)** | `DATABASE_URL` не задан | просто `pnpm dev` — API поднимает in-memory Postgres (WASM), seed admin автоматически |
+| **PostgreSQL 16** | нужна персистентная БД / ближе к prod | `docker compose up -d` затем `cp apps/api/.env.example apps/api/.env` и задайте `DATABASE_URL=postgres://tab10:tab10@localhost:5432/tab10` |
+
 | Сервис | URL |
 |--------|-----|
 | Web | http://localhost:5173 |
 | API | http://localhost:3001/health |
 
 **Seed admin:** `admin@tab10.local` / `AdminPass1!`
-
-PostgreSQL (опционально):
-
-```bash
-docker compose up -d
-DATABASE_URL=postgres://tab10:tab10@localhost:5432/tab10 pnpm --filter @tab10/api dev
-```
 
 ## Структура репозитория
 

@@ -1,9 +1,9 @@
 # Tab-10 Project Status
 
-Last updated: 2026-07-20  
-**Product version:** 1.4.0  
-Current phase: 10 (UI polish complete) + admin role management  
-Next step: Phase 9 remaining (security / mutation / observability) или продуктовый backlog
+Last updated: 2026-07-21  
+**Product version:** 1.6.3  
+Current phase: Swap ↔ between panels + mercy after undo (v1.6.3) on branch `cursor/p0-p1-bugfix-058e`  
+Next step: merge P0+P1 + judge UX → ветка `cursor/tournament-*` для Phase 6 match wiring
 
 ## Progress
 
@@ -34,6 +34,27 @@ Next step: Phase 9 remaining (security / mutation / observability) или про
 | UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
+
+### Swap ↔ + mercy after undo — done (v1.6.3)
+- Setup: ↔ снова между плашками счёта (`judge-board--setup`)
+- Mercy: лидер ≥ N и соперник 0 (D8); AT-MATCH-004c — Undo случайного очка → 5:0 finish
+
+### Mercy + setup board — done (v1.6.2)
+- Mercy только N:0 / 0:N (ADR D8); create default «Игрок»; setup = board; serve badge + ракетка
+
+### Judge UX polish — done (v1.6.1)
+- Undo replay только `point_awarded` (ровно −1 очко)
+- Setup: стрелка ↔ вместо чекбоксов; `startedAt` при judge/setup
+- Acquire: любой active user (ADR D7); +1 внутри ячеек; выход после confirmFinish
+
+### Judge UX slice — done (v1.6.0)
+- **P0:** fix зависания «Подключение судьи» при ошибке acquire; `activeJudge` в GET match; idempotent re-acquire; AT-JUDGE-003
+- **P1:** mercy 5:0 в создании матча; live-таймер; кнопки «+1» вместо клика по всей панели
+- **P2:** pre-game setup (первый подающий, swap сторон, flip экрана); readonly счёт; Match detail — статус судьи
+
+### P0+P1 bugfix — done (v1.5.0, branch `cursor/p0-p1-bugfix-058e`)
+- **P0 API:** atomic score version, idempotency key required, CSRF on mutations, judge/stop authz, RANK-001 sort + calendar week/month, participant displayName in match API, 2v2 serve order
+- **P1 Web:** `/notifications`, challenge prefill, stop match UI, 404, AsyncState form errors, auth polish, history sort
 
 ### Admin role management — done (v1.4.0)
 - Create with role `user`/`admin`; PATCH role for others (not self)

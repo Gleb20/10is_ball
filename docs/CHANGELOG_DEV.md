@@ -1,5 +1,113 @@
 # Dev Changelog
 
+## 2026-07-21 — Swap ↔ between panels + mercy after undo (v1.6.3)
+
+### Web
+- Judge setup: ↔ снова между плашками счёта (`judge-board--setup`), не в toolbar
+
+### Rules
+- `checkVictory` mercy: лидер ≥ `mercyPoints` и соперник 0 (D8); отменённые очки не блокируют
+- AT-MATCH-004c: accidental B → Undo → 5×A → `pending_confirmation`
+
+### How to verify
+```bash
+pnpm run ci
+pnpm dev
+# Judge setup: ↔ между плашками
+# +1 сопернику → Undo → 5 очков лидеру → подтверждение сухой победы
+```
+
+## 2026-07-21 — Mercy N:0 + setup board + serve racket (v1.6.2)
+
+### Rules
+- `checkVictory` mercy: только exact `mercyPoints:0` / `0:mercyPoints` (ADR D8)
+- AT-MATCH-004b: 5:1 не завершает матч
+
+### Web
+- MatchCreate: дефолт «Игрок»; copy «сухая победа при счёте N:0»
+- Judge setup = тот же board (0:0); тап стороны = первый подающий; ↔; «Начать матч»
+- Бейдж «Подача» + `TableTennisRacketIcon`
+
+### How to verify
+```bash
+pnpm run ci
+pnpm dev
+# /matches/new — режим Игрок; mercy 5:0 copy
+# Judge setup: board layout, tap serve, Начать матч → timer
+# 5:1 при mercy не finish
+```
+
+## 2026-07-21 — Judge UX polish (v1.6.1)
+
+### Fixes
+- Undo: rebuild только из `point_awarded` (AT-MATCH-005b) — всегда −1 очко
+- `startedAt` ставится в `judge/setup`, не в `startMatch` — таймер после выбора подачи
+- Setup UI: кликабельная ↔ между половинами; чекбоксы смены сторон убраны
+- +1 внутри ячеек счёта (стабильная высота); spacer в readonly
+- После «Подтвердить результат» → navigate на карточку матча
+- Undo: `undoPending` + reload при ошибке
+
+### Authz
+- ADR D7: любой active user может acquire свободный judge-слот (не только участник)
+
+### How to verify
+```bash
+pnpm run ci
+pnpm dev
+# Setup: ↔ меняет стороны; таймер стартует после «Начать судейство»
+# Undo после серии award/undo — ровно −1
+# Не-участник может «Судить» свободный матч
+# Confirm finish → /matches/:id
+```
+
+## 2026-07-21 — Judge UX slice (v1.6.0)
+
+### API
+- `GET /matches/:id` → `activeJudge: { userId, displayName } | null`
+- `POST /matches/:id/judge/setup` — first server, swap sides, display flip (`judge_display_flipped`)
+- `acquireJudge` idempotent для той же сессии; `JUDGE_TAKEN` с `details.currentJudge`
+- Integration: AT-JUDGE-003, AT-MATCH-004 mercy, setup swap/server
+
+### Web
+- JudgePage: фазы loading / blocked / setup / scoring / readonly (`?mode=readonly`)
+- MatchCreatePage: сухая победа (default on, порог 5/10)
+- MatchDetailPage: длительность, активный судья, «Открыть счёт»
+- Таймер матча; кнопки «+1»; контраст loading-текста
+
+### How to verify
+```bash
+pnpm run ci
+pnpm dev
+# Создать матч с mercy → 5:0 → pending_confirmation
+# Release судьи → другой участник acquire без зависания
+# /matches/:id/judge?mode=readonly — просмотр счёта
+```
+
+## 2026-07-21 — P0+P1 bugfix slice (v1.5.0)
+
+### P0 — корректность API
+- Atomic `UPDATE … WHERE version = expected` на очках / undo
+- Обязательный `Idempotency-Key`; повтор ключа — idempotent 200
+- CSRF: cookie + `X-CSRF-Token` на мутациях (кроме login; в тестах отключено)
+- Authz: stop — только участник/судья; acquire judge — только участник; release — активный судья
+- RANK-001 comparator + calendar week/month из `finishedAt` матчей
+- `getMatch` обогащает participants полем `displayName`
+
+### P1 — тупиковые UX-сценарии
+- `/notifications` — список, read, accept/decline team invite
+- Challenge: `/matches/new?opponentId&opponentName` из рейтинга
+- Stop match UI на детали матча
+- 404 страница, «Назад» / «Отмена» на формах
+- Rankings sticky error fix; history sort by time
+- Login: show password, текст про админа; first password confirm
+
+### How to verify
+```bash
+pnpm --filter @tab10/shared build && pnpm --filter @tab10/test-utils build
+pnpm run ci
+pnpm dev
+```
+
 ## 2026-07-20 — Admin role create / promote / demote (v1.4.0)
 
 ### Added

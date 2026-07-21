@@ -138,9 +138,12 @@ export async function applySchemaSql(
       stop_reason_text text,
       event_log jsonb NOT NULL DEFAULT '[]',
       idempotency_keys jsonb NOT NULL DEFAULT '[]',
+      judge_display_flipped boolean NOT NULL DEFAULT false,
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now()
     );
+
+    ALTER TABLE matches ADD COLUMN IF NOT EXISTS judge_display_flipped boolean NOT NULL DEFAULT false;
 
     CREATE TABLE IF NOT EXISTS match_participants (
       id uuid PRIMARY KEY ${uuidDefault},

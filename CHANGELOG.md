@@ -2,6 +2,39 @@
 
 Формат версий: [docs/VERSIONING.md](docs/VERSIONING.md).
 
+## [1.6.3] — 2026-07-21
+
+### Fixed (c — judge setup + mercy)
+
+- Setup: стрелка ↔ снова между плашками счёта
+- Сухая победа по текущему счёту (≥N:0); Undo случайного очка не блокирует 5:0
+
+## [1.6.2] — 2026-07-21
+
+### Changed (c — mercy + setup board)
+
+- Сухая победа только при сопернике 0 (ADR D8); 5:1 не завершает
+- Judge setup = board; дефолт создания матча «Игрок»; бейдж подачи с ракеткой
+
+## [1.6.1] — 2026-07-21
+
+### Fixed (c — judge polish)
+
+- Undo ровно −1 очко; любой active user может судить; таймер после setup; ↔ / +1 в ячейках
+
+## [1.6.0] — 2026-07-21
+
+### Added (b — Judge UX)
+
+- Pre-game setup (первый подающий, стороны, flip); mercy в создании матча; live-таймер; кнопки +1
+- `activeJudge` в GET match; fix зависания «Подключение судьи»
+
+## [1.5.0] — 2026-07-21
+
+### Fixed (b — P0+P1 bugfix)
+
+- Atomic score version, idempotency, CSRF, judge/stop authz, rankings, UX dead-ends
+
 ## [1.4.0] — 2026-07-20
 
 ### Added (b — admin roles)

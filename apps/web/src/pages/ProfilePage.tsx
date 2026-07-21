@@ -55,6 +55,11 @@ export function ProfilePage() {
           title="Команды"
           subtitle="Создание и приглашения"
         />
+        <ListRow
+          to="/notifications"
+          title="Уведомления"
+          subtitle="Приглашения и события"
+        />
         <ListRow to="/help" title="Помощь" subtitle="FAQ и обратная связь" />
         <ListRow
           to="/onboarding"

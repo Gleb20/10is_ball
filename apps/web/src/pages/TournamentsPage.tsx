@@ -14,7 +14,8 @@ import { api } from "../api";
 export function TournamentsPage() {
   const navigate = useNavigate();
   const [list, setList] = useState<Array<Record<string, unknown>> | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [title, setTitle] = useState("Турнир");
   const [format, setFormat] = useState<
     "single_elimination" | "double_elimination"
@@ -26,7 +27,7 @@ export function TournamentsPage() {
   }
 
   useEffect(() => {
-    void load().catch((e) => setError(e.message));
+    void load().catch((e) => setLoadError(e.message));
   }, []);
 
   return (
@@ -38,7 +39,7 @@ export function TournamentsPage() {
           void api
             .createTournament({ title, format })
             .then((r) => navigate(`/tournaments/${r.tournament.id}`))
-            .catch((err) => setError((err as Error).message));
+            .catch((err) => setFormError((err as Error).message));
         }}
       >
         <TextField
@@ -60,11 +61,12 @@ export function TournamentsPage() {
           ]}
         />
         <Button type="submit">Создать</Button>
+        {formError ? <p className="error">{formError}</p> : null}
       </form>
 
       <AsyncState
-        loading={list === null && !error}
-        error={error}
+        loading={list === null && !loadError}
+        error={loadError}
         empty={list !== null && list.length === 0}
         emptyTitle="Нет турниров"
         emptyDescription="Создайте турнир выше или через «Начать»."

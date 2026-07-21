@@ -9,6 +9,7 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [pending, setPending] = useState(false);
   const { setUser, refresh } = useAuth();
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ export function LoginPage() {
         />
         <TextField
           label="Пароль"
-          type="password"
+          type={showPassword ? "text" : "password"}
           name="password"
           value={password}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -61,6 +62,18 @@ export function LoginPage() {
           autoComplete="current-password"
           required
         />
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => setShowPassword((v) => !v)}
+        >
+          {showPassword ? "Скрыть пароль" : "Показать пароль"}
+        </Button>
+        <p className="muted">
+          Нет доступа? Обратитесь к администратору Tab-10 — самостоятельная
+          регистрация недоступна.
+        </p>
         {error && (
           <p className="error" role="alert">
             {error}
