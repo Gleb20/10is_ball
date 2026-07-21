@@ -37,6 +37,7 @@ export const BRACKET_ALGORITHM_OPTIONS: Record<
 
 export const COMPACT_DE_DISABLED_REASON =
   "Для турниров с сеткой проигравших компактный способ пока недоступен.";
+// Kept for backwards-compatible imports; compact DE is now supported.
 
 export function algorithmLabel(
   algorithm: BracketConstructionAlgorithm | "legacy" | null | undefined,

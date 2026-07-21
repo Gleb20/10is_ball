@@ -1018,7 +1018,7 @@ describe("match and judge integration", () => {
     return id;
   }
 
-  it("construction algorithm: defaults, preserve, switch, DE reject, unknown", async () => {
+  it("construction algorithm: defaults, preserve, switch, DE compact, unknown", async () => {
     // 1. First generate without body → compact
     const id1 = await createSeTournamentWithN(5, "algo-def");
     const g1 = await app.inject({
@@ -1116,7 +1116,7 @@ describe("match and judge integration", () => {
     expect(bad.statusCode).toBe(400);
     expect(bad.json().code).toBe("INVALID_BRACKET_CONSTRUCTION_ALGORITHM");
 
-    // 8. Compact + DE rejected
+    // 8. Compact + DE supported
     const de = await app.inject({
       method: "POST",
       url: "/api/v1/tournaments",
@@ -1152,8 +1152,23 @@ describe("match and judge integration", () => {
       cookies: { tab10_session: userACookie },
       payload: { constructionAlgorithm: "compact" },
     });
-    expect(deCompact.statusCode).toBe(400);
-    expect(deCompact.json().code).toBe("COMPACT_DOUBLE_ELIMINATION_UNSUPPORTED");
+    expect(deCompact.statusCode).toBe(200);
+    expect(deCompact.json().constructionAlgorithm).toBe("compact");
+    expect(deCompact.json().bracket.format).toBe("double_elimination");
+    expect(deCompact.json().bracket.constructionAlgorithm).toBe("compact");
+    expect(deCompact.json().bracket.bracketSize).toBeUndefined();
+    expect(
+      (deCompact.json().bracket.matches as Array<{ stage: string }>).some(
+        (m) => m.stage === "losers",
+      ),
+    ).toBe(true);
+    const deStart = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${deId}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(deStart.statusCode).toBe(200);
+    expect(deStart.json().tournament.matches.length).toBeGreaterThan(0);
 
     // 9. Column + JSON atomic (same response)
     const id4 = await createSeTournamentWithN(3, "algo-atom");

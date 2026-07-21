@@ -4,7 +4,6 @@ import { Dialog } from "../ui";
 import {
   BRACKET_ALGORITHM_DIALOG,
   BRACKET_ALGORITHM_OPTIONS,
-  COMPACT_DE_DISABLED_REASON,
 } from "../bracketAlgorithmCopy";
 import "./BracketAlgorithmDialog.css";
 
@@ -21,7 +20,7 @@ export type BracketAlgorithmDialogProps = {
 
 export function BracketAlgorithmDialog({
   open,
-  format,
+  format: _format,
   selected,
   onSelect,
   onCancel,
@@ -30,10 +29,8 @@ export function BracketAlgorithmDialog({
   showRegenWarning = false,
 }: BracketAlgorithmDialogProps) {
   const groupId = useId();
-  const compactDisabled = format === "double_elimination";
-  const canSubmit =
-    !busy &&
-    !(compactDisabled && selected === "compact");
+  void _format;
+  const canSubmit = !busy;
 
   return (
     <Dialog
@@ -72,7 +69,6 @@ export function BracketAlgorithmDialog({
           ["compact", "power_of_two"] as BracketConstructionAlgorithm[]
         ).map((key) => {
           const opt = BRACKET_ALGORITHM_OPTIONS[key];
-          const disabled = key === "compact" && compactDisabled;
           const checked = selected === key;
           return (
             <label
@@ -80,7 +76,6 @@ export function BracketAlgorithmDialog({
               className={[
                 "bracket-algo-card",
                 checked ? "bracket-algo-card--selected" : "",
-                disabled ? "bracket-algo-card--disabled" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -91,19 +86,11 @@ export function BracketAlgorithmDialog({
                 name={`bracket-algo-${groupId}`}
                 value={key}
                 checked={checked}
-                disabled={disabled}
-                onChange={() => {
-                  if (!disabled) onSelect(key);
-                }}
+                onChange={() => onSelect(key)}
               />
               <span className="bracket-algo-card__title">{opt.title}</span>
               <span className="bracket-algo-card__desc">{opt.description}</span>
               <span className="bracket-algo-card__hint">{opt.shortHint}</span>
-              {disabled ? (
-                <span className="bracket-algo-card__disabled-reason">
-                  {COMPACT_DE_DISABLED_REASON}
-                </span>
-              ) : null}
             </label>
           );
         })}

@@ -44,21 +44,21 @@
 
 **Superseded for new generates by D12** (V2 Challonge-inspired Po2 SE). V1 compact graphs remain readable. Further superseded by **D14** (user-selectable compact vs power_of_two).
 
-## D14 — Bracket construction algorithm choice (2026-07-21)
+## D14 — Bracket construction algorithm choice (2026-07-21, compact DE 2026-07-22)
 
 **Decision:**
 
 - Product algorithms: `compact` (default) and `power_of_two` (classic Challonge-inspired pad).
 - Both emit match-centric **schemaVersion 2**; new compact never uses V1 JSON.
-- Supported combos: SE+compact, SE+Po2, DE+Po2. **DE+compact** rejected: `COMPACT_DOUBLE_ELIMINATION_UNSUPPORTED` (no silent Po2 fallback).
+- Supported combos: SE+compact, SE+Po2, DE+Po2, **DE+compact**.
+- Compact DE: WB = compact SE (no TP); LB = generate-time phased CompactEntry pairing of competitive WB loser drops only (auto-advance losers excluded); GF1/GF2 as Po2.
 - `tournaments.bracket_construction_algorithm` = setting for next generate; `bracketJson.constructionAlgorithm` = stored graph. Unstarted live bracket: must match or `BRACKET_ALGORITHM_MISMATCH`.
 - API default-preservation: explicit request wins; regenerate without body keeps existing; first generate → `compact`.
-- Compact: no `bracketSize`; odd-round auto-advance via `CompactEntry` bye-history on paths. Po2: required `bracketSize = nextPowerOfTwo(N)`.
-- Legacy: V1 SE → compact; V1 DE → read-only `legacy` / NULL column (do not guess); V2 without field → power_of_two.
-- Migration: nullable column → backfill → DEFAULT `'compact'` for new rows; do not rewrite `bracket_json`.
+- Compact: no `bracketSize`; Po2: required `bracketSize = nextPowerOfTwo(N)`.
+- Legacy: V1 SE → compact; V1 DE → read-only `legacy` / NULL column; V2 without field → power_of_two.
 - After tournament start, algorithm cannot change.
 
-**Why:** Product needs both amateur-friendly compact and classic Po2; compact DE needs a static topology spec before implementation.
+**Why:** Amateur-friendly compact and classic Po2 for both SE and DE; static LB topology avoids runtime “available path” graphs.
 
 ## D12 — Challonge-inspired match-centric brackets V2 (2026-07-21)
 

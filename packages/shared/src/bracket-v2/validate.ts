@@ -35,13 +35,6 @@ export function validateBracketGraph(graph: BracketGraphV2): void {
         "compact_no_bracket_size",
       );
     }
-    if (graph.format === "double_elimination") {
-      throw new BracketValidationError(
-        "compact double elimination unsupported",
-        undefined,
-        "compact_de",
-      );
-    }
   }
   if (graph.constructionAlgorithm === "power_of_two") {
     if (

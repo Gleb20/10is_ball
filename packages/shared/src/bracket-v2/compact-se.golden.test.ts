@@ -106,15 +106,4 @@ describe("compact SE exact golden topologies", () => {
       expect(po2.bracketSize).toBe(8);
     }
   });
-
-  it("rejects compact + double_elimination", () => {
-    expect(() =>
-      prepareBracketGraph({
-        seedOrder: ids(4),
-        format: "double_elimination",
-        constructionAlgorithm: "compact",
-        thirdPlaceEnabled: false,
-      }),
-    ).toThrow(/COMPACT_DOUBLE_ELIMINATION_UNSUPPORTED/);
-  });
 });

@@ -177,9 +177,7 @@ export function TournamentDetailPage() {
         );
 
   function openAlgorithmDialog() {
-    if (format === "double_elimination") {
-      setAlgoSelected("power_of_two");
-    } else if (
+    if (
       detectedAlgo.kind === "algorithm" &&
       (detectedAlgo.algorithm === "compact" ||
         detectedAlgo.algorithm === "power_of_two")

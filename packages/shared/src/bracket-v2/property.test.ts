@@ -59,10 +59,27 @@ describe("bracket-v2 property N=3..64", () => {
   ];
   for (const n of deNs) {
     for (const strategy of ["lowerSeed", "alwaysA", "alwaysB"] as const) {
-      it(`DE n=${n} ${strategy}`, () => {
+      it(`DE Po2 n=${n} ${strategy}`, () => {
         let g = generateDoubleEliminationV2({ seedOrder: ids(n) });
         g = simulateBracket(g, strategy);
         assertDeInvariants(g, n, strategy);
+      });
+    }
+  }
+
+  for (let n = 3; n <= 32; n += 1) {
+    for (const strategy of ["lowerSeed", "alwaysA", "alwaysB"] as const) {
+      it(`DE compact n=${n} ${strategy}`, () => {
+        let g = prepareBracketGraph({
+          seedOrder: ids(n),
+          format: "double_elimination",
+          constructionAlgorithm: "compact",
+          thirdPlaceEnabled: false,
+        });
+        g = simulateBracket(g, strategy);
+        assertDeInvariants(g, n, strategy);
+        expect(g.constructionAlgorithm).toBe("compact");
+        expect(g.bracketSize).toBeUndefined();
       });
     }
   }

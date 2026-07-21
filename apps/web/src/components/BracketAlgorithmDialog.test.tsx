@@ -5,7 +5,6 @@ import { BracketAlgorithmDialog } from "./BracketAlgorithmDialog";
 import {
   BRACKET_ALGORITHM_DIALOG,
   BRACKET_ALGORITHM_OPTIONS,
-  COMPACT_DE_DISABLED_REASON,
 } from "../bracketAlgorithmCopy";
 
 afterEach(() => cleanup());
@@ -79,23 +78,22 @@ describe("BracketAlgorithmDialog", () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
-  it("DE: compact disabled with reason; classic available", () => {
+  it("DE: both algorithms available; compact enabled", () => {
     const { body } = renderDialog({
       format: "double_elimination",
-      selected: "power_of_two",
+      selected: "compact",
     });
     const compactRadio = within(body).getByDisplayValue(
       "compact",
     ) as HTMLInputElement;
-    expect(compactRadio.disabled).toBe(true);
-    expect(within(body).getByText(COMPACT_DE_DISABLED_REASON)).toBeInTheDocument();
+    expect(compactRadio.disabled).toBe(false);
     const po2 = within(body).getByDisplayValue(
       "power_of_two",
     ) as HTMLInputElement;
     expect(po2.disabled).toBe(false);
   });
 
-  it("DE: submit with compact selected does not confirm", () => {
+  it("DE: submit with compact confirms", () => {
     const onConfirm = vi.fn();
     renderDialog({
       format: "double_elimination",
@@ -106,7 +104,7 @@ describe("BracketAlgorithmDialog", () => {
       name: BRACKET_ALGORITHM_DIALOG.submit,
     });
     fireEvent.click(buttons[buttons.length - 1]!);
-    expect(onConfirm).not.toHaveBeenCalled();
+    expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
   it("shows regen warning when requested", () => {

@@ -1,5 +1,23 @@
 # Dev Changelog
 
+## 2026-07-22 — Compact double elimination
+
+### Shared
+- `generateCompactDoubleElimination`: compact WB + phased CompactEntry LB + GF1/GF2
+- Golden N=3/5/6/7; property DE compact N=3..32
+- Removed `COMPACT_DOUBLE_ELIMINATION_UNSUPPORTED`
+
+### API / Web
+- DE + compact generate/start supported; dialog enables both algorithms for DE
+- ADR D14 updated
+
+### How to verify
+```bash
+pnpm --filter @tab10/shared build && pnpm --filter @tab10/shared test -- src/bracket-v2/compact-de.golden.test.ts
+PGLITE_DATA_DIR= pnpm --filter @tab10/api test -- -t "construction algorithm"
+pnpm --filter @tab10/web test -- src/components/BracketAlgorithmDialog.test.tsx
+```
+
 ## 2026-07-21 — Bracket construction algorithm choice (compact / power_of_two)
 
 ### Shared

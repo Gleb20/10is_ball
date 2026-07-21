@@ -4,6 +4,7 @@ export * from "./seed.js";
 export * from "./generate-se.js";
 export * from "./generate-de.js";
 export * from "./generate-compact-se.js";
+export * from "./generate-compact-de.js";
 export * from "./generate.js";
 export * from "./prepare.js";
 export * from "./third-place.js";

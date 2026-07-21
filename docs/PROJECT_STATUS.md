@@ -1,9 +1,9 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-21  
-**Product version:** 1.10.0 (bracket algorithm choice in tree; proposed next release **1.11.0**)  
-Current phase: Bracket construction algorithm (compact / power_of_two) — SE done; compact DE unsupported (D14)  
-Next step: optional release 1.11.0; compact DE only after static topology spec
+**Product version:** 1.10.0 (bracket algorithm choice + compact DE in tree; proposed next release **1.11.0**)  
+Current phase: Bracket construction algorithm (compact / power_of_two) — SE + DE for both  
+Next step: optional release 1.11.0; Stage 4 correction still deferred (D13)
 
 ## Progress
 
@@ -34,6 +34,11 @@ Next step: optional release 1.11.0; compact DE only after static topology spec
 | UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
+
+### Compact double elimination — done (unreleased)
+- Shared: `generate-compact-de.ts`; golden N=3/5/6/7; property N=3..32
+- API/UI: DE+compact unlocked; dialog both options enabled
+- ADR D14 updated
 
 ### Bracket construction algorithm choice — done (unreleased)
 - Shared: compact SE V2 + Po2 SE/DE; prepare pipeline; reject compact DE

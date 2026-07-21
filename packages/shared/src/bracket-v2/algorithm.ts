@@ -54,16 +54,9 @@ export function resolveRequestedConstructionAlgorithm(input: {
   return "compact";
 }
 
-export function assertConstructionSupported(input: {
+export function assertConstructionSupported(_input: {
   format: "single_elimination" | "double_elimination";
   constructionAlgorithm: BracketConstructionAlgorithm;
 }): void {
-  if (
-    input.format === "double_elimination" &&
-    input.constructionAlgorithm === "compact"
-  ) {
-    throw Object.assign(new Error("COMPACT_DOUBLE_ELIMINATION_UNSUPPORTED"), {
-      code: "COMPACT_DOUBLE_ELIMINATION_UNSUPPORTED",
-    });
-  }
+  // All format × algorithm pairs are supported (compact DE since 2026-07-22).
 }

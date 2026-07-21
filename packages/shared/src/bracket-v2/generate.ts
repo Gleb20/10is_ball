@@ -2,6 +2,7 @@ import {
   assertConstructionSupported,
   type BracketConstructionAlgorithm,
 } from "./algorithm.js";
+import { generateCompactDoubleElimination } from "./generate-compact-de.js";
 import { generateCompactSingleElimination } from "./generate-compact-se.js";
 import { generateDoubleEliminationV2 } from "./generate-de.js";
 import { generateSingleEliminationV2 } from "./generate-se.js";
@@ -20,6 +21,11 @@ export function generateBracketGraph(
 
   switch (input.constructionAlgorithm) {
     case "compact":
+      if (input.format === "double_elimination") {
+        return generateCompactDoubleElimination({
+          seedOrder: input.seedOrder,
+        });
+      }
       return generateCompactSingleElimination({
         seedOrder: input.seedOrder,
         thirdPlaceEnabled: input.thirdPlaceEnabled,
