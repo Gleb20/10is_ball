@@ -602,7 +602,9 @@ describe("match and judge integration", () => {
     });
     expect(bracket.statusCode).toBe(200);
     // organizerParticipates default + 3 added = 4
-    expect(bracket.json().bracket.size).toBe(4);
+    expect(bracket.json().bracket.schemaVersion).toBe(2);
+    expect(bracket.json().bracket.participantCount).toBe(4);
+    expect(bracket.json().bracket.bracketSize).toBe(4);
   });
 
   it("create with organizerParticipates includes organizer + displayName", async () => {
@@ -912,9 +914,10 @@ describe("match and judge integration", () => {
     });
     expect(gen.statusCode).toBe(200);
     expect(gen.json().bracket.format).toBe("double_elimination");
+    expect(gen.json().bracket.schemaVersion).toBe(2);
     expect(
-      (gen.json().bracket.slots as Array<{ side: string }>).some(
-        (s) => s.side === "losers",
+      (gen.json().bracket.matches as Array<{ stage: string }>).some(
+        (m) => m.stage === "losers",
       ),
     ).toBe(true);
     const start = await app.inject({

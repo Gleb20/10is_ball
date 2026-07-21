@@ -42,6 +42,35 @@
 
 **Why:** PRD TOURNAMENT-009 (≤1 bye per player when possible) and product feedback that N=5 must not show three free passes; bye recipient must face a prior-round winner next. DE topology still needs a fixed Po2 WB.
 
+**Superseded for new generates by D12** (V2 Challonge-inspired Po2 SE). V1 compact graphs remain readable.
+
+## D12 — Challonge-inspired match-centric brackets V2 (2026-07-21)
+
+**Decision:**
+
+- New tournament bracket generates use **schemaVersion 2** match-centric graphs (`packages/shared/src/bracket-v2/`).
+- Topology name in docs/product: **Challonge-inspired canonical double-elimination topology** (not “exact Challonge” without export/API parity).
+- **DE has no placement / third-place matches** (product diff from Challonge).
+- SE V2 pads to next power of 2 with Challonge seed order; `tournaments.third_place_enabled` is `NULL` for legacy, `true` for new SE, `false` for DE.
+- Sources (`sourceA`/`sourceB`) are canonical; destinations are derived via `buildDestinationIndex`.
+- No cached resolved participants; always `resolveSource`. Concurrency: DB column `tournaments.bracket_state_version` only (not in JSON).
+- Legacy V1 `bracket_json` (slots) remains **read/playable**; new generate always V2.
+- GF2: `winner(GF1)` × `loser(GF1)` with `activationCondition` when LB champ wins GF1; derived state `inactive` otherwise.
+
+**Why:** Fixes confirmed V1 hangs (BYE/empty LB), rematch wiring, and UI topology assumptions; keeps old tournaments working.
+
+## D13 — Bracket result correction deferred (2026-07-21)
+
+**Decision:** Do **not** ship half-correction (delete/rewrite finished tournament matches without compensate).
+
+**Audit:** `MatchService.applyStats` increments `userStats` on finish/stop; there is no reverse/compensate path. Notifications and downstream bracket nodes also depend on applied results.
+
+**Preferred future model:** `voided`/`cancelled` actual match + audit (actor/reason) + stats compensate + invalidate/cascade dependents + new `actualMatchId` materialization.
+
+**Until compensate exists:** organizer may only stop the tournament or leave results as-is; no in-bracket “edit past result” API.
+
+**Why:** Plan Stage 4 stop-gate — correction without compensate corrupts rankings.
+
 ## D9 — Tournament bracket storage (2026-07-21)
 
 **Decision:** MVP хранит сетку в `tournaments.bracket_json`; игровые матчи — в `matches` с `kind=tournament`, `tournament_id`, `tournament_slot_id` (пара slot id). Advancement обновляет JSON и создаёт следующие матчи. Отдельные таблицы `tournament_match` / slot rows не вводим в v1.7.0.

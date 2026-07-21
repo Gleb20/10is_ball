@@ -114,6 +114,8 @@ export const matches = pgTable("matches", {
     .references(() => users.id),
   tournamentId: uuid("tournament_id"),
   tournamentSlotId: text("tournament_slot_id"),
+  /** V2 bracket node id (e.g. W0_0); unique with tournament_id when set. */
+  tournamentBracketMatchId: text("tournament_bracket_match_id"),
   scoreA: integer("score_a").notNull().default(0),
   scoreB: integer("score_b").notNull().default(0),
   currentServerParticipantId: text("current_server_participant_id"),
@@ -186,6 +188,13 @@ export const tournaments = pgTable("tournaments", {
     .references(() => users.id),
   defaultJudgeUserId: uuid("default_judge_user_id").references(() => users.id),
   bracketJson: jsonb("bracket_json"),
+  /** Optimistic concurrency for bracket mutations (DB-only; not in JSON). */
+  bracketStateVersion: integer("bracket_state_version").notNull().default(0),
+  /**
+   * NULL = legacy: topology from existing bracketJson.
+   * true/false = explicit policy for new SE/DE generates.
+   */
+  thirdPlaceEnabled: boolean("third_place_enabled"),
   stopReasonCode: text("stop_reason_code"),
   stopReasonText: text("stop_reason_text"),
   startedAt: timestamp("started_at", { withTimezone: true }),

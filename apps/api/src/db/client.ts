@@ -132,6 +132,7 @@ export async function applySchemaSql(
       created_by_user_id uuid NOT NULL REFERENCES users(id),
       tournament_id uuid,
       tournament_slot_id text,
+      tournament_bracket_match_id text,
       score_a integer NOT NULL DEFAULT 0,
       score_b integer NOT NULL DEFAULT 0,
       current_server_participant_id text,
@@ -189,6 +190,8 @@ export async function applySchemaSql(
       created_by_user_id uuid NOT NULL REFERENCES users(id),
       default_judge_user_id uuid REFERENCES users(id),
       bracket_json jsonb,
+      bracket_state_version integer NOT NULL DEFAULT 0,
+      third_place_enabled boolean,
       stop_reason_code text,
       stop_reason_text text,
       started_at timestamptz,
@@ -301,5 +304,11 @@ export async function applySchemaSql(
 
     ALTER TABLE match_participants ADD COLUMN IF NOT EXISTS guest_avatar_key text;
     ALTER TABLE tournament_participants ADD COLUMN IF NOT EXISTS guest_avatar_key text;
+    ALTER TABLE matches ADD COLUMN IF NOT EXISTS tournament_bracket_match_id text;
+    ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS bracket_state_version integer NOT NULL DEFAULT 0;
+    ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS third_place_enabled boolean;
+    CREATE UNIQUE INDEX IF NOT EXISTS matches_tournament_bracket_match_uid
+      ON matches (tournament_id, tournament_bracket_match_id)
+      WHERE tournament_bracket_match_id IS NOT NULL AND tournament_id IS NOT NULL;
   `);
 }

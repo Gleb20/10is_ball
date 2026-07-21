@@ -1,19 +1,25 @@
-import { and, eq, inArray, ne, or } from "drizzle-orm";
+import { and, eq, inArray, ne, or, sql } from "drizzle-orm";
 import {
+  applyBracketResult,
   applyMatchResult,
   attachMatchId,
-  generateDoubleEliminationBracket,
-  generateSingleEliminationBracket,
+  generateDoubleEliminationV2,
+  generateSingleEliminationV2,
+  getMatchSides,
+  isBracketGraphComplete,
   isInvitationExpired,
   isTournamentComplete,
   listMatchPairs,
+  listReadyMatchIds,
   pairNeedsMatch,
+  propagateByesFixpoint,
   randomAvatarKey,
   seedParticipants,
   TOURNAMENT_INVITATION_TTL_MS,
   type Bracket,
+  type BracketGraphV2,
 } from "@tab10/shared";
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import type { Clock } from "@tab10/test-utils";
 import type { Db } from "../../db/client.js";
 import {
@@ -27,6 +33,7 @@ import {
   userStats,
 } from "../../db/schema.js";
 import type { MatchService } from "../matches/match-service.js";
+import { loadTournamentBracket, swapV2MatchSeeds } from "./bracket-load.js";
 
 type ActiveParticipant = typeof tournamentParticipants.$inferSelect;
 
@@ -60,6 +67,8 @@ export class TournamentService {
     mercyPoints?: number | null;
   }) {
     const organizerParticipates = input.organizerParticipates ?? true;
+    const thirdPlaceEnabled =
+      input.format === "double_elimination" ? false : true;
     const [row] = await this.db
       .insert(tournaments)
       .values({
@@ -68,6 +77,7 @@ export class TournamentService {
         createdByUserId: input.createdByUserId,
         defaultJudgeUserId: input.defaultJudgeUserId ?? input.createdByUserId,
         organizerParticipates,
+        thirdPlaceEnabled,
         pointsToWin: input.pointsToWin ?? 11,
         mercyEnabled: input.mercyEnabled ?? true,
         mercyPoints:
@@ -514,10 +524,19 @@ export class TournamentService {
       playing.map((p) => ({ id: p.id, wins: p.winsSnapshot })),
       rng,
     );
-    const bracket =
+
+    const thirdPlaceEnabled =
       t.format === "double_elimination"
-        ? generateDoubleEliminationBracket(seeded, () => randomUUID())
-        : generateSingleEliminationBracket(seeded, () => randomUUID());
+        ? false
+        : (t.thirdPlaceEnabled ?? true);
+
+    const bracket: BracketGraphV2 =
+      t.format === "double_elimination"
+        ? generateDoubleEliminationV2({ seedOrder: seeded })
+        : generateSingleEliminationV2({
+            seedOrder: seeded,
+            thirdPlaceEnabled,
+          });
 
     for (let i = 0; i < seeded.length; i += 1) {
       await this.db
@@ -542,6 +561,8 @@ export class TournamentService {
       .set({
         status: "bracket_generated",
         bracketJson: bracket,
+        thirdPlaceEnabled,
+        bracketStateVersion: sql`${tournaments.bracketStateVersion} + 1`,
         updatedAt: this.clock.now(),
       })
       .where(eq(tournaments.id, tournamentId))
@@ -566,6 +587,7 @@ export class TournamentService {
       .set({
         status: "collecting",
         bracketJson: null,
+        bracketStateVersion: sql`${tournaments.bracketStateVersion} + 1`,
         updatedAt: this.clock.now(),
       })
       .where(eq(tournaments.id, tournamentId))
@@ -588,27 +610,47 @@ export class TournamentService {
         code: "BRACKET_NOT_EDITABLE",
       });
     }
-    const bracket = t.bracketJson as Bracket;
-    if (!bracket?.slots) {
-      throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
+    const loaded = loadTournamentBracket(t.bracketJson);
+
+    if (loaded.kind === "v1") {
+      const bracket = loaded.bracket;
+      const slots = bracket.slots.map((s) => ({ ...s }));
+      const byId = new Map(slots.map((s) => [s.id, s]));
+      for (const swap of swaps) {
+        const a = byId.get(swap.slotIdA);
+        const b = byId.get(swap.slotIdB);
+        if (!a || !b) continue;
+        const tmp = a.participantId;
+        a.participantId = b.participantId;
+        b.participantId = tmp;
+        const byeA = a.isBye;
+        a.isBye = b.isBye;
+        b.isBye = byeA;
+      }
+      const next = { ...bracket, slots };
+      const [row] = await this.db
+        .update(tournaments)
+        .set({
+          bracketJson: next,
+          bracketStateVersion: sql`${tournaments.bracketStateVersion} + 1`,
+          updatedAt: this.clock.now(),
+        })
+        .where(eq(tournaments.id, tournamentId))
+        .returning();
+      return { ...row, bracket: next };
     }
-    const slots = bracket.slots.map((s) => ({ ...s }));
-    const byId = new Map(slots.map((s) => [s.id, s]));
+
+    let next = loaded.graph;
     for (const swap of swaps) {
-      const a = byId.get(swap.slotIdA);
-      const b = byId.get(swap.slotIdB);
-      if (!a || !b) continue;
-      const tmp = a.participantId;
-      a.participantId = b.participantId;
-      b.participantId = tmp;
-      const byeA = a.isBye;
-      a.isBye = b.isBye;
-      b.isBye = byeA;
+      next = swapV2MatchSeeds(next, swap.slotIdA, swap.slotIdB);
     }
-    const next = { ...bracket, slots };
     const [row] = await this.db
       .update(tournaments)
-      .set({ bracketJson: next, updatedAt: this.clock.now() })
+      .set({
+        bracketJson: next,
+        bracketStateVersion: sql`${tournaments.bracketStateVersion} + 1`,
+        updatedAt: this.clock.now(),
+      })
       .where(eq(tournaments.id, tournamentId))
       .returning();
     return { ...row, bracket: next };
@@ -628,97 +670,235 @@ export class TournamentService {
     if (t.status !== "bracket_generated") {
       throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
     }
-    let bracket = t.bracketJson as Bracket;
-    if (!bracket) {
-      throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
+
+    const loaded = loadTournamentBracket(t.bracketJson);
+    const pendingNotifs: Array<{
+      userId: string;
+      matchId: string;
+    }> = [];
+
+    if (loaded.kind === "v1") {
+      const bracket = await this.materializeReadyMatchesV1(t, loaded.bracket, {
+        collectNotifs: pendingNotifs,
+      });
+      await this.db
+        .update(tournaments)
+        .set({
+          status: "in_progress",
+          startedAt: this.clock.now(),
+          bracketJson: bracket,
+          bracketStateVersion: sql`${tournaments.bracketStateVersion} + 1`,
+          updatedAt: this.clock.now(),
+        })
+        .where(eq(tournaments.id, tournamentId));
+    } else {
+      const graph = await this.materializeReadyMatchesV2(
+        t,
+        loaded.graph,
+        this.db,
+        pendingNotifs,
+      );
+      const version = t.bracketStateVersion ?? 0;
+      const updated = await this.db
+        .update(tournaments)
+        .set({
+          status: "in_progress",
+          startedAt: this.clock.now(),
+          bracketJson: graph,
+          bracketStateVersion: version + 1,
+          updatedAt: this.clock.now(),
+        })
+        .where(
+          and(
+            eq(tournaments.id, tournamentId),
+            eq(tournaments.bracketStateVersion, version),
+          ),
+        )
+        .returning();
+      if (updated.length === 0) {
+        throw Object.assign(new Error("BRACKET_VERSION_CONFLICT"), {
+          code: "BRACKET_VERSION_CONFLICT",
+        });
+      }
     }
 
-    bracket = await this.materializeReadyMatches(t, bracket);
+    for (const n of pendingNotifs) {
+      await this.db.insert(notifications).values({
+        userId: n.userId,
+        type: "tournament_match_ready",
+        title: "Матч турнира готов",
+        body: `Ваш матч в «${t.title}» можно судить`,
+        payload: { tournamentId: t.id, matchId: n.matchId },
+      });
+    }
 
-    const [row] = await this.db
-      .update(tournaments)
-      .set({
-        status: "in_progress",
-        startedAt: this.clock.now(),
-        bracketJson: bracket,
-        updatedAt: this.clock.now(),
-      })
-      .where(eq(tournaments.id, tournamentId))
-      .returning();
     return this.get(tournamentId);
   }
 
-  private async materializeReadyMatches(
+  private async materializeReadyMatchesV1(
     t: NonNullable<Awaited<ReturnType<TournamentService["get"]>>>,
     bracket: Bracket,
+    opts?: {
+      db?: Db;
+      collectNotifs?: Array<{ userId: string; matchId: string }>;
+    },
   ): Promise<Bracket> {
+    const db = opts?.db ?? this.db;
     let next = bracket;
     const partsById = new Map(t.participants.map((p) => [p.id, p]));
     const pairs = listMatchPairs(next).filter(pairNeedsMatch);
 
     for (const pair of pairs) {
-      await this.assertPlayersFree([
-        pair.slotA.participantId!,
-        pair.slotB.participantId!,
-      ]);
+      await this.assertPlayersFree(
+        [pair.slotA.participantId!, pair.slotB.participantId!],
+        db,
+      );
       const pA = partsById.get(pair.slotA.participantId!);
       const pB = partsById.get(pair.slotB.participantId!);
       if (!pA || !pB) continue;
 
-      const match = await this.matchService.createMatch({
-        createdByUserId: t.createdByUserId,
-        title: `${t.title} · ${pair.side} R${pair.round}`,
-        format: "1v1",
-        pointsToWin: t.pointsToWin,
-        mercyEnabled: t.mercyEnabled,
-        mercyPoints: t.mercyPoints,
-        kind: "tournament",
-        tournamentId: t.id,
-        tournamentSlotId: `${pair.slotA.id},${pair.slotB.id}`,
-        participants: [
-          {
-            side: "A",
-            userId: pA.userId ?? undefined,
-            guestFirstName: pA.guestFirstName ?? undefined,
-            guestLastName: pA.guestLastName ?? undefined,
-            guestAvatarKey: pA.guestAvatarKey ?? undefined,
-          },
-          {
-            side: "B",
-            userId: pB.userId ?? undefined,
-            guestFirstName: pB.guestFirstName ?? undefined,
-            guestLastName: pB.guestLastName ?? undefined,
-            guestAvatarKey: pB.guestAvatarKey ?? undefined,
-          },
-        ],
-      });
+      const match = await this.matchService.createMatch(
+        {
+          createdByUserId: t.createdByUserId,
+          title: `${t.title} · ${pair.side} R${pair.round}`,
+          format: "1v1",
+          pointsToWin: t.pointsToWin,
+          mercyEnabled: t.mercyEnabled,
+          mercyPoints: t.mercyPoints,
+          kind: "tournament",
+          tournamentId: t.id,
+          tournamentSlotId: `${pair.slotA.id},${pair.slotB.id}`,
+          participants: [
+            {
+              side: "A",
+              userId: pA.userId ?? undefined,
+              guestFirstName: pA.guestFirstName ?? undefined,
+              guestLastName: pA.guestLastName ?? undefined,
+              guestAvatarKey: pA.guestAvatarKey ?? undefined,
+            },
+            {
+              side: "B",
+              userId: pB.userId ?? undefined,
+              guestFirstName: pB.guestFirstName ?? undefined,
+              guestLastName: pB.guestLastName ?? undefined,
+              guestAvatarKey: pB.guestAvatarKey ?? undefined,
+            },
+          ],
+        },
+        db,
+      );
 
       next = attachMatchId(next, [pair.slotA.id, pair.slotB.id], match!.id);
 
-      // Notify participants with user accounts
       for (const p of [pA, pB]) {
         if (p.userId) {
-          await this.db.insert(notifications).values({
-            userId: p.userId,
-            type: "tournament_match_ready",
-            title: "Матч турнира готов",
-            body: `Ваш матч в «${t.title}» можно судить`,
-            payload: { tournamentId: t.id, matchId: match!.id },
-          });
+          if (opts?.collectNotifs) {
+            opts.collectNotifs.push({ userId: p.userId, matchId: match!.id });
+          } else {
+            await db.insert(notifications).values({
+              userId: p.userId,
+              type: "tournament_match_ready",
+              title: "Матч турнира готов",
+              body: `Ваш матч в «${t.title}» можно судить`,
+              payload: { tournamentId: t.id, matchId: match!.id },
+            });
+          }
         }
       }
     }
 
-    await this.db
-      .update(tournaments)
-      .set({ bracketJson: next, updatedAt: this.clock.now() })
-      .where(eq(tournaments.id, t.id));
+    if (!opts?.db) {
+      await this.db
+        .update(tournaments)
+        .set({ bracketJson: next, updatedAt: this.clock.now() })
+        .where(eq(tournaments.id, t.id));
+    }
 
     return next;
   }
 
-  private async assertPlayersFree(participantIds: string[]) {
-    const parts = await this.db.query.tournamentParticipants.findMany({
+  private async materializeReadyMatchesV2(
+    t: NonNullable<Awaited<ReturnType<TournamentService["get"]>>>,
+    graph: BracketGraphV2,
+    db: Db,
+    collectNotifs: Array<{ userId: string; matchId: string }>,
+  ): Promise<BracketGraphV2> {
+    let next = propagateByesFixpoint(graph);
+    const partsById = new Map(t.participants.map((p) => [p.id, p]));
+
+    // Idempotent: skip nodes that already have actualMatchId
+    const readyIds = listReadyMatchIds(next).filter((id) => {
+      const m = next.matches.find((x) => x.id === id);
+      return Boolean(m && !m.actualMatchId);
+    });
+
+    for (const matchId of readyIds) {
+      const node = next.matches.find((m) => m.id === matchId)!;
+      const sides = getMatchSides(next, node);
+      if (sides.a.kind !== "resolved" || sides.b.kind !== "resolved") continue;
+
+      await this.assertPlayersFree(
+        [sides.a.participantId, sides.b.participantId],
+        db,
+      );
+      const pA = partsById.get(sides.a.participantId);
+      const pB = partsById.get(sides.b.participantId);
+      if (!pA || !pB) continue;
+
+      const match = await this.matchService.createMatch(
+        {
+          createdByUserId: t.createdByUserId,
+          title: `${t.title} · ${node.stage} ${node.id}`,
+          format: "1v1",
+          pointsToWin: t.pointsToWin,
+          mercyEnabled: t.mercyEnabled,
+          mercyPoints: t.mercyPoints,
+          kind: "tournament",
+          tournamentId: t.id,
+          tournamentSlotId: node.id,
+          tournamentBracketMatchId: node.id,
+          participants: [
+            {
+              side: "A",
+              userId: pA.userId ?? undefined,
+              guestFirstName: pA.guestFirstName ?? undefined,
+              guestLastName: pA.guestLastName ?? undefined,
+              guestAvatarKey: pA.guestAvatarKey ?? undefined,
+            },
+            {
+              side: "B",
+              userId: pB.userId ?? undefined,
+              guestFirstName: pB.guestFirstName ?? undefined,
+              guestLastName: pB.guestLastName ?? undefined,
+              guestAvatarKey: pB.guestAvatarKey ?? undefined,
+            },
+          ],
+        },
+        db,
+      );
+
+      next = {
+        ...next,
+        matches: next.matches.map((m) =>
+          m.id === node.id ? { ...m, actualMatchId: match!.id } : m,
+        ),
+      };
+
+      for (const p of [pA, pB]) {
+        if (p.userId) {
+          collectNotifs.push({ userId: p.userId, matchId: match!.id });
+        }
+      }
+    }
+
+    return next;
+  }
+
+  private async assertPlayersFree(
+    participantIds: string[],
+    db: Db = this.db,
+  ) {
+    const parts = await db.query.tournamentParticipants.findMany({
       where: inArray(tournamentParticipants.id, participantIds),
     });
     const userIds = parts
@@ -726,7 +906,7 @@ export class TournamentService {
       .filter((id): id is string => Boolean(id));
     if (userIds.length === 0) return;
 
-    const active = await this.db
+    const active = await db
       .select({ id: matches.id })
       .from(matches)
       .innerJoin(matchParticipants, eq(matchParticipants.matchId, matches.id))
@@ -756,10 +936,14 @@ export class TournamentService {
 
     const t = await this.get(match.tournamentId);
     if (!t || t.status !== "in_progress") return;
-    let bracket = t.bracketJson as Bracket;
-    if (!bracket || !match.tournamentSlotId) return;
 
-    const slotIds = match.tournamentSlotId.split(",") as [string, string];
+    let loaded;
+    try {
+      loaded = loadTournamentBracket(t.bracketJson);
+    } catch {
+      return;
+    }
+
     const winnerSide = match.winnerSide as "A" | "B" | null;
     if (!winnerSide) return;
 
@@ -767,68 +951,156 @@ export class TournamentService {
     const loserPart = match.participants.find((p) => p.side !== winnerSide);
     if (!winnerPart || !loserPart) return;
 
-    // Map match participants back to tournament participant ids via slot
-    const slotA = bracket.slots.find((s) => s.id === slotIds[0]);
-    const slotB = bracket.slots.find((s) => s.id === slotIds[1]);
-    if (!slotA || !slotB) return;
+    const pendingNotifs: Array<{ userId: string; matchId: string }> = [];
 
-    const winnerTournamentParticipantId =
-      this.resolveTournamentParticipant(
+    if (loaded.kind === "v1") {
+      if (!match.tournamentSlotId) return;
+      const slotIds = match.tournamentSlotId.split(",") as [string, string];
+      const bracket = loaded.bracket;
+      const slotA = bracket.slots.find((s) => s.id === slotIds[0]);
+      const slotB = bracket.slots.find((s) => s.id === slotIds[1]);
+      if (!slotA || !slotB) return;
+
+      const winnerTournamentParticipantId = this.resolveTournamentParticipant(
         slotA,
         slotB,
         winnerPart,
         t.participants,
       );
-    const loserTournamentParticipantId =
-      this.resolveTournamentParticipant(
+      const loserTournamentParticipantId = this.resolveTournamentParticipant(
         slotA,
         slotB,
         loserPart,
         t.participants,
       );
-    if (!winnerTournamentParticipantId || !loserTournamentParticipantId) return;
+      if (!winnerTournamentParticipantId || !loserTournamentParticipantId) {
+        return;
+      }
 
-    bracket = applyMatchResult(
-      bracket,
-      slotIds,
-      winnerTournamentParticipantId,
-      loserTournamentParticipantId,
-      matchId,
-    );
-
-    bracket = await this.materializeReadyMatches(
-      { ...t, bracketJson: bracket },
-      bracket,
-    );
-
-    const complete = isTournamentComplete(bracket);
-    await this.db
-      .update(tournaments)
-      .set({
-        bracketJson: bracket,
-        ...(complete
-          ? {
-              status: "finished",
-              finishedAt: this.clock.now(),
-            }
-          : {}),
-        updatedAt: this.clock.now(),
-      })
-      .where(eq(tournaments.id, t.id));
-
-    if (complete && bracket.championParticipantId) {
-      const champ = t.participants.find(
-        (p) => p.id === bracket.championParticipantId,
+      let next = applyMatchResult(
+        bracket,
+        slotIds,
+        winnerTournamentParticipantId,
+        loserTournamentParticipantId,
+        matchId,
       );
-      if (champ?.userId) {
-        await this.db.insert(notifications).values({
-          userId: champ.userId,
-          type: "tournament_finished",
-          title: "Турнир завершён",
-          body: `Вы победили в «${t.title}»`,
-          payload: { tournamentId: t.id },
+
+      next = await this.materializeReadyMatchesV1(
+        { ...t, bracketJson: next },
+        next,
+        { collectNotifs: pendingNotifs },
+      );
+
+      const complete = isTournamentComplete(next);
+      await this.db
+        .update(tournaments)
+        .set({
+          bracketJson: next,
+          bracketStateVersion: sql`${tournaments.bracketStateVersion} + 1`,
+          ...(complete
+            ? {
+                status: "finished",
+                finishedAt: this.clock.now(),
+              }
+            : {}),
+          updatedAt: this.clock.now(),
+        })
+        .where(eq(tournaments.id, t.id));
+
+      if (complete && next.championParticipantId) {
+        const champ = t.participants.find(
+          (p) => p.id === next.championParticipantId,
+        );
+        if (champ?.userId) {
+          await this.db.insert(notifications).values({
+            userId: champ.userId,
+            type: "tournament_finished",
+            title: "Турнир завершён",
+            body: `Вы победили в «${t.title}»`,
+            payload: { tournamentId: t.id },
+          });
+        }
+      }
+    } else {
+      const bracketMatchId =
+        match.tournamentBracketMatchId ?? match.tournamentSlotId;
+      if (!bracketMatchId) return;
+
+      const node = loaded.graph.matches.find((m) => m.id === bracketMatchId);
+      if (!node) return;
+
+      const sides = getMatchSides(loaded.graph, node);
+      if (sides.a.kind !== "resolved" || sides.b.kind !== "resolved") return;
+
+      const winnerTournamentParticipantId =
+        winnerSide === "A" ? sides.a.participantId : sides.b.participantId;
+      const loserTournamentParticipantId =
+        winnerSide === "A" ? sides.b.participantId : sides.a.participantId;
+
+      let next = applyBracketResult(loaded.graph, {
+        bracketMatchId,
+        winnerParticipantId: winnerTournamentParticipantId,
+        loserParticipantId: loserTournamentParticipantId,
+        actualMatchId: matchId,
+      });
+
+      const version = t.bracketStateVersion ?? 0;
+      next = await this.materializeReadyMatchesV2(
+        { ...t, bracketJson: next },
+        next,
+        this.db,
+        pendingNotifs,
+      );
+      const complete = isBracketGraphComplete(next);
+      const champId = next.championParticipantId;
+      const updated = await this.db
+        .update(tournaments)
+        .set({
+          bracketJson: next,
+          bracketStateVersion: version + 1,
+          ...(complete
+            ? {
+                status: "finished",
+                finishedAt: this.clock.now(),
+              }
+            : {}),
+          updatedAt: this.clock.now(),
+        })
+        .where(
+          and(
+            eq(tournaments.id, t.id),
+            eq(tournaments.bracketStateVersion, version),
+          ),
+        )
+        .returning();
+      if (updated.length === 0) {
+        throw Object.assign(new Error("BRACKET_VERSION_CONFLICT"), {
+          code: "BRACKET_VERSION_CONFLICT",
         });
       }
+
+      if (complete && champId) {
+        const champ = t.participants.find((p) => p.id === champId);
+        if (champ?.userId) {
+          await this.db.insert(notifications).values({
+            userId: champ.userId,
+            type: "tournament_finished",
+            title: "Турнир завершён",
+            body: `Вы победили в «${t.title}»`,
+            payload: { tournamentId: t.id },
+          });
+        }
+      }
+    }
+
+    for (const n of pendingNotifs) {
+      await this.db.insert(notifications).values({
+        userId: n.userId,
+        type: "tournament_match_ready",
+        title: "Матч турнира готов",
+        body: `Ваш матч в «${t.title}» можно судить`,
+        payload: { tournamentId: t.id, matchId: n.matchId },
+      });
     }
   }
 

@@ -7,9 +7,10 @@ import {
   type RefObject,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Bracket } from "@tab10/shared";
+import type { Bracket, BracketGraphV2 } from "@tab10/shared";
 import {
   buildBracketViewModel,
+  buildBracketViewModelV2,
   type BracketBand,
   type BracketCard,
   type BracketMatchLike,
@@ -20,12 +21,14 @@ import { initialsFromName } from "../rankingUi";
 import { avatarSrc } from "../avatarSrc";
 
 type Props = {
-  bracket: Bracket;
   names: Map<string, string> | Record<string, string>;
   matches: BracketMatchLike[];
   avatars?: Map<string, string | null> | Record<string, string | null>;
   seeds?: Map<string, number | null> | Record<string, number | null>;
-};
+} & (
+  | { bracket: Bracket; graph?: undefined }
+  | { graph: BracketGraphV2; bracket?: undefined }
+);
 
 type ConnectorPath = {
   key: string;
@@ -351,17 +354,18 @@ function BracketBandView({ band }: { band: BracketBand }) {
   );
 }
 
-export function TournamentBracket({
-  bracket,
-  names,
-  matches,
-  avatars,
-  seeds,
-}: Props) {
-  const vm = buildBracketViewModel(bracket, names, matches, {
-    avatars,
-    seeds,
-  });
+export function TournamentBracket(props: Props) {
+  const { names, matches, avatars, seeds } = props;
+  const vm =
+    "graph" in props && props.graph
+      ? buildBracketViewModelV2(props.graph, names, matches, {
+          avatars,
+          seeds,
+        })
+      : buildBracketViewModel(props.bracket!, names, matches, {
+          avatars,
+          seeds,
+        });
 
   return (
     <div className="tournament-bracket stack">

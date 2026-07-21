@@ -1,9 +1,9 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-21  
-**Product version:** 1.10.0  
-Current phase: Working tournaments + Challonge-like bracket UX  
-Next step: merge tournament branch → main
+**Product version:** 1.10.0 (bracket V2 in tree; proposed next release **1.11.0**)  
+Current phase: Challonge-inspired match-centric brackets (V2) — Stages 1–3 done; Stage 4 correction deferred (D13)  
+Next step: optional release 1.11.0; then void/compensate when stats reverse exists
 
 ## Progress
 
@@ -15,7 +15,7 @@ Next step: merge tournament branch → main
 | 3 Match domain | done | 6/6 |
 | 4 Judge concurrency | done | 5/5 |
 | 5 Stats / Rankings | done | 4/4 |
-| 6 Tournaments | done | 9/9 + compact SE bye + roster/notif (v1.10.0) |
+| 6 Tournaments | done | 9/9 + V2 domain/API/web (unreleased) |
 | 7 Teams & Notifications | done | 4/4 (+ tournament notifs) |
 | 8 Onboarding / Help | done | 4/4 |
 | 9 Hardening | partial | CI + OpenAPI; load test; backup rehearsal; optional: security / mutation / observability |
@@ -35,8 +35,14 @@ Next step: merge tournament branch → main
 
 ## Step log (latest)
 
+### Challonge-inspired bracket V2 — Stages 1–3 done (unreleased)
+- Domain: `packages/shared/src/bracket-v2/`; V1 parallel + characterization
+- API: new generate → V2; V1 read/play; `bracket_state_version`; `tournament_bracket_match_id`
+- Web: V2 VM + V1 legacy display via `parseBracketJson`
+- Stage 4: correction **stopped** — ADR D13 (no stats compensate)
+
 ### Roster / notifications / compact SE — done (v1.10.0)
-- Invite statuses + field clear; profile badge; Актуальные; N=5 → 1 bye
+- Invite statuses + field clear; profile badge; Актуальные; N=5 → 1 bye (V1 only)
 
 ### Bracket connectors rewrite — done (v1.9.2)
 - Winner SVG curve → next card; loser ↓ (LB) / ✕ (out)

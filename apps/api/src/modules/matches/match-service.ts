@@ -43,26 +43,34 @@ export class MatchService {
     this.onTournamentMatchFinished = hook;
   }
 
-  async createMatch(input: {
-    createdByUserId: string;
-    title: string;
-    format: "1v1" | "2v2";
-    pointsToWin?: number;
-    mercyEnabled?: boolean;
-    mercyPoints?: number | null;
-    kind?: "standalone" | "tournament" | "tutorial";
-    tournamentId?: string;
-    tournamentSlotId?: string;
-    participants: Array<{
-      side: Side;
-      userId?: string;
-      guestFirstName?: string;
-      guestLastName?: string;
-      guestAvatarKey?: string;
-      isTutorialActor?: boolean;
-    }>;
-  }) {
-    const [match] = await this.db
+  /**
+   * Create a match. Pass `db` to run inside an external transaction
+   * (same executor as bracket materialize).
+   */
+  async createMatch(
+    input: {
+      createdByUserId: string;
+      title: string;
+      format: "1v1" | "2v2";
+      pointsToWin?: number;
+      mercyEnabled?: boolean;
+      mercyPoints?: number | null;
+      kind?: "standalone" | "tournament" | "tutorial";
+      tournamentId?: string;
+      tournamentSlotId?: string;
+      tournamentBracketMatchId?: string;
+      participants: Array<{
+        side: Side;
+        userId?: string;
+        guestFirstName?: string;
+        guestLastName?: string;
+        guestAvatarKey?: string;
+        isTutorialActor?: boolean;
+      }>;
+    },
+    db: Db = this.db,
+  ) {
+    const [match] = await db
       .insert(matches)
       .values({
         title: input.title,
@@ -74,13 +82,14 @@ export class MatchService {
         createdByUserId: input.createdByUserId,
         tournamentId: input.tournamentId,
         tournamentSlotId: input.tournamentSlotId,
+        tournamentBracketMatchId: input.tournamentBracketMatchId,
         status: "waiting",
       })
       .returning();
 
     for (const p of input.participants) {
       const isGuest = !p.userId && (p.guestFirstName || p.guestLastName);
-      await this.db.insert(matchParticipants).values({
+      await db.insert(matchParticipants).values({
         matchId: match!.id,
         side: p.side,
         userId: p.userId,
@@ -92,15 +101,15 @@ export class MatchService {
         isTutorialActor: p.isTutorialActor ?? false,
       });
     }
-    return this.getMatch(match!.id);
+    return this.getMatch(match!.id, db);
   }
 
-  async getMatch(matchId: string) {
-    const match = await this.db.query.matches.findFirst({
+  async getMatch(matchId: string, db: Db = this.db) {
+    const match = await db.query.matches.findFirst({
       where: eq(matches.id, matchId),
     });
     if (!match) return null;
-    const participants = await this.db.query.matchParticipants.findMany({
+    const participants = await db.query.matchParticipants.findMany({
       where: eq(matchParticipants.matchId, matchId),
     });
     const userIds = participants

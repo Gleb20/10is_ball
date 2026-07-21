@@ -1,5 +1,35 @@
 # Dev Changelog
 
+## 2026-07-21 — Challonge-inspired bracket V2 (domain + API + web; no product version bump)
+
+### Shared (`bracket-v2/`)
+- Match-centric `schemaVersion: 2` types; SE/DE generate; tri-state `resolveSource` + bye fixpoint
+- GF2 = W(GF1)×L(GF1) + `activationCondition` (LB champ); derived `inactive`
+- Golden DE 4/8/16; property N=3..64; V1 characterization / `test.todo` (not red suite)
+- Facade: `tournament-bracket-v1.ts` + re-exports; `isBracketGraphComplete` (V2)
+
+### API
+- Columns: `bracket_state_version`, `third_place_enabled`, `tournament_bracket_match_id` (+ unique index)
+- New generate → V2; V1 brackets still start/advance
+- `createMatch` accepts optional `db` executor; optimistic `bracket_state_version`
+- Parse errors: `BRACKET_MISSING` / `CORRUPT` / `UNSUPPORTED` / `VERSION_CONFLICT`
+- PGlite: no wrapping `db.transaction` (deadlock); version check + sequential materialize
+
+### Web
+- `buildBracketViewModelV2` + V1 path retained; Detail page via `parseBracketJson`
+- `liveMatchVersusLabel` supports V2 node id in `tournamentSlotId`
+
+### Docs
+- ADR D12 (V2 topology), D13 (correction deferred — no stats compensate yet)
+- Proposed next product release when shipping: **1.11.0** (b — rewrite under tournaments)
+
+### How to verify
+```bash
+pnpm --filter @tab10/shared test && pnpm --filter @tab10/shared typecheck
+PGLITE_DATA_DIR= pnpm --filter @tab10/api test -- src/domain.integration.test.ts -t "AT-TRN|INT_trn"
+pnpm --filter @tab10/web test -- src/bracketViewModel.test.ts
+```
+
 ## 2026-07-21 — Roster / notifications / compact SE (v1.10.0)
 
 ### Domain

@@ -1,6 +1,11 @@
 import {
+  buildDestinationIndex,
+  deriveBracketMatchState,
+  getMatchSides,
   listMatchPairs,
   type Bracket,
+  type BracketGraphV2,
+  type BracketMatchNode,
   type BracketSlot,
   type MatchPair,
 } from "@tab10/shared";
@@ -342,18 +347,47 @@ function wireFeedsToCardKeys(
 export function liveMatchVersusLabel(
   match: {
     tournamentSlotId?: string | null;
+    tournamentBracketMatchId?: string | null;
     title?: string;
   },
-  bracket: Bracket | null | undefined,
+  bracket: Bracket | BracketGraphV2 | null | undefined,
   names: Map<string, string>,
 ): string {
+  if (bracket && "schemaVersion" in bracket && bracket.schemaVersion === 2) {
+    const nodeId =
+      match.tournamentBracketMatchId ?? match.tournamentSlotId ?? null;
+    if (nodeId) {
+      const node = bracket.matches.find((m) => m.id === nodeId);
+      if (node) {
+        const sides = getMatchSides(bracket, node);
+        const nameA =
+          sides.a.kind === "resolved"
+            ? nameFor(sides.a.participantId, names)
+            : sides.a.kind === "structurally_empty"
+              ? "BYE"
+              : "—";
+        const nameB =
+          sides.b.kind === "resolved"
+            ? nameFor(sides.b.participantId, names)
+            : sides.b.kind === "structurally_empty"
+              ? "BYE"
+              : "—";
+        if (nameA !== "—" || nameB !== "—") {
+          return `${nameA} vs ${nameB}`;
+        }
+      }
+    }
+    return match.title?.trim() || "Матч";
+  }
+
   const slotIds = String(match.tournamentSlotId ?? "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  if (bracket && slotIds.length >= 2) {
-    const a = bracket.slots.find((s) => s.id === slotIds[0]);
-    const b = bracket.slots.find((s) => s.id === slotIds[1]);
+  const v1 = bracket as Bracket | null | undefined;
+  if (v1?.slots && slotIds.length >= 2) {
+    const a = v1.slots.find((s) => s.id === slotIds[0]);
+    const b = v1.slots.find((s) => s.id === slotIds[1]);
     const nameA = a?.participantId
       ? nameFor(a.participantId, names)
       : a?.isBye
@@ -452,6 +486,244 @@ export function buildBracketViewModel(
   }
 
   const championId = bracket.championParticipantId ?? null;
+  return {
+    bands,
+    championName: championId ? nameFor(championId, nameMap) : null,
+    championAvatarKey: championId
+      ? avatarFor(championId, avatarMap)
+      : null,
+  };
+}
+
+function stageToPairSide(
+  stage: BracketMatchNode["stage"],
+): MatchPair["side"] {
+  switch (stage) {
+    case "winners":
+      return "main";
+    case "losers":
+      return "losers";
+    case "grand_final":
+      return "final";
+    case "grand_final_reset":
+      return "final_reset";
+    case "third_place":
+      return "third_place";
+    default:
+      return "main";
+  }
+}
+
+function resolveV2Fate(
+  nodeId: string,
+  isWinner: boolean,
+  decided: boolean,
+  dest: ReturnType<typeof buildDestinationIndex>,
+): PlayerFate {
+  if (!decided) return null;
+  if (isWinner) {
+    return dest.winners.has(nodeId) ? "advance" : null;
+  }
+  return dest.losers.has(nodeId) ? "drop" : "eliminated";
+}
+
+function cardFromV2Node(
+  node: BracketMatchNode,
+  graph: BracketGraphV2,
+  names: Map<string, string>,
+  avatars: Map<string, string | null>,
+  seeds: Map<string, number | null>,
+  matchesById: Map<string, BracketMatchLike>,
+  dest: ReturnType<typeof buildDestinationIndex>,
+): BracketCard | null {
+  const state = deriveBracketMatchState(graph, node.id);
+  if (
+    state === "inactive" ||
+    state === "structurally_empty" ||
+    state === "cancelled"
+  ) {
+    return null;
+  }
+
+  const sides = getMatchSides(graph, node);
+  const matchId = node.actualMatchId;
+  const match = matchId ? matchesById.get(matchId) : undefined;
+  const status = match?.status ?? null;
+  const scoreLabel =
+    match &&
+    (status === "finished" ||
+      status === "stopped" ||
+      status === "in_progress" ||
+      status === "pending_confirmation")
+      ? `${match.scoreA ?? 0}:${match.scoreB ?? 0}`
+      : null;
+
+  const aEmpty = sides.a.kind === "structurally_empty";
+  const bEmpty = sides.b.kind === "structurally_empty";
+  const aId = sides.a.kind === "resolved" ? sides.a.participantId : null;
+  const bId = sides.b.kind === "resolved" ? sides.b.participantId : null;
+
+  let cta: BracketCard["cta"] = "pending";
+  let autoAdvanceName: string | null = null;
+  if (state === "auto_advance_eligible" || (aEmpty !== bEmpty && !matchId)) {
+    cta = "bye";
+    const named = aEmpty ? bId : aId;
+    autoAdvanceName = named ? nameFor(named, names) : null;
+  } else if (matchId && (status === "finished" || status === "stopped")) {
+    cta = "open";
+  } else if (matchId) {
+    cta = "judge";
+  } else if (state === "ready") {
+    cta = "pending";
+  }
+
+  const winnerId = node.winnerParticipantId;
+  const decided =
+    Boolean(winnerId) || cta === "bye" || cta === "open" || state === "completed";
+  const aWinner = Boolean(winnerId && aId === winnerId);
+  const bWinner = Boolean(winnerId && bId === winnerId);
+  const aAdvanceBye = cta === "bye" && !aEmpty && Boolean(aId);
+  const bAdvanceBye = cta === "bye" && !bEmpty && Boolean(bId);
+  const slotAIsWinner = aWinner || aAdvanceBye;
+  const slotBIsWinner = bWinner || bAdvanceBye;
+
+  let winnerSide: BracketCard["winnerSide"] = null;
+  if (slotAIsWinner) winnerSide = "a";
+  else if (slotBIsWinner) winnerSide = "b";
+
+  const pairSide = stageToPairSide(node.stage);
+  const winnerDest = dest.winners.get(node.id);
+
+  return {
+    key: node.id,
+    side: pairSide,
+    round: node.roundIndex,
+    matchId,
+    status,
+    scoreLabel,
+    slotA: {
+      slotId: `${node.id}:a`,
+      participantId: aId,
+      displayName: aEmpty ? "—" : nameFor(aId, names),
+      avatarKey: aEmpty ? null : avatarFor(aId, avatars),
+      seed: seedFor(aId, seeds),
+      isBye: aEmpty,
+      isWinner: slotAIsWinner,
+      fate: resolveV2Fate(node.id, slotAIsWinner, decided, dest),
+    },
+    slotB: {
+      slotId: `${node.id}:b`,
+      participantId: bId,
+      displayName: bEmpty ? "—" : nameFor(bId, names),
+      avatarKey: bEmpty ? null : avatarFor(bId, avatars),
+      seed: seedFor(bId, seeds),
+      isBye: bEmpty,
+      isWinner: slotBIsWinner,
+      fate: resolveV2Fate(node.id, slotBIsWinner, decided, dest),
+    },
+    cta,
+    autoAdvanceName,
+    pairIndex: node.orderInRound,
+    pairsInRound: 1,
+    decided,
+    feedsToCardKey: winnerDest?.bracketMatchId ?? null,
+    winnerSide,
+  };
+}
+
+function wireV2FeedsInBand(columns: BracketRoundColumn[]): BracketRoundColumn[] {
+  const keys = new Set(
+    columns.flatMap((c) => c.cards.map((card) => card.key)),
+  );
+  return columns.map((col) => ({
+    ...col,
+    cards: col.cards.map((card) => {
+      const inBand = Boolean(
+        card.feedsToCardKey && keys.has(card.feedsToCardKey),
+      );
+      return {
+        ...card,
+        feedsToCardKey: inBand ? card.feedsToCardKey : null,
+        slotA:
+          card.slotA.fate === "advance" &&
+          card.winnerSide === "a" &&
+          !inBand
+            ? { ...card.slotA, fate: null }
+            : card.slotA,
+        slotB:
+          card.slotB.fate === "advance" &&
+          card.winnerSide === "b" &&
+          !inBand
+            ? { ...card.slotB, fate: null }
+            : card.slotB,
+      };
+    }),
+  }));
+}
+
+/** Match-centric V2 view-model (Challonge-inspired topology). */
+export function buildBracketViewModelV2(
+  graph: BracketGraphV2,
+  names: Map<string, string> | Record<string, string>,
+  matches: BracketMatchLike[],
+  opts?: {
+    avatars?: Map<string, string | null> | Record<string, string | null>;
+    seeds?: Map<string, number | null> | Record<string, number | null>;
+  },
+): BracketViewModel {
+  const nameMap =
+    names instanceof Map ? names : new Map(Object.entries(names));
+  const avatarMap =
+    opts?.avatars instanceof Map
+      ? opts.avatars
+      : new Map(Object.entries(opts?.avatars ?? {}));
+  const seedMap =
+    opts?.seeds instanceof Map
+      ? opts.seeds
+      : new Map(Object.entries(opts?.seeds ?? {}));
+  const matchesById = new Map(matches.map((m) => [m.id, m]));
+  const dest = buildDestinationIndex(graph);
+
+  const cards = graph.matches
+    .map((n) =>
+      cardFromV2Node(
+        n,
+        graph,
+        nameMap,
+        avatarMap,
+        seedMap,
+        matchesById,
+        dest,
+      ),
+    )
+    .filter((c): c is BracketCard => c != null);
+
+  const bands: BracketBand[] = [];
+  const size = graph.bracketSize;
+
+  const mainCols = wireV2FeedsInBand(columnsForSide("main", cards, size));
+  if (mainCols.length) {
+    bands.push({ id: "winners", title: "Победители", columns: mainCols });
+  }
+  const loserCols = wireV2FeedsInBand(columnsForSide("losers", cards, size));
+  if (loserCols.length) {
+    bands.push({ id: "losers", title: "Проигравшие", columns: loserCols });
+  }
+  const gfCols = wireV2FeedsInBand([
+    ...columnsForSide("final", cards, size),
+    ...columnsForSide("final_reset", cards, size),
+  ]);
+  if (gfCols.length) {
+    bands.push({ id: "grand_final", title: "Гранд-финал", columns: gfCols });
+  }
+  const thirdCols = wireV2FeedsInBand(
+    columnsForSide("third_place", cards, size),
+  );
+  if (thirdCols.length) {
+    bands.push({ id: "third", title: "За 3-е место", columns: thirdCols });
+  }
+
+  const championId = graph.championParticipantId ?? null;
   return {
     bands,
     championName: championId ? nameFor(championId, nameMap) : null,

@@ -1202,6 +1202,10 @@ function messageFor(code: string): string {
     TOO_MANY: "Максимум 64 участника",
     BRACKET_NOT_EDITABLE: "Сетку нельзя менять",
     BRACKET_REGEN_REQUIRED: "Нужна перегенерация сетки",
+    BRACKET_MISSING: "Сетка отсутствует",
+    BRACKET_CORRUPT: "Сетка повреждена",
+    BRACKET_UNSUPPORTED: "Неподдерживаемая версия сетки",
+    BRACKET_VERSION_CONFLICT: "Конфликт версии сетки",
     TOURNAMENT_ALREADY_STARTED: "Турнир уже стартовал",
     PLAYER_ALREADY_IN_ACTIVE_MATCH: "Игрок уже в активном матче",
     EXPIRED: "Приглашение истекло",
@@ -1224,7 +1228,9 @@ function sendError(reply: FastifyReply, e: unknown) {
       ? 404
       : code === "FORBIDDEN"
         ? 403
-        : code === "VERSION_CONFLICT" || code === "JUDGE_TAKEN"
+        : code === "VERSION_CONFLICT" ||
+            code === "JUDGE_TAKEN" ||
+            code === "BRACKET_VERSION_CONFLICT"
           ? 409
           : 400;
   const details: Record<string, unknown> = {};

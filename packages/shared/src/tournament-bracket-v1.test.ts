@@ -8,7 +8,7 @@ import {
   listMatchPairs,
   pairNeedsMatch,
   seedParticipants,
-} from "./tournament-bracket.js";
+} from "./tournament-bracket-v1.js";
 
 describe("REQ_TRN__bracket_generation", () => {
   it("AT-TRN-005: seeds by wins descending", () => {

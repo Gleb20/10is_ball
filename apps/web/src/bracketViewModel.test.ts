@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyBracketResult,
   applyMatchResult,
   generateDoubleEliminationBracket,
   generateSingleEliminationBracket,
+  generateSingleEliminationV2,
+  getMatchSides,
   listMatchPairs,
   type Bracket,
 } from "@tab10/shared";
 import {
   buildBracketViewModel,
+  buildBracketViewModelV2,
   challongeRoundLabel,
   liveMatchVersusLabel,
   resolvePlayerFate,
@@ -205,5 +209,84 @@ describe("buildBracketViewModel", () => {
     // SE size 4: R0 losers go to third-place → drop, not eliminated
     expect(card!.slotB.fate).toBe("drop");
     expect(card!.feedsToCardKey).toBeTruthy();
+  });
+});
+
+describe("buildBracketViewModelV2", () => {
+  it("renders SE V2 seed names and winners band", () => {
+    const graph = generateSingleEliminationV2({
+      seedOrder: ["p1", "p2", "p3", "p4"],
+      thirdPlaceEnabled: true,
+    });
+    const names = new Map([
+      ["p1", "A"],
+      ["p2", "B"],
+      ["p3", "C"],
+      ["p4", "D"],
+    ]);
+    const vm = buildBracketViewModelV2(graph, names, []);
+    expect(vm.bands.some((b) => b.id === "winners")).toBe(true);
+    const namesOnCards = vm.bands
+      .flatMap((b) => b.columns)
+      .flatMap((c) => c.cards)
+      .flatMap((c) => [c.slotA.displayName, c.slotB.displayName]);
+    expect(namesOnCards).toEqual(expect.arrayContaining(["A", "B", "C", "D"]));
+  });
+
+  it("wires feedsToCardKey after applyBracketResult", () => {
+    let graph = generateSingleEliminationV2({
+      seedOrder: ["p1", "p2", "p3", "p4"],
+      thirdPlaceEnabled: false,
+    });
+    const sides = getMatchSides(
+      graph,
+      graph.matches.find((m) => m.id === "W0_0")!,
+    );
+    expect(sides.a.kind).toBe("resolved");
+    expect(sides.b.kind).toBe("resolved");
+    const a = (sides.a as { participantId: string }).participantId;
+    const b = (sides.b as { participantId: string }).participantId;
+    graph = applyBracketResult(graph, {
+      bracketMatchId: "W0_0",
+      winnerParticipantId: a,
+      loserParticipantId: b,
+      actualMatchId: "m1",
+    });
+    const names = new Map([
+      ["p1", "A"],
+      ["p2", "B"],
+      ["p3", "C"],
+      ["p4", "D"],
+    ]);
+    const vm = buildBracketViewModelV2(graph, names, [
+      { id: "m1", status: "finished", scoreA: 5, scoreB: 2 },
+    ]);
+    const card = vm.bands
+      .flatMap((b) => b.columns)
+      .flatMap((c) => c.cards)
+      .find((c) => c.key === "W0_0");
+    expect(card?.slotA.isWinner).toBe(true);
+    expect(card?.slotA.fate).toBe("advance");
+    expect(card?.slotB.fate).toBe("eliminated");
+    expect(card?.feedsToCardKey).toBe("W1_0");
+  });
+
+  it("liveMatchVersusLabel resolves V2 node id", () => {
+    const graph = generateSingleEliminationV2({
+      seedOrder: ["p1", "p2", "p3", "p4"],
+      thirdPlaceEnabled: false,
+    });
+    const names = new Map([
+      ["p1", "A"],
+      ["p2", "B"],
+      ["p3", "C"],
+      ["p4", "D"],
+    ]);
+    const label = liveMatchVersusLabel(
+      { tournamentSlotId: "W0_0" },
+      graph,
+      names,
+    );
+    expect(label).toMatch(/ vs /);
   });
 });

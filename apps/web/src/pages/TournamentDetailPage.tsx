@@ -7,7 +7,8 @@ import { api } from "../api";
 import { useAuth } from "../auth";
 import { UserPicker } from "../components/UserPicker";
 import { TournamentBracket } from "../components/TournamentBracket";
-import type { Bracket } from "@tab10/shared";
+import type { Bracket, BracketGraphV2 } from "@tab10/shared";
+import { parseBracketJson } from "@tab10/shared";
 import { liveMatchVersusLabel } from "../bracketViewModel";
 import { statusLabel } from "../statusLabels";
 
@@ -113,7 +114,16 @@ export function TournamentDetailPage() {
     return m;
   }, [participants]);
 
-  const bracket = tournament?.bracketJson as Bracket | null | undefined;
+  const bracketParsed = parseBracketJson(tournament?.bracketJson);
+  const bracketV1 =
+    bracketParsed.kind === "v1"
+      ? (bracketParsed.raw as Bracket)
+      : null;
+  const bracketV2 =
+    bracketParsed.kind === "v2" ? bracketParsed.graph : null;
+  const bracketForLabels: Bracket | BracketGraphV2 | null =
+    bracketV2 ?? bracketV1;
+  const hasBracket = Boolean(bracketV1?.slots || bracketV2);
   const matches = (tournament?.matches as MatchRow[]) ?? [];
   const status = String(tournament?.status ?? "");
   const canEditRoster =
@@ -407,7 +417,7 @@ export function TournamentDetailPage() {
               <div className="card stack">
                 <h2 className="section-title">Текущие матчи</h2>
                 {liveMatches.map((m) => {
-                  const vs = liveMatchVersusLabel(m, bracket, nameMap);
+                  const vs = liveMatchVersusLabel(m, bracketForLabels, nameMap);
                   const showScore =
                     m.status === "in_progress" ||
                     m.status === "pending_confirmation";
@@ -439,18 +449,33 @@ export function TournamentDetailPage() {
               </div>
             ) : null}
 
-            {bracket?.slots ? (
+            {hasBracket ? (
               <div className="card stack">
                 <h2 className="section-title">
-                  Сетка{bracket.size ? ` (${bracket.size})` : ""}
+                  Сетка
+                  {bracketV2
+                    ? ` (${bracketV2.participantCount})`
+                    : bracketV1?.size
+                      ? ` (${bracketV1.size})`
+                      : ""}
                 </h2>
-                <TournamentBracket
-                  bracket={bracket}
-                  names={nameMap}
-                  matches={matches}
-                  avatars={avatarMap}
-                  seeds={seedMap}
-                />
+                {bracketV2 ? (
+                  <TournamentBracket
+                    graph={bracketV2}
+                    names={nameMap}
+                    matches={matches}
+                    avatars={avatarMap}
+                    seeds={seedMap}
+                  />
+                ) : bracketV1 ? (
+                  <TournamentBracket
+                    bracket={bracketV1}
+                    names={nameMap}
+                    matches={matches}
+                    avatars={avatarMap}
+                    seeds={seedMap}
+                  />
+                ) : null}
               </div>
             ) : null}
 
