@@ -75,6 +75,7 @@ export type BracketViewModel = {
   bands: BracketBand[];
   championName: string | null;
   championAvatarKey: string | null;
+  constructionAlgorithm?: "compact" | "power_of_two" | "legacy";
 };
 
 function nameFor(
@@ -699,7 +700,10 @@ export function buildBracketViewModelV2(
     .filter((c): c is BracketCard => c != null);
 
   const bands: BracketBand[] = [];
-  const size = graph.bracketSize;
+  const size =
+    graph.constructionAlgorithm === "power_of_two"
+      ? graph.bracketSize
+      : graph.participantCount;
 
   const mainCols = wireV2FeedsInBand(columnsForSide("main", cards, size));
   if (mainCols.length) {
@@ -730,5 +734,6 @@ export function buildBracketViewModelV2(
     championAvatarKey: championId
       ? avatarFor(championId, avatarMap)
       : null,
+    constructionAlgorithm: graph.constructionAlgorithm,
   };
 }

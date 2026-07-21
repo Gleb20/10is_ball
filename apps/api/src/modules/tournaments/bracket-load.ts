@@ -1,4 +1,5 @@
 import {
+  detectStoredConstructionAlgorithm,
   parseBracketJson,
   type Bracket,
   type BracketGraphV2,
@@ -36,15 +37,19 @@ export function loadTournamentBracket(raw: unknown): LoadedBracket {
   }
 }
 
-/** Swap seed participants between two V2 match nodes (pre-start edit). */
-export function swapV2MatchSeeds(
+/**
+ * Swap two seed participants referenced by V2 match node ids (pre-start edit).
+ * Returns updated seedOrder; caller must regenerate the graph.
+ */
+export function swapSeedOrderByMatchIds(
   graph: BracketGraphV2,
+  seedOrder: string[],
   matchIdA: string,
   matchIdB: string,
-): BracketGraphV2 {
+): string[] {
   const a = graph.matches.find((m) => m.id === matchIdA);
   const b = graph.matches.find((m) => m.id === matchIdB);
-  if (!a || !b) return graph;
+  if (!a || !b) return seedOrder;
 
   const seedsA: number[] = [];
   const seedsB: number[] = [];
@@ -54,16 +59,40 @@ export function swapV2MatchSeeds(
   for (const src of [b.sourceA, b.sourceB]) {
     if (src.type === "seed") seedsB.push(src.seed);
   }
-  if (seedsA.length === 0 || seedsB.length === 0) return graph;
+  if (seedsA.length === 0 || seedsB.length === 0) return seedOrder;
 
-  const seedOrder = [...graph.seedOrder];
+  const next = [...seedOrder];
   const i = seedsA[0]! - 1;
   const j = seedsB[0]! - 1;
-  if (i < 0 || j < 0 || i >= seedOrder.length || j >= seedOrder.length) {
-    return graph;
+  if (i < 0 || j < 0 || i >= next.length || j >= next.length) {
+    return seedOrder;
   }
-  const tmp = seedOrder[i]!;
-  seedOrder[i] = seedOrder[j]!;
-  seedOrder[j] = tmp;
-  return { ...graph, seedOrder };
+  const tmp = next[i]!;
+  next[i] = next[j]!;
+  next[j] = tmp;
+  return next;
+}
+
+export function readTournamentConstructionAlgorithm(input: {
+  bracketJson: unknown;
+  columnValue: string | null;
+}): {
+  algorithm: string | null;
+  viewLabel: "compact" | "power_of_two" | "legacy" | null;
+} {
+  const detected = detectStoredConstructionAlgorithm(input.bracketJson);
+  if (detected.kind === "algorithm") {
+    return {
+      algorithm:
+        detected.algorithm === "legacy" ? null : detected.algorithm,
+      viewLabel: detected.algorithm,
+    };
+  }
+  if (
+    input.columnValue === "compact" ||
+    input.columnValue === "power_of_two"
+  ) {
+    return { algorithm: input.columnValue, viewLabel: input.columnValue };
+  }
+  return { algorithm: null, viewLabel: null };
 }

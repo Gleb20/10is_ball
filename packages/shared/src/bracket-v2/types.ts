@@ -1,8 +1,10 @@
 /**
- * Challonge-inspired match-centric tournament bracket (schemaVersion 2).
+ * Match-centric tournament bracket (schemaVersion 2).
  * Exact Challonge edge parity is not claimed without export/API verification.
  * Product diff: double elimination has no placement/third-place matches.
  */
+
+import type { BracketConstructionAlgorithm } from "./algorithm.js";
 
 export type BracketStage =
   | "winners"
@@ -56,17 +58,43 @@ export type BracketMatchNode = {
   activationCondition: ActivationCondition;
 };
 
-export type BracketGraphV2 = {
+type BracketGraphV2Base = {
   schemaVersion: 2;
   format: "single_elimination" | "double_elimination";
   participantCount: number;
-  bracketSize: number;
   seedOrder: string[];
   thirdPlaceEnabled: boolean;
   matches: BracketMatchNode[];
   championParticipantId: string | null;
   runnerUpParticipantId: string | null;
   thirdPlaceParticipantId: string | null;
+};
+
+/** Compact: no pad-to-Po2; bracketSize must be absent. */
+export type CompactBracketGraphV2 = BracketGraphV2Base & {
+  constructionAlgorithm: "compact";
+  bracketSize?: undefined;
+};
+
+/** Power-of-two: bracketSize required = nextPowerOfTwo(N). */
+export type PowerOfTwoBracketGraphV2 = BracketGraphV2Base & {
+  constructionAlgorithm: "power_of_two";
+  bracketSize: number;
+};
+
+export type BracketGraphV2 = CompactBracketGraphV2 | PowerOfTwoBracketGraphV2;
+
+export type CompactEntry = {
+  source: ParticipantSource;
+  receivedByeInPreviousRound: boolean;
+  stableOrder: number;
+};
+
+export type GenerateBracketInput = {
+  seedOrder: string[];
+  format: "single_elimination" | "double_elimination";
+  constructionAlgorithm: BracketConstructionAlgorithm;
+  thirdPlaceEnabled: boolean;
 };
 
 export type Side = "A" | "B";

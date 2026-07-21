@@ -601,10 +601,12 @@ describe("match and judge integration", () => {
       cookies: { tab10_session: userACookie },
     });
     expect(bracket.statusCode).toBe(200);
-    // organizerParticipates default + 3 added = 4
+    // organizerParticipates default + 3 added = 4; default algorithm = compact
     expect(bracket.json().bracket.schemaVersion).toBe(2);
     expect(bracket.json().bracket.participantCount).toBe(4);
-    expect(bracket.json().bracket.bracketSize).toBe(4);
+    expect(bracket.json().bracket.constructionAlgorithm).toBe("compact");
+    expect(bracket.json().bracket.bracketSize).toBeUndefined();
+    expect(bracket.json().constructionAlgorithm).toBe("compact");
   });
 
   it("create with organizerParticipates includes organizer + displayName", async () => {
@@ -911,10 +913,13 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/tournaments/${id}/bracket`,
       cookies: { tab10_session: userACookie },
+      payload: { constructionAlgorithm: "power_of_two" },
     });
     expect(gen.statusCode).toBe(200);
     expect(gen.json().bracket.format).toBe("double_elimination");
     expect(gen.json().bracket.schemaVersion).toBe(2);
+    expect(gen.json().bracket.constructionAlgorithm).toBe("power_of_two");
+    expect(gen.json().bracket.bracketSize).toBe(4);
     expect(
       (gen.json().bracket.matches as Array<{ stage: string }>).some(
         (m) => m.stage === "losers",
@@ -979,6 +984,214 @@ describe("match and judge integration", () => {
     expect(tut.statusCode).toBe(200);
     expect(tut.json().match.kind).toBe("tutorial");
   });
+
+  async function createSeTournamentWithN(n: number, title: string) {
+    const t = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title,
+        format: "single_elimination",
+        organizerParticipates: false,
+      },
+    });
+    const id = t.json().tournament.id as string;
+    for (let i = 0; i < n; i += 1) {
+      const u = await app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: {
+          email: `${title}-${i}@algo.local`,
+          firstName: "P",
+          lastName: `L${i}`,
+        },
+      });
+      await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${id}/participants`,
+        cookies: { tab10_session: userACookie },
+        payload: { userId: u.json().user.id },
+      });
+    }
+    return id;
+  }
+
+  it("construction algorithm: defaults, preserve, switch, DE reject, unknown", async () => {
+    // 1. First generate without body → compact
+    const id1 = await createSeTournamentWithN(5, "algo-def");
+    const g1 = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id1}/bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(g1.statusCode).toBe(200);
+    expect(g1.json().constructionAlgorithm).toBe("compact");
+    expect(g1.json().bracket.constructionAlgorithm).toBe("compact");
+    const compactIds = (g1.json().bracket.matches as Array<{ id: string }>).map(
+      (m) => m.id,
+    );
+    expect(compactIds).toContain("W0_2");
+    expect(g1.json().bracket.matches.find((m: { id: string }) => m.id === "W0_2")
+      .sourceB).toEqual({ type: "empty" });
+
+    // 2. First generate with power_of_two
+    const id2 = await createSeTournamentWithN(5, "algo-po2");
+    const g2 = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id2}/bracket`,
+      cookies: { tab10_session: userACookie },
+      payload: { constructionAlgorithm: "power_of_two" },
+    });
+    expect(g2.statusCode).toBe(200);
+    expect(g2.json().constructionAlgorithm).toBe("power_of_two");
+    expect(g2.json().bracket.bracketSize).toBe(8);
+
+    // 3. Regen Po2 without body → stays Po2
+    const g2b = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id2}/bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(g2b.statusCode).toBe(200);
+    expect(g2b.json().constructionAlgorithm).toBe("power_of_two");
+
+    // 4. Regen compact without body → stays compact
+    const g1b = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id1}/bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(g1b.statusCode).toBe(200);
+    expect(g1b.json().constructionAlgorithm).toBe("compact");
+
+    // 5. Explicit switch Po2 → compact
+    const g2c = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id2}/bracket`,
+      cookies: { tab10_session: userACookie },
+      payload: { constructionAlgorithm: "compact" },
+    });
+    expect(g2c.statusCode).toBe(200);
+    expect(g2c.json().constructionAlgorithm).toBe("compact");
+    expect(g2c.json().bracket.bracketSize).toBeUndefined();
+
+    // 6. After start — change forbidden
+    const start = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id1}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(start.statusCode).toBe(200);
+    // compact N=5 start: ready matches W0_0, W0_1 only (not W0_2 bye)
+    const matches = start.json().tournament.matches as Array<{
+      tournamentBracketMatchId?: string;
+      tournamentSlotId?: string;
+    }>;
+    const matchNodeIds = matches.map(
+      (m) => m.tournamentBracketMatchId ?? m.tournamentSlotId,
+    );
+    expect(matchNodeIds).toContain("W0_0");
+    expect(matchNodeIds).toContain("W0_1");
+    expect(matchNodeIds).not.toContain("W0_2");
+
+    const afterStart = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id1}/bracket`,
+      cookies: { tab10_session: userACookie },
+      payload: { constructionAlgorithm: "power_of_two" },
+    });
+    expect(afterStart.statusCode).toBe(400);
+    expect(afterStart.json().code).toBe("INVALID_STATUS");
+
+    // 7. Unknown algorithm
+    const id3 = await createSeTournamentWithN(3, "algo-bad");
+    const bad = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id3}/bracket`,
+      cookies: { tab10_session: userACookie },
+      payload: { constructionAlgorithm: "legacy" },
+    });
+    expect(bad.statusCode).toBe(400);
+    expect(bad.json().code).toBe("INVALID_BRACKET_CONSTRUCTION_ALGORITHM");
+
+    // 8. Compact + DE rejected
+    const de = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "algo-de",
+        format: "double_elimination",
+        organizerParticipates: false,
+      },
+    });
+    const deId = de.json().tournament.id as string;
+    for (let i = 0; i < 4; i += 1) {
+      const u = await app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: {
+          email: `de-c-${i}@algo.local`,
+          firstName: "P",
+          lastName: `L${i}`,
+        },
+      });
+      await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${deId}/participants`,
+        cookies: { tab10_session: userACookie },
+        payload: { userId: u.json().user.id },
+      });
+    }
+    const deCompact = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${deId}/bracket`,
+      cookies: { tab10_session: userACookie },
+      payload: { constructionAlgorithm: "compact" },
+    });
+    expect(deCompact.statusCode).toBe(400);
+    expect(deCompact.json().code).toBe("COMPACT_DOUBLE_ELIMINATION_UNSUPPORTED");
+
+    // 9. Column + JSON atomic (same response)
+    const id4 = await createSeTournamentWithN(3, "algo-atom");
+    const g4 = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id4}/bracket`,
+      cookies: { tab10_session: userACookie },
+      payload: { constructionAlgorithm: "power_of_two" },
+    });
+    expect(g4.json().constructionAlgorithm).toBe(
+      g4.json().bracket.constructionAlgorithm,
+    );
+    expect(g4.json().bracketConstructionAlgorithm).toBe("power_of_two");
+
+    // Po2 N=5 start materializes W0_1 (4v5) and bye-advanced W1 paths — not bye nodes
+    const id5 = await createSeTournamentWithN(5, "algo-po2-mat");
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id5}/bracket`,
+      cookies: { tab10_session: userACookie },
+      payload: { constructionAlgorithm: "power_of_two" },
+    });
+    const startPo2 = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id5}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(startPo2.statusCode).toBe(200);
+    const po2MatchIds = (
+      startPo2.json().tournament.matches as Array<{
+        tournamentBracketMatchId?: string;
+      }>
+    ).map((m) => m.tournamentBracketMatchId);
+    expect(po2MatchIds).toContain("W0_1");
+    expect(po2MatchIds).not.toContain("W0_0");
+    expect(po2MatchIds).not.toContain("W0_2");
+    expect(po2MatchIds).not.toContain("W0_3");
+  });
 });
 
 describe("INT_migrations__apply_from_scratch", () => {
@@ -991,6 +1204,54 @@ describe("INT_migrations__apply_from_scratch", () => {
     expect(names).toContain("users");
     expect(names).toContain("matches");
     expect(names).toContain("tournaments");
+    const col = await ctx.client.query(
+      `SELECT column_default FROM information_schema.columns
+       WHERE table_name='tournaments' AND column_name='bracket_construction_algorithm'`,
+    );
+    expect((col.rows as { column_default: string | null }[])[0]?.column_default).toContain(
+      "compact",
+    );
+    await ctx.close();
+  });
+
+  it("backfills existing Po2 V2 as power_of_two not compact", async () => {
+    const ctx = await createPgliteDb();
+    // Insert legacy-shaped row as if migration had not run column yet — column exists with NULL
+    await ctx.client.query(
+      `INSERT INTO users (id, email, password_hash, first_name, last_name, role, status, must_change_password)
+       VALUES ('11111111-1111-1111-1111-111111111111', 'mig@t.local', 'x', 'M', 'G', 'user', 'active', false)`,
+    );
+    await ctx.client.query(
+      `INSERT INTO tournaments (id, title, status, format, created_by_user_id, bracket_json, bracket_construction_algorithm)
+       VALUES (
+         '22222222-2222-2222-2222-222222222222',
+         'LegacyPo2',
+         'bracket_generated',
+         'single_elimination',
+         '11111111-1111-1111-1111-111111111111',
+         '{"schemaVersion":2,"format":"single_elimination","participantCount":4,"bracketSize":4,"seedOrder":["a","b","c","d"],"thirdPlaceEnabled":false,"matches":[],"championParticipantId":null,"runnerUpParticipantId":null,"thirdPlaceParticipantId":null}'::jsonb,
+         NULL
+       )`,
+    );
+    // Re-run backfill statements (idempotent with ensureSchema path — call UPDATE as migration does)
+    await ctx.client.query(`
+      UPDATE tournaments
+      SET bracket_construction_algorithm = 'power_of_two'
+      WHERE bracket_construction_algorithm IS NULL
+        AND bracket_json IS NOT NULL
+        AND (bracket_json->>'schemaVersion') = '2'
+        AND (
+          bracket_json->>'constructionAlgorithm' IS NULL
+          OR bracket_json->>'constructionAlgorithm' = 'power_of_two'
+        );
+    `);
+    const row = await ctx.client.query(
+      `SELECT bracket_construction_algorithm FROM tournaments WHERE id='22222222-2222-2222-2222-222222222222'`,
+    );
+    expect(
+      (row.rows as { bracket_construction_algorithm: string }[])[0]
+        ?.bracket_construction_algorithm,
+    ).toBe("power_of_two");
     await ctx.close();
   });
 });

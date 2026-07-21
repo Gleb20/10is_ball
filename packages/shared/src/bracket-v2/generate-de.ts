@@ -163,6 +163,7 @@ export function generateDoubleEliminationV2(input: {
 
   return {
     schemaVersion: 2,
+    constructionAlgorithm: "power_of_two",
     format: "double_elimination",
     participantCount,
     bracketSize,

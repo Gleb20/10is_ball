@@ -1,0 +1,101 @@
+.bracket-algo-dialog__subtitle {
+  margin: 0 0 1rem;
+  color: var(--ic-color-text-secondary, #5c6370);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.bracket-algo-dialog__warning {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, #c47b2b 12%, transparent);
+  color: var(--ic-color-text-primary, #1a1d23);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.bracket-algo-dialog__options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .bracket-algo-dialog__options {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .bracket-algo-card {
+    flex: 1;
+  }
+}
+
+.bracket-algo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  border: 2px solid var(--ic-color-border, #d0d5dd);
+  border-radius: 12px;
+  cursor: pointer;
+  background: var(--ic-color-surface, #fff);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bracket-algo-card:has(input:focus-visible) {
+  outline: 2px solid var(--ic-color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.bracket-algo-card--selected {
+  border-color: var(--ic-color-primary, #2563eb);
+  box-shadow: 0 0 0 1px var(--ic-color-primary, #2563eb);
+}
+
+.bracket-algo-card--disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.bracket-algo-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bracket-algo-card__title {
+  font-weight: 650;
+  font-size: 1.05rem;
+}
+
+.bracket-algo-card__desc {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--ic-color-text-secondary, #5c6370);
+}
+
+.bracket-algo-card__hint {
+  font-size: 0.8rem;
+  color: var(--ic-color-text-secondary, #5c6370);
+  font-style: italic;
+}
+
+.bracket-algo-card__disabled-reason {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--ic-color-text-primary, #1a1d23);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

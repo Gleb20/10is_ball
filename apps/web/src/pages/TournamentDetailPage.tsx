@@ -7,9 +7,21 @@ import { api } from "../api";
 import { useAuth } from "../auth";
 import { UserPicker } from "../components/UserPicker";
 import { TournamentBracket } from "../components/TournamentBracket";
-import type { Bracket, BracketGraphV2 } from "@tab10/shared";
-import { parseBracketJson } from "@tab10/shared";
+import { BracketAlgorithmDialog } from "../components/BracketAlgorithmDialog";
+import type {
+  Bracket,
+  BracketConstructionAlgorithm,
+  BracketGraphV2,
+} from "@tab10/shared";
+import {
+  detectStoredConstructionAlgorithm,
+  parseBracketJson,
+} from "@tab10/shared";
 import { liveMatchVersusLabel } from "../bracketViewModel";
+import {
+  algorithmLabel,
+  BRACKET_ALGORITHM_DIALOG,
+} from "../bracketAlgorithmCopy";
 import { statusLabel } from "../statusLabels";
 
 type Participant = {
@@ -55,6 +67,9 @@ export function TournamentDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionHint, setActionHint] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [algoDialogOpen, setAlgoDialogOpen] = useState(false);
+  const [algoSelected, setAlgoSelected] =
+    useState<BracketConstructionAlgorithm>("compact");
 
   async function load() {
     const res = await api.getTournament(id!);
@@ -137,6 +152,44 @@ export function TournamentDetailPage() {
     status !== "in_progress";
   const canDissolve =
     status === "bracket_generated" || status === "needs_regeneration";
+  const canChangeAlgorithm =
+    (status === "bracket_generated" || status === "needs_regeneration") &&
+    hasBracket;
+  const canBuildBracket = canGenerate || canChangeAlgorithm;
+
+  const format = (String(tournament?.format ?? "single_elimination") ===
+  "double_elimination"
+    ? "double_elimination"
+    : "single_elimination") as
+    | "single_elimination"
+    | "double_elimination";
+
+  const detectedAlgo = detectStoredConstructionAlgorithm(
+    tournament?.bracketJson,
+  );
+  const currentAlgoLabel =
+    detectedAlgo.kind === "algorithm"
+      ? algorithmLabel(detectedAlgo.algorithm)
+      : algorithmLabel(
+          (tournament?.bracketConstructionAlgorithm as
+            | BracketConstructionAlgorithm
+            | undefined) ?? null,
+        );
+
+  function openAlgorithmDialog() {
+    if (format === "double_elimination") {
+      setAlgoSelected("power_of_two");
+    } else if (
+      detectedAlgo.kind === "algorithm" &&
+      (detectedAlgo.algorithm === "compact" ||
+        detectedAlgo.algorithm === "power_of_two")
+    ) {
+      setAlgoSelected(detectedAlgo.algorithm);
+    } else {
+      setAlgoSelected("compact");
+    }
+    setAlgoDialogOpen(true);
+  }
 
   const liveMatches = matches.filter(
     (m) =>
@@ -200,17 +253,15 @@ export function TournamentDetailPage() {
             ) : null}
 
             <div className="row">
-              {canGenerate ? (
+              {canBuildBracket && activeParticipants.length >= 3 ? (
                 <Button
                   disabled={busy}
-                  onClick={() =>
-                    void runAction(async () => {
-                      await api.generateBracket(id!);
-                      await load();
-                    }, "Сетка сгенерирована")
-                  }
+                  data-testid="tournament-build-bracket"
+                  onClick={() => openAlgorithmDialog()}
                 >
-                  Сгенерировать сетку
+                  {hasBracket
+                    ? BRACKET_ALGORITHM_DIALOG.changeAction
+                    : BRACKET_ALGORITHM_DIALOG.buildAction}
                 </Button>
               ) : null}
               {canDissolve ? (
@@ -458,7 +509,20 @@ export function TournamentDetailPage() {
                     : bracketV1?.size
                       ? ` (${bracketV1.size})`
                       : ""}
+                  {currentAlgoLabel ? (
+                    <span className="muted"> · {currentAlgoLabel}</span>
+                  ) : null}
                 </h2>
+                {canChangeAlgorithm ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => openAlgorithmDialog()}
+                  >
+                    {BRACKET_ALGORITHM_DIALOG.changeAction}
+                  </Button>
+                ) : null}
                 {bracketV2 ? (
                   <TournamentBracket
                     graph={bracketV2}
@@ -487,6 +551,25 @@ export function TournamentDetailPage() {
           </div>
         ) : null}
       </AsyncState>
+
+      <BracketAlgorithmDialog
+        open={algoDialogOpen}
+        format={format}
+        selected={algoSelected}
+        onSelect={setAlgoSelected}
+        onCancel={() => setAlgoDialogOpen(false)}
+        busy={busy}
+        showRegenWarning={hasBracket}
+        onConfirm={() => {
+          void runAction(async () => {
+            await api.generateBracket(id!, {
+              constructionAlgorithm: algoSelected,
+            });
+            setAlgoDialogOpen(false);
+            await load();
+          }, "Сетка построена");
+        }}
+      />
     </PageLayout>
   );
 }

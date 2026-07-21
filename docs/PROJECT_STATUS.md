@@ -1,9 +1,9 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-21  
-**Product version:** 1.10.0 (bracket V2 in tree; proposed next release **1.11.0**)  
-Current phase: Challonge-inspired match-centric brackets (V2) — Stages 1–3 done; Stage 4 correction deferred (D13)  
-Next step: optional release 1.11.0; then void/compensate when stats reverse exists
+**Product version:** 1.10.0 (bracket algorithm choice in tree; proposed next release **1.11.0**)  
+Current phase: Bracket construction algorithm (compact / power_of_two) — SE done; compact DE unsupported (D14)  
+Next step: optional release 1.11.0; compact DE only after static topology spec
 
 ## Progress
 
@@ -34,6 +34,12 @@ Next step: optional release 1.11.0; then void/compensate when stats reverse exis
 | UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
+
+### Bracket construction algorithm choice — done (unreleased)
+- Shared: compact SE V2 + Po2 SE/DE; prepare pipeline; reject compact DE
+- API: column + default-preservation; integrity mismatch
+- Web: algorithm dialog; DE compact disabled
+- ADR D14; Stage 4 correction still deferred (D13)
 
 ### Challonge-inspired bracket V2 — Stages 1–3 done (unreleased)
 - Domain: `packages/shared/src/bracket-v2/`; V1 parallel + characterization

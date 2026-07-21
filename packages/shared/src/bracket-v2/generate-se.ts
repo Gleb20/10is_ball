@@ -110,6 +110,7 @@ export function generateSingleEliminationV2(input: {
 
   return {
     schemaVersion: 2,
+    constructionAlgorithm: "power_of_two",
     format: "single_elimination",
     participantCount,
     bracketSize,

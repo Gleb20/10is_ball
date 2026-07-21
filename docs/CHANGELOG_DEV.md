@@ -1,5 +1,35 @@
 # Dev Changelog
 
+## 2026-07-21 — Bracket construction algorithm choice (compact / power_of_two)
+
+### Shared
+- `BracketConstructionAlgorithm`; discriminated V2 metadata (compact без `bracketSize`)
+- `generateBracketGraph` / `prepareBracketGraph`; compact SE generator + CompactEntry bye-history
+- Po2 SE/DE isolated; compact+DE → `COMPACT_DOUBLE_ELIMINATION_UNSUPPORTED`
+- Legacy detect: V1 SE→compact, V1 DE→legacy, V2 missing field→Po2
+- Golden N=3/5/6/7; property SE compact+Po2 N=3..64
+
+### API
+- Column `bracket_construction_algorithm` (nullable + DEFAULT compact; safe backfill)
+- `POST /bracket` body `{ constructionAlgorithm? }` + `resolveRequestedConstructionAlgorithm`
+- Seed reorder regenerates full graph with same algorithm
+- Integration: default-preservation, DE reject, materialization N=5
+
+### Web
+- Dialog «Как построить сетку?»; DE: compact disabled with reason
+- Labels «Компактная / Классическая сетка»; bye caption «Проходит дальше без матча»
+
+### Docs
+- ADR D14
+
+### How to verify
+```bash
+pnpm --filter @tab10/shared build && pnpm --filter @tab10/shared test
+PGLITE_DATA_DIR= pnpm --filter @tab10/api test
+pnpm --filter @tab10/web test
+pnpm typecheck
+```
+
 ## 2026-07-21 — Challonge-inspired bracket V2 (domain + API + web; no product version bump)
 
 ### Shared (`bracket-v2/`)

@@ -1,3 +1,4 @@
+import { nextPowerOf2 } from "./seed.js";
 import { deriveBracketMatchState, isPermanentlyBlocked } from "./derive-state.js";
 import type { BracketGraphV2 } from "./types.js";
 
@@ -15,6 +16,44 @@ export class BracketValidationError extends Error {
 export function validateBracketGraph(graph: BracketGraphV2): void {
   if (graph.schemaVersion !== 2) {
     throw new BracketValidationError("schemaVersion must be 2", undefined, "schema");
+  }
+  if (
+    graph.constructionAlgorithm !== "compact" &&
+    graph.constructionAlgorithm !== "power_of_two"
+  ) {
+    throw new BracketValidationError(
+      "invalid constructionAlgorithm",
+      undefined,
+      "construction_algorithm",
+    );
+  }
+  if (graph.constructionAlgorithm === "compact") {
+    if (graph.bracketSize !== undefined) {
+      throw new BracketValidationError(
+        "compact must not set bracketSize",
+        undefined,
+        "compact_no_bracket_size",
+      );
+    }
+    if (graph.format === "double_elimination") {
+      throw new BracketValidationError(
+        "compact double elimination unsupported",
+        undefined,
+        "compact_de",
+      );
+    }
+  }
+  if (graph.constructionAlgorithm === "power_of_two") {
+    if (
+      typeof graph.bracketSize !== "number" ||
+      graph.bracketSize !== nextPowerOf2(graph.participantCount)
+    ) {
+      throw new BracketValidationError(
+        "power_of_two requires bracketSize = nextPowerOfTwo(N)",
+        undefined,
+        "po2_bracket_size",
+      );
+    }
   }
   const ids = new Set<string>();
   for (const m of graph.matches) {

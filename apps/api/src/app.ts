@@ -978,7 +978,12 @@ export async function buildApp(opts: {
     async (req, reply) => {
       try {
         const { id } = req.params as { id: string };
-        const result = await services.tournaments.generateBracket(id);
+        const body = (req.body ?? {}) as {
+          constructionAlgorithm?: unknown;
+        };
+        const result = await services.tournaments.generateBracket(id, {
+          constructionAlgorithm: body.constructionAlgorithm,
+        });
         return result;
       } catch (e) {
         return sendError(reply, e);
@@ -1206,6 +1211,12 @@ function messageFor(code: string): string {
     BRACKET_CORRUPT: "Сетка повреждена",
     BRACKET_UNSUPPORTED: "Неподдерживаемая версия сетки",
     BRACKET_VERSION_CONFLICT: "Конфликт версии сетки",
+    BRACKET_ALGORITHM_MISMATCH: "Несогласованность алгоритма сетки",
+    INVALID_BRACKET_CONSTRUCTION_ALGORITHM: "Неизвестный способ построения сетки",
+    COMPACT_DOUBLE_ELIMINATION_UNSUPPORTED:
+      "Компактная сетка пока недоступна для турниров с сеткой проигравших",
+    LEGACY_BRACKET_ALGORITHM_REQUIRED:
+      "Для сетки старого формата выберите способ построения явно",
     TOURNAMENT_ALREADY_STARTED: "Турнир уже стартовал",
     PLAYER_ALREADY_IN_ACTIVE_MATCH: "Игрок уже в активном матче",
     EXPIRED: "Приглашение истекло",

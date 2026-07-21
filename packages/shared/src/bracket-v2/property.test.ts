@@ -5,6 +5,7 @@ import {
   countCompetitiveMatchesPlayed,
   generateDoubleEliminationV2,
   generateSingleEliminationV2,
+  prepareBracketGraph,
   simulateBracket,
   type WinnerStrategy,
 } from "./index.js";
@@ -23,7 +24,7 @@ const strategies: WinnerStrategy[] = [
 describe("bracket-v2 property N=3..64", () => {
   for (let n = 3; n <= 64; n += 1) {
     for (const strategy of strategies) {
-      it(`SE n=${n} ${strategy}`, () => {
+      it(`SE Po2 n=${n} ${strategy}`, () => {
         let g = generateSingleEliminationV2({
           seedOrder: ids(n),
           thirdPlaceEnabled: false,
@@ -33,6 +34,22 @@ describe("bracket-v2 property N=3..64", () => {
         expect(countCompetitiveMatchesPlayed(g)).toBe(n - 1);
       });
     }
+  }
+
+  for (let n = 3; n <= 64; n += 1) {
+    it(`SE compact n=${n} lowerSeed`, () => {
+      let g = prepareBracketGraph({
+        seedOrder: ids(n),
+        format: "single_elimination",
+        constructionAlgorithm: "compact",
+        thirdPlaceEnabled: false,
+      });
+      g = simulateBracket(g, "lowerSeed");
+      assertSeInvariants(g, n);
+      expect(countCompetitiveMatchesPlayed(g)).toBe(n - 1);
+      expect(g.constructionAlgorithm).toBe("compact");
+      expect(g.bracketSize).toBeUndefined();
+    });
   }
 
   // DE property: sample denser near small N, then step

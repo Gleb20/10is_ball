@@ -233,6 +233,7 @@ describe("bracket-v2 empty / bye resolution", () => {
     if (!emptyEmpty) {
       const micro: BracketGraphV2 = {
         schemaVersion: 2,
+        constructionAlgorithm: "power_of_two",
         format: "single_elimination",
         participantCount: 3,
         bracketSize: 4,

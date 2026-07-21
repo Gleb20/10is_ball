@@ -197,8 +197,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-  generateBracket: (id: string) =>
-    request(`/api/v1/tournaments/${id}/bracket`, { method: "POST" }),
+  generateBracket: (
+    id: string,
+    payload?: { constructionAlgorithm?: "compact" | "power_of_two" },
+  ) =>
+    request(`/api/v1/tournaments/${id}/bracket`, {
+      method: "POST",
+      body: JSON.stringify(payload ?? {}),
+    }),
   patchTournament: (id: string, payload: unknown) =>
     request<{ tournament: Record<string, unknown> }>(
       `/api/v1/tournaments/${id}`,

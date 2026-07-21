@@ -195,6 +195,11 @@ export const tournaments = pgTable("tournaments", {
    * true/false = explicit policy for new SE/DE generates.
    */
   thirdPlaceEnabled: boolean("third_place_enabled"),
+  /**
+   * Setting for the next generate. NULL = unclassified legacy (e.g. V1 DE).
+   * Allowed: compact | power_of_two. Default for new rows: compact.
+   */
+  bracketConstructionAlgorithm: text("bracket_construction_algorithm"),
   stopReasonCode: text("stop_reason_code"),
   stopReasonText: text("stop_reason_text"),
   startedAt: timestamp("started_at", { withTimezone: true }),

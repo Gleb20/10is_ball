@@ -42,7 +42,23 @@
 
 **Why:** PRD TOURNAMENT-009 (≤1 bye per player when possible) and product feedback that N=5 must not show three free passes; bye recipient must face a prior-round winner next. DE topology still needs a fixed Po2 WB.
 
-**Superseded for new generates by D12** (V2 Challonge-inspired Po2 SE). V1 compact graphs remain readable.
+**Superseded for new generates by D12** (V2 Challonge-inspired Po2 SE). V1 compact graphs remain readable. Further superseded by **D14** (user-selectable compact vs power_of_two).
+
+## D14 — Bracket construction algorithm choice (2026-07-21)
+
+**Decision:**
+
+- Product algorithms: `compact` (default) and `power_of_two` (classic Challonge-inspired pad).
+- Both emit match-centric **schemaVersion 2**; new compact never uses V1 JSON.
+- Supported combos: SE+compact, SE+Po2, DE+Po2. **DE+compact** rejected: `COMPACT_DOUBLE_ELIMINATION_UNSUPPORTED` (no silent Po2 fallback).
+- `tournaments.bracket_construction_algorithm` = setting for next generate; `bracketJson.constructionAlgorithm` = stored graph. Unstarted live bracket: must match or `BRACKET_ALGORITHM_MISMATCH`.
+- API default-preservation: explicit request wins; regenerate without body keeps existing; first generate → `compact`.
+- Compact: no `bracketSize`; odd-round auto-advance via `CompactEntry` bye-history on paths. Po2: required `bracketSize = nextPowerOfTwo(N)`.
+- Legacy: V1 SE → compact; V1 DE → read-only `legacy` / NULL column (do not guess); V2 without field → power_of_two.
+- Migration: nullable column → backfill → DEFAULT `'compact'` for new rows; do not rewrite `bracket_json`.
+- After tournament start, algorithm cannot change.
+
+**Why:** Product needs both amateur-friendly compact and classic Po2; compact DE needs a static topology spec before implementation.
 
 ## D12 — Challonge-inspired match-centric brackets V2 (2026-07-21)
 

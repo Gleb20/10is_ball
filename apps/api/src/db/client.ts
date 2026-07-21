@@ -192,6 +192,7 @@ export async function applySchemaSql(
       bracket_json jsonb,
       bracket_state_version integer NOT NULL DEFAULT 0,
       third_place_enabled boolean,
+      bracket_construction_algorithm text,
       stop_reason_code text,
       stop_reason_text text,
       started_at timestamptz,
@@ -307,6 +308,35 @@ export async function applySchemaSql(
     ALTER TABLE matches ADD COLUMN IF NOT EXISTS tournament_bracket_match_id text;
     ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS bracket_state_version integer NOT NULL DEFAULT 0;
     ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS third_place_enabled boolean;
+    ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS bracket_construction_algorithm text;
+    -- Safe backfill (does not rewrite bracket_json)
+    UPDATE tournaments
+    SET bracket_construction_algorithm = 'power_of_two'
+    WHERE bracket_construction_algorithm IS NULL
+      AND bracket_json IS NOT NULL
+      AND (bracket_json->>'schemaVersion') = '2'
+      AND (
+        bracket_json->>'constructionAlgorithm' IS NULL
+        OR bracket_json->>'constructionAlgorithm' = 'power_of_two'
+      );
+    UPDATE tournaments
+    SET bracket_construction_algorithm = 'compact'
+    WHERE bracket_construction_algorithm IS NULL
+      AND bracket_json IS NOT NULL
+      AND (bracket_json->>'schemaVersion') = '2'
+      AND bracket_json->>'constructionAlgorithm' = 'compact';
+    UPDATE tournaments
+    SET bracket_construction_algorithm = 'compact'
+    WHERE bracket_construction_algorithm IS NULL
+      AND bracket_json IS NOT NULL
+      AND (
+        bracket_json->>'schemaVersion' IS NULL
+        OR bracket_json->>'schemaVersion' = '1'
+      )
+      AND bracket_json->>'format' = 'single_elimination'
+      AND jsonb_typeof(bracket_json->'slots') = 'array';
+    -- New rows default to compact (column stays nullable for legacy DE)
+    ALTER TABLE tournaments ALTER COLUMN bracket_construction_algorithm SET DEFAULT 'compact';
     CREATE UNIQUE INDEX IF NOT EXISTS matches_tournament_bracket_match_uid
       ON matches (tournament_id, tournament_bracket_match_id)
       WHERE tournament_bracket_match_id IS NOT NULL AND tournament_id IS NOT NULL;

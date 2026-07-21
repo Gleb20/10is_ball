@@ -1,3 +1,4 @@
+import { normalizeV2Graph } from "./legacy.js";
 import type { BracketGraphV2 } from "./types.js";
 
 export type ParseResult =
@@ -24,7 +25,18 @@ export function parseBracketJson(raw: unknown): ParseResult {
     if (!Array.isArray(obj.matches) || !Array.isArray(obj.seedOrder)) {
       return { kind: "corrupt", message: "v2 missing matches/seedOrder" };
     }
-    return { kind: "v2", graph: obj as unknown as BracketGraphV2 };
+    if (
+      "constructionAlgorithm" in obj &&
+      obj.constructionAlgorithm !== "compact" &&
+      obj.constructionAlgorithm !== "power_of_two"
+    ) {
+      return {
+        kind: "corrupt",
+        message: `unknown constructionAlgorithm ${String(obj.constructionAlgorithm)}`,
+      };
+    }
+    const graph = normalizeV2Graph(obj);
+    return { kind: "v2", graph };
   }
   if (typeof v === "number" && v > 2) {
     return { kind: "unsupported", schemaVersion: v };

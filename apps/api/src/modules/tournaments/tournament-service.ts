@@ -3,20 +3,24 @@ import {
   applyBracketResult,
   applyMatchResult,
   attachMatchId,
-  generateDoubleEliminationV2,
-  generateSingleEliminationV2,
+  detectStoredConstructionAlgorithm,
   getMatchSides,
+  isBracketConstructionAlgorithm,
   isBracketGraphComplete,
   isInvitationExpired,
   isTournamentComplete,
   listMatchPairs,
   listReadyMatchIds,
   pairNeedsMatch,
+  parseBracketConstructionAlgorithm,
+  prepareBracketGraph,
   propagateByesFixpoint,
   randomAvatarKey,
+  resolveRequestedConstructionAlgorithm,
   seedParticipants,
   TOURNAMENT_INVITATION_TTL_MS,
   type Bracket,
+  type BracketConstructionAlgorithm,
   type BracketGraphV2,
 } from "@tab10/shared";
 import { randomBytes } from "node:crypto";
@@ -33,7 +37,7 @@ import {
   userStats,
 } from "../../db/schema.js";
 import type { MatchService } from "../matches/match-service.js";
-import { loadTournamentBracket, swapV2MatchSeeds } from "./bracket-load.js";
+import { loadTournamentBracket, swapSeedOrderByMatchIds } from "./bracket-load.js";
 
 type ActiveParticipant = typeof tournamentParticipants.$inferSelect;
 
@@ -507,12 +511,20 @@ export class TournamentService {
     return { status };
   }
 
-  async generateBracket(tournamentId: string, rng: () => number = Math.random) {
+  async generateBracket(
+    tournamentId: string,
+    opts: {
+      constructionAlgorithm?: unknown;
+      rng?: () => number;
+    } = {},
+  ) {
+    const rng = opts.rng ?? Math.random;
     const t = await this.get(tournamentId);
     if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
-    if (t.status !== "collecting" && t.status !== "needs_regeneration") {
+    if (t.status !== "collecting" && t.status !== "needs_regeneration" && t.status !== "bracket_generated") {
       throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
     }
+
     const playing = this.playingParticipants(t);
     if (playing.length < 3) {
       throw Object.assign(new Error("TOO_FEW"), { code: "TOO_FEW" });
@@ -520,23 +532,73 @@ export class TournamentService {
     if (playing.length === 2) {
       throw Object.assign(new Error("USE_MATCH"), { code: "USE_MATCH" });
     }
-    const seeded = seedParticipants(
-      playing.map((p) => ({ id: p.id, wins: p.winsSnapshot })),
-      rng,
-    );
+
+    let requestedAlgorithm: BracketConstructionAlgorithm | undefined;
+    if (opts.constructionAlgorithm !== undefined) {
+      requestedAlgorithm = parseBracketConstructionAlgorithm(
+        opts.constructionAlgorithm,
+      );
+    }
+
+    const hasExistingBracket = Boolean(t.bracketJson);
+    let existingBracketAlgorithm: BracketConstructionAlgorithm | null = null;
+    if (hasExistingBracket) {
+      const detected = detectStoredConstructionAlgorithm(t.bracketJson);
+      if (
+        detected.kind === "algorithm" &&
+        isBracketConstructionAlgorithm(detected.algorithm)
+      ) {
+        existingBracketAlgorithm = detected.algorithm;
+      } else if (
+        t.bracketConstructionAlgorithm &&
+        isBracketConstructionAlgorithm(t.bracketConstructionAlgorithm)
+      ) {
+        existingBracketAlgorithm = t.bracketConstructionAlgorithm;
+      } else if (detected.kind === "algorithm" && detected.algorithm === "legacy") {
+        // Regenerate of legacy DE without explicit algo: require explicit choice
+        if (requestedAlgorithm === undefined) {
+          throw Object.assign(new Error("LEGACY_BRACKET_ALGORITHM_REQUIRED"), {
+            code: "LEGACY_BRACKET_ALGORITHM_REQUIRED",
+          });
+        }
+      }
+    } else if (
+      t.bracketConstructionAlgorithm &&
+      isBracketConstructionAlgorithm(t.bracketConstructionAlgorithm)
+    ) {
+      existingBracketAlgorithm = t.bracketConstructionAlgorithm;
+    }
+
+    const constructionAlgorithm = resolveRequestedConstructionAlgorithm({
+      requestedAlgorithm,
+      existingBracketAlgorithm,
+      hasExistingBracket,
+    });
+
+    // Preserve seed order on regenerate when participants already seeded
+    const existingSeeds = playing
+      .filter((p) => p.seed != null)
+      .sort((a, b) => (a.seed ?? 0) - (b.seed ?? 0));
+    const seeded =
+      hasExistingBracket && existingSeeds.length === playing.length
+        ? existingSeeds.map((p) => p.id)
+        : seedParticipants(
+            playing.map((p) => ({ id: p.id, wins: p.winsSnapshot })),
+            rng,
+          );
 
     const thirdPlaceEnabled =
       t.format === "double_elimination"
         ? false
         : (t.thirdPlaceEnabled ?? true);
 
-    const bracket: BracketGraphV2 =
-      t.format === "double_elimination"
-        ? generateDoubleEliminationV2({ seedOrder: seeded })
-        : generateSingleEliminationV2({
-            seedOrder: seeded,
-            thirdPlaceEnabled,
-          });
+    const format = t.format as "single_elimination" | "double_elimination";
+    const bracket = prepareBracketGraph({
+      seedOrder: seeded,
+      format,
+      constructionAlgorithm,
+      thirdPlaceEnabled,
+    });
 
     for (let i = 0; i < seeded.length; i += 1) {
       await this.db
@@ -562,12 +624,18 @@ export class TournamentService {
         status: "bracket_generated",
         bracketJson: bracket,
         thirdPlaceEnabled,
+        bracketConstructionAlgorithm: constructionAlgorithm,
         bracketStateVersion: sql`${tournaments.bracketStateVersion} + 1`,
         updatedAt: this.clock.now(),
       })
       .where(eq(tournaments.id, tournamentId))
       .returning();
-    return { ...row, participants: t.participants, bracket };
+    return {
+      ...row,
+      participants: t.participants,
+      bracket,
+      constructionAlgorithm,
+    };
   }
 
   async dissolveBracket(tournamentId: string, actorUserId: string) {
@@ -610,6 +678,7 @@ export class TournamentService {
         code: "BRACKET_NOT_EDITABLE",
       });
     }
+    this.assertBracketAlgorithmIntegrity(t);
     const loaded = loadTournamentBracket(t.bracketJson);
 
     if (loaded.kind === "v1") {
@@ -640,20 +709,60 @@ export class TournamentService {
       return { ...row, bracket: next };
     }
 
-    let next = loaded.graph;
+    // V2: apply seed swaps to seedOrder, then full regenerate with same algorithm
+    let seedOrder = [...loaded.graph.seedOrder];
     for (const swap of swaps) {
-      next = swapV2MatchSeeds(next, swap.slotIdA, swap.slotIdB);
+      seedOrder = swapSeedOrderByMatchIds(loaded.graph, seedOrder, swap.slotIdA, swap.slotIdB);
     }
+    const constructionAlgorithm = loaded.graph.constructionAlgorithm;
+    const format = loaded.graph.format;
+    const next = prepareBracketGraph({
+      seedOrder,
+      format,
+      constructionAlgorithm,
+      thirdPlaceEnabled: loaded.graph.thirdPlaceEnabled,
+    });
+
+    for (let i = 0; i < seedOrder.length; i += 1) {
+      await this.db
+        .update(tournamentParticipants)
+        .set({ seed: i + 1 })
+        .where(eq(tournamentParticipants.id, seedOrder[i]!));
+    }
+
     const [row] = await this.db
       .update(tournaments)
       .set({
         bracketJson: next,
+        bracketConstructionAlgorithm: constructionAlgorithm,
         bracketStateVersion: sql`${tournaments.bracketStateVersion} + 1`,
         updatedAt: this.clock.now(),
       })
       .where(eq(tournaments.id, tournamentId))
       .returning();
     return { ...row, bracket: next };
+  }
+
+  /** Column vs JSON must agree for an unstarted live bracket. */
+  private assertBracketAlgorithmIntegrity(t: {
+    status: string;
+    bracketJson: unknown;
+    bracketConstructionAlgorithm: string | null;
+  }) {
+    if (!t.bracketJson) return;
+    if (t.status !== "bracket_generated" && t.status !== "needs_regeneration") {
+      return;
+    }
+    const detected = detectStoredConstructionAlgorithm(t.bracketJson);
+    if (detected.kind !== "algorithm") return;
+    if (detected.algorithm === "legacy") return;
+    const col = t.bracketConstructionAlgorithm;
+    if (col == null) return;
+    if (col !== detected.algorithm) {
+      throw Object.assign(new Error("BRACKET_ALGORITHM_MISMATCH"), {
+        code: "BRACKET_ALGORITHM_MISMATCH",
+      });
+    }
   }
 
   async start(tournamentId: string, actorUserId: string) {
@@ -671,6 +780,7 @@ export class TournamentService {
       throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
     }
 
+    this.assertBracketAlgorithmIntegrity(t);
     const loaded = loadTournamentBracket(t.bracketJson);
     const pendingNotifs: Array<{
       userId: string;

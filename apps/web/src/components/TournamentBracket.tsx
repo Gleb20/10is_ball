@@ -153,8 +153,8 @@ function MatchCard({
         {card.cta === "bye" ? (
           <span className="muted">
             {card.autoAdvanceName
-              ? `Автопроход: ${card.autoAdvanceName}`
-              : "Автопроход"}
+              ? `${card.autoAdvanceName} · Проходит дальше без матча`
+              : "Проходит дальше без матча"}
           </span>
         ) : null}
         {card.cta === "pending" ? (
