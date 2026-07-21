@@ -18,6 +18,10 @@ function defaultMatchTitle() {
   })}`;
 }
 
+function defaultMercyPoints(pointsToWin: 11 | 21): number {
+  return pointsToWin === 21 ? 10 : 5;
+}
+
 /** Create match wizard — ADR D5 Q-UI-2 `/matches/new`. */
 export function MatchCreatePage() {
   const { user } = useAuth();
@@ -25,6 +29,7 @@ export function MatchCreatePage() {
   const [searchParams] = useSearchParams();
   const [title, setTitle] = useState(defaultMatchTitle);
   const [pointsToWin, setPointsToWin] = useState<11 | 21>(11);
+  const [mercyEnabled, setMercyEnabled] = useState(true);
   const [mode, setMode] = useState<OpponentMode>("guest");
   const [opponentId, setOpponentId] = useState("");
   const [guestName, setGuestName] = useState("");
@@ -33,6 +38,8 @@ export function MatchCreatePage() {
   >([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  const mercyPoints = defaultMercyPoints(pointsToWin);
 
   const challengeHint = useMemo(() => {
     const name = searchParams.get("opponentName");
@@ -97,6 +104,8 @@ export function MatchCreatePage() {
         title,
         format: "1v1",
         pointsToWin,
+        mercyEnabled,
+        mercyPoints: mercyEnabled ? mercyPoints : null,
         participants,
       });
       navigate(`/matches/${res.match.id}`);
@@ -128,6 +137,14 @@ export function MatchCreatePage() {
             { value: "21", label: "21" },
           ]}
         />
+        <label className="match-create__check">
+          <input
+            type="checkbox"
+            checked={mercyEnabled}
+            onChange={(e) => setMercyEnabled(e.target.checked)}
+          />
+          Сухая победа при отрыве {mercyPoints} очков
+        </label>
         <FilterBar
           label="Тип соперника"
           value={mode}

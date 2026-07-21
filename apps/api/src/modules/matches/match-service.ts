@@ -92,12 +92,36 @@ export class MatchService {
           })
         : [];
     const usersById = new Map(userRows.map((u) => [u.id, u]));
+    const activeJudge = await this.getActiveJudge(matchId);
     return {
       ...match,
       participants: participants.map((p) => ({
         ...p,
         displayName: this.participantDisplayName(p, usersById),
       })),
+      activeJudge,
+    };
+  }
+
+  private async getActiveJudge(
+    matchId: string,
+  ): Promise<{ userId: string; displayName: string } | null> {
+    const now = this.clock.now();
+    const session = await this.db.query.judgeSessions.findFirst({
+      where: and(
+        eq(judgeSessions.matchId, matchId),
+        isNull(judgeSessions.releasedAt),
+        sql`${judgeSessions.expiresAt} > ${now}`,
+      ),
+    });
+    if (!session) return null;
+    const user = await this.db.query.users.findFirst({
+      where: eq(users.id, session.userId),
+    });
+    if (!user) return null;
+    return {
+      userId: user.id,
+      displayName: `${user.lastName} ${user.firstName}`.trim(),
     };
   }
 
@@ -612,6 +636,32 @@ export class MatchService {
       throw Object.assign(new Error("JUDGE_BUSY"), { code: "JUDGE_BUSY" });
     }
 
+    const existing = await this.db.query.judgeSessions.findFirst({
+      where: and(
+        eq(judgeSessions.matchId, input.matchId),
+        eq(judgeSessions.userId, input.userId),
+        eq(judgeSessions.authSessionId, input.authSessionId),
+        isNull(judgeSessions.releasedAt),
+        sql`${judgeSessions.expiresAt} > ${now}`,
+      ),
+    });
+    if (existing) return existing;
+
+    const taken = await this.db.query.judgeSessions.findFirst({
+      where: and(
+        eq(judgeSessions.matchId, input.matchId),
+        isNull(judgeSessions.releasedAt),
+        sql`${judgeSessions.expiresAt} > ${now}`,
+      ),
+    });
+    if (taken) {
+      const currentJudge = await this.getActiveJudge(input.matchId);
+      throw Object.assign(new Error("JUDGE_TAKEN"), {
+        code: "JUDGE_TAKEN",
+        currentJudge: currentJudge ?? undefined,
+      });
+    }
+
     try {
       const [row] = await this.db
         .insert(judgeSessions)
@@ -626,7 +676,11 @@ export class MatchService {
         .returning();
       return row;
     } catch {
-      throw Object.assign(new Error("JUDGE_TAKEN"), { code: "JUDGE_TAKEN" });
+      const currentJudge = await this.getActiveJudge(input.matchId);
+      throw Object.assign(new Error("JUDGE_TAKEN"), {
+        code: "JUDGE_TAKEN",
+        currentJudge: currentJudge ?? undefined,
+      });
     }
   }
 
@@ -697,6 +751,68 @@ export class MatchService {
     await this.releaseJudge(input.matchId);
     // Reserve for target — they must acquire with their session; create notification path
     return { reservedForUserId: input.toUserId };
+  }
+
+  async judgeSetup(input: {
+    matchId: string;
+    userId: string;
+    authSessionId: string;
+    firstServerParticipantId?: string;
+    swapSides?: boolean;
+    displayFlipped?: boolean;
+  }) {
+    await this.assertActiveJudge(
+      input.matchId,
+      input.userId,
+      input.authSessionId,
+    );
+    const detail = await this.getMatch(input.matchId);
+    if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+
+    const totalPoints = detail.scoreA + detail.scoreB;
+    if (totalPoints > 0 && input.swapSides) {
+      throw Object.assign(new Error("INVALID_STATUS"), {
+        code: "INVALID_STATUS",
+        message: "Cannot swap sides after points scored",
+      });
+    }
+
+    const now = this.clock.now();
+
+    if (input.swapSides && totalPoints === 0) {
+      for (const p of detail.participants) {
+        const nextSide = p.side === "A" ? "B" : "A";
+        await this.db
+          .update(matchParticipants)
+          .set({ side: nextSide })
+          .where(eq(matchParticipants.id, p.id));
+      }
+    }
+
+    const patch: Partial<typeof matches.$inferInsert> = { updatedAt: now };
+    if (input.firstServerParticipantId) {
+      const valid = detail.participants.some(
+        (p) => p.id === input.firstServerParticipantId,
+      );
+      if (!valid) {
+        throw Object.assign(new Error("VALIDATION"), {
+          code: "VALIDATION",
+          message: "Invalid first server participant",
+        });
+      }
+      patch.currentServerParticipantId = input.firstServerParticipantId;
+    }
+    if (input.displayFlipped !== undefined) {
+      patch.judgeDisplayFlipped = input.displayFlipped;
+    }
+    if (Object.keys(patch).length > 1) {
+      await this.db
+        .update(matches)
+        .set(patch)
+        .where(eq(matches.id, input.matchId));
+    }
+
+    return this.getMatch(input.matchId);
   }
 
   private isMatchParticipant(

@@ -567,6 +567,32 @@ export async function buildApp(opts: {
   );
 
   app.post(
+    "/api/v1/matches/:matchId/judge/setup",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { matchId } = req.params as { matchId: string };
+        const body = req.body as {
+          firstServerParticipantId?: string;
+          swapSides?: boolean;
+          displayFlipped?: boolean;
+        };
+        const match = await services.matches.judgeSetup({
+          matchId,
+          userId: req.authUser!.id,
+          authSessionId: req.authSessionId!,
+          firstServerParticipantId: body?.firstServerParticipantId,
+          swapSides: body?.swapSides,
+          displayFlipped: body?.displayFlipped,
+        });
+        return { match };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
     "/api/v1/matches/:matchId/points",
     { preHandler: requireAuth },
     async (req, reply) => {
@@ -976,7 +1002,12 @@ function messageFor(code: string): string {
 }
 
 function sendError(reply: FastifyReply, e: unknown) {
-  const err = e as { code?: string; state?: unknown; message?: string };
+  const err = e as {
+    code?: string;
+    state?: unknown;
+    message?: string;
+    currentJudge?: { userId: string; displayName: string };
+  };
   const code = err.code ?? "INTERNAL";
   const status =
     code === "NOT_FOUND"
@@ -986,10 +1017,17 @@ function sendError(reply: FastifyReply, e: unknown) {
         : code === "VERSION_CONFLICT" || code === "JUDGE_TAKEN"
           ? 409
           : 400;
+  const details: Record<string, unknown> = {};
+  if (err.state) details.state = err.state;
+  if (err.currentJudge) details.currentJudge = err.currentJudge;
+  const message =
+    code === "JUDGE_TAKEN" && err.currentJudge
+      ? `Этот матч уже судит «${err.currentJudge.displayName}», два судьи у матча — дело к драке. Давай не будем.`
+      : messageFor(code);
   return reply.code(status).send({
     code,
-    message: messageFor(code),
-    details: err.state ? { state: err.state } : undefined,
+    message,
+    details: Object.keys(details).length > 0 ? details : undefined,
   });
 }
 

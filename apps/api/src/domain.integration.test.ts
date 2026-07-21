@@ -11,6 +11,7 @@ describe("match and judge integration", () => {
   let close: () => Promise<void>;
   let adminCookie: string;
   let userACookie: string;
+  let userBCookie: string;
   let userAId: string;
   let userBId: string;
 
@@ -68,6 +69,7 @@ describe("match and judge integration", () => {
     userAId = a.id;
     userBId = b.id;
     userACookie = a.cookie;
+    userBCookie = b.cookie;
   });
 
   afterEach(async () => {
@@ -190,11 +192,168 @@ describe("match and judge integration", () => {
         cookies: { tab10_session: userACookie },
       }),
     ]);
-    const codes = [r1.statusCode, r2.statusCode].sort();
-    // same user/session: second may succeed as re-acquire or fail — unique is on match
-    // For same session twice, unique index blocks second
-    expect(codes).toContain(200);
-    expect(codes.filter((c) => c === 200).length).toBe(1);
+    const codes = [r1.statusCode, r2.statusCode];
+    expect(codes.some((c) => c === 200)).toBe(true);
+  });
+
+  it("AT-JUDGE-003: release then another participant acquires", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Handoff",
+        format: "1v1",
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    const matchId = created.json().match.id as string;
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/start`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+
+    const acquireA = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/acquire`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(acquireA.statusCode).toBe(200);
+
+    const release = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/release`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(release.statusCode).toBe(200);
+
+    const acquireB = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/acquire`,
+      cookies: { tab10_session: userBCookie },
+    });
+    expect(acquireB.statusCode).toBe(200);
+
+    const detail = await app.inject({
+      method: "GET",
+      url: `/api/v1/matches/${matchId}`,
+      cookies: { tab10_session: userBCookie },
+    });
+    expect(detail.json().match.activeJudge?.userId).toBe(userBId);
+    expect(detail.json().match.scoreA).toBe(0);
+  });
+
+  it("AT-MATCH-004: mercy 5:0 proposes finish", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Mercy",
+        format: "1v1",
+        pointsToWin: 11,
+        mercyEnabled: true,
+        mercyPoints: 5,
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    const matchId = created.json().match.id as string;
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/start`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/acquire`,
+      cookies: { tab10_session: userACookie },
+    });
+
+    let version = 0;
+    for (let i = 0; i < 5; i += 1) {
+      const pt = await app.inject({
+        method: "POST",
+        url: `/api/v1/matches/${matchId}/points`,
+        cookies: { tab10_session: userACookie },
+        headers: { "idempotency-key": `mercy-${i}` },
+        payload: { side: "A", expectedVersion: version },
+      });
+      expect(pt.statusCode).toBe(200);
+      version = pt.json().match.version as number;
+    }
+
+    const final = await app.inject({
+      method: "GET",
+      url: `/api/v1/matches/${matchId}`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(final.json().match.scoreA).toBe(5);
+    expect(final.json().match.scoreB).toBe(0);
+    expect(final.json().match.status).toBe("pending_confirmation");
+  });
+
+  it("INT_judge__setup_swap_sides_and_server", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Setup",
+        format: "1v1",
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    const matchId = created.json().match.id as string;
+    const participants = created.json().match.participants as Array<{
+      id: string;
+      side: string;
+      userId: string;
+    }>;
+    const bParticipant = participants.find((p) => p.userId === userBId)!;
+
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/start`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/acquire`,
+      cookies: { tab10_session: userACookie },
+    });
+
+    const setup = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/setup`,
+      cookies: { tab10_session: userACookie },
+      payload: {
+        swapSides: true,
+        firstServerParticipantId: bParticipant.id,
+        displayFlipped: true,
+      },
+    });
+    expect(setup.statusCode).toBe(200);
+    const swapped = setup.json().match.participants as Array<{
+      userId: string;
+      side: string;
+    }>;
+    expect(swapped.find((p) => p.userId === userAId)?.side).toBe("B");
+    expect(swapped.find((p) => p.userId === userBId)?.side).toBe("A");
+    expect(setup.json().match.currentServerParticipantId).toBe(bParticipant.id);
+    expect(setup.json().match.judgeDisplayFlipped).toBe(true);
   });
 
   it("INT_trn__bracket_from_collecting", async () => {

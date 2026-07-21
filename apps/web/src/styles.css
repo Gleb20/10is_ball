@@ -394,6 +394,88 @@ body {
   gap: 16px;
 }
 
+.judge-screen__status {
+  margin: 0;
+  color: #f5f5f5;
+  font-size: 16px;
+}
+
+.judge-screen__hint {
+  margin: 0;
+  color: rgba(245, 245, 245, 0.75);
+  font-size: 14px;
+}
+
+.judge-blocked-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.judge-timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #ffd666;
+}
+
+.judge-readonly-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+}
+
+.judge-setup__title {
+  margin: 0;
+  font-size: 20px;
+}
+
+.judge-setup__field {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.judge-setup__legend {
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.judge-setup__radio,
+.judge-setup__check,
+.match-create__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.judge-setup__preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 600;
+}
+
+.judge-setup__vs {
+  opacity: 0.6;
+}
+
+.judge-setup__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .judge-rotate-hint {
   margin: 0;
   padding: 10px 12px;
@@ -467,11 +549,23 @@ body {
   min-height: 220px;
 }
 
+.judge-side-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.judge-side-col--serving .judge-side--display {
+  border-color: #5b9fff;
+  box-shadow: inset 0 0 0 1px rgba(91, 159, 255, 0.4);
+}
+
 .judge-side {
   border-radius: 16px;
   padding: 20px 12px;
   text-align: center;
-  min-height: 160px;
+  min-height: 120px;
   min-width: 44px;
   display: flex;
   flex-direction: column;
@@ -479,14 +573,42 @@ body {
   align-items: center;
   gap: 10px;
   border: 2px solid rgba(255, 255, 255, 0.2);
-  cursor: pointer;
   background: #1a1d24;
   color: #f5f5f5;
   -webkit-tap-highlight-color: transparent;
+}
+
+.judge-side--display {
+  flex: 1;
+}
+
+.judge-side--flash {
+  animation: judge-score-flash 0.35s ease;
+}
+
+@keyframes judge-score-flash {
+  0% {
+    background: #2a4a7a;
+  }
+  100% {
+    background: #1a1d24;
+  }
+}
+
+.judge-point-btn {
+  min-height: 56px !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  width: 100%;
   touch-action: manipulation;
 }
 
 .judge-side:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.judge-point-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -497,6 +619,12 @@ body {
 }
 
 .judge-side--serving {
+  border-color: #5b9fff;
+  box-shadow: inset 0 0 0 1px rgba(91, 159, 255, 0.4);
+}
+
+/* legacy single-button side kept for tests referencing judge-side--serving on button */
+button.judge-side--serving {
   border-color: #5b9fff;
   box-shadow: inset 0 0 0 1px rgba(91, 159, 255, 0.4);
 }
@@ -551,10 +679,19 @@ body {
     min-height: 0;
   }
 
+  .judge-side-col {
+    min-height: 0;
+  }
+
   .judge-side {
     min-height: 0;
     padding: 12px 8px;
     gap: 6px;
+  }
+
+  .judge-point-btn {
+    min-height: 48px !important;
+    font-size: 20px !important;
   }
 
   .judge-side__score {

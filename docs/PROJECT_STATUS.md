@@ -1,9 +1,9 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-21  
-**Product version:** 1.5.0  
-Current phase: P0+P1 bugfix slice (branch `cursor/p0-p1-bugfix-058e`); tournament wiring → отдельная ветка `tournament`  
-Next step: merge P0+P1 → ветка `cursor/tournament-*` для Phase 6 match wiring
+**Product version:** 1.6.0  
+Current phase: Judge UX slice (v1.6.0) on branch `cursor/p0-p1-bugfix-058e`  
+Next step: merge P0+P1 + judge UX → ветка `cursor/tournament-*` для Phase 6 match wiring
 
 ## Progress
 
@@ -35,7 +35,12 @@ Next step: merge P0+P1 → ветка `cursor/tournament-*` для Phase 6 match
 
 ## Step log (latest)
 
-### P0+P1 bugfix — in progress (v1.5.0, branch `cursor/p0-p1-bugfix-058e`)
+### Judge UX slice — done (v1.6.0)
+- **P0:** fix зависания «Подключение судьи» при ошибке acquire; `activeJudge` в GET match; idempotent re-acquire; AT-JUDGE-003
+- **P1:** mercy 5:0 в создании матча; live-таймер; кнопки «+1» вместо клика по всей панели
+- **P2:** pre-game setup (первый подающий, swap сторон, flip экрана); readonly счёт; Match detail — статус судьи
+
+### P0+P1 bugfix — done (v1.5.0, branch `cursor/p0-p1-bugfix-058e`)
 - **P0 API:** atomic score version, idempotency key required, CSRF on mutations, judge/stop authz, RANK-001 sort + calendar week/month, participant displayName in match API, 2v2 serve order
 - **P1 Web:** `/notifications`, challenge prefill, stop match UI, 404, AsyncState form errors, auth polish, history sort
 

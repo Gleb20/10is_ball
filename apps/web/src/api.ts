@@ -107,10 +107,22 @@ export const api = {
     }),
   getMatch: (id: string) =>
     request<{ match: Record<string, unknown> }>(`/api/v1/matches/${id}`),
-  startMatch: (id: string) =>
+  startMatch: (id: string, body?: { firstServerParticipantId?: string }) =>
     request<{ match: Record<string, unknown> }>(
       `/api/v1/matches/${id}/start`,
-      { method: "POST", body: "{}" },
+      { method: "POST", body: JSON.stringify(body ?? {}) },
+    ),
+  judgeSetup: (
+    id: string,
+    body: {
+      firstServerParticipantId?: string;
+      swapSides?: boolean;
+      displayFlipped?: boolean;
+    },
+  ) =>
+    request<{ match: Record<string, unknown> }>(
+      `/api/v1/matches/${id}/judge/setup`,
+      { method: "POST", body: JSON.stringify(body) },
     ),
   acquireJudge: (id: string) =>
     request(`/api/v1/matches/${id}/judge/acquire`, { method: "POST" }),

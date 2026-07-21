@@ -1,5 +1,28 @@
 # Dev Changelog
 
+## 2026-07-21 — Judge UX slice (v1.6.0)
+
+### API
+- `GET /matches/:id` → `activeJudge: { userId, displayName } | null`
+- `POST /matches/:id/judge/setup` — first server, swap sides, display flip (`judge_display_flipped`)
+- `acquireJudge` idempotent для той же сессии; `JUDGE_TAKEN` с `details.currentJudge`
+- Integration: AT-JUDGE-003, AT-MATCH-004 mercy, setup swap/server
+
+### Web
+- JudgePage: фазы loading / blocked / setup / scoring / readonly (`?mode=readonly`)
+- MatchCreatePage: сухая победа (default on, порог 5/10)
+- MatchDetailPage: длительность, активный судья, «Открыть счёт»
+- Таймер матча; кнопки «+1»; контраст loading-текста
+
+### How to verify
+```bash
+pnpm run ci
+pnpm dev
+# Создать матч с mercy → 5:0 → pending_confirmation
+# Release судьи → другой участник acquire без зависания
+# /matches/:id/judge?mode=readonly — просмотр счёта
+```
+
 ## 2026-07-21 — P0+P1 bugfix slice (v1.5.0)
 
 ### P0 — корректность API
