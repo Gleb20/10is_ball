@@ -372,6 +372,69 @@ describe("match and judge integration", () => {
     expect(final.json().match.status).toBe("pending_confirmation");
   });
 
+  it("AT-MATCH-004b: 5:1 is not dry mercy finish", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Not mercy",
+        format: "1v1",
+        pointsToWin: 11,
+        mercyEnabled: true,
+        mercyPoints: 5,
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    const matchId = created.json().match.id as string;
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/start`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/acquire`,
+      cookies: { tab10_session: userACookie },
+    });
+
+    let version = 0;
+    const bPoint = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/points`,
+      cookies: { tab10_session: userACookie },
+      headers: { "idempotency-key": "b1" },
+      payload: { side: "B", expectedVersion: version },
+    });
+    expect(bPoint.statusCode).toBe(200);
+    version = bPoint.json().match.version as number;
+
+    for (let i = 0; i < 5; i += 1) {
+      const pt = await app.inject({
+        method: "POST",
+        url: `/api/v1/matches/${matchId}/points`,
+        cookies: { tab10_session: userACookie },
+        headers: { "idempotency-key": `a-lead-${i}` },
+        payload: { side: "A", expectedVersion: version },
+      });
+      expect(pt.statusCode).toBe(200);
+      version = pt.json().match.version as number;
+    }
+
+    const mid = await app.inject({
+      method: "GET",
+      url: `/api/v1/matches/${matchId}`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(mid.json().match.scoreA).toBe(5);
+    expect(mid.json().match.scoreB).toBe(1);
+    expect(mid.json().match.status).toBe("in_progress");
+  });
+
   it("INT_judge__setup_swap_sides_and_server", async () => {
     const created = await app.inject({
       method: "POST",

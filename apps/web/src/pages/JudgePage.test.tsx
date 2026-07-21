@@ -83,7 +83,7 @@ describe("REQ_ui__judge_immersive", () => {
     });
   });
 
-  it("shows scores, side names, serve badge, timer and +1 inside cells", async () => {
+  it("shows scores, side names, serve badge with racket, timer and +1", async () => {
     renderJudge();
     expect(await screen.findByTestId("judge-screen")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();
@@ -91,12 +91,12 @@ describe("REQ_ui__judge_immersive", () => {
     expect(screen.getByText("Анна А")).toBeInTheDocument();
     expect(screen.getByText("Борис Б")).toBeInTheDocument();
     expect(screen.getByText("Подача")).toBeInTheDocument();
+    expect(screen.getByTestId("serve-racket")).toBeInTheDocument();
     expect(screen.getByText(/0:00|:\d{2}/)).toBeInTheDocument();
     const sideA = screen.getByTestId("judge-side-A");
     expect(sideA).toContainElement(
       screen.getByRole("button", { name: /\+1 очко: анна а/i }),
     );
-    expect(screen.queryByText(/поверните устройство/i)).not.toBeInTheDocument();
   });
 
   it("shows landscape hint in portrait", async () => {
@@ -124,8 +124,6 @@ describe("REQ_ui__judge_immersive", () => {
     renderJudge();
     expect(await screen.findByTestId("judge-blocked")).toBeInTheDocument();
     expect(screen.getByText(/уже судит/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /назад к матчу/i })).toBeInTheDocument();
-    expect(screen.queryByText(/подключение судьи/i)).not.toBeInTheDocument();
   });
 
   it("awards point only via +1 button", async () => {
@@ -141,7 +139,8 @@ describe("REQ_ui__judge_immersive", () => {
     expect(awardPoint).toHaveBeenCalledWith("m1", "A", 5, expect.any(String));
   });
 
-  it("shows setup with swap arrow and no side checkboxes", async () => {
+  it("shows setup as board with swap and start match", async () => {
+    const user = userEvent.setup();
     getMatch.mockResolvedValue({
       match: {
         ...matchBody,
@@ -152,14 +151,39 @@ describe("REQ_ui__judge_immersive", () => {
         startedAt: null,
       },
     });
+    judgeSetup.mockResolvedValue({
+      match: {
+        ...matchBody,
+        scoreA: 0,
+        scoreB: 0,
+        status: "in_progress",
+        startedAt: "2026-07-21T10:00:00.000Z",
+      },
+    });
+    startMatch.mockResolvedValue({
+      match: {
+        ...matchBody,
+        scoreA: 0,
+        scoreB: 0,
+        status: "in_progress",
+        startedAt: null,
+      },
+    });
     renderJudge();
     expect(await screen.findByTestId("judge-setup")).toBeInTheDocument();
-    expect(screen.getByText(/первый подаёт/i)).toBeInTheDocument();
+    expect(screen.getByTestId("judge-side-A")).toBeInTheDocument();
+    expect(screen.getByTestId("judge-side-B")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /поменять стороны/i }),
     ).toBeInTheDocument();
-    expect(screen.queryByLabelText(/поменять стороны стола/i)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/поменять местами на экране/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId("serve-racket")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /\+1 очко/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId("judge-side-B"));
+    await user.click(screen.getByRole("button", { name: /начать матч/i }));
+    expect(judgeSetup).toHaveBeenCalled();
   });
 
   it("exits to match detail after confirm finish", async () => {

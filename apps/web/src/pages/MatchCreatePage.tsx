@@ -30,7 +30,7 @@ export function MatchCreatePage() {
   const [title, setTitle] = useState(defaultMatchTitle);
   const [pointsToWin, setPointsToWin] = useState<11 | 21>(11);
   const [mercyEnabled, setMercyEnabled] = useState(true);
-  const [mode, setMode] = useState<OpponentMode>("guest");
+  const [mode, setMode] = useState<OpponentMode>("user");
   const [opponentId, setOpponentId] = useState("");
   const [guestName, setGuestName] = useState("");
   const [options, setOptions] = useState<
@@ -143,7 +143,7 @@ export function MatchCreatePage() {
             checked={mercyEnabled}
             onChange={(e) => setMercyEnabled(e.target.checked)}
           />
-          Сухая победа при отрыве {mercyPoints} очков
+          Сухая победа при счёте {mercyPoints}:0
         </label>
         <FilterBar
           label="Тип соперника"

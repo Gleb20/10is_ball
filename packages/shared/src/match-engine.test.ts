@@ -33,13 +33,16 @@ describe("REQ_MATCH__winner_rules", () => {
     expect(checkVictory(12, 10, rules11)).toBe("A");
   });
 
-  it("AT-MATCH-004: mercy at 5 when enabled", () => {
+  it("AT-MATCH-004: mercy only at exact 5:0 / 0:5", () => {
     const mercy: MatchRules = {
       ...rules11,
       mercyEnabled: true,
       mercyPoints: 5,
     };
     expect(checkVictory(5, 0, mercy)).toBe("A");
+    expect(checkVictory(0, 5, mercy)).toBe("B");
+    expect(checkVictory(5, 1, mercy)).toBeNull();
+    expect(checkVictory(6, 1, mercy)).toBeNull();
     expect(checkVictory(5, 0, rules11)).toBeNull();
   });
 });

@@ -664,6 +664,14 @@ body {
   text-transform: uppercase;
   background: #5b9fff;
   color: #0f1115;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.judge-side--setup {
+  cursor: pointer;
 }
 
 .judge-serve-badge--empty {

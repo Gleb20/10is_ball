@@ -1,5 +1,25 @@
 # Dev Changelog
 
+## 2026-07-21 — Mercy N:0 + setup board + serve racket (v1.6.2)
+
+### Rules
+- `checkVictory` mercy: только exact `mercyPoints:0` / `0:mercyPoints` (ADR D8)
+- AT-MATCH-004b: 5:1 не завершает матч
+
+### Web
+- MatchCreate: дефолт «Игрок»; copy «сухая победа при счёте N:0»
+- Judge setup = тот же board (0:0); тап стороны = первый подающий; ↔; «Начать матч»
+- Бейдж «Подача» + `TableTennisRacketIcon`
+
+### How to verify
+```bash
+pnpm run ci
+pnpm dev
+# /matches/new — режим Игрок; mercy 5:0 copy
+# Judge setup: board layout, tap serve, Начать матч → timer
+# 5:1 при mercy не finish
+```
+
 ## 2026-07-21 — Judge UX polish (v1.6.1)
 
 ### Fixes
