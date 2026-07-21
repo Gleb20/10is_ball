@@ -16,6 +16,7 @@ type HistoryItem = {
   title: string;
   status: string;
   subtitle: string;
+  sortAt: number;
 };
 
 export function HistoryPage() {
@@ -36,6 +37,7 @@ export function HistoryPage() {
           title: String(m.title),
           status: String(m.status),
           subtitle: `Матч · ${String(m.scoreA)}:${String(m.scoreB)}`,
+          sortAt: Date.parse(String(m.updatedAt ?? m.createdAt ?? 0)),
         }));
         const tournamentItems: HistoryItem[] = tournaments.tournaments.map(
           (t) => ({
@@ -44,9 +46,14 @@ export function HistoryPage() {
             title: String(t.title),
             status: String(t.status),
             subtitle: `Турнир · ${formatLabel(String(t.format))}`,
+            sortAt: Date.parse(String(t.updatedAt ?? t.createdAt ?? 0)),
           }),
         );
-        setItems([...matchItems, ...tournamentItems]);
+        setItems(
+          [...matchItems, ...tournamentItems].sort(
+            (a, b) => b.sortAt - a.sortAt,
+          ),
+        );
       } catch (e) {
         setError((e as Error).message);
       }

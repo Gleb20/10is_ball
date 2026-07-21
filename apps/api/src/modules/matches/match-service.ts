@@ -1,9 +1,14 @@
 import { and, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import {
+  buildRanking,
+  calendarMonthStartUTC,
+  calendarWeekStartUTC,
   createInitialScoreState,
   reduceMatchEvent,
+  toRankingEntry,
   type MatchEvent,
   type MatchRules,
+  type RankingScope,
   type ServeRotationConfig,
   type Side,
 } from "@tab10/shared";
@@ -14,9 +19,11 @@ import {
   matchParticipants,
   matches,
   userStats,
-  } from "../../db/schema.js";
+  users,
+} from "../../db/schema.js";
 
 const JUDGE_TTL_MS = 120_000;
+const STOP_REASON_CODES = ["injury", "time", "other"] as const;
 
 export class MatchService {
   constructor(
@@ -75,7 +82,40 @@ export class MatchService {
     const participants = await this.db.query.matchParticipants.findMany({
       where: eq(matchParticipants.matchId, matchId),
     });
-    return { ...match, participants };
+    const userIds = participants
+      .map((p) => p.userId)
+      .filter((id): id is string => Boolean(id));
+    const userRows =
+      userIds.length > 0
+        ? await this.db.query.users.findMany({
+            where: inArray(users.id, userIds),
+          })
+        : [];
+    const usersById = new Map(userRows.map((u) => [u.id, u]));
+    return {
+      ...match,
+      participants: participants.map((p) => ({
+        ...p,
+        displayName: this.participantDisplayName(p, usersById),
+      })),
+    };
+  }
+
+  private participantDisplayName(
+    p: typeof matchParticipants.$inferSelect,
+    usersById: Map<string, typeof users.$inferSelect>,
+  ): string {
+    if (p.isTutorialActor) return "Призрачный Олег";
+    if (p.userId) {
+      const u = usersById.get(p.userId);
+      if (u) return `${u.lastName} ${u.firstName}`.trim();
+    }
+    const guest = [p.guestFirstName, p.guestLastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    if (guest) return guest;
+    return p.side === "A" ? "Сторона A" : "Сторона B";
   }
 
   async listMatches(limit = 50) {
@@ -146,13 +186,21 @@ export class MatchService {
     match: typeof matches.$inferSelect,
     participants: (typeof matchParticipants.$inferSelect)[],
   ): ServeRotationConfig {
-    const order = participants
-      .slice()
-      .sort((a, b) => a.side.localeCompare(b.side) || a.id.localeCompare(b.id))
-      .map((p) => p.id);
+    const sideA = participants
+      .filter((p) => p.side === "A")
+      .sort((a, b) => a.id.localeCompare(b.id));
+    const sideB = participants
+      .filter((p) => p.side === "B")
+      .sort((a, b) => a.id.localeCompare(b.id));
+    const order: string[] = [];
+    const maxLen = Math.max(sideA.length, sideB.length);
+    for (let i = 0; i < maxLen; i += 1) {
+      if (sideA[i]) order.push(sideA[i]!.id);
+      if (sideB[i]) order.push(sideB[i]!.id);
+    }
     return {
       format: match.format,
-      participantOrder: order,
+      participantOrder: order.length > 0 ? order : participants.map((p) => p.id),
       firstServerId: match.currentServerParticipantId ?? order[0]!,
     };
   }
@@ -172,6 +220,20 @@ export class MatchService {
     );
     const detail = await this.getMatch(input.matchId);
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    if (
+      detail.status !== "in_progress" &&
+      detail.status !== "pending_confirmation"
+    ) {
+      throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
+    }
+
+    const keys = new Set<string>(
+      (detail.idempotencyKeys as string[]) ?? [],
+    );
+    if (keys.has(input.idempotencyKey)) {
+      return detail;
+    }
+
     if (detail.version !== input.expectedVersion) {
       throw Object.assign(new Error("VERSION_CONFLICT"), {
         code: "VERSION_CONFLICT",
@@ -197,9 +259,6 @@ export class MatchService {
     }
 
     const history = (detail.eventLog as MatchEvent[]) ?? [];
-    const keys = new Set<string>(
-      (detail.idempotencyKeys as string[]) ?? [],
-    );
     const result = reduceMatchEvent(
       state,
       {
@@ -215,9 +274,12 @@ export class MatchService {
     if (!result.ok) {
       throw Object.assign(new Error(result.code), { code: result.code });
     }
+    if (!result.applied) {
+      return detail;
+    }
 
     const now = this.clock.now();
-    await this.db
+    const updated = await this.db
       .update(matches)
       .set({
         scoreA: result.state.scoreA,
@@ -232,7 +294,20 @@ export class MatchService {
         idempotencyKeys: [...keys],
         updatedAt: now,
       })
-      .where(eq(matches.id, input.matchId));
+      .where(
+        and(
+          eq(matches.id, input.matchId),
+          eq(matches.version, input.expectedVersion),
+        ),
+      )
+      .returning();
+    if (updated.length === 0) {
+      const current = await this.getMatch(input.matchId);
+      throw Object.assign(new Error("VERSION_CONFLICT"), {
+        code: "VERSION_CONFLICT",
+        state: current,
+      });
+    }
     return this.getMatch(input.matchId);
   }
 
@@ -250,6 +325,12 @@ export class MatchService {
     );
     const detail = await this.getMatch(input.matchId);
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+
+    const keys = new Set<string>((detail.idempotencyKeys as string[]) ?? []);
+    if (keys.has(input.idempotencyKey)) {
+      return detail;
+    }
+
     if (detail.version !== input.expectedVersion) {
       throw Object.assign(new Error("VERSION_CONFLICT"), {
         code: "VERSION_CONFLICT",
@@ -270,7 +351,6 @@ export class MatchService {
       version: detail.version,
     };
     const history = (detail.eventLog as MatchEvent[]) ?? [];
-    const keys = new Set<string>((detail.idempotencyKeys as string[]) ?? []);
     const result = reduceMatchEvent(
       state,
       { type: "point_undone", idempotencyKey: input.idempotencyKey },
@@ -282,8 +362,11 @@ export class MatchService {
     if (!result.ok) {
       throw Object.assign(new Error(result.code), { code: result.code });
     }
+    if (!result.applied) {
+      return detail;
+    }
     const now = this.clock.now();
-    await this.db
+    const updated = await this.db
       .update(matches)
       .set({
         scoreA: result.state.scoreA,
@@ -298,7 +381,20 @@ export class MatchService {
         idempotencyKeys: [...keys],
         updatedAt: now,
       })
-      .where(eq(matches.id, input.matchId));
+      .where(
+        and(
+          eq(matches.id, input.matchId),
+          eq(matches.version, input.expectedVersion),
+        ),
+      )
+      .returning();
+    if (updated.length === 0) {
+      const current = await this.getMatch(input.matchId);
+      throw Object.assign(new Error("VERSION_CONFLICT"), {
+        code: "VERSION_CONFLICT",
+        state: current,
+      });
+    }
     return this.getMatch(input.matchId);
   }
 
@@ -424,6 +520,18 @@ export class MatchService {
         code: "MATCH_IMMUTABLE",
       });
     }
+    if (
+      !STOP_REASON_CODES.includes(
+        input.reasonCode as (typeof STOP_REASON_CODES)[number],
+      )
+    ) {
+      throw Object.assign(new Error("VALIDATION"), {
+        code: "VALIDATION",
+        message: "reasonCode must be injury, time, or other",
+      });
+    }
+    await this.assertCanManageMatch(detail, input.actorUserId);
+
     const now = this.clock.now();
     await this.db
       .update(matches)
@@ -442,7 +550,7 @@ export class MatchService {
     if (updated && updated.kind !== "tutorial") {
       await this.applyStats(updated);
     }
-    await this.releaseJudge(input.matchId);
+    await this.releaseJudge(input.matchId, input.actorUserId, undefined, true);
     return updated;
   }
 
@@ -451,6 +559,19 @@ export class MatchService {
     userId: string;
     authSessionId: string;
   }) {
+    const detail = await this.getMatch(input.matchId);
+    if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    if (
+      detail.status !== "waiting" &&
+      detail.status !== "in_progress" &&
+      detail.status !== "pending_confirmation"
+    ) {
+      throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
+    }
+    if (!this.isMatchParticipant(detail, input.userId)) {
+      throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+    }
+
     const now = this.clock.now();
     // Expire stale
     await this.db
@@ -465,17 +586,30 @@ export class MatchService {
       );
 
     // User cannot hold judge from another auth session
-    const other = await this.db.query.judgeSessions.findFirst({
+    const otherDevice = await this.db.query.judgeSessions.findFirst({
       where: and(
         eq(judgeSessions.userId, input.userId),
         isNull(judgeSessions.releasedAt),
         ne(judgeSessions.authSessionId, input.authSessionId),
       ),
     });
-    if (other) {
+    if (otherDevice) {
       throw Object.assign(new Error("JUDGE_OTHER_DEVICE"), {
         code: "JUDGE_OTHER_DEVICE",
       });
+    }
+
+    // One active judge session per user across matches
+    const otherMatch = await this.db.query.judgeSessions.findFirst({
+      where: and(
+        eq(judgeSessions.userId, input.userId),
+        isNull(judgeSessions.releasedAt),
+        ne(judgeSessions.matchId, input.matchId),
+        sql`${judgeSessions.expiresAt} > ${now}`,
+      ),
+    });
+    if (otherMatch) {
+      throw Object.assign(new Error("JUDGE_BUSY"), { code: "JUDGE_BUSY" });
     }
 
     try {
@@ -514,6 +648,7 @@ export class MatchService {
           eq(judgeSessions.userId, input.userId),
           eq(judgeSessions.authSessionId, input.authSessionId),
           isNull(judgeSessions.releasedAt),
+          sql`${judgeSessions.expiresAt} > ${now}`,
         ),
       )
       .returning();
@@ -525,7 +660,20 @@ export class MatchService {
     return result[0];
   }
 
-  async releaseJudge(matchId: string) {
+  async releaseJudge(
+    matchId: string,
+    userId?: string,
+    authSessionId?: string,
+    force = false,
+  ) {
+    if (!force && userId && authSessionId) {
+      await this.assertActiveJudge(matchId, userId, authSessionId);
+    } else if (!force && userId) {
+      const detail = await this.getMatch(matchId);
+      if (!detail || !this.isMatchParticipant(detail, userId)) {
+        throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+      }
+    }
     const now = this.clock.now();
     await this.db
       .update(judgeSessions)
@@ -549,6 +697,35 @@ export class MatchService {
     await this.releaseJudge(input.matchId);
     // Reserve for target — they must acquire with their session; create notification path
     return { reservedForUserId: input.toUserId };
+  }
+
+  private isMatchParticipant(
+    detail: NonNullable<Awaited<ReturnType<MatchService["getMatch"]>>>,
+    userId: string,
+  ): boolean {
+    return (
+      detail.createdByUserId === userId ||
+      detail.participants.some((p) => p.userId === userId)
+    );
+  }
+
+  private async assertCanManageMatch(
+    detail: NonNullable<Awaited<ReturnType<MatchService["getMatch"]>>>,
+    userId: string,
+  ) {
+    if (this.isMatchParticipant(detail, userId)) return;
+    const now = this.clock.now();
+    const judge = await this.db.query.judgeSessions.findFirst({
+      where: and(
+        eq(judgeSessions.matchId, detail.id),
+        eq(judgeSessions.userId, userId),
+        isNull(judgeSessions.releasedAt),
+        sql`${judgeSessions.expiresAt} > ${now}`,
+      ),
+    });
+    if (!judge) {
+      throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+    }
   }
 
   private async assertActiveJudge(
@@ -616,35 +793,82 @@ export class MatchService {
       .where(eq(userStats.userId, userId));
   }
 
-  async getRankings(period: "all_time" | "week" | "month" = "all_time") {
-    const stats = await this.db.query.userStats.findMany();
+  async getRankings(scope: RankingScope = "all_time") {
+    const now = this.clock.now();
     const allUsers = await this.db.query.users.findMany();
-    const byId = new Map(allUsers.map((u) => [u.id, u]));
-    const entries = stats
-      .map((s) => {
-        const u = byId.get(s.userId);
-        if (!u || u.status === "blocked") return null;
-        const wins =
-          period === "week"
-            ? s.winsWeek
-            : period === "month"
-              ? s.winsMonth
-              : s.winsAllTime;
-        return {
-          userId: s.userId,
-          wins,
-          losses: s.lossesAllTime,
+    const activeUsers = allUsers.filter((u) => u.status === "active");
+
+    if (scope === "all_time") {
+      const stats = await this.db.query.userStats.findMany();
+      const statsByUser = new Map(stats.map((s) => [s.userId, s]));
+      const entries = activeUsers.map((u) => {
+        const s = statsByUser.get(u.id);
+        return toRankingEntry({
+          userId: u.id,
+          wins: s?.winsAllTime ?? 0,
+          losses: s?.lossesAllTime ?? 0,
           displayName: `${u.lastName} ${u.firstName}`,
           status: u.status as "active" | "blocked",
-        };
+          createdAt: u.createdAt,
+        });
+      });
+      return buildRanking(entries);
+    }
+
+    const rangeStart =
+      scope === "week"
+        ? calendarWeekStartUTC(now)
+        : calendarMonthStartUTC(now);
+    const finished = await this.db.query.matches.findMany({
+      where: and(
+        inArray(matches.status, ["finished", "stopped"]),
+        ne(matches.kind, "tutorial"),
+        sql`${matches.finishedAt} >= ${rangeStart}`,
+      ),
+    });
+    const matchIds = finished.map((m) => m.id);
+    const participants =
+      matchIds.length > 0
+        ? await this.db.query.matchParticipants.findMany({
+            where: inArray(matchParticipants.matchId, matchIds),
+          })
+        : [];
+    const partsByMatch = new Map<string, typeof participants>();
+    for (const p of participants) {
+      const list = partsByMatch.get(p.matchId) ?? [];
+      list.push(p);
+      partsByMatch.set(p.matchId, list);
+    }
+
+    const agg = new Map<string, { wins: number; losses: number }>();
+    for (const m of finished) {
+      if (!m.winnerSide || !m.finishedAt) continue;
+      const parts = partsByMatch.get(m.id) ?? [];
+      for (const p of parts) {
+        if (!p.userId || p.isTutorialActor) continue;
+        const cur = agg.get(p.userId) ?? { wins: 0, losses: 0 };
+        if (p.side === m.winnerSide) cur.wins += 1;
+        else cur.losses += 1;
+        agg.set(p.userId, cur);
+      }
+    }
+
+    const entries = activeUsers
+      .map((u) => {
+        const a = agg.get(u.id) ?? { wins: 0, losses: 0 };
+        if (a.wins + a.losses === 0) return null;
+        return toRankingEntry({
+          userId: u.id,
+          wins: a.wins,
+          losses: a.losses,
+          displayName: `${u.lastName} ${u.firstName}`,
+          status: u.status as "active" | "blocked",
+          createdAt: u.createdAt,
+        });
       })
-      .filter(Boolean);
-    return entries.sort(
-      (a, b) =>
-        b!.wins - a!.wins ||
-        a!.losses - b!.losses ||
-        a!.displayName.localeCompare(b!.displayName, "ru"),
-    );
+      .filter(Boolean) as ReturnType<typeof toRankingEntry>[];
+
+    return buildRanking(entries);
   }
 
   async createTutorialMatch(userId: string) {

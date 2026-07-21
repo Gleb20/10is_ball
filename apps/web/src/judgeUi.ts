@@ -5,6 +5,7 @@ export type JudgeParticipant = {
   guestFirstName?: string | null;
   guestLastName?: string | null;
   isTutorialActor?: boolean | null;
+  displayName?: string | null;
 };
 
 export type JudgeMatchLike = {
@@ -13,6 +14,7 @@ export type JudgeMatchLike = {
 };
 
 export function participantDisplayName(p: JudgeParticipant): string {
+  if (p.displayName?.trim()) return p.displayName.trim();
   if (p.isTutorialActor) return "Призрачный Олег";
   const first = (p.guestFirstName ?? "").trim();
   const last = (p.guestLastName ?? "").trim();

@@ -1,5 +1,30 @@
 # Dev Changelog
 
+## 2026-07-21 — P0+P1 bugfix slice (v1.5.0)
+
+### P0 — корректность API
+- Atomic `UPDATE … WHERE version = expected` на очках / undo
+- Обязательный `Idempotency-Key`; повтор ключа — idempotent 200
+- CSRF: cookie + `X-CSRF-Token` на мутациях (кроме login; в тестах отключено)
+- Authz: stop — только участник/судья; acquire judge — только участник; release — активный судья
+- RANK-001 comparator + calendar week/month из `finishedAt` матчей
+- `getMatch` обогащает participants полем `displayName`
+
+### P1 — тупиковые UX-сценарии
+- `/notifications` — список, read, accept/decline team invite
+- Challenge: `/matches/new?opponentId&opponentName` из рейтинга
+- Stop match UI на детали матча
+- 404 страница, «Назад» / «Отмена» на формах
+- Rankings sticky error fix; history sort by time
+- Login: show password, текст про админа; first password confirm
+
+### How to verify
+```bash
+pnpm --filter @tab10/shared build && pnpm --filter @tab10/test-utils build
+pnpm run ci
+pnpm dev
+```
+
 ## 2026-07-20 — Admin role create / promote / demote (v1.4.0)
 
 ### Added

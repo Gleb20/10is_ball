@@ -19,6 +19,8 @@ import { HelpPage } from "./pages/HelpPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { StartPage } from "./pages/StartPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -178,6 +180,15 @@ function AppRoutes() {
             </Protected>
           }
         />
+        <Route
+          path="/notifications"
+          element={
+            <Protected>
+              <NotificationsPage />
+            </Protected>
+          }
+        />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </AppShell>
   );

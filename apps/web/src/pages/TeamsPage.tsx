@@ -8,7 +8,8 @@ export function TeamsPage() {
   const [teams, setTeams] = useState<Array<Record<string, unknown>> | null>(
     null,
   );
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [name, setName] = useState("");
 
   async function load() {
@@ -17,7 +18,7 @@ export function TeamsPage() {
   }
 
   useEffect(() => {
-    void load().catch((e) => setError(e.message));
+    void load().catch((e) => setLoadError(e.message));
   }, []);
 
   return (
@@ -30,9 +31,10 @@ export function TeamsPage() {
             .createTeam({ name })
             .then(() => {
               setName("");
+              setFormError(null);
               return load();
             })
-            .catch((err) => setError((err as Error).message));
+            .catch((err) => setFormError((err as Error).message));
         }}
       >
         <TextField
@@ -44,11 +46,12 @@ export function TeamsPage() {
           required
         />
         <Button type="submit">Создать</Button>
+        {formError ? <p className="error">{formError}</p> : null}
       </form>
 
       <AsyncState
-        loading={teams === null && !error}
-        error={error}
+        loading={teams === null && !loadError}
+        error={loadError}
         empty={teams !== null && teams.length === 0}
         emptyTitle="Нет команд"
         emptyDescription="Создайте команду формой выше."

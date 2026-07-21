@@ -40,6 +40,17 @@ describe("REQ_ui__judge_serve_indicator", () => {
     expect(sideDisplayName(match, "B")).toBe("Борис Б");
   });
 
+  it("prefers API displayName for registered players", () => {
+    expect(
+      participantDisplayName({
+        id: "p1",
+        side: "A",
+        userId: "u1",
+        displayName: "Иванов Иван",
+      }),
+    ).toBe("Иванов Иван");
+  });
+
   it("labels tutorial actor", () => {
     expect(
       participantDisplayName({

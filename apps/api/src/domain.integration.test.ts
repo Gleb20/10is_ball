@@ -135,8 +135,8 @@ describe("match and judge integration", () => {
       headers: { "idempotency-key": "p-0" },
       payload: { side: "A", expectedVersion: version },
     });
-    // may fail version or return same — either way score shouldn't jump wrongly after confirm path
-    expect([200, 400, 409]).toContain(dup.statusCode);
+    expect(dup.statusCode).toBe(200);
+    expect(dup.json().match.version).toBe(version);
 
     const confirm = await app.inject({
       method: "POST",

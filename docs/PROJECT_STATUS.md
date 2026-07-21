@@ -1,9 +1,9 @@
 # Tab-10 Project Status
 
-Last updated: 2026-07-20  
-**Product version:** 1.4.0  
-Current phase: 10 (UI polish complete) + admin role management  
-Next step: Phase 9 remaining (security / mutation / observability) или продуктовый backlog
+Last updated: 2026-07-21  
+**Product version:** 1.5.0  
+Current phase: P0+P1 bugfix slice (branch `cursor/p0-p1-bugfix-058e`); tournament wiring → отдельная ветка `tournament`  
+Next step: merge P0+P1 → ветка `cursor/tournament-*` для Phase 6 match wiring
 
 ## Progress
 
@@ -34,6 +34,10 @@ Next step: Phase 9 remaining (security / mutation / observability) или про
 | UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
+
+### P0+P1 bugfix — in progress (v1.5.0, branch `cursor/p0-p1-bugfix-058e`)
+- **P0 API:** atomic score version, idempotency key required, CSRF on mutations, judge/stop authz, RANK-001 sort + calendar week/month, participant displayName in match API, 2v2 serve order
+- **P1 Web:** `/notifications`, challenge prefill, stop match UI, 404, AsyncState form errors, auth polish, history sort
 
 ### Admin role management — done (v1.4.0)
 - Create with role `user`/`admin`; PATCH role for others (not self)

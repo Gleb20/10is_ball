@@ -111,7 +111,7 @@ export function HomePage() {
             <button
               type="button"
               className="card list-row list-row--button"
-              onClick={() => navigate("/profile")}
+              onClick={() => navigate("/notifications")}
             >
               <div className="list-row__body">
                 <strong>Уведомления</strong>
