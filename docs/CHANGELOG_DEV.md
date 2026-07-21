@@ -1,5 +1,28 @@
 # Dev Changelog
 
+## 2026-07-21 — Judge UX polish (v1.6.1)
+
+### Fixes
+- Undo: rebuild только из `point_awarded` (AT-MATCH-005b) — всегда −1 очко
+- `startedAt` ставится в `judge/setup`, не в `startMatch` — таймер после выбора подачи
+- Setup UI: кликабельная ↔ между половинами; чекбоксы смены сторон убраны
+- +1 внутри ячеек счёта (стабильная высота); spacer в readonly
+- После «Подтвердить результат» → navigate на карточку матча
+- Undo: `undoPending` + reload при ошибке
+
+### Authz
+- ADR D7: любой active user может acquire свободный judge-слот (не только участник)
+
+### How to verify
+```bash
+pnpm run ci
+pnpm dev
+# Setup: ↔ меняет стороны; таймер стартует после «Начать судейство»
+# Undo после серии award/undo — ровно −1
+# Не-участник может «Судить» свободный матч
+# Confirm finish → /matches/:id
+```
+
 ## 2026-07-21 — Judge UX slice (v1.6.0)
 
 ### API

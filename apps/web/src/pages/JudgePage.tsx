@@ -36,6 +36,7 @@ export function JudgePage() {
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [flashSide, setFlashSide] = useState<"A" | "B" | null>(null);
+  const [undoPending, setUndoPending] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [viewport, setViewport] = useState(() => ({
     w: typeof window !== "undefined" ? window.innerWidth : 800,
@@ -44,7 +45,6 @@ export function JudgePage() {
 
   const [firstServerId, setFirstServerId] = useState("");
   const [swapSides, setSwapSides] = useState(false);
-  const [displayFlipped, setDisplayFlipped] = useState(false);
   const [setupPending, setSetupPending] = useState(false);
 
   const load = useCallback(async () => {
@@ -74,7 +74,6 @@ export function JudgePage() {
               "",
           ),
         );
-        setDisplayFlipped(Boolean(refreshed.judgeDisplayFlipped));
         setPhase("setup");
       } else {
         setPhase("scoring");
@@ -137,7 +136,6 @@ export function JudgePage() {
       const res = await api.judgeSetup(id, {
         firstServerParticipantId: firstServerId,
         swapSides,
-        displayFlipped,
       });
       setMatch(res.match as MatchState);
       setPhase("scoring");
@@ -168,7 +166,8 @@ export function JudgePage() {
   }
 
   async function undo() {
-    if (!match) return;
+    if (!match || undoPending) return;
+    setUndoPending(true);
     try {
       const res = await api.undoPoint(
         id!,
@@ -179,6 +178,9 @@ export function JudgePage() {
       setError(null);
     } catch (e) {
       setError((e as Error).message);
+      await load();
+    } finally {
+      setUndoPending(false);
     }
   }
 
@@ -191,13 +193,21 @@ export function JudgePage() {
     }
   }
 
+  async function onConfirmFinish() {
+    try {
+      await api.confirmFinish(id!);
+      navigate(`/matches/${id}`);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
   async function toggleDisplayFlip() {
     if (!id || !match) return;
     const next = !match.judgeDisplayFlipped;
     try {
       const res = await api.judgeSetup(id, { displayFlipped: next });
       setMatch(res.match as MatchState);
-      setDisplayFlipped(next);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -256,7 +266,6 @@ export function JudgePage() {
             side: p.side === "A" ? "B" : "A",
           }))
         : participants,
-      judgeDisplayFlipped: displayFlipped,
     };
     const { left, right } = boardSides(previewMatch);
 
@@ -264,7 +273,7 @@ export function JudgePage() {
       <div className="judge-screen" data-testid="judge-setup">
         <h2 className="judge-setup__title">Настройка перед игрой</h2>
         <p className="judge-screen__hint">
-          Выберите первую подачу и расположение игроков у стола.
+          Выберите первую подачу. Нажмите ↔, чтобы поменять стороны стола.
         </p>
 
         <fieldset className="judge-setup__field">
@@ -283,28 +292,23 @@ export function JudgePage() {
           ))}
         </fieldset>
 
-        <label className="judge-setup__check">
-          <input
-            type="checkbox"
-            checked={swapSides}
-            onChange={(e) => setSwapSides(e.target.checked)}
-          />
-          Поменять стороны стола (A ↔ B)
-        </label>
-
-        <label className="judge-setup__check">
-          <input
-            type="checkbox"
-            checked={displayFlipped}
-            onChange={(e) => setDisplayFlipped(e.target.checked)}
-          />
-          Поменять местами на экране
-        </label>
-
-        <div className="judge-setup__preview">
-          <span>{sideDisplayName(previewMatch, left)}</span>
-          <span className="judge-setup__vs">↔</span>
-          <span>{sideDisplayName(previewMatch, right)}</span>
+        <div className="judge-setup__sides" aria-label="Стороны стола">
+          <div className="judge-setup__half">
+            <span className="judge-setup__half-label">Слева</span>
+            <strong>{sideDisplayName(previewMatch, left)}</strong>
+          </div>
+          <button
+            type="button"
+            className="judge-setup__swap-btn"
+            aria-label="Поменять стороны"
+            onClick={() => setSwapSides((v) => !v)}
+          >
+            ↔
+          </button>
+          <div className="judge-setup__half">
+            <span className="judge-setup__half-label">Справа</span>
+            <strong>{sideDisplayName(previewMatch, right)}</strong>
+          </div>
         </div>
 
         {error ? (
@@ -314,7 +318,10 @@ export function JudgePage() {
         ) : null}
 
         <div className="judge-setup__actions">
-          <Button disabled={setupPending || !firstServerId} onClick={() => void confirmSetup()}>
+          <Button
+            disabled={setupPending || !firstServerId}
+            onClick={() => void confirmSetup()}
+          >
             {setupPending ? "Сохранение…" : "Начать судейство"}
           </Button>
           <Button variant="secondary" onClick={() => navigate(`/matches/${id}`)}>
@@ -344,33 +351,29 @@ export function JudgePage() {
     const label = sideDisplayName(matchState, side);
     const score = side === "A" ? String(matchState.scoreA) : String(matchState.scoreB);
     const serving = serve === side;
+    const flash = flashSide === side;
 
     return (
       <div
         key={side}
-        className={
-          serving
-            ? "judge-side-col judge-side-col--serving"
-            : "judge-side-col"
-        }
+        className={[
+          "judge-side",
+          serving ? "judge-side--serving" : "",
+          flash ? "judge-side--flash" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        data-testid={`judge-side-${side}`}
       >
-        <div
-          className={
-            flashSide === side
-              ? "judge-side judge-side--flash"
-              : "judge-side judge-side--display"
-          }
-        >
-          <span className="judge-side__name">{label}</span>
-          <span className="judge-side__score">{score}</span>
-          {serving ? (
-            <span className="judge-serve-badge" aria-live="polite">
-              Подача
-            </span>
-          ) : (
-            <span className="judge-serve-badge judge-serve-badge--empty" />
-          )}
-        </div>
+        <span className="judge-side__name">{label}</span>
+        <span className="judge-side__score">{score}</span>
+        {serving ? (
+          <span className="judge-serve-badge" aria-live="polite">
+            Подача
+          </span>
+        ) : (
+          <span className="judge-serve-badge judge-serve-badge--empty" />
+        )}
         {!readonly ? (
           <Button
             className="judge-point-btn judge-touch"
@@ -380,7 +383,9 @@ export function JudgePage() {
           >
             +1
           </Button>
-        ) : null}
+        ) : (
+          <span className="judge-point-spacer" aria-hidden />
+        )}
       </div>
     );
   }
@@ -398,9 +403,11 @@ export function JudgePage() {
           <span className="judge-status">
             {statusLabel(String(match.status), "match")}
           </span>
-          <span className="judge-timer" aria-live="off">
-            {duration}
-          </span>
+          {match.startedAt ? (
+            <span className="judge-timer" aria-live="off">
+              {duration}
+            </span>
+          ) : null}
           {match.deuceMode ? (
             <span className="judge-deuce">Deuce</span>
           ) : null}
@@ -415,7 +422,7 @@ export function JudgePage() {
                 variant="secondary"
                 className="judge-touch"
                 onClick={() => void undo()}
-                disabled={locked}
+                disabled={locked || undoPending}
                 aria-label="Отменить последнее очко"
               >
                 Undo
@@ -463,15 +470,10 @@ export function JudgePage() {
             <>
               <Button
                 className="judge-touch"
-                onClick={() =>
-                  void api
-                    .confirmFinish(id!)
-                    .then((r) => {
-                      setMatch(r.match as MatchState);
-                      setMenuOpen(false);
-                    })
-                    .catch((e) => setError(e.message))
-                }
+                onClick={() => {
+                  setMenuOpen(false);
+                  void onConfirmFinish();
+                }}
               >
                 Подтвердить результат
               </Button>
@@ -515,15 +517,7 @@ export function JudgePage() {
 
       {match.status === "pending_confirmation" && !menuOpen && !readonly ? (
         <div className="judge-confirm-bar">
-          <Button
-            className="judge-touch"
-            onClick={() =>
-              void api
-                .confirmFinish(id!)
-                .then((r) => setMatch(r.match as MatchState))
-                .catch((e) => setError(e.message))
-            }
-          >
+          <Button className="judge-touch" onClick={() => void onConfirmFinish()}>
             Подтвердить результат
           </Button>
           <Button

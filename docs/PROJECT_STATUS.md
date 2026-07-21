@@ -1,8 +1,8 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-21  
-**Product version:** 1.6.0  
-Current phase: Judge UX slice (v1.6.0) on branch `cursor/p0-p1-bugfix-058e`  
+**Product version:** 1.6.1  
+Current phase: Judge UX polish (v1.6.1) on branch `cursor/p0-p1-bugfix-058e`  
 Next step: merge P0+P1 + judge UX → ветка `cursor/tournament-*` для Phase 6 match wiring
 
 ## Progress
@@ -34,6 +34,11 @@ Next step: merge P0+P1 + judge UX → ветка `cursor/tournament-*` для Ph
 | UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
+
+### Judge UX polish — done (v1.6.1)
+- Undo replay только `point_awarded` (ровно −1 очко)
+- Setup: стрелка ↔ вместо чекбоксов; `startedAt` при judge/setup
+- Acquire: любой active user (ADR D7); +1 внутри ячеек; выход после confirmFinish
 
 ### Judge UX slice — done (v1.6.0)
 - **P0:** fix зависания «Подключение судьи» при ошибке acquire; `activeJudge` в GET match; idempotent re-acquire; AT-JUDGE-003

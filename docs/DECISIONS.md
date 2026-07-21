@@ -34,7 +34,7 @@
 
 **Git:** каждый коммит — детальное тело по [`.cursor/rules/git-commits.mdc`](../.cursor/rules/git-commits.mdc).
 
-**Current release:** 1.4.0
+**Current release:** 1.6.1
 
 ## D5 — Mobile shell IA (2026-07-20)
 
@@ -93,3 +93,9 @@
 - Нельзя понизить/заблокировать последнего активного admin (`LAST_ADMIN` / AT-AUTH-008).
 
 **Why:** Закрывает gap UX/PRD (выбор роли при создании + назначение админа в production) без self-escalation и без «тихой» смены прав в живой сессии.
+
+## D7 — Who may acquire judge (2026-07-21)
+
+**Decision:** Любой **активный** (не blocked) зарегистрированный пользователь клуба может захватить свободный judge-слот матча в статусах `waiting` | `in_progress` | `pending_confirmation`. Участие в составе матча не требуется.
+
+**Why:** Закрытый клуб; часто судит сосед у стола, не обязательно игрок. JUDGE-001 (один судья) и JUDGE-005 (занятый слот) без изменений.

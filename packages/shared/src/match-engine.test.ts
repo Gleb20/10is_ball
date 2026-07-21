@@ -73,6 +73,59 @@ describe("REQ_MATCH__undo_and_idempotency", () => {
     expect(r.ok && r.state.scoreB).toBe(0);
   });
 
+  it("AT-MATCH-005b: undo after prior undo removes exactly one point", () => {
+    let state = createInitialScoreState("pA");
+    const history: Parameters<typeof reduceMatchEvent>[4] = [];
+    const keys = new Set<string>();
+
+    for (const key of ["a1", "a2"]) {
+      const r = reduceMatchEvent(
+        state,
+        { type: "point_awarded", side: "A", idempotencyKey: key },
+        rules11,
+        serve,
+        history,
+        keys,
+      );
+      expect(r.ok).toBe(true);
+      if (r.ok) state = r.state;
+    }
+    expect(state.scoreA).toBe(2);
+
+    let r = reduceMatchEvent(
+      state,
+      { type: "point_undone", idempotencyKey: "u1" },
+      rules11,
+      serve,
+      history,
+      keys,
+    );
+    expect(r.ok && r.state.scoreA).toBe(1);
+    if (r.ok) state = r.state;
+
+    r = reduceMatchEvent(
+      state,
+      { type: "point_awarded", side: "A", idempotencyKey: "a3" },
+      rules11,
+      serve,
+      history,
+      keys,
+    );
+    expect(r.ok && r.state.scoreA).toBe(2);
+    if (r.ok) state = r.state;
+
+    r = reduceMatchEvent(
+      state,
+      { type: "point_undone", idempotencyKey: "u2" },
+      rules11,
+      serve,
+      history,
+      keys,
+    );
+    expect(r.ok && r.state.scoreA).toBe(1);
+    expect(r.ok && r.state.scoreB).toBe(0);
+  });
+
   it("AT-MATCH-006: duplicate idempotency key does not double score", () => {
     let state = createInitialScoreState("pA");
     const history: Parameters<typeof reduceMatchEvent>[4] = [];

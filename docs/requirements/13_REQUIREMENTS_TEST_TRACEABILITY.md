@@ -12,7 +12,7 @@
 | RANK-001..005 | AT-RANK-001..004 | unit, integration, API | yes |
 | HISTORY-001..004 | AT-VIS-*, AT-VIS-003 | integration, API, E2E | high |
 | MATCH-001..015 | AT-MATCH-001..012 | unit, integration, API, E2E | yes |
-| JUDGE-001..012 | AT-JUDGE-001..006; AT-JUDGE-003 release→acquire; REQ_ui__judge_immersive / setup / +1 / timer / readonly (v1.6.0) | integration, API, component | yes |
+| JUDGE-001..012 | AT-JUDGE-001..006; AT-JUDGE-003; JUDGE-002 any active user (D7); REQ_ui__judge setup ↔ / +1-in-cell / timer-on-setup / exit-after-confirm (v1.6.1) | integration, API, component | yes |
 | TOURNAMENT-001..017 | AT-TRN-001..013 | unit, integration, API, E2E | yes |
 | TEAM-001..009 | AT-TEAM-001..006 | unit, integration, API | high |
 | NOTIF-001..006 | AT-NOTIF-001..004 | integration, API, component | medium |

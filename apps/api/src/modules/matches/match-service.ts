@@ -189,7 +189,6 @@ export class MatchService {
       .update(matches)
       .set({
         status: "in_progress",
-        startedAt: now,
         currentServerParticipantId: serverId,
         updatedAt: now,
       })
@@ -592,7 +591,10 @@ export class MatchService {
     ) {
       throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
     }
-    if (!this.isMatchParticipant(detail, input.userId)) {
+    const actor = await this.db.query.users.findFirst({
+      where: eq(users.id, input.userId),
+    });
+    if (!actor || actor.status !== "active") {
       throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
     }
 
@@ -790,6 +792,9 @@ export class MatchService {
     }
 
     const patch: Partial<typeof matches.$inferInsert> = { updatedAt: now };
+    if (!detail.startedAt && totalPoints === 0) {
+      patch.startedAt = now;
+    }
     if (input.firstServerParticipantId) {
       const valid = detail.participants.some(
         (p) => p.id === input.firstServerParticipantId,

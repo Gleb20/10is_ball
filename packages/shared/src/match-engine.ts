@@ -200,7 +200,11 @@ export function reduceMatchEvent(
     if (lastIdx < 0) {
       return { ok: false, code: "NOTHING_TO_UNDO", message: "No points to undo" };
     }
-    const priorEvents = history.slice(0, lastIdx);
+    // Replay only awards — replaying prior point_undone would undo-the-undo
+    // and drop an extra point (award→award→undo→award→undo → 0 instead of 1).
+    const priorEvents = history
+      .slice(0, lastIdx)
+      .filter((e) => e.type === "point_awarded");
     let rebuilt = createInitialScoreState(serveConfig.firstServerId);
     const keys = new Set<string>();
     const tempHistory: MatchEvent[] = [];
