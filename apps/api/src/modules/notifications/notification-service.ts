@@ -1,15 +1,29 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import type { Db } from "../../db/client.js";
-import { faqArticles, feedbackMessages, notifications } from "../../db/schema.js";
+import {
+  faqArticles,
+  feedbackMessages,
+  notifications,
+  teamInvitations,
+  tournamentInvitations,
+} from "../../db/schema.js";
+
+export type NotificationLifecycle =
+  | "new"
+  | "accepted"
+  | "declined"
+  | "read"
+  | "expired";
 
 export class NotificationService {
   constructor(private readonly db: Db) {}
 
   async list(userId: string) {
-    return this.db.query.notifications.findMany({
+    const rows = await this.db.query.notifications.findMany({
       where: eq(notifications.userId, userId),
       orderBy: [desc(notifications.createdAt)],
     });
+    return this.enrichLifecycle(rows);
   }
 
   async unread(userId: string) {
@@ -20,6 +34,12 @@ export class NotificationService {
       ),
       orderBy: [desc(notifications.createdAt)],
     });
+  }
+
+  /** Count of actionable / unread items (for badges). */
+  async unreadCount(userId: string) {
+    const enriched = await this.list(userId);
+    return enriched.filter((n) => n.lifecycle === "new").length;
   }
 
   async markRead(userId: string, id: string) {
@@ -49,6 +69,74 @@ export class NotificationService {
       })
       .returning();
     return row;
+  }
+
+  private async enrichLifecycle<
+    T extends {
+      id: string;
+      type: string;
+      readAt: Date | null;
+      payload: unknown;
+    },
+  >(
+    rows: T[],
+  ): Promise<Array<T & { lifecycle: NotificationLifecycle }>> {
+    const tournamentIds: string[] = [];
+    const teamIds: string[] = [];
+    for (const n of rows) {
+      const payload = (n.payload ?? {}) as { invitationId?: string };
+      if (
+        n.type === "tournament_invitation" &&
+        payload.invitationId
+      ) {
+        tournamentIds.push(payload.invitationId);
+      }
+      if (n.type === "team_invitation" && payload.invitationId) {
+        teamIds.push(payload.invitationId);
+      }
+    }
+
+    const tInv =
+      tournamentIds.length > 0
+        ? await this.db.query.tournamentInvitations.findMany({
+            where: inArray(tournamentInvitations.id, tournamentIds),
+          })
+        : [];
+    const teamInv =
+      teamIds.length > 0
+        ? await this.db.query.teamInvitations.findMany({
+            where: inArray(teamInvitations.id, teamIds),
+          })
+        : [];
+    const tById = new Map(tInv.map((i) => [i.id, i]));
+    const teamById = new Map(teamInv.map((i) => [i.id, i]));
+
+    return rows.map((n) => {
+      const payload = (n.payload ?? {}) as { invitationId?: string };
+      let lifecycle: NotificationLifecycle = n.readAt ? "read" : "new";
+
+      if (
+        n.type === "tournament_invitation" &&
+        payload.invitationId
+      ) {
+        const inv = tById.get(payload.invitationId);
+        if (inv?.status === "accepted") lifecycle = "accepted";
+        else if (inv?.status === "declined") lifecycle = "declined";
+        else if (inv?.status === "expired") lifecycle = "expired";
+        else if (inv?.status === "pending") lifecycle = "new";
+      } else if (
+        n.type === "team_invitation" &&
+        payload.invitationId
+      ) {
+        const inv = teamById.get(payload.invitationId);
+        if (inv?.status === "accepted") lifecycle = "accepted";
+        else if (inv?.status === "declined") lifecycle = "declined";
+        else if (inv?.status === "expired") lifecycle = "expired";
+        else if (inv?.status === "pending") lifecycle = "new";
+      }
+
+      return { ...n, lifecycle };
+    });
   }
 }
 

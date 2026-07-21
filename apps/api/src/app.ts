@@ -767,6 +767,9 @@ export async function buildApp(opts: {
     const matches = await services.matches.listMatches(5);
     const rankings = await services.matches.getRankings("all_time");
     const unread = await services.notifications.unread(req.authUser!.id);
+    const unreadCount = await services.notifications.unreadCount(
+      req.authUser!.id,
+    );
     const myRankIndex = rankings.findIndex(
       (r) => r && r.userId === req.authUser!.id,
     );
@@ -775,6 +778,7 @@ export async function buildApp(opts: {
       lastMatches: matches,
       topRankings: rankings.slice(0, 5),
       unreadNotifications: unread.slice(0, 5),
+      unreadCount,
       myStats: myEntry
         ? {
             rank: myRankIndex + 1,
@@ -922,6 +926,27 @@ export async function buildApp(opts: {
           invitedByUserId: req.authUser!.id,
         });
         return { invitation };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.delete(
+    "/api/v1/tournaments/:id/invitations/:invitationId",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { id, invitationId } = req.params as {
+          id: string;
+          invitationId: string;
+        };
+        await services.tournaments.cancelInvitation({
+          tournamentId: id,
+          invitationId,
+          actorUserId: req.authUser!.id,
+        });
+        return { ok: true };
       } catch (e) {
         return sendError(reply, e);
       }

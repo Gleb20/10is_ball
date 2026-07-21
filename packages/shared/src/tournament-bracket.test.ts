@@ -41,18 +41,86 @@ describe("REQ_TRN__bracket_generation", () => {
     ).toThrow("PARTICIPANT_COUNT_INVALID");
   });
 
-  it("creates power-of-2 bracket with byes for 3 players", () => {
+  it("creates compact bracket with one bye for 3 players", () => {
     let n = 0;
     const ids = () => `s_${++n}`;
     const bracket = generateSingleEliminationBracket(["p1", "p2", "p3"], ids);
-    expect(bracket.size).toBe(4);
+    expect(bracket.size).toBe(3);
     expect(bracket.format).toBe("single_elimination");
-    const first = bracket.slots.filter((s) => s.round === 0 && s.side === "main");
-    expect(first.filter((s) => s.isBye).length).toBe(1);
-    expect(first.filter((s) => s.participantId).length).toBe(3);
+    const r0Pairs = listMatchPairs(bracket).filter(
+      (p) => p.side === "main" && p.round === 0,
+    );
+    const byePairs = r0Pairs.filter((p) => p.slotA.isBye || p.slotB.isBye);
+    const playPairs = r0Pairs.filter(pairNeedsMatch);
+    expect(byePairs).toHaveLength(1);
+    expect(playPairs).toHaveLength(1);
+    // Last in seed order gets the bye
+    const byeAdvancer =
+      byePairs[0]!.slotA.isBye
+        ? byePairs[0]!.slotB.participantId
+        : byePairs[0]!.slotA.participantId;
+    expect(byeAdvancer).toBe("p3");
   });
 
-  it("SE size>=4 includes third_place slots", () => {
+  it("compact placement: N=5/6/7 one bye when odd", () => {
+    function byeAdvancers(seeded: string[]) {
+      let n = 0;
+      const bracket = generateSingleEliminationBracket(
+        seeded,
+        () => `b_${++n}`,
+      );
+      const r0 = listMatchPairs(bracket).filter(
+        (p) => p.side === "main" && p.round === 0,
+      );
+      const advancers: string[] = [];
+      for (const p of r0) {
+        if (p.slotA.isBye && p.slotB.participantId)
+          advancers.push(p.slotB.participantId);
+        if (p.slotB.isBye && p.slotA.participantId)
+          advancers.push(p.slotA.participantId);
+      }
+      const playable = r0.filter(pairNeedsMatch).length;
+      return { advancers: advancers.sort(), playable, size: bracket.size };
+    }
+
+    expect(byeAdvancers(["s1", "s2", "s3", "s4", "s5"])).toEqual({
+      advancers: ["s5"],
+      playable: 2,
+      size: 5,
+    });
+    expect(byeAdvancers(["s1", "s2", "s3", "s4", "s5", "s6"])).toEqual({
+      advancers: [],
+      playable: 3,
+      size: 6,
+    });
+    expect(
+      byeAdvancers(["s1", "s2", "s3", "s4", "s5", "s6", "s7"]),
+    ).toEqual({
+      advancers: ["s7"],
+      playable: 3,
+      size: 7,
+    });
+  });
+
+  it("N=5: R1 bye goes to a non-bye advancer so R0 bye plays a winner", () => {
+    let n = 0;
+    const bracket = generateSingleEliminationBracket(
+      ["s1", "s2", "s3", "s4", "s5"],
+      () => `b_${++n}`,
+    );
+    const r1 = listMatchPairs(bracket).filter(
+      (p) => p.side === "main" && p.round === 1,
+    );
+    const playPair = r1.find((p) => !p.slotA.isBye && !p.slotB.isBye);
+    expect(playPair).toBeTruthy();
+    const playIds = [
+      playPair!.slotA.participantId,
+      playPair!.slotB.participantId,
+    ];
+    expect(playIds).toContain("s5");
+  });
+
+  it("SE with 4 players includes third_place slots", () => {
     let n = 0;
     const bracket = generateSingleEliminationBracket(
       ["a", "b", "c", "d"],

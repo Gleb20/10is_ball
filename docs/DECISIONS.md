@@ -34,7 +34,13 @@
 
 **Git:** каждый коммит — детальное тело по [`.cursor/rules/git-commits.mdc`](../.cursor/rules/git-commits.mdc).
 
-**Current release:** 1.9.0
+**Current release:** 1.10.0
+
+## D11 — Compact SE bye vs Challonge DE (2026-07-21)
+
+**Decision:** Single elimination uses **successive odd-bye** (one bye when remaining count is odd; prefer seats that have not yet received a bye, else last in order). Bracket `size` = participant count (not next power of 2). Double elimination keeps **Challonge pad-to-Po2** WB via `generatePowerOf2SingleEliminationBracket`.
+
+**Why:** PRD TOURNAMENT-009 (≤1 bye per player when possible) and product feedback that N=5 must not show three free passes; bye recipient must face a prior-round winner next. DE topology still needs a fixed Po2 WB.
 
 ## D9 — Tournament bracket storage (2026-07-21)
 

@@ -1,7 +1,7 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-21  
-**Product version:** 1.9.0  
+**Product version:** 1.10.0  
 Current phase: Working tournaments + Challonge-like bracket UX  
 Next step: merge tournament branch → main
 
@@ -15,7 +15,7 @@ Next step: merge tournament branch → main
 | 3 Match domain | done | 6/6 |
 | 4 Judge concurrency | done | 5/5 |
 | 5 Stats / Rankings | done | 4/4 |
-| 6 Tournaments | done | 9/9 + match wiring + Challonge DE/UI (v1.9.0) |
+| 6 Tournaments | done | 9/9 + compact SE bye + roster/notif (v1.10.0) |
 | 7 Teams & Notifications | done | 4/4 (+ tournament notifs) |
 | 8 Onboarding / Help | done | 4/4 |
 | 9 Hardening | partial | CI + OpenAPI; load test; backup rehearsal; optional: security / mutation / observability |
@@ -34,6 +34,15 @@ Next step: merge tournament branch → main
 | UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
+
+### Roster / notifications / compact SE — done (v1.10.0)
+- Invite statuses + field clear; profile badge; Актуальные; N=5 → 1 bye
+
+### Bracket connectors rewrite — done (v1.9.2)
+- Winner SVG curve → next card; loser ↓ (LB) / ✕ (out)
+
+### Bracket UX BYE + connectors — done (v1.9.1)
+- Challonge placement; live vs labels; hide roster after lock
 
 ### Challonge-like SE/DE + avatars — done (v1.9.0)
 - DE topology + GF reset; bracket bands; meme avatars 1..10 on user/guest; show in match/judge/bracket

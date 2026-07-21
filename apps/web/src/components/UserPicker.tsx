@@ -9,6 +9,9 @@ type UserPickerProps = {
   label: string;
   value: string;
   onChange: (userId: string) => void;
+  /** Cleared together with value after successful add/invite. */
+  inputValue?: string;
+  onInputChange?: (text: string) => void;
   /** User IDs already in roster (or otherwise unavailable). */
   excludeUserIds?: string[];
   /** Also exclude the current user (default true). */
@@ -22,6 +25,8 @@ export function UserPicker({
   label,
   value,
   onChange,
+  inputValue: inputValueProp,
+  onInputChange,
   excludeUserIds = EMPTY_IDS,
   excludeSelf = true,
   placeholder = "Начните вводить имя",
@@ -32,6 +37,9 @@ export function UserPicker({
     Array<{ value: string; label: string }>
   >([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [innerInput, setInnerInput] = useState("");
+  const controlled = inputValueProp !== undefined;
+  const inputValue = controlled ? inputValueProp : innerInput;
 
   const excludeKey = useMemo(
     () =>
@@ -57,6 +65,11 @@ export function UserPicker({
       .catch(() => setLoadError("Не удалось загрузить список игроков"));
   }, [excludeKey, excludeUserIds, excludeSelf, user?.id]);
 
+  // When parent clears value, also clear visible text if uncontrolled
+  useEffect(() => {
+    if (!value && !controlled) setInnerInput("");
+  }, [value, controlled]);
+
   return (
     <div className="stack">
       <Autocomplete
@@ -65,6 +78,11 @@ export function UserPicker({
         options={options}
         value={value}
         onChange={onChange}
+        inputValue={inputValue}
+        onInputChange={(text) => {
+          if (controlled) onInputChange?.(text);
+          else setInnerInput(text);
+        }}
         clearable
         fullWidth
         disabled={disabled}

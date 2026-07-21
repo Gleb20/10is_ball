@@ -70,8 +70,158 @@ export function seedParticipants(
   return [...ranked, ...shuffledUnranked].map((p) => p.id);
 }
 
-/** Classic single-elim pairing with byes + optional third-place slot. */
+/**
+ * Compact single-elim: one bye when remaining count is odd (successive rounds).
+ * Bye prefers seats not filled by a prior bye; tie → last in order.
+ * N=5 → 1 bye + 2 matches in R0 (not Challonge pad-to-8).
+ */
 export function generateSingleEliminationBracket(
+  seededIds: string[],
+  idFactory: () => string,
+): Bracket {
+  if (seededIds.length < 3 || seededIds.length > 64) {
+    throw new Error("PARTICIPANT_COUNT_INVALID");
+  }
+
+  const slots: BracketSlot[] = [];
+  let round = 0;
+  let thirdPlaceSlotId: string | null = null;
+  let thirdA: BracketSlot | null = null;
+  let thirdB: BracketSlot | null = null;
+
+  // R0 seats from seed order
+  let current: BracketSlot[] = seededIds.map((pid, i) =>
+    emptySlot({
+      id: idFactory(),
+      round: 0,
+      position: i,
+      side: "main",
+      participantId: pid,
+      isBye: false,
+      advancesToSlotId: null,
+      loserToSlotId: null,
+    }),
+  );
+  // Track which current seats arrived via bye (for later bye preference)
+  let filledByBye = new Set<string>();
+
+  while (current.length > 1) {
+    const n = current.length;
+    const byeEligible = current.filter((s) => !filledByBye.has(s.id));
+    const byePool = byeEligible.length > 0 ? byeEligible : current;
+    const byeSlot = n % 2 === 1 ? byePool[byePool.length - 1]! : null;
+
+    const playSlots = byeSlot
+      ? current.filter((s) => s.id !== byeSlot.id)
+      : current;
+    const matchCount = playSlots.length / 2;
+    const nextCount = matchCount + (byeSlot ? 1 : 0);
+
+    if (n === 4 && !byeSlot && !thirdA) {
+      thirdA = emptySlot({
+        id: idFactory(),
+        round: 0,
+        position: 0,
+        side: "third_place",
+        participantId: null,
+        isBye: false,
+        advancesToSlotId: null,
+        loserToSlotId: null,
+      });
+      thirdB = emptySlot({
+        id: idFactory(),
+        round: 0,
+        position: 1,
+        side: "third_place",
+        participantId: null,
+        isBye: false,
+        advancesToSlotId: null,
+        loserToSlotId: null,
+      });
+      thirdPlaceSlotId = thirdA.id;
+    }
+
+    const nextRound: BracketSlot[] = [];
+    for (let i = 0; i < nextCount; i += 1) {
+      nextRound.push(
+        emptySlot({
+          id: idFactory(),
+          round: round + 1,
+          position: i,
+          side: "main",
+          participantId: null,
+          isBye: false,
+          advancesToSlotId: null,
+          loserToSlotId: null,
+        }),
+      );
+    }
+
+    const nextFilledByBye = new Set<string>();
+    let nextIdx = 0;
+
+    for (let m = 0; m < matchCount; m += 1) {
+      const a = playSlots[m * 2]!;
+      const b = playSlots[m * 2 + 1]!;
+      const target = nextRound[nextIdx++]!;
+      a.advancesToSlotId = target.id;
+      b.advancesToSlotId = target.id;
+      if (n === 4 && !byeSlot && thirdA && thirdB) {
+        const dest = m === 0 ? thirdA.id : thirdB.id;
+        a.loserToSlotId = dest;
+        b.loserToSlotId = dest;
+      }
+    }
+
+    if (byeSlot) {
+      const target = nextRound[nextIdx]!;
+      const byePad = emptySlot({
+        id: idFactory(),
+        round,
+        position: current.length + 100 + round, // unique pos in round
+        side: "main",
+        participantId: null,
+        isBye: true,
+        advancesToSlotId: target.id,
+        loserToSlotId: null,
+      });
+      byeSlot.advancesToSlotId = target.id;
+      if (byeSlot.participantId) {
+        target.participantId = byeSlot.participantId;
+        byeSlot.winnerParticipantId = byeSlot.participantId;
+        nextFilledByBye.add(target.id);
+      }
+      slots.push(byePad);
+    }
+
+    // Ensure round field on current slots (R0 already 0; later rounds keep their round)
+    for (const s of current) {
+      if (!slots.includes(s)) slots.push(s);
+    }
+    slots.push(...nextRound);
+
+    if (nextCount === 1) break;
+
+    current = nextRound;
+    filledByBye = nextFilledByBye;
+    round += 1;
+  }
+
+  if (thirdA && thirdB) slots.push(thirdA, thirdB);
+
+  return {
+    slots,
+    size: seededIds.length,
+    format: "single_elimination",
+    thirdPlaceSlotId,
+    championParticipantId: null,
+  };
+}
+
+/**
+ * Challonge pad-to-power-of-2 SE (used as WB foundation for DE only).
+ */
+export function generatePowerOf2SingleEliminationBracket(
   seededIds: string[],
   idFactory: () => string,
 ): Bracket {
@@ -159,7 +309,6 @@ export function generateSingleEliminationBracket(
       advancesToSlotId: null,
       loserToSlotId: null,
     });
-    // dual-slot third place: store placeholder B as second slot
     const thirdB = emptySlot({
       id: idFactory(),
       round: 0,
@@ -174,13 +323,6 @@ export function generateSingleEliminationBracket(
     const semis = slots.filter(
       (s) => s.side === "main" && s.round === rounds - 1,
     );
-    for (const semi of semis) {
-      // losers of semis feed third-place slots (A then B)
-      if (!semi.loserToSlotId) {
-        semi.loserToSlotId =
-          semis.indexOf(semi) === 0 ? third.id : thirdB.id;
-      }
-    }
     if (semis[0]) semis[0].loserToSlotId = third.id;
     if (semis[1]) semis[1].loserToSlotId = thirdB.id;
     slots.push(third, thirdB);
@@ -195,22 +337,41 @@ export function generateSingleEliminationBracket(
   };
 }
 
-function standardPlacement(size: number): number[] {
-  if (size === 1) return [0];
-  if (size === 2) return [0, 1];
-  const half = standardPlacement(size / 2);
-  const result: number[] = [];
-  for (const pos of half) {
-    result.push(pos);
-    result.push(size - 1 - pos);
+/**
+ * Challonge-style R0 seed order (1-based): grow by complements.
+ * size 8 → [1,8,4,5,2,7,3,6]
+ */
+function bracketSeedOrder(size: number): number[] {
+  let order = [1];
+  while (order.length < size) {
+    const sum = order.length * 2 + 1;
+    const next: number[] = [];
+    for (const seed of order) {
+      next.push(seed);
+      next.push(sum - seed);
+    }
+    order = next;
   }
-  return result;
+  return order;
+}
+
+/**
+ * Map 0-based seed index → R0 slot position (Challonge).
+ * size 8 → [0,4,6,2,3,7,5,1] so top seeds get byes when N < size.
+ */
+function standardPlacement(size: number): number[] {
+  const order = bracketSeedOrder(size);
+  const placement = Array<number>(size);
+  for (let pos = 0; pos < size; pos += 1) {
+    placement[order[pos]! - 1] = pos;
+  }
+  return placement;
 }
 
 export function thirdPlaceParticipantIds(
   bracket: Bracket,
 ): { semiLoserA: string | null; semiLoserB: string | null } | null {
-  if (bracket.format !== "single_elimination" || bracket.size < 4) return null;
+  if (bracket.format !== "single_elimination") return null;
   const thirds = bracket.slots
     .filter((s) => s.side === "third_place")
     .sort((a, b) => a.position - b.position);
@@ -223,7 +384,7 @@ export function thirdPlaceParticipantIds(
 
 /**
  * Double elimination (Challonge-style):
- * - Winners bracket = SE without third-place / terminal champion slot
+ * - Winners bracket = Po2 SE without third-place / terminal champion slot
  * - Losers: alternating drop-in rounds + internal rounds
  * - Grand Final + optional final_reset slots (filled when LB champ wins GF1)
  */
@@ -231,7 +392,10 @@ export function generateDoubleEliminationBracket(
   seededIds: string[],
   idFactory: () => string,
 ): Bracket {
-  const single = generateSingleEliminationBracket(seededIds, idFactory);
+  const single = generatePowerOf2SingleEliminationBracket(
+    seededIds,
+    idFactory,
+  );
   const size = single.size;
   const wbDepth = Math.log2(size); // rounds of WB matches: 0..wbDepth-1
 
@@ -499,7 +663,10 @@ export function applyMatchResult(
 
   let championParticipantId = bracket.championParticipantId;
   if (bracket.format === "single_elimination") {
-    const maxRound = Math.log2(bracket.size);
+    const mainRounds = slots
+      .filter((s) => s.side === "main")
+      .map((s) => s.round);
+    const maxRound = mainRounds.length ? Math.max(...mainRounds) : 0;
     const finalSlot = slots.find(
       (s) => s.side === "main" && s.round === maxRound,
     );

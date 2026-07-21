@@ -327,6 +327,20 @@ export class TournamentService {
       where: eq(matches.tournamentId, id),
     });
 
+    const invitations = await this.db.query.tournamentInvitations.findMany({
+      where: eq(tournamentInvitations.tournamentId, id),
+    });
+    const inviteUserIds = [
+      ...new Set(invitations.map((i) => i.invitedUserId)),
+    ];
+    const inviteUsers =
+      inviteUserIds.length > 0
+        ? await this.db.query.users.findMany({
+            where: inArray(users.id, inviteUserIds),
+          })
+        : [];
+    const inviteUsersById = new Map(inviteUsers.map((u) => [u.id, u]));
+
     return {
       ...t,
       participants: participants.map((p) => ({
@@ -336,8 +350,55 @@ export class TournamentService {
           ? (usersById.get(p.userId)?.generatedAvatarKey ?? null)
           : (p.guestAvatarKey ?? null),
       })),
+      invitations: invitations
+        .filter((i) => i.status === "pending" || i.status === "declined")
+        .map((i) => {
+          const u = inviteUsersById.get(i.invitedUserId);
+          return {
+            id: i.id,
+            status: i.status,
+            invitedUserId: i.invitedUserId,
+            displayName: u
+              ? `${u.lastName} ${u.firstName}`.trim()
+              : "Игрок",
+            avatarKey: u?.generatedAvatarKey ?? null,
+            expiresAt: i.expiresAt,
+            respondedAt: i.respondedAt,
+          };
+        }),
       matches: tournamentMatches,
     };
+  }
+
+  /** Organizer removes a declined (or pending) invitation so they can re-invite. */
+  async cancelInvitation(input: {
+    tournamentId: string;
+    invitationId: string;
+    actorUserId: string;
+  }) {
+    const t = await this.get(input.tournamentId);
+    if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    if (t.createdByUserId !== input.actorUserId) {
+      throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+    }
+    const inv = await this.db.query.tournamentInvitations.findFirst({
+      where: and(
+        eq(tournamentInvitations.id, input.invitationId),
+        eq(tournamentInvitations.tournamentId, input.tournamentId),
+      ),
+    });
+    if (!inv) {
+      throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    }
+    if (inv.status !== "declined" && inv.status !== "pending") {
+      throw Object.assign(new Error("INVALID_STATUS"), {
+        code: "INVALID_STATUS",
+      });
+    }
+    await this.db
+      .delete(tournamentInvitations)
+      .where(eq(tournamentInvitations.id, inv.id));
+    return { ok: true };
   }
 
   async list() {
@@ -414,6 +475,24 @@ export class TournamentService {
         tournamentId: inv.tournamentId,
         userId: input.userId,
       });
+    }
+    // Mark related notifications read so home badge stays in sync
+    const userNotifs = await this.db.query.notifications.findMany({
+      where: eq(notifications.userId, input.userId),
+    });
+    const readAt = this.clock.now();
+    for (const n of userNotifs) {
+      const payload = (n.payload ?? {}) as { invitationId?: string };
+      if (
+        n.type === "tournament_invitation" &&
+        payload.invitationId === inv.id &&
+        !n.readAt
+      ) {
+        await this.db
+          .update(notifications)
+          .set({ readAt })
+          .where(eq(notifications.id, n.id));
+      }
     }
     return { status };
   }

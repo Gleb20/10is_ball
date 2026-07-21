@@ -213,6 +213,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ userId }),
     }),
+  cancelTournamentInvitation: (id: string, invitationId: string) =>
+    request(`/api/v1/tournaments/${id}/invitations/${invitationId}`, {
+      method: "DELETE",
+    }),
   respondTournamentInvitation: (invitationId: string, accept: boolean) =>
     request(`/api/v1/tournament-invitations/${invitationId}/respond`, {
       method: "POST",

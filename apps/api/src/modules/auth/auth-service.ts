@@ -492,7 +492,9 @@ export class AuthService {
       .filter(
         (u) =>
           u.status === "active" &&
-          (!opts.excludeUserId || u.id !== opts.excludeUserId),
+          (!opts.excludeUserId || u.id !== opts.excludeUserId) &&
+          // Hide load-test synthetics (displayName would be "User Load")
+          !/^load\d*@tab10\.local$/i.test(u.email),
       )
       .map((u) => ({
         id: u.id,

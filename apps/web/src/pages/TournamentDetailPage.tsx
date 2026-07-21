@@ -8,6 +8,8 @@ import { useAuth } from "../auth";
 import { UserPicker } from "../components/UserPicker";
 import { TournamentBracket } from "../components/TournamentBracket";
 import type { Bracket } from "@tab10/shared";
+import { liveMatchVersusLabel } from "../bracketViewModel";
+import { statusLabel } from "../statusLabels";
 
 type Participant = {
   id: string;
@@ -18,6 +20,13 @@ type Participant = {
   guestLastName?: string | null;
   seed?: number | null;
   status?: string;
+};
+
+type InvitationRow = {
+  id: string;
+  status: string;
+  invitedUserId: string;
+  displayName?: string;
 };
 
 type MatchRow = {
@@ -38,7 +47,9 @@ export function TournamentDetailPage() {
   );
   const [guest, setGuest] = useState("");
   const [pickUserId, setPickUserId] = useState("");
+  const [pickInput, setPickInput] = useState("");
   const [inviteUserId, setInviteUserId] = useState("");
+  const [inviteInput, setInviteInput] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionHint, setActionHint] = useState<string | null>(null);
@@ -55,15 +66,26 @@ export function TournamentDetailPage() {
   }, [id]);
 
   const participants = (tournament?.participants as Participant[]) ?? [];
+  const invitations = (tournament?.invitations as InvitationRow[]) ?? [];
   const activeParticipants = participants.filter(
     (p) => !p.status || p.status === "active",
   );
+  const pendingInvites = invitations.filter((i) => i.status === "pending");
+  const declinedInvites = invitations.filter((i) => i.status === "declined");
   const rosterUserIds = useMemo(
     () =>
       activeParticipants
         .map((p) => p.userId)
         .filter((uid): uid is string => Boolean(uid)),
     [activeParticipants],
+  );
+  const excludeInviteIds = useMemo(
+    () => [
+      ...rosterUserIds,
+      ...pendingInvites.map((i) => i.invitedUserId),
+      ...declinedInvites.map((i) => i.invitedUserId),
+    ],
+    [rosterUserIds, pendingInvites, declinedInvites],
   );
   const nameMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -243,6 +265,7 @@ export function TournamentDetailPage() {
               ) : null}
             </div>
 
+            {canEditRoster ? (
             <div className="card stack">
               <h2 className="section-title">
                 Участники ({activeParticipants.length})
@@ -261,113 +284,158 @@ export function TournamentDetailPage() {
                         <span className="muted"> · вы</span>
                       ) : null}
                     </span>
-                    {canEditRoster ? (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        disabled={busy}
-                        onClick={() =>
-                          void runAction(async () => {
-                            await api.removeTournamentParticipant(id!, p.id);
-                            await load();
-                          })
-                        }
-                      >
-                        Удалить
-                      </Button>
-                    ) : null}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() =>
+                        void runAction(async () => {
+                          await api.removeTournamentParticipant(id!, p.id);
+                          await load();
+                        })
+                      }
+                    >
+                      Удалить
+                    </Button>
                   </div>
                 ))
               )}
-              {canEditRoster ? (
-                <>
-                  <UserPicker
-                    label="Добавить игрока"
-                    value={pickUserId}
-                    onChange={setPickUserId}
-                    excludeUserIds={rosterUserIds}
-                    excludeSelf={false}
-                  />
-                  <Button
-                    disabled={busy || !pickUserId}
-                    onClick={() =>
-                      void runAction(async () => {
-                        await api.addTournamentParticipant(id!, {
-                          userId: pickUserId,
-                        });
-                        setPickUserId("");
-                        await load();
-                      }, "Игрок добавлен")
-                    }
-                  >
-                    Добавить в состав
-                  </Button>
-                  <UserPicker
-                    label="Пригласить игрока"
-                    value={inviteUserId}
-                    onChange={setInviteUserId}
-                    excludeUserIds={rosterUserIds}
-                    excludeSelf
-                  />
+              {pendingInvites.map((inv) => (
+                <div key={inv.id} className="row">
+                  <span>
+                    {inv.displayName ?? "Игрок"}
+                    <span className="muted"> · ожидает ответ</span>
+                  </span>
+                </div>
+              ))}
+              {declinedInvites.map((inv) => (
+                <div key={inv.id} className="row">
+                  <span>
+                    {inv.displayName ?? "Игрок"}
+                    <span className="muted"> · отказался</span>
+                  </span>
                   <Button
                     variant="secondary"
-                    disabled={busy || !inviteUserId}
+                    size="sm"
+                    disabled={busy}
                     onClick={() =>
                       void runAction(async () => {
-                        await api.inviteTournament(id!, inviteUserId);
-                        setInviteUserId("");
-                      }, "Приглашение отправлено")
-                    }
-                  >
-                    Отправить приглашение
-                  </Button>
-                  <TextField
-                    label="Добавить гостя (Имя Фамилия)"
-                    value={guest}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setGuest(e.target.value)
-                    }
-                  />
-                  <Button
-                    variant="secondary"
-                    disabled={busy || !guest.trim()}
-                    onClick={() => {
-                      const [first, ...rest] = guest.trim().split(/\s+/);
-                      void runAction(async () => {
-                        await api.addTournamentParticipant(id!, {
-                          guestFirstName: first,
-                          guestLastName: rest.join(" ") || "Гость",
-                        });
-                        setGuest("");
+                        await api.cancelTournamentInvitation(id!, inv.id);
                         await load();
-                      }, "Гость добавлен");
-                    }}
+                      }, "Приглашение удалено")
+                    }
                   >
-                    Добавить гостя
+                    Удалить
                   </Button>
-                </>
-              ) : null}
+                </div>
+              ))}
+              <UserPicker
+                label="Добавить игрока"
+                value={pickUserId}
+                onChange={setPickUserId}
+                inputValue={pickInput}
+                onInputChange={setPickInput}
+                excludeUserIds={rosterUserIds}
+                excludeSelf={false}
+              />
+              <Button
+                disabled={busy || !pickUserId}
+                onClick={() =>
+                  void runAction(async () => {
+                    await api.addTournamentParticipant(id!, {
+                      userId: pickUserId,
+                    });
+                    setPickUserId("");
+                    setPickInput("");
+                    await load();
+                  }, "Игрок добавлен")
+                }
+              >
+                Добавить в состав
+              </Button>
+              <UserPicker
+                label="Пригласить игрока"
+                value={inviteUserId}
+                onChange={setInviteUserId}
+                inputValue={inviteInput}
+                onInputChange={setInviteInput}
+                excludeUserIds={excludeInviteIds}
+                excludeSelf
+              />
+              <Button
+                variant="secondary"
+                disabled={busy || !inviteUserId}
+                onClick={() =>
+                  void runAction(async () => {
+                    await api.inviteTournament(id!, inviteUserId);
+                    setInviteUserId("");
+                    setInviteInput("");
+                    await load();
+                  }, "Приглашение отправлено")
+                }
+              >
+                Отправить приглашение
+              </Button>
+              <TextField
+                label="Добавить гостя (Имя Фамилия)"
+                value={guest}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setGuest(e.target.value)
+                }
+              />
+              <Button
+                variant="secondary"
+                disabled={busy || !guest.trim()}
+                onClick={() => {
+                  const [first, ...rest] = guest.trim().split(/\s+/);
+                  void runAction(async () => {
+                    await api.addTournamentParticipant(id!, {
+                      guestFirstName: first,
+                      guestLastName: rest.join(" ") || "Гость",
+                    });
+                    setGuest("");
+                    await load();
+                  }, "Гость добавлен");
+                }}
+              >
+                Добавить гостя
+              </Button>
             </div>
+            ) : null}
 
             {liveMatches.length > 0 ? (
               <div className="card stack">
                 <h2 className="section-title">Текущие матчи</h2>
-                {liveMatches.map((m) => (
-                  <div key={m.id} className="row">
-                    <Link to={`/matches/${m.id}`} className="list-row">
-                      {m.title ?? "Матч"} · {m.status} · {m.scoreA ?? 0}:
-                      {m.scoreB ?? 0}
-                    </Link>
-                    {m.status !== "finished" && m.status !== "stopped" ? (
-                      <Button
-                        size="sm"
-                        onClick={() => navigate(`/matches/${m.id}/judge`)}
+                {liveMatches.map((m) => {
+                  const vs = liveMatchVersusLabel(m, bracket, nameMap);
+                  const showScore =
+                    m.status === "in_progress" ||
+                    m.status === "pending_confirmation";
+                  const meta = showScore
+                    ? `${statusLabel(String(m.status))} · ${m.scoreA ?? 0}:${m.scoreB ?? 0}`
+                    : statusLabel(String(m.status)) || "ожидает";
+                  return (
+                    <div key={m.id} className="row">
+                      <Link
+                        to={`/matches/${m.id}`}
+                        className="list-row tournament-live-match"
                       >
-                        Судить
-                      </Button>
-                    ) : null}
-                  </div>
-                ))}
+                        <span className="tournament-live-match__vs">{vs}</span>
+                        <span className="tournament-live-match__meta">
+                          {meta}
+                        </span>
+                      </Link>
+                      {m.status !== "finished" && m.status !== "stopped" ? (
+                        <Button
+                          size="sm"
+                          onClick={() => navigate(`/matches/${m.id}/judge`)}
+                        >
+                          Судить
+                        </Button>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             ) : null}
 

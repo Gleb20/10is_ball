@@ -1,5 +1,59 @@
 # Dev Changelog
 
+## 2026-07-21 — Roster / notifications / compact SE (v1.10.0)
+
+### Domain
+- `generateSingleEliminationBracket` → successive odd-bye (last / fewest prior byes)
+- `generatePowerOf2SingleEliminationBracket` kept for DE WB only
+- ADR: SE compact vs DE Challonge Po2
+
+### API
+- Tournament `get` returns `invitations` (pending/declined); `DELETE .../invitations/:id`
+- Directory excludes `load*@tab10.local`
+- Notifications list enriched with `lifecycle`; home `unreadCount`
+- Respond invite marks related notification read
+
+### Web
+- UserPicker controlled `inputValue` clear; roster invite statuses
+- Profile unread badge; Notifications «Актуальные» filter + Принято/Отклонено
+
+### How to verify
+```bash
+pnpm --filter @tab10/shared build && PGLITE_DATA_DIR= pnpm --filter @tab10/api test && pnpm --filter @tab10/web test
+# N=5 generate → 1 bye (last seed), 2 R0 matches
+```
+
+## 2026-07-21 — Bracket connectors rewrite (v1.9.2)
+
+### Web
+- Removed ambiguous CSS card stubs (`::before`/`::after`)
+- Measured SVG cubic from winner row → next match card (`feedsToCardKey`)
+- Player fate: `advance` | `drop` (↓) | `eliminated` (✕) via `loserToSlotId`
+- Column padding by round power-of-two so feeders align under next card
+
+### How to verify
+```bash
+pnpm --filter @tab10/web test && pnpm --filter @tab10/web typecheck
+# Play a WB match in DE → blue curve from winner; loser shows ↓
+# Lose in LB or SE R0 → ✕
+```
+
+## 2026-07-21 — Bracket UX BYE + connectors (v1.9.1)
+
+### Domain
+- `standardPlacement` → Challonge bracket seed order (top seeds get byes)
+
+### Web
+- Bracket connectors (CSS path-top/bottom), loser dim, round spacing
+- Current matches: vs labels from tournamentSlotId; no 0:0 while waiting
+- Hide roster when not collecting / needs_regeneration
+
+### How to verify
+```bash
+pnpm --filter @tab10/shared build && PGLITE_DATA_DIR= pnpm --filter @tab10/api test && pnpm --filter @tab10/web test
+# 6 players generate → bye #1 #2; live matches show A vs B
+```
+
 ## 2026-07-21 — Challonge-like SE/DE + meme avatars (v1.9.0)
 
 ### Domain

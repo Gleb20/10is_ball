@@ -601,6 +601,7 @@ describe("match and judge integration", () => {
       cookies: { tab10_session: userACookie },
     });
     expect(bracket.statusCode).toBe(200);
+    // organizerParticipates default + 3 added = 4
     expect(bracket.json().bracket.size).toBe(4);
   });
 

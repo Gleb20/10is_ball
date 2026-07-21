@@ -13,6 +13,7 @@ export function ProfilePage() {
   const [sessions, setSessions] = useState<
     Array<{ id: string; userAgent: string | null; current: boolean }> | null
   >(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -21,6 +22,12 @@ export function ProfilePage() {
       .sessions()
       .then((r) => setSessions(r.sessions))
       .catch((e) => setError(e.message));
+    void api
+      .home()
+      .then((r) =>
+        setUnreadCount(Number((r as { unreadCount?: number }).unreadCount ?? 0)),
+      )
+      .catch(() => setUnreadCount(0));
   }, []);
 
   const displayName = `${user?.lastName ?? ""} ${user?.firstName ?? ""}`.trim();
@@ -61,6 +68,16 @@ export function ProfilePage() {
           to="/notifications"
           title="Уведомления"
           subtitle="Приглашения и события"
+          trailing={
+            unreadCount > 0 ? (
+              <Chip
+                size="sm"
+                variant="tonal"
+                color="primary"
+                label={String(unreadCount)}
+              />
+            ) : null
+          }
         />
         <ListRow to="/help" title="Помощь" subtitle="FAQ и обратная связь" />
         <ListRow

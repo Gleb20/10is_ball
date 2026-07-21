@@ -1,6 +1,7 @@
 import {
   listMatchPairs,
   type Bracket,
+  type BracketSlot,
   type MatchPair,
 } from "@tab10/shared";
 
@@ -12,13 +13,23 @@ export type BracketMatchLike = {
   title?: string;
 };
 
+/** Outcome badge / connector for a decided player row. */
+export type PlayerFate =
+  | "advance"
+  | "drop"
+  | "eliminated"
+  | null;
+
 export type BracketCardSide = {
+  slotId: string;
   participantId: string | null;
   displayName: string;
   avatarKey?: string | null;
   seed?: number | null;
   isBye: boolean;
   isWinner: boolean;
+  /** advance → curved connector; drop → ↓ to LB/3rd; eliminated → ✕ */
+  fate: PlayerFate;
 };
 
 export type BracketCard = {
@@ -32,6 +43,13 @@ export type BracketCard = {
   slotB: BracketCardSide;
   cta: "judge" | "open" | "bye" | "pending";
   autoAdvanceName: string | null;
+  pairIndex: number;
+  pairsInRound: number;
+  decided: boolean;
+  /** Next-match card key within the same band (winner path target). */
+  feedsToCardKey: string | null;
+  /** Which side won (for SVG path start). */
+  winnerSide: "a" | "b" | null;
 };
 
 export type BracketRoundColumn = {
@@ -89,6 +107,14 @@ export function challongeRoundLabel(
   if (side === "third_place") return "За 3-е место";
   if (side === "losers") return `Losers · R${round + 1}`;
 
+  // Compact SE: size may not be power-of-2 — prefer simple labels
+  const pow2 = bracketSize > 0 && (bracketSize & (bracketSize - 1)) === 0;
+  if (!pow2) {
+    const matchesInRound = Math.max(1, Math.ceil(bracketSize / 2 ** (round + 1)));
+    if (matchesInRound <= 1) return "Финал";
+    return `Раунд ${round + 1}`;
+  }
+
   const matchesInRound = bracketSize / 2 ** (round + 1);
   if (matchesInRound <= 1) return "Финал";
   if (matchesInRound === 2) return "1/2";
@@ -98,12 +124,38 @@ export function challongeRoundLabel(
   return `Раунд ${round + 1}`;
 }
 
+/**
+ * Decide fate for one side of a decided match.
+ * - Winner with next slot → advance (connector)
+ * - Loser with loserTo (LB / 3rd) → drop (↓)
+ * - Loser with nowhere → eliminated (✕)
+ */
+export function resolvePlayerFate(
+  slot: BracketSlot,
+  isWinner: boolean,
+  decided: boolean,
+  slotsById: Map<string, BracketSlot>,
+): PlayerFate {
+  if (!decided || slot.isBye) return null;
+  if (isWinner) {
+    return slot.advancesToSlotId ? "advance" : null;
+  }
+  // Loser of a decided match
+  const destId = slot.loserToSlotId;
+  if (!destId) return "eliminated";
+  const dest = slotsById.get(destId);
+  if (!dest) return "eliminated";
+  // Further match via loserTo = drop (LB or 3rd-place)
+  return "drop";
+}
+
 function cardFromPair(
   pair: MatchPair,
   names: Map<string, string>,
   avatars: Map<string, string | null>,
   seeds: Map<string, number | null>,
   matchesById: Map<string, BracketMatchLike>,
+  slotsById: Map<string, BracketSlot>,
 ): BracketCard {
   const matchId = pair.slotA.matchId ?? pair.slotB.matchId ?? null;
   const match = matchId ? matchesById.get(matchId) : undefined;
@@ -135,6 +187,26 @@ function cardFromPair(
     cta = "open";
   else if (matchId) cta = "judge";
 
+  const decided = Boolean(winnerId) || cta === "bye" || cta === "open";
+  const aWinner = Boolean(
+    winnerId && pair.slotA.participantId === winnerId,
+  );
+  const bWinner = Boolean(
+    winnerId && pair.slotB.participantId === winnerId,
+  );
+  // Bye auto-advance: non-bye side is the "winner"
+  const aAdvanceBye =
+    cta === "bye" && !pair.slotA.isBye && Boolean(pair.slotA.participantId);
+  const bAdvanceBye =
+    cta === "bye" && !pair.slotB.isBye && Boolean(pair.slotB.participantId);
+
+  const slotAIsWinner = aWinner || aAdvanceBye;
+  const slotBIsWinner = bWinner || bAdvanceBye;
+
+  let winnerSide: BracketCard["winnerSide"] = null;
+  if (slotAIsWinner) winnerSide = "a";
+  else if (slotBIsWinner) winnerSide = "b";
+
   return {
     key: `${pair.side}-${pair.round}-${pair.slotA.id}-${pair.slotB.id}`,
     side: pair.side,
@@ -143,6 +215,7 @@ function cardFromPair(
     status,
     scoreLabel,
     slotA: {
+      slotId: pair.slotA.id,
       participantId: pair.slotA.participantId,
       displayName: pair.slotA.isBye
         ? "—"
@@ -152,11 +225,16 @@ function cardFromPair(
         : avatarFor(pair.slotA.participantId, avatars),
       seed: seedFor(pair.slotA.participantId, seeds),
       isBye: pair.slotA.isBye,
-      isWinner: Boolean(
-        winnerId && pair.slotA.participantId === winnerId,
+      isWinner: slotAIsWinner,
+      fate: resolvePlayerFate(
+        pair.slotA,
+        slotAIsWinner,
+        decided,
+        slotsById,
       ),
     },
     slotB: {
+      slotId: pair.slotB.id,
       participantId: pair.slotB.participantId,
       displayName: pair.slotB.isBye
         ? "—"
@@ -166,12 +244,21 @@ function cardFromPair(
         : avatarFor(pair.slotB.participantId, avatars),
       seed: seedFor(pair.slotB.participantId, seeds),
       isBye: pair.slotB.isBye,
-      isWinner: Boolean(
-        winnerId && pair.slotB.participantId === winnerId,
+      isWinner: slotBIsWinner,
+      fate: resolvePlayerFate(
+        pair.slotB,
+        slotBIsWinner,
+        decided,
+        slotsById,
       ),
     },
     cta,
     autoAdvanceName,
+    pairIndex: 0,
+    pairsInRound: 1,
+    decided,
+    feedsToCardKey: null,
+    winnerSide,
   };
 }
 
@@ -183,13 +270,105 @@ function columnsForSide(
   const rounds = [
     ...new Set(cards.filter((c) => c.side === side).map((c) => c.round)),
   ].sort((a, b) => a - b);
-  return rounds.map((round) => ({
-    key: `${side}:${round}`,
-    label: challongeRoundLabel(bracketSize, round, side),
-    side: side as MatchPair["side"],
-    round,
-    cards: cards.filter((c) => c.side === side && c.round === round),
+  return rounds.map((round) => {
+    const roundCards = cards
+      .filter((c) => c.side === side && c.round === round)
+      .map((c, i, arr) => ({
+        ...c,
+        pairIndex: i,
+        pairsInRound: arr.length,
+      }));
+    return {
+      key: `${side}:${round}`,
+      label: challongeRoundLabel(bracketSize, round, side),
+      side: side as MatchPair["side"],
+      round,
+      cards: roundCards,
+    };
+  });
+}
+
+function wireFeedsToCardKeys(
+  columns: BracketRoundColumn[],
+  slotsById: Map<string, BracketSlot>,
+): BracketRoundColumn[] {
+  const cardBySlotId = new Map<string, string>();
+  for (const col of columns) {
+    for (const card of col.cards) {
+      cardBySlotId.set(card.slotA.slotId, card.key);
+      cardBySlotId.set(card.slotB.slotId, card.key);
+    }
+  }
+
+  return columns.map((col) => ({
+    ...col,
+    cards: col.cards.map((card) => {
+      const winnerSlot =
+        card.winnerSide === "a"
+          ? slotsById.get(card.slotA.slotId)
+          : card.winnerSide === "b"
+            ? slotsById.get(card.slotB.slotId)
+            : null;
+      const advanceId = winnerSlot?.advancesToSlotId ?? null;
+      const feedsToCardKey = advanceId
+        ? (cardBySlotId.get(advanceId) ?? null)
+        : null;
+      // Only connect within this band's columns
+      const inBand = feedsToCardKey
+        ? columns.some((c) => c.cards.some((x) => x.key === feedsToCardKey))
+        : false;
+      return {
+        ...card,
+        feedsToCardKey: inBand ? feedsToCardKey : null,
+        // Winner without in-band next: clear advance fate if champion/band end
+        slotA:
+          card.slotA.fate === "advance" &&
+          card.winnerSide === "a" &&
+          !inBand
+            ? { ...card.slotA, fate: null }
+            : card.slotA,
+        slotB:
+          card.slotB.fate === "advance" &&
+          card.winnerSide === "b" &&
+          !inBand
+            ? { ...card.slotB, fate: null }
+            : card.slotB,
+      };
+    }),
   }));
+}
+
+/** Resolve «A vs B» from tournamentSlotId + bracket participant names. */
+export function liveMatchVersusLabel(
+  match: {
+    tournamentSlotId?: string | null;
+    title?: string;
+  },
+  bracket: Bracket | null | undefined,
+  names: Map<string, string>,
+): string {
+  const slotIds = String(match.tournamentSlotId ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (bracket && slotIds.length >= 2) {
+    const a = bracket.slots.find((s) => s.id === slotIds[0]);
+    const b = bracket.slots.find((s) => s.id === slotIds[1]);
+    const nameA = a?.participantId
+      ? nameFor(a.participantId, names)
+      : a?.isBye
+        ? "BYE"
+        : "—";
+    const nameB = b?.participantId
+      ? nameFor(b.participantId, names)
+      : b?.isBye
+        ? "BYE"
+        : "—";
+    if (nameA !== "—" || nameB !== "—") {
+      return `${nameA} vs ${nameB}`;
+    }
+  }
+  return match.title?.trim() || "Матч";
 }
 
 /** Pure view-model for Challonge-lite CSS tournament bracket. */
@@ -213,14 +392,18 @@ export function buildBracketViewModel(
       ? opts.seeds
       : new Map(Object.entries(opts?.seeds ?? {}));
   const matchesById = new Map(matches.map((m) => [m.id, m]));
+  const slotsById = new Map(bracket.slots.map((s) => [s.id, s]));
   const pairs = listMatchPairs(bracket);
   const cards = pairs.map((p) =>
-    cardFromPair(p, nameMap, avatarMap, seedMap, matchesById),
+    cardFromPair(p, nameMap, avatarMap, seedMap, matchesById, slotsById),
   );
 
   const bands: BracketBand[] = [];
 
-  const mainCols = columnsForSide("main", cards, bracket.size);
+  const mainCols = wireFeedsToCardKeys(
+    columnsForSide("main", cards, bracket.size),
+    slotsById,
+  );
   if (mainCols.length) {
     bands.push({
       id: "winners",
@@ -229,7 +412,10 @@ export function buildBracketViewModel(
     });
   }
 
-  const loserCols = columnsForSide("losers", cards, bracket.size);
+  const loserCols = wireFeedsToCardKeys(
+    columnsForSide("losers", cards, bracket.size),
+    slotsById,
+  );
   if (loserCols.length) {
     bands.push({
       id: "losers",
@@ -238,10 +424,13 @@ export function buildBracketViewModel(
     });
   }
 
-  const gfCols = [
-    ...columnsForSide("final", cards, bracket.size),
-    ...columnsForSide("final_reset", cards, bracket.size),
-  ];
+  const gfCols = wireFeedsToCardKeys(
+    [
+      ...columnsForSide("final", cards, bracket.size),
+      ...columnsForSide("final_reset", cards, bracket.size),
+    ],
+    slotsById,
+  );
   if (gfCols.length) {
     bands.push({
       id: "grand_final",
@@ -250,7 +439,10 @@ export function buildBracketViewModel(
     });
   }
 
-  const thirdCols = columnsForSide("third_place", cards, bracket.size);
+  const thirdCols = wireFeedsToCardKeys(
+    columnsForSide("third_place", cards, bracket.size),
+    slotsById,
+  );
   if (thirdCols.length) {
     bands.push({
       id: "third",
