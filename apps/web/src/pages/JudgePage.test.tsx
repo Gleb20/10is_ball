@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { JudgePage } from "./JudgePage";
@@ -173,8 +173,9 @@ describe("REQ_ui__judge_immersive", () => {
     expect(await screen.findByTestId("judge-setup")).toBeInTheDocument();
     expect(screen.getByTestId("judge-side-A")).toBeInTheDocument();
     expect(screen.getByTestId("judge-side-B")).toBeInTheDocument();
+    const board = screen.getByRole("group", { name: /расположение и подача/i });
     expect(
-      screen.getByRole("button", { name: /поменять стороны/i }),
+      within(board).getByRole("button", { name: /поменять стороны/i }),
     ).toBeInTheDocument();
     expect(screen.getByTestId("serve-racket")).toBeInTheDocument();
     expect(

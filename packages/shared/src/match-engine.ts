@@ -74,10 +74,10 @@ export function checkVictory(
   const { pointsToWin, mercyEnabled, mercyPoints } = rules;
   const deuce = isDeuce(scoreA, scoreB, pointsToWin);
 
-  // Dry win only at exact N:0 / 0:N — a lead of N with opponent points is not mercy
+  // Dry win when leader ≥ N and opponent has 0 (undone points do not count)
   if (mercyEnabled && mercyPoints != null && !deuce) {
-    if (scoreA === mercyPoints && scoreB === 0) return "A";
-    if (scoreB === mercyPoints && scoreA === 0) return "B";
+    if (scoreA >= mercyPoints && scoreB === 0) return "A";
+    if (scoreB >= mercyPoints && scoreA === 0) return "B";
   }
 
   if (!deuce) {

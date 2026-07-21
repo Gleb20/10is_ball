@@ -415,23 +415,13 @@ export function JudgePage() {
         </div>
         <div className="judge-toolbar__actions">
           {isSetup ? (
-            <>
-              <Button
-                variant="secondary"
-                className="judge-touch judge-setup__swap-btn"
-                aria-label="Поменять стороны"
-                onClick={() => setSwapSides((v) => !v)}
-              >
-                ↔
-              </Button>
-              <Button
-                variant="secondary"
-                className="judge-touch"
-                onClick={() => navigate(`/matches/${id}`)}
-              >
-                Отмена
-              </Button>
-            </>
+            <Button
+              variant="secondary"
+              className="judge-touch"
+              onClick={() => navigate(`/matches/${id}`)}
+            >
+              Отмена
+            </Button>
           ) : !readonly ? (
             <>
               <Button
@@ -534,11 +524,23 @@ export function JudgePage() {
       ) : null}
 
       <div
-        className="judge-board"
+        className={["judge-board", isSetup ? "judge-board--setup" : ""]
+          .filter(Boolean)
+          .join(" ")}
         role="group"
         aria-label={isSetup ? "Расположение и подача" : "Счёт матча"}
       >
         {renderSide(left, match)}
+        {isSetup ? (
+          <Button
+            variant="secondary"
+            className="judge-touch judge-setup__swap-btn"
+            aria-label="Поменять стороны"
+            onClick={() => setSwapSides((v) => !v)}
+          >
+            ↔
+          </Button>
+        ) : null}
         {renderSide(right, match)}
       </div>
 

@@ -435,6 +435,81 @@ describe("match and judge integration", () => {
     expect(mid.json().match.status).toBe("in_progress");
   });
 
+  it("AT-MATCH-004c: undo accidental point then 5:0 is mercy", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Mercy after undo",
+        format: "1v1",
+        pointsToWin: 11,
+        mercyEnabled: true,
+        mercyPoints: 5,
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    const matchId = created.json().match.id as string;
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/start`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/acquire`,
+      cookies: { tab10_session: userACookie },
+    });
+
+    let version = 0;
+    const bPoint = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/points`,
+      cookies: { tab10_session: userACookie },
+      headers: { "idempotency-key": "accidental-b" },
+      payload: { side: "B", expectedVersion: version },
+    });
+    expect(bPoint.statusCode).toBe(200);
+    version = bPoint.json().match.version as number;
+
+    const undone = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/undo`,
+      cookies: { tab10_session: userACookie },
+      headers: { "idempotency-key": "undo-b" },
+      payload: { expectedVersion: version },
+    });
+    expect(undone.statusCode).toBe(200);
+    expect(undone.json().match.scoreA).toBe(0);
+    expect(undone.json().match.scoreB).toBe(0);
+    version = undone.json().match.version as number;
+
+    for (let i = 0; i < 5; i += 1) {
+      const pt = await app.inject({
+        method: "POST",
+        url: `/api/v1/matches/${matchId}/points`,
+        cookies: { tab10_session: userACookie },
+        headers: { "idempotency-key": `mercy-undo-a-${i}` },
+        payload: { side: "A", expectedVersion: version },
+      });
+      expect(pt.statusCode).toBe(200);
+      version = pt.json().match.version as number;
+    }
+
+    const final = await app.inject({
+      method: "GET",
+      url: `/api/v1/matches/${matchId}`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(final.json().match.scoreA).toBe(5);
+    expect(final.json().match.scoreB).toBe(0);
+    expect(final.json().match.status).toBe("pending_confirmation");
+  });
+
   it("INT_judge__setup_swap_sides_and_server", async () => {
     const created = await app.inject({
       method: "POST",

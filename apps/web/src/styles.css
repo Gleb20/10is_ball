@@ -576,6 +576,11 @@ body {
   min-height: 280px;
 }
 
+.judge-board--setup {
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
 .judge-side {
   border-radius: 16px;
   padding: 16px 12px;

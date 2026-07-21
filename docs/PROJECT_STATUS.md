@@ -1,8 +1,8 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-21  
-**Product version:** 1.6.2  
-Current phase: Mercy N:0 + setup-as-board (v1.6.2) on branch `cursor/p0-p1-bugfix-058e`  
+**Product version:** 1.6.3  
+Current phase: Swap ↔ between panels + mercy after undo (v1.6.3) on branch `cursor/p0-p1-bugfix-058e`  
 Next step: merge P0+P1 + judge UX → ветка `cursor/tournament-*` для Phase 6 match wiring
 
 ## Progress
@@ -34,6 +34,10 @@ Next step: merge P0+P1 + judge UX → ветка `cursor/tournament-*` для Ph
 | UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
+
+### Swap ↔ + mercy after undo — done (v1.6.3)
+- Setup: ↔ снова между плашками счёта (`judge-board--setup`)
+- Mercy: лидер ≥ N и соперник 0 (D8); AT-MATCH-004c — Undo случайного очка → 5:0 finish
 
 ### Mercy + setup board — done (v1.6.2)
 - Mercy только N:0 / 0:N (ADR D8); create default «Игрок»; setup = board; serve badge + ракетка

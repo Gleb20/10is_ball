@@ -1,5 +1,22 @@
 # Dev Changelog
 
+## 2026-07-21 — Swap ↔ between panels + mercy after undo (v1.6.3)
+
+### Web
+- Judge setup: ↔ снова между плашками счёта (`judge-board--setup`), не в toolbar
+
+### Rules
+- `checkVictory` mercy: лидер ≥ `mercyPoints` и соперник 0 (D8); отменённые очки не блокируют
+- AT-MATCH-004c: accidental B → Undo → 5×A → `pending_confirmation`
+
+### How to verify
+```bash
+pnpm run ci
+pnpm dev
+# Judge setup: ↔ между плашками
+# +1 сопернику → Undo → 5 очков лидеру → подтверждение сухой победы
+```
+
 ## 2026-07-21 — Mercy N:0 + setup board + serve racket (v1.6.2)
 
 ### Rules
