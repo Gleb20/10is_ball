@@ -69,3 +69,4 @@ export * from "./match-engine.js";
 export * from "./tournament-bracket.js";
 export * from "./ranking.js";
 export * from "./team-rules.js";
+export * from "./avatars.js";

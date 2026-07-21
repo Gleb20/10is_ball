@@ -604,6 +604,327 @@ describe("match and judge integration", () => {
     expect(bracket.json().bracket.size).toBe(4);
   });
 
+  it("create with organizerParticipates includes organizer + displayName", async () => {
+    const t = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "OrgIn",
+        format: "single_elimination",
+        organizerParticipates: true,
+      },
+    });
+    expect(t.statusCode).toBe(200);
+    const participants = t.json().tournament.participants as Array<{
+      userId: string;
+      displayName: string;
+      status: string;
+    }>;
+    expect(participants.some((p) => p.userId === userAId)).toBe(true);
+    const self = participants.find((p) => p.userId === userAId)!;
+    expect(self.displayName.length).toBeGreaterThan(0);
+    expect(self.status).toBe("active");
+  });
+
+  it("AT-TRN-001/004/007: generate needs 3+, closes roster, dissolve", async () => {
+    const t = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "AT1",
+        format: "single_elimination",
+        organizerParticipates: false,
+      },
+    });
+    const id = t.json().tournament.id as string;
+    const few = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(few.statusCode).toBeGreaterThanOrEqual(400);
+
+    const ids: string[] = [];
+    for (const email of ["t1@t.local", "t2@t.local", "t3@t.local"]) {
+      const u = await app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: { email, firstName: "P", lastName: "L" },
+      });
+      ids.push(u.json().user.id);
+      await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${id}/participants`,
+        cookies: { tab10_session: userACookie },
+        payload: { userId: u.json().user.id },
+      });
+    }
+    const gen = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(gen.statusCode).toBe(200);
+    expect(gen.json().status ?? gen.json().bracket).toBeTruthy();
+
+    const blocked = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/participants`,
+      cookies: { tab10_session: userACookie },
+      payload: { guestFirstName: "X", guestLastName: "Y" },
+    });
+    expect(blocked.statusCode).toBeGreaterThanOrEqual(400);
+
+    const dissolve = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/dissolve-bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(dissolve.statusCode).toBe(200);
+    expect(dissolve.json().tournament.status).toBe("collecting");
+  });
+
+  it("AT-TRN-008: withdraw after generate → needs_regeneration", async () => {
+    const t = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: { title: "W", organizerParticipates: true },
+    });
+    const id = t.json().tournament.id as string;
+    // organizerParticipates: true → organizer already in roster on create
+    expect(
+      (t.json().tournament.participants as Array<{ userId: string }>).some(
+        (p) => p.userId === userAId,
+      ),
+    ).toBe(true);
+    for (const email of ["w1@t.local", "w2@t.local"]) {
+      const u = await app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: { email, firstName: "P", lastName: "L" },
+      });
+      await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${id}/participants`,
+        cookies: { tab10_session: userACookie },
+        payload: { userId: u.json().user.id },
+      });
+    }
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+    const wd = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/withdraw`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(wd.statusCode).toBe(200);
+    expect(wd.json().tournament.status).toBe("needs_regeneration");
+  });
+
+  it("AT-TRN-006/010/012: start matches, advance, stop", async () => {
+    const t = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Play",
+        format: "single_elimination",
+        organizerParticipates: false,
+        pointsToWin: 3,
+        mercyEnabled: false,
+      },
+    });
+    const id = t.json().tournament.id as string;
+    const playerCookies: string[] = [];
+    const playerIds: string[] = [];
+    for (const email of [
+      "p1@trn.local",
+      "p2@trn.local",
+      "p3@trn.local",
+      "p4@trn.local",
+    ]) {
+      const created = await app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: { email, firstName: "P", lastName: "L" },
+      });
+      const temp = created.json().temporaryPassword as string;
+      const uid = created.json().user.id as string;
+      playerIds.push(uid);
+      const login = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/login",
+        payload: { email, password: temp },
+      });
+      const cookie = login.cookies.find((c) => c.name === "tab10_session")!
+        .value;
+      await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/password/first-change",
+        cookies: { tab10_session: cookie },
+        payload: { newPassword: "UserPass1!" },
+      });
+      const login2 = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/login",
+        payload: { email, password: "UserPass1!" },
+      });
+      playerCookies.push(
+        login2.cookies.find((c) => c.name === "tab10_session")!.value,
+      );
+      await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${id}/participants`,
+        cookies: { tab10_session: userACookie },
+        payload: { userId: uid },
+      });
+    }
+
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+
+    const locked = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/tournaments/${id}/bracket`,
+      cookies: { tab10_session: userACookie },
+      payload: { swaps: [] },
+    });
+    expect(locked.statusCode).toBe(200);
+
+    const started = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(started.statusCode).toBe(200);
+    expect(started.json().tournament.status).toBe("in_progress");
+    const matchList = started.json().tournament.matches as Array<{
+      id: string;
+      status: string;
+    }>;
+    expect(matchList.length).toBeGreaterThanOrEqual(1);
+
+    const afterStartEdit = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/tournaments/${id}/bracket`,
+      cookies: { tab10_session: userACookie },
+      payload: { swaps: [] },
+    });
+    expect(afterStartEdit.statusCode).toBeGreaterThanOrEqual(400);
+
+    // Finish first match quickly as organizer-judge
+    const matchId = matchList[0]!.id;
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/start`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/acquire`,
+      cookies: { tab10_session: userACookie },
+    });
+    let version = 0;
+    for (let i = 0; i < 3; i += 1) {
+      const pt = await app.inject({
+        method: "POST",
+        url: `/api/v1/matches/${matchId}/points`,
+        cookies: { tab10_session: userACookie },
+        headers: { "idempotency-key": `trn-pt-${i}` },
+        payload: { side: "A", expectedVersion: version },
+      });
+      expect(pt.statusCode).toBe(200);
+      version = pt.json().match.version as number;
+    }
+    const conf = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/confirm-finish`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(conf.statusCode).toBe(200);
+
+    const mid = await app.inject({
+      method: "GET",
+      url: `/api/v1/tournaments/${id}`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(mid.json().tournament.status).toBe("in_progress");
+
+    const stopped = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/stop`,
+      cookies: { tab10_session: userACookie },
+      payload: { code: "time" },
+    });
+    expect(stopped.statusCode).toBe(200);
+    expect(stopped.json().tournament.status).toBe("stopped");
+  });
+
+  it("AT-TRN-011: DE generate has losers and can start", async () => {
+    const t = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "DE",
+        format: "double_elimination",
+        organizerParticipates: false,
+      },
+    });
+    const id = t.json().tournament.id as string;
+    for (const email of [
+      "d1@t.local",
+      "d2@t.local",
+      "d3@t.local",
+      "d4@t.local",
+    ]) {
+      const u = await app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: { email, firstName: "P", lastName: "L" },
+      });
+      await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${id}/participants`,
+        cookies: { tab10_session: userACookie },
+        payload: { userId: u.json().user.id },
+      });
+    }
+    const gen = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(gen.statusCode).toBe(200);
+    expect(gen.json().bracket.format).toBe("double_elimination");
+    expect(
+      (gen.json().bracket.slots as Array<{ side: string }>).some(
+        (s) => s.side === "losers",
+      ),
+    ).toBe(true);
+    const start = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(start.statusCode).toBe(200);
+    expect(start.json().tournament.matches.length).toBeGreaterThan(0);
+  });
+
   it("INT_team__invite_and_accept", async () => {
     const team = await app.inject({
       method: "POST",

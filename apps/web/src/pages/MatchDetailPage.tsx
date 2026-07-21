@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "../ui";
+import { Avatar, Button } from "../ui";
 import { PageLayout } from "../layout";
 import { AsyncState, FilterBar, StatusChip } from "../patterns";
 import { api } from "../api";
@@ -10,6 +10,8 @@ import {
   formatMatchDuration,
   type ActiveJudge,
 } from "../judgeUi";
+import { initialsFromName } from "../rankingUi";
+import { avatarSrc } from "../avatarSrc";
 
 export function MatchDetailPage() {
   const { id } = useParams();
@@ -39,8 +41,11 @@ export function MatchDetailPage() {
   }, [match?.status]);
 
   const participants =
-    (match?.participants as Array<{ side: string; displayName?: string }>) ??
-    [];
+    (match?.participants as Array<{
+      side: string;
+      displayName?: string;
+      avatarKey?: string | null;
+    }>) ?? [];
 
   const activeJudge = match?.activeJudge as ActiveJudge | null | undefined;
   const judgeTakenByOther =
@@ -96,10 +101,22 @@ export function MatchDetailPage() {
                 <p className="muted">Судья не назначен</p>
               )}
               {participants.length > 0 ? (
-                <div className="muted">
+                <div className="stack">
                   {participants.map((p) => (
-                    <div key={`${p.side}-${p.displayName}`}>
-                      {p.side}: {p.displayName ?? "—"}
+                    <div
+                      key={`${p.side}-${p.displayName}`}
+                      className="row"
+                    >
+                      <Avatar
+                        size="sm"
+                        variant="tonal"
+                        src={avatarSrc(p.avatarKey)}
+                        initials={initialsFromName(p.displayName ?? p.side)}
+                        alt={p.displayName}
+                      />
+                      <span>
+                        {p.side}: {p.displayName ?? "—"}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -148,6 +165,16 @@ export function MatchDetailPage() {
                   {stopOpen ? "Скрыть остановку" : "Остановить матч"}
                 </Button>
               )}
+              {match.tournamentId ? (
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    navigate(`/tournaments/${String(match.tournamentId)}`)
+                  }
+                >
+                  К турниру
+                </Button>
+              ) : null}
               <Button variant="secondary" onClick={() => navigate(-1)}>
                 Назад
               </Button>

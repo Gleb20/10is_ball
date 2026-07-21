@@ -6,6 +6,7 @@ export type JudgeParticipant = {
   guestLastName?: string | null;
   isTutorialActor?: boolean | null;
   displayName?: string | null;
+  avatarKey?: string | null;
 };
 
 export type ActiveJudge = {
@@ -42,6 +43,14 @@ export function sideDisplayName(
   const list = (match.participants ?? []).filter((p) => p.side === side);
   if (list.length === 0) return side === "A" ? "Сторона A" : "Сторона B";
   return list.map(participantDisplayName).join(" / ");
+}
+
+export function sideAvatarKey(
+  match: JudgeMatchLike,
+  side: "A" | "B",
+): string | null {
+  const list = (match.participants ?? []).filter((p) => p.side === side);
+  return list[0]?.avatarKey ?? null;
 }
 
 /** Which court side currently serves, or null if unknown. */
@@ -113,6 +122,9 @@ export function judgeAcquireErrorMessage(error: {
   }
   if (error.code === "JUDGE_OTHER_DEVICE") {
     return "Судейство уже открыто на другом устройстве.";
+  }
+  if (error.code === "INVALID_STATUS") {
+    return "Действие недоступно в текущем статусе матча";
   }
   return error.message ?? "Не удалось подключиться как судья";
 }

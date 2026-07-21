@@ -61,6 +61,10 @@ function renderJudge(path = "/matches/m1/judge") {
       <Routes>
         <Route path="/matches/:id/judge" element={<JudgePage />} />
         <Route path="/matches/:id" element={<div>match-detail</div>} />
+        <Route
+          path="/tournaments/:id"
+          element={<div>tournament-detail</div>}
+        />
       </Routes>
     </MemoryRouter>,
   );
@@ -69,6 +73,7 @@ function renderJudge(path = "/matches/m1/judge") {
 describe("REQ_ui__judge_immersive", () => {
   beforeEach(() => {
     cleanup();
+    vi.clearAllMocks();
     getMatch.mockResolvedValue({ match: matchBody });
     startMatch.mockResolvedValue({ match: matchBody });
     acquireJudge.mockResolvedValue({ ok: true });
@@ -201,5 +206,38 @@ describe("REQ_ui__judge_immersive", () => {
       screen.getByRole("button", { name: /подтвердить результат/i }),
     );
     expect(await screen.findByText("match-detail")).toBeInTheDocument();
+  });
+
+  it("finished match opens readonly without acquire", async () => {
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, status: "finished" },
+    });
+    renderJudge();
+    expect(await screen.findByTestId("judge-screen")).toBeInTheDocument();
+    expect(acquireJudge).not.toHaveBeenCalled();
+  });
+
+  it("exits to tournament after confirm finish when tournamentId set", async () => {
+    const user = userEvent.setup();
+    getMatch.mockResolvedValue({
+      match: {
+        ...matchBody,
+        status: "pending_confirmation",
+        tournamentId: "trn-1",
+      },
+    });
+    confirmFinish.mockResolvedValue({
+      match: {
+        ...matchBody,
+        status: "finished",
+        tournamentId: "trn-1",
+      },
+    });
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+    await user.click(
+      screen.getByRole("button", { name: /подтвердить результат/i }),
+    );
+    expect(await screen.findByText("tournament-detail")).toBeInTheDocument();
   });
 });

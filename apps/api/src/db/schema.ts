@@ -113,6 +113,7 @@ export const matches = pgTable("matches", {
     .notNull()
     .references(() => users.id),
   tournamentId: uuid("tournament_id"),
+  tournamentSlotId: text("tournament_slot_id"),
   scoreA: integer("score_a").notNull().default(0),
   scoreB: integer("score_b").notNull().default(0),
   currentServerParticipantId: text("current_server_participant_id"),
@@ -145,6 +146,7 @@ export const matchParticipants = pgTable("match_participants", {
   userId: uuid("user_id").references(() => users.id),
   guestFirstName: text("guest_first_name"),
   guestLastName: text("guest_last_name"),
+  guestAvatarKey: text("guest_avatar_key"),
   isTutorialActor: boolean("is_tutorial_actor").notNull().default(false),
 });
 
@@ -175,11 +177,18 @@ export const tournaments = pgTable("tournaments", {
   title: text("title").notNull(),
   status: text("status").notNull().default("collecting"),
   format: text("format").notNull().default("single_elimination"),
+  organizerParticipates: boolean("organizer_participates").notNull().default(true),
+  pointsToWin: integer("points_to_win").notNull().default(11),
+  mercyEnabled: boolean("mercy_enabled").notNull().default(true),
+  mercyPoints: integer("mercy_points").default(5),
   createdByUserId: uuid("created_by_user_id")
     .notNull()
     .references(() => users.id),
   defaultJudgeUserId: uuid("default_judge_user_id").references(() => users.id),
   bracketJson: jsonb("bracket_json"),
+  stopReasonCode: text("stop_reason_code"),
+  stopReasonText: text("stop_reason_text"),
+  startedAt: timestamp("started_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -197,8 +206,29 @@ export const tournamentParticipants = pgTable("tournament_participants", {
   userId: uuid("user_id").references(() => users.id),
   guestFirstName: text("guest_first_name"),
   guestLastName: text("guest_last_name"),
+  guestAvatarKey: text("guest_avatar_key"),
   seed: integer("seed"),
   winsSnapshot: integer("wins_snapshot").notNull().default(0),
+  status: text("status").notNull().default("active"),
+});
+
+export const tournamentInvitations = pgTable("tournament_invitations", {
+  id: uuid("id").primaryKey().$defaultFn(newId),
+  tournamentId: uuid("tournament_id")
+    .notNull()
+    .references(() => tournaments.id),
+  invitedUserId: uuid("invited_user_id")
+    .notNull()
+    .references(() => users.id),
+  invitedByUserId: uuid("invited_by_user_id")
+    .notNull()
+    .references(() => users.id),
+  status: text("status").notNull().default("pending"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  respondedAt: timestamp("responded_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export const teams = pgTable("teams", {

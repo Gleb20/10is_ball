@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Button } from "../ui";
+import { Button, Avatar } from "../ui";
 import { api } from "../api";
 import { TableTennisRacketIcon } from "../icons/TableTennisRacketIcon";
 import {
@@ -11,11 +11,14 @@ import {
   needsJudgeSetup,
   servingSide,
   shouldShowLandscapeHint,
+  sideAvatarKey,
   sideDisplayName,
   type JudgeMatchLike,
   type JudgeParticipant,
 } from "../judgeUi";
 import { statusLabel } from "../statusLabels";
+import { initialsFromName } from "../rankingUi";
+import { avatarSrc } from "../avatarSrc";
 
 type MatchState = Record<string, unknown> & JudgeMatchLike;
 type Phase =
@@ -65,13 +68,30 @@ export function JudgePage() {
     return res.match as MatchState;
   }, [id]);
 
+  const exitAfterJudge = useCallback(
+    (m: MatchState | null) => {
+      const tournamentId = m?.tournamentId ? String(m.tournamentId) : null;
+      if (tournamentId) {
+        navigate(`/tournaments/${tournamentId}`);
+        return;
+      }
+      navigate(id ? `/matches/${id}` : "/history");
+    },
+    [id, navigate],
+  );
+
   const initJudge = useCallback(async () => {
     if (!id) return;
     setPhase("loading");
     setError(null);
     try {
       const detail = await load();
-      if (readonlyMode) {
+      const status = String(detail.status ?? "");
+      if (
+        readonlyMode ||
+        status === "finished" ||
+        status === "stopped"
+      ) {
         setPhase("readonly");
         return;
       }
@@ -221,7 +241,7 @@ export function JudgePage() {
   async function releaseAndExit() {
     try {
       await api.releaseJudge(id!);
-      navigate(id ? `/matches/${id}` : "/history");
+      exitAfterJudge(match);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -229,8 +249,10 @@ export function JudgePage() {
 
   async function onConfirmFinish() {
     try {
-      await api.confirmFinish(id!);
-      navigate(`/matches/${id}`);
+      const res = await api.confirmFinish(id!);
+      const finished = (res.match ?? match) as MatchState;
+      setMatch(finished);
+      exitAfterJudge(finished);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -256,6 +278,9 @@ export function JudgePage() {
   }
 
   if (phase === "blocked") {
+    const tournamentId = match?.tournamentId
+      ? String(match.tournamentId)
+      : null;
     return (
       <div className="judge-screen judge-screen--error" data-testid="judge-blocked">
         <p className="judge-screen__status" role="alert">
@@ -272,6 +297,14 @@ export function JudgePage() {
           <Button variant="secondary" onClick={() => navigate(`/matches/${id}`)}>
             Назад к матчу
           </Button>
+          {tournamentId ? (
+            <Button
+              variant="secondary"
+              onClick={() => navigate(`/tournaments/${tournamentId}`)}
+            >
+              К турниру
+            </Button>
+          ) : null}
         </div>
       </div>
     );
@@ -359,7 +392,17 @@ export function JudgePage() {
             : undefined
         }
       >
-        <span className="judge-side__name">{label}</span>
+        <span className="judge-side__name">
+          <Avatar
+            size="sm"
+            variant="tonal"
+            className="judge-side__avatar"
+            src={avatarSrc(sideAvatarKey(boardMatch, side))}
+            initials={initialsFromName(label)}
+            alt={label}
+          />
+          {label}
+        </span>
         <span className="judge-side__score">{score}</span>
         <ServeBadge active={Boolean(serving)} />
         {isSetup ? (

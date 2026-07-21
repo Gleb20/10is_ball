@@ -4,6 +4,7 @@ import { Avatar, Button, Chip } from "../ui";
 import { PageLayout } from "../layout";
 import { AsyncState, ListRow } from "../patterns";
 import { initialsFromName } from "../rankingUi";
+import { avatarSrc } from "../avatarSrc";
 import { api } from "../api";
 import { useAuth } from "../auth";
 
@@ -31,6 +32,7 @@ export function ProfilePage() {
           size="md"
           variant="contained"
           color="primary"
+          src={avatarSrc(user?.avatarKey)}
           initials={initialsFromName(displayName || user?.email || "?")}
           alt={displayName}
         />

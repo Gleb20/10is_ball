@@ -16,11 +16,11 @@
 
 | ID | Decision (provisional) | Revisit |
 |----|------------------------|---------|
-| Q1 Third-place match | Always create for single-elim size ≥ 4 (shell only until match wiring) | Phase 6.5 |
+| Q1 Third-place match | Always create for single-elim size ≥ 4; wired via `third_place` slots + loserTo (v1.7.0) | polish UX |
 | Q2 Team ranking | Sum of current members' all-time wins | Phase 5 |
-| Q3 Double elimination | Simplified DE with losers bracket shell | Phase 6.8 |
+| Q3 Double elimination | Challonge-style WB+LB+GF with **bracket reset** when LB wins GF1 (v1.9.0); Split Participants out of scope | done |
 | Q4 Stop reasons | Codes: `injury`, `time`, `other` (+ optional text) | Phase 3.6 |
-| Q5 Default judge | Tournament organizer by default | Phase 6 |
+| Q5 Default judge | Tournament organizer by default; any active user can acquire (D7) | done |
 | Q6 Cookie SameSite | `Lax` for MVP | Phase 9 |
 
 ## D4 — Product versioning & commits (2026-07-20)
@@ -34,7 +34,19 @@
 
 **Git:** каждый коммит — детальное тело по [`.cursor/rules/git-commits.mdc`](../.cursor/rules/git-commits.mdc).
 
-**Current release:** 1.6.2
+**Current release:** 1.9.0
+
+## D9 — Tournament bracket storage (2026-07-21)
+
+**Decision:** MVP хранит сетку в `tournaments.bracket_json`; игровые матчи — в `matches` с `kind=tournament`, `tournament_id`, `tournament_slot_id` (пара slot id). Advancement обновляет JSON и создаёт следующие матчи. Отдельные таблицы `tournament_match` / slot rows не вводим в v1.7.0.
+
+**Why:** Совместимо с уже существующим generate; быстрее довести e2e play loop.
+
+## D10 — Meme avatar presets (2026-07-21)
+
+**Decision:** 10 статических пресетов `avatar_1`…`avatar_10` в `apps/web/public/avatars/`. Ключ назначается один раз при создании user (`generated_avatar_key`) или guest (`guest_avatar_key`). Редактирование / upload / regenerate — вне MVP.
+
+**Why:** Быстрый узнаваемый UI в сетке и матче без storage pipeline.
 
 ## D5 — Mobile shell IA (2026-07-20)
 

@@ -3,6 +3,7 @@ import { and, count, eq, gt, isNull, ne } from "drizzle-orm";
 import {
   generateTemporaryPassword,
   normalizeEmail,
+  randomAvatarKey,
   validatePassword,
 } from "@tab10/shared";
 import { createHash, randomBytes } from "node:crypto";
@@ -45,6 +46,7 @@ export type AuthUser = {
   firstName: string;
   lastName: string;
   mustChangePassword: boolean;
+  avatarKey: string | null;
 };
 
 function toAuthUser(row: typeof users.$inferSelect): AuthUser {
@@ -56,6 +58,7 @@ function toAuthUser(row: typeof users.$inferSelect): AuthUser {
     firstName: row.firstName,
     lastName: row.lastName,
     mustChangePassword: row.mustChangePassword,
+    avatarKey: row.generatedAvatarKey ?? null,
   };
 }
 
@@ -106,7 +109,7 @@ export class AuthService {
       randomBytes(1)[0]!,
     );
     const passwordHash = await hashPassword(temporaryPassword);
-    const avatarKey = `avatar_${(randomBytes(3).readUIntBE(0, 3) % 12) + 1}`;
+    const avatarKey = randomAvatarKey(randomBytes(1)[0]!);
 
     const [row] = await this.db
       .insert(users)
@@ -496,6 +499,7 @@ export class AuthService {
         firstName: u.firstName,
         lastName: u.lastName,
         displayName: `${u.lastName} ${u.firstName}`,
+        avatarKey: u.generatedAvatarKey ?? null,
       }));
   }
 

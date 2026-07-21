@@ -5,6 +5,7 @@ export type User = {
   mustChangePassword: boolean;
   firstName?: string;
   lastName?: string;
+  avatarKey?: string | null;
 };
 
 /** Production: set VITE_API_BASE_URL to API origin (no trailing slash). Dev: empty + Vite proxy. */
@@ -68,6 +69,7 @@ export const api = {
         firstName: string;
         lastName: string;
         displayName: string;
+        avatarKey?: string | null;
       }>;
     }>(`/api/v1/users/directory${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   listUsers: (q?: string) =>
@@ -197,6 +199,47 @@ export const api = {
     }),
   generateBracket: (id: string) =>
     request(`/api/v1/tournaments/${id}/bracket`, { method: "POST" }),
+  patchTournament: (id: string, payload: unknown) =>
+    request<{ tournament: Record<string, unknown> }>(
+      `/api/v1/tournaments/${id}`,
+      { method: "PATCH", body: JSON.stringify(payload) },
+    ),
+  removeTournamentParticipant: (id: string, participantId: string) =>
+    request(`/api/v1/tournaments/${id}/participants/${participantId}`, {
+      method: "DELETE",
+    }),
+  inviteTournament: (id: string, userId: string) =>
+    request(`/api/v1/tournaments/${id}/invitations`, {
+      method: "POST",
+      body: JSON.stringify({ userId }),
+    }),
+  respondTournamentInvitation: (invitationId: string, accept: boolean) =>
+    request(`/api/v1/tournament-invitations/${invitationId}/respond`, {
+      method: "POST",
+      body: JSON.stringify({ accept }),
+    }),
+  dissolveBracket: (id: string) =>
+    request(`/api/v1/tournaments/${id}/dissolve-bracket`, { method: "POST" }),
+  withdrawTournament: (id: string) =>
+    request(`/api/v1/tournaments/${id}/withdraw`, { method: "POST" }),
+  patchTournamentBracket: (
+    id: string,
+    swaps: Array<{ slotIdA: string; slotIdB: string }>,
+  ) =>
+    request(`/api/v1/tournaments/${id}/bracket`, {
+      method: "PATCH",
+      body: JSON.stringify({ swaps }),
+    }),
+  startTournament: (id: string) =>
+    request<{ tournament: Record<string, unknown> }>(
+      `/api/v1/tournaments/${id}/start`,
+      { method: "POST" },
+    ),
+  stopTournament: (id: string, payload?: { code?: string; text?: string }) =>
+    request<{ tournament: Record<string, unknown> }>(
+      `/api/v1/tournaments/${id}/stop`,
+      { method: "POST", body: JSON.stringify(payload ?? {}) },
+    ),
   listTeams: () =>
     request<{ teams: Array<Record<string, unknown>> }>("/api/v1/teams"),
   createTeam: (payload: unknown) =>

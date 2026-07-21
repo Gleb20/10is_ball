@@ -11,6 +11,7 @@ const MATCH_STATUS: Record<string, string> = {
 
 const TOURNAMENT_STATUS: Record<string, string> = {
   collecting: "Сбор",
+  bracket_generated: "Сетка готова",
   bracket_ready: "Сетка готова",
   in_progress: "Идёт",
   finished: "Завершён",
@@ -60,7 +61,8 @@ export function statusTone(
   if (
     status === "finished" ||
     status === "active" ||
-    status === "bracket_ready"
+    status === "bracket_ready" ||
+    status === "bracket_generated"
   ) {
     return "success";
   }

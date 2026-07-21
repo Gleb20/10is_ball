@@ -16,10 +16,14 @@ export function TournamentsPage() {
   const [list, setList] = useState<Array<Record<string, unknown>> | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [title, setTitle] = useState("Турнир");
+  const [title, setTitle] = useState(() => {
+    const d = new Date();
+    return `Турнир ${d.toLocaleString("ru-RU")}`;
+  });
   const [format, setFormat] = useState<
     "single_elimination" | "double_elimination"
   >("single_elimination");
+  const [organizerParticipates, setOrganizerParticipates] = useState(true);
 
   async function load() {
     const res = await api.listTournaments();
@@ -37,7 +41,7 @@ export function TournamentsPage() {
         onSubmit={(e) => {
           e.preventDefault();
           void api
-            .createTournament({ title, format })
+            .createTournament({ title, format, organizerParticipates })
             .then((r) => navigate(`/tournaments/${r.tournament.id}`))
             .catch((err) => setFormError((err as Error).message));
         }}
@@ -60,6 +64,14 @@ export function TournamentsPage() {
             { value: "double_elimination", label: "Double" },
           ]}
         />
+        <label className="match-create__check">
+          <input
+            type="checkbox"
+            checked={organizerParticipates}
+            onChange={(e) => setOrganizerParticipates(e.target.checked)}
+          />
+          Организатор участвует
+        </label>
         <Button type="submit">Создать</Button>
         {formError ? <p className="error">{formError}</p> : null}
       </form>

@@ -10,6 +10,7 @@ coverage
 .env.local
 *.log
 .tools
+.data
 apps/api/data
 apps/api/uploads
 apps/api/dist

@@ -4,12 +4,14 @@ import { Avatar, Button } from "../ui";
 import { PageLayout } from "../layout";
 import { AsyncState, FilterBar, ListRow } from "../patterns";
 import { initialsFromName, splitPodium } from "../rankingUi";
+import { avatarSrc } from "../avatarSrc";
 import { api } from "../api";
 
 type RankingRow = {
   userId: string;
   displayName: string;
   wins: number;
+  avatarKey?: string | null;
 };
 
 export function RankingsPage() {
@@ -70,6 +72,7 @@ export function RankingsPage() {
                         size="md"
                         variant={i === 0 ? "contained" : "tonal"}
                         color={i === 0 ? "primary" : "secondary"}
+                        src={avatarSrc(r.avatarKey)}
                         initials={initialsFromName(r.displayName)}
                         alt={r.displayName}
                       />

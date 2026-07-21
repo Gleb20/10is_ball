@@ -65,6 +65,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@tab10/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       ic-kit:
         specifier: workspace:*
         version: link:../../packages/ic-kit

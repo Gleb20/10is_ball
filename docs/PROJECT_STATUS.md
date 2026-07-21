@@ -1,9 +1,9 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-21  
-**Product version:** 1.6.3  
-Current phase: Swap ↔ between panels + mercy after undo (v1.6.3) on branch `cursor/p0-p1-bugfix-058e`  
-Next step: merge P0+P1 + judge UX → ветка `cursor/tournament-*` для Phase 6 match wiring
+**Product version:** 1.9.0  
+Current phase: Working tournaments + Challonge-like bracket UX  
+Next step: merge tournament branch → main
 
 ## Progress
 
@@ -15,8 +15,8 @@ Next step: merge P0+P1 + judge UX → ветка `cursor/tournament-*` для Ph
 | 3 Match domain | done | 6/6 |
 | 4 Judge concurrency | done | 5/5 |
 | 5 Stats / Rankings | done | 4/4 |
-| 6 Tournaments | done | 9/9 (core bracket; match wiring partial) |
-| 7 Teams & Notifications | done | 4/4 |
+| 6 Tournaments | done | 9/9 + match wiring + Challonge DE/UI (v1.9.0) |
+| 7 Teams & Notifications | done | 4/4 (+ tournament notifs) |
 | 8 Onboarding / Help | done | 4/4 |
 | 9 Hardening | partial | CI + OpenAPI; load test; backup rehearsal; optional: security / mutation / observability |
 | 10 UI polish (mobile-first) | done | UI-0…UI-6 |
@@ -34,6 +34,16 @@ Next step: merge P0+P1 + judge UX → ветка `cursor/tournament-*` для Ph
 | UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
+
+### Challonge-like SE/DE + avatars — done (v1.9.0)
+- DE topology + GF reset; bracket bands; meme avatars 1..10 on user/guest; show in match/judge/bracket
+
+### Tournament playable UX — done (v1.8.0)
+- UserPicker + organizer auto-roster + displayName; inline action errors
+- CSS TournamentBracket (names/scores/CTA); judge↔tournament navigation; finished readonly
+
+### Working tournaments — done (v1.7.0)
+- Lifecycle + invites; start→matches; advancement; stop; DE start; notifications
 
 ### Swap ↔ + mercy after undo — done (v1.6.3)
 - Setup: ↔ снова между плашками счёта (`judge-board--setup`)
@@ -72,4 +82,5 @@ Next step: merge P0+P1 + judge UX → ветка `cursor/tournament-*` для Ph
 pnpm dev
 # 360×640: tabs + Tab focus; /login skip→main; judge immersive
 # /admin: создать с ролью admin; promote существующего user → confirm → re-login
+# Tournament DE: WB/LB bands; GF reset if LB wins; avatars on bracket/judge
 ```

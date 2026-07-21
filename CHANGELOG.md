@@ -2,6 +2,33 @@
 
 Формат версий: [docs/VERSIONING.md](docs/VERSIONING.md).
 
+## [1.9.0] — 2026-07-21
+
+### Changed (b — Challonge-like SE/DE + avatars)
+
+- DE: Challonge WB/LB topology + Grand Final **bracket reset**
+- Сетка: полосы Победители / Проигравшие / Гранд-финал, labels 1/8…Финал, seed, winner highlight, автопроход BYE с именем
+- 10 мемных аватаров (`avatar_1`…`10`); assign на user/guest; показ в профиле, рейтинге, матче, судье, сетке
+
+## [1.8.0] — 2026-07-21
+
+### Changed (b — tournament playable UX)
+
+- Участники: Autocomplete по ФИО, автодобавление организатора, roster с displayName
+- Ошибки действий inline (без тупика AsyncState); `INVALID_STATUS` в messageFor
+- CSS-сетка: имена, счёт, «Судить» / «Открыть»; навигация матч ↔ турнир
+- Finished judge → readonly без acquire; после finish → турнир при `tournamentId`
+
+## [1.7.0] — 2026-07-21
+
+### Added (b — working tournaments)
+
+- Полный lifecycle турнира: PATCH, invites (TTL 10м), dissolve, withdraw, edit bracket
+- Start материализует матчи из сетки (`tournamentId` + slot); advancement после finish/stop
+- SE third-place slots; DE losers/final + start
+- Stop турнира (unplayed → cancelled); уведомления invite / match ready / finished
+- Web: старт/стоп, матчи, приглашения в Notifications
+
 ## [1.6.3] — 2026-07-21
 
 ### Fixed (c — judge setup + mercy)

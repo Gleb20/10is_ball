@@ -63,10 +63,15 @@ export async function buildApp(opts: {
   clock?: Clock;
 }): Promise<{ app: FastifyInstance; services: AppServices }> {
   const clock = opts.clock ?? { now: () => new Date() };
+  const matches = new MatchService(opts.db, clock);
+  const tournaments = new TournamentService(opts.db, clock, matches);
+  matches.setTournamentMatchFinishedHook((matchId) =>
+    tournaments.onMatchFinished(matchId),
+  );
   const services: AppServices = {
     auth: new AuthService(opts.db, clock),
-    matches: new MatchService(opts.db, clock),
-    tournaments: new TournamentService(opts.db, clock),
+    matches,
+    tournaments,
     teams: new TeamService(opts.db, clock),
     notifications: new NotificationService(opts.db),
     help: new HelpService(opts.db),
@@ -776,6 +781,7 @@ export async function buildApp(opts: {
             wins: myEntry.wins,
             losses: myEntry.losses,
             displayName: myEntry.displayName,
+            avatarKey: myEntry.avatarKey ?? null,
           }
         : null,
       hero: rankings[0]
@@ -784,6 +790,7 @@ export async function buildApp(opts: {
             userId: rankings[0].userId,
             displayName: rankings[0].displayName,
             wins: rankings[0].wins,
+            avatarKey: rankings[0].avatarKey ?? null,
           }
         : { type: "empty" },
     };
@@ -802,11 +809,19 @@ export async function buildApp(opts: {
       const body = req.body as {
         title: string;
         format?: "single_elimination" | "double_elimination";
+        organizerParticipates?: boolean;
+        pointsToWin?: number;
+        mercyEnabled?: boolean;
+        mercyPoints?: number | null;
       };
       const tournament = await services.tournaments.create({
         title: body.title,
         format: body.format ?? "single_elimination",
         createdByUserId: req.authUser!.id,
+        organizerParticipates: body.organizerParticipates,
+        pointsToWin: body.pointsToWin,
+        mercyEnabled: body.mercyEnabled,
+        mercyPoints: body.mercyPoints,
       });
       return { tournament };
     },
@@ -822,6 +837,32 @@ export async function buildApp(opts: {
         return reply.code(404).send({ code: "NOT_FOUND", message: "Не найден" });
       }
       return { tournament };
+    },
+  );
+
+  app.patch(
+    "/api/v1/tournaments/:id",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { id } = req.params as { id: string };
+        const body = req.body as Record<string, unknown>;
+        const tournament = await services.tournaments.patch(
+          id,
+          req.authUser!.id,
+          body as {
+            title?: string;
+            format?: "single_elimination" | "double_elimination";
+            organizerParticipates?: boolean;
+            pointsToWin?: number;
+            mercyEnabled?: boolean;
+            mercyPoints?: number | null;
+          },
+        );
+        return { tournament };
+      } catch (e) {
+        return sendError(reply, e);
+      }
     },
   );
 
@@ -847,6 +888,65 @@ export async function buildApp(opts: {
     },
   );
 
+  app.delete(
+    "/api/v1/tournaments/:id/participants/:participantId",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { id, participantId } = req.params as {
+          id: string;
+          participantId: string;
+        };
+        await services.tournaments.removeParticipant({
+          tournamentId: id,
+          participantId,
+          actorUserId: req.authUser!.id,
+        });
+        return { ok: true };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
+    "/api/v1/tournaments/:id/invitations",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { id } = req.params as { id: string };
+        const body = req.body as { userId: string };
+        const invitation = await services.tournaments.invite({
+          tournamentId: id,
+          invitedUserId: body.userId,
+          invitedByUserId: req.authUser!.id,
+        });
+        return { invitation };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
+    "/api/v1/tournament-invitations/:id/respond",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { id } = req.params as { id: string };
+        const body = req.body as { accept: boolean };
+        const result = await services.tournaments.respondInvitation({
+          invitationId: id,
+          userId: req.authUser!.id,
+          accept: Boolean(body.accept),
+        });
+        return result;
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
   app.post(
     "/api/v1/tournaments/:id/bracket",
     { preHandler: requireAuth },
@@ -861,13 +961,90 @@ export async function buildApp(opts: {
     },
   );
 
+  app.patch(
+    "/api/v1/tournaments/:id/bracket",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { id } = req.params as { id: string };
+        const body = req.body as {
+          swaps?: Array<{ slotIdA: string; slotIdB: string }>;
+        };
+        const result = await services.tournaments.patchBracket(
+          id,
+          req.authUser!.id,
+          body.swaps ?? [],
+        );
+        return result;
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
+    "/api/v1/tournaments/:id/dissolve-bracket",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { id } = req.params as { id: string };
+        const tournament = await services.tournaments.dissolveBracket(
+          id,
+          req.authUser!.id,
+        );
+        return { tournament };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
+    "/api/v1/tournaments/:id/withdraw",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { id } = req.params as { id: string };
+        const tournament = await services.tournaments.withdraw({
+          tournamentId: id,
+          userId: req.authUser!.id,
+        });
+        return { tournament };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
   app.post(
     "/api/v1/tournaments/:id/start",
     { preHandler: requireAuth },
     async (req, reply) => {
       try {
         const { id } = req.params as { id: string };
-        const tournament = await services.tournaments.start(id);
+        const tournament = await services.tournaments.start(
+          id,
+          req.authUser!.id,
+        );
+        return { tournament };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
+    "/api/v1/tournaments/:id/stop",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { id } = req.params as { id: string };
+        const body = (req.body as { code?: string; text?: string }) ?? {};
+        const tournament = await services.tournaments.stop(
+          id,
+          req.authUser!.id,
+          body,
+        );
         return { tournament };
       } catch (e) {
         return sendError(reply, e);
@@ -995,8 +1172,16 @@ function messageFor(code: string): string {
     IDEMPOTENCY_KEY_REQUIRED: "Нужен заголовок Idempotency-Key",
     VERSION_CONFLICT: "Конфликт версии",
     PLAYER_BUSY: "Игрок уже в активном матче",
+    INVALID_STATUS: "Действие недоступно в текущем статусе",
     TOO_FEW: "Нужно минимум 3 участника",
     TOO_MANY: "Максимум 64 участника",
+    BRACKET_NOT_EDITABLE: "Сетку нельзя менять",
+    BRACKET_REGEN_REQUIRED: "Нужна перегенерация сетки",
+    TOURNAMENT_ALREADY_STARTED: "Турнир уже стартовал",
+    PLAYER_ALREADY_IN_ACTIVE_MATCH: "Игрок уже в активном матче",
+    EXPIRED: "Приглашение истекло",
+    USE_MATCH: "Для двух игроков создайте обычный матч",
+    ALREADY_IN_TOURNAMENT: "Игрок уже в составе турнира",
   };
   return map[code] ?? code;
 }

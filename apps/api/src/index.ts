@@ -34,6 +34,9 @@ async function main() {
     ? await createPostgresDb(url)
     : await createPgliteDb();
 
+  if (!url && process.env.PGLITE_DATA_DIR) {
+    console.log(`PGlite persistent dir: ${process.env.PGLITE_DATA_DIR}`);
+  }
   const { app, services } = await buildApp({ db });
 
   if (process.env.SEED_ADMIN !== "0") {

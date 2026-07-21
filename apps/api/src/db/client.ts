@@ -6,12 +6,19 @@ import * as schema from "./schema.js";
 
 export type Db = ReturnType<typeof drizzlePglite<typeof schema>>;
 
-export async function createPgliteDb(): Promise<{
+export async function createPgliteDb(opts?: {
+  dataDir?: string;
+}): Promise<{
   db: Db;
   client: PGlite;
   close: () => Promise<void>;
 }> {
-  const client = new PGlite();
+  const dataDir =
+    opts?.dataDir ??
+    (process.env.PGLITE_DATA_DIR?.trim()
+      ? process.env.PGLITE_DATA_DIR.trim()
+      : undefined);
+  const client = dataDir ? new PGlite(dataDir) : new PGlite();
   const db = drizzlePglite(client, { schema });
   await applySchemaSql(client);
   return {
@@ -124,6 +131,7 @@ export async function applySchemaSql(
       mercy_points integer,
       created_by_user_id uuid NOT NULL REFERENCES users(id),
       tournament_id uuid,
+      tournament_slot_id text,
       score_a integer NOT NULL DEFAULT 0,
       score_b integer NOT NULL DEFAULT 0,
       current_server_participant_id text,
@@ -152,6 +160,7 @@ export async function applySchemaSql(
       user_id uuid REFERENCES users(id),
       guest_first_name text,
       guest_last_name text,
+      guest_avatar_key text,
       is_tutorial_actor boolean NOT NULL DEFAULT false
     );
 
@@ -173,9 +182,16 @@ export async function applySchemaSql(
       title text NOT NULL,
       status text NOT NULL DEFAULT 'collecting',
       format text NOT NULL DEFAULT 'single_elimination',
+      organizer_participates boolean NOT NULL DEFAULT true,
+      points_to_win integer NOT NULL DEFAULT 11,
+      mercy_enabled boolean NOT NULL DEFAULT true,
+      mercy_points integer DEFAULT 5,
       created_by_user_id uuid NOT NULL REFERENCES users(id),
       default_judge_user_id uuid REFERENCES users(id),
       bracket_json jsonb,
+      stop_reason_code text,
+      stop_reason_text text,
+      started_at timestamptz,
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now(),
       finished_at timestamptz
@@ -187,8 +203,21 @@ export async function applySchemaSql(
       user_id uuid REFERENCES users(id),
       guest_first_name text,
       guest_last_name text,
+      guest_avatar_key text,
       seed integer,
-      wins_snapshot integer NOT NULL DEFAULT 0
+      wins_snapshot integer NOT NULL DEFAULT 0,
+      status text NOT NULL DEFAULT 'active'
+    );
+
+    CREATE TABLE IF NOT EXISTS tournament_invitations (
+      id uuid PRIMARY KEY ${uuidDefault},
+      tournament_id uuid NOT NULL REFERENCES tournaments(id),
+      invited_user_id uuid NOT NULL REFERENCES users(id),
+      invited_by_user_id uuid NOT NULL REFERENCES users(id),
+      status text NOT NULL DEFAULT 'pending',
+      expires_at timestamptz NOT NULL,
+      responded_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now()
     );
 
     CREATE TABLE IF NOT EXISTS teams (
@@ -269,5 +298,8 @@ export async function applySchemaSql(
       wins_month integer NOT NULL DEFAULT 0,
       updated_at timestamptz NOT NULL DEFAULT now()
     );
+
+    ALTER TABLE match_participants ADD COLUMN IF NOT EXISTS guest_avatar_key text;
+    ALTER TABLE tournament_participants ADD COLUMN IF NOT EXISTS guest_avatar_key text;
   `);
 }

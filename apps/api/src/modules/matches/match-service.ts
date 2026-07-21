@@ -4,6 +4,7 @@ import {
   calendarMonthStartUTC,
   calendarWeekStartUTC,
   createInitialScoreState,
+  randomAvatarKey,
   reduceMatchEvent,
   toRankingEntry,
   type MatchEvent,
@@ -12,6 +13,7 @@ import {
   type ServeRotationConfig,
   type Side,
 } from "@tab10/shared";
+import { randomBytes } from "node:crypto";
 import type { Clock } from "@tab10/test-utils";
 import type { Db } from "../../db/client.js";
 import {
@@ -26,10 +28,20 @@ const JUDGE_TTL_MS = 120_000;
 const STOP_REASON_CODES = ["injury", "time", "other"] as const;
 
 export class MatchService {
+  private onTournamentMatchFinished:
+    | ((matchId: string) => Promise<void>)
+    | null = null;
+
   constructor(
     private readonly db: Db,
     private readonly clock: Clock,
   ) {}
+
+  setTournamentMatchFinishedHook(
+    hook: (matchId: string) => Promise<void>,
+  ) {
+    this.onTournamentMatchFinished = hook;
+  }
 
   async createMatch(input: {
     createdByUserId: string;
@@ -39,11 +51,14 @@ export class MatchService {
     mercyEnabled?: boolean;
     mercyPoints?: number | null;
     kind?: "standalone" | "tournament" | "tutorial";
+    tournamentId?: string;
+    tournamentSlotId?: string;
     participants: Array<{
       side: Side;
       userId?: string;
       guestFirstName?: string;
       guestLastName?: string;
+      guestAvatarKey?: string;
       isTutorialActor?: boolean;
     }>;
   }) {
@@ -57,17 +72,23 @@ export class MatchService {
         mercyPoints: input.mercyPoints ?? null,
         kind: input.kind ?? "standalone",
         createdByUserId: input.createdByUserId,
+        tournamentId: input.tournamentId,
+        tournamentSlotId: input.tournamentSlotId,
         status: "waiting",
       })
       .returning();
 
     for (const p of input.participants) {
+      const isGuest = !p.userId && (p.guestFirstName || p.guestLastName);
       await this.db.insert(matchParticipants).values({
         matchId: match!.id,
         side: p.side,
         userId: p.userId,
         guestFirstName: p.guestFirstName,
         guestLastName: p.guestLastName,
+        guestAvatarKey: isGuest
+          ? (p.guestAvatarKey ?? randomAvatarKey(randomBytes(1)[0]!))
+          : null,
         isTutorialActor: p.isTutorialActor ?? false,
       });
     }
@@ -98,6 +119,9 @@ export class MatchService {
       participants: participants.map((p) => ({
         ...p,
         displayName: this.participantDisplayName(p, usersById),
+        avatarKey: p.userId
+          ? (usersById.get(p.userId)?.generatedAvatarKey ?? null)
+          : (p.guestAvatarKey ?? null),
       })),
       activeJudge,
     };
@@ -476,6 +500,9 @@ export class MatchService {
       await this.applyStats(detail);
     }
     await this.releaseJudge(input.matchId);
+    if (detail.kind === "tournament" && this.onTournamentMatchFinished) {
+      await this.onTournamentMatchFinished(input.matchId);
+    }
     return this.getMatch(input.matchId);
   }
 
@@ -574,6 +601,9 @@ export class MatchService {
       await this.applyStats(updated);
     }
     await this.releaseJudge(input.matchId, input.actorUserId, undefined, true);
+    if (updated?.kind === "tournament" && this.onTournamentMatchFinished) {
+      await this.onTournamentMatchFinished(input.matchId);
+    }
     return updated;
   }
 
@@ -931,6 +961,7 @@ export class MatchService {
           displayName: `${u.lastName} ${u.firstName}`,
           status: u.status as "active" | "blocked",
           createdAt: u.createdAt,
+          avatarKey: u.generatedAvatarKey ?? null,
         });
       });
       return buildRanking(entries);
@@ -985,6 +1016,7 @@ export class MatchService {
           displayName: `${u.lastName} ${u.firstName}`,
           status: u.status as "active" | "blocked",
           createdAt: u.createdAt,
+          avatarKey: u.generatedAvatarKey ?? null,
         });
       })
       .filter(Boolean) as ReturnType<typeof toRankingEntry>[];

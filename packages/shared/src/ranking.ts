@@ -12,6 +12,7 @@ export type RankingEntry = {
   status: "active" | "blocked";
   /** Account creation time (ms) for RANK-001 tie-break. */
   createdAt: number;
+  avatarKey?: string | null;
 };
 
 export type RankingScope = "all_time" | "week" | "month";
@@ -43,6 +44,7 @@ export function toRankingEntry(input: {
   displayName: string;
   status: "active" | "blocked";
   createdAt: Date | number;
+  avatarKey?: string | null;
 }): RankingEntry {
   const matchesPlayed = input.wins + input.losses;
   return {
@@ -57,6 +59,7 @@ export function toRankingEntry(input: {
       typeof input.createdAt === "number"
         ? input.createdAt
         : input.createdAt.getTime(),
+    avatarKey: input.avatarKey ?? null,
   };
 }
 

@@ -4,6 +4,7 @@ import { Avatar, Button, EmptyState } from "../ui";
 import { PageLayout } from "../layout";
 import { AsyncState, ListRow, StatusChip } from "../patterns";
 import { initialsFromName } from "../rankingUi";
+import { avatarSrc } from "../avatarSrc";
 import { api } from "../api";
 import { useAuth } from "../auth";
 
@@ -11,6 +12,7 @@ type RankingEntry = {
   userId: string;
   displayName: string;
   wins: number;
+  avatarKey?: string | null;
 };
 
 export function HomePage() {
@@ -30,13 +32,24 @@ export function HomePage() {
     (data?.lastMatches as Array<Record<string, unknown>>) ?? [];
   const topRankings = (data?.topRankings as RankingEntry[]) ?? [];
   const myStats = data?.myStats as
-    | { rank: number; wins: number; losses: number; displayName: string }
+    | {
+        rank: number;
+        wins: number;
+        losses: number;
+        displayName: string;
+        avatarKey?: string | null;
+      }
     | null
     | undefined;
   const unread =
     (data?.unreadNotifications as Array<Record<string, unknown>>) ?? [];
   const hero = data?.hero as
-    | { type: string; displayName?: string; wins?: number }
+    | {
+        type: string;
+        displayName?: string;
+        wins?: number;
+        avatarKey?: string | null;
+      }
     | undefined;
 
   return (
@@ -58,6 +71,7 @@ export function HomePage() {
                   <Avatar
                     size="md"
                     variant="tonal"
+                    src={avatarSrc(myStats.avatarKey ?? user?.avatarKey)}
                     initials={initialsFromName(myStats.displayName)}
                     alt={myStats.displayName}
                   />
@@ -76,6 +90,7 @@ export function HomePage() {
                     size="sm"
                     variant="contained"
                     color="primary"
+                    src={avatarSrc(hero?.avatarKey)}
                     initials={initialsFromName(hero?.displayName ?? "")}
                     alt={hero?.displayName}
                   />
@@ -95,6 +110,7 @@ export function HomePage() {
                       <Avatar
                         size="sm"
                         variant="tonal"
+                        src={avatarSrc(r.avatarKey)}
                         initials={initialsFromName(r.displayName)}
                         alt={r.displayName}
                       />

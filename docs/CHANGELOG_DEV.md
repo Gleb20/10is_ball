@@ -1,5 +1,63 @@
 # Dev Changelog
 
+## 2026-07-21 — Challonge-like SE/DE + meme avatars (v1.9.0)
+
+### Domain
+- Rewrite `generateDoubleEliminationBracket`: WB + LB drop-ins + `final` / `final_reset`
+- `applyMatchResult`: WB wins GF → champion; LB wins → fill reset slots
+- ADR Q3 closed (Challonge DE + reset)
+
+### Avatars
+- Presets `apps/web/public/avatars/avatar_1.png`…`10`
+- `randomAvatarKey` in shared; users 1..10; `guest_avatar_key` on match/tournament participants
+- Enrich me/directory/rankings/match/tournament with `avatarKey`
+
+### Web
+- Challonge-lite bands + avatars/seeds on bracket cards; Profile/Home/Rankings/Match/Judge
+
+### How to verify
+```bash
+pnpm --filter @tab10/shared build && PGLITE_DATA_DIR= pnpm --filter @tab10/api test && pnpm --filter @tab10/web test
+```
+
+## 2026-07-21 — Tournament playable UX (v1.8.0)
+
+### API
+- `create` + `organizerParticipates` → insert organizer as active participant
+- `GET /tournaments/:id`: participant `displayName`; one-shot heal organizer on roster
+- Duplicate user add → `ALREADY_IN_TOURNAMENT`; `INVALID_STATUS` message
+
+### Web
+- `UserPicker` Autocomplete; TournamentDetail add/invite by name
+- loadError vs actionError; status-aware withdraw/lifecycle
+- `TournamentBracket` + `buildBracketViewModel` (CSS columns)
+- Judge: finished → readonly; confirmFinish/release → tournament; MatchDetail «К турниру»
+
+### How to verify
+```bash
+pnpm --filter @tab10/shared build && pnpm --filter @tab10/api test && pnpm --filter @tab10/web test
+# Create with organizer participates → self in list → Autocomplete add → generate → Судить → back to tournament
+```
+
+## 2026-07-21 — Working tournaments Phase 6 (v1.7.0)
+
+### API / domain
+- Tournament lifecycle: PATCH, invitations, dissolve, withdraw, PATCH bracket
+- `start` → create matches from ready pairs; `onMatchFinished` advances bracket
+- `stop` cancels unplayed; DE losers/final materialization
+- Schema: organizerParticipates, rules, tournament_slot_id, tournament_invitations
+
+### Web
+- Tournament detail: start/stop/dissolve/withdraw, match links, invites
+- Notifications: tournament_invitation + match_ready
+
+### How to verify
+```bash
+pnpm --filter @tab10/shared build && pnpm test
+pnpm dev
+# Create SE → 4 players → generate → start → judge match → stop
+```
+
 ## 2026-07-21 — Swap ↔ between panels + mercy after undo (v1.6.3)
 
 ### Web

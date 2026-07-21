@@ -1,11 +1,13 @@
 {
   "name": "10is-ball",
   "private": true,
-  "version": "1.6.3",
+  "version": "1.9.0",
   "description": "Tab-10 — closed table tennis tournament web service",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev": "pnpm run --parallel --filter @tab10/api --filter @tab10/web dev",
+    "dev": "PGLITE_DATA_DIR=${PGLITE_DATA_DIR:-.data/pglite} pnpm run --parallel --filter @tab10/api --filter @tab10/web dev",
+    "dev:ephemeral": "PGLITE_DATA_DIR= pnpm run --parallel --filter @tab10/api --filter @tab10/web dev",
+    "seed:local-players": "node scripts/seed-local-meme-players.mjs",
     "build": "pnpm -r run build",
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck",

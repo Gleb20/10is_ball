@@ -11,8 +11,12 @@ type NotificationRow = {
   title: string;
   body: string;
   readAt?: string | null;
-  payload?: { invitationId?: string; teamId?: string };
-  createdAt?: string;
+  payload?: {
+    invitationId?: string;
+    teamId?: string;
+    tournamentId?: string;
+    matchId?: string;
+  };
 };
 
 export function NotificationsPage() {
@@ -40,11 +44,27 @@ export function NotificationsPage() {
     );
   }
 
-  async function respondInvite(invitationId: string, accept: boolean) {
+  async function respondTeamInvite(invitationId: string, accept: boolean) {
     setBusyId(invitationId);
     setActionError(null);
     try {
       await api.respondTeamInvitation(invitationId, accept);
+      await load();
+    } catch (e) {
+      setActionError((e as Error).message);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function respondTournamentInvite(
+    invitationId: string,
+    accept: boolean,
+  ) {
+    setBusyId(invitationId);
+    setActionError(null);
+    try {
+      await api.respondTournamentInvitation(invitationId, accept);
       await load();
     } catch (e) {
       setActionError((e as Error).message);
@@ -95,9 +115,10 @@ export function NotificationsPage() {
                     size="sm"
                     disabled={busyId === n.payload.invitationId}
                     onClick={() =>
-                      void respondInvite(n.payload!.invitationId!, true).then(
-                        () => markRead(n.id),
-                      )
+                      void respondTeamInvite(
+                        n.payload!.invitationId!,
+                        true,
+                      ).then(() => markRead(n.id))
                     }
                   >
                     Принять
@@ -107,14 +128,54 @@ export function NotificationsPage() {
                     variant="secondary"
                     disabled={busyId === n.payload.invitationId}
                     onClick={() =>
-                      void respondInvite(n.payload!.invitationId!, false).then(
-                        () => markRead(n.id),
-                      )
+                      void respondTeamInvite(
+                        n.payload!.invitationId!,
+                        false,
+                      ).then(() => markRead(n.id))
                     }
                   >
                     Отклонить
                   </Button>
                 </div>
+              ) : n.type === "tournament_invitation" &&
+                n.payload?.invitationId ? (
+                <div className="row">
+                  <Button
+                    size="sm"
+                    disabled={busyId === n.payload.invitationId}
+                    onClick={() =>
+                      void respondTournamentInvite(
+                        n.payload!.invitationId!,
+                        true,
+                      ).then(() => markRead(n.id))
+                    }
+                  >
+                    Принять
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={busyId === n.payload.invitationId}
+                    onClick={() =>
+                      void respondTournamentInvite(
+                        n.payload!.invitationId!,
+                        false,
+                      ).then(() => markRead(n.id))
+                    }
+                  >
+                    Отклонить
+                  </Button>
+                </div>
+              ) : n.type === "tournament_match_ready" && n.payload?.matchId ? (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    void markRead(n.id);
+                    navigate(`/matches/${n.payload!.matchId}`);
+                  }}
+                >
+                  Открыть матч
+                </Button>
               ) : (
                 !n.readAt && (
                   <Button

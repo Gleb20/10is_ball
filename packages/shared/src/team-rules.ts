@@ -22,6 +22,8 @@ export function selectNewCaptain(
 }
 
 export const TEAM_INVITATION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+/** Tournament invite TTL (AT / PRD): 10 minutes. */
+export const TOURNAMENT_INVITATION_TTL_MS = 10 * 60 * 1000;
 
 export function isInvitationExpired(
   createdAt: number,
