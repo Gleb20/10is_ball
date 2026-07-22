@@ -252,6 +252,20 @@ body {
   gap: 8px;
 }
 
+.history-row {
+  align-items: stretch;
+  gap: 8px;
+}
+
+.history-row__link {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-row__link .list-row {
+  height: 100%;
+}
+
 .list-row__chevron {
   color: var(--color-text-secondary, #999);
   font-size: 22px;

@@ -46,14 +46,24 @@ Errors:
 - `POST /admin/users/{userId}/block`
 - `POST /admin/users/{userId}/unblock`
 - `POST /admin/users/{userId}/reset-password`
+- `POST /admin/matches/{matchId}/force-close` — void active **standalone** match → `cancelled` (D15)
+- `DELETE /admin/matches/{matchId}` — hard-delete **standalone** match; reverse rankings if finished/stopped with winner
 
 Create response включает `temporaryPassword` только один раз.
+
+Force-close body (optional):
+```json
+{"reasonText":"ops cleanup"}
+```
 
 Errors:
 - `ADMIN_REQUIRED`
 - `EMAIL_ALREADY_EXISTS`
 - `LAST_ADMIN_CANNOT_BE_DEMOTED_OR_BLOCKED`
 - `USER_ALREADY_BLOCKED`
+- `TOURNAMENT_MATCH_FORBIDDEN` — `kind !== standalone`
+- `MATCH_NOT_ACTIVE` — force-close when already finished/stopped/cancelled
+- `NOT_FOUND`
 
 ## 4. Home / profile
 

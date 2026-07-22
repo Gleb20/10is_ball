@@ -34,7 +34,7 @@
 
 **Git:** каждый коммит — детальное тело по [`.cursor/rules/git-commits.mdc`](../.cursor/rules/git-commits.mdc).
 
-**Current release:** 1.10.1
+**Current release:** 1.10.1 (planned next **b** → 1.11.0: admin match force-close/delete D15)
 
 ## D11 — Compact SE bye vs Challonge DE (2026-07-21)
 
@@ -86,6 +86,18 @@
 **Until compensate exists:** organizer may only stop the tournament or leave results as-is; no in-bracket “edit past result” API.
 
 **Why:** Plan Stage 4 stop-gate — correction without compensate corrupts rankings.
+
+## D15 — Admin force-close / delete standalone matches (2026-07-22)
+
+**Decision:**
+
+- Role `admin` may **force-close** and **hard-delete** only matches with `kind === "standalone"`.
+- Tournament (`kind=tournament`) and tutorial matches are rejected (`TOURNAMENT_MATCH_FORBIDDEN` for non-standalone).
+- Force-close: active statuses `waiting` | `in_progress` | `pending_confirmation` → `cancelled`, no `winnerSide`, no `applyStats`, judge session released. Clears MATCH-009 / `PLAYER_BUSY` / `PLAYER_ALREADY_IN_ACTIVE_MATCH` without removing the concurrency rule.
+- Delete: hard purge (`judge_sessions` → `match_participants` → `matches`); if the match was `finished`/`stopped` with a winner, **reverse** `userStats` (floor at 0).
+- Exception to PRD “admin does not change finished sports results”: this is ops void/purge, not score editing.
+
+**Why:** Stuck standalone matches blocked players indefinitely; organizers/judges could not always stop them; tournament bracket correction remains deferred (D13).
 
 ## D9 — Tournament bracket storage (2026-07-21)
 

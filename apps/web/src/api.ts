@@ -100,6 +100,18 @@ export const api = {
       `/api/v1/admin/users/${userId}/reset-password`,
       { method: "POST" },
     ),
+  adminForceCloseMatch: (matchId: string, reasonText?: string) =>
+    request<{ match: Record<string, unknown> }>(
+      `/api/v1/admin/matches/${matchId}/force-close`,
+      {
+        method: "POST",
+        body: JSON.stringify(reasonText ? { reasonText } : {}),
+      },
+    ),
+  adminDeleteMatch: (matchId: string) =>
+    request<{ ok: boolean }>(`/api/v1/admin/matches/${matchId}`, {
+      method: "DELETE",
+    }),
   listMatches: () =>
     request<{ matches: Array<Record<string, unknown>> }>("/api/v1/matches"),
   createMatch: (payload: unknown) =>

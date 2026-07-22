@@ -1274,6 +1274,378 @@ describe("match and judge integration", () => {
     expect(po2MatchIds).not.toContain("W0_2");
     expect(po2MatchIds).not.toContain("W0_3");
   });
+
+  it("AT-ADM-MATCH-001: non-admin cannot force-close or delete", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Admin gate",
+        format: "1v1",
+        pointsToWin: 11,
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    const matchId = created.json().match.id as string;
+
+    const force = await app.inject({
+      method: "POST",
+      url: `/api/v1/admin/matches/${matchId}/force-close`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+    expect(force.statusCode).toBe(403);
+
+    const del = await app.inject({
+      method: "DELETE",
+      url: `/api/v1/admin/matches/${matchId}`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(del.statusCode).toBe(403);
+  });
+
+  it("AT-ADM-MATCH-002: force-close stuck in_progress clears PLAYER_BUSY", async () => {
+    const stuck = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Stuck",
+        format: "1v1",
+        pointsToWin: 11,
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    const stuckId = stuck.json().match.id as string;
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${stuckId}/start`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+
+    const next = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Next",
+        format: "1v1",
+        pointsToWin: 11,
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", guestFirstName: "G", guestLastName: "One" },
+        ],
+      },
+    });
+    const nextId = next.json().match.id as string;
+    const busy = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${nextId}/start`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+    expect(busy.statusCode).toBe(400);
+    expect(busy.json().code).toBe("PLAYER_BUSY");
+
+    const force = await app.inject({
+      method: "POST",
+      url: `/api/v1/admin/matches/${stuckId}/force-close`,
+      cookies: { tab10_session: adminCookie },
+      payload: { reasonText: "ops cleanup" },
+    });
+    expect(force.statusCode).toBe(200);
+    expect(force.json().match.status).toBe("cancelled");
+    expect(force.json().match.winnerSide).toBeNull();
+
+    const started = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${nextId}/start`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+    expect(started.statusCode).toBe(200);
+    expect(started.json().match.status).toBe("in_progress");
+  });
+
+  it("AT-ADM-MATCH-003: force-close waiting standalone unblocks tournament start", async () => {
+    const waiting = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Waiting block",
+        format: "1v1",
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    const waitingId = waiting.json().match.id as string;
+
+    const t = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Blocked start",
+        format: "single_elimination",
+        organizerParticipates: true,
+      },
+    });
+    const tid = t.json().tournament.id as string;
+    for (const email of ["adm1@t.local", "adm2@t.local"]) {
+      const u = await app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: { email, firstName: "P", lastName: "L" },
+      });
+      await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${tid}/participants`,
+        cookies: { tab10_session: userACookie },
+        payload: { userId: u.json().user.id },
+      });
+    }
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tid}/bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+
+    const blocked = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tid}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(blocked.statusCode).toBe(400);
+    expect(blocked.json().code).toBe("PLAYER_ALREADY_IN_ACTIVE_MATCH");
+
+    const force = await app.inject({
+      method: "POST",
+      url: `/api/v1/admin/matches/${waitingId}/force-close`,
+      cookies: { tab10_session: adminCookie },
+      payload: {},
+    });
+    expect(force.statusCode).toBe(200);
+
+    const started = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tid}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(started.statusCode).toBe(200);
+    expect(started.json().tournament.status).toBe("in_progress");
+  });
+
+  it("AT-ADM-MATCH-004: tournament match force-close/delete forbidden", async () => {
+    const t = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Trn forbid",
+        format: "single_elimination",
+        organizerParticipates: false,
+        pointsToWin: 3,
+      },
+    });
+    const tid = t.json().tournament.id as string;
+    const playerIds: string[] = [];
+    for (const email of [
+      "tf1@trn.local",
+      "tf2@trn.local",
+      "tf3@trn.local",
+    ]) {
+      const created = await app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: { email, firstName: "P", lastName: "L" },
+      });
+      playerIds.push(created.json().user.id as string);
+      await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${tid}/participants`,
+        cookies: { tab10_session: userACookie },
+        payload: { userId: created.json().user.id },
+      });
+    }
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tid}/bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+    const started = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tid}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(started.statusCode).toBe(200);
+    const matchId = (
+      started.json().tournament.matches as Array<{ id: string }>
+    )[0]!.id;
+
+    const force = await app.inject({
+      method: "POST",
+      url: `/api/v1/admin/matches/${matchId}/force-close`,
+      cookies: { tab10_session: adminCookie },
+      payload: {},
+    });
+    expect(force.statusCode).toBe(400);
+    expect(force.json().code).toBe("TOURNAMENT_MATCH_FORBIDDEN");
+
+    const del = await app.inject({
+      method: "DELETE",
+      url: `/api/v1/admin/matches/${matchId}`,
+      cookies: { tab10_session: adminCookie },
+    });
+    expect(del.statusCode).toBe(400);
+    expect(del.json().code).toBe("TOURNAMENT_MATCH_FORBIDDEN");
+  });
+
+  it("AT-ADM-MATCH-005: delete finished reverses rankings", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Counted",
+        format: "1v1",
+        pointsToWin: 3,
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    const matchId = created.json().match.id as string;
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/start`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/acquire`,
+      cookies: { tab10_session: userACookie },
+    });
+    let version = 0;
+    for (let i = 0; i < 3; i += 1) {
+      const point = await app.inject({
+        method: "POST",
+        url: `/api/v1/matches/${matchId}/points`,
+        cookies: { tab10_session: userACookie },
+        headers: { "idempotency-key": `adm-del-${i}` },
+        payload: { side: "A", expectedVersion: version },
+      });
+      version = point.json().match.version;
+    }
+    const confirm = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/confirm-finish`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(confirm.statusCode).toBe(200);
+
+    const before = await app.inject({
+      method: "GET",
+      url: "/api/v1/rankings",
+      cookies: { tab10_session: userACookie },
+    });
+    const entryBefore = (
+      before.json().rankings as Array<{ userId: string; wins: number }>
+    ).find((r) => r.userId === userAId);
+    expect(entryBefore?.wins).toBeGreaterThanOrEqual(1);
+
+    const del = await app.inject({
+      method: "DELETE",
+      url: `/api/v1/admin/matches/${matchId}`,
+      cookies: { tab10_session: adminCookie },
+    });
+    expect(del.statusCode).toBe(200);
+
+    const gone = await app.inject({
+      method: "GET",
+      url: `/api/v1/matches/${matchId}`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(gone.statusCode).toBe(404);
+
+    const after = await app.inject({
+      method: "GET",
+      url: "/api/v1/rankings",
+      cookies: { tab10_session: userACookie },
+    });
+    const entryAfter = (
+      after.json().rankings as Array<{ userId: string; wins: number }>
+    ).find((r) => r.userId === userAId);
+    expect(entryAfter?.wins ?? 0).toBe((entryBefore?.wins ?? 0) - 1);
+  });
+
+  it("AT-ADM-MATCH-006: force-close on finished → MATCH_NOT_ACTIVE", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Already done",
+        format: "1v1",
+        pointsToWin: 3,
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    const matchId = created.json().match.id as string;
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/start`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/acquire`,
+      cookies: { tab10_session: userACookie },
+    });
+    let version = 0;
+    for (let i = 0; i < 3; i += 1) {
+      const point = await app.inject({
+        method: "POST",
+        url: `/api/v1/matches/${matchId}/points`,
+        cookies: { tab10_session: userACookie },
+        headers: { "idempotency-key": `adm-fin-${i}` },
+        payload: { side: "A", expectedVersion: version },
+      });
+      version = point.json().match.version;
+    }
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/confirm-finish`,
+      cookies: { tab10_session: userACookie },
+    });
+
+    const force = await app.inject({
+      method: "POST",
+      url: `/api/v1/admin/matches/${matchId}/force-close`,
+      cookies: { tab10_session: adminCookie },
+      payload: {},
+    });
+    expect(force.statusCode).toBe(400);
+    expect(force.json().code).toBe("MATCH_NOT_ACTIVE");
+  });
 });
 
 describe("INT_migrations__apply_from_scratch", () => {

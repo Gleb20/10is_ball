@@ -448,6 +448,42 @@ export async function buildApp(opts: {
     },
   );
 
+  app.post(
+    "/api/v1/admin/matches/:matchId/force-close",
+    { preHandler: requireAdmin },
+    async (req, reply) => {
+      try {
+        const { matchId } = req.params as { matchId: string };
+        const body = (req.body ?? {}) as { reasonText?: string };
+        const match = await services.matches.adminForceCloseMatch({
+          matchId,
+          actorAdminId: req.authUser!.id,
+          reasonText: body.reasonText,
+        });
+        return { match };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.delete(
+    "/api/v1/admin/matches/:matchId",
+    { preHandler: requireAdmin },
+    async (req, reply) => {
+      try {
+        const { matchId } = req.params as { matchId: string };
+        const result = await services.matches.adminDeleteMatch({
+          matchId,
+          actorAdminId: req.authUser!.id,
+        });
+        return result;
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
   // --- Profile ---
   app.patch(
     "/api/v1/me/profile",
@@ -1257,6 +1293,9 @@ function messageFor(code: string): string {
       "Для сетки старого формата выберите способ построения явно",
     TOURNAMENT_ALREADY_STARTED: "Турнир уже стартовал",
     PLAYER_ALREADY_IN_ACTIVE_MATCH: "Игрок уже в активном матче",
+    TOURNAMENT_MATCH_FORBIDDEN:
+      "Админ может закрывать и удалять только обычные матчи",
+    MATCH_NOT_ACTIVE: "Матч уже закрыт",
     EXPIRED: "Приглашение истекло",
     USE_MATCH: "Для двух игроков создайте обычный матч",
     ALREADY_IN_TOURNAMENT: "Игрок уже в составе турнира",
@@ -1319,6 +1358,12 @@ function openApiSpec() {
       },
       "/api/v1/admin/users/{userId}": {
         patch: { summary: "Update user role (admin only)" },
+      },
+      "/api/v1/admin/matches/{matchId}/force-close": {
+        post: { summary: "Admin force-close standalone match" },
+      },
+      "/api/v1/admin/matches/{matchId}": {
+        delete: { summary: "Admin delete standalone match" },
       },
       "/api/v1/matches": {
         get: { summary: "List matches" },

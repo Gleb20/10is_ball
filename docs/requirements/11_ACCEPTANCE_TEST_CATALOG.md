@@ -47,6 +47,24 @@ User получает 403 на все admin endpoints.
 ### AT-ADM-005 Историческая сохранность
 Blocked user остаётся в завершённых матчах, но не появляется в новом participant picker.
 
+### AT-ADM-MATCH-001 Non-admin
+Non-admin получает 403 на force-close и delete матча.
+
+### AT-ADM-MATCH-002 Force-close clears PLAYER_BUSY
+Stuck `in_progress` standalone → admin force-close → `cancelled` → тот же игрок может стартовать другой матч.
+
+### AT-ADM-MATCH-003 Waiting unblocks tournament
+`waiting` standalone блокирует старт турнира → force-close → турнир стартует.
+
+### AT-ADM-MATCH-004 Tournament forbidden
+Tournament match → force-close/delete → `TOURNAMENT_MATCH_FORBIDDEN`.
+
+### AT-ADM-MATCH-005 Delete reverses rankings
+Finished standalone учтён в rankings → delete → wins откатываются; GET match → 404.
+
+### AT-ADM-MATCH-006 Force-close finished
+Force-close на `finished` → `MATCH_NOT_ACTIVE`.
+
 ## MATCH RULES
 
 ### AT-MATCH-001 Обычная победа

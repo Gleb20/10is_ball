@@ -6,6 +6,7 @@
 |---|---|---|---|
 | AUTH-001..008 | AT-AUTH-001..008; REQ_ui__auth_layout (UI-5) | unit, integration, API, E2E, component | yes |
 | ADM-001..008 | AT-ADM-001..005; AT-AUTH-008; INT_admin__role_*; REQ_ui__admin_confirm_dialogs (role create/promote) | integration, API, E2E, component | yes |
+| ADM-MATCH (D15) | AT-ADM-MATCH-001..006; REQ_ui__admin_match_ops | integration, API, component | high |
 | HOME-001..006 | AT-EMPTY-001, AT-RANK-*; shell IA = ADR D5; AsyncState/ListRow/StatusChip; Home hero+podium (UI-3) | component, API, E2E | medium |
 | MATCH create picker | API_GET_users_directory; REQ_ui__match_create_autocomplete | API, component | high |
 | PROFILE-001..006 | profile contract tests | unit, API, component | medium |

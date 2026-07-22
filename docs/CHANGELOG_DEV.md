@@ -1,5 +1,33 @@
 # Dev Changelog
 
+## 2026-07-22 — Admin force-close / delete standalone matches (D15, planned v1.11.0)
+
+### Decision
+- ADR D15: admin may void (`cancelled`) and hard-delete only `kind=standalone`; MATCH-009 concurrency stays; tournament/tutorial forbidden.
+
+### API
+- `POST /api/v1/admin/matches/:matchId/force-close` → `cancelled`, no winner/stats, release judge
+- `DELETE /api/v1/admin/matches/:matchId` → reverseStats if finished/stopped with winner; delete judge_sessions → participants → match
+- Errors: `TOURNAMENT_MATCH_FORBIDDEN`, `MATCH_NOT_ACTIVE`
+
+### Web
+- Match detail: «Принудительно закрыть» / «Удалить из истории» (admin + standalone)
+- History: delete button on standalone match rows
+- Confirm dialogs (ic-kit Dialog)
+
+### Tests
+- AT-ADM-MATCH-001..006 in `domain.integration.test.ts`
+- REQ_ui__admin_match_ops in `MatchDetailPage.test.tsx`
+
+### Requirement IDs
+- ADM-MATCH / AT-ADM-MATCH-001..006; MATCH-009 (unchanged rule, ops unblock)
+
+### How to verify
+```bash
+pnpm --filter @tab10/api test -- src/domain.integration.test.ts -t AT-ADM-MATCH
+pnpm --filter @tab10/web test -- src/pages/MatchDetailPage.test.tsx
+```
+
 ## 2026-07-22 — Prod hotfix: Date in sql on postgres-js (v1.10.1)
 
 ### API

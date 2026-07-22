@@ -925,34 +925,6 @@ export class MatchService {
     }
   }
 
-  private async bumpStats(userId: string, won: boolean) {
-    const existing = await this.db.query.userStats.findFirst({
-      where: eq(userStats.userId, userId),
-    });
-    const now = this.clock.now();
-    if (!existing) {
-      await this.db.insert(userStats).values({
-        userId,
-        winsAllTime: won ? 1 : 0,
-        lossesAllTime: won ? 0 : 1,
-        winsWeek: won ? 1 : 0,
-        winsMonth: won ? 1 : 0,
-        updatedAt: now,
-      });
-      return;
-    }
-    await this.db
-      .update(userStats)
-      .set({
-        winsAllTime: existing.winsAllTime + (won ? 1 : 0),
-        lossesAllTime: existing.lossesAllTime + (won ? 0 : 1),
-        winsWeek: existing.winsWeek + (won ? 1 : 0),
-        winsMonth: existing.winsMonth + (won ? 1 : 0),
-        updatedAt: now,
-      })
-      .where(eq(userStats.userId, userId));
-  }
-
   async getRankings(scope: RankingScope = "all_time") {
     const now = this.clock.now();
     const allUsers = await this.db.query.users.findMany();
@@ -1050,5 +1022,130 @@ export class MatchService {
         },
       ],
     });
+  }
+
+  /** Admin ops (D15): void active standalone match without stats. */
+  async adminForceCloseMatch(input: {
+    matchId: string;
+    actorAdminId: string;
+    reasonText?: string;
+  }) {
+    const detail = await this.getMatch(input.matchId);
+    if (!detail) {
+      throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    }
+    if (detail.kind !== "standalone") {
+      throw Object.assign(new Error("TOURNAMENT_MATCH_FORBIDDEN"), {
+        code: "TOURNAMENT_MATCH_FORBIDDEN",
+      });
+    }
+    if (
+      detail.status !== "waiting" &&
+      detail.status !== "in_progress" &&
+      detail.status !== "pending_confirmation"
+    ) {
+      throw Object.assign(new Error("MATCH_NOT_ACTIVE"), {
+        code: "MATCH_NOT_ACTIVE",
+      });
+    }
+
+    const now = this.clock.now();
+    await this.db
+      .update(matches)
+      .set({
+        status: "cancelled",
+        winnerSide: null,
+        finishReason: "admin_void",
+        stopReasonCode: "other",
+        stopReasonText: input.reasonText ?? null,
+        finishedAt: now,
+        updatedAt: now,
+        version: detail.version + 1,
+      })
+      .where(eq(matches.id, input.matchId));
+
+    await this.releaseJudge(
+      input.matchId,
+      input.actorAdminId,
+      undefined,
+      true,
+    );
+    return this.getMatch(input.matchId);
+  }
+
+  /** Admin ops (D15): hard-delete standalone match; reverse stats if counted. */
+  async adminDeleteMatch(input: { matchId: string; actorAdminId: string }) {
+    const detail = await this.getMatch(input.matchId);
+    if (!detail) {
+      throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    }
+    if (detail.kind !== "standalone") {
+      throw Object.assign(new Error("TOURNAMENT_MATCH_FORBIDDEN"), {
+        code: "TOURNAMENT_MATCH_FORBIDDEN",
+      });
+    }
+
+    const counted =
+      (detail.status === "finished" || detail.status === "stopped") &&
+      Boolean(detail.winnerSide);
+    if (counted) {
+      await this.reverseStats(detail);
+    }
+
+    await this.db
+      .delete(judgeSessions)
+      .where(eq(judgeSessions.matchId, input.matchId));
+    await this.db
+      .delete(matchParticipants)
+      .where(eq(matchParticipants.matchId, input.matchId));
+    await this.db.delete(matches).where(eq(matches.id, input.matchId));
+    return { ok: true as const };
+  }
+
+  private async reverseStats(
+    match: NonNullable<Awaited<ReturnType<MatchService["getMatch"]>>>,
+  ) {
+    if (!match.winnerSide) return;
+    const winners = match.participants.filter((p) => p.side === match.winnerSide);
+    const losers = match.participants.filter((p) => p.side !== match.winnerSide);
+    for (const w of winners) {
+      if (!w.userId || w.isTutorialActor) continue;
+      await this.bumpStats(w.userId, true, -1);
+    }
+    for (const l of losers) {
+      if (!l.userId || l.isTutorialActor) continue;
+      await this.bumpStats(l.userId, false, -1);
+    }
+  }
+
+  private async bumpStats(userId: string, won: boolean, delta = 1) {
+    const existing = await this.db.query.userStats.findFirst({
+      where: eq(userStats.userId, userId),
+    });
+    const now = this.clock.now();
+    const winDelta = won ? delta : 0;
+    const lossDelta = won ? 0 : delta;
+    if (!existing) {
+      if (delta < 0) return;
+      await this.db.insert(userStats).values({
+        userId,
+        winsAllTime: Math.max(0, winDelta),
+        lossesAllTime: Math.max(0, lossDelta),
+        winsWeek: Math.max(0, winDelta),
+        winsMonth: Math.max(0, winDelta),
+        updatedAt: now,
+      });
+      return;
+    }
+    await this.db
+      .update(userStats)
+      .set({
+        winsAllTime: Math.max(0, existing.winsAllTime + winDelta),
+        lossesAllTime: Math.max(0, existing.lossesAllTime + lossDelta),
+        winsWeek: Math.max(0, existing.winsWeek + winDelta),
+        winsMonth: Math.max(0, existing.winsMonth + winDelta),
+        updatedAt: now,
+      })
+      .where(eq(userStats.userId, userId));
   }
 }

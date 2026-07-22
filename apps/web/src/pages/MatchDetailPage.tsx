@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Avatar, Button } from "../ui";
+import { Avatar, Button, Dialog } from "../ui";
 import { PageLayout } from "../layout";
 import { AsyncState, FilterBar, StatusChip } from "../patterns";
 import { api } from "../api";
@@ -13,6 +13,8 @@ import {
 import { initialsFromName } from "../rankingUi";
 import { avatarSrc } from "../avatarSrc";
 
+type AdminConfirm = "force-close" | "delete" | null;
+
 export function MatchDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -23,6 +25,8 @@ export function MatchDetailPage() {
   const [stopSide, setStopSide] = useState<"A" | "B">("A");
   const [stopReason, setStopReason] = useState("injury");
   const [stopPending, setStopPending] = useState(false);
+  const [adminConfirm, setAdminConfirm] = useState<AdminConfirm>(null);
+  const [adminPending, setAdminPending] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
   async function load() {
@@ -51,6 +55,14 @@ export function MatchDetailPage() {
   const judgeTakenByOther =
     activeJudge != null && activeJudge.userId !== user?.id;
 
+  const isAdminStandalone =
+    user?.role === "admin" && match?.kind === "standalone";
+  const canForceClose =
+    isAdminStandalone &&
+    (match?.status === "waiting" ||
+      match?.status === "in_progress" ||
+      match?.status === "pending_confirmation");
+
   const durationLabel =
     match?.startedAt != null
       ? formatMatchDuration(
@@ -77,6 +89,28 @@ export function MatchDetailPage() {
       setError((e as Error).message);
     } finally {
       setStopPending(false);
+    }
+  }
+
+  async function onAdminConfirm() {
+    if (!adminConfirm || !id) return;
+    setAdminPending(true);
+    setError(null);
+    try {
+      if (adminConfirm === "force-close") {
+        const res = await api.adminForceCloseMatch(id);
+        setMatch(res.match);
+        setAdminConfirm(null);
+      } else {
+        await api.adminDeleteMatch(id);
+        setAdminConfirm(null);
+        navigate("/history");
+      }
+    } catch (e) {
+      setError((e as Error).message);
+      setAdminConfirm(null);
+    } finally {
+      setAdminPending(false);
     }
   }
 
@@ -165,6 +199,22 @@ export function MatchDetailPage() {
                   {stopOpen ? "Скрыть остановку" : "Остановить матч"}
                 </Button>
               )}
+              {canForceClose ? (
+                <Button
+                  variant="secondary"
+                  onClick={() => setAdminConfirm("force-close")}
+                >
+                  Принудительно закрыть
+                </Button>
+              ) : null}
+              {isAdminStandalone ? (
+                <Button
+                  variant="secondary"
+                  onClick={() => setAdminConfirm("delete")}
+                >
+                  Удалить из истории
+                </Button>
+              ) : null}
               {match.tournamentId ? (
                 <Button
                   variant="secondary"
@@ -218,6 +268,36 @@ export function MatchDetailPage() {
                 </Button>
               </div>
             ) : null}
+            <Dialog
+              open={adminConfirm !== null}
+              onClose={() =>
+                !adminPending ? setAdminConfirm(null) : undefined
+              }
+              title={
+                adminConfirm === "force-close"
+                  ? "Принудительно закрыть матч?"
+                  : "Удалить матч из истории?"
+              }
+              width="sm"
+              secondaryButtonLabel="Отмена"
+              onSecondaryButton={() =>
+                !adminPending ? setAdminConfirm(null) : undefined
+              }
+              mainButtonLabel={
+                adminPending
+                  ? "…"
+                  : adminConfirm === "force-close"
+                    ? "Закрыть"
+                    : "Удалить"
+              }
+              onMainButton={() => void onAdminConfirm()}
+            >
+              <p>
+                {adminConfirm === "force-close"
+                  ? "Матч будет аннулирован (статус «Отменён») без победителя и без влияния на рейтинг. Игроки снова смогут участвовать в других матчах."
+                  : "Матч будет удалён безвозвратно. Если результат уже учтён в рейтинге, победы и поражения будут откачены."}
+              </p>
+            </Dialog>
           </>
         ) : null}
       </AsyncState>

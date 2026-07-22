@@ -1,20 +1,20 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-22  
-**Product version:** 1.10.1 (prod tournament parity + match create/get on Neon)  
+**Product version:** 1.10.1 (prod tournament parity + match create/get on Neon); next planned **1.11.0** — admin match force-close/delete (D15)  
 Current phase: Bracket construction algorithm (compact / power_of_two) — SE + DE for both  
-Next step: optional release of unreleased bracket V2/compact DE as 1.11.0; Stage 4 correction still deferred (D13)
+Next step: optional release of unreleased bracket V2/compact DE + admin match ops as 1.11.0; Stage 4 correction still deferred (D13)
 
 ## Progress
 
 | Phase | Status | Steps done |
 |-------|--------|------------|
 | 0 Foundation | done | 5/5 |
-| 1 Auth & Admin | done | 8/8 (+ role PATCH / UI) |
+| 1 Auth & Admin | done | 8/8 (+ role PATCH / UI) + ADM-MATCH D15 |
 | 2 Shell & Profiles | done | 4/4 |
 | 3 Match domain | done | 6/6 |
 | 4 Judge concurrency | done | 5/5 |
-| 5 Stats / Rankings | done | 4/4 |
+| 5 Stats / Rankings | done | 4/4 (+ reverseStats for admin delete) |
 | 6 Tournaments | done | 9/9 + V2 domain/API/web (unreleased) + cancel/parity 1.10.1 |
 | 7 Teams & Notifications | done | 4/4 (+ tournament notifs) |
 | 8 Onboarding / Help | done | 4/4 |
@@ -34,6 +34,13 @@ Next step: optional release of unreleased bracket V2/compact DE as 1.11.0; Stage
 | UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
+
+### Admin force-close / delete standalone matches — done (D15, planned v1.11.0)
+- API: `POST /admin/matches/:id/force-close`, `DELETE /admin/matches/:id`; only `kind=standalone`
+- Force-close → `cancelled` (no winner/stats); clears PLAYER_BUSY / PLAYER_ALREADY_IN_ACTIVE_MATCH
+- Delete → purge sessions/participants/match + reverseStats if finished/stopped
+- Web: Match detail + History admin CTAs with confirm dialogs
+- Tests: AT-ADM-MATCH-001..006; REQ_ui__admin_match_ops
 
 ### Prod hotfix — Date in sql on postgres-js — done (v1.10.1)
 - API: judge/rankings date filters via Drizzle operators (Neon prod regression)
