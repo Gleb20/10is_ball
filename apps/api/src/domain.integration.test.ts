@@ -77,6 +77,35 @@ describe("match and judge integration", () => {
     if (close) await close();
   });
 
+  it("INT_match__get_after_create_returns_activeJudge", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Smoke",
+        format: "1v1",
+        pointsToWin: 11,
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    expect(created.statusCode).toBe(200);
+    expect(created.json().match.activeJudge).toBeNull();
+    const matchId = created.json().match.id as string;
+
+    const detail = await app.inject({
+      method: "GET",
+      url: `/api/v1/matches/${matchId}`,
+      cookies: { tab10_session: userBCookie },
+    });
+    expect(detail.statusCode).toBe(200);
+    expect(detail.json().match.activeJudge).toBeNull();
+    expect(detail.json().match.status).toBe("waiting");
+  });
+
   it("INT_match__create_judge_score_confirm", async () => {
     const created = await app.inject({
       method: "POST",

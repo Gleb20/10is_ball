@@ -1,5 +1,26 @@
 # Dev Changelog
 
+## 2026-07-22 — Prod hotfix: Date in sql on postgres-js (v1.10.1)
+
+### API
+- `match-service.ts`: 8× `` sql`…${date}` `` → `gt` / `lte` / `gte` (judge sessions, rankings week/month)
+- `app.ts`: try/catch on `POST/GET /api/v1/matches`; global `setErrorHandler` для INTERNAL
+
+### Tests
+- `INT_match__get_after_create_returns_activeJudge` (PGlite)
+- `postgres-date.integration.test.ts` — smoke при `DATABASE_URL` (Neon)
+
+### Requirement IDs
+- MATCH-001, MATCH-008, JUDGE-001; AT-MATCH-001, AT-JUDGE-003
+
+### How to verify
+```bash
+pnpm run ci
+PGLITE_DATA_DIR= pnpm --filter @tab10/api test -- src/domain.integration.test.ts -t INT_match__get_after_create
+# optional Neon:
+DATABASE_URL=postgresql://... pnpm --filter @tab10/api test -- src/postgres-date.integration.test.ts
+```
+
 ## 2026-07-22 — Prod tournament parity (Neon schema drift + cancel)
 
 ### Root cause

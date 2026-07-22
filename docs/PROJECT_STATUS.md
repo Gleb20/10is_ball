@@ -1,7 +1,7 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-22  
-**Product version:** 1.10.1 (prod tournament parity: Neon ALTER migrate + cancel before start)  
+**Product version:** 1.10.1 (prod tournament parity + match create/get on Neon)  
 Current phase: Bracket construction algorithm (compact / power_of_two) — SE + DE for both  
 Next step: optional release of unreleased bracket V2/compact DE as 1.11.0; Stage 4 correction still deferred (D13)
 
@@ -34,6 +34,10 @@ Next step: optional release of unreleased bracket V2/compact DE as 1.11.0; Stage
 | UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
+
+### Prod hotfix — Date in sql on postgres-js — done (v1.10.1)
+- API: judge/rankings date filters via Drizzle operators (Neon prod regression)
+- Tests: INT_match__get_after_create; optional postgres-date.integration
 
 ### Prod tournament parity — done (v1.10.1)
 - Neon schema drift: ALTER missing tournament columns on boot

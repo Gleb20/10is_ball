@@ -85,6 +85,15 @@ export async function buildApp(opts: {
   });
   await app.register(cookie);
 
+  app.setErrorHandler((err, _req, reply) => {
+    if (reply.sent) return;
+    console.error(err);
+    return reply.code(500).send({
+      code: "INTERNAL",
+      message: "Внутренняя ошибка сервера",
+    });
+  });
+
   app.addHook("onRequest", async (req) => {
     const token = req.cookies[COOKIE];
     const resolved = await services.auth.resolveSession(token);
@@ -465,37 +474,45 @@ export async function buildApp(opts: {
     return { matches: list };
   });
 
-  app.post("/api/v1/matches", { preHandler: requireAuth }, async (req) => {
-    const body = req.body as {
-      title: string;
-      format: "1v1" | "2v2";
-      pointsToWin?: number;
-      mercyEnabled?: boolean;
-      mercyPoints?: number;
-      participants: Array<{
-        side: "A" | "B";
-        userId?: string;
-        guestFirstName?: string;
-        guestLastName?: string;
-      }>;
-    };
-    const match = await services.matches.createMatch({
-      createdByUserId: req.authUser!.id,
-      ...body,
-    });
-    return { match };
+  app.post("/api/v1/matches", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const body = req.body as {
+        title: string;
+        format: "1v1" | "2v2";
+        pointsToWin?: number;
+        mercyEnabled?: boolean;
+        mercyPoints?: number;
+        participants: Array<{
+          side: "A" | "B";
+          userId?: string;
+          guestFirstName?: string;
+          guestLastName?: string;
+        }>;
+      };
+      const match = await services.matches.createMatch({
+        createdByUserId: req.authUser!.id,
+        ...body,
+      });
+      return { match };
+    } catch (e) {
+      return sendError(reply, e);
+    }
   });
 
   app.get(
     "/api/v1/matches/:matchId",
     { preHandler: requireAuth },
     async (req, reply) => {
-      const { matchId } = req.params as { matchId: string };
-      const match = await services.matches.getMatch(matchId);
-      if (!match) {
-        return reply.code(404).send({ code: "NOT_FOUND", message: "Матч не найден" });
+      try {
+        const { matchId } = req.params as { matchId: string };
+        const match = await services.matches.getMatch(matchId);
+        if (!match) {
+          return reply.code(404).send({ code: "NOT_FOUND", message: "Матч не найден" });
+        }
+        return { match };
+      } catch (e) {
+        return sendError(reply, e);
       }
-      return { match };
     },
   );
 
@@ -1244,6 +1261,7 @@ function messageFor(code: string): string {
     USE_MATCH: "Для двух игроков создайте обычный матч",
     ALREADY_IN_TOURNAMENT: "Игрок уже в составе турнира",
     NOT_A_PARTICIPANT: "Вы не в составе этого турнира",
+    INTERNAL: "Внутренняя ошибка сервера",
   };
   return map[code] ?? code;
 }
@@ -1261,11 +1279,13 @@ function sendError(reply: FastifyReply, e: unknown) {
       ? 404
       : code === "FORBIDDEN"
         ? 403
-        : code === "VERSION_CONFLICT" ||
-            code === "JUDGE_TAKEN" ||
-            code === "BRACKET_VERSION_CONFLICT"
-          ? 409
-          : 400;
+        : code === "INTERNAL"
+          ? 500
+          : code === "VERSION_CONFLICT" ||
+              code === "JUDGE_TAKEN" ||
+              code === "BRACKET_VERSION_CONFLICT"
+            ? 409
+            : 400;
   const details: Record<string, unknown> = {};
   if (err.state) details.state = err.state;
   if (err.currentJudge) details.currentJudge = err.currentJudge;

@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, isNull, lte, ne } from "drizzle-orm";
 import {
   buildRanking,
   calendarMonthStartUTC,
@@ -144,7 +144,7 @@ export class MatchService {
       where: and(
         eq(judgeSessions.matchId, matchId),
         isNull(judgeSessions.releasedAt),
-        sql`${judgeSessions.expiresAt} > ${now}`,
+        gt(judgeSessions.expiresAt, now),
       ),
     });
     if (!session) return null;
@@ -646,7 +646,7 @@ export class MatchService {
         and(
           eq(judgeSessions.matchId, input.matchId),
           isNull(judgeSessions.releasedAt),
-          sql`${judgeSessions.expiresAt} <= ${now}`,
+          lte(judgeSessions.expiresAt, now),
         ),
       );
 
@@ -670,7 +670,7 @@ export class MatchService {
         eq(judgeSessions.userId, input.userId),
         isNull(judgeSessions.releasedAt),
         ne(judgeSessions.matchId, input.matchId),
-        sql`${judgeSessions.expiresAt} > ${now}`,
+        gt(judgeSessions.expiresAt, now),
       ),
     });
     if (otherMatch) {
@@ -683,7 +683,7 @@ export class MatchService {
         eq(judgeSessions.userId, input.userId),
         eq(judgeSessions.authSessionId, input.authSessionId),
         isNull(judgeSessions.releasedAt),
-        sql`${judgeSessions.expiresAt} > ${now}`,
+        gt(judgeSessions.expiresAt, now),
       ),
     });
     if (existing) return existing;
@@ -692,7 +692,7 @@ export class MatchService {
       where: and(
         eq(judgeSessions.matchId, input.matchId),
         isNull(judgeSessions.releasedAt),
-        sql`${judgeSessions.expiresAt} > ${now}`,
+        gt(judgeSessions.expiresAt, now),
       ),
     });
     if (taken) {
@@ -743,7 +743,7 @@ export class MatchService {
           eq(judgeSessions.userId, input.userId),
           eq(judgeSessions.authSessionId, input.authSessionId),
           isNull(judgeSessions.releasedAt),
-          sql`${judgeSessions.expiresAt} > ${now}`,
+          gt(judgeSessions.expiresAt, now),
         ),
       )
       .returning();
@@ -880,7 +880,7 @@ export class MatchService {
         eq(judgeSessions.matchId, detail.id),
         eq(judgeSessions.userId, userId),
         isNull(judgeSessions.releasedAt),
-        sql`${judgeSessions.expiresAt} > ${now}`,
+        gt(judgeSessions.expiresAt, now),
       ),
     });
     if (!judge) {
@@ -984,7 +984,7 @@ export class MatchService {
       where: and(
         inArray(matches.status, ["finished", "stopped"]),
         ne(matches.kind, "tutorial"),
-        sql`${matches.finishedAt} >= ${rangeStart}`,
+        gte(matches.finishedAt, rangeStart),
       ),
     });
     const matchIds = finished.map((m) => m.id);

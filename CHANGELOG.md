@@ -12,6 +12,12 @@
 - Выход: только для активного участника; `NOT_A_PARTICIPANT` вместо «Не найдено»
 - PATCH `organizerParticipates` синхронизирует roster; статус `cancelled` в UI
 
+### Fixed (c — prod hotfix: матчи на Neon/Postgres)
+
+- API: сравнения дат в judge/rankings через `gt`/`lte`/`gte` вместо raw `sql`+`Date` (drizzle + postgres-js)
+- Создание и просмотр матча снова работают в продакшене; week/month rankings не падают
+- Обработка ошибок на `POST/GET /matches`; `INTERNAL` без сырого stack клиенту
+
 ## [1.10.0] — 2026-07-21
 
 ### Changed (b — roster, notifications, compact SE bye)
