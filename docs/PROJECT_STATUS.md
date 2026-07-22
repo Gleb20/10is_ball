@@ -1,9 +1,9 @@
 # Tab-10 Project Status
 
 Last updated: 2026-07-22  
-**Product version:** 1.10.1 (prod tournament parity + match create/get on Neon); next planned **1.11.0** — admin match force-close/delete (D15)  
+**Product version:** 1.10.1 (prod tournament parity + match create/get on Neon); next planned **1.10.2** (c — match cancel UI) / **1.11.0** (b — admin match ops D15 + bracket V2)  
 Current phase: Bracket construction algorithm (compact / power_of_two) — SE + DE for both  
-Next step: optional release of unreleased bracket V2/compact DE + admin match ops as 1.11.0; Stage 4 correction still deferred (D13)
+Next step: optional release bump; Stage 4 correction still deferred (D13)
 
 ## Progress
 
@@ -12,7 +12,7 @@ Next step: optional release of unreleased bracket V2/compact DE + admin match op
 | 0 Foundation | done | 5/5 |
 | 1 Auth & Admin | done | 8/8 (+ role PATCH / UI) + ADM-MATCH D15 |
 | 2 Shell & Profiles | done | 4/4 |
-| 3 Match domain | done | 6/6 |
+| 3 Match domain | done | 6/6 + cancel standalone |
 | 4 Judge concurrency | done | 5/5 |
 | 5 Stats / Rankings | done | 4/4 (+ reverseStats for admin delete) |
 | 6 Tournaments | done | 9/9 + V2 domain/API/web (unreleased) + cancel/parity 1.10.1 |
@@ -34,6 +34,12 @@ Next step: optional release of unreleased bracket V2/compact DE + admin match op
 | UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
+
+### Match cancel for organizer/participant — done (planned v1.10.2)
+- API: `POST /matches/:id/cancel` → `cancelled` (standalone only; assertCanManageMatch)
+- Shared void helper with admin force-close; frees PLAYER_ALREADY_IN_ACTIVE_MATCH / PLAYER_BUSY
+- Web: «Отменить матч» on match detail (waiting / in_progress / pending) with confirm
+- Tests: AT-MATCH-CANCEL-001..003; REQ_ui__match_cancel
 
 ### Admin force-close / delete standalone matches — done (D15, planned v1.11.0)
 - API: `POST /admin/matches/:id/force-close`, `DELETE /admin/matches/:id`; only `kind=standalone`

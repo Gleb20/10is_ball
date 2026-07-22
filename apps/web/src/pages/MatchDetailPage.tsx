@@ -25,6 +25,8 @@ export function MatchDetailPage() {
   const [stopSide, setStopSide] = useState<"A" | "B">("A");
   const [stopReason, setStopReason] = useState("injury");
   const [stopPending, setStopPending] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelPending, setCancelPending] = useState(false);
   const [adminConfirm, setAdminConfirm] = useState<AdminConfirm>(null);
   const [adminPending, setAdminPending] = useState(false);
   const [now, setNow] = useState(() => new Date());
@@ -47,6 +49,7 @@ export function MatchDetailPage() {
   const participants =
     (match?.participants as Array<{
       side: string;
+      userId?: string | null;
       displayName?: string;
       avatarKey?: string | null;
     }>) ?? [];
@@ -55,13 +58,23 @@ export function MatchDetailPage() {
   const judgeTakenByOther =
     activeJudge != null && activeJudge.userId !== user?.id;
 
+  const isActiveStatus =
+    match?.status === "waiting" ||
+    match?.status === "in_progress" ||
+    match?.status === "pending_confirmation";
+
+  const canManageMatch =
+    Boolean(user?.id) &&
+    (match?.createdByUserId === user?.id ||
+      participants.some((p) => p.userId === user?.id) ||
+      activeJudge?.userId === user?.id);
+
+  const canCancel =
+    match?.kind === "standalone" && isActiveStatus && canManageMatch;
+
   const isAdminStandalone =
     user?.role === "admin" && match?.kind === "standalone";
-  const canForceClose =
-    isAdminStandalone &&
-    (match?.status === "waiting" ||
-      match?.status === "in_progress" ||
-      match?.status === "pending_confirmation");
+  const canForceClose = isAdminStandalone && isActiveStatus;
 
   const durationLabel =
     match?.startedAt != null
@@ -89,6 +102,22 @@ export function MatchDetailPage() {
       setError((e as Error).message);
     } finally {
       setStopPending(false);
+    }
+  }
+
+  async function onCancelConfirm() {
+    if (!id) return;
+    setCancelPending(true);
+    setError(null);
+    try {
+      const res = await api.cancelMatch(id);
+      setMatch(res.match);
+      setCancelOpen(false);
+    } catch (e) {
+      setError((e as Error).message);
+      setCancelOpen(false);
+    } finally {
+      setCancelPending(false);
     }
   }
 
@@ -199,6 +228,14 @@ export function MatchDetailPage() {
                   {stopOpen ? "Скрыть остановку" : "Остановить матч"}
                 </Button>
               )}
+              {canCancel ? (
+                <Button
+                  variant="secondary"
+                  onClick={() => setCancelOpen(true)}
+                >
+                  Отменить матч
+                </Button>
+              ) : null}
               {canForceClose ? (
                 <Button
                   variant="secondary"
@@ -268,6 +305,23 @@ export function MatchDetailPage() {
                 </Button>
               </div>
             ) : null}
+            <Dialog
+              open={cancelOpen}
+              onClose={() => (!cancelPending ? setCancelOpen(false) : undefined)}
+              title="Отменить матч?"
+              width="sm"
+              secondaryButtonLabel="Нет"
+              onSecondaryButton={() =>
+                !cancelPending ? setCancelOpen(false) : undefined
+              }
+              mainButtonLabel={cancelPending ? "…" : "Отменить матч"}
+              onMainButton={() => void onCancelConfirm()}
+            >
+              <p>
+                Матч будет аннулирован без победителя и без влияния на рейтинг.
+                Участники снова смогут играть в других матчах и турнирах.
+              </p>
+            </Dialog>
             <Dialog
               open={adminConfirm !== null}
               onClose={() =>

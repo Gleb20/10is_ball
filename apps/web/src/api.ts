@@ -187,6 +187,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  cancelMatch: (id: string) =>
+    request<{ match: Record<string, unknown> }>(
+      `/api/v1/matches/${id}/cancel`,
+      { method: "POST" },
+    ),
   rankings: (period = "all_time") =>
     request<{ rankings: Array<Record<string, unknown>> }>(
       `/api/v1/rankings?period=${period}`,

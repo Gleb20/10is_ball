@@ -772,6 +772,23 @@ export async function buildApp(opts: {
   );
 
   app.post(
+    "/api/v1/matches/:matchId/cancel",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { matchId } = req.params as { matchId: string };
+        const match = await services.matches.cancelMatch({
+          matchId,
+          actorUserId: req.authUser!.id,
+        });
+        return { match };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
     "/api/v1/matches/tutorial",
     { preHandler: requireAuth },
     async (req) => {
@@ -1368,6 +1385,9 @@ function openApiSpec() {
       "/api/v1/matches": {
         get: { summary: "List matches" },
         post: { summary: "Create match" },
+      },
+      "/api/v1/matches/{matchId}/cancel": {
+        post: { summary: "Cancel standalone match (organizer/participant)" },
       },
       "/api/v1/tournaments": {
         get: { summary: "List tournaments" },

@@ -1646,6 +1646,159 @@ describe("match and judge integration", () => {
     expect(force.statusCode).toBe(400);
     expect(force.json().code).toBe("MATCH_NOT_ACTIVE");
   });
+
+  it("AT-MATCH-CANCEL-001: organizer cancels waiting → frees tournament start", async () => {
+    const waiting = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Cancel me",
+        format: "1v1",
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    const waitingId = waiting.json().match.id as string;
+
+    const t = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "After cancel",
+        format: "single_elimination",
+        organizerParticipates: true,
+      },
+    });
+    const tid = t.json().tournament.id as string;
+    for (const email of ["cn1@t.local", "cn2@t.local"]) {
+      const u = await app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: { email, firstName: "P", lastName: "L" },
+      });
+      await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${tid}/participants`,
+        cookies: { tab10_session: userACookie },
+        payload: { userId: u.json().user.id },
+      });
+    }
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tid}/bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+
+    const blocked = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tid}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(blocked.statusCode).toBe(400);
+    expect(blocked.json().code).toBe("PLAYER_ALREADY_IN_ACTIVE_MATCH");
+
+    const cancel = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${waitingId}/cancel`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(cancel.statusCode).toBe(200);
+    expect(cancel.json().match.status).toBe("cancelled");
+    expect(cancel.json().match.winnerSide).toBeNull();
+
+    const started = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tid}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(started.statusCode).toBe(200);
+    expect(started.json().tournament.status).toBe("in_progress");
+  });
+
+  it("AT-MATCH-CANCEL-002: non-participant cannot cancel", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Private",
+        format: "1v1",
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", guestFirstName: "G", guestLastName: "One" },
+        ],
+      },
+    });
+    const matchId = created.json().match.id as string;
+
+    const cancel = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/cancel`,
+      cookies: { tab10_session: userBCookie },
+    });
+    expect(cancel.statusCode).toBe(403);
+    expect(cancel.json().code).toBe("FORBIDDEN");
+  });
+
+  it("AT-MATCH-CANCEL-003: tournament match cancel forbidden", async () => {
+    const t = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Trn cancel forbid",
+        format: "single_elimination",
+        organizerParticipates: false,
+        pointsToWin: 3,
+      },
+    });
+    const tid = t.json().tournament.id as string;
+    for (const email of [
+      "tc1@trn.local",
+      "tc2@trn.local",
+      "tc3@trn.local",
+    ]) {
+      const created = await app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: { email, firstName: "P", lastName: "L" },
+      });
+      await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${tid}/participants`,
+        cookies: { tab10_session: userACookie },
+        payload: { userId: created.json().user.id },
+      });
+    }
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tid}/bracket`,
+      cookies: { tab10_session: userACookie },
+    });
+    const started = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tid}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(started.statusCode).toBe(200);
+    const matchId = (
+      started.json().tournament.matches as Array<{ id: string }>
+    )[0]!.id;
+
+    const cancel = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/cancel`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(cancel.statusCode).toBe(400);
+    expect(cancel.json().code).toBe("TOURNAMENT_MATCH_FORBIDDEN");
+  });
 });
 
 describe("INT_migrations__apply_from_scratch", () => {

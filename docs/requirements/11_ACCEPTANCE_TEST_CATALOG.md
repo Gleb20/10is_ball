@@ -67,6 +67,15 @@ Force-close на `finished` → `MATCH_NOT_ACTIVE`.
 
 ## MATCH RULES
 
+### AT-MATCH-CANCEL-001 Organizer cancels waiting
+Organizer cancels `waiting` standalone → `cancelled`; тот же игрок может стартовать турнир (нет `PLAYER_ALREADY_IN_ACTIVE_MATCH`).
+
+### AT-MATCH-CANCEL-002 Non-participant
+Non-participant получает 403 на cancel.
+
+### AT-MATCH-CANCEL-003 Tournament forbidden
+Tournament match → cancel → `TOURNAMENT_MATCH_FORBIDDEN`.
+
 ### AT-MATCH-001 Обычная победа
 При лимите 11 счёт 11:9 предлагает завершение; 11:10 не завершает.
 

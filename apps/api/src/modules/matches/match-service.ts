@@ -1024,6 +1024,35 @@ export class MatchService {
     });
   }
 
+  /** Organizer/participant cancel (void) active standalone match — frees MATCH-009. */
+  async cancelMatch(input: { matchId: string; actorUserId: string }) {
+    const detail = await this.getMatch(input.matchId);
+    if (!detail) {
+      throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    }
+    if (detail.kind !== "standalone") {
+      throw Object.assign(new Error("TOURNAMENT_MATCH_FORBIDDEN"), {
+        code: "TOURNAMENT_MATCH_FORBIDDEN",
+      });
+    }
+    if (
+      detail.status !== "waiting" &&
+      detail.status !== "in_progress" &&
+      detail.status !== "pending_confirmation"
+    ) {
+      throw Object.assign(new Error("MATCH_NOT_ACTIVE"), {
+        code: "MATCH_NOT_ACTIVE",
+      });
+    }
+    await this.assertCanManageMatch(detail, input.actorUserId);
+    return this.voidStandaloneMatch({
+      matchId: input.matchId,
+      actorUserId: input.actorUserId,
+      finishReason: "cancelled",
+      version: detail.version,
+    });
+  }
+
   /** Admin ops (D15): void active standalone match without stats. */
   async adminForceCloseMatch(input: {
     matchId: string;
@@ -1049,24 +1078,40 @@ export class MatchService {
       });
     }
 
+    return this.voidStandaloneMatch({
+      matchId: input.matchId,
+      actorUserId: input.actorAdminId,
+      finishReason: "admin_void",
+      stopReasonText: input.reasonText,
+      version: detail.version,
+    });
+  }
+
+  private async voidStandaloneMatch(input: {
+    matchId: string;
+    actorUserId: string;
+    finishReason: string;
+    stopReasonText?: string;
+    version: number;
+  }) {
     const now = this.clock.now();
     await this.db
       .update(matches)
       .set({
         status: "cancelled",
         winnerSide: null,
-        finishReason: "admin_void",
+        finishReason: input.finishReason,
         stopReasonCode: "other",
-        stopReasonText: input.reasonText ?? null,
+        stopReasonText: input.stopReasonText ?? null,
         finishedAt: now,
         updatedAt: now,
-        version: detail.version + 1,
+        version: input.version + 1,
       })
       .where(eq(matches.id, input.matchId));
 
     await this.releaseJudge(
       input.matchId,
-      input.actorAdminId,
+      input.actorUserId,
       undefined,
       true,
     );

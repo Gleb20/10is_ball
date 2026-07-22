@@ -1,5 +1,28 @@
 # Dev Changelog
 
+## 2026-07-22 — Match cancel for organizer/participant (planned v1.10.2)
+
+### API
+- `POST /api/v1/matches/:matchId/cancel` — standalone active → `cancelled`, no winner/stats
+- Auth: creator / participant / active judge (`assertCanManageMatch`)
+- Shared `voidStandaloneMatch` with admin force-close
+
+### Web
+- Match detail: «Отменить матч» + confirm dialog for managers on waiting/in_progress/pending
+
+### Tests
+- AT-MATCH-CANCEL-001..003
+- REQ_ui__match_cancel
+
+### Requirement IDs
+- MATCH-009, AT-MATCH-CANCEL-001..003; D15 (user cancel parallel)
+
+### How to verify
+```bash
+pnpm --filter @tab10/api test -- src/domain.integration.test.ts -t AT-MATCH-CANCEL
+pnpm --filter @tab10/web test -- src/pages/MatchDetailPage.test.tsx
+```
+
 ## 2026-07-22 — Admin force-close / delete standalone matches (D15, planned v1.11.0)
 
 ### Decision
