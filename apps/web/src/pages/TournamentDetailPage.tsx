@@ -146,10 +146,23 @@ export function TournamentDetailPage() {
   const canGenerate = canEditRoster && activeParticipants.length >= 3;
   const canStart = status === "bracket_generated";
   const canStop = status === "in_progress";
+  const isOrganizer = Boolean(
+    user?.id && tournament?.createdByUserId === user.id,
+  );
+  const iAmActiveParticipant = activeParticipants.some(
+    (p) => p.userId && user?.id && p.userId === user.id,
+  );
   const canWithdraw =
+    iAmActiveParticipant &&
     status !== "finished" &&
     status !== "stopped" &&
+    status !== "cancelled" &&
     status !== "in_progress";
+  const canCancel =
+    isOrganizer &&
+    (status === "collecting" ||
+      status === "bracket_generated" ||
+      status === "needs_regeneration");
   const canDissolve =
     status === "bracket_generated" || status === "needs_regeneration";
   const canChangeAlgorithm =
@@ -303,6 +316,21 @@ export function TournamentDetailPage() {
                   }
                 >
                   Остановить турнир
+                </Button>
+              ) : null}
+              {canCancel ? (
+                <Button
+                  variant="secondary"
+                  disabled={busy}
+                  data-testid="tournament-cancel"
+                  onClick={() =>
+                    void runAction(async () => {
+                      const r = await api.cancelTournament(id!);
+                      setTournament(r.tournament);
+                    }, "Турнир отменён")
+                  }
+                >
+                  Отменить турнир
                 </Button>
               ) : null}
               {canWithdraw ? (

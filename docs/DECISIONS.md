@@ -34,7 +34,7 @@
 
 **Git:** каждый коммит — детальное тело по [`.cursor/rules/git-commits.mdc`](../.cursor/rules/git-commits.mdc).
 
-**Current release:** 1.10.0
+**Current release:** 1.10.1
 
 ## D11 — Compact SE bye vs Challonge DE (2026-07-21)
 

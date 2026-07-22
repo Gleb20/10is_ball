@@ -2,6 +2,16 @@
 
 Формат версий: [docs/VERSIONING.md](docs/VERSIONING.md).
 
+## [1.10.1] — 2026-07-22
+
+### Fixed (c — Neon/prod tournament parity)
+
+- Boot migrate: `ALTER … ADD COLUMN IF NOT EXISTS` для `organizer_participates`, `tournament_participants.status`, mercy/stop/slot и др. (CREATE IF NOT EXISTS не обновлял существующий Neon)
+- Create tournament: откат строки турнира, если insert участника-организатора упал
+- `POST /tournaments/:id/cancel` — отмена до старта; кнопка «Отменить турнир»
+- Выход: только для активного участника; `NOT_A_PARTICIPANT` вместо «Не найдено»
+- PATCH `organizerParticipates` синхронизирует roster; статус `cancelled` в UI
+
 ## [1.10.0] — 2026-07-21
 
 ### Changed (b — roster, notifications, compact SE bye)

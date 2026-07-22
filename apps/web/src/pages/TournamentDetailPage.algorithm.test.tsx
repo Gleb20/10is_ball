@@ -19,6 +19,7 @@ vi.mock("../api", () => ({
     startTournament: vi.fn(),
     stopTournament: vi.fn(),
     withdrawTournament: vi.fn(),
+    cancelTournament: vi.fn(),
     addTournamentParticipant: vi.fn(),
     removeTournamentParticipant: vi.fn(),
     inviteTournament: vi.fn(),

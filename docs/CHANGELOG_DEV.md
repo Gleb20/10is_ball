@@ -1,5 +1,32 @@
 # Dev Changelog
 
+## 2026-07-22 — Prod tournament parity (Neon schema drift + cancel)
+
+### Root cause
+- Neon/prod tables created at early bootstrap; later columns lived only in `CREATE TABLE IF NOT EXISTS` → never applied on existing DB
+- Localhost (fresh PGlite / wiped `.data`) always got full CREATE → looked fine
+
+### API
+- `applySchemaSql`: ALTER for `organizer_participates`, participant `status`, mercy/stop/slot/avatar/algorithm columns
+- Create: delete tournament row if organizer roster insert fails (no orphan collecting)
+- `POST /tournaments/:id/cancel` (organizer, pre-start) → `cancelled`
+- Withdraw: `NOT_A_PARTICIPANT`; treat null status as active
+- PATCH `organizerParticipates` adds/withdraws organizer on roster
+
+### Web
+- «Отменить турнир»; leave only if active participant; `cancelled` label
+
+### Tests
+- `schema-drift.integration.test.ts`; AT-TRN-014 cancel + non-participant withdraw
+
+### How to verify
+```bash
+PGLITE_DATA_DIR= pnpm --filter @tab10/api test -- src/db/schema-drift.integration.test.ts
+PGLITE_DATA_DIR= pnpm --filter @tab10/api test -- -t "AT-TRN-014"
+pnpm --filter @tab10/web test -- src/pages/TournamentDetailPage.algorithm.test.tsx
+```
+After Render redeploy: log `Postgres schema ensured`; smoke create tournament with checkbox → organizer in roster with ФИО; Cancel works.
+
 ## 2026-07-22 — Compact double elimination
 
 ### Shared

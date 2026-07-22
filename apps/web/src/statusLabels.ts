@@ -16,6 +16,7 @@ const TOURNAMENT_STATUS: Record<string, string> = {
   in_progress: "Идёт",
   finished: "Завершён",
   stopped: "Остановлен",
+  cancelled: "Отменён",
   dissolved: "Распущен",
   needs_regeneration: "Нужна перегенерация",
 };

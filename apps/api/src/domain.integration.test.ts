@@ -734,6 +734,44 @@ describe("match and judge integration", () => {
     expect(wd.json().tournament.status).toBe("needs_regeneration");
   });
 
+  it("AT-TRN-014: cancel before start → cancelled; withdraw non-participant → NOT_A_PARTICIPANT", async () => {
+    const t = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "CancelMe",
+        organizerParticipates: false,
+      },
+    });
+    expect(t.statusCode).toBe(200);
+    const id = t.json().tournament.id as string;
+
+    const nonPart = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/withdraw`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(nonPart.statusCode).toBe(400);
+    expect(nonPart.json().code).toBe("NOT_A_PARTICIPANT");
+
+    const cancel = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/cancel`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(cancel.statusCode).toBe(200);
+    expect(cancel.json().tournament.status).toBe("cancelled");
+
+    const again = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${id}/cancel`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(again.statusCode).toBeGreaterThanOrEqual(400);
+    expect(again.json().code).toBe("INVALID_STATUS");
+  });
+
   it("AT-TRN-006/010/012: start matches, advance, stop", async () => {
     const t = await app.inject({
       method: "POST",

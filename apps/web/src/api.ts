@@ -250,6 +250,11 @@ export const api = {
       `/api/v1/tournaments/${id}/stop`,
       { method: "POST", body: JSON.stringify(payload ?? {}) },
     ),
+  cancelTournament: (id: string) =>
+    request<{ tournament: Record<string, unknown> }>(
+      `/api/v1/tournaments/${id}/cancel`,
+      { method: "POST" },
+    ),
   listTeams: () =>
     request<{ teams: Array<Record<string, unknown>> }>("/api/v1/teams"),
   createTeam: (payload: unknown) =>

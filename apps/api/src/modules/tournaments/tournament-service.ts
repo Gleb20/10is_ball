@@ -41,6 +41,11 @@ import { loadTournamentBracket, swapSeedOrderByMatchIds } from "./bracket-load.j
 
 type ActiveParticipant = typeof tournamentParticipants.$inferSelect;
 
+function isActiveParticipant(p: { status?: string | null }): boolean {
+  // Legacy rows / pre-migration Neon may omit status; treat as active.
+  return !p.status || p.status === "active";
+}
+
 function participantDisplayName(
   p: ActiveParticipant,
   usersById: Map<string, { firstName: string; lastName: string }>,
@@ -95,15 +100,22 @@ export class TournamentService {
       .returning();
 
     if (organizerParticipates && row) {
-      const stats = await this.db.query.userStats.findFirst({
-        where: eq(userStats.userId, input.createdByUserId),
-      });
-      await this.db.insert(tournamentParticipants).values({
-        tournamentId: row.id,
-        userId: input.createdByUserId,
-        winsSnapshot: stats?.winsAllTime ?? 0,
-        status: "active",
-      });
+      try {
+        const stats = await this.db.query.userStats.findFirst({
+          where: eq(userStats.userId, input.createdByUserId),
+        });
+        await this.db.insert(tournamentParticipants).values({
+          tournamentId: row.id,
+          userId: input.createdByUserId,
+          winsSnapshot: stats?.winsAllTime ?? 0,
+          status: "active",
+        });
+      } catch (e) {
+        // Avoid orphan collecting tournaments when roster insert fails
+        // (e.g. Neon missing tournament_participants.status before migrate).
+        await this.db.delete(tournaments).where(eq(tournaments.id, row.id));
+        throw e;
+      }
     }
     return this.get(row!.id);
   }
@@ -128,13 +140,14 @@ export class TournamentService {
     if (
       t.status === "in_progress" ||
       t.status === "finished" ||
-      t.status === "stopped"
+      t.status === "stopped" ||
+      t.status === "cancelled"
     ) {
       throw Object.assign(new Error("TOURNAMENT_ALREADY_STARTED"), {
         code: "TOURNAMENT_ALREADY_STARTED",
       });
     }
-    const [row] = await this.db
+    await this.db
       .update(tournaments)
       .set({
         ...(patch.title !== undefined ? { title: patch.title } : {}),
@@ -155,7 +168,45 @@ export class TournamentService {
       })
       .where(eq(tournaments.id, tournamentId))
       .returning();
-    return row;
+
+    if (patch.organizerParticipates === true) {
+      const onRoster = t.participants.some(
+        (p) => p.userId === actorUserId && isActiveParticipant(p),
+      );
+      if (!onRoster) {
+        const stats = await this.db.query.userStats.findFirst({
+          where: eq(userStats.userId, actorUserId),
+        });
+        const withdrawn = t.participants.find(
+          (p) => p.userId === actorUserId && p.status === "withdrawn",
+        );
+        if (withdrawn) {
+          await this.db
+            .update(tournamentParticipants)
+            .set({ status: "active" })
+            .where(eq(tournamentParticipants.id, withdrawn.id));
+        } else {
+          await this.db.insert(tournamentParticipants).values({
+            tournamentId,
+            userId: actorUserId,
+            winsSnapshot: stats?.winsAllTime ?? 0,
+            status: "active",
+          });
+        }
+      }
+    } else if (patch.organizerParticipates === false) {
+      const part = t.participants.find(
+        (p) => p.userId === actorUserId && isActiveParticipant(p),
+      );
+      if (part) {
+        await this.db
+          .update(tournamentParticipants)
+          .set({ status: "withdrawn" })
+          .where(eq(tournamentParticipants.id, part.id));
+      }
+    }
+
+    return this.get(tournamentId);
   }
 
   playingParticipants(t: {
@@ -164,7 +215,7 @@ export class TournamentService {
     organizerParticipates: boolean;
   }) {
     return t.participants.filter((p) => {
-      if (p.status && p.status !== "active") return false;
+      if (!isActiveParticipant(p)) return false;
       if (
         !t.organizerParticipates &&
         p.userId &&
@@ -190,7 +241,7 @@ export class TournamentService {
         message: "Roster closed after bracket generation",
       });
     }
-    const active = t.participants.filter((p) => p.status === "active");
+    const active = t.participants.filter((p) => isActiveParticipant(p));
     if (active.length >= 64) {
       throw Object.assign(new Error("TOO_MANY"), { code: "TOO_MANY" });
     }
@@ -267,15 +318,18 @@ export class TournamentService {
     const t = await this.get(input.tournamentId);
     if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
     const part = t.participants.find(
-      (p) => p.userId === input.userId && p.status === "active",
+      (p) => p.userId === input.userId && isActiveParticipant(p),
     );
     if (!part) {
-      throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+      throw Object.assign(new Error("NOT_A_PARTICIPANT"), {
+        code: "NOT_A_PARTICIPANT",
+      });
     }
     if (
       t.status === "in_progress" ||
       t.status === "finished" ||
-      t.status === "stopped"
+      t.status === "stopped" ||
+      t.status === "cancelled"
     ) {
       throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
     }
@@ -295,6 +349,44 @@ export class TournamentService {
     return this.get(input.tournamentId);
   }
 
+  /** Organizer cancels a tournament that has not started yet. */
+  async cancel(tournamentId: string, actorUserId: string) {
+    const t = await this.get(tournamentId);
+    if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    if (t.createdByUserId !== actorUserId) {
+      throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+    }
+    if (
+      t.status !== "collecting" &&
+      t.status !== "bracket_generated" &&
+      t.status !== "needs_regeneration"
+    ) {
+      throw Object.assign(new Error("INVALID_STATUS"), {
+        code: "INVALID_STATUS",
+      });
+    }
+    const now = this.clock.now();
+    await this.db
+      .update(tournamentInvitations)
+      .set({ status: "cancelled", respondedAt: now })
+      .where(
+        and(
+          eq(tournamentInvitations.tournamentId, tournamentId),
+          eq(tournamentInvitations.status, "pending"),
+        ),
+      );
+    await this.db
+      .update(tournaments)
+      .set({
+        status: "cancelled",
+        bracketJson: null,
+        finishedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(tournaments.id, tournamentId));
+    return this.get(tournamentId);
+  }
+
   async get(id: string) {
     const t = await this.db.query.tournaments.findFirst({
       where: eq(tournaments.id, id),
@@ -309,7 +401,7 @@ export class TournamentService {
       t.organizerParticipates &&
       (t.status === "collecting" || t.status === "needs_regeneration") &&
       !participants.some(
-        (p) => p.userId === t.createdByUserId && p.status === "active",
+        (p) => p.userId === t.createdByUserId && isActiveParticipant(p),
       )
     ) {
       const stats = await this.db.query.userStats.findFirst({

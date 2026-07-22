@@ -303,12 +303,25 @@ export async function applySchemaSql(
       updated_at timestamptz NOT NULL DEFAULT now()
     );
 
+    -- Columns added after initial CREATE TABLE IF NOT EXISTS must be ALTERed:
+    -- Neon/prod keeps the old table shape; CREATE IF NOT EXISTS is a no-op there.
+    ALTER TABLE matches ADD COLUMN IF NOT EXISTS tournament_slot_id text;
+    ALTER TABLE matches ADD COLUMN IF NOT EXISTS tournament_bracket_match_id text;
     ALTER TABLE match_participants ADD COLUMN IF NOT EXISTS guest_avatar_key text;
     ALTER TABLE tournament_participants ADD COLUMN IF NOT EXISTS guest_avatar_key text;
-    ALTER TABLE matches ADD COLUMN IF NOT EXISTS tournament_bracket_match_id text;
+    ALTER TABLE tournament_participants ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'active';
+    ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS organizer_participates boolean NOT NULL DEFAULT true;
+    ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS points_to_win integer NOT NULL DEFAULT 11;
+    ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS mercy_enabled boolean NOT NULL DEFAULT true;
+    ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS mercy_points integer DEFAULT 5;
+    ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS stop_reason_code text;
+    ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS stop_reason_text text;
+    ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS started_at timestamptz;
+    ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS finished_at timestamptz;
     ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS bracket_state_version integer NOT NULL DEFAULT 0;
     ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS third_place_enabled boolean;
     ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS bracket_construction_algorithm text;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS generated_avatar_key text;
     -- Safe backfill (does not rewrite bracket_json)
     UPDATE tournaments
     SET bracket_construction_algorithm = 'power_of_two'

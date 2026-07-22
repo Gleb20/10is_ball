@@ -42,6 +42,8 @@ Browser ──► Vercel (apps/web) ──rewrite /api──► Render (apps/api
 
 Схема таблиц создаётся **при старте API** (`MIGRATE_ON_BOOT`, по умолчанию вкл.).
 
+`applySchemaSql` делает не только `CREATE TABLE IF NOT EXISTS`, но и **`ALTER TABLE … ADD COLUMN IF NOT EXISTS`** для колонок, добавленных после первого деплоя (например `organizer_participates`, `tournament_participants.status`). Без этого Neon сохраняет старую форму таблиц → «на localhost всё ок, в проде турниры ломаются». После деплоя API смотрите в логе Render строку `Postgres schema ensured`.
+
 ---
 
 ## 2. Backend — Render (подробно)

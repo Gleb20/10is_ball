@@ -1,9 +1,9 @@
 # Tab-10 Project Status
 
-Last updated: 2026-07-21  
-**Product version:** 1.10.0 (bracket algorithm choice + compact DE in tree; proposed next release **1.11.0**)  
+Last updated: 2026-07-22  
+**Product version:** 1.10.1 (prod tournament parity: Neon ALTER migrate + cancel before start)  
 Current phase: Bracket construction algorithm (compact / power_of_two) — SE + DE for both  
-Next step: optional release 1.11.0; Stage 4 correction still deferred (D13)
+Next step: optional release of unreleased bracket V2/compact DE as 1.11.0; Stage 4 correction still deferred (D13)
 
 ## Progress
 
@@ -15,7 +15,7 @@ Next step: optional release 1.11.0; Stage 4 correction still deferred (D13)
 | 3 Match domain | done | 6/6 |
 | 4 Judge concurrency | done | 5/5 |
 | 5 Stats / Rankings | done | 4/4 |
-| 6 Tournaments | done | 9/9 + V2 domain/API/web (unreleased) |
+| 6 Tournaments | done | 9/9 + V2 domain/API/web (unreleased) + cancel/parity 1.10.1 |
 | 7 Teams & Notifications | done | 4/4 (+ tournament notifs) |
 | 8 Onboarding / Help | done | 4/4 |
 | 9 Hardening | partial | CI + OpenAPI; load test; backup rehearsal; optional: security / mutation / observability |
@@ -34,6 +34,11 @@ Next step: optional release 1.11.0; Stage 4 correction still deferred (D13)
 | UI-6 | Visual/a11y QA | done | c → 1.3.2 |
 
 ## Step log (latest)
+
+### Prod tournament parity — done (v1.10.1)
+- Neon schema drift: ALTER missing tournament columns on boot
+- Cancel before start; withdraw gated + NOT_A_PARTICIPANT
+- Organizer roster heal/sync; create compensation
 
 ### Compact double elimination — done (unreleased)
 - Shared: `generate-compact-de.ts`; golden N=3/5/6/7; property N=3..32
@@ -108,5 +113,6 @@ Next step: optional release 1.11.0; Stage 4 correction still deferred (D13)
 pnpm dev
 # 360×640: tabs + Tab focus; /login skip→main; judge immersive
 # /admin: создать с ролью admin; promote существующего user → confirm → re-login
-# Tournament DE: WB/LB bands; GF reset if LB wins; avatars on bracket/judge
+# Tournament DE: WB/LB bands; GF reset if LB wins GF1; avatars on bracket/judge
+# Prod after API redeploy: create with «участвую» → organizer named on roster; Cancel before start
 ```

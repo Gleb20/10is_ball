@@ -809,25 +809,29 @@ export async function buildApp(opts: {
   app.post(
     "/api/v1/tournaments",
     { preHandler: requireAuth },
-    async (req) => {
-      const body = req.body as {
-        title: string;
-        format?: "single_elimination" | "double_elimination";
-        organizerParticipates?: boolean;
-        pointsToWin?: number;
-        mercyEnabled?: boolean;
-        mercyPoints?: number | null;
-      };
-      const tournament = await services.tournaments.create({
-        title: body.title,
-        format: body.format ?? "single_elimination",
-        createdByUserId: req.authUser!.id,
-        organizerParticipates: body.organizerParticipates,
-        pointsToWin: body.pointsToWin,
-        mercyEnabled: body.mercyEnabled,
-        mercyPoints: body.mercyPoints,
-      });
-      return { tournament };
+    async (req, reply) => {
+      try {
+        const body = req.body as {
+          title: string;
+          format?: "single_elimination" | "double_elimination";
+          organizerParticipates?: boolean;
+          pointsToWin?: number;
+          mercyEnabled?: boolean;
+          mercyPoints?: number | null;
+        };
+        const tournament = await services.tournaments.create({
+          title: body.title,
+          format: body.format ?? "single_elimination",
+          createdByUserId: req.authUser!.id,
+          organizerParticipates: body.organizerParticipates,
+          pointsToWin: body.pointsToWin,
+          mercyEnabled: body.mercyEnabled,
+          mercyPoints: body.mercyPoints,
+        });
+        return { tournament };
+      } catch (e) {
+        return sendError(reply, e);
+      }
     },
   );
 
@@ -1047,6 +1051,23 @@ export async function buildApp(opts: {
   );
 
   app.post(
+    "/api/v1/tournaments/:id/cancel",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { id } = req.params as { id: string };
+        const tournament = await services.tournaments.cancel(
+          id,
+          req.authUser!.id,
+        );
+        return { tournament };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
     "/api/v1/tournaments/:id/start",
     { preHandler: requireAuth },
     async (req, reply) => {
@@ -1222,6 +1243,7 @@ function messageFor(code: string): string {
     EXPIRED: "Приглашение истекло",
     USE_MATCH: "Для двух игроков создайте обычный матч",
     ALREADY_IN_TOURNAMENT: "Игрок уже в составе турнира",
+    NOT_A_PARTICIPANT: "Вы не в составе этого турнира",
   };
   return map[code] ?? code;
 }
