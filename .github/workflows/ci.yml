@@ -35,6 +35,8 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Workspace packages export dist/*.d.ts — build before api/web tsc lint
+      - run: pnpm --filter @tab10/shared --filter @tab10/test-utils run build
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test

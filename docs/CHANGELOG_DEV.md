@@ -1,5 +1,14 @@
 # Dev Changelog
 
+## 2026-07-22 — CI: build shared packages before lint
+
+### CI / root
+- `.github/workflows/ci.yml`: build `@tab10/shared` + `@tab10/test-utils` before `pnpm lint`
+- Root `package.json` `ci` script: same pre-build (packages export `dist/*.d.ts`)
+
+### Why
+- Fresh CI checkout has no `dist/` → api `tsc` lint fails with TS2307 and cascading `any` errors
+
 ## 2026-07-22 — Match cancel for organizer/participant (planned v1.10.2)
 
 ### API
