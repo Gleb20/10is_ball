@@ -39,8 +39,8 @@
 | Database evolution | Versioned safe PostgreSQL migrations | `broken` | boot-time DDL и drift risks | DATA-003 |
 | Backup/restore | Safe rehearsed recovery | `unknown` | script есть, production policy/evidence отсутствуют и script опасен | OPS-003, Q-OPS-003 |
 | Observability/readiness | Diagnose API/DB/requests/incidents | `missing` | logger disabled; health only liveness | OPS-002 |
-| Deterministic CI | Full repeatable green quality gate | `partial` | RNG leak устранён; три последовательных full suite и final local Node 24 `pnpm run ci` зелёные; hosted PostgreSQL/CI ещё не выполнены | TECH-001, TECH-002 |
-| Runtime/build portability | One Node version across local/CI/hosting | `partial` | configs aligned; local frozen install и полный quality/build проходят на Node 24.20.0, но hosted CI/deploy этого snapshot ещё не наблюдался | TECH-004, OPS-004 |
+| Deterministic CI | Full repeatable green quality gate | `verified` | RNG leak устранён; три последовательных full suite и final local Node 24 `pnpm run ci` зелёные; GitHub run 34048623246 green для Quality/PGlite и PostgreSQL 16 | TECH-001, TECH-002 |
+| Runtime/build portability | One Node version across local/CI/hosting | `partial` | configs aligned; local Node 24.20.0 и hosted GitHub quality/PostgreSQL jobs green; Vercel/Render build/deploy этого snapshot не выполнялись | TECH-004, OPS-004 |
 
 Изменение статуса требует evidence по [Definition of done](WORKFLOW.md#3-definition-of-done),
 а не только закрытия связанного backlog item.

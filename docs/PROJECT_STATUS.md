@@ -19,9 +19,10 @@
 | Текущий full test | shared 517 passed + 1 todo; test-utils 4 passed; web 70 passed; API 83 passed + 3 real-PostgreSQL tests skipped |
 | Детерминизм | после изоляции RNG три последовательных full suite и последний Node 24 run зелёные; известный busy+bye дефект закреплён отдельным `BUG-015` characterization test |
 | Local quality/build | exact Node 24.20.0: frozen install и полный `pnpm run ci` (audit gates, lint, typecheck, tests, API/web builds) прошли |
+| Hosted CI | commit `f925efc`: GitHub run `34048623246` green — Quality/PGlite и PostgreSQL 16 jobs passed; evidence в `audit/evidence/hosted-ci-foundation.json` |
 | Web artifact fingerprint | local build HTML/JS/CSS hashes совпали с production capture; это не заменяет commit SHA/release metadata |
 | Browser baseline | production login: 4 viewport; local synthetic data: 4 home viewport, key 360px screens и smoke 17 organizer routes + admin; это не полный PRD E2E/axe |
-| PostgreSQL verification | initial hosted PostgreSQL 16 job `101526650172`: fresh-schema/date passed; concurrency и bracket assertions выявили две ошибки test fixture, исправлены локально и ожидают повторного hosted run; local PostgreSQL runtime отсутствует |
+| PostgreSQL verification | corrected hosted job `101528083822`: 3/3 passed — fresh-schema/date, concurrent `200/409` + one-time stats, final + third-place advancement; local PostgreSQL runtime отсутствует |
 | Secret location scan | worktree + index + all Git refs: 0 unreviewed candidates, 0 skipped inputs, 11 exact-hash benign findings в 9 historical blobs; ignored `.env*` доступны отдельным opt-in scan; external rotation этим не подтверждается |
 | Security dependencies | 17 production advisories: 12 high и 5 moderate |
 | Route/OpenAPI inventory | source: 60 operations / 54 paths; OpenAPI: 15 operations / 12 paths (25% operation coverage); live version 0.1.0 |

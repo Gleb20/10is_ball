@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-06T17:29:40Z",
+  "repository": "Gleb20/10is_ball",
+  "pullRequest": 3,
+  "headSha": "f925efc63596b4aac56cad09f12419f6306819df",
+  "workflow": {
+    "id": 34048623246,
+    "event": "pull_request",
+    "attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "createdAt": "2026-09-06T17:26:41Z",
+    "completedAt": "2026-09-06T17:28:52Z",
+    "url": "https://github.com/Gleb20/10is_ball/actions/runs/34048623246"
+  },
+  "jobs": [
+    {
+      "id": 101528083822,
+      "name": "PostgreSQL critical integration",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-06T17:26:44Z",
+      "completedAt": "2026-09-06T17:27:14Z"
+    },
+    {
+      "id": 101528083922,
+      "name": "Quality and PGlite tests",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-06T17:26:44Z",
+      "completedAt": "2026-09-06T17:28:51Z"
+    }
+  ],
+  "postgres": {
+    "version": "16",
+    "testFilesPassed": 1,
+    "testsPassed": 3,
+    "testsFailed": 0,
+    "durationSeconds": 3.2,
+    "covered": [
+      "fresh schema and PostgreSQL Date parameters",
+      "AT-MATCH-007/011 optimistic concurrency and one-time winner statistics",
+      "AT-TRN-010 final and third-place materialization after both semi-finals"
+    ]
+  },
+  "initialFailure": {
+    "workflowId": 34048088511,
+    "postgresJobId": 101526650172,
+    "conclusion": "failure",
+    "diagnosis": "two test-fixture expectations were inconsistent with the documented scoring and third-place rules; no retry or skip was used"
+  },
+  "deploymentObservation": {
+    "githubDeploymentsForHead": 0,
+    "renderServiceBranch": "main",
+    "renderPullRequestPreviews": "off",
+    "renderLastDeployedSha": "1a98a5f7e516762bed12c3d9b20ceefc06a6be06",
+    "vercelDashboardVerified": false,
+    "vercelDashboardBlocker": "owner 2FA pending"
+  }
+}

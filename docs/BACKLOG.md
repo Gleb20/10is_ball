@@ -609,12 +609,12 @@
 - **Type:** test-reliability
 - **Priority:** P0
 - **Status:** verified_local
-- **Evidence:** baseline API failure остаётся immutable history в `docs/audits/2026-09-06-baseline.md:67`. После отделения deterministic acceptance seed (`apps/api/src/domain.integration.test.ts:1699`) от hermetic known-defect characterization (`apps/api/src/domain.integration.test.ts:1736`) команда `pnpm test` прошла green три раза подряд (confirmed 2026-09-06); текущий full suite на Node 24.20.0 также green: shared 517 passed + 1 todo, test-utils 4, web 70, API 83 passed + 3 PostgreSQL skipped. Initial hosted PostgreSQL job `101526650172` выполнил fresh-schema/date smoke, затем честно упал на двух неверных test expectations; corrected `AT-MATCH-007/011` и `AT-TRN-010` находятся в `apps/api/src/postgres-date.integration.test.ts:139` и `apps/api/src/postgres-date.integration.test.ts:220`. Passing BUG-015 characterization подтверждает воспроизводимость дефекта, а не его исправление.
+- **Evidence:** baseline API failure остаётся immutable history в `docs/audits/2026-09-06-baseline.md:67`. После отделения deterministic acceptance seed (`apps/api/src/domain.integration.test.ts:1699`) от hermetic known-defect characterization (`apps/api/src/domain.integration.test.ts:1736`) команда `pnpm test` прошла green три раза подряд (confirmed 2026-09-06); текущий full suite на Node 24.20.0 также green: shared 517 passed + 1 todo, test-utils 4, web 70, API 83 passed + 3 PostgreSQL skipped. Initial hosted PostgreSQL job `101526650172` выполнил fresh-schema/date smoke, затем честно упал на двух неверных test expectations; corrected `AT-MATCH-007/011` и `AT-TRN-010` находятся в `apps/api/src/postgres-date.integration.test.ts:139` и `apps/api/src/postgres-date.integration.test.ts:220`. Follow-up GitHub run `34048623246` и оба job green; exact snapshot — `docs/audit/evidence/hosted-ci-foundation.json`. Passing BUG-015 characterization подтверждает воспроизводимость дефекта, а не его исправление.
 - **Expected:** полный deterministic CI зелёный; flaky тест блокирует релиз согласно NFR.
-- **Actual:** локальная repeatability подтверждена тремя полными прогонами; прежние acceptance failures были связаны со смешением seed-сценариев. Первый hosted PostgreSQL run выявил fixture drift (`pointsToWin=1` и пропущенный third-place match), исправленный без retry/skip; rerun pending. BUG-015 остаётся отдельным детерминированным product defect, а не flaky test.
+- **Actual:** локальная repeatability подтверждена тремя полными прогонами; прежние acceptance failures были связаны со смешением seed-сценариев. Первый hosted PostgreSQL run выявил fixture drift (`pointsToWin=1` и пропущенный third-place match), исправленный без retry/skip; follow-up quality и PostgreSQL jobs прошли. BUG-015 остаётся отдельным детерминированным product defect, а не flaky test.
 - **Repro:** выполнить `pnpm test` последовательно; `pnpm audit:reproduce-busy-bye` должен запускать только один отдельный characterization test.
-- **Risk:** до hosted CI-run остаётся риск расхождения локальной и GitHub Actions среды; product risk busy-bye отслеживается независимо в BUG-015.
-- **Verification:** три последовательных full suites и final Node 24.20.0 `pnpm run ci` green локально; corrected hosted PostgreSQL lane должен пройти fresh schema/date + `200/409` race + one-time stats + final/third-place advancement.
+- **Risk:** текущий configured gate воспроизводим локально/hosted, но не заменяет отсутствующие browser E2E и ещё не покрытые product races; product risk busy-bye отслеживается независимо в BUG-015.
+- **Verification:** три последовательных full suites и final Node 24.20.0 `pnpm run ci` green локально; GitHub run `34048623246` green, включая PostgreSQL fresh schema/date + `200/409` race + one-time stats + final/third-place advancement.
 - **Dependencies:** BUG-015; TECH-004 для final Node 24 CI evidence.
 
 ### TECH-002 — Критические флоу не покрыты browser E2E
@@ -643,15 +643,15 @@
 - **Verification:** fake-clock unit tests success/failure/expiry/cleanup и documented production topology.
 - **Dependencies:** решение о shared store только при реальной multi-replica потребности.
 
-### TECH-004 — Node 24 alignment подтверждён локально, hosted runtime ожидает проверки
+### TECH-004 — Node 24 alignment подтверждён локально и в CI; hosting deploy pending
 
 - **Type:** build-tooling
 - **Priority:** P1
 - **Status:** verified_local
-- **Evidence:** baseline configs расходились между Node 20/24; current pins согласованы в `.node-version:1`, `package.json:34`, `apps/api/package.json:7`, `render.yaml:16` и `.github/workflows/ci.yml:30`. На exact Node 24.20.0 + pnpm 9.15.0 выполнены frozen install и полный `pnpm run ci`: audit gates, lint, typecheck, tests и builds green 2026-09-06.
+- **Evidence:** baseline configs расходились между Node 20/24; current pins согласованы в `.node-version:1`, `package.json:34`, `apps/api/package.json:7`, `render.yaml:16` и `.github/workflows/ci.yml:30`. На exact Node 24.20.0 + pnpm 9.15.0 выполнены frozen install и полный `pnpm run ci`: audit gates, lint, typecheck, tests и builds green 2026-09-06. GitHub run `34048623246` также green для Quality/PGlite и PostgreSQL 16; `docs/audit/evidence/hosted-ci-foundation.json` привязывает evidence к SHA.
 - **Expected:** install/lint/typecheck/test/build и deployment проходят на одной явно поддерживаемой Node 24 version.
-- **Actual:** repo-controlled config и локальный полный quality/build pipeline подтверждены exact Node 24.20.0; GitHub Actions действительно запустил Node 24 и PostgreSQL 16 на PR #3, но initial PostgreSQL job завершился красным из-за двух исправленных test-fixture expectations. Corrected hosted run и Vercel/Render build/deploy этого snapshot не подтверждены.
+- **Actual:** repo-controlled config и локальный полный quality/build pipeline подтверждены exact Node 24.20.0; corrected GitHub Actions run green на Node 24/PostgreSQL 16. Vercel/Render build и deploy этого snapshot намеренно не выполнялись и не подтверждены.
 - **Repro:** clean checkout с Node 24 → frozen install → `pnpm run ci`; сравнить hosting runtime metadata.
 - **Risk:** локально зелёная работа ломается в CI/hosting или наоборот.
-- **Verification:** local quality/build gate green; далее green GitHub quality + PostgreSQL lanes и Vercel/Render build/smoke, привязанные к commit SHA.
+- **Verification:** local quality/build gate и GitHub quality + PostgreSQL lanes green на одном commit SHA; Vercel/Render build/smoke остаются отдельным approval-bounded deploy gate.
 - **Dependencies:** OPS-004 release evidence; Q-OPS-002.

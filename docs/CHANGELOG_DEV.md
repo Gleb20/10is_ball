@@ -3,6 +3,32 @@
 Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
 записи сохраняются как история и могут быть помечены `superseded` новой записью.
 
+## 2026-09-06 — Foundation CI green на GitHub и Render preview guard подтверждён
+
+### Scope
+- `TECH-001`, `TECH-004`, `OPS-004`; commit
+  `f925efc63596b4aac56cad09f12419f6306819df` в draft PR
+  [`#3`](https://github.com/Gleb20/10is_ball/pull/3).
+
+### Verified
+- GitHub workflow
+  [`34048623246`](https://github.com/Gleb20/10is_ball/actions/runs/34048623246)
+  завершился `success`: `Quality and PGlite tests` и
+  `PostgreSQL critical integration` зелёные.
+- PostgreSQL 16 job: `3/3` passed — fresh schema/Date, `AT-MATCH-007/011`
+  (`200 + 409`, последовательное завершение, одна победа в статистике) и
+  `AT-TRN-010` (два finished semi-finals, waiting final + third place).
+- Render dashboard после push по-прежнему связан с `main`, PR Previews=`Off`,
+  last deployed SHA остался `1a98a5f`; GitHub Deployments для foundation SHA
+  вернул 0 записей. Vercel dashboard напрямую ещё не проверен: ожидается owner
+  2FA; branch-specific deployment guard остаётся repo-controlled evidence.
+- Машиночитаемый снимок: [`audit/evidence/hosted-ci-foundation.json`](audit/evidence/hosted-ci-foundation.json).
+
+### Remaining
+- CI green не является production deploy verification. Foundation code не
+  деплоился; Render/Neon credential rotation, session revocation и Vercel owner
+  verification остаются в `SEC-001` и approval-bounded плане.
+
 ## 2026-09-06 — Коррекция first-run PostgreSQL CI characterization
 
 ### Scope

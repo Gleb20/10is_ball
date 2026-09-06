@@ -35,9 +35,9 @@ deployed SHA `1a98a5f7e516762bed12c3d9b20ceefc06a6be06`. Auto-deploy/PR-preview 
 Vercel deployed SHA и фактический credential state ещё не подтверждены; см.
 Q-OPS-001/002 в [`../OPEN_QUESTIONS.md`](../OPEN_QUESTIONS.md).
 
-## Working-tree foundation после baseline
+## Foundation branch после baseline
 
-Незакоммиченная foundation-правка выровняла repo-controlled runtime на Node 24,
+Foundation branch выровняла repo-controlled runtime на Node 24,
 поставила `SEED_ADMIN=0` в Render blueprint и добавила fail-closed bootstrap:
 `SEED_ADMIN=1` требует явные valid email/password; существующий active admin не
 получает тихую ротацию пароля; конкурентный bootstrap атомарно различает
@@ -50,16 +50,21 @@ PostgreSQL CI использует отдельный `TEST_DATABASE_URL`, ра�
 `NODE_ENV=test`, пустом `DATABASE_URL`, loopback host, test-named DB и явном
 `ALLOW_TEST_DATABASE_RESET=1`. `db:migrate` требует полный explicit PostgreSQL
 target и больше не сообщает успех после disposable PGlite smoke. Local checks
-выполнены на Node 24.20.0; hosted CI и production deploy ещё не подтверждены
-(`SEC-004`, `TECH-004`).
+выполнены на Node 24.20.0. GitHub run `34048623246` для commit `f925efc` green:
+quality/PGlite и PostgreSQL 16 `3/3` прошли; evidence сохранён в
+[`../audit/evidence/hosted-ci-foundation.json`](../audit/evidence/hosted-ci-foundation.json).
+Production deploy foundation-кода не выполнялся (`SEC-004`, `TECH-004`).
 
 До первого push foundation-ветки в `apps/web/vercel.json` добавлен
 `git.deploymentEnabled=false` только для `codex/audit-foundation`. Это позволяет
 открыть draft PR и выполнить GitHub CI без Vercel Preview этого snapshot. Guard
 ещё не подтверждён фактическим push. Чтобы независимо исключить Render PR
 Preview, draft PR получает `[skip preview]` в title; не в commit message. После
-push проверяется отсутствие Vercel/Render deployment для SHA. Merge/deploy
-foundation-кода не разрешён.
+push Render dashboard сохранил branch `main`, PR Previews=`Off` и прежний live
+SHA `1a98a5f`; GitHub Deployments для foundation SHA вернул 0 записей. Vercel
+dashboard verification ожидает owner 2FA, поэтому его отсутствие не объявляется
+полностью подтверждённым только по dashboard. Merge/deploy foundation-кода не
+разрешён.
 
 Локальный Docker PostgreSQL получает user/password/database из ignored root
 `.env`, шаблон которого согласован с `apps/api/.env.example`; порт связан только
