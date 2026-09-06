@@ -78,6 +78,15 @@ Admin может hard-purge только допустимую non-finished stand
 после отдельного UI confirmation. Попытка purge finished/stopped/voided,
 tournament или tutorial отклоняется без изменения match, audit или stats.
 
+## PROFILE
+
+### AT-PROFILE-001 Безопасный ответ редактирования
+**Given** активный пользователь меняет разрешённые поля собственного профиля.
+**When** `PATCH /profile/me` завершается успешно.
+**Then** `user` содержит только явно разрешённые поля собственного профиля и не
+содержит password/session hashes, timestamps блокировки/входа, storage paths или
+другие внутренние auth persistence-поля.
+
 ## MATCH RULES
 
 ### AT-MATCH-CANCEL-001 Creator cancels active standalone

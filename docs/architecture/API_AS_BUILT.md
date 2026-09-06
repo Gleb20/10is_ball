@@ -33,7 +33,10 @@ login/OpenAPI, требуют session; state-changing routes вне test тре�
 | PATCH | `/api/v1/me/profile` |
 
 Admin match hard delete конфликтует с принятой void-only моделью (`DATA-005`).
-Profile serializer раскрывает внутренние поля (`SEC-002`).
+Profile mutation теперь возвращает отдельный `OwnProfileUser` allowlist из 11
+полей и не сериализует password hash, auth timestamps или storage paths
+(`SEC-002`, local verification). Несовпадение target `/profile/me` и runtime
+`/me/profile` остаётся contract drift вне этого исправления.
 
 ## Match, directory, ranking, home (18)
 

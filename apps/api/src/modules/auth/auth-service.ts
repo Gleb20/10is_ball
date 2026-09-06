@@ -49,6 +49,12 @@ export type AuthUser = {
   avatarKey: string | null;
 };
 
+export type OwnProfileUser = AuthUser & {
+  birthDate: string | null;
+  organizationText: string | null;
+  positionText: string | null;
+};
+
 function toAuthUser(row: typeof users.$inferSelect): AuthUser {
   return {
     id: row.id,
@@ -59,6 +65,15 @@ function toAuthUser(row: typeof users.$inferSelect): AuthUser {
     lastName: row.lastName,
     mustChangePassword: row.mustChangePassword,
     avatarKey: row.generatedAvatarKey ?? null,
+  };
+}
+
+function toOwnProfileUser(row: typeof users.$inferSelect): OwnProfileUser {
+  return {
+    ...toAuthUser(row),
+    birthDate: row.birthDate ?? null,
+    organizationText: row.organizationText ?? null,
+    positionText: row.positionText ?? null,
   };
 }
 
@@ -515,14 +530,14 @@ export class AuthService {
       positionText: string | null;
       onboardingCompletedAt: Date | null;
     }>,
-  ) {
+  ): Promise<OwnProfileUser> {
     const now = this.clock.now();
     const [row] = await this.db
       .update(users)
       .set({ ...patch, updatedAt: now })
       .where(eq(users.id, userId))
       .returning();
-    return row;
+    return toOwnProfileUser(row!);
   }
 
   async seedAdmin(

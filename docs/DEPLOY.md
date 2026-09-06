@@ -2,10 +2,10 @@
 
 Фактический снимок и известные риски: [operations/DEPLOYMENT_AS_BUILT.md](operations/DEPLOYMENT_AS_BUILT.md).
 
-> **Security blocker SEC-001:** ранее credential БД попадал в tracked example.
-> Значение здесь не приводится. Перед следующим production deploy владелец должен
-> отозвать старый credential в Neon, обновить Render и отрицательно проверить
-> старый доступ. Удаление строки из Git само по себе недостаточно.
+> **SEC-001 status:** credential БД, ранее попавший в tracked example, ротирован
+> 2026-09-06; Render обновлён и работает с `SEED_ADMIN=0`. Значение здесь не
+> приводится. Independent old-URI negative probe остаётся residual verification,
+> поскольку connected Neon tool не принимает произвольный retained URI.
 
 Цель: поднять **живой** сервис (логин, матчи, судья) на бесплатных тарифах для теста.
 
@@ -270,7 +270,7 @@ pnpm --filter @tab10/web preview
 - [ ] Vercel: Root = `apps/web`, Node.js = `24.x`
 - [ ] Vercel: `VITE_API_BASE_URL` не задан; rewrite `/api/*` → Render
 - [ ] Логин админа работает
-- [ ] Старый DB credential отозван; Render обновлён; старый доступ отклонён (SEC-001)
+- [x] DB role credential ротирован; Render обновлён; old-URI negative probe отмечен как tool-limited residual (SEC-001)
 - [ ] Bootstrap выполнен только с явными secrets; после него `SEED_ADMIN=0`
 - [ ] Deploy связан с commit SHA/version и smoke evidence записан в changelog
 

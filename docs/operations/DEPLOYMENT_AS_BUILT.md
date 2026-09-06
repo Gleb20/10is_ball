@@ -29,11 +29,38 @@ cookies выставляются через `/api` на Vercel domain. Прям�
 | DB schema | [`../../apps/api/src/db/client.ts`](../../apps/api/src/db/client.ts) | `CREATE/ALTER IF NOT EXISTS` на boot вместо versioned migrations |
 | Root runtime | [`../../package.json`](../../package.json) и `.node-version` | foundation переводит repo-controlled configs на Node 24; dashboard deploy ещё требует проверки |
 
-Read-only dashboard inspection 2026-09-06 подтвердил, что фактический Render
-service `10is_ball` связан с `Gleb20/10is_ball`, branch `main`, и показывает
-deployed SHA `1a98a5f7e516762bed12c3d9b20ceefc06a6be06`. Auto-deploy/PR-preview policy,
-Vercel deployed SHA и фактический credential state ещё не подтверждены; см.
-Q-OPS-001/002 в [`../OPEN_QUESTIONS.md`](../OPEN_QUESTIONS.md).
+Dashboard/plugin inspection 2026-09-06 подтвердил, что фактический Render service
+`10is_ball` связан с `Gleb20/10is_ball`, branch `main`, и показывает deployed SHA
+`1a98a5f7e516762bed12c3d9b20ceefc06a6be06`. PR Previews=`Off`; credential state
+подтверждён отдельной SEC-001 execution ниже. Vercel deployed SHA и полная release
+policy ещё остаются Q-OPS-002 в [`../OPEN_QUESTIONS.md`](../OPEN_QUESTIONS.md).
+
+## SEC-001 credential rotation 2026-09-06
+
+После явного action-time разрешения через подключённые Neon/Render plugins:
+
+- пароль production-роли `neondb_owner` сброшен; Neon operations
+  `6e83b8d4-15ed-41e1-8579-b2ede0a75394` и
+  `b739306a-96ab-4e3b-a908-9325a6a76832` завершились `finished`;
+- Render service `srv-d9f3odn41pts73fvpktg` merge-обновил только
+  `DATABASE_URL` и `SEED_ADMIN=0`; env update автоматически запустил один deploy,
+  дополнительный deploy не создавался;
+- deploy `dep-daerpe8u01pc73fpfh80` вышел в `live` на `main`, SHA
+  `1a98a5f7e516762bed12c3d9b20ceefc06a6be06`, 2026-09-06 22:20:26 MSK;
+- endpoint имеет `pooler_enabled=false`, поэтому active service использует новый
+  direct URI. Перевод compute на pooler — отдельное infrastructure change;
+- 26 active admin auth sessions получили `revoked_at` и reason
+  `credential_rotation`; после deploy active count = 0;
+- post-deploy direct health = 200 за 0.356 s, Vercel-proxied health = 200 за
+  0.533 s. Повторный Vercel inventory показал 0 deployments после начала
+  операции; latest остался production `dpl_JDzAkaZ29XQi3zyiM9YysnXSFPgF` от
+  2026-07-22. Vercel configuration и содержимое БД не менялись.
+
+Independent negative query со старым URI не выполнен: connected Neon tool не
+принимает arbitrary connection URI. Terminal control-plane reset подтверждает
+ротацию, но SEC-001 остаётся `verified_prod`, пока этот отдельный acceptance step
+не выполнен безопасным инструментом. Sanitized machine-readable evidence:
+[`../audit/evidence/sec-001-production-rotation.json`](../audit/evidence/sec-001-production-rotation.json).
 
 ## Foundation branch после baseline
 
@@ -106,12 +133,12 @@ Web обязан показывать явное состояние «серви
   refs; `audit:secrets:local` отдельно включает ignored `.env*`, чтобы частный
   local config не делал обычный CI заведомо красным.
 - В baseline был обнаружен ранее опубликованный live-looking DB credential.
-  Значение намеренно не воспроизводится. Удаление из файла не отзывает доступ:
-  внешняя ротация, обновление Render и отрицательная проверка старого доступа —
-  blocker `SEC-001`.
-- В baseline Render config включал production admin seed. Текущий безопасный
-  working-tree result теперь fail-closed, opt-in и default-off, но статус
-  production dashboard/deploy ещё не подтверждён (`SEC-004`).
+  Значение намеренно не воспроизводится. 2026-09-06 пароль роли ротирован и Render
+  обновлён; independent old-URI negative probe остаётся единственным residual
+  verification step `SEC-001`.
+- В baseline Render config включал production admin seed. Live service теперь
+  подтверждённо имеет `SEED_ADMIN=0`; fail-closed/opt-in foundation-код всё ещё
+  ожидает отдельного production deploy (`SEC-004`).
 
 ## Release и recovery gaps
 

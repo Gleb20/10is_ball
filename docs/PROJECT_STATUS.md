@@ -14,16 +14,16 @@
 
 | Область | Состояние на 2026-09-06 |
 |---|---|
-| Production web/API | Vercel web, direct Render health, Vercel proxy health и live OpenAPI ответили HTTP 200; только read-only probes |
-| Node 24 | repo, CI, Render и package engines закреплены на 24; local validation выполнена на Node **24.20.0** с pnpm 9.15.0 |
-| Текущий full test | shared 517 passed + 1 todo; test-utils 4 passed; web 70 passed; API 83 passed + 3 real-PostgreSQL tests skipped |
+| Production web/API | После credential rotation Render deploy `dep-daerpe8u01pc73fpfh80` вышел в `live`; direct и Vercel-proxied health ответили 200; Vercel не изменялся |
+| Node 24 | repo, CI, Render и package engines закреплены на 24; SEC-002 validation выполнена на bundled Node **24.19.0** с pnpm 9.15.0, foundation baseline — на 24.20.0 |
+| Текущий full test | shared 517 passed + 1 todo; test-utils 4 passed; web 70 passed; API 84 passed + 3 real-PostgreSQL tests skipped |
 | Детерминизм | после изоляции RNG три последовательных full suite и последний Node 24 run зелёные; известный busy+bye дефект закреплён отдельным `BUG-015` characterization test |
-| Local quality/build | exact Node 24.20.0: frozen install и полный `pnpm run ci` (audit gates, lint, typecheck, tests, API/web builds) прошли |
+| Local quality/build | foundation frozen install/full CI прошли на exact Node 24.20.0; SEC-002 повторил полный `pnpm run ci` на bundled Node 24.19.0 — audit gates, lint, typecheck, tests и API/web builds зелёные |
 | Hosted CI | commit `f925efc`: GitHub run `34048623246` green — Quality/PGlite и PostgreSQL 16 jobs passed; evidence в `audit/evidence/hosted-ci-foundation.json` |
 | Web artifact fingerprint | local build HTML/JS/CSS hashes совпали с production capture; это не заменяет commit SHA/release metadata |
 | Browser baseline | production login: 4 viewport; local synthetic data: 4 home viewport, key 360px screens и smoke 17 organizer routes + admin; это не полный PRD E2E/axe |
 | PostgreSQL verification | corrected hosted job `101528083822`: 3/3 passed — fresh-schema/date, concurrent `200/409` + one-time stats, final + third-place advancement; local PostgreSQL runtime отсутствует |
-| Secret location scan | worktree + index + all Git refs: 0 unreviewed candidates, 0 skipped inputs, 11 exact-hash benign findings в 9 historical blobs; ignored `.env*` доступны отдельным opt-in scan; external rotation этим не подтверждается |
+| Secret incident | Neon role credential ротирован, Render `DATABASE_URL` обновлён, `SEED_ADMIN=0`, 26 admin-сессий отозваны и 0 остались active; independent old-URI auth probe недоступен через plugin, поэтому SEC-001=`verified_prod` |
 | Security dependencies | 17 production advisories: 12 high и 5 moderate |
 | Route/OpenAPI inventory | source: 60 operations / 54 paths; OpenAPI: 15 operations / 12 paths (25% operation coverage); live version 0.1.0 |
 | Product decisions | D23: cancel только active admin/creator; D24: creator/admin soft void без mandatory reason/second approver; D25: V1 DE preservation не требуется; D26: полный PRD v2 остаётся target |
@@ -32,10 +32,7 @@
 
 ## Главные блокеры
 
-- [SEC-001](BACKLOG.md#sec-001--ротация-скомпрометированного-доступа-к-бд):
-  внешняя ротация credential Neon и обновление Render не подтверждены.
-- Сервер отдаёт password hash в ответе профиля; есть обход обязательной смены
-  временного пароля.
+- Остаётся обход обязательной смены временного пароля.
 - Несколько organizer-only операций проверяют только факт входа; есть IDOR между
   турнирами.
 - Завершение матча, статистика и продвижение сетки не образуют одну транзакцию;
@@ -50,9 +47,12 @@
 
 ## Следующий этап
 
-Сначала закрыть внешнюю ротацию секрета и P0-пакет `SEC`/`DATA`/`BUG`. Локальный
-quality baseline уже зелёный; real-PostgreSQL CI и затем browser E2E должны
-подтверждать каждое core-flow исправление.
+Внешняя ротация секрета и отзыв сессий выполнены; SEC-001 остаётся
+`verified_prod`, пока нет безопасного independent old-URI negative probe.
+SEC-002 исправлен и проверен локально, но ещё не выпущен; следующая реализация
+начинается с оставшихся P0: SEC-003/005/006/007 и DATA-001/002.
+Локальный quality baseline уже зелёный; real-PostgreSQL CI и затем browser E2E
+должны подтверждать каждое core-flow исправление.
 Q-MATCH-001, Q-MATCH-002, Q-DATA-001 и Q-PRODUCT-001 закрыты решениями D23–D26; BUG-002,
 DATA-006 и standalone/ledger DATA-005 готовы к реализации; DATA-007 остаётся
 `blocked_decision` до ответа Q-MATCH-003 о void турнирного матча с уже сыгранными

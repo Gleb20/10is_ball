@@ -87,6 +87,14 @@ Errors:
 
 `GET /home` возвращает hero stats, active summaries, last five, ranking top, rival summaries, notification indicator, `myStats`.
 
+Успешный ответ `PATCH /profile/me` строится по явному allowlist и содержит только
+поля собственного профиля: `id`, `email`, `role`, `status`, `firstName`,
+`lastName`, `birthDate`, `organizationText`, `positionText`,
+`mustChangePassword`, `avatarKey`. Password hash, timestamps блокировки/входа,
+storage paths и другие внутренние auth persistence-поля запрещены. Текущий
+runtime alias `/api/v1/me/profile` остаётся contract drift в OPS-001 и этим
+исправлением не переименовывается.
+
 ## 5. Rankings / history
 
 - `GET /rankings?scope=all_time|calendar_week|calendar_month&teamId=`

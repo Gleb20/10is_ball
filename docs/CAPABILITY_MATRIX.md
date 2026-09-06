@@ -12,9 +12,9 @@
 |---|---|---|---|---|
 | Production web/API reachability | Web → Vercel rewrite → Render API | `verified` | [HTTP evidence](audit/evidence/production-http-baseline.json): оба URL и proxied health 200 после wake-up | OPS-005 |
 | Local account login | Active user входит по email/password | `partial` | happy path и tests есть; temporary-password gate bypassable, rate limiter flawed | SEC-003, TECH-003 |
-| Admin account lifecycle | create/role/block/unblock/reset | `partial` | API шире UI; bootstrap теперь explicit/atomic/audited локально, но production config не подтверждён; unblock/self safety UI incomplete | SEC-004, BUG-011, GAP-010 |
+| Admin account lifecycle | create/role/block/unblock/reset | `partial` | API шире UI; live `SEED_ADMIN=0` подтверждён, bootstrap hardening explicit/atomic/audited локально, но foundation code ещё не deployed; unblock/self safety UI incomplete | SEC-004, BUG-011, GAP-010 |
 | Session management | sliding session, list/revoke/change password | `partial` | API есть; runtime 401 не синхронизирует web auth state | BUG-007 |
-| Own profile | view/edit/stats/avatar/sessions | `broken` | edit response раскрывает hash; значительная часть PRD отсутствует | SEC-002, GAP-002 |
+| Own profile | view/edit/stats/avatar/sessions | `broken` | edit response локально защищён точным allowlist; значительная часть PRD отсутствует | GAP-002 |
 | Public player profile | privacy-safe card + challenge | `missing` | отдельного полного route/экрана нет | GAP-002 |
 | Home dashboard | hero, active/recent events, stats/rival | `partial` | сокращённый aggregate; нет полного HOME-001..006 | GAP-001 |
 | Rankings | all/week/month ordered ranking | `broken` | базовые scopes есть, но UTC boundaries расходятся с Europe/Moscow; team/public-card gaps | BUG-014, GAP-004 |

@@ -3,6 +3,60 @@
 Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
 записи сохраняются как история и могут быть помечены `superseded` новой записью.
 
+## 2026-09-06 — SEC-002 profile response allowlist
+
+- Scope: SEC-002; PROFILE-001/003; NFR Security §4; AT-PROFILE-001. Полный
+  profile/avatar/public-card flow и переименование runtime route исключены.
+- Changed: `apps/api/src/modules/auth/auth-service.ts` возвращает типизированный
+  `OwnProfileUser` вместо DB row; `apps/api/src/auth.integration.test.ts`
+  закрепляет точный 11-field HTTP contract. Target/API as-built, acceptance,
+  traceability, backlog, capability и status docs синхронизированы.
+- Verified: focused test сначала упал на 19 полях, включая `passwordHash`, затем
+  прошёл 1/1; полный `auth.integration.test.ts` — 9/9; API suite — 84 passed и 3
+  real-PostgreSQL tests skipped; API typecheck passed. Grep review не нашёл второго
+  raw-user-row HTTP serializer. Полный `pnpm run ci` на bundled Node 24.19.0
+  прошёл: audit gates, lint, typecheck, 517 shared + 1 todo, 4 test-utils, 70 web,
+  84 API + 3 real-PostgreSQL skipped, API/web builds.
+- Remaining: production deploy/smoke не разрешён и не выполнялся; SEC-002 до него
+  остаётся local-only fix. GAP-002 продолжает полный profile flow.
+
+## 2026-09-06 — SEC-001 production credential rotation
+
+### Scope
+- Явно разрешённая production-операция: Neon role credential rotation, Render
+  `DATABASE_URL` update, `SEED_ADMIN=0`, отзыв active admin sessions и один
+  проверочный Render deploy. Database reset/delete и Vercel deploy исключены.
+
+### Changed
+- Neon password роли `neondb_owner` ротирован; control-plane operations
+  `6e83b8d4-15ed-41e1-8579-b2ede0a75394` и
+  `b739306a-96ab-4e3b-a908-9325a6a76832` завершены.
+- Render service `10is_ball` merge-обновил только `DATABASE_URL` и
+  `SEED_ADMIN=0`; automatic deploy `dep-daerpe8u01pc73fpfh80` вышел в `live` на
+  прежнем `main` SHA `1a98a5f7e516762bed12c3d9b20ceefc06a6be06`.
+- Одной SQL transaction отозвано 26 admin-сессий с reason
+  `credential_rotation`; active admin sessions после deploy = 0.
+
+### Verification
+- Neon reset operations terminal `finished`; Render deploy terminal `live`.
+- Sanitized startup logs содержат startup/listening/schema-ready signals без
+  auth/fatal failures или connection-string output.
+- Post-deploy direct `/health` = 200 за 0.356 s; Vercel proxy `/health` = 200 за
+  0.533 s. Vercel не изменялся и не деплоился; БД не удалялась и не reset-илась.
+- Повторный Vercel deployment inventory: 0 deployments после начала incident
+  operation; latest остался `dpl_JDzAkaZ29XQi3zyiM9YysnXSFPgF` от 2026-07-22,
+  `READY`, production, тот же SHA `1a98a5f`.
+- Blocking secret scan: 253 worktree files, 1038 ref objects, 662 ref blobs,
+  0 skipped inputs и 0 candidates.
+- Endpoint имеет `pooler_enabled=false`, поэтому Render использует новый direct
+  URI. Секреты не сохранены; evidence:
+  [`audit/evidence/sec-001-production-rotation.json`](audit/evidence/sec-001-production-rotation.json).
+
+### Remaining
+- Independent authentication failure старого URI не проверен: Neon plugin не
+  выполняет SQL по произвольному retained URI. Поэтому SEC-001=`verified_prod`,
+  не `done`; operational threat mitigated control-plane reset-ом.
+
 ## 2026-09-06 — Foundation CI green на GitHub и Render preview guard подтверждён
 
 ### Scope

@@ -1,6 +1,6 @@
 # SEC-001 — ротация production DB credential
 
-Статус: `in_progress`
+Статус: `verified_prod`
 Дата начала: `2026-09-06`
 Scope: `SEC-001`, `SEC-004`, `Q-OPS-001`
 
@@ -23,8 +23,9 @@ admin-сессии приложения и доказать, что старый
 - Draft PR открывается с `[skip preview]` в title, чтобы Render не создавал PR
   Preview и не копировал production environment; после push проверяется
   отсутствие обоих deployment events для SHA.
-- Финальную кнопку сброса пароля Neon нажимает владелец аккаунта; секрет между
-  Neon и Render передаётся только в памяти текущей защищённой browser-сессии.
+- После отдельного action-time подтверждения сброс выполняется подключённым Neon
+  plugin; secret передаётся напрямую в Render plugin и не записывается в файлы,
+  evidence или сообщения.
 
 ## Предварительная проверка
 
@@ -39,10 +40,11 @@ admin-сессии приложения и доказать, что старый
 
 ## Выполнение
 
-1. В памяти сохранить старый Render `DATABASE_URL` только для отрицательной
-   проверки; не писать его в файл или вывод.
-2. Владелец нажимает `Reset` для `neondb_owner` в Neon.
-3. Получить новый pooled connection string без вывода значения, заменить
+1. Если инструмент позволяет безопасно удержать старый `DATABASE_URL`, сохранить
+   его только в памяти для отрицательной проверки; не писать его в файл или вывод.
+2. Сбросить пароль только `neondb_owner` через Neon control plane и дождаться
+   terminal operations.
+3. Получить новый connection string без вывода значения, заменить
    `DATABASE_URL` в Render и явно выставить `SEED_ADMIN=0` в live dashboard.
    Сохранение env может перезапустить сервис; дождаться terminal deploy state.
 4. Через Neon SQL editor одной транзакцией пометить все незавершённые admin auth
@@ -77,3 +79,25 @@ IDs, old-credential result, deploy id/SHA, HTTP statuses и количество
 и значение env в UI. Старый пароль после reset не восстанавливается; повторная
 ротация допустима только как отдельный зафиксированный incident step. БД не
 удалять и не пересоздавать как способ rollback.
+
+## Execution record 2026-09-06
+
+- Neon project `shiny-leaf-88815850`, production branch
+  `br-calm-queen-astg3726`, database `neondb`, role `neondb_owner` подтверждены.
+- Reset завершён в 22:18:08 MSK: operations
+  `6e83b8d4-15ed-41e1-8579-b2ede0a75394` (`apply_config`) и
+  `b739306a-96ab-4e3b-a908-9325a6a76832` (`epc_sync`) имеют status `finished`.
+- Endpoint сообщил `pooler_enabled=false`, поэтому Render получил рабочий новый
+  direct URI; включение pooler не входило в разрешённый scope.
+- Render merge-обновил только `DATABASE_URL` и `SEED_ADMIN=0`; automatic deploy
+  `dep-daerpe8u01pc73fpfh80` вышел в `live` 22:20:26 MSK на `main`, SHA
+  `1a98a5f7e516762bed12c3d9b20ceefc06a6be06`.
+- Транзакционно отозвано 26 незавершённых admin-сессий с reason
+  `credential_rotation`; после deploy active admin sessions = 0.
+- Post-deploy direct `/health` = 200 за 0.356 s, Vercel proxy `/health` = 200 за
+  0.533 s. Vercel не изменялся и не деплоился; БД не удалялась и не reset-илась.
+- Old-credential negative test не выполнен: connected Neon tool не поддерживает
+  SQL по произвольному retained URI. Control-plane reset подтверждён terminal
+  operations, но SEC-001 остаётся `verified_prod`, не `done`, до независимой
+  безопасной проверки старого доступа.
+- Полное sanitized evidence: [`../audit/evidence/sec-001-production-rotation.json`](../audit/evidence/sec-001-production-rotation.json).

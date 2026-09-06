@@ -1,0 +1,87 @@
+{
+  "capturedAt": "2026-09-06T19:20:27Z",
+  "scope": "SEC-001",
+  "secretsIncluded": false,
+  "neon": {
+    "projectId": "shiny-leaf-88815850",
+    "branchId": "br-calm-queen-astg3726",
+    "database": "neondb",
+    "role": "neondb_owner",
+    "passwordResetCompletedAt": "2026-09-06T19:18:08Z",
+    "operations": [
+      {
+        "id": "6e83b8d4-15ed-41e1-8579-b2ede0a75394",
+        "action": "apply_config",
+        "status": "finished"
+      },
+      {
+        "id": "b739306a-96ab-4e3b-a908-9325a6a76832",
+        "action": "epc_sync",
+        "status": "finished"
+      }
+    ],
+    "connectionMode": "direct",
+    "poolerEnabled": false,
+    "oldCredentialNegativeTest": {
+      "status": "not_executed",
+      "reason": "The connected Neon tool cannot run SQL against an arbitrary retained connection URI."
+    }
+  },
+  "render": {
+    "serviceId": "srv-d9f3odn41pts73fvpktg",
+    "serviceName": "10is_ball",
+    "updatedEnvironmentKeys": [
+      "DATABASE_URL",
+      "SEED_ADMIN"
+    ],
+    "seedAdmin": "disabled",
+    "deployId": "dep-daerpe8u01pc73fpfh80",
+    "deployStatus": "live",
+    "deployFinishedAt": "2026-09-06T19:20:26.654Z",
+    "branch": "main",
+    "commit": "1a98a5f7e516762bed12c3d9b20ceefc06a6be06"
+  },
+  "sessions": {
+    "revocationReason": "credential_rotation",
+    "revokedAdminSessions": 26,
+    "activeAdminSessionsAfterDeploy": 0
+  },
+  "health": {
+    "preDeploy": {
+      "directStatus": 200,
+      "directDurationSeconds": 42.56,
+      "proxyStatus": 200,
+      "proxyDurationSeconds": 0.36
+    },
+    "postDeploy": {
+      "directStatus": 200,
+      "directDurationSeconds": 0.356,
+      "proxyStatus": 200,
+      "proxyDurationSeconds": 0.533
+    }
+  },
+  "repositorySecretScan": {
+    "capturedAt": "2026-09-06T19:30:46.325Z",
+    "scannedWorktreeFiles": 253,
+    "scannedRefObjects": 1038,
+    "scannedRefBlobs": 662,
+    "skippedInputs": 0,
+    "candidates": 0
+  },
+  "guardrails": {
+    "databaseReset": false,
+    "databaseDeleted": false,
+    "vercelChanged": false,
+    "vercelDeployed": false,
+    "duplicateRenderDeployTriggered": false,
+    "vercelDeploymentHistory": {
+      "checkedAfter": "2026-09-06T19:18:00Z",
+      "deploymentsAfter": 0,
+      "latestDeploymentId": "dpl_JDzAkaZ29XQi3zyiM9YysnXSFPgF",
+      "latestCreatedAt": "2026-07-22T13:51:17.017Z",
+      "latestStatus": "READY",
+      "latestTarget": "production",
+      "latestCommit": "1a98a5f7e516762bed12c3d9b20ceefc06a6be06"
+    }
+  }
+}

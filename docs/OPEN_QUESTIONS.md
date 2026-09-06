@@ -2,7 +2,8 @@
 
 Активная часть содержит только вопросы, ответ на которые нельзя достоверно
 получить из текущего репозитория. Реализация, зависящая от ответа, должна ссылаться
-на ID вопроса. Закрытые ID сохраняются в конце для traceability и ссылаются на ADR.
+на ID вопроса. Закрытые ID сохраняются в конце для traceability и ссылаются на ADR
+либо операционное evidence.
 
 ## Q-MATCH-003 — Void турнирного матча с downstream-результатами
 
@@ -12,12 +13,6 @@ D24 требует согласованно инвалидировать/reconci
 invalid/replay-required с отдельным repair flow? Ledger, actor policy и standalone
 compensation можно реализовать независимо; завершение tournament void зависит от
 этого решения.
-
-## Q-OPS-001 — Статус ротации credential
-
-Выполнена ли в Neon внешняя ротация ранее опубликованного credential, обновлено ли
-значение в Render и проверено ли отсутствие старого доступа? Значение секрета в
-репозитории и документации фиксировать нельзя.
 
 ## Q-OPS-002 — Production release policy
 
@@ -44,6 +39,16 @@ judge/outsider и разрешено ли создавать синтетиче�
 коммитить — их нужно передать/настроить безопасным способом.
 
 ## Закрытые вопросы
+
+### Q-OPS-001 — Статус ротации credential
+
+**Closed 2026-09-06 by SEC-001 production execution evidence.** Neon control
+plane завершил reset роли, Render использует новый credential и `SEED_ADMIN=0`,
+26 admin-сессий отозваны, health после deploy зелёный. Connected Neon tool не
+поддержал independent query по retained old URI; этот verification residual
+остаётся в SEC-001 и не возвращает сам вопрос в active state. Secret values не
+зафиксированы. См.
+[`audit/evidence/sec-001-production-rotation.json`](audit/evidence/sec-001-production-rotation.json).
 
 ### Q-MATCH-001 — Права на cancel
 

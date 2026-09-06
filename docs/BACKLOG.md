@@ -15,27 +15,31 @@
 
 - **Type:** security
 - **Priority:** P0
-- **Status:** in_progress
-- **Evidence:** live-looking Neon credential находился в `apps/api/.env.example`; локальное удаление не отзывает уже раскрытый доступ. Зафиксированная точка baseline: `docs/audits/2026-09-06-baseline.md:93`; текущий очищенный scan: `docs/audit/evidence/secret-scan.json:15` (`candidates=[]`).
+- **Status:** verified_prod
+- **Evidence:** live-looking Neon credential находился в `apps/api/.env.example`; baseline сохранён в `docs/audits/2026-09-06-baseline.md:93`. 2026-09-06 Neon control plane завершил reset роли `neondb_owner`, Render получил новый secret и вышел в `live`; sanitized evidence: [`sec-001-production-rotation.json`](audit/evidence/sec-001-production-rotation.json). Текущий repo scan: `docs/audit/evidence/secret-scan.json:15` (`candidates=[]`).
 - **Expected:** старый credential отозван в Neon, Render использует новый secret, старый доступ отрицательно проверен; значения не попадают в код/логи/docs.
-- **Actual:** current worktree/`HEAD`/`origin/main` location scan сообщает 0 candidates после cleanup, но это не отзывает ранее раскрытый credential; внешняя ротация не подтверждена. См. [Q-OPS-001](OPEN_QUESTIONS.md#q-ops-001--статус-ротации-credential).
+- **Actual:** пароль Neon-роли ротирован; terminal operations `apply_config`/`epc_sync` завершены, Render deploy `dep-daerpe8u01pc73fpfh80` использует новый `DATABASE_URL`, `SEED_ADMIN=0`, direct и proxied health отвечают 200. Отозвано 26 admin-сессий, active осталось 0. Независимый login старым URL не выполнен: Neon plugin не принимает произвольный retained URI, поэтому пункт не переводится в `done`.
 - **Repro:** проверить историю репозитория на secret fingerprint и состояние credential в Neon/Render без публикации значения.
 - **Risk:** несанкционированное чтение, изменение или удаление production-данных.
-- **Verification:** rotate → redeploy → health/login smoke → доказать отказ старого credential → secret scan HEAD и history.
-- **Dependencies:** владелец Neon/Render; затем SEC-004 и OPS-004.
+- **Verification:** control-plane reset завершён → Render env merge/deploy `live` → startup logs без auth/fatal ошибок → direct/proxy health 200 → active admin sessions 0 → repo secret scan 0. Остаётся независимое доказательство authentication failure старого credential безопасным инструментом.
+- **Dependencies:** безопасный arbitrary-URI negative probe; затем SEC-004 и OPS-004.
 
 ### SEC-002 — Password hash в ответе профиля
 
 - **Type:** security
 - **Priority:** P0
-- **Status:** ready
-- **Evidence:** [`PATCH /me/profile`](../apps/api/src/app.ts) возвращает raw row из `updateProfile`, включая `passwordHash` из [`users`](../apps/api/src/db/schema.ts). Точные точки: `apps/api/src/app.ts:505`, `apps/api/src/modules/auth/auth-service.ts:524`, `apps/api/src/db/schema.ts:28`.
+- **Status:** verified_local
+- **Requirements:** PROFILE-001, PROFILE-003, NFR Security §4, AT-PROFILE-001.
+- **Evidence:** Red API test зафиксировал 19 DB-полей, включая `passwordHash`, `blockedAt`, `lastLoginAt` и storage path. Текущий `updateProfile` возвращает отдельный `OwnProfileUser` allowlist; regression test `API_PATCH_me_profile__PROFILE_003__AT-PROFILE-001__response_allowlist__SEC-002` проверяет точный набор 11 полей.
 - **Expected:** ни один HTTP response/log не содержит password hash или другие внутренние auth-поля.
-- **Actual:** успешное обновление профиля сериализует полную DB-строку.
+- **Actual:** успешное обновление профиля локально сериализует только `id`, `email`, `role`, `status`, `firstName`, `lastName`, `birthDate`, `organizationText`, `positionText`, `mustChangePassword`, `avatarKey`; production release ещё не выполнялся.
 - **Repro:** войти, вызвать `PATCH /api/v1/me/profile`, проверить поле `user.passwordHash`.
 - **Risk:** раскрытие verifier повышает последствия XSS, логирования и утечки ответа.
-- **Verification:** API regression test на allowlist полей; grep/contract test всех user serializers.
-- **Dependencies:** нет.
+- **Verification:** focused Red → Green (1/1), полный `auth.integration.test.ts` 9/9, API suite 84 passed + 3 real-PostgreSQL skipped, API typecheck passed; grep review подтвердил, что остальные HTTP user responses уже используют `AuthUser` или route-level projection. Полный `pnpm run ci` прошёл на bundled Node 24.19.0: audit gates, lint, typecheck, 517 shared + 1 todo, 4 test-utils, 70 web, 84 API + 3 real-PostgreSQL skipped, API/web builds.
+- **Non-goals:** полный GET/edit/avatar/public-profile flow из GAP-002 и переименование существующего route.
+- **Permissions:** только локальные code/test/docs changes; production deploy и production mutation не входят в scope.
+- **Open questions:** нет.
+- **Dependencies:** для `verified_prod` нужен release/smoke по Q-OPS-002; полный profile flow остаётся GAP-002.
 
 ### SEC-003 — Обход обязательной смены временного пароля
 
@@ -57,10 +61,10 @@
 - **Status:** verified_local
 - **Evidence:** baseline-аудит зафиксировал Render default `SEED_ADMIN=1` и fallback credentials; current [`render.yaml`](../render.yaml) задаёт default-off в `render.yaml:22`. Bootstrap возвращает atomic `existing`/`provisioned` outcomes в `apps/api/src/bootstrap-admin.ts:121` и `apps/api/src/bootstrap-admin.ts:127`; создание и durable system audit выполняются в одной транзакции в `apps/api/src/modules/auth/auth-service.ts:537` и `apps/api/src/modules/auth/auth-service.ts:562`. Focused concurrency/audit characterization находится в `apps/api/src/bootstrap-admin.integration.test.ts:16`.
 - **Expected:** production startup fail-closed без явно заданных secrets; bootstrap одноразовый, аудируемый и отключаемый.
-- **Actual:** baseline был fail-open; current foundation требует точный opt-in и явные valid values, ставит Render default `0`, не ротирует существующего active admin, атомарно различает созданную и уже существующую запись и пишет один durable audit event в той же транзакции. Внешние Render/production настройки и deploy ещё не проверены.
+- **Actual:** baseline был fail-open; current foundation требует точный opt-in и явные valid values, ставит Render default `0`, не ротирует существующего active admin, атомарно различает созданную и уже существующую запись и пишет один durable audit event в той же транзакции. Live Render configuration теперь подтверждённо имеет `SEED_ADMIN=0`; fail-closed foundation-код ещё не задеплоен в production.
 - **Repro:** запустить production-like API без части `SEED_ADMIN_*`, изучить созданного/существующего admin.
 - **Risk:** полный захват приложения.
-- **Verification:** independent focused foundation run прошёл 40/40 tests в 7 files: bootstrap unit 12, bootstrap persistence 1, test DB guard 9, migration URL 7, runtime audit 7, safe log 2, env loader 2; остаются external production-like smoke и dashboard `SEED_ADMIN=0` verification.
+- **Verification:** independent focused foundation run прошёл 40/40 tests в 7 files: bootstrap unit 12, bootstrap persistence 1, test DB guard 9, migration URL 7, runtime audit 7, safe log 2, env loader 2; live `SEED_ADMIN=0` и successful Render restart подтверждены, остаётся production deploy/smoke fail-closed foundation-кода.
 - **Dependencies:** SEC-001; решение о production bootstrap в Q-OPS-002 желательно, но fail-closed не зависит от него.
 
 ### SEC-005 — Уязвимые production dependencies

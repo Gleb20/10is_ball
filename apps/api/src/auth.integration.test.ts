@@ -288,6 +288,48 @@ describe("auth and admin integration", () => {
     expect(users.every((u) => u.id !== adminId)).toBe(true);
   });
 
+  it("API_PATCH_me_profile__PROFILE_003__AT-PROFILE-001__response_allowlist__SEC-002", async () => {
+    const token = await loginAsAdmin();
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/api/v1/me/profile",
+      cookies: { tab10_session: token },
+      payload: {
+        firstName: "Safe",
+        lastName: "Profile",
+        birthDate: "1990-01-02",
+        organizationText: "Tab 10",
+        positionText: "Player",
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const user = response.json().user as Record<string, unknown>;
+    expect(Object.keys(user).sort()).toEqual(
+      [
+        "avatarKey",
+        "birthDate",
+        "email",
+        "firstName",
+        "id",
+        "lastName",
+        "mustChangePassword",
+        "organizationText",
+        "positionText",
+        "role",
+        "status",
+      ].sort(),
+    );
+    expect(user).toMatchObject({
+      email: "admin@tab10.local",
+      firstName: "Safe",
+      lastName: "Profile",
+      birthDate: "1990-01-02",
+      organizationText: "Tab 10",
+      positionText: "Player",
+    });
+  });
+
   it("INT_admin__role_create_promote_demote_guards", async () => {
     const adminToken = await loginAsAdmin();
     const adminMe = await app.inject({
