@@ -1,13 +1,12 @@
 ---
-description: Product-led delivery — user goals, acceptance criteria, prototype vs production scope, explicit unknowns, incremental delivery.
+description: Compatibility pointer to the canonical product and backlog workflow.
 alwaysApply: true
 ---
 
-# Product Development Rules
+# Product-work compatibility pointer
 
-- Start from the user problem and target workflow, not from components.
-- For every feature, identify user goal, success criteria, risks, and edge cases.
-- Treat prototype scope separately from production scope.
-- Always define acceptance criteria before implementation.
-- Surface open questions explicitly instead of guessing silently.
-- Prefer smaller, testable increments over broad feature generation.
+Follow [`../../AGENTS.md`](../../AGENTS.md),
+[`../../docs/README.md`](../../docs/README.md),
+[`../../docs/WORKFLOW.md`](../../docs/WORKFLOW.md), and
+[`../../docs/BACKLOG.md`](../../docs/BACKLOG.md). Requirements and acceptance
+precedence is defined only in the root `AGENTS.md` and requirements index.

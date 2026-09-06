@@ -1,10 +1,18 @@
 import { defineConfig } from "drizzle-kit";
+import { loadLocalEnv } from "./src/load-local-env.js";
+
+loadLocalEnv();
+
+const databaseUrl = process.env.DATABASE_URL?.trim();
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is required for drizzle-kit commands");
+}
 
 export default defineConfig({
   schema: "./src/db/schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? "postgres://tab10:tab10@localhost:5432/tab10",
+    url: databaseUrl,
   },
 });

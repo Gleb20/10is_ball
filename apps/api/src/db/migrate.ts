@@ -1,12 +1,14 @@
-import { createPgliteDb, createPostgresDb, applySchemaSql } from "./client.js";
+import { applySchemaSql } from "./client.js";
+import { loadLocalEnv } from "../load-local-env.js";
+import { safeStartupErrorMessage } from "../safe-startup-error.js";
+import { requireMigrationDatabaseUrl } from "./migration-database-url.js";
 
 async function main() {
-  const url = process.env.DATABASE_URL;
-  if (url) {
-    const { close } = await createPostgresDb(url);
-    // For postgres, run SQL via a one-off connection
-    const postgres = (await import("postgres")).default;
-    const sql = postgres(url);
+  loadLocalEnv();
+  const url = requireMigrationDatabaseUrl(process.env);
+  const postgres = (await import("postgres")).default;
+  const sql = postgres(url, { max: 1 });
+  try {
     await applySchemaSql(
       {
         exec: async (q) => {
@@ -15,17 +17,13 @@ async function main() {
       },
       { withPgcrypto: true },
     );
-    await sql.end();
-    await close();
-    console.log("Migrations applied (postgres)");
-    return;
+  } finally {
+    await sql.end({ timeout: 5 });
   }
-  const { close } = await createPgliteDb();
-  await close();
-  console.log("Migrations applied (pglite smoke)");
+  console.log("Migrations applied (postgres)");
 }
 
-main().catch((e) => {
-  console.error(e);
+main().catch((error) => {
+  console.error(`Migration failed: ${safeStartupErrorMessage(error)}`);
   process.exit(1);
 });

@@ -8,6 +8,7 @@ import Fastify, {
 import type { Clock } from "@tab10/test-utils";
 import type { Db } from "./db/client.js";
 import { authSessions, users } from "./db/schema.js";
+import { isAuditEphemeral } from "./audit-ephemeral.js";
 import { AuthService, type AuthUser } from "./modules/auth/auth-service.js";
 import { MatchService } from "./modules/matches/match-service.js";
 import {
@@ -164,6 +165,7 @@ export async function buildApp(opts: {
   app.get("/health", async () => ({
     status: "ok",
     time: clock.now().toISOString(),
+    ...(isAuditEphemeral(process.env) ? { auditEphemeral: true } : {}),
   }));
 
   app.get("/api/v1/openapi.json", async () => openApiSpec());

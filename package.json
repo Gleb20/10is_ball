@@ -6,8 +6,9 @@
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "PGLITE_DATA_DIR=${PGLITE_DATA_DIR:-.data/pglite} pnpm run --parallel --filter @tab10/api --filter @tab10/web dev",
-    "dev:ephemeral": "PGLITE_DATA_DIR= pnpm run --parallel --filter @tab10/api --filter @tab10/web dev",
+    "dev:ephemeral": "AUDIT_EPHEMERAL=1 DATABASE_URL= TEST_DATABASE_URL= PGLITE_DATA_DIR= pnpm run --parallel --filter @tab10/api --filter @tab10/web dev",
     "seed:local-players": "node scripts/seed-local-meme-players.mjs",
+    "seed:audit": "node scripts/audit/seed-ephemeral.mjs",
     "build": "pnpm -r run build",
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck",
@@ -16,11 +17,20 @@
     "test:integration": "pnpm --filter @tab10/api run test:integration",
     "test:load": "pnpm --filter @tab10/api run test:load",
     "backup:rehearsal": "bash scripts/backup-rehearsal.sh",
-    "ci": "pnpm --filter @tab10/shared --filter @tab10/test-utils run build && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "audit:docs": "node scripts/audit/check-docs.mjs",
+    "audit:routes": "node scripts/audit/route-openapi-inventory.mjs --baseline docs/audit/evidence/route-openapi-inventory.json",
+    "audit:routes:strict": "node scripts/audit/route-openapi-inventory.mjs --strict",
+    "audit:secrets": "bash scripts/audit/secret-scan.sh",
+    "audit:secrets:local": "bash scripts/audit/secret-scan.sh --include-local-env",
+    "audit:secrets:self-test": "node scripts/audit/secret-scan.mjs --self-test",
+    "audit:production": "node scripts/audit/capture-production-baseline.mjs",
+    "audit:reproduce-busy-bye": "node scripts/audit/reproduce-tournament-busy-bye.mjs",
+    "audit:check": "pnpm audit:docs && pnpm audit:routes && pnpm audit:secrets:self-test && pnpm audit:secrets && pnpm audit:reproduce-busy-bye",
+    "ci": "pnpm --filter @tab10/shared --filter @tab10/test-utils run build && pnpm audit:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "db:generate": "pnpm --filter @tab10/api run db:generate",
     "db:migrate": "pnpm --filter @tab10/api run db:migrate"
   },
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   }
 }

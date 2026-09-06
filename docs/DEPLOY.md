@@ -1,5 +1,12 @@
 # Free temporary hosting for Tab-10 (API + DB + Web)
 
+Фактический снимок и известные риски: [operations/DEPLOYMENT_AS_BUILT.md](operations/DEPLOYMENT_AS_BUILT.md).
+
+> **Security blocker SEC-001:** ранее credential БД попадал в tracked example.
+> Значение здесь не приводится. Перед следующим production deploy владелец должен
+> отозвать старый credential в Neon, обновить Render и отрицательно проверить
+> старый доступ. Удаление строки из Git само по себе недостаточно.
+
 Цель: поднять **живой** сервис (логин, матчи, судья) на бесплатных тарифах для теста.
 
 Рекомендуемая схема (cookies работают без танцев):
@@ -27,8 +34,22 @@ Browser ──► Vercel (apps/web) ──rewrite /api──► Render (apps/api
 
 ## 0. Подготовка репозитория
 
-1. Запушьте `main` на GitHub (включая фиксы деплоя).
-2. Убедитесь, что локально: `pnpm run ci` зелёный.
+Для обычного production release сначала получите отдельное разрешение на deploy,
+убедитесь, что `pnpm run ci` зелёный, и только затем обновляйте `main`.
+
+Для CI-only проверки `codex/audit-foundation`:
+
+1. Push выполняется только в одноимённую feature-ветку; production branch/tag не
+   изменяются.
+2. Сразу убедитесь, что Vercel и Render не создали deployment этого SHA.
+3. Откройте draft PR с `[skip preview]` в **title**. Это отключает Render PR
+   Preview даже при automatic preview policy; строка в commit message не заменяет
+   title safeguard.
+4. Дождитесь quality/PostgreSQL jobs; не merge и не promote этот snapshot.
+
+Причина отдельной защиты Render: PR Preview может копировать environment base
+service, включая DB connection. Vercel для этой ветки независимо отключён через
+`git.deploymentEnabled` в `apps/web/vercel.json`.
 
 ---
 
@@ -105,15 +126,24 @@ export PATH="$HOME/.local/bin:$PATH" && pnpm --filter @tab10/api start
 |-----|--------|
 | `NODE_ENV` | `production` |
 | `HOST` | `0.0.0.0` |
-| `NODE_VERSION` | `20` (важно: не Node 26) |
+| `NODE_VERSION` | `24.20.0` (должно совпадать с `.node-version`) |
 | `DATABASE_URL` | строка Neon из панели (не коммитьте) |
-| `SEED_ADMIN` | `1` |
-| `SEED_ADMIN_EMAIL` | ваш email админа |
-| `SEED_ADMIN_PASSWORD` | свой надёжный пароль (только в панели) |
+| `SEED_ADMIN` | `0` для обычного запуска |
+| `SEED_ADMIN_EMAIL` | не задавать, кроме одноразового bootstrap |
+| `SEED_ADMIN_PASSWORD` | не задавать, кроме одноразового bootstrap |
 
 Пока **не** ставьте `WEB_ORIGIN` / `COOKIE_SAME_SITE` (нужны только при прямом вызове API без Vercel rewrite).
 
 `DATABASE_URL` — без кавычек и пробелов по краям.
+
+Для первого bootstrap администратора временно поставьте `SEED_ADMIN=1` и задайте
+явные уникальные `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD`, соответствующие password
+policy. После успешного создания сразу верните `SEED_ADMIN=0` и redeploy. API
+должен отказать в старте при `SEED_ADMIN=1` без валидных явных значений; пароль
+уже существующего active admin автоматически не ротируется. Конкурентные старты
+атомарно различают созданный и существующий аккаунт; успешное создание оставляет
+`admin.bootstrap_provisioned` audit entry с system actor. После проверки удалите
+bootstrap email/password из Render environment, а не только верните flag в `0`.
 
 ### 2.5. Deploy
 
@@ -125,7 +155,9 @@ export PATH="$HOME/.local/bin:$PATH" && pnpm --filter @tab10/api start
 
 1. URL сервиса: `https://one0is-ball.onrender.com` (или ваш).
 2. Откройте `https://one0is-ball.onrender.com/health` → JSON с `ok`.
-3. Первый запрос на Free может идти до ~1 минуты (cold start).
+3. Первый запрос на Free может идти до 60 секунд (cold start). Это допустимо
+   только при явном UI-состоянии «сервис просыпается/загрузка», bounded timeout и
+   Retry. После wake-up применяются обычные SLO (ADR D21).
 
 ### 2.7. Опционально: Blueprint
 
@@ -144,14 +176,18 @@ export PATH="$HOME/.local/bin:$PATH" && pnpm --filter @tab10/api start
 |-------|--------|
 | Framework Preset | **Vite** |
 | Root Directory | **`apps/web`** |
-| Node.js Version | **`20.x`** |
+| Node.js Version | **`24.x`** |
 | Install / Build / Output | берутся из [`apps/web/vercel.json`](../apps/web/vercel.json) |
 
 В `vercel.json` уже заданы:
 
 - `installCommand` — pnpm 9.15.0 из корня monorepo, `--frozen-lockfile --prod=false --filter "@tab10/web..."`
-- `buildCommand` — `pnpm --filter @tab10/web build`
+- `buildCommand` — последовательная сборка `@tab10/shared` и `@tab10/web`
 - `outputDirectory` — `dist`
+- `git.deploymentEnabled` — branch-specific запрет preview для
+  `codex/audit-foundation`, чтобы audit-foundation push/PR не публиковал этот
+  snapshot; изменение относится только к этой ветке и не отключает production
+  deploy из `main`
 - rewrites: `/api/*` и `/health` → `https://one0is-ball.onrender.com`, затем SPA fallback на `/index.html`
 
 3. **Environment Variables (Production):**
@@ -191,10 +227,10 @@ Frontend вызывает относительные пути `/api/...`; про
 
 | Симптом | Причина | Что делать |
 |---------|---------|------------|
-| Vercel build падает на `apps/api` / `tsc` | Root не `apps/web` или билдится весь monorepo | Root Directory = `apps/web`; Node `20.x` |
+| Vercel build падает на `apps/api` / `tsc` | Root не `apps/web` или билдится весь monorepo | Root Directory = `apps/web`; Node `24.x` |
 | `/health` 502 на Render | нет `DATABASE_URL` / падение migrate | логи Render; проверьте Neon URL в панели |
 | Логин ок, сразу 401 | cookies не доходят | rewrite `/api` → Render; не задавать `VITE_API_BASE_URL` |
-| Долгий первый ответ | Render sleep | подождать / открыть `/health` на API |
+| Долгий первый ответ | Render sleep или outage | UI показывает bounded wake-up и Retry; проверить `/health`, после wake не маскировать проблему cold-start допуском |
 | CORS error в консоли | прямой вызов API без `WEB_ORIGIN` | оставить rewrite (относительные `/api`) |
 
 ---
@@ -231,9 +267,11 @@ pnpm --filter @tab10/web preview
 
 - [ ] Neon `DATABASE_URL` задан в Render (не в Git)
 - [ ] Render API Live: `https://one0is-ball.onrender.com/health` ok
-- [ ] Vercel: Root = `apps/web`, Node.js = `20.x`
+- [ ] Vercel: Root = `apps/web`, Node.js = `24.x`
 - [ ] Vercel: `VITE_API_BASE_URL` не задан; rewrite `/api/*` → Render
 - [ ] Логин админа работает
-- [ ] После первого деплоя: сменить пароль админа / `SEED_ADMIN=0` при необходимости
+- [ ] Старый DB credential отозван; Render обновлён; старый доступ отклонён (SEC-001)
+- [ ] Bootstrap выполнен только с явными secrets; после него `SEED_ADMIN=0`
+- [ ] Deploy связан с commit SHA/version и smoke evidence записан в changelog
 
 После выполнения шагов 1–3 пришлите URL Vercel — можно разобрать логи, если что-то не взлетит.

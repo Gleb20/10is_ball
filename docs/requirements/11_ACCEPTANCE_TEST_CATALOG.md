@@ -48,7 +48,9 @@ User получает 403 на все admin endpoints.
 Blocked user остаётся в завершённых матчах, но не появляется в новом participant picker.
 
 ### AT-ADM-MATCH-001 Non-admin
-Non-admin получает 403 на force-close и delete матча.
+Non-admin получает 403 на admin force-close/purge endpoint. Creator с ролью
+`user` использует общий cancel/void endpoint; его право выводится из ownership,
+а не из доступа к `/admin/*`.
 
 ### AT-ADM-MATCH-002 Force-close clears PLAYER_BUSY
 Stuck `in_progress` standalone → admin force-close → `cancelled` → тот же игрок может стартовать другой матч.
@@ -57,24 +59,44 @@ Stuck `in_progress` standalone → admin force-close → `cancelled` → тот 
 `waiting` standalone блокирует старт турнира → force-close → турнир стартует.
 
 ### AT-ADM-MATCH-004 Tournament forbidden
-Tournament match → force-close/delete → `TOURNAMENT_MATCH_FORBIDDEN`.
+Tournament match → force-close → `TOURNAMENT_MATCH_FORBIDDEN`. Void проверяется
+отдельно; downstream outcome заблокирован DATA-007/Q-MATCH-003.
 
-### AT-ADM-MATCH-005 Delete reverses rankings
-Finished standalone учтён в rankings → delete → wins откатываются; GET match → 404.
+### AT-ADM-MATCH-005 Void compensates rankings
+**Given:** finished standalone учтён в rankings.
+**When:** active admin или creator выполняет void с причиной либо без неё после
+явного UI confirmation.
+**Then** исходный match остаётся доступен как voided, wins/losses компенсируются,
+а immutable audit содержит actor/timestamp/prior result/version и опциональную
+reason. Второго approval нет, hard delete не вызывается.
 
 ### AT-ADM-MATCH-006 Force-close finished
 Force-close на `finished` → `MATCH_NOT_ACTIVE`.
 
+### AT-ADM-MATCH-007 Purge safeguard and scope
+Admin может hard-purge только допустимую non-finished standalone запись и только
+после отдельного UI confirmation. Попытка purge finished/stopped/voided,
+tournament или tutorial отклоняется без изменения match, audit или stats.
+
 ## MATCH RULES
 
-### AT-MATCH-CANCEL-001 Organizer cancels waiting
-Organizer cancels `waiting` standalone → `cancelled`; тот же игрок может стартовать турнир (нет `PLAYER_ALREADY_IN_ACTIVE_MATCH`).
+### AT-MATCH-CANCEL-001 Creator cancels active standalone
+Creator отменяет `waiting`, `in_progress` или `pending_confirmation` standalone с
+опциональной причиной → `cancelled` без winner/stats; judge session закрыта, тот
+же игрок может стартовать другой event без `PLAYER_ALREADY_IN_ACTIVE_MATCH`.
 
-### AT-MATCH-CANCEL-002 Non-participant
-Non-participant получает 403 на cancel.
+### AT-MATCH-CANCEL-002 Actor matrix
+Active admin может cancel чужой active standalone. Participant, current active
+judge и outsider, которые не являются creator/admin, получают 403; status,
+version, judge session, stats и audit не меняются.
 
 ### AT-MATCH-CANCEL-003 Tournament forbidden
 Tournament match → cancel → `TOURNAMENT_MATCH_FORBIDDEN`.
+
+### AT-MATCH-CANCEL-004 Explicit confirmation and stale request
+Первое нажатие Cancel только открывает confirmation с match name и последствиями;
+request отправляется отдельным подтверждающим действием. Отмена dialog не создаёт
+request. Stale `expectedVersion` не отменяет матч и предлагает обновить state.
 
 ### AT-MATCH-001 Обычная победа
 При лимите 11 счёт 11:9 предлагает завершение; 11:10 не завершает.
@@ -103,6 +125,17 @@ Undo последнего очка восстанавливает точный �
 ### AT-MATCH-009 Manual stop
 Остановка требует победителя и причины и учитывается в рейтинге.
 
+### AT-MATCH-START-001 Start authorization
+Только creator/organizer запускает валидный матч. Participant, active judge и
+outsider без роли organizer получают 403, состояние матча не меняется.
+
+### AT-MATCH-STOP-001 Stop authorization
+Creator/organizer и текущий active judge могут досрочно остановить матч.
+
+### AT-MATCH-STOP-002 Participant is insufficient
+Participant, который не creator/organizer и не current active judge, получает 403
+на stop; winner, score, status, version и event log не меняются.
+
 ### AT-MATCH-010 No-show
 Ручная неявка создаёт победу с причиной, без выдуманного игрового счёта.
 
@@ -111,6 +144,24 @@ Undo последнего очка восстанавливает точный �
 
 ### AT-MATCH-012 Tutorial isolation
 Матч с Призрачным Олегом не меняет статистику, рейтинг, историю и rival calculations.
+
+### AT-MATCH-VOID-001 No hard delete
+После void finished standalone match исходный результат и event/audit facts остаются,
+физическое удаление недоступно, а повторный void идемпотентен.
+
+### AT-MATCH-VOID-002 Standalone compensation
+Stats и ranking aggregates finished standalone match компенсируются в одной
+идемпотентной операции; исходный result и audit остаются доступными.
+
+### AT-MATCH-VOID-003 Actor, optional reason and confirmation
+Active admin и creator могут void finished/stopped standalone match с опциональной причиной
+и без второго approver. Participant, current judge и outsider без одной из этих
+ролей получают 403 без side effects. До request UI требует отдельного confirmation
+с описанием soft invalidation и stats impact; закрытие dialog без подтверждения
+оставляет всё без изменений, stale version не создаёт audit/compensation.
+
+Tournament downstream acceptance добавляется только после закрытия
+Q-MATCH-003/DATA-007; текущие AT-MATCH-VOID-001..003 не определяют его outcome.
 
 ## JUDGE
 
@@ -176,13 +227,21 @@ Undo последнего очка восстанавливает точный �
 ### AT-TRN-014 Cancel before start
 Организатор отменяет турнир до старта → статус `cancelled`. Пользователь не в составе получает `NOT_A_PARTICIPANT` при withdraw.
 
+### AT-TRN-015 Legacy V1 DE fails closed
+Legacy schemaVersion 1 double-elimination input завершается bounded ошибкой
+`UNSUPPORTED_BRACKET_VERSION`: не запускает игровой цикл, не зависает, не меняет
+сетку и не инициирует migration/reset/recreate. V2 SE/DE lifecycle продолжает
+работать; V1 SE не изменяется этим сценарием.
+
 ## RANKING
 
 ### AT-RANK-001 Sort
 Порядок: wins, win rate, matches played, user created_at — всё descending.
 
 ### AT-RANK-002 Calendar scopes
-Неделя и месяц считаются по календарным границам; all-time используется по умолчанию.
+Неделя и месяц считаются по календарным границам `Europe/Moscow` независимо от
+timezone клиента/сервера; all-time используется по умолчанию. Проверяются события
+по обе стороны UTC-момента московской границы.
 
 ### AT-RANK-003 Guest opponent
 Победа над гостем увеличивает рейтинг зарегистрированного пользователя; гость не появляется в списке.
@@ -227,10 +286,16 @@ Blocked user отсутствует в текущем рейтинге.
 ## VISIBILITY / HISTORY
 
 ### AT-VIS-001 Active event
-Посторонний user получает 403 на активный матч/турнир.
+Active event доступен organizer, participant и current active judge. Бывший/expired
+judge и outsider получают 403 как на detail, так и через list/home/history.
 
 ### AT-VIS-002 Completed event
-Любой активный user открывает завершённое событие.
+Любой active (`status != blocked`) club user открывает завершённое событие, даже
+если не участвовал.
+
+### AT-VIS-004 Blocked and tutorial isolation
+Blocked user не получает завершённое событие; tutorial event не появляется в
+общих list/home/history и не открывается посторонним.
 
 ### AT-VIS-003 History filters
 Комбинация фильтров и поиска возвращает только соответствующие события и стабильную пагинацию.
@@ -245,3 +310,15 @@ Blocked user отсутствует в текущем рейтинге.
 
 ### AT-EMPTY-001 Zero data
 Новый пользователь видит осмысленные empty states и CTA, а не нули без объяснения.
+
+## OPERATIONS UX
+
+### AT-OPS-COLD-001 Cold start
+**Given:** первый API response задержан пробуждением до 60 секунд.
+**When:** пользователь открывает приложение.
+**Then** показано явное состояние «сервис просыпается/загрузка», ожидание ограничено
+timeout и после него доступен Retry; после успешного ответа обычный экран загружен.
+
+### AT-OPS-COLD-002 Warm request
+После подтверждённого пробуждения медленный/ошибочный запрос не маркируется как
+допустимый cold start: применяется обычный error/SLO path с Retry.

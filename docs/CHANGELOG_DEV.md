@@ -1,5 +1,176 @@
 # Dev Changelog
 
+Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
+записи сохраняются как история и могут быть помечены `superseded` новой записью.
+
+## 2026-09-06 — SEC-001 execution plan и безопасный feature-branch push
+
+### Changed
+- Добавлен approval-bounded план
+  `test-plans/SEC-001-credential-rotation.md`: Neon credential rotation, Render
+  env update, отзыв active admin sessions и отрицательная проверка старого
+  credential без записи secret values.
+- В `apps/web/vercel.json` preview deployment отключён только для
+  `codex/audit-foundation`; GitHub PR CI остаётся доступен, а foundation deploy и
+  merge в `main` в scope не входят.
+- Draft PR должен содержать `[skip preview]` в title, чтобы не создать Render
+  PR Preview, который иначе может скопировать production environment.
+- Deployment docs различают фактический Render service `10is_ball` и optional
+  Blueprint service `tab10-api`, описывают branch guard и фактическую команду
+  сборки shared + web.
+
+### Verification
+- External credential rotation, Render restart, session revocation и old-secret
+  negative test ещё не выполнены и не заявляются как verified.
+- Branch guard будет проверен после разрешённого push по отсутствию Vercel
+  deployment. До push это только repo-controlled configuration.
+
+## 2026-09-06 — Cancel/void, legacy V1 DE и полный PRD: решения D23–D26
+
+### Scope
+- Закрыты Q-MATCH-001, Q-MATCH-002, Q-DATA-001 и Q-PRODUCT-001 без изменения immutable
+  baseline: cancel active standalone и void finished/stopped разрешены только
+  active admin или creator; reason optional; для опасных действий обязателен
+  отдельный UI confirmation.
+- Finished/stopped result остаётся soft-invalidated: hard delete запрещён,
+  исходные факты/audit сохраняются, stats/dependents компенсируются идемпотентно.
+- Legacy V1 DE preservation/read/play/migration не требуется; input должен fail
+  closed в bounded time. Production reset/recreate этим решением не разрешён.
+- Полный PRD v2 остаётся functional target; gap не выпадает из scope без
+  отдельного superseding ADR и синхронного изменения требований/acceptance.
+
+### Changed
+- ADR/open questions/status: `DECISIONS.md`, `OPEN_QUESTIONS.md`,
+  `PROJECT_STATUS.md`, `CAPABILITY_MATRIX.md`.
+- Target contracts: `requirements/04_PRD.md`, `05_UX_FLOWS.md`,
+  `07_DATA_MODEL.md`, `08_API_SPEC.md`, `09_LOCAL_AUTH_AND_TENNIS_ADMIN.md`.
+- Acceptance/traceability: `requirements/11_ACCEPTANCE_TEST_CATALOG.md`,
+  `requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md`.
+- Live backlog: `BACKLOG.md`; standalone DATA-005 и DATA-006 переведены в
+  `ready`, tournament downstream policy выделена в DATA-007
+  (`blocked_decision`), BUG-002 расширен текущим cancel authz drift.
+- Code, immutable baseline и production не изменялись.
+
+### Verification
+- `node scripts/audit/check-docs.mjs`: 45 files, 0 broken links/anchors, 49
+  unique complete findings, 0 duplicate/malformed IDs or invalid statuses.
+- `git diff --check`: passed.
+
+### Remaining
+- D23–D26 описывают target, но не исправляют code: BUG-002, DATA-006 и
+  standalone/ledger DATA-005 требуют Red/Green; DATA-007 остаётся
+  `blocked_decision` до ответа Q-MATCH-003. Нужны API, real-PostgreSQL и browser
+  tests.
+- Backup/RPO/RTO для будущих ценных данных остаётся Q-OPS-003; любые production
+  data operations по-прежнему требуют отдельного явного разрешения.
+
+## 2026-09-06 — Audit foundation и правила Codex/Cursor
+
+### Scope
+- Immutable baseline: `audits/2026-09-06-baseline.md`
+- Live backlog: `BACKLOG.md` (`SEC`, `BUG`, `GAP`, `DATA`, `OPS`, `TECH` IDs)
+- Accepted ADR: D16–D22; updated HISTORY/MATCH/time/cold-start acceptance
+- Backlog lifecycle unified: `confirmed → ready → in_progress → verified_local → verified_prod → done`, with `blocked_decision` branch
+- External blocker: SEC-001 credential rotation; значение секрета не сохраняется
+- Canonical Git: `Gleb20/10is_ball` `main`; рабочая ветка
+  `codex/audit-foundation`; commit/push/deploy не выполнялись
+
+### Changed
+- Canonical docs: `docs/README.md`, `PROJECT_STATUS.md`, `BACKLOG.md`,
+  `CAPABILITY_MATRIX.md`, `OPEN_QUESTIONS.md`, `WORKFLOW.md`, `DECISIONS.md`
+- Entry/deploy/QA: `../README.md`, `DEPLOY.md`, `VERSIONING.md`,
+  `A11Y_CHECKLIST.md`
+- As-built: `architecture/AS_BUILT.md`, `architecture/API_AS_BUILT.md`,
+  `architecture/DATA_MODEL_AS_BUILT.md`, `operations/DEPLOYMENT_AS_BUILT.md`
+- Requirements governance: `requirements/00_README.md`, `04_PRD.md`,
+  `06_NFR_CONSTRAINTS.md`, `11_ACCEPTANCE_TEST_CATALOG.md`,
+  `12_IMPLEMENTATION_ROADMAP_TDD.md`, `13_REQUIREMENTS_TEST_TRACEABILITY.md`,
+  `14_CURSOR_INSTRUCTIONS.md`,
+  `MANIFEST.json`
+- Agent rules (параллельная audit-foundation работа): `../AGENTS.md`,
+  `../apps/api/AGENTS.md`, `../apps/web/AGENTS.md`,
+  `../packages/shared/AGENTS.md`, `../.cursor/rules/*.mdc`
+- Runtime/security: Node 24.20.0 pins, default-off bootstrap без fallback,
+  atomic create/existing outcome и system audit; production без `DATABASE_URL`
+  не запускается; startup/migration errors redacted
+- Database tooling: `TEST_DATABASE_URL` не имеет fallback, ограничен loopback
+  test-named DB и требует `ALLOW_TEST_DATABASE_RESET=1`; `db:migrate` требует
+  explicit complete PostgreSQL URL и не подменяет его PGlite smoke
+- Local PostgreSQL DX: root/API env examples согласованы, Compose требует явные
+  значения и публикует порт только на `127.0.0.1`; existing volume caveat описан
+- Audit automation: docs/link/ID gate, exact route↔OpenAPI baseline drift,
+  staged/worktree/all-refs secret scan и отдельный local-env incident mode,
+  read-only production capture, guarded synthetic seed и `BUG-015`
+  characterization reproducer
+- Evidence: production/local visual baseline 360/440/768/1440, local synthetic
+  route smoke, production HTTP/fingerprint и PostgreSQL 16 critical CI lane
+
+### Verified
+- Исходный baseline был красным: API 2 failed / 40 passed / 1 skipped. После
+  изоляции RNG выполнены три последовательных green full suite; дефект busy+bye
+  не скрыт, а вынесен в `BUG-015` deterministic characterization
+- Node 24.20.0 full test: shared 517 passed + 1 todo; test-utils 4 passed;
+  web 70 passed; API 83 passed + 3 guarded PostgreSQL tests skipped
+- Exact Node 24.20.0 `pnpm install --frozen-lockfile` и полный `pnpm run ci`
+  завершились успешно: audit gates, lint, typecheck, tests, API/web builds
+- Bootstrap focused integration: два concurrent seed дают ровно один `created`,
+  один `existing` и одну durable audit row с system actor
+- Live: Vercel web, direct Render health и proxied health ответили 200 после cold start
+- Browser: public production login на 4 viewport; synthetic local home на 4
+  viewport, key screens на 360px, 17 organizer routes + отдельный admin pass;
+  горизонтальный overflow не найден, полный PRD E2E/axe не заявляется
+- Documentation: automated link/anchor/schema check покрывает immutable baseline
+  48 findings и live backlog 49 после выделения DATA-007
+- Cursor compatibility rules: 6/6 `.mdc` files have delimited frontmatter,
+  non-empty `description` and boolean `alwaysApply`
+- Secret scan: worktree + index + all refs, 0 unreviewed candidates, 0 skipped
+  inputs; 11 exact-hash benign findings в 9 historical loopback blobs reviewed;
+  staged-only blob self-test проходит. Это не подтверждает external rotation
+- Route/OpenAPI: source 60 operations / 54 paths, OpenAPI 15 operations /
+  12 paths, exact inventory unchanged against saved baseline
+- Local web build fingerprint совпал с production HTML/JS/CSS capture; deployed
+  commit SHA этим не доказан
+- PostgreSQL 16 CI lane добавлен и fail-closed; local PostgreSQL runtime был
+  недоступен, поэтому 3 real-PG tests и hosted lane остаются pending
+- Dependency audit: 17 production advisories — 12 high и 5 moderate
+
+### Remaining
+- Исправление product backlog ещё не начато; foundation устранил только риски
+  самого audit/dev контура и bootstrap/runtime configuration.
+- SEC-001 требует внешнего действия в Neon/Render и отрицательной проверки старого доступа.
+- Current production = interim visual regression baseline; Figma = historical,
+  non-authoritative reference (D22).
+
+## 2026-07-25 — Historical Figma visual parity + interaction Screen Flows
+
+> Historical design work. Superseded by D22 on 2026-09-06: этот файл не является
+> authoritative source; current production используется как interim regression baseline.
+
+### Design
+- Rebuilt [10is](https://www.figma.com/design/WBUbQBLKsijwYnQTCVw2Uy/10is) screens for 1:1 layout parity with localhost (Handjet only intentional font delta)
+- New kit pieces: AuthCard, HeroCard, PodiumSlot, ScoreDisplay, Segment, BottomNav v2, JudgeSide
+- Interaction flows: Auth (login states → first password → Home), Start→Match create→Detail, Judge setup/scoring/pending, Tournament sequence, overlays on Match detail
+- Old schematic frames moved to `_Deprecated schematic`
+
+### Docs
+- Visual parity rebuild note (this entry)
+
+## 2026-07-25 — Historical Figma UI Kit + Screen Flows (10is)
+
+> Historical design artifact; source-of-truth claim below was superseded by D22.
+
+### Design
+- Figma file [10is](https://www.figma.com/design/WBUbQBLKsijwYnQTCVw2Uy/10is): Foundations (variables + Handjet text styles), Components (variants + Auto Layout), Shell (iPhone 17 Pro Max 440×956), Screen Flows (auth, primary tabs, matches, tournaments, more, judge, overlays)
+- Typography in mockups: Handjet (pixel direction); web still `Moscow Sans W` until follow-up CSS change
+
+### Docs
+- Historical decision note: Q-UI-4 тогда объявлял Figma + Handjet source of truth;
+  это отменено D22, Handjet rollout не одобрен
+- `PROJECT_STATUS.md` step log
+
+### How to verify
+- Open file in Figma Desktop; pages Cover → Foundations → Components → Flows / *
+
 ## 2026-07-22 — CI: build shared packages before lint
 
 ### CI / root

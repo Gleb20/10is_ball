@@ -1,135 +1,68 @@
-# Tab-10 Project Status
+# Tab-10 — статус проекта
 
-Last updated: 2026-07-22  
-**Product version:** 1.10.1 (prod tournament parity + match create/get on Neon); next planned **1.10.2** (c — match cancel UI) / **1.11.0** (b — admin match ops D15 + bracket V2)  
-Current phase: Bracket construction algorithm (compact / power_of_two) — SE + DE for both  
-Next step: optional release bump; Stage 4 correction still deferred (D13)
+Обновлено: **2026-09-06**. Версия в корневом `package.json`: **1.10.1**.
 
-## Progress
+## Итог
 
-| Phase | Status | Steps done |
-|-------|--------|------------|
-| 0 Foundation | done | 5/5 |
-| 1 Auth & Admin | done | 8/8 (+ role PATCH / UI) + ADM-MATCH D15 |
-| 2 Shell & Profiles | done | 4/4 |
-| 3 Match domain | done | 6/6 + cancel standalone |
-| 4 Judge concurrency | done | 5/5 |
-| 5 Stats / Rankings | done | 4/4 (+ reverseStats for admin delete) |
-| 6 Tournaments | done | 9/9 + V2 domain/API/web (unreleased) + cancel/parity 1.10.1 |
-| 7 Teams & Notifications | done | 4/4 (+ tournament notifs) |
-| 8 Onboarding / Help | done | 4/4 |
-| 9 Hardening | partial | CI + OpenAPI; load test; backup rehearsal; optional: security / mutation / observability |
-| 10 UI polish (mobile-first) | done | UI-0…UI-6 |
+Сервис опубликован и отвечает, но **не готов к полноценной эксплуатации**. Базовая
+цепочка login → match → judge → score и турнирный код существуют, однако аудит
+обнаружил P0-дефекты безопасности, авторизации и целостности данных. Ранее
+выставленные статусы фаз `done` означали наличие реализации, а не подтверждённую
+готовность.
 
-## Phase 10 plan (summary)
+## Проверенный снимок
 
-| Slice | Фокус | Status | Version digit |
-|-------|--------|--------|---------------|
-| UI-0 | Layout primitives, ic-kit exports, safe-area | done | b (с UI-1) |
-| UI-1 | Bottom bar + Start hub + History (D5) | done | b → 1.1.0 |
-| UI-2 | ListRow, StatusChip, AsyncState, FilterBar | done | c → 1.1.1 |
-| UI-3 | Home, Matches flow, Rankings, Profile polish | done | b → 1.2.0 |
-| UI-4 | Judge immersive + landscape | done | b → 1.3.0 |
-| UI-5 | Auth + Admin polish | done | c → 1.3.1 |
-| UI-6 | Visual/a11y QA | done | c → 1.3.2 |
+| Область | Состояние на 2026-09-06 |
+|---|---|
+| Production web/API | Vercel web, direct Render health, Vercel proxy health и live OpenAPI ответили HTTP 200; только read-only probes |
+| Node 24 | repo, CI, Render и package engines закреплены на 24; local validation выполнена на Node **24.20.0** с pnpm 9.15.0 |
+| Текущий full test | shared 517 passed + 1 todo; test-utils 4 passed; web 70 passed; API 83 passed + 3 real-PostgreSQL tests skipped |
+| Детерминизм | после изоляции RNG три последовательных full suite и последний Node 24 run зелёные; известный busy+bye дефект закреплён отдельным `BUG-015` characterization test |
+| Local quality/build | exact Node 24.20.0: frozen install и полный `pnpm run ci` (audit gates, lint, typecheck, tests, API/web builds) прошли |
+| Web artifact fingerprint | local build HTML/JS/CSS hashes совпали с production capture; это не заменяет commit SHA/release metadata |
+| Browser baseline | production login: 4 viewport; local synthetic data: 4 home viewport, key 360px screens и smoke 17 organizer routes + admin; это не полный PRD E2E/axe |
+| PostgreSQL verification | guarded PostgreSQL 16 CI lane содержит fresh-schema/date, concurrent score, stats и bracket smoke; local PostgreSQL runtime отсутствует, поэтому 3 tests skipped и hosted lane ещё не выполнен |
+| Secret location scan | worktree + index + all Git refs: 0 unreviewed candidates, 0 skipped inputs, 11 exact-hash benign findings в 9 historical blobs; ignored `.env*` доступны отдельным opt-in scan; external rotation этим не подтверждается |
+| Security dependencies | 17 production advisories: 12 high и 5 moderate |
+| Route/OpenAPI inventory | source: 60 operations / 54 paths; OpenAPI: 15 operations / 12 paths (25% operation coverage); live version 0.1.0 |
+| Product decisions | D23: cancel только active admin/creator; D24: creator/admin soft void без mandatory reason/second approver; D25: V1 DE preservation не требуется; D26: полный PRD v2 остаётся target |
+| Documentation | immutable baseline: 48 findings; live backlog: 49 после выделения DATA-007; links/anchors/IDs/status schema проверяются автоматически |
+| Релизная синхронизация | версия и опубликованный набор функций не подтверждены единым release artifact |
 
-## Step log (latest)
+## Главные блокеры
 
-### Match cancel for organizer/participant — done (planned v1.10.2)
-- API: `POST /matches/:id/cancel` → `cancelled` (standalone only; assertCanManageMatch)
-- Shared void helper with admin force-close; frees PLAYER_ALREADY_IN_ACTIVE_MATCH / PLAYER_BUSY
-- Web: «Отменить матч» on match detail (waiting / in_progress / pending) with confirm
-- Tests: AT-MATCH-CANCEL-001..003; REQ_ui__match_cancel
+- [SEC-001](BACKLOG.md#sec-001--ротация-скомпрометированного-доступа-к-бд):
+  внешняя ротация credential Neon и обновление Render не подтверждены.
+- Сервер отдаёт password hash в ответе профиля; есть обход обязательной смены
+  временного пароля.
+- Несколько organizer-only операций проверяют только факт входа; есть IDOR между
+  турнирами.
+- Завершение матча, статистика и продвижение сетки не образуют одну транзакцию;
+  параллельные результаты могут потеряться или повредить турнир.
+- Целевая видимость событий и права start/stop/cancel не соблюдаются; D24 void с
+  immutable audit и compensation ещё отсутствует.
+- UI допускает потерю очка при быстром двойном нажатии и не освобождает judge lock
+  при некоторых выходах.
 
-### Admin force-close / delete standalone matches — done (D15, planned v1.11.0)
-- API: `POST /admin/matches/:id/force-close`, `DELETE /admin/matches/:id`; only `kind=standalone`
-- Force-close → `cancelled` (no winner/stats); clears PLAYER_BUSY / PLAYER_ALREADY_IN_ACTIVE_MATCH
-- Delete → purge sessions/participants/match + reverseStats if finished/stopped
-- Web: Match detail + History admin CTAs with confirm dialogs
-- Tests: AT-ADM-MATCH-001..006; REQ_ui__admin_match_ops
+Полный зафиксированный отчёт: [baseline audit](audits/2026-09-06-baseline.md).
+Текущие приоритеты и критерии проверки: [BACKLOG.md](BACKLOG.md).
 
-### Prod hotfix — Date in sql on postgres-js — done (v1.10.1)
-- API: judge/rankings date filters via Drizzle operators (Neon prod regression)
-- Tests: INT_match__get_after_create; optional postgres-date.integration
+## Следующий этап
 
-### Prod tournament parity — done (v1.10.1)
-- Neon schema drift: ALTER missing tournament columns on boot
-- Cancel before start; withdraw gated + NOT_A_PARTICIPANT
-- Organizer roster heal/sync; create compensation
+Сначала закрыть внешнюю ротацию секрета и P0-пакет `SEC`/`DATA`/`BUG`. Локальный
+quality baseline уже зелёный; real-PostgreSQL CI и затем browser E2E должны
+подтверждать каждое core-flow исправление.
+Q-MATCH-001, Q-MATCH-002, Q-DATA-001 и Q-PRODUCT-001 закрыты решениями D23–D26; BUG-002,
+DATA-006 и standalone/ledger DATA-005 готовы к реализации; DATA-007 остаётся
+`blocked_decision` до ответа Q-MATCH-003 о void турнирного матча с уже сыгранными
+downstream matches. Полный PRD v2 закреплён D26. Ни один reset/recreate production
+этой фиксацией не разрешён. Новые
+продуктовые решения принимаются только через
+[OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) и [DECISIONS.md](DECISIONS.md).
 
-### Compact double elimination — done (unreleased)
-- Shared: `generate-compact-de.ts`; golden N=3/5/6/7; property N=3..32
-- API/UI: DE+compact unlocked; dialog both options enabled
-- ADR D14 updated
+## Визуальный статус
 
-### Bracket construction algorithm choice — done (unreleased)
-- Shared: compact SE V2 + Po2 SE/DE; prepare pipeline; reject compact DE
-- API: column + default-preservation; integrity mismatch
-- Web: algorithm dialog; DE compact disabled
-- ADR D14; Stage 4 correction still deferred (D13)
-
-### Challonge-inspired bracket V2 — Stages 1–3 done (unreleased)
-- Domain: `packages/shared/src/bracket-v2/`; V1 parallel + characterization
-- API: new generate → V2; V1 read/play; `bracket_state_version`; `tournament_bracket_match_id`
-- Web: V2 VM + V1 legacy display via `parseBracketJson`
-- Stage 4: correction **stopped** — ADR D13 (no stats compensate)
-
-### Roster / notifications / compact SE — done (v1.10.0)
-- Invite statuses + field clear; profile badge; Актуальные; N=5 → 1 bye (V1 only)
-
-### Bracket connectors rewrite — done (v1.9.2)
-- Winner SVG curve → next card; loser ↓ (LB) / ✕ (out)
-
-### Bracket UX BYE + connectors — done (v1.9.1)
-- Challonge placement; live vs labels; hide roster after lock
-
-### Challonge-like SE/DE + avatars — done (v1.9.0)
-- DE topology + GF reset; bracket bands; meme avatars 1..10 on user/guest; show in match/judge/bracket
-
-### Tournament playable UX — done (v1.8.0)
-- UserPicker + organizer auto-roster + displayName; inline action errors
-- CSS TournamentBracket (names/scores/CTA); judge↔tournament navigation; finished readonly
-
-### Working tournaments — done (v1.7.0)
-- Lifecycle + invites; start→matches; advancement; stop; DE start; notifications
-
-### Swap ↔ + mercy after undo — done (v1.6.3)
-- Setup: ↔ снова между плашками счёта (`judge-board--setup`)
-- Mercy: лидер ≥ N и соперник 0 (D8); AT-MATCH-004c — Undo случайного очка → 5:0 finish
-
-### Mercy + setup board — done (v1.6.2)
-- Mercy только N:0 / 0:N (ADR D8); create default «Игрок»; setup = board; serve badge + ракетка
-
-### Judge UX polish — done (v1.6.1)
-- Undo replay только `point_awarded` (ровно −1 очко)
-- Setup: стрелка ↔ вместо чекбоксов; `startedAt` при judge/setup
-- Acquire: любой active user (ADR D7); +1 внутри ячеек; выход после confirmFinish
-
-### Judge UX slice — done (v1.6.0)
-- **P0:** fix зависания «Подключение судьи» при ошибке acquire; `activeJudge` в GET match; idempotent re-acquire; AT-JUDGE-003
-- **P1:** mercy 5:0 в создании матча; live-таймер; кнопки «+1» вместо клика по всей панели
-- **P2:** pre-game setup (первый подающий, swap сторон, flip экрана); readonly счёт; Match detail — статус судьи
-
-### P0+P1 bugfix — done (v1.5.0, branch `cursor/p0-p1-bugfix-058e`)
-- **P0 API:** atomic score version, idempotency key required, CSRF on mutations, judge/stop authz, RANK-001 sort + calendar week/month, participant displayName in match API, 2v2 serve order
-- **P1 Web:** `/notifications`, challenge prefill, stop match UI, 404, AsyncState form errors, auth polish, history sort
-
-### Admin role management — done (v1.4.0)
-- Create with role `user`/`admin`; PATCH role for others (not self)
-- Confirm dialog; revoke sessions on role change; last-admin guard
-- Deploy: API (Render) first, then Web (Vercel)
-
-### Phase 10 UI-6 — Visual/a11y QA — done (v1.3.2)
-### Phase 10 UI-5 — Auth + Admin polish — done (v1.3.1)
-### Phase 10 UI-4 — Judge immersive — done (v1.3.0)
-### Phase 10 UI-0…UI-3 — done
-
-## Manual smoke
-
-```bash
-pnpm dev
-# 360×640: tabs + Tab focus; /login skip→main; judge immersive
-# /admin: создать с ролью admin; promote существующего user → confirm → re-login
-# Tournament DE: WB/LB bands; GF reset if LB wins GF1; avatars on bracket/judge
-# Prod after API redeploy: create with «участвую» → organizer named on roster; Cancel before start
-```
+Current production — временный visual regression baseline до отдельно
+согласованного redesign. Figma-работа 2026-07-25 сохранена как historical
+reference и не является source of truth. Подтверждённые a11y/layout defects
+production не нормализуются и остаются в `GAP-011` (ADR D22).

@@ -1,5 +1,184 @@
 # Decisions (ADR)
 
+Этот файл — индекс и полные записи продуктовых/технических решений. При конфликте
+более поздний ADR с явной ссылкой `supersedes` имеет приоритет. История не
+удаляется.
+
+## Индекс
+
+| ADR | Тема | Статус |
+|---|---|---|
+| D1 | Stack | active |
+| D2 | Test database without Docker | active, fidelity risk tracked |
+| D3 | Initial open-question defaults | mixed / historical table |
+| D4 | Versioning semantics | active; Git/release-note portion superseded by D16/D19 |
+| D5 | Mobile shell IA | active |
+| D6 | Admin role change | active |
+| D7 | Who may acquire judge | active |
+| D8 | Mercy rule | active |
+| D9 | Tournament bracket storage | active for current implementation |
+| D10 | Meme avatar presets | active; overrides upload/regenerate PRD |
+| D11 | Compact SE bye | superseded for new generation by D12/D14 |
+| D12 | Match-centric bracket V2 | active for V2; V1 DE preservation superseded by D25 |
+| D13 | Result correction deferred | superseded by D19 target; implementation pending |
+| D14 | Bracket construction algorithm choice | active for V2; V1 DE legacy clause superseded by D25 |
+| D15 | Admin standalone match operations | cancel actor superseded by D23; finished hard delete superseded by D19/D24 |
+| D16 | Documentation governance | active |
+| D17 | Event visibility | active |
+| D18 | Match start and early stop rights | active |
+| D19 | Void instead of hard delete | active invariant; actor/reason/safeguard resolved by D24 |
+| D20 | Europe/Moscow calendar convention | active |
+| D21 | Render Free cold-start UX | active |
+| D22 | Visual regression baseline | active; Figma non-authoritative |
+| D23 | Standalone cancel rights and safeguard | active |
+| D24 | Finished-match void authorization | active |
+| D25 | Legacy V1 DE retirement and data-operation boundary | active |
+| D26 | Full PRD v2 remains the product target | active |
+
+## D16 — Documentation governance (2026-09-06)
+
+**Decision:** ADR → PRD/acceptance → implementation contracts is the precedence
+order for target behaviour. As-built documents describe current code without
+turning defects into requirements. [`BACKLOG.md`](BACKLOG.md) is live;
+[`audits/2026-09-06-baseline.md`](audits/2026-09-06-baseline.md) is immutable;
+[`CHANGELOG_DEV.md`](CHANGELOG_DEV.md) is append-only reverse chronology. Every
+product/code change follows [`WORKFLOW.md`](WORKFLOW.md).
+
+**Why:** previous status/roadmap mixed implemented, verified and deployed states,
+which made a `done` label unreliable.
+
+## D17 — Event visibility (2026-09-06)
+
+**Decision:** an active match or tournament is visible only to its organizer,
+participants and **current active judge**. A completed event is visible to every
+active (`status != blocked`) club user. Tutorial events never enter shared lists or
+history.
+
+**Why:** closed-club history may be shared after completion, while live events need
+contextual access and tutorial isolation.
+
+## D18 — Match start and early stop rights (2026-09-06)
+
+**Decision:** only match creator/organizer may start a match. Early stop may be
+performed by creator/organizer or the current active judge. Being a participant by
+itself is insufficient.
+
+Cancellation is a separate operation with its own actor/state rules in D23; its
+rights are not inferred from early stop.
+
+## D19 — Void instead of hard delete (2026-09-06)
+
+**Decision:** an erroneously finished match is corrected only through `void`.
+Original facts remain in an immutable audit trail; already applied statistics are
+compensated; dependent tournament state must be invalidated/reconciled. Hard delete
+of finished sporting data is forbidden.
+
+D24 resolves who can initiate void, makes a second approval unnecessary and sets
+the confirmation safeguard. This ADR still supersedes the finished-match
+hard-delete part of D15 and turns the preferred model in D13 into a required
+target invariant.
+
+## D20 — Europe/Moscow calendar convention (2026-09-06)
+
+**Decision:** user-facing time and calendar day/week/month boundaries use
+`Europe/Moscow`. Absolute instants are stored and transported in UTC; that storage
+rule is a technical convention derived from the product timezone, not a separate
+user-facing timezone choice.
+
+**Why:** calendar rankings and labels must not depend on host/browser timezone.
+
+## D21 — Render Free cold-start UX (2026-09-06)
+
+**Decision:** up to 60 seconds may be tolerated only while a sleeping Render Free
+service wakes. During that interval the UI explicitly says the service is waking/
+loading, applies a bounded timeout and offers Retry. Once awake, ordinary request
+SLO applies and must not be hidden by the cold-start allowance.
+
+## D22 — Visual regression baseline; Figma is reference only (2026-09-06)
+
+**Decision:** current production UI is the interim visual regression baseline while
+bugs are stabilized. The Figma file created 2026-07-25 is non-authoritative
+historical reference; it cannot justify code changes by itself. Any future redesign
+or replacement reference requires a separate explicit decision.
+
+**Why:** no approved evidence establishes Figma as the intended current product,
+while a stable regression baseline is necessary for repair work.
+
+Evidence capture: [`audit/evidence/visual-baseline/README.md`](audit/evidence/visual-baseline/README.md).
+
+## D23 — Standalone cancel rights and safeguard (2026-09-06)
+
+**Decision:** an active standalone match in `waiting`, `in_progress` or
+`pending_confirmation` may be cancelled only by an active `admin` or by the
+match creator (`created_by_user_id`). A participant or current active judge who
+is neither creator nor admin cannot cancel it. Early stop remains a separate
+sporting action under D18: it records a winner and affects statistics; cancel
+invalidates the unconfirmed event without a winner or statistics.
+
+A reason is optional. The UI must not submit cancel/force-close/delete from the
+first click: it shows an explicit confirmation step naming the match and the
+effect. Server-side actor, state, idempotency and version checks remain mandatory;
+the dialog is a mistake-prevention safeguard, not an authorization boundary.
+
+The admin force-close path from D15 may remain an admin-only way to reach the same
+soft `cancelled` outcome. D15's admin-only purge of a **non-finished** standalone
+record is not expanded to creators and, while it exists, uses the same explicit
+confirmation safeguard. This decision does not authorize bulk deletion, database
+reset or any production mutation.
+
+**Resolution:** This resolves Q-MATCH-001. Cancel must free a stuck player without
+letting participant/judge erase it; destructive controls need a deliberate action.
+
+## D24 — Finished-match void authorization (2026-09-06)
+
+**Decision:** only an active `admin` or the match creator
+(`created_by_user_id`) may void a finished/stopped match. A second approver is not
+required. The reason is optional; when supplied it is preserved in the audit.
+Before the request, the UI requires an explicit confirmation step that explains
+the soft invalidation and statistics impact.
+
+Void never hard-deletes or rewrites the original match/event facts. It appends an
+immutable audit record with actor, timestamp, prior result/version and optional
+reason, compensates already applied statistics idempotently and reconciles or
+invalidates dependent tournament state in the same consistent operation. Repeated
+void is idempotent. Unauthorized or stale requests leave all state unchanged.
+
+This resolves Q-MATCH-002, supersedes D19's open actor/approval clause and the
+finished-result delete/"ops purge" parts of D15. It does not grant admins direct
+score editing.
+
+**Why:** creator/admin authority is sufficient for the closed club, while soft
+invalidation, audit, compensation and confirmation protect sporting history.
+
+## D25 — Legacy V1 DE retirement and data-operation boundary (2026-09-06)
+
+**Decision:** legacy schemaVersion 1 double-elimination brackets do not require
+migration, read/play compatibility or preservation. Supported tournament play is
+V2; V1 DE input must fail closed in bounded time instead of entering the known
+hang path. The legacy V1 DE clauses in D12 and D14 are superseded. V1 single
+elimination is outside this decision.
+
+The current production installation has no valuable data that needs a V1 DE
+preservation programme. This fact is **not** permission to mutate it: reset,
+recreate, truncate, purge or any other production data operation still requires a
+separate explicit user authorization with an exact target and verification plan.
+
+**Resolution:** This resolves Q-DATA-001. Maintaining a defective unused legacy
+path adds risk without product value; the operational permission boundary remains
+independent from data value.
+
+## D26 — Full PRD v2 remains the product target (2026-09-06)
+
+**Decision:** the complete current `requirements/04_PRD.md` is the functional
+target. A declared but unimplemented capability remains an in-scope product gap
+until a later explicit ADR moves it to future scope and updates PRD, acceptance
+and traceability in the same change. P0/P1 risk work controls delivery order but
+does not silently reduce the target.
+
+**Resolution:** This closes Q-PRODUCT-001 and preserves the audit-plan scope.
+Backlog priority may change as evidence changes; omission from the current sprint
+does not mean removal from the product.
+
 ## D1 — Stack (2026-07-20)
 
 **Decision:** TypeScript monorepo with pnpm workspaces; Fastify + Drizzle API; Vite + React 19 + ic-kit web; Vitest; Playwright later for E2E.
@@ -32,9 +211,13 @@
 - **c** — баги, UX-полировка, мелкие правки
 - Увеличение **a** или **b** сбрасывает цифры справа в 0 (1.1.1 + b → 1.2.0; + a → 2.0.0)
 
-**Git:** каждый коммит — детальное тело по [`.cursor/rules/git-commits.mdc`](../.cursor/rules/git-commits.mdc).
+**Git (updated by D16):** commit/push/tag/version bump требуют явного разрешения
+задачи. Формат handoff и журнал определяет [`WORKFLOW.md`](WORKFLOW.md), а
+[`.cursor/rules/git-commits.mdc`](../.cursor/rules/git-commits.mdc) остаётся thin
+permission pointer, не отдельным шаблоном commit message.
 
-**Current release:** 1.10.1 (planned next **b** → 1.11.0: admin match force-close/delete D15)
+**Current recorded release:** 1.10.1. Следующая версия не назначается автоматически.
+План hard-delete из прежней release note отменён для finished results D19.
 
 ## D11 — Compact SE bye vs Challonge DE (2026-07-21)
 
@@ -55,7 +238,7 @@
 - `tournaments.bracket_construction_algorithm` = setting for next generate; `bracketJson.constructionAlgorithm` = stored graph. Unstarted live bracket: must match or `BRACKET_ALGORITHM_MISMATCH`.
 - API default-preservation: explicit request wins; regenerate without body keeps existing; first generate → `compact`.
 - Compact: no `bracketSize`; Po2: required `bracketSize = nextPowerOfTwo(N)`.
-- Legacy: V1 SE → compact; V1 DE → read-only `legacy` / NULL column; V2 without field → power_of_two.
+- Legacy historical mapping: V1 SE → compact; the former V1 DE read-only clause is superseded by D25; V2 without field → power_of_two.
 - After tournament start, algorithm cannot change.
 
 **Why:** Amateur-friendly compact and classic Po2 for both SE and DE; static LB topology avoids runtime “available path” graphs.
@@ -70,7 +253,8 @@
 - SE V2 pads to next power of 2 with Challonge seed order; `tournaments.third_place_enabled` is `NULL` for legacy, `true` for new SE, `false` for DE.
 - Sources (`sourceA`/`sourceB`) are canonical; destinations are derived via `buildDestinationIndex`.
 - No cached resolved participants; always `resolveSource`. Concurrency: DB column `tournaments.bracket_state_version` only (not in JSON).
-- Legacy V1 `bracket_json` (slots) remains **read/playable**; new generate always V2.
+- Legacy V1 `bracket_json` (slots) was originally read/playable; D25 supersedes
+  this compatibility promise for V1 DE. New generate always V2.
 - GF2: `winner(GF1)` × `loser(GF1)` with `activationCondition` when LB champ wins GF1; derived state `inactive` otherwise.
 
 **Why:** Fixes confirmed V1 hangs (BYE/empty LB), rematch wiring, and UI topology assumptions; keeps old tournaments working.
@@ -88,6 +272,11 @@
 **Why:** Plan Stage 4 stop-gate — correction without compensate corrupts rankings.
 
 ## D15 — Admin force-close / delete standalone matches (2026-07-22)
+
+**Superseded scope:** D23 replaces the cancel actor/safeguard policy. D19/D24
+forbid hard delete of finished/stopped results and replace it with creator/admin
+void. The historical bullets below remain as implementation history, not the
+target where they conflict with those ADRs.
 
 **Decision:**
 
@@ -143,7 +332,7 @@
 |----|----------|-----|
 | Q-UI-2 Create match | Отдельный route `/matches/new` (wizard), не modal поверх списка | Согласовано с «Начать» → «Матч» (`05_UX_FLOWS` §5) |
 | Q-UI-3 Desktop | База — колонка ~360–480px; ≥768px шире контент, **тот же** порядок табов и действий | `05_UX_FLOWS` §15 |
-| Q-UI-4 Design source | Нет отдельного Figma MVP; визуал = ic-kit (`data-brand=ic`) + токены | D1 stack |
+| Q-UI-4 Design source | **Superseded by D22.** Current production = interim visual regression baseline. Figma `10is` = non-authoritative historical reference; Handjet rollout не одобрен. | Baseline-аудит не нашёл подтверждения, что Figma была принята как целевой продукт |
 
 ### Explicit non-goals (чтобы не противоречить прототипу)
 

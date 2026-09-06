@@ -525,24 +525,48 @@ export class AuthService {
     return row;
   }
 
-  async seedAdmin(email: string, password: string): Promise<AuthUser> {
+  async seedAdmin(
+    email: string,
+    password: string,
+  ): Promise<{ user: AuthUser; created: boolean }> {
     const existing = await this.db.query.users.findFirst({
       where: eq(users.email, normalizeEmail(email)),
     });
-    if (existing) return toAuthUser(existing);
+    if (existing) return { user: toAuthUser(existing), created: false };
     const passwordHash = await hashPassword(password);
-    const [row] = await this.db
-      .insert(users)
-      .values({
-        email: normalizeEmail(email),
-        passwordHash,
-        role: "admin",
-        firstName: "Admin",
-        lastName: "Tab10",
-        mustChangePassword: false,
-        generatedAvatarKey: "avatar_1",
-      })
-      .returning();
-    return toAuthUser(row!);
+    return this.db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(users)
+        .values({
+          email: normalizeEmail(email),
+          passwordHash,
+          role: "admin",
+          firstName: "Admin",
+          lastName: "Tab10",
+          mustChangePassword: false,
+          generatedAvatarKey: "avatar_1",
+        })
+        .onConflictDoNothing({ target: users.email })
+        .returning();
+
+      if (!row) {
+        const concurrent = await tx.query.users.findFirst({
+          where: eq(users.email, normalizeEmail(email)),
+        });
+        if (!concurrent) {
+          throw new Error("Bootstrap admin conflict did not yield an account");
+        }
+        return { user: toAuthUser(concurrent), created: false };
+      }
+
+      await tx.insert(auditLogs).values({
+        actorUserId: null,
+        action: "admin.bootstrap_provisioned",
+        entityType: "user",
+        entityId: row.id,
+        meta: { source: "startup-bootstrap" },
+      });
+      return { user: toAuthUser(row), created: true };
+    });
   }
 }

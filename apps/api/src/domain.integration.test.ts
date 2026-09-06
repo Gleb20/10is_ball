@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { FakeClock } from "@tab10/test-utils";
 import { createPgliteDb } from "./db/client.js";
 import { buildApp } from "./app.js";
@@ -1416,11 +1416,17 @@ describe("match and judge integration", () => {
         payload: { userId: u.json().user.id },
       });
     }
-    await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${tid}/bracket`,
-      cookies: { tab10_session: userACookie },
-    });
+    // Pin a bracket where the busy organizer must play immediately.
+    const random = vi.spyOn(Math, "random").mockReturnValue(0.999_999);
+    try {
+      await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${tid}/bracket`,
+        cookies: { tab10_session: userACookie },
+      });
+    } finally {
+      random.mockRestore();
+    }
 
     const blocked = await app.inject({
       method: "POST",
@@ -1688,11 +1694,18 @@ describe("match and judge integration", () => {
         payload: { userId: u.json().user.id },
       });
     }
-    await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${tid}/bracket`,
-      cookies: { tab10_session: userACookie },
-    });
+    // Keep the acceptance precondition deterministic. BUG-015 below records
+    // the complementary bye behavior as an explicit characterization test.
+    const random = vi.spyOn(Math, "random").mockReturnValue(0.999_999);
+    try {
+      await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${tid}/bracket`,
+        cookies: { tab10_session: userACookie },
+      });
+    } finally {
+      random.mockRestore();
+    }
 
     const blocked = await app.inject({
       method: "POST",
@@ -1716,6 +1729,77 @@ describe("match and judge integration", () => {
       url: `/api/v1/tournaments/${tid}/start`,
       cookies: { tab10_session: userACookie },
     });
+    expect(started.statusCode).toBe(200);
+    expect(started.json().tournament.status).toBe("in_progress");
+  });
+
+  it("BUG-015 characterization: busy organizer with a bye incorrectly starts tournament", async () => {
+    const waiting = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Busy organizer with bye",
+        format: "1v1",
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    expect(waiting.statusCode).toBe(200);
+    expect(waiting.json().match.status).toBe("waiting");
+
+    const tournament = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Known busy-bye defect",
+        format: "single_elimination",
+        organizerParticipates: true,
+      },
+    });
+    expect(tournament.statusCode).toBe(200);
+    const tournamentId = tournament.json().tournament.id as string;
+
+    for (const email of ["bye1@t.local", "bye2@t.local"]) {
+      const user = await app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: { email, firstName: "P", lastName: "L" },
+      });
+      expect(user.statusCode).toBe(200);
+      const added = await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${tournamentId}/participants`,
+        cookies: { tab10_session: userACookie },
+        payload: { userId: user.json().user.id },
+      });
+      expect(added.statusCode).toBe(200);
+    }
+
+    const random = vi.spyOn(Math, "random").mockReturnValue(0);
+    try {
+      const bracket = await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${tournamentId}/bracket`,
+        cookies: { tab10_session: userACookie },
+      });
+      expect(bracket.statusCode).toBe(200);
+    } finally {
+      random.mockRestore();
+    }
+
+    const started = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tournamentId}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+
+    // This is the observed defective result. Once BUG-015 is fixed, change
+    // this into an acceptance assertion for 400 / PLAYER_ALREADY_IN_ACTIVE_MATCH.
     expect(started.statusCode).toBe(200);
     expect(started.json().tournament.status).toBe("in_progress");
   });

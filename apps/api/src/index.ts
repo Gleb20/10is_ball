@@ -4,6 +4,13 @@ import {
   createPostgresDb,
 } from "./db/client.js";
 import { buildApp } from "./app.js";
+import {
+  ensureBootstrapAdmin,
+  resolveBootstrapAdminConfig,
+} from "./bootstrap-admin.js";
+import { assertRuntimeDatabaseConfig } from "./audit-ephemeral.js";
+import { safeStartupErrorMessage } from "./safe-startup-error.js";
+import { loadLocalEnv } from "./load-local-env.js";
 
 async function ensurePostgresSchema(url: string) {
   if (process.env.MIGRATE_ON_BOOT === "0") return;
@@ -25,7 +32,12 @@ async function ensurePostgresSchema(url: string) {
 }
 
 async function main() {
-  const url = process.env.DATABASE_URL;
+  loadLocalEnv();
+  assertRuntimeDatabaseConfig(process.env);
+  // Validate the explicit bootstrap request before touching the database. A
+  // missing or weak credential must prevent startup, not produce partial state.
+  const bootstrapAdmin = resolveBootstrapAdminConfig(process.env);
+  const url = process.env.DATABASE_URL?.trim();
   if (url) {
     await ensurePostgresSchema(url);
   }
@@ -39,12 +51,7 @@ async function main() {
   }
   const { app, services } = await buildApp({ db });
 
-  if (process.env.SEED_ADMIN !== "0") {
-    await services.auth.seedAdmin(
-      process.env.SEED_ADMIN_EMAIL ?? "admin@tab10.local",
-      process.env.SEED_ADMIN_PASSWORD ?? "AdminPass1!",
-    );
-  }
+  await ensureBootstrapAdmin(services.auth, bootstrapAdmin);
   await services.help.seedFaq();
 
   const port = Number(process.env.PORT ?? 3001);
@@ -66,6 +73,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(err);
+  console.error(`API startup failed: ${safeStartupErrorMessage(err)}`);
   process.exit(1);
 });

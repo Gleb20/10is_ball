@@ -4,27 +4,52 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ci:
+  quality:
+    name: Quality and PGlite tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run ci
+
+  postgres-integration:
+    name: PostgreSQL critical integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: tab10
-          POSTGRES_PASSWORD: tab10
-          POSTGRES_DB: tab10
+          POSTGRES_USER: tab10_test
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: tab10_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U tab10 -d tab10"
+          --health-cmd "pg_isready -U tab10_test -d tab10_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-    env:
-      DATABASE_URL: postgres://tab10:tab10@localhost:5432/tab10
-      NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -32,12 +57,14 @@ jobs:
           version: 9.15.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Workspace packages export dist/*.d.ts — build before api/web tsc lint
-      - run: pnpm --filter @tab10/shared --filter @tab10/test-utils run build
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm build
+      - name: Build workspace dependencies
+        run: pnpm --filter @tab10/shared --filter @tab10/test-utils run build
+      - name: Run migration, concurrency, statistics, and bracket smoke
+        env:
+          NODE_ENV: test
+          ALLOW_TEST_DATABASE_RESET: "1"
+          TEST_DATABASE_URL: postgresql://tab10_test:ci-only-password@127.0.0.1:5432/tab10_test
+        run: pnpm --filter @tab10/api run test:postgres

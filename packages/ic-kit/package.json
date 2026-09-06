@@ -6,7 +6,7 @@
   "type": "module",
   "license": "SEE LICENSE IN LICENSE",
   "engines": {
-    "node": ">=20"
+    "node": "24.x"
   },
   "files": [
     "dist"

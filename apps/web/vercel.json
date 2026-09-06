@@ -4,6 +4,11 @@
   "installCommand": "cd ../.. && corepack enable && corepack prepare pnpm@9.15.0 --activate && pnpm install --frozen-lockfile --prod=false --filter \"@tab10/web...\"",
   "buildCommand": "cd ../.. && pnpm --filter @tab10/shared build && pnpm --filter @tab10/web build",
   "outputDirectory": "dist",
+  "git": {
+    "deploymentEnabled": {
+      "codex/audit-foundation": false
+    }
+  },
   "rewrites": [
     {
       "source": "/api/:path*",

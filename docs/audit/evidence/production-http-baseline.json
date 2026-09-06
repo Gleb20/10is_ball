@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-06T15:19:35.364Z",
+  "mutationPolicy": "read-only GET requests",
+  "targets": [
+    {
+      "name": "web",
+      "requestedUrl": "https://tab-10.vercel.app/",
+      "finalUrl": "https://tab-10.vercel.app/",
+      "status": 200,
+      "durationMs": 265,
+      "contentType": "text/html; charset=utf-8",
+      "contentLength": 462,
+      "sha256": "8d923f0e7e9f57bc8b96c97eee5c1bdfbc53292253f03e08cf04b66ac616b820",
+      "localBuild": {
+        "htmlSha256": "8d923f0e7e9f57bc8b96c97eee5c1bdfbc53292253f03e08cf04b66ac616b820",
+        "htmlMatches": true
+      },
+      "assets": [
+        {
+          "url": "https://tab-10.vercel.app/assets/index-CE1x96sK.js",
+          "status": 200,
+          "contentLength": 4595965,
+          "sha256": "62c7b5da990360ea0672be076a8302f931d0a094ac92416bda10ebc292d034db",
+          "localSha256": "62c7b5da990360ea0672be076a8302f931d0a094ac92416bda10ebc292d034db",
+          "matchesLocalBuild": true
+        },
+        {
+          "url": "https://tab-10.vercel.app/assets/index-CmYfyljd.css",
+          "status": 200,
+          "contentLength": 706237,
+          "sha256": "7a1f51d3f96a7c27730a9928c9a6bc5e7eeb1753a3cda3e90df14a80dc951863",
+          "localSha256": "7a1f51d3f96a7c27730a9928c9a6bc5e7eeb1753a3cda3e90df14a80dc951863",
+          "matchesLocalBuild": true
+        }
+      ]
+    },
+    {
+      "name": "apiHealth",
+      "requestedUrl": "https://one0is-ball.onrender.com/health",
+      "finalUrl": "https://one0is-ball.onrender.com/health",
+      "status": 200,
+      "durationMs": 249,
+      "contentType": "application/json; charset=utf-8",
+      "contentLength": 49,
+      "sha256": "c77c297e7a04451f1580a505594d14c0c6704249a97b64f37337ed59fc0e9270"
+    },
+    {
+      "name": "proxyHealth",
+      "requestedUrl": "https://tab-10.vercel.app/health",
+      "finalUrl": "https://tab-10.vercel.app/health",
+      "status": 200,
+      "durationMs": 107,
+      "contentType": "application/json; charset=utf-8",
+      "contentLength": 49,
+      "sha256": "2b9012b8dd5ed8aa2b1d78886646f9b08dc4f3e09e1fddf50517410b33091856"
+    },
+    {
+      "name": "openApi",
+      "requestedUrl": "https://one0is-ball.onrender.com/api/v1/openapi.json",
+      "finalUrl": "https://one0is-ball.onrender.com/api/v1/openapi.json",
+      "status": 200,
+      "durationMs": 84,
+      "contentType": "application/json; charset=utf-8",
+      "contentLength": 1002,
+      "sha256": "2f9e1be073751081aa164c36dd60289f287bf69edf71874218d6dcbabcfd5e6a",
+      "openApiVersion": "3.0.3",
+      "apiVersion": "0.1.0",
+      "pathCount": 12
+    }
+  ]
+}

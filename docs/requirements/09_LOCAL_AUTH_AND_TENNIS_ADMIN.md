@@ -25,7 +25,15 @@
 ### `admin`
 Имеет все функции `user` и локальную панель пользователей.
 
-Дополнительно (ADR D15): может **принудительно закрыть** (`cancelled`, без победителя/статистики) и **удалить из истории** только матчи `kind=standalone`. Турнирные и tutorial — запрещены. Проверка MATCH-009 («игрок уже в активном матче») не снимается.
+Дополнительно (ADR D23/D24): active admin может **принудительно закрыть** active
+standalone через тот же soft `cancelled` outcome, который доступен создателю, и
+может void finished/stopped match. Удаление finished/stopped/voided результата
+запрещено: void сохраняет исходные факты, audit и компенсирует статистику. Hard
+purge остаётся admin-only только для non-finished standalone записи (D15
+superseded scope). Cancel, void и допустимый purge требуют отдельного явного
+confirmation в UI; причина cancel/void опциональна. Tournament и tutorial для
+cancel/purge запрещены. Проверка MATCH-009 («игрок уже в активном матче») не
+снимается.
 
 Рекомендация: защитить invariant «в системе всегда остаётся минимум один активный admin».
 
@@ -87,7 +95,8 @@
 3. просмотр/редактирование;
 4. confirm modal блокировки;
 5. reset password с одноразовым выводом;
-6. lightweight audit history пользователя.
+6. lightweight audit history пользователя;
+7. explicit confirmation для force-close, void и допустимого non-finished purge.
 
 Не включать:
 - массовый импорт;
@@ -109,4 +118,9 @@
 - нельзя заблокировать/понизить последнего активного admin;
 - email unique case-insensitively;
 - открытый временный пароль нигде не сохраняется и повторно не читается;
-- admin force-close/delete только standalone (AT-ADM-MATCH-*).
+- admin force-close active match проверяется отдельно (AT-ADM-MATCH-*);
+- finished sporting result не hard-delete: только void + immutable audit + stats
+  compensation (D19/D24); разрешены active admin или creator, reason optional,
+  второго approver нет;
+- participant/current judge без creator/admin роли не может cancel/void; UI
+  confirmation не заменяет server-side authorization/version/idempotency checks.

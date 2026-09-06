@@ -1,0 +1,68 @@
+{
+  "capturedAt": "2026-09-06T15:31:50.178Z",
+  "timezone": "Europe/Moscow",
+  "url": "https://tab-10.vercel.app/login",
+  "capture": "viewport screenshot",
+  "viewports": [
+    {
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "file": "login-360x640.jpg",
+      "clientHeight": 640,
+      "clientWidth": 360,
+      "heading": "Вход",
+      "overflowX": false,
+      "overflowY": true,
+      "scrollHeight": 672,
+      "scrollWidth": 360,
+      "url": "https://tab-10.vercel.app/login"
+    },
+    {
+      "viewport": {
+        "width": 440,
+        "height": 956
+      },
+      "file": "login-440x956.jpg",
+      "clientHeight": 956,
+      "clientWidth": 440,
+      "heading": "Вход",
+      "overflowX": false,
+      "overflowY": true,
+      "scrollHeight": 988,
+      "scrollWidth": 440,
+      "url": "https://tab-10.vercel.app/login"
+    },
+    {
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "file": "login-768x1024.jpg",
+      "clientHeight": 1024,
+      "clientWidth": 768,
+      "heading": "Вход",
+      "overflowX": false,
+      "overflowY": true,
+      "scrollHeight": 1056,
+      "scrollWidth": 768,
+      "url": "https://tab-10.vercel.app/login"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "file": "login-1440x900.jpg",
+      "clientHeight": 900,
+      "clientWidth": 1440,
+      "heading": "Вход",
+      "overflowX": false,
+      "overflowY": true,
+      "scrollHeight": 932,
+      "scrollWidth": 1440,
+      "url": "https://tab-10.vercel.app/login"
+    }
+  ]
+}
