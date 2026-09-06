@@ -3,6 +3,32 @@
 Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
 записи сохраняются как история и могут быть помечены `superseded` новой записью.
 
+## 2026-09-06 — Коррекция first-run PostgreSQL CI characterization
+
+### Scope
+- `TECH-001`, `TECH-004`; draft PR
+  [`#3`](https://github.com/Gleb20/10is_ball/pull/3), initial workflow run
+  `34048088511`, PostgreSQL job `101526650172`.
+
+### Changed
+- `AT-MATCH-007/011` real-PostgreSQL smoke теперь сохраняет собственно race:
+  два конкурентных score command с одной expected version дают `200 + 409`,
+  после чего матч с допустимым target 3 доигрывается последовательными версиями
+  и статистика победителя проверяется ровно один раз.
+- `AT-TRN-010` учитывает целевой default single-elimination: после двух
+  полуфиналов материализованы и финал, и матч за третье место (`4 total`,
+  `2 finished`, `2 waiting`).
+
+### Verification
+- Initial hosted PostgreSQL 16 run выполнил fresh-schema/date smoke успешно, но
+  выявил две ошибки ожиданий теста: `pointsToWin=1` не создавал допустимого
+  finish state, а проверка сетки не учитывала матч за третье место. Это не было
+  скрыто retry/skip.
+- Exact Node 24.20.0: API typecheck passed; focused local file корректно guarded
+  и показал `3 skipped`, потому что локальный PostgreSQL runtime отсутствует.
+- Исправленный hosted PostgreSQL rerun на этом снимке ещё не выполнен; green до
+  его завершения не заявляется.
+
 ## 2026-09-06 — SEC-001 execution plan и безопасный feature-branch push
 
 ### Changed

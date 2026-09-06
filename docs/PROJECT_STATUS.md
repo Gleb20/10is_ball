@@ -21,7 +21,7 @@
 | Local quality/build | exact Node 24.20.0: frozen install и полный `pnpm run ci` (audit gates, lint, typecheck, tests, API/web builds) прошли |
 | Web artifact fingerprint | local build HTML/JS/CSS hashes совпали с production capture; это не заменяет commit SHA/release metadata |
 | Browser baseline | production login: 4 viewport; local synthetic data: 4 home viewport, key 360px screens и smoke 17 organizer routes + admin; это не полный PRD E2E/axe |
-| PostgreSQL verification | guarded PostgreSQL 16 CI lane содержит fresh-schema/date, concurrent score, stats и bracket smoke; local PostgreSQL runtime отсутствует, поэтому 3 tests skipped и hosted lane ещё не выполнен |
+| PostgreSQL verification | initial hosted PostgreSQL 16 job `101526650172`: fresh-schema/date passed; concurrency и bracket assertions выявили две ошибки test fixture, исправлены локально и ожидают повторного hosted run; local PostgreSQL runtime отсутствует |
 | Secret location scan | worktree + index + all Git refs: 0 unreviewed candidates, 0 skipped inputs, 11 exact-hash benign findings в 9 historical blobs; ignored `.env*` доступны отдельным opt-in scan; external rotation этим не подтверждается |
 | Security dependencies | 17 production advisories: 12 high и 5 moderate |
 | Route/OpenAPI inventory | source: 60 operations / 54 paths; OpenAPI: 15 operations / 12 paths (25% operation coverage); live version 0.1.0 |

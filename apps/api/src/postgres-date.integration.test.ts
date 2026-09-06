@@ -136,7 +136,7 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
     expect(weekRankings.statusCode).toBe(200);
   });
 
-  it("serializes concurrent point updates and applies winner stats once", async () => {
+  it("AT-MATCH-007/011: serializes concurrent point updates and applies winner stats once", async () => {
     const created = await app.inject({
       method: "POST",
       url: "/api/v1/matches",
@@ -144,7 +144,7 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
       payload: {
         title: "Postgres concurrent score",
         format: "1v1",
-        pointsToWin: 1,
+        pointsToWin: 3,
         participants: [
           { side: "A", userId: userAId },
           { side: "B", userId: userBId },
@@ -185,6 +185,20 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
     ]);
     expect([first.statusCode, second.statusCode].sort()).toEqual([200, 409]);
 
+    const accepted = first.statusCode === 200 ? first : second;
+    let version = accepted.json().match.version as number;
+    for (let point = 1; point < 3; point += 1) {
+      const scored = await app.inject({
+        method: "POST",
+        url: `/api/v1/matches/${matchId}/points`,
+        cookies: { tab10_session: userACookie },
+        headers: { "idempotency-key": `pg-after-race-${point}` },
+        payload: { side: "A", expectedVersion: version },
+      });
+      expect(scored.statusCode).toBe(200);
+      version = scored.json().match.version as number;
+    }
+
     const confirm = await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/confirm-finish`,
@@ -203,7 +217,7 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
     expect(winner?.wins).toBe(1);
   });
 
-  it("materializes and advances a four-player bracket on PostgreSQL", async () => {
+  it("AT-TRN-010: materializes and advances a four-player bracket on PostgreSQL", async () => {
     const tournament = await app.inject({
       method: "POST",
       url: "/api/v1/tournaments",
@@ -303,7 +317,10 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
     const matches = detail.json().tournament.matches as Array<{
       status: string;
     }>;
-    expect(matches).toHaveLength(3);
-    expect(matches.filter((match) => match.status === "waiting")).toHaveLength(1);
+    // Single-elimination tournaments enable the third-place match by default,
+    // so completing both semi-finals materializes both the final and bronze match.
+    expect(matches).toHaveLength(4);
+    expect(matches.filter((match) => match.status === "finished")).toHaveLength(2);
+    expect(matches.filter((match) => match.status === "waiting")).toHaveLength(2);
   });
 });
