@@ -22,7 +22,7 @@ fast/PostgreSQL/compiled-browser lanes, immutable migration `0000` и одина
 не входят в active path. Render настроен на native Git deploy каждого commit в
 `main`, Vercel — на production branch `main`; после deploy ручной GitHub smoke
 только ждёт exact SHA на обоих origins. Public runtime и migrations временно
-используют `neondb_owner`. Старую Neon schema разрешено один раз пересоздать и
+используют один direct `neondb_owner` URL. Старую Neon schema разрешено один раз пересоздать и
 применить `0000` с нуля. Provider settings, reset, PR merge и первый release ещё
 должны быть фактически выполнены и проверены.
 

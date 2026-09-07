@@ -603,7 +603,7 @@
   lanes и ReleaseMetadata находятся в clean worktree. D31 заменил отдельный
   staging/provider orchestration на Render/Vercel native `main` Git deploy и
   ручной passive exact-SHA smoke. Public runtime и migrations временно используют
-  `neondb_owner`; split-role проверки сохранены local/CI. Frozen product/story delta и migrations
+  один direct `neondb_owner` URL; split-role проверки сохранены local/CI. Frozen product/story delta и migrations
   `0001–0003` остаются следующей волной и не блокируют foundation. Исходный dirty
   worktree и внешний recovery snapshot не изменяются.
 - **Repro:** выполнить fresh `pnpm ci`, затем после merge проверить `/health`,

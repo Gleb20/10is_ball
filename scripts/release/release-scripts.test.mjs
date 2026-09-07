@@ -250,6 +250,8 @@ test("native provider configs deploy main and preserve same-origin routing", asy
   assert.doesNotMatch(render, /TAB10_RUNTIME_DATABASE_ROLE/);
   assert.match(render, /healthCheckPath: \/ready/);
   assert.match(render, /pnpm run db:migrate -- --mode=apply/);
+  assert.match(render, /MIGRATION_DATABASE_URL="\$DATABASE_URL"/);
+  assert.doesNotMatch(render, /^\s+- key: MIGRATION_DATABASE_URL$/m);
   assert.match(render, /TAB10_MIGRATION_CONFIRM_SHA="\$RENDER_GIT_COMMIT"/);
   assert.match(render, /TAB10_RELEASE_SHA="\$RENDER_GIT_COMMIT"/);
   assert.match(render, /GITHUB_SHA="\$RENDER_GIT_COMMIT"/);

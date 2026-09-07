@@ -251,8 +251,9 @@ risk without a date-based automatic release block.
 `/release.json`. Required `Release gate` остаётся барьером PR, но повторный CI
 merge SHA не задерживает disposable deploy.
 
-Для ускорения текущий стенд использует `neondb_owner` и в pooled runtime URL, и
-в direct migration URL. Это явное временное исключение: local/CI продолжают
+Для ускорения текущий стенд использует существующий direct `neondb_owner` URL и
+для runtime, и для migration command; start command передаёт его migrator-у без
+копирования credentials между провайдерами. Это явное временное исключение: local/CI продолжают
 проверять раздельные owner/runtime roles, а ограниченная hosted runtime role
 обязательна до появления ценных данных или переезда на VPS.
 
@@ -261,7 +262,7 @@ merge SHA не задерживает disposable deploy.
 fresh `0000` все следующие releases используют только `--mode=apply` и не
 сбрасывают данные. Production mutating E2E по-прежнему отсутствуют.
 
-**Accepted debt:** бесплатный public stand может deploy-иться до завершения
+**Accepted debt:** бесплатный public stand не использует pooling, может deploy-иться до завершения
 повторного CI merge SHA, API работает с повышенными правами `neondb_owner`, smoke
 запускается вручную, возможны downtime и ручной application rollback. Стенд не
 обещает production-grade backups, zero-downtime schema rollout или автоматический

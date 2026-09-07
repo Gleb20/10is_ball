@@ -12,8 +12,9 @@
   orchestration удаляются из active release path. Render и Vercel используют
   native Git deploy каждого `main`, GitHub вручную выполняет только bounded
   read-only exact-SHA/version smoke после deploy.
-- По отдельному разрешению disposable public API и migrator используют одну
-  `neondb_owner` role, а deploy не ждёт повторного CI merge SHA. Split-role и
+- По отдельному разрешению disposable public API и migrator используют один
+  существующий direct `neondb_owner` URL без копирования credential между
+  провайдерами, а deploy не ждёт повторного CI merge SHA. Split-role и
   полный release gate остаются обязательными local/PR проверками; это accepted
   debt до VPS.
 - Пользователь разрешил одноразово пересоздать `public` и `drizzle` текущей Neon

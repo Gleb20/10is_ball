@@ -79,8 +79,9 @@ Vercel проксирует `/api/*`, `/health` и `/ready` в Render до SPA f
 
 ## База публичного стенда
 
-`DATABASE_URL` — pooled URL `neondb_owner`; `MIGRATION_DATABASE_URL` — direct URL
-той же роли. Render startup передаёт миграции exact `RENDER_GIT_COMMIT` и
+`DATABASE_URL` — существующий direct URL `neondb_owner`; Render startup передаёт
+его только процессу migrator как `MIGRATION_DATABASE_URL`, а также передаёт exact
+`RENDER_GIT_COMMIT` и
 закреплённые Neon target IDs. Повышенные runtime-права приняты только для этого
 disposable stand; local/CI продолжают проверять разделённые роли.
 
