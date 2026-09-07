@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      VERIFY_EVIDENCE_DIR: ${{ runner.temp }}/tab10-evidence/quality
+      VERIFY_EVIDENCE_DIR: .verify-evidence/quality
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -41,7 +41,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: quality-${{ github.sha }}
-          path: ${{ runner.temp }}/tab10-evidence/quality
+          path: .verify-evidence/quality
           if-no-files-found: error
           retention-days: 14
 
@@ -53,7 +53,7 @@ jobs:
       NODE_ENV: test
       ALLOW_TEST_DATABASE_RESET: "1"
       TAB10_RUNTIME_DATABASE_ROLE: tab10_runtime_test
-      VERIFY_EVIDENCE_DIR: ${{ runner.temp }}/tab10-evidence/postgres
+      VERIFY_EVIDENCE_DIR: .verify-evidence/postgres
     services:
       postgres:
         image: postgres:16.15-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
@@ -89,7 +89,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: postgres-${{ github.sha }}
-          path: ${{ runner.temp }}/tab10-evidence/postgres
+          path: .verify-evidence/postgres
           if-no-files-found: error
           retention-days: 14
 
@@ -101,7 +101,7 @@ jobs:
       NODE_ENV: test
       ALLOW_TEST_DATABASE_RESET: "1"
       TAB10_RUNTIME_DATABASE_ROLE: tab10_runtime_test
-      VERIFY_EVIDENCE_DIR: ${{ runner.temp }}/tab10-evidence/browser-prodlike
+      VERIFY_EVIDENCE_DIR: .verify-evidence/browser-prodlike
     services:
       postgres:
         image: postgres:16.15-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
@@ -140,9 +140,9 @@ jobs:
         with:
           name: browser-prodlike-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/tab10-evidence/browser-prodlike/environment.json
-            ${{ runner.temp }}/tab10-evidence/browser-prodlike/browser-summary.json
-            ${{ runner.temp }}/tab10-evidence/browser-prodlike/sanitized-traces
+            .verify-evidence/browser-prodlike/environment.json
+            .verify-evidence/browser-prodlike/browser-summary.json
+            .verify-evidence/browser-prodlike/sanitized-traces
           if-no-files-found: error
           retention-days: 14
 
@@ -161,13 +161,13 @@ jobs:
           QUALITY_RESULT: ${{ needs.quality.result }}
           POSTGRES_RESULT: ${{ needs.postgres-integration.result }}
           BROWSER_RESULT: ${{ needs.browser-prodlike.result }}
-          VERIFY_RELEASE_GATE_RESULT: ${{ runner.temp }}/tab10-evidence/release-gate/results.json
+          VERIFY_RELEASE_GATE_RESULT: .verify-evidence/release-gate/results.json
         run: node scripts/verify/assert-release-gate.mjs
       - name: Upload release-gate evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-gate-${{ github.sha }}
-          path: ${{ runner.temp }}/tab10-evidence/release-gate
+          path: .verify-evidence/release-gate
           if-no-files-found: error
           retention-days: 14

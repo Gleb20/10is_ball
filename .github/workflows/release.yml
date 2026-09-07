@@ -20,7 +20,7 @@ jobs:
       TAB10_RELEASE_SHA: ${{ github.sha }}
       TAB10_ENVIRONMENT: production
       TAB10_RELEASE_DIRTY: "false"
-      TAB10_PUBLIC_RELEASE_RESULT: ${{ runner.temp }}/public-release.json
+      TAB10_PUBLIC_RELEASE_RESULT: .verify-evidence/public-release.json
     steps:
       - name: Check out the CI-approved commit
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -51,6 +51,6 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: public-release-${{ github.sha }}
-          path: ${{ runner.temp }}/public-release.json
+          path: .verify-evidence/public-release.json
           if-no-files-found: error
           retention-days: 30
