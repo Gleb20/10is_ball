@@ -23,7 +23,7 @@ services:
       - key: HOST
         value: "0.0.0.0"
       - key: SEED_ADMIN
-        value: "0"
+        value: "1"
       - key: DATABASE_URL
         sync: false
       - key: TAB10_NEON_PROJECT_ID

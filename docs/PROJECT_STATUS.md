@@ -14,8 +14,8 @@
 
 | Область | Состояние на 2026-09-07 |
 |---|---|
-| Public stand web/API | Это disposable испытательный стенд без ценных данных; application release пока на прежнем SHA, direct и Vercel-proxied health отвечают 200 |
-| OPS-004 PR1 | Delivery foundation реализуется в отдельном clean worktree от `b62afee`; исходный dirty worktree и внешний recovery snapshot сохранены; PR ещё не создан и в `main` ничего не слито |
+| Public stand web/API | Это disposable испытательный стенд без ценных данных; foundation уже в `main`, первый exact-SHA API/web release и seed-admin bootstrap завершаются |
+| OPS-004 foundation | PR #4 и Neon-normalization PR #5 слиты; дальнейшая работа по D32 идёт прямыми commits/pushes в `main`; исходный dirty worktree и внешний recovery snapshot сохранены |
 | Закреплённый stack | Repo target: Node **24.20.0**, pnpm **9.15.0**, PostgreSQL **16.15-alpine** по digest, Playwright **1.63.0**/Chromium **153.0.8010.12**; fresh frozen install и `doctor` прошли |
 | Текущий full test | Финальный OPS-004 `verify:all` ожидает заморозки release workflow; предыдущий baseline: shared 517 passed + 1 todo, test-utils 4, web 70, API 84 + 3 PostgreSQL skipped — он не считается новым acceptance evidence |
 | Детерминизм | после изоляции RNG три последовательных full suite и последний Node 24 run зелёные; известный busy+bye дефект закреплён отдельным `BUG-015` characterization test |
@@ -29,7 +29,7 @@
 | Route/OpenAPI inventory | source: 60 operations / 54 paths; OpenAPI: 15 operations / 12 paths (25% operation coverage); live version 0.1.0 |
 | Product decisions | D23: cancel только active admin/creator; D24: creator/admin soft void без mandatory reason/second approver; D25: V1 DE preservation не требуется; D26: полный PRD v2 остаётся target |
 | Documentation | immutable baseline: 48 findings; live backlog: 49 после выделения DATA-007; links/anchors/IDs/status schema проверяются автоматически |
-| Релизная синхронизация | D31 упрощает контур: Render/Vercel native Git deploy каждого `main`, после него ручной read-only smoke ждёт одинаковый SHA/version; provider API orchestration и отдельный staging исключены; public API временно использует `neondb_owner` |
+| Релизная синхронизация | D32: прямой verified push в `main` запускает Render/Vercel native Git deploy и параллельный CI; `pnpm smoke:public` read-only ждёт одинаковый SHA/version; public API временно использует `neondb_owner` |
 | Public DB bootstrap | Пользователь разрешил одноразово пересоздать `public`/`drizzle` на точном Neon target и применить `0000` с нуля; последующие releases только apply-only |
 | Recovery | Существующий manual snapshot/recovery copy сохранён как ручная страховка, но не является release barrier для disposable stand |
 
@@ -50,9 +50,8 @@
 
 ## Следующий этап
 
-Текущий приоритет — завершить `OPS-004`: получить чистый локальный `verify:all`,
-создать и проверить PR1, защитить `main`, один раз пересоздать disposable public
-schema и провести native-Git release после пользовательского merge. Один
+Текущий приоритет — завершить `OPS-004`: применить baseline к disposable public
+schema, включить seed admin и провести первый direct-main native-Git release. Один
 успешный exact-SHA smoke переводит item в `verified_prod`. Product/story delta и
 migrations `0001–0003` переносятся следующей волной, но больше не блокируют
 рабочий delivery-контур.

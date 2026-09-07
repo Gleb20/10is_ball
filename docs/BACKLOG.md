@@ -594,15 +594,16 @@
   Pre-PR1 aggregate fingerprint/manual snapshot/restore comparison:
   [`ops-004-pre-pr1-production-recovery.json`](audit/evidence/ops-004-pre-pr1-production-recovery.json).
 - **Expected:** один воспроизводимый local → public-stand pipeline на Node
-  `24.20.0`, pnpm `9.15.0`, PostgreSQL `16.15`; каждый PR проходит обязательные
-  quality/PostgreSQL/compiled-browser lanes, merge в `main` автоматически
-  публикуется native Git integrations, а read-only monitor подтверждает один
+  `24.20.0`, pnpm `9.15.0`, PostgreSQL `16.15`; proportional local checks и
+  parallel CI сохраняют quality/PostgreSQL/compiled-browser evidence, прямой push
+  в `main` автоматически публикуется native Git integrations, а read-only smoke подтверждает один
   SHA/version у web и API.
 - **Actual:** delivery foundation реализуется изолированным PR1 от `b62afee`:
   exact toolchain, default local PostgreSQL, versioned `0000`, strict local/CI
   lanes и ReleaseMetadata находятся в clean worktree. D31 заменил отдельный
   staging/provider orchestration на Render/Vercel native `main` Git deploy и
-  ручной passive exact-SHA smoke. Public runtime и migrations временно используют
+  локальный `pnpm smoke:public`. D32 заменил PR-only этап прямой работой в `main`.
+  Public runtime и migrations временно используют
   один direct `neondb_owner` URL; split-role проверки сохранены local/CI. Frozen product/story delta и migrations
   `0001–0003` остаются следующей волной и не блокируют foundation. Исходный dirty
   worktree и внешний recovery snapshot не изменяются.
@@ -614,7 +615,8 @@
   VPS. Ручной smoke делает рассинхронизацию видимой.
 - **Permissions:** 2026-09-07 пользователь явно разрешил одноразово удалить и
   пересоздать текущую публичную Neon schema, поскольку ценных данных на стенде
-  нет. Последующие deploy используют apply-only. Mutating public E2E,
+  нет; также разрешил постоянные прямые commit/push в `main`, native deploy и
+  включённый seed admin до явной смены режима. Последующие deploy используют apply-only. Mutating public E2E,
   down-migration и automatic restore не разрешены.
 - **Non-goals:** version bump/tag, платные планы, отдельный staging,
   production-grade recovery/zero-downtime и продуктовые migrations `0001–0003`.
@@ -622,8 +624,8 @@
   [`test-plans/OPS-004-delivery-parity.md`](test-plans/OPS-004-delivery-parity.md):
   clean checkout без `.env` → `pnpm run verify:all` с 0 failed/skipped/todo и полным
   cleanup; negative unit/migration/browser gates; fresh 17-table schema; один
-  native-Git public release с exact-SHA smoke и redacted artifact.
-- **Dependencies:** D31; main protection и provider Git settings. Q-OPS-003
+  direct-main native-Git public release с exact-SHA smoke.
+- **Dependencies:** D32; provider Git settings. Q-OPS-003
   переносится в обязательный VPS-readiness scope и не блокирует disposable stand.
 
 ### OPS-005 — Cold start не имеет явного UX состояния

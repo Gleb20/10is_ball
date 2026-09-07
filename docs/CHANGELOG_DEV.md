@@ -3,6 +3,21 @@
 Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
 записи сохраняются как история и могут быть помечены `superseded` новой записью.
 
+## 2026-09-07 — D32 direct-main test-stand delivery
+
+- По прямому решению пользователя до отдельной отмены работа ведётся в чистом
+  `main`: пропорциональная локальная проверка → commit → push без feature branch
+  и PR. Force-push, rewrite, tag/version bump и публикация secrets не разрешены.
+- Render/Vercel native deploy запускаются на каждый push параллельно с CI;
+  GitHub release orchestration не является обязательным этапом.
+- Добавлена `pnpm smoke:public`: команда сама получает exact SHA из
+  `origin/main` и read-only ждёт тот же SHA/version у API, web и proxy.
+- Repo Blueprint включает `SEED_ADMIN=1` только для disposable stand; фактический
+  provider flag переключается с уже сохранёнными secret credentials.
+- Verification: focused release-script tests, docs/secret audit и первый
+  direct-main public smoke выполняются в этой операции; итог будет сообщён в
+  handoff без публикации credentials.
+
 ## 2026-09-07 — OPS-004 Neon catalog-default compatibility
 
 - Baseline adoption считает эквивалентными встроенные PostgreSQL defaults

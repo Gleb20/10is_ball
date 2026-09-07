@@ -36,18 +36,24 @@
 локального work item переход `verified_prod` требует явно записанного подтверждения,
 что production scope отсутствует; иначе item остаётся `verified_local`.
 
-### Release authorization по D31
+### Ускоренный solo-main режим по D32
 
-Пользовательский merge pull request в защищённый `main` является подтверждением
-native Git release этого merge на текущий disposable public stand. Render ждёт
-успешных CI checks, применяет immutable migrations и запускает API; Vercel
-публикует production branch `main`. GitHub не управляет провайдерами и после CI
-только ждёт, пока web/API сообщат один exact SHA/version.
+До прямой отмены пользователем работа ведётся в `main`: после пропорциональной
+локальной проверки агент коммитит и сразу пушит тематический diff в
+`origin/main`. Feature branches и pull requests не являются обязательным этапом.
+Force-push, переписывание истории и смешивание чужих изменений запрещены.
 
-Это разрешение не распространяется на иной branch, tag/version bump, mutating
-public E2E, down-migration, автоматический restore, повторный reset/recreate,
-DNS, billing или access-control changes. Такие операции требуют отдельного
-явного разрешения. Read-only monitor привязывается к merge SHA/version.
+Каждый push в `main` сразу запускает параллельные native Git deploy Render и
+Vercel на текущий disposable public stand. Они не ждут повторного CI этого SHA;
+CI идёт параллельно и остаётся наблюдаемым сигналом. Render применяет только
+immutable forward migrations. После схождения провайдеров выполняется локальная
+read-only команда `pnpm smoke:public`, которая сама получает SHA из
+`origin/main` и проверяет одинаковые SHA/version web и API.
+
+Это разрешение не распространяется на tag/version bump, mutating public E2E,
+down-migration, автоматический restore, повторный reset/recreate, DNS, billing,
+access-control changes или будущий production с ценными данными. Такие операции
+требуют отдельного явного разрешения.
 
 ## 2. Во время изменения
 

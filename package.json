@@ -33,6 +33,7 @@
     "audit:secrets:local": "bash scripts/audit/secret-scan.sh --include-local-env",
     "audit:secrets:self-test": "node scripts/audit/secret-scan.mjs --self-test",
     "audit:production": "node scripts/audit/capture-production-baseline.mjs",
+    "smoke:public": "node scripts/release/smoke-current-main.mjs",
     "audit:reproduce-busy-bye": "node scripts/audit/reproduce-tournament-busy-bye.mjs",
     "audit:check": "pnpm audit:docs && pnpm audit:routes && pnpm audit:secrets:self-test && pnpm audit:secrets && pnpm audit:reproduce-busy-bye",
     "doctor": "node scripts/verify/doctor.mjs --require-docker --require-browser",

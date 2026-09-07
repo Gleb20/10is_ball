@@ -2,8 +2,8 @@
 
 Текущий публичный контур — испытательный стенд без ценных данных, а не будущий
 боевой production. До переезда на оплачиваемый VPS для него сознательно выбран
-простой delivery-процесс: обязательная проверка полностью воспроизводится
-локально и в GitHub, а merge в `main` автоматически публикуется штатными
+простой delivery-процесс: проверка полностью воспроизводится локально и в
+GitHub, а прямой push в `main` автоматически публикуется штатными
 Git-интеграциями Render и Vercel.
 
 ## Закреплённый стек
@@ -29,6 +29,7 @@ same-origin proxy, который используется на публично
 | `pnpm verify:all` | весь барьер в disposable PostgreSQL с обязательным cleanup |
 | `pnpm ci` | точный alias `verify:all` |
 | `pnpm db:migrate -- --mode=apply` | применить immutable migrations |
+| `pnpm smoke:public` | дождаться exact SHA из `origin/main` на web/API |
 
 Fresh checkout не требует `.env` или provider credentials для `pnpm ci`.
 Каждый исполняемый suite обязан завершиться с `0 failed`, `0 skipped`, `0 todo`
@@ -54,24 +55,19 @@ API публикует `release` в `/health` и `/ready`, web — `/release.jso
 ## CI и публикация
 
 ```text
-pull request
-  └─ quality + postgres-integration + browser-prodlike
-       └─ Release gate
-            └─ merge в main
-                 ├─ Render: native deploy commit
-                 │    └─ db:migrate --mode=apply → compiled API
-                 ├─ Vercel: production deploy main → compiled web
-                 └─ ручной GitHub Release smoke после deploy
-                      └─ ждёт одинаковый SHA/version у web и API
+локальная пропорциональная проверка → commit + push main
+  ├─ Render native deploy → db:migrate --mode=apply → compiled API
+  ├─ Vercel native production deploy → compiled web
+  ├─ GitHub CI (параллельно, не блокирует test-stand deploy)
+  └─ pnpm smoke:public → одинаковый SHA/version у web и API
 ```
 
-`main` защищается обязательным `Release gate`, запретом direct/force push и
-удаления ветки. Render использует `autoDeployTrigger: commit`; Vercel публикует
-production branch `main`. После завершения обоих native deploy пользователь
-запускает workflow `Release` на `main`. Он ничего не меняет у провайдеров и не
-хранит их токены: только ждёт `/health`, `/ready`, `/release.json` и OpenAPI для
-точного SHA. Повторный CI merge SHA наблюдаем, но не задерживает этот disposable
-deploy; основной предохранитель — обязательный PR gate.
+До прямой отмены D32 разрешает push только в `main` без feature branch и PR.
+Force-push и удаление `main` остаются запрещены. Render использует
+`autoDeployTrigger: commit`; Vercel публикует production branch `main`. Команда
+`pnpm smoke:public` сама читает текущий remote SHA и root version, затем только
+GET-запросами ждёт `/health`, `/ready`, `/release.json` и OpenAPI. Отдельного
+ручного GitHub Release шага в обязательном пути нет.
 
 Vercel проксирует `/api/*`, `/health` и `/ready` в Render до SPA fallback.
 Изменяющие E2E выполняются только на disposable локальной/CI базе. Проверка
@@ -90,7 +86,11 @@ disposable stand; local/CI продолжают проверять раздел�
 после чего выполняется обычный `--mode=apply`. Дальнейшие deploy не сбрасывают
 данные и только применяют новые immutable migrations. Автоматических down-
 migrations и restore нет; при неудаче исправление делается новым commit в
-`main` или ручным возвратом предыдущего application deploy.
+`main`.
+
+`SEED_ADMIN=1` постоянно включён только на этом disposable stand. Email и пароль
+остаются provider secrets; приложение создаёт seed admin на пустой БД и не
+ротирует пароль уже существующей active записи.
 
 ## Что намеренно отложено до VPS
 

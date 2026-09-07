@@ -130,7 +130,9 @@
 
 ## 10. CI gates
 
-Каждый PR и повторно точный merge SHA выполняют три независимые required lanes:
+Каждый push в `main` и optional PR выполняют три независимые CI lanes. Для
+текущего disposable stand они идут параллельно native deploy и являются
+наблюдаемым quality signal, а не pre-deploy barrier:
 
 1. `quality`: audit, lint, typecheck, hermetic unit/component/PGlite и build;
 2. `postgres-integration`: fresh/adoption/upgrade migration и concurrency checks;

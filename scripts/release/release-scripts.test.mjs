@@ -13,6 +13,10 @@ import {
   validatedOrigin,
 } from "./release-lib.mjs";
 import { validateReleasePayload } from "./smoke-release.mjs";
+import {
+  currentMainRelease,
+  parseRemoteMainSha,
+} from "./smoke-current-main.mjs";
 import { waitForPublicRelease } from "./wait-for-public-release.mjs";
 import { writeWebRelease } from "./write-web-release.mjs";
 
@@ -36,6 +40,26 @@ test("hosted release identity requires a full clean SHA", () => {
         dirty: true,
       }),
     /must not be dirty/,
+  );
+});
+
+test("public smoke resolves exact origin main SHA and root version", async () => {
+  assert.equal(parseRemoteMainSha(`${SHA}\trefs/heads/main\n`), SHA);
+  assert.throws(() => parseRemoteMainSha("short\trefs/heads/main\n"), /full SHA/);
+  assert.deepEqual(
+    await currentMainRelease({
+      runGit: async (...args) => {
+        assert.deepEqual(args, [
+          "ls-remote",
+          "--exit-code",
+          "origin",
+          "refs/heads/main",
+        ]);
+        return { stdout: `${SHA}\trefs/heads/main\n` };
+      },
+      loadPackage: async () => ({ version: VERSION }),
+    }),
+    expected,
   );
 });
 
@@ -218,7 +242,7 @@ test("provider request errors expose only an opaque endpoint reference", async (
   );
 });
 
-test("CI actions are immutable and release is a manual passive one-job monitor", async () => {
+test("CI actions are immutable and optional GitHub release remains passive", async () => {
   const workflows = await Promise.all(
     ["ci.yml", "release.yml"].map((file) =>
       readFile(new URL(`../../.github/workflows/${file}`, import.meta.url), "utf8"),

@@ -5,7 +5,10 @@ alwaysApply: true
 
 # Version-control compatibility pointer
 
-Follow the permission rules in [`../../AGENTS.md`](../../AGENTS.md), the delivery
-process in [`../../docs/WORKFLOW.md`](../../docs/WORKFLOW.md), and version semantics
-in [`../../docs/VERSIONING.md`](../../docs/VERSIONING.md). This file does not
-authorize an automatic commit, push, tag, deployment, or version bump.
+Follow the current solo-development override in
+[`../../AGENTS.md`](../../AGENTS.md), the delivery process in
+[`../../docs/WORKFLOW.md`](../../docs/WORKFLOW.md), and version semantics in
+[`../../docs/VERSIONING.md`](../../docs/VERSIONING.md). D32 authorizes direct
+verified commits and pushes to `main` plus native public-stand deployment until
+the user explicitly revokes it; it never authorizes force-push, tag or version
+bump.

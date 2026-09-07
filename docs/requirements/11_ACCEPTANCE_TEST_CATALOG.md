@@ -341,8 +341,8 @@ Playwright-managed Chromium. Итог содержит `0 failed`, `0 skipped`, 
 `finally` не остаётся контейнеров, volumes или дочерних процессов.
 
 ### AT-OPS-DELIVERY-002 Required lanes are fail-closed
-PR и точный merge SHA имеют результаты `success` для `quality`,
-`postgres-integration` и `browser-prodlike`. `release-gate` становится зелёным
+Push в `main` имеет результаты `success` для `quality`, `postgres-integration` и
+`browser-prodlike`. `release-gate` становится зелёным
 только при всех трёх `success`; отдельно сломанный unit, migration или browser
 scenario делает его красным, а `skipped`/`neutral` не принимаются.
 
@@ -371,16 +371,17 @@ Desktop `1280×800` и mobile `390×844` идут с `workers=1`, `retries=0`,
 `forbidOnly=true`.
 
 ### AT-OPS-DELIVERY-007 Native main deployment
-После merge прошедшего PR gate Render native Git deploy применяет immutable
+После прямого push в `main` Render native Git deploy применяет immutable
 migrations и запускает compiled API, а Vercel production branch `main` публикует
 compiled web. Provider Git metadata является SHA source; отдельные deploy tokens
-не нужны. Для disposable stand повторный CI merge SHA не задерживает deploy.
+не нужны. Для disposable stand CI этого SHA выполняется параллельно и не
+задерживает deploy.
 
 ### AT-OPS-DELIVERY-008 Bounded release convergence
-Вручную запущенный GitHub Release smoke не изменяет provider/DB state. Он
-ограниченно повторяет read-only probes, пока direct API, canonical web и web
-proxy не сообщат ожидаемый SHA/version, либо завершается красным по timeout.
-Повторный запуск всегда берёт текущий `main`.
+Локальная команда `pnpm smoke:public` не изменяет provider/DB state, сама получает
+exact SHA из `origin/main` и ограниченно повторяет read-only probes, пока direct
+API, canonical web и web proxy не сообщат ожидаемый SHA/version, либо завершается
+красным по timeout.
 
 ### AT-OPS-DELIVERY-009 Public read-only smoke
 Стабильные origins проходят `/release.json`, direct/proxy `/health`, `/ready` и

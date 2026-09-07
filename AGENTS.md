@@ -6,6 +6,21 @@ root changes a nested subtree, read that subtree's `AGENTS.md` before editing.
 The user's explicit task scope and approved decisions take precedence over these
 repository defaults; never use a general rule to broaden the requested change.
 
+## Current solo-development override
+
+Until the user explicitly asks to change the process, work directly on `main`.
+For an in-scope task, a clean worktree may commit and push the verified change to
+`origin/main` without creating a feature branch or pull request and without asking
+again for commit/push permission. Use proportional local verification before the
+push; the full gate remains available as `pnpm run verify:all` for risky changes.
+
+Every push to `main` is standing authorization for the native Render and Vercel
+Git integrations to update the disposable public test stand. Render may run only
+forward, immutable `--mode=apply` migrations during startup. Verification of the
+public result is read-only. Do not force-push, rewrite `main`, publish secrets,
+reset data, change version/tag, or extend this authorization to a future valuable
+production environment.
+
 ## Sources of truth
 
 Start with `docs/README.md`, then read the current status, backlog, relevant
@@ -98,15 +113,12 @@ Require explicit user approval before any of the following:
 - run migrations, reset, truncate, restore, or seed any non-ephemeral database;
 - rotate credentials or change hosting, DNS, billing, or access controls.
 
-ADR D31 defines one narrow standing authorization for the current disposable
-public stand: when the user merges a pull request into protected `main`, native
-Render/Vercel Git integrations may publish that merge and Render may apply its
-immutable migrations after required CI checks pass. GitHub then performs only a
-read-only exact-SHA smoke. This does not cover another branch, manual/fallback
-deploys, version/tag changes, mutating public E2E, down-migrations, automatic
-restore, DNS/billing/access changes or bypassing a failed/skipped gate. The
-separately approved one-time reset for OPS-004 is not standing authorization for
-future resets or deletion of valuable data.
+ADR D32 defines a narrow standing authorization for the current disposable public
+stand: a verified direct push to `main` may be published immediately by native
+Render/Vercel Git integrations, Render may apply immutable forward migrations,
+and the public result may be checked read-only. It does not cover force-pushes,
+history rewrites, version/tag changes, mutating public E2E, down-migrations,
+automatic restore, DNS/billing/access changes or future valuable production data.
 
 Never use production as a test fixture. Production may be inspected read-only as
 a visual/behavioral baseline when access is available. Do not bypass approval by

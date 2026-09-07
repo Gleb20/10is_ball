@@ -268,6 +268,30 @@ fresh `0000` все следующие releases используют тольк�
 обещает production-grade backups, zero-downtime schema rollout или автоматический
 restore. Эти гарантии обязательны до переноса реальных данных на VPS.
 
+## D32 — Direct-main solo delivery and test-stand admin (2026-09-07)
+
+**Supersedes the PR-only procedure in D31 until the user explicitly changes the
+working mode.** Один пользователь и агент являются единственными разработчиками
+текущей фазы, поэтому отдельные ветки и pull requests не дают достаточной пользы.
+
+**Decision:** изменения выполняются в чистом `main`, проходят пропорциональную
+локальную проверку, коммитятся и сразу пушатся в `origin/main`. Native Git deploy
+Render и Vercel стартует на каждый push параллельно с GitHub CI и не ждёт его
+завершения. SHA-smoke запускается локально одной read-only командой
+`pnpm smoke:public`; feature branch, PR и ручной GitHub Release workflow не входят
+в обязательный путь.
+
+Seed admin на disposable public stand включён постоянно существующими secret
+значениями провайдера, чтобы стенд всегда оставался доступен для ручной проверки.
+Bootstrap не публикует credentials и не меняет пароль уже существующего active
+admin. Это принятое временное security debt; перед переносом реальных данных на
+VPS seed отключается, права БД разделяются и production-процесс проектируется
+заново.
+
+Прямой режим не разрешает force-push, переписывание истории, автоматический reset
+данных, down-migrations, mutating public E2E, tag/version bump или публикацию
+секретов.
+
 ## D1 — Stack (2026-07-20)
 
 **Decision:** TypeScript monorepo with pnpm workspaces; Fastify + Drizzle API; Vite + React 19 + ic-kit web; Vitest; Playwright later for E2E.
