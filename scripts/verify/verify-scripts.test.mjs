@@ -48,6 +48,10 @@ const migrationRunner = await readFile(
   path.join(ROOT, "scripts/verify/run-migrations.mjs"),
   "utf8",
 );
+const prodlikeRunner = await readFile(
+  path.join(ROOT, "scripts/verify/run-prodlike-e2e.mjs"),
+  "utf8",
+);
 const verifyCompose = await readFile(path.join(ROOT, "compose.verify.yml"), "utf8");
 const cleanupHarness = await readFile(
   path.join(ROOT, "scripts/verify/run-cleanup-harness.mjs"),
@@ -184,6 +188,10 @@ test("PostgreSQL runners use the canonical compiled migration command", () => {
   }
   assert.match(devRunner, /\["run", "build:api"\]/);
   assert.match(migrationRunner, /Build compiled migration entrypoint/);
+  assert.match(
+    migrationRunner,
+    /"@tab10\/shared",[\s\S]*"@tab10\/test-utils",[\s\S]*"@tab10\/api",[\s\S]*"build"/,
+  );
 });
 
 test("release builds compile workspace dependencies before clean-checkout consumers", () => {
@@ -208,6 +216,16 @@ test("relative CI evidence paths are anchored to the repository root", (context)
     resolveEvidenceDir("fast"),
     path.join(ROOT, ".verify-evidence/quality"),
   );
+});
+
+test("production-like E2E replaces hosted CI SHA sources with its synthetic SHA", () => {
+  for (const key of [
+    "GITHUB_SHA",
+    "RENDER_GIT_COMMIT",
+    "VERCEL_GIT_COMMIT_SHA",
+  ]) {
+    assert.match(prodlikeRunner, new RegExp(`"${key}"`));
+  }
 });
 
 test("PGlite dev migration avoids pnpm's literal separator forwarding", () => {

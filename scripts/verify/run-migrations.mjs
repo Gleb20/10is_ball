@@ -31,7 +31,16 @@ try {
   if (!skipBuild) {
     await runCommand(
       pnpmCommand(),
-      ["--filter", "@tab10/shared", "--filter", "@tab10/api", "run", "build"],
+      [
+        "--filter",
+        "@tab10/shared",
+        "--filter",
+        "@tab10/test-utils",
+        "--filter",
+        "@tab10/api",
+        "run",
+        "build",
+      ],
       { label: "Build compiled migration entrypoint" },
     );
   }

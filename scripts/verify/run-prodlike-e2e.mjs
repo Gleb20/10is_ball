@@ -66,6 +66,9 @@ for (const key of [
   "AUDIT_EPHEMERAL",
   "VITE_API_BASE_URL",
   "COOKIE_SAME_SITE",
+  "GITHUB_SHA",
+  "RENDER_GIT_COMMIT",
+  "VERCEL_GIT_COMMIT_SHA",
 ]) {
   delete cleanEnvironment[key];
 }
