@@ -3,6 +3,17 @@
 Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
 записи сохраняются как история и могут быть помечены `superseded` новой записью.
 
+## 2026-09-07 — OPS-004 Neon catalog-default compatibility
+
+- Baseline adoption считает эквивалентными встроенные PostgreSQL defaults
+  `gen_random_uuid()` и Neon-канонизацию `pg_catalog.gen_random_uuid()`; остальные
+  schema/default drift проверки остаются строгими.
+- Добавлен regression-тест нормализации. До исправления он детерминированно падал;
+  после исправления focused test и API typecheck прошли.
+- `pnpm run ci` вне sandbox: `820 passed, 0 failed, 0 skipped, 0 todo,
+  0 interrupted`; включая quality `769`, PostgreSQL `36`, compiled browser
+  production-like `11`; disposable containers/networks удалены.
+
 ## 2026-09-07 — OPS-004 public-stand simplification (in progress)
 
 - По явному уточнению пользователя текущий public contour классифицирован как
