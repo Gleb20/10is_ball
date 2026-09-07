@@ -1,19 +1,23 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16.15-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
-      POSTGRES_USER: tab10
-      POSTGRES_PASSWORD: tab10
+      # The fixed placeholder credential is valid only for this loopback-only
+      # development container. Hosted environments never use this compose file.
+      POSTGRES_USER: tab10_migration_owner
+      POSTGRES_PASSWORD: local
       POSTGRES_DB: tab10
     volumes:
-      - tab10_pg:/var/lib/postgresql/data
+      - tab10_pg16_15:/var/lib/postgresql/data
+      - ./scripts/postgres/init-local.sql:/docker-entrypoint-initdb.d/010-runtime-role.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tab10 -d tab10"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    stop_grace_period: 10s
 
 volumes:
-  tab10_pg:
+  tab10_pg16_15:

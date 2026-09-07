@@ -4,40 +4,170 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  ci:
+  quality:
+    name: Quality
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VERIFY_EVIDENCE_DIR: .verify-evidence/quality
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - name: Capture toolchain evidence
+        run: node scripts/verify/doctor.mjs
+      - run: pnpm install --frozen-lockfile
+      - name: Run quality and zero-skip fast suites
+        run: pnpm run verify:fast
+      - name: Upload quality evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: quality-${{ github.sha }}
+          path: .verify-evidence/quality
+          if-no-files-found: error
+          retention-days: 14
+
+  postgres-integration:
+    name: PostgreSQL integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NODE_ENV: test
+      ALLOW_TEST_DATABASE_RESET: "1"
+      TAB10_RUNTIME_DATABASE_ROLE: tab10_runtime_test
+      VERIFY_EVIDENCE_DIR: .verify-evidence/postgres
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16.15-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
         env:
-          POSTGRES_USER: tab10
-          POSTGRES_PASSWORD: tab10
-          POSTGRES_DB: tab10
+          POSTGRES_USER: tab10_test
+          POSTGRES_DB: tab10_test
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U tab10 -d tab10"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-    env:
-      DATABASE_URL: postgres://tab10:tab10@localhost:5432/tab10
-      NODE_ENV: test
+          --health-cmd "pg_isready -U tab10_test -d tab10_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
           version: 9.15.0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 20
+          node-version-file: .node-version
           cache: pnpm
+      - name: Capture toolchain evidence
+        run: node scripts/verify/doctor.mjs
       - run: pnpm install --frozen-lockfile
-      # Workspace packages export dist/*.d.ts — build before api/web tsc lint
-      - run: pnpm --filter @tab10/shared --filter @tab10/test-utils run build
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm build
+      - name: Configure the disposable loopback database
+        run: node scripts/verify/export-ci-database-url.mjs
+      - name: Run compiled migrations and PostgreSQL integration tests
+        run: pnpm run verify:postgres
+      - name: Upload PostgreSQL evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: postgres-${{ github.sha }}
+          path: .verify-evidence/postgres
+          if-no-files-found: error
+          retention-days: 14
+
+  browser-prodlike:
+    name: Compiled browser production-like
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NODE_ENV: test
+      ALLOW_TEST_DATABASE_RESET: "1"
+      TAB10_RUNTIME_DATABASE_ROLE: tab10_runtime_test
+      VERIFY_EVIDENCE_DIR: .verify-evidence/browser-prodlike
+    services:
+      postgres:
+        image: postgres:16.15-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+        env:
+          POSTGRES_USER: tab10_test
+          POSTGRES_DB: tab10_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tab10_test -d tab10_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - name: Capture toolchain evidence
+        run: node scripts/verify/doctor.mjs
+      - run: pnpm install --frozen-lockfile
+      - name: Configure the disposable loopback database
+        run: node scripts/verify/export-ci-database-url.mjs
+      - name: Install lockfile-matched Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run compiled API and web through the same-origin proxy
+        run: pnpm run verify:e2e
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: browser-prodlike-${{ github.sha }}
+          path: |
+            .verify-evidence/browser-prodlike/environment.json
+            .verify-evidence/browser-prodlike/browser-summary.json
+            .verify-evidence/browser-prodlike/sanitized-traces
+          if-no-files-found: error
+          retention-days: 14
+
+  release-gate:
+    name: Release gate
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [quality, postgres-integration, browser-prodlike]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+      - name: Require every verification lane
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          POSTGRES_RESULT: ${{ needs.postgres-integration.result }}
+          BROWSER_RESULT: ${{ needs.browser-prodlike.result }}
+          VERIFY_RELEASE_GATE_RESULT: .verify-evidence/release-gate/results.json
+        run: node scripts/verify/assert-release-gate.mjs
+      - name: Upload release-gate evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-gate-${{ github.sha }}
+          path: .verify-evidence/release-gate
+          if-no-files-found: error
+          retention-days: 14

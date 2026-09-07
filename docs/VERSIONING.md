@@ -36,4 +36,8 @@ Phase 10 (UI polish): выравнивание bottom bar под [`05_UX_FLOWS.m
 
 ## Текущая версия
 
-**1.4.0** — Admin: создание с ролью admin; promote/demote других пользователей.
+**1.10.1** — значение из корневого `package.json` на 2026-09-06.
+
+Сам номер не доказывает, какой commit развёрнут на Vercel/Render. Текущий release
+drift и требование связать deploy с commit SHA отслеживаются как `OPS-004` в
+[`BACKLOG.md`](BACKLOG.md).

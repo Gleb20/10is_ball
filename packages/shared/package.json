@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "24.20.0"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -17,6 +20,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "test:fast": "vitest run --exclude 'src/tournament-bracket-v1.characterization.test.ts'",
     "test:unit": "vitest run"
   },
   "dependencies": {

@@ -7,6 +7,7 @@ const MATCH_STATUS: Record<string, string> = {
   finished: "Завершён",
   stopped: "Остановлен",
   cancelled: "Отменён",
+  voided: "Аннулирован",
 };
 
 const TOURNAMENT_STATUS: Record<string, string> = {
@@ -56,7 +57,12 @@ export function statusTone(
   status: string,
   domain: "match" | "tournament" | "user" = "match",
 ): StatusTone {
-  if (status === "blocked" || status === "cancelled" || status === "stopped") {
+  if (
+    status === "blocked" ||
+    status === "cancelled" ||
+    status === "stopped" ||
+    status === "voided"
+  ) {
     return "error";
   }
   if (

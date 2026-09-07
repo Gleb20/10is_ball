@@ -1,41 +1,54 @@
 # Requirements ↔ Tests Traceability
 
-Эта таблица должна обновляться в каждом PR.
+Обновлено по baseline-аудиту **2026-09-06**. Таблица показывает существующий
+evidence и пробелы; перечисление слоя не означает, что слой уже реализован.
+Capability-level выводы находятся в [`../CAPABILITY_MATRIX.md`](../CAPABILITY_MATRIX.md),
+дефекты — в [`../BACKLOG.md`](../BACKLOG.md).
 
-| Requirement group | Primary tests | Test layers | Critical |
-|---|---|---|---|
-| AUTH-001..008 | AT-AUTH-001..008; REQ_ui__auth_layout (UI-5) | unit, integration, API, E2E, component | yes |
-| ADM-001..008 | AT-ADM-001..005; AT-AUTH-008; INT_admin__role_*; REQ_ui__admin_confirm_dialogs (role create/promote) | integration, API, E2E, component | yes |
-| ADM-MATCH (D15) | AT-ADM-MATCH-001..006; REQ_ui__admin_match_ops | integration, API, component | high |
-| HOME-001..006 | AT-EMPTY-001, AT-RANK-*; shell IA = ADR D5; AsyncState/ListRow/StatusChip; Home hero+podium (UI-3) | component, API, E2E | medium |
-| MATCH create picker | API_GET_users_directory; REQ_ui__match_create_autocomplete | API, component | high |
-| PROFILE-001..006 | profile contract tests | unit, API, component | medium |
-| RANK-001..005 | AT-RANK-001..004 | unit, integration, API | yes |
-| HISTORY-001..004 | AT-VIS-*, AT-VIS-003 | integration, API, E2E | high |
-| MATCH-001..015 | AT-MATCH-001..012; AT-MATCH-CANCEL-001..003; REQ_ui__match_cancel; INT_match__get_after_create_returns_activeJudge (v1.10.1); postgres-date.integration (DATABASE_URL); AT-MATCH-004 / 004b / 004c mercy ≥N:0 current score after undo (D8, v1.6.3) | unit, integration, API, E2E | yes |
-| JUDGE-001..012 | AT-JUDGE-001..006; AT-JUDGE-003; JUDGE-002 any active user (D7); REQ_ui__judge setup ↔ between panels / +1-in-cell / timer-on-setup / exit-after-confirm (v1.6.3) | integration, API, component | yes |
-| TOURNAMENT-001..018 | AT-TRN-001..014; Challonge DE+GF reset + bracket UX + avatars (v1.9.0); cancel/parity (v1.10.1) | unit, integration, API, E2E | yes |
-| TEAM-001..009 | AT-TEAM-001..006 | unit, integration, API | high |
-| NOTIF-001..006 | AT-NOTIF-001..004 | integration, API, component | medium |
-| ONB-001..005 | AT-ONB-001..002, AT-MATCH-012; highlight tabs per ADR D5 | integration, E2E | medium |
-| HELP-001..003 | feedback/FAQ contract tests | API, component | low |
-| EMPTY | AT-EMPTY-001; REQ_ui__a11y_360_smoke (UI-6) | component, visual | medium |
-| NFR a11y §9–10 | docs/A11Y_CHECKLIST.md; skip-link / focus-visible / 360px smoke | component, docs | medium |
-| AUDIT | audit integration tests | integration | high |
-| NFR-002 perf | INT_load__ten_parallel_matches_meet_slo | integration (load) | yes |
-| NFR-007 backup | scripts/backup-rehearsal.sh | ops script | high |
+| Requirement group | Acceptance / intended evidence | Current evidence | Coverage | Blocking backlog |
+|---|---|---|---|---|
+| AUTH-001..008 | AT-AUTH-001..008; API + browser first-login/session journeys | API integration и часть component tests | `partial` | SEC-003, BUG-007, TECH-003 |
+| ADM-001..008 | AT-ADM-001..005, AT-AUTH-008; admin role/user/audit journeys | integration/API и AdminPage tests частично | `partial` | SEC-004, BUG-011, GAP-010 |
+| ADM-MATCH / void | AT-ADM-MATCH-001..007; standalone AT-MATCH-VOID-001..003; tournament criteria after Q-MATCH-003 | force-close/delete tests есть; D23 actor matrix расходится с cancel service, целевой D24 void отсутствует | `broken` | BUG-002, DATA-005/007 |
+| HOME-001..006 | AT-EMPTY-001; active/recent/stats/rival states | aggregate и Home UI, но не полный PRD | `partial` | BUG-001, GAP-001 |
+| PROFILE-001..006 | AT-PROFILE-001; own/public/privacy/edit/avatar/session contracts | exact 11-field profile mutation allowlist API test; нет полного public flow | `broken` | GAP-002 |
+| RANK-001..005 | AT-RANK-001..004; timezone boundary cases | unit/integration basics; текущие period boundaries UTC | `broken` | BUG-014, GAP-004 |
+| HISTORY-001..004 | AT-VIS-001..004; AT-VIS-003 filters/pagination | упрощённая global list, без dedicated API/E2E | `broken` | BUG-001, GAP-003 |
+| MATCH-001..017 | AT-MATCH-001..012, START/STOP, CANCEL-001..004, standalone VOID-001..003; tournament criteria after Q-MATCH-003 | strong engine/API slice; hosted PostgreSQL AT-MATCH-007/011 race + one-time stats green on run 34048623246; D23 cancel actor, D24 void и broader concurrency gaps remain | `broken` | DATA-001/002/005/007, BUG-002/003/010, GAP-005 |
+| JUDGE-001..012 | AT-JUDGE-001..006; two-client browser lifecycle | API integration + limited JudgePage tests | `broken` | BUG-003/004/005, GAP-005 |
+| TOURNAMENT-001..019 | AT-TRN-001..015; deterministic V2 SE/DE E2E; bounded V1 DE rejection; void criteria after Q-MATCH-003 | 455 bracket property scenarios + API/UI slices; hosted PostgreSQL AT-TRN-010 final + third-place materialization green on run 34048623246; V1 DE known hang path, tournament void outcome unresolved и нет full browser lifecycle | `broken` | SEC-006/007, DATA-002/006/007, GAP-006 |
+| TEAM-001..009 | AT-TEAM-001..006; captain/invite/leave/archive E2E | service/API basics, sparse page coverage | `partial` | DATA-004, GAP-007 |
+| NOTIF-001..006 | AT-NOTIF-001..004; expiry/read/popup lifecycle | list/read + limited integration/UI | `partial` | BUG-013, GAP-008 |
+| ONB-001..005 | AT-ONB-001/002; first-login/resume/restart E2E | static page; guided state not covered | `broken` | BUG-012, GAP-009 |
+| HELP-001..003 | FAQ/feedback categories and validation | endpoints/basic page only | `partial` | GAP-009 |
+| EMPTY | AT-EMPTY-001 across all zero states | isolated smoke/components, not route matrix | `partial` | GAP-001..010 |
+| NFR performance/cold start | load SLO; AT-OPS-COLD-001/002 | in-process PGlite load only; live cold start observed | `partial` | OPS-005, TECH-002 |
+| NFR security | negative authz/schema/secret/dependency tests | SEC-002 profile response allowlist verified locally; Neon credential rotation, Render update and admin-session revocation verified_prod, но independent old-URI probe tool-limited; другие P0 findings остаются | `broken` | SEC-001, SEC-003..007, DATA-001 |
+| NFR a11y/compatibility | axe, browser/viewport/keyboard/safe-area matrix | jsdom smoke only | `broken` | GAP-011, TECH-002 |
+| AUDIT | immutable ledger + D24 void actor/prior-state/optional-reason/compensation integration tests | generic audit rows, no immutable enforcement | `broken` | DATA-005 |
+| NFR backup/observability | safe restore rehearsal; readiness/log assertions | unsafe rehearsal script; no readiness/structured logs | `unknown` | OPS-002/003 |
+| NFR delivery/release identity | AT-OPS-DELIVERY-001..009; exact-SHA quality/PostgreSQL/compiled-browser plus native-Git public smoke evidence | OPS-004 implementation in progress; final clean gate, main protection and one public release still required | `partial` | OPS-004; VPS recovery follow-up |
 
 ## Naming convention
 
 - Unit: `REQ_<group>__<rule>`
 - Integration: `INT_<group>__<behavior>`
 - API: `API_<method>_<route>__<behavior>`
-- E2E: `E2E_<journey>__<outcome>`
+- Browser E2E: `E2E_<journey>__<outcome>`
+
+Имена старых тестов можно сохранять; новый test должен ссылаться на acceptance ID
+в названии или описании, если такой ID существует.
 
 ## Review rule
 
 Если requirement изменён:
-1. соответствующий acceptance scenario изменяется первым;
-2. тесты должны упасть;
-3. затем меняется реализация;
-4. matrix остаётся согласованной.
+
+1. решение фиксируется ADR, если меняется продуктовая политика;
+2. acceptance scenario изменяется до implementation;
+3. тест демонстрирует Red либо документируется characterization для уже
+   существующего поведения;
+4. после Green обновляются as-built docs, эта matrix, capability status, backlog и
+   changelog по [`../WORKFLOW.md`](../WORKFLOW.md).
+
+Нельзя указывать `E2E` как текущее покрытие без существующего browser test и
+сохранённого результата прогона.

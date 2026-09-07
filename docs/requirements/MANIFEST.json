@@ -2,6 +2,9 @@
   "package": "tab10_tdd_simplified",
   "version": "2.0",
   "date": "2026-07-20",
+  "status": "historical_deprecated",
+  "note": "Original v2.0 snapshot manifest. Hashes are not current integrity metadata after later edits; do not regenerate in place.",
+  "supersededBy": "../README.md",
   "files": [
     {
       "name": "00_README.md",

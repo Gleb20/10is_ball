@@ -5,9 +5,12 @@ import Fastify, {
   type FastifyReply,
   type FastifyRequest,
 } from "fastify";
+import { sql } from "drizzle-orm";
+import type { ReleaseMetadata } from "@tab10/shared";
 import type { Clock } from "@tab10/test-utils";
 import type { Db } from "./db/client.js";
 import { authSessions, users } from "./db/schema.js";
+import { isAuditEphemeral } from "./audit-ephemeral.js";
 import { AuthService, type AuthUser } from "./modules/auth/auth-service.js";
 import { MatchService } from "./modules/matches/match-service.js";
 import {
@@ -16,6 +19,7 @@ import {
 } from "./modules/notifications/notification-service.js";
 import { TeamService } from "./modules/teams/team-service.js";
 import { TournamentService } from "./modules/tournaments/tournament-service.js";
+import { resolveRuntimeReleaseMetadata } from "./release-metadata.js";
 
 const COOKIE = "tab10_session";
 const CSRF_COOKIE = "tab10_csrf";
@@ -61,8 +65,16 @@ declare module "fastify" {
 export async function buildApp(opts: {
   db: Db;
   clock?: Clock;
+  releaseMetadata?: ReleaseMetadata;
+  readinessProbe?: () => Promise<void>;
 }): Promise<{ app: FastifyInstance; services: AppServices }> {
   const clock = opts.clock ?? { now: () => new Date() };
+  const release = opts.releaseMetadata ?? resolveRuntimeReleaseMetadata();
+  const readinessProbe =
+    opts.readinessProbe ??
+    (async () => {
+      await opts.db.execute(sql`select 1`);
+    });
   const matches = new MatchService(opts.db, clock);
   const tournaments = new TournamentService(opts.db, clock, matches);
   matches.setTournamentMatchFinishedHook((matchId) =>
@@ -87,7 +99,11 @@ export async function buildApp(opts: {
 
   app.setErrorHandler((err, _req, reply) => {
     if (reply.sent) return;
-    console.error(err);
+    // Runtime exceptions can include SQL parameters, request payloads, URLs or
+    // credentials. Keep provider logs useful without serializing the raw error.
+    console.error(
+      JSON.stringify({ level: "error", event: "request_failed", code: "INTERNAL" }),
+    );
     return reply.code(500).send({
       code: "INTERNAL",
       message: "Внутренняя ошибка сервера",
@@ -164,9 +180,21 @@ export async function buildApp(opts: {
   app.get("/health", async () => ({
     status: "ok",
     time: clock.now().toISOString(),
+    release,
+    ...(isAuditEphemeral(process.env) ? { auditEphemeral: true } : {}),
   }));
 
-  app.get("/api/v1/openapi.json", async () => openApiSpec());
+  app.get("/ready", async (_req, reply) => {
+    const time = clock.now().toISOString();
+    try {
+      await readinessProbe();
+      return { status: "ready", time, release };
+    } catch {
+      return reply.code(503).send({ status: "not_ready", time, release });
+    }
+  });
+
+  app.get("/api/v1/openapi.json", async () => openApiSpec(release.version));
 
   // --- Auth ---
   app.post("/api/v1/auth/login", async (req, reply) => {
@@ -1362,12 +1390,13 @@ function cryptoRandom(): string {
     .join("");
 }
 
-function openApiSpec() {
+function openApiSpec(releaseVersion: string) {
   return {
     openapi: "3.0.3",
-    info: { title: "Tab-10 API", version: "0.1.0" },
+    info: { title: "Tab-10 API", version: releaseVersion },
     paths: {
-      "/health": { get: { summary: "Health" } },
+      "/health": { get: { summary: "Process health and release identity" } },
+      "/ready": { get: { summary: "Database readiness and release identity" } },
       "/api/v1/auth/login": { post: { summary: "Login" } },
       "/api/v1/admin/users": {
         get: { summary: "List users" },

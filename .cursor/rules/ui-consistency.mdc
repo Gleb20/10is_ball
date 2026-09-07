@@ -1,13 +1,13 @@
 ---
-description: UI consistency — shared patterns for forms, tables, filters, dialogs; visual hierarchy; system variants; state coverage and reuse on new screens.
+description: Compatibility pointer to canonical web UI, UX, and accessibility rules.
 globs: "**/*.{tsx,ts,jsx,js,vue,svelte,css}"
 alwaysApply: false
 ---
 
-# UI Consistency Rules
+# UI compatibility pointer
 
-- Similar problems should use the same interaction pattern.
-- Forms, tables, filters, dialogs, toasts, and navigation must follow shared patterns.
-- Respect hierarchy: page > section > group > component > element.
-- Default to system variants before introducing custom styling.
-- Audit all new screens for state coverage and component reuse.
+Follow [`../../AGENTS.md`](../../AGENTS.md),
+[`../../apps/web/AGENTS.md`](../../apps/web/AGENTS.md),
+[`../../docs/requirements/05_UX_FLOWS.md`](../../docs/requirements/05_UX_FLOWS.md),
+and [`../../docs/requirements/06_NFR_CONSTRAINTS.md`](../../docs/requirements/06_NFR_CONSTRAINTS.md).
+This file adds no separate component or visual policy.

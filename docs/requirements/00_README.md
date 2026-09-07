@@ -1,13 +1,17 @@
-# Tab-10 MVP — автономный пакет требований для Cursor
+# Tab-10 MVP — пакет целевых требований
 
-Статус: Ready for implementation planning v2.0  
+Статус: историческая база v2.0, актуализируемая ADR/acceptance
 Дата: 2026-07-20  
 Язык продукта: русский  
 Подход к разработке: Test-Driven Development
 
 ## 1. Назначение пакета
 
-Этот архив — единый источник требований для первой автономной версии Tab-10: закрытого mobile-first веб-сервиса для организации матчей и турниров по настольному теннису, ведения счёта, статистики, рейтинга и команд.
+Этот пакет описывает целевые требования первой автономной версии Tab-10:
+закрытого mobile-first веб-сервиса для организации матчей и турниров по
+настольному теннису, ведения счёта, статистики, рейтинга и команд. Он не является
+доказательством реализации; текущее покрытие см. в
+[`../CAPABILITY_MATRIX.md`](../CAPABILITY_MATRIX.md).
 
 ### Факты
 - Первая версия является самостоятельным приложением.
@@ -41,16 +45,23 @@
 11. `11_ACCEPTANCE_TEST_CATALOG.md`
 12. `12_IMPLEMENTATION_ROADMAP_TDD.md`
 13. `13_REQUIREMENTS_TEST_TRACEABILITY.md`
-14. `14_CURSOR_INSTRUCTIONS.md`
+14. `14_CURSOR_INSTRUCTIONS.md` — historical/deprecated; active agent rules в
+    [`../../AGENTS.md`](../../AGENTS.md) и scoped `AGENTS.md`
 
 ## 3. Источники истины
 
 При конфликте документов использовать следующий приоритет:
-1. `04_PRD.md` — продуктовые правила.
-2. `11_ACCEPTANCE_TEST_CATALOG.md` — наблюдаемое поведение.
-3. `07_DATA_MODEL.md` и `08_API_SPEC.md` — технические контракты.
-4. `05_UX_FLOWS.md` — порядок действий и состояния интерфейса.
-5. `10_TDD_STRATEGY.md` — процесс реализации и quality gates.
+1. принятые ADR в [`../DECISIONS.md`](../DECISIONS.md);
+2. `04_PRD.md` — целевые продуктовые правила;
+3. `11_ACCEPTANCE_TEST_CATALOG.md` — целевое наблюдаемое поведение;
+4. `07_DATA_MODEL.md` и `08_API_SPEC.md` — целевые data/API contracts;
+5. `05_UX_FLOWS.md` — целевые interaction flow и UI states;
+6. `10_TDD_STRATEGY.md` — delivery/quality gates.
+
+As-built документы в [`../architecture/`](../architecture/) описывают фактический
+код и являются evidence, но не переопределяют desired product.
+
+Полный порядок и update matrix: [`../WORKFLOW.md`](../WORKFLOW.md).
 
 ## 4. Граница MVP
 
@@ -85,7 +96,7 @@
 - ачивки;
 - сохранение черновиков.
 
-## 5. Критическое правило для Cursor
+## 5. Критическое правило для любого coding agent
 
 Любая задача должна содержать:
 1. идентификатор требования;
@@ -94,3 +105,6 @@
 4. рефакторинг без изменения поведения;
 5. обновление traceability matrix;
 6. полный зелёный прогон CI.
+
+Текущие автоматически загружаемые инструкции находятся в `AGENTS.md`. Этот раздел
+задаёт требования к результату, но не заменяет scoped agent rules.

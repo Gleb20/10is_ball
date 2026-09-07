@@ -129,7 +129,7 @@ Validation:
 - `id`
 - `title`
 - `kind` enum `standalone|tournament|tutorial`
-- `status` enum `waiting|in_progress|pending_confirmation|finished|stopped|cancelled`
+- `status` enum `waiting|in_progress|pending_confirmation|finished|stopped|cancelled|voided`
 - `format` enum `1v1|2v2`
 - `ruleset_id`
 - `created_by_user_id`
@@ -150,6 +150,14 @@ Validation:
 - `stop_reason_text` nullable
 - `created_at`
 - `updated_at`
+
+Для `voided` исходный результат/события не удаляются. Отдельная append-only запись
+void хранит `match_id`, `actor_user_id`, `created_at`, prior result/version,
+опциональную причину и ссылки на идемпотентную stats/dependent compensation.
+Отдельного approval state нет. Void разрешён только активному `admin` или
+`match.created_by_user_id`; hard delete finished/stopped match запрещён (D19/D24).
+Повтор той же операции не создаёт повторную компенсацию, а audit/compensation и
+согласование зависимого tournament state коммитятся согласованно.
 
 ### `match_participant`
 - `id`
@@ -228,6 +236,12 @@ Unique `(match_id,sequence_no)`; unique `(match_id,idempotency_key)` where not n
 - `stop_reason_text` nullable
 - `created_at`
 - `updated_at`
+
+Для double-elimination поддерживается только V2 bracket representation. Legacy V1
+DE не мигрируется и не сохраняется как playable/read-compatible формат: такой
+payload должен fail closed с bounded unsupported-version result. Никакой
+production reset/recreate из этой схемы не следует и без отдельного явного
+разрешения не выполняется (D25). V1 single-elimination этим решением не меняется.
 
 ### `tournament_participant`
 - `id`

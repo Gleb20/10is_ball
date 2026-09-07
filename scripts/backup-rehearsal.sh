@@ -7,12 +7,11 @@
 #   - pg_dump and psql on PATH (brew install libpq / postgresql client)
 #
 # Usage:
-#   ./scripts/backup-rehearsal.sh
-#   DATABASE_URL=postgres://tab10:tab10@localhost:5432/tab10 ./scripts/backup-rehearsal.sh
+#   DATABASE_URL='<explicit local or approved staging URL>' ./scripts/backup-rehearsal.sh
 
 set -euo pipefail
 
-DATABASE_URL="${DATABASE_URL:-postgres://tab10:tab10@localhost:5432/tab10}"
+: "${DATABASE_URL:?DATABASE_URL must be set explicitly; never rely on a fallback}"
 RESTORE_DB="${RESTORE_DB:-tab10_restore_rehearsal}"
 BACKUP_DIR="${BACKUP_DIR:-/tmp/tab10-backup-rehearsal}"
 TIMESTAMP="$(date +%Y%m%d_%H%M%S)"

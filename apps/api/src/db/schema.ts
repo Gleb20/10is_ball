@@ -23,7 +23,7 @@ export const avatarSourceEnum = pgEnum("avatar_source", [
 export const users = pgTable(
   "users",
   {
-    id: uuid("id").primaryKey().$defaultFn(newId),
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
     email: text("email").notNull(),
     passwordHash: text("password_hash").notNull(),
     role: userRoleEnum("role").notNull().default("user"),
@@ -55,7 +55,7 @@ export const users = pgTable(
 );
 
 export const authSessions = pgTable("auth_sessions", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id),
@@ -74,7 +74,7 @@ export const authSessions = pgTable("auth_sessions", {
 });
 
 export const temporaryPasswordIssues = pgTable("temporary_password_issues", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id),
@@ -93,6 +93,9 @@ export const matchStatusEnum = pgEnum("match_status", [
   "finished",
   "stopped",
   "cancelled",
+  // Read-only rollback compatibility for the immutable PR2 enum extension.
+  // PR1 does not write this state and migration 0000 intentionally omits it.
+  "voided",
 ]);
 export const matchKindEnum = pgEnum("match_kind", [
   "standalone",
@@ -101,7 +104,7 @@ export const matchKindEnum = pgEnum("match_kind", [
 ]);
 
 export const matches = pgTable("matches", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   title: text("title").notNull(),
   kind: matchKindEnum("kind").notNull().default("standalone"),
   status: matchStatusEnum("status").notNull().default("waiting"),
@@ -140,7 +143,7 @@ export const matches = pgTable("matches", {
 });
 
 export const matchParticipants = pgTable("match_participants", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   matchId: uuid("match_id")
     .notNull()
     .references(() => matches.id),
@@ -154,7 +157,7 @@ export const matchParticipants = pgTable("match_participants", {
 
 /** Active judge exclusivity enforced in app + SQL migration (partial unique). */
 export const judgeSessions = pgTable("judge_sessions", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   matchId: uuid("match_id")
     .notNull()
     .references(() => matches.id),
@@ -175,7 +178,7 @@ export const judgeSessions = pgTable("judge_sessions", {
 });
 
 export const tournaments = pgTable("tournaments", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   title: text("title").notNull(),
   status: text("status").notNull().default("collecting"),
   format: text("format").notNull().default("single_elimination"),
@@ -213,7 +216,7 @@ export const tournaments = pgTable("tournaments", {
 });
 
 export const tournamentParticipants = pgTable("tournament_participants", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   tournamentId: uuid("tournament_id")
     .notNull()
     .references(() => tournaments.id),
@@ -227,7 +230,7 @@ export const tournamentParticipants = pgTable("tournament_participants", {
 });
 
 export const tournamentInvitations = pgTable("tournament_invitations", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   tournamentId: uuid("tournament_id")
     .notNull()
     .references(() => tournaments.id),
@@ -246,7 +249,7 @@ export const tournamentInvitations = pgTable("tournament_invitations", {
 });
 
 export const teams = pgTable("teams", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   slogan: text("slogan"),
@@ -265,7 +268,7 @@ export const teams = pgTable("teams", {
 });
 
 export const teamMemberships = pgTable("team_memberships", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   teamId: uuid("team_id")
     .notNull()
     .references(() => teams.id),
@@ -278,7 +281,7 @@ export const teamMemberships = pgTable("team_memberships", {
 });
 
 export const teamInvitations = pgTable("team_invitations", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   teamId: uuid("team_id")
     .notNull()
     .references(() => teams.id),
@@ -297,7 +300,7 @@ export const teamInvitations = pgTable("team_invitations", {
 });
 
 export const notifications = pgTable("notifications", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id),
@@ -312,7 +315,7 @@ export const notifications = pgTable("notifications", {
 });
 
 export const auditLogs = pgTable("audit_logs", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   actorUserId: uuid("actor_user_id").references(() => users.id),
   action: text("action").notNull(),
   entityType: text("entity_type").notNull(),
@@ -324,7 +327,7 @@ export const auditLogs = pgTable("audit_logs", {
 });
 
 export const faqArticles = pgTable("faq_articles", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   category: text("category").notNull(),
   title: text("title").notNull(),
   body: text("body").notNull(),
@@ -332,7 +335,7 @@ export const faqArticles = pgTable("faq_articles", {
 });
 
 export const feedbackMessages = pgTable("feedback_messages", {
-  id: uuid("id").primaryKey().$defaultFn(newId),
+  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id),

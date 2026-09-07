@@ -1,15 +1,14 @@
 ---
-description: Figma-aligned design system — tokens, layout primitives, states; extend DS before one-offs; visual parity with implementation architecture.
+description: Compatibility pointer for UI design references and visual authority.
 globs: "**/*.{tsx,ts,jsx,js,vue,svelte,css}"
 alwaysApply: false
 ---
 
-# Figma Design System Rules
+# Design-reference compatibility pointer
 
-- Prefer existing design-system components over creating new UI patterns.
-- Never hardcode colors, spacing, radius, shadows, or typography if tokens exist.
-- Use semantic tokens, not raw values.
-- Reuse canonical layout primitives for page, section, card, form, and modal composition.
-- Maintain consistent empty, loading, error, success, and validation states.
-- If a requested UI pattern does not exist, propose an extension to the design system before implementing a one-off variant.
-- For implementation, preserve visual parity with Figma while adapting to the codebase’s existing component architecture.
+Visual authority, the production baseline, and Figma's supporting role are defined
+in [`../../AGENTS.md`](../../AGENTS.md) and
+[`../../apps/web/AGENTS.md`](../../apps/web/AGENTS.md). Also follow
+[`../../docs/requirements/05_UX_FLOWS.md`](../../docs/requirements/05_UX_FLOWS.md)
+and [`../../docs/requirements/06_NFR_CONSTRAINTS.md`](../../docs/requirements/06_NFR_CONSTRAINTS.md).
+This file does not make Figma authoritative.

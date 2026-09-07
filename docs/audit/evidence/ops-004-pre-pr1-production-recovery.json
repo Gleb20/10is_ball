@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-07",
+  "workItem": "OPS-004",
+  "scope": "Read-only production fingerprint and first Free-tier recovery rehearsal before PR1 baseline adoption",
+  "redaction": "Provider credentials, connection strings, row payloads, personal data, endpoint hostnames and control-plane resource identifiers are intentionally omitted.",
+  "before": {
+    "publicTableCount": 17,
+    "totalRowCount": 201,
+    "catalogProfiles": {
+      "columns": {
+        "objectCount": 171,
+        "md5": "e51fb267fa6734f73eca8ffccb2e2d8e"
+      },
+      "constraints": {
+        "objectCount": 44,
+        "md5": "711c7a6438b43eb40e84f29d2191d948"
+      },
+      "enums": {
+        "objectCount": 17,
+        "md5": "7845d89cadb46e03b0212541d0224aec"
+      },
+      "indexes": {
+        "objectCount": 21,
+        "md5": "e8b4f7689d43e034cae644585156c199"
+      }
+    },
+    "catalogSha256": "4ca0e9024d0c054f5151f6f6ca82fd592d6ff7581e7417d267fea025cb4dd81a",
+    "dataSha256": "d9fd5ae005fdfc040c2c35b8a00b4c1567a002baf9257c41067aa0edb4a78f50"
+  },
+  "snapshot": {
+    "created": true,
+    "tier": "Neon Free manual snapshot",
+    "restoreRehearsal": {
+      "requestedAsTemporaryProof": true,
+      "finalizedByControlPlane": true,
+      "stableConnectionEndpointPreserved": true,
+      "primaryBranchIdentityChanged": true,
+      "formerPrimaryRetainedAsRecoveryBranch": true
+    }
+  },
+  "after": {
+    "publicTableCount": 17,
+    "totalRowCount": 201,
+    "catalogFingerprintMatched": true,
+    "dataFingerprintMatched": true,
+    "directApiHealthStatus": 200,
+    "sameOriginProxyHealthStatus": 200
+  },
+  "mutationDisclosure": {
+    "applicationDataWrittenByThisRehearsal": false,
+    "migrationApplied": false,
+    "controlPlaneBranchIdentityChanged": true
+  },
+  "limitations": [
+    "This evidence is an aggregate integrity comparison, not a database dump.",
+    "The finalized restore was an unintended control-plane mutation and is not the normal rehearsal procedure.",
+    "A manual Free-tier snapshot and retained recovery branch do not satisfy the desired independent daily-backup policy in Q-OPS-003."
+  ]
+}

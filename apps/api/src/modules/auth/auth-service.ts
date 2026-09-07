@@ -49,6 +49,12 @@ export type AuthUser = {
   avatarKey: string | null;
 };
 
+export type OwnProfileUser = AuthUser & {
+  birthDate: string | null;
+  organizationText: string | null;
+  positionText: string | null;
+};
+
 function toAuthUser(row: typeof users.$inferSelect): AuthUser {
   return {
     id: row.id,
@@ -59,6 +65,15 @@ function toAuthUser(row: typeof users.$inferSelect): AuthUser {
     lastName: row.lastName,
     mustChangePassword: row.mustChangePassword,
     avatarKey: row.generatedAvatarKey ?? null,
+  };
+}
+
+function toOwnProfileUser(row: typeof users.$inferSelect): OwnProfileUser {
+  return {
+    ...toAuthUser(row),
+    birthDate: row.birthDate ?? null,
+    organizationText: row.organizationText ?? null,
+    positionText: row.positionText ?? null,
   };
 }
 
@@ -515,34 +530,58 @@ export class AuthService {
       positionText: string | null;
       onboardingCompletedAt: Date | null;
     }>,
-  ) {
+  ): Promise<OwnProfileUser> {
     const now = this.clock.now();
     const [row] = await this.db
       .update(users)
       .set({ ...patch, updatedAt: now })
       .where(eq(users.id, userId))
       .returning();
-    return row;
+    return toOwnProfileUser(row!);
   }
 
-  async seedAdmin(email: string, password: string): Promise<AuthUser> {
+  async seedAdmin(
+    email: string,
+    password: string,
+  ): Promise<{ user: AuthUser; created: boolean }> {
     const existing = await this.db.query.users.findFirst({
       where: eq(users.email, normalizeEmail(email)),
     });
-    if (existing) return toAuthUser(existing);
+    if (existing) return { user: toAuthUser(existing), created: false };
     const passwordHash = await hashPassword(password);
-    const [row] = await this.db
-      .insert(users)
-      .values({
-        email: normalizeEmail(email),
-        passwordHash,
-        role: "admin",
-        firstName: "Admin",
-        lastName: "Tab10",
-        mustChangePassword: false,
-        generatedAvatarKey: "avatar_1",
-      })
-      .returning();
-    return toAuthUser(row!);
+    return this.db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(users)
+        .values({
+          email: normalizeEmail(email),
+          passwordHash,
+          role: "admin",
+          firstName: "Admin",
+          lastName: "Tab10",
+          mustChangePassword: false,
+          generatedAvatarKey: "avatar_1",
+        })
+        .onConflictDoNothing({ target: users.email })
+        .returning();
+
+      if (!row) {
+        const concurrent = await tx.query.users.findFirst({
+          where: eq(users.email, normalizeEmail(email)),
+        });
+        if (!concurrent) {
+          throw new Error("Bootstrap admin conflict did not yield an account");
+        }
+        return { user: toAuthUser(concurrent), created: false };
+      }
+
+      await tx.insert(auditLogs).values({
+        actorUserId: null,
+        action: "admin.bootstrap_provisioned",
+        entityType: "user",
+        entityId: row.id,
+        meta: { source: "startup-bootstrap" },
+      });
+      return { user: toAuthUser(row), created: true };
+    });
   }
 }

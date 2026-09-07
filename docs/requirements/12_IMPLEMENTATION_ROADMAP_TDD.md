@@ -1,5 +1,10 @@
 # Implementation Roadmap — TDD-first
 
+> **Historical planning document (2026-07-20).** Он не отражает текущую
+> готовность фаз и не используется как live plan. Текущие приоритеты —
+> [`../BACKLOG.md`](../BACKLOG.md), статус —
+> [`../PROJECT_STATUS.md`](../PROJECT_STATUS.md).
+
 Оценки не являются календарным обещанием. Порядок важнее длительности.
 
 ## Phase 0 — Repository and quality foundation

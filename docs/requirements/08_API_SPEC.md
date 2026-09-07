@@ -46,14 +46,22 @@ Errors:
 - `POST /admin/users/{userId}/block`
 - `POST /admin/users/{userId}/unblock`
 - `POST /admin/users/{userId}/reset-password`
-- `POST /admin/matches/{matchId}/force-close` — void active **standalone** match → `cancelled` (D15)
-- `DELETE /admin/matches/{matchId}` — hard-delete **standalone** match; reverse rankings if finished/stopped with winner
+- `POST /admin/matches/{matchId}/force-close` — admin-only alias для soft cancel
+  active **standalone** match → `cancelled` (D23)
+- `DELETE /admin/matches/{matchId}` — admin-only hard purge только
+  **non-finished** standalone record; finished/stopped/voided result запрещён
+  (D15, superseded scope D19/D23/D24)
+
+Hard delete finished match не является частью целевого API. Ошибочный finished
+result проходит общий void flow ниже (D19/D24). И force-close, и допустимый
+non-finished purge требуют явного подтверждения в клиенте до отправки запроса;
+сервер не считает этот dialog authorization boundary.
 
 Create response включает `temporaryPassword` только один раз.
 
-Force-close body (optional):
+Force-close body; `reasonText` optional:
 ```json
-{"reasonText":"ops cleanup"}
+{"expectedVersion":7,"reasonText":"ops cleanup"}
 ```
 
 Errors:
@@ -63,6 +71,7 @@ Errors:
 - `USER_ALREADY_BLOCKED`
 - `TOURNAMENT_MATCH_FORBIDDEN` — `kind !== standalone`
 - `MATCH_NOT_ACTIVE` — force-close when already finished/stopped/cancelled
+- `MATCH_IMMUTABLE` — hard purge для finished/stopped/voided результата
 - `NOT_FOUND`
 
 ## 4. Home / profile
@@ -77,6 +86,14 @@ Errors:
 - `POST /profile/onboarding/restart`
 
 `GET /home` возвращает hero stats, active summaries, last five, ranking top, rival summaries, notification indicator, `myStats`.
+
+Успешный ответ `PATCH /profile/me` строится по явному allowlist и содержит только
+поля собственного профиля: `id`, `email`, `role`, `status`, `firstName`,
+`lastName`, `birthDate`, `organizationText`, `positionText`,
+`mustChangePassword`, `avatarKey`. Password hash, timestamps блокировки/входа,
+storage paths и другие внутренние auth persistence-поля запрещены. Текущий
+runtime alias `/api/v1/me/profile` остаётся contract drift в OPS-001 и этим
+исправлением не переименовывается.
 
 ## 5. Rankings / history
 
@@ -114,7 +131,11 @@ Actionable действия вызывают endpoint исходной сущн�
 - `POST /match-invitations/{id}/decline`
 - `POST /matches/{matchId}/start`
 - `POST /matches/{matchId}/stop`
-- `POST /matches/{matchId}/cancel` — void active **standalone** match → `cancelled` (organizer / participant / active judge; no winner/stats; frees MATCH-009)
+- `POST /matches/{matchId}/cancel` — cancel active **standalone** match; только
+  active admin или `created_by_user_id`, причина опциональна (D23)
+- `POST /matches/{matchId}/void` — сохранить finished result как voided,
+  компенсировать stats и согласовать dependents; только active admin или
+  `created_by_user_id`, reason optional, second approval отсутствует (D24)
 - `POST /matches/{matchId}/no-show`
 - `POST /matches/{matchId}/confirm-result`
 - `POST /matches/{matchId}/revert-finish`
@@ -127,11 +148,33 @@ Create supports:
 - optional judge invite;
 - source `manual|challenge|revenge|tutorial`.
 
+Cancel body; `reasonText` optional:
+```json
+{"expectedVersion":7,"reasonText":"created by mistake"}
+```
+
+Void body; `reasonText` optional:
+```json
+{"expectedVersion":12,"reasonText":"wrong winner confirmed"}
+```
+
+Оба endpoint требуют `Idempotency-Key: <uuid>`. Повтор того же actor + match +
+key возвращает тот же authoritative outcome и не создаёт второй audit или
+compensation; новый key со stale `expectedVersion` получает version conflict без
+side effects.
+
 Cancel / stop errors (also via admin force-close):
 - `TOURNAMENT_MATCH_FORBIDDEN`
 - `MATCH_NOT_ACTIVE`
 - `FORBIDDEN`
 - `MATCH_IMMUTABLE` (stop on finished)
+
+Client cancel/void UI требует отдельного явного confirmation action перед
+request; actor/state/version/idempotency сервер проверяет независимо. Void обязан
+быть идемпотентным и сохранять immutable actor/timestamp/prior result/version,
+опциональную reason и ссылки на compensation audit. Hard-delete route для
+finished/stopped/voided результата запрещён. Unauthorized/stale request не меняет
+match, audit, stats или dependent tournament state.
 
 ## 9. Judge
 
@@ -187,6 +230,8 @@ Errors:
 - `BRACKET_REGEN_REQUIRED`
 - `TOURNAMENT_ALREADY_STARTED`
 - `PLAYER_ALREADY_IN_ACTIVE_MATCH`
+- `UNSUPPORTED_BRACKET_VERSION` — legacy V1 double-elimination не исполняется;
+  ответ bounded и не запускает implicit reset/migration (D25)
 
 ## 11. FAQ / feedback
 
@@ -206,6 +251,9 @@ Errors:
 
 - `admin/*` — only admin.
 - match update before start — organizer.
+- standalone cancel — active admin or match creator; participant/current judge
+  без одной из этих ролей недостаточен.
+- finished/stopped match void — active admin or match creator; no second approver.
 - judge mutations — active judge session.
 - tournament bracket — organizer before start.
 - team edit/invite/remove — captain.

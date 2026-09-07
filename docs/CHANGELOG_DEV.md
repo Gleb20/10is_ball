@@ -1,5 +1,382 @@
 # Dev Changelog
 
+Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
+записи сохраняются как история и могут быть помечены `superseded` новой записью.
+
+## 2026-09-07 — OPS-004 public-stand simplification (in progress)
+
+- По явному уточнению пользователя текущий public contour классифицирован как
+  disposable испытательный стенд без ценных данных; production-grade D29/D30
+  superseded для этого контура новым D31.
+- Отдельный staging, rehearsal/recovery branches, writer pause и provider API
+  orchestration удаляются из active release path. Render и Vercel используют
+  native Git deploy каждого `main`, GitHub вручную выполняет только bounded
+  read-only exact-SHA/version smoke после deploy.
+- По отдельному разрешению disposable public API и migrator используют один
+  существующий direct `neondb_owner` URL без копирования credential между
+  провайдерами, а deploy не ждёт повторного CI merge SHA. Split-role и
+  полный release gate остаются обязательными local/PR проверками; это accepted
+  debt до VPS.
+- Пользователь разрешил одноразово пересоздать `public` и `drizzle` текущей Neon
+  БД вместо historical adoption. Следующие releases используют apply-only и не
+  сбрасывают данные.
+- Локальные гарантии не ослаблены: exact Node/pnpm/PostgreSQL/Playwright/Chromium,
+  quality/PostgreSQL/compiled-browser lanes, ReleaseMetadata и zero-skip policy
+  остаются обязательными. Vercel CLI удалён из local toolchain: web публикуется
+  native Git deployment. Production-grade recovery/backup/staging возвращаются
+  отдельным scope перед переносом ценных данных на оплачиваемый VPS.
+- Verification: clean `pnpm ci` на Node `24.20.0`/pnpm `9.15.0`/PostgreSQL
+  `16.15`/Playwright Chromium — `816 passed, 0 failed, 0 skipped, 0 todo,
+  0 interrupted`; disposable containers/networks удалены. Hosted `Release gate`,
+  merge пользователем, public reset/bootstrap и одинаковый SHA web/API ожидаются.
+- Первый hosted run выявил clean-checkout drift: job-level `runner.temp` не
+  валиден до старта runner, относительный evidence path уходил в cwd workspace-
+  пакета, а API build не гарантировал готовые `shared`/`test-utils`. Workflow,
+  path resolution и release build scripts исправлены; повторный gate ожидается.
+
+## 2026-09-07 — OPS-004 delivery foundation (historical D29/D30 design)
+
+### Scope
+
+- D29/D30; `AT-OPS-DELIVERY-001..009`; только PR1 baseline migration
+  `0000_data_003_baseline`. Product/story delta и migrations `0001–0003`
+  зарезервированы для PR2; version/tag остаются `1.10.1`.
+- Исходный dirty worktree не переключался. Его tracked/untracked SHA-256 recovery
+  snapshot хранится вне repository; `.agents/**` и `skills-lock.json` не входят в
+  publishable branch.
+
+### Changed
+
+- Закреплены Node `24.20.0`, pnpm `9.15.0`, PostgreSQL `16.15-alpine` по digest,
+  Playwright `1.63.0`/lockfile Chromium и Vercel CLI `59.11.7`; единый lockfile и
+  одинаковые install/build команды используются локально, в CI и provider build.
+- `.mise.toml` добавляет безопасный repository-local pnpm dispatcher: bare
+  `mise exec -- pnpm doctor` и `mise exec -- pnpm ci` больше не перехватываются
+  встроенными командами pnpm, а остальные команды без изменений идут через
+  Corepack `pnpm@9.15.0`.
+- `pnpm dev` запускает PostgreSQL с раздельными migration/runtime roles;
+  `pnpm dev:pglite` оставлен явным reduced-fidelity режимом. Оба local runner
+  очищают inherited hosted/provider/Vite origin environment и принудительно
+  используют loopback same-origin proxy. Добавлены строгие `doctor`,
+  `verify:fast`, `verify:postgres`, `verify:e2e`, `verify:all` и `pnpm run ci`.
+- Boot-time DDL заменяется immutable migration ledger. Runner выполняет exact
+  17-table adoption profile, data-change manifest, URL/control-plane/role
+  attestation, reserved-connection advisory lock и bounded timeouts; ручной stamp
+  и down-migration отсутствуют.
+- API `/health`/`/ready` и web `/release.json` публикуют единый ReleaseMetadata;
+  staging/production fail closed на неверном SHA/version/environment/dirty state.
+  Vite dev и compiled preview используют одинаковый same-origin proxy contract.
+- Добавлены три required PR/main lane и первоначальный exact-SHA staging →
+  production workflow с
+  stale-main guard, Neon rehearsal/recovery, bounded writer pause, exact Render
+  deploy, unaliased Vercel candidate/promotion и read-only production smoke.
+  Provider tokens/URLs/credentials не должны попадать в logs или artifacts.
+  Этот provider workflow superseded упрощённым D31 выше до публикации в `main`.
+- Документационный drift по runtime, 17/18 tables, route inventory, migration
+  rollback и release topology согласован; Q-OPS-002/Q-OPS-004 закрыты D29,
+  Q-OPS-003 сохранён как P0 residual risk.
+
+### Verified so far
+
+- Fresh frozen install и `pnpm run doctor` прошли на Node `24.20.0`, pnpm
+  `9.15.0`, Docker CLI `29.8.0`/server `29.5.2`, Compose `5.5.1`, Playwright
+  `1.63.0`, Chromium `153.0.8010.12` и Vercel CLI `59.11.7`.
+- Focused migration/release policy: 50/50 PGlite/URL/startup tests; 13/13 final
+  PostgreSQL migration tests, включая fresh/adoption/drift/failure/race/no-op;
+  compiled CLI fresh/no-op, API typecheck и diff check прошли.
+- Отдельный staging Neon создан; runtime login проверен как non-superuser без
+  createdb/createrole/replication/bypassrls и с runtime/default ACL.
+- Перед PR1 сохранены aggregate production fingerprints и manual Free snapshot.
+  Restore comparison подтвердил 17 tables, 201 aggregate rows, catalog/data
+  digests и direct/proxied health 200. Redacted evidence:
+  [`audit/evidence/ops-004-pre-pr1-production-recovery.json`](audit/evidence/ops-004-pre-pr1-production-recovery.json).
+
+### Incident disclosure and remaining
+
+- Restore rehearsal был ошибочно финализирован control plane: стабильный Neon
+  endpoint сохранился, но primary branch identity сменилась; прежняя primary
+  оставлена recovery copy. Fingerprints совпали, migration/application writes не
+  выполнялись. Обратное переключение не делается автоматически, чтобы не потерять
+  возможные последующие production writes.
+- Итоговый `pnpm run verify:all`, hosted three-lane `release-gate`, Render/Vercel
+  staging, native auto-deploy disable, GitHub Environments/main protection, новый
+  PR и оба пользовательски подтверждённых release ещё не выполнены. OPS-004
+  остаётся `in_progress`.
+
+## 2026-09-06 — SEC-002 profile response allowlist
+
+- Scope: SEC-002; PROFILE-001/003; NFR Security §4; AT-PROFILE-001. Полный
+  profile/avatar/public-card flow и переименование runtime route исключены.
+- Changed: `apps/api/src/modules/auth/auth-service.ts` возвращает типизированный
+  `OwnProfileUser` вместо DB row; `apps/api/src/auth.integration.test.ts`
+  закрепляет точный 11-field HTTP contract. Target/API as-built, acceptance,
+  traceability, backlog, capability и status docs синхронизированы.
+- Verified: focused test сначала упал на 19 полях, включая `passwordHash`, затем
+  прошёл 1/1; полный `auth.integration.test.ts` — 9/9; API suite — 84 passed и 3
+  real-PostgreSQL tests skipped; API typecheck passed. Grep review не нашёл второго
+  raw-user-row HTTP serializer. Полный `pnpm run ci` на bundled Node 24.19.0
+  прошёл: audit gates, lint, typecheck, 517 shared + 1 todo, 4 test-utils, 70 web,
+  84 API + 3 real-PostgreSQL skipped, API/web builds.
+- Remaining: production deploy/smoke не разрешён и не выполнялся; SEC-002 до него
+  остаётся local-only fix. GAP-002 продолжает полный profile flow.
+
+## 2026-09-06 — SEC-001 production credential rotation
+
+### Scope
+- Явно разрешённая production-операция: Neon role credential rotation, Render
+  `DATABASE_URL` update, `SEED_ADMIN=0`, отзыв active admin sessions и один
+  проверочный Render deploy. Database reset/delete и Vercel deploy исключены.
+
+### Changed
+- Neon password роли `neondb_owner` ротирован; control-plane operations
+  `6e83b8d4-15ed-41e1-8579-b2ede0a75394` и
+  `b739306a-96ab-4e3b-a908-9325a6a76832` завершены.
+- Render service `10is_ball` merge-обновил только `DATABASE_URL` и
+  `SEED_ADMIN=0`; automatic deploy `dep-daerpe8u01pc73fpfh80` вышел в `live` на
+  прежнем `main` SHA `1a98a5f7e516762bed12c3d9b20ceefc06a6be06`.
+- Одной SQL transaction отозвано 26 admin-сессий с reason
+  `credential_rotation`; active admin sessions после deploy = 0.
+
+### Verification
+- Neon reset operations terminal `finished`; Render deploy terminal `live`.
+- Sanitized startup logs содержат startup/listening/schema-ready signals без
+  auth/fatal failures или connection-string output.
+- Post-deploy direct `/health` = 200 за 0.356 s; Vercel proxy `/health` = 200 за
+  0.533 s. Vercel не изменялся и не деплоился; БД не удалялась и не reset-илась.
+- Повторный Vercel deployment inventory: 0 deployments после начала incident
+  operation; latest остался `dpl_JDzAkaZ29XQi3zyiM9YysnXSFPgF` от 2026-07-22,
+  `READY`, production, тот же SHA `1a98a5f`.
+- Blocking secret scan: 253 worktree files, 1038 ref objects, 662 ref blobs,
+  0 skipped inputs и 0 candidates.
+- Endpoint имеет `pooler_enabled=false`, поэтому Render использует новый direct
+  URI. Секреты не сохранены; evidence:
+  [`audit/evidence/sec-001-production-rotation.json`](audit/evidence/sec-001-production-rotation.json).
+
+### Remaining
+- Independent authentication failure старого URI не проверен: Neon plugin не
+  выполняет SQL по произвольному retained URI. Поэтому SEC-001=`verified_prod`,
+  не `done`; operational threat mitigated control-plane reset-ом.
+
+## 2026-09-06 — Foundation CI green на GitHub и Render preview guard подтверждён
+
+### Scope
+- `TECH-001`, `TECH-004`, `OPS-004`; commit
+  `f925efc63596b4aac56cad09f12419f6306819df` в draft PR
+  [`#3`](https://github.com/Gleb20/10is_ball/pull/3).
+
+### Verified
+- GitHub workflow
+  [`34048623246`](https://github.com/Gleb20/10is_ball/actions/runs/34048623246)
+  завершился `success`: `Quality and PGlite tests` и
+  `PostgreSQL critical integration` зелёные.
+- PostgreSQL 16 job: `3/3` passed — fresh schema/Date, `AT-MATCH-007/011`
+  (`200 + 409`, последовательное завершение, одна победа в статистике) и
+  `AT-TRN-010` (два finished semi-finals, waiting final + third place).
+- Render dashboard после push по-прежнему связан с `main`, PR Previews=`Off`,
+  last deployed SHA остался `1a98a5f`; GitHub Deployments для foundation SHA
+  вернул 0 записей. Vercel dashboard напрямую ещё не проверен: ожидается owner
+  2FA; branch-specific deployment guard остаётся repo-controlled evidence.
+- Машиночитаемый снимок: [`audit/evidence/hosted-ci-foundation.json`](audit/evidence/hosted-ci-foundation.json).
+
+### Remaining
+- CI green не является production deploy verification. Foundation code не
+  деплоился; Render/Neon credential rotation, session revocation и Vercel owner
+  verification остаются в `SEC-001` и approval-bounded плане.
+
+## 2026-09-06 — Коррекция first-run PostgreSQL CI characterization
+
+### Scope
+- `TECH-001`, `TECH-004`; draft PR
+  [`#3`](https://github.com/Gleb20/10is_ball/pull/3), initial workflow run
+  `34048088511`, PostgreSQL job `101526650172`.
+
+### Changed
+- `AT-MATCH-007/011` real-PostgreSQL smoke теперь сохраняет собственно race:
+  два конкурентных score command с одной expected version дают `200 + 409`,
+  после чего матч с допустимым target 3 доигрывается последовательными версиями
+  и статистика победителя проверяется ровно один раз.
+- `AT-TRN-010` учитывает целевой default single-elimination: после двух
+  полуфиналов материализованы и финал, и матч за третье место (`4 total`,
+  `2 finished`, `2 waiting`).
+
+### Verification
+- Initial hosted PostgreSQL 16 run выполнил fresh-schema/date smoke успешно, но
+  выявил две ошибки ожиданий теста: `pointsToWin=1` не создавал допустимого
+  finish state, а проверка сетки не учитывала матч за третье место. Это не было
+  скрыто retry/skip.
+- Exact Node 24.20.0: API typecheck passed; focused local file корректно guarded
+  и показал `3 skipped`, потому что локальный PostgreSQL runtime отсутствует.
+- Исправленный hosted PostgreSQL rerun на этом снимке ещё не выполнен; green до
+  его завершения не заявляется.
+
+## 2026-09-06 — SEC-001 execution plan и безопасный feature-branch push
+
+### Changed
+- Добавлен approval-bounded план
+  `test-plans/SEC-001-credential-rotation.md`: Neon credential rotation, Render
+  env update, отзыв active admin sessions и отрицательная проверка старого
+  credential без записи secret values.
+- В `apps/web/vercel.json` preview deployment отключён только для
+  `codex/audit-foundation`; GitHub PR CI остаётся доступен, а foundation deploy и
+  merge в `main` в scope не входят.
+- Draft PR должен содержать `[skip preview]` в title, чтобы не создать Render
+  PR Preview, который иначе может скопировать production environment.
+- Deployment docs различают фактический Render service `10is_ball` и optional
+  Blueprint service `tab10-api`, описывают branch guard и фактическую команду
+  сборки shared + web.
+
+### Verification
+- External credential rotation, Render restart, session revocation и old-secret
+  negative test ещё не выполнены и не заявляются как verified.
+- Branch guard будет проверен после разрешённого push по отсутствию Vercel
+  deployment. До push это только repo-controlled configuration.
+
+## 2026-09-06 — Cancel/void, legacy V1 DE и полный PRD: решения D23–D26
+
+### Scope
+- Закрыты Q-MATCH-001, Q-MATCH-002, Q-DATA-001 и Q-PRODUCT-001 без изменения immutable
+  baseline: cancel active standalone и void finished/stopped разрешены только
+  active admin или creator; reason optional; для опасных действий обязателен
+  отдельный UI confirmation.
+- Finished/stopped result остаётся soft-invalidated: hard delete запрещён,
+  исходные факты/audit сохраняются, stats/dependents компенсируются идемпотентно.
+- Legacy V1 DE preservation/read/play/migration не требуется; input должен fail
+  closed в bounded time. Production reset/recreate этим решением не разрешён.
+- Полный PRD v2 остаётся functional target; gap не выпадает из scope без
+  отдельного superseding ADR и синхронного изменения требований/acceptance.
+
+### Changed
+- ADR/open questions/status: `DECISIONS.md`, `OPEN_QUESTIONS.md`,
+  `PROJECT_STATUS.md`, `CAPABILITY_MATRIX.md`.
+- Target contracts: `requirements/04_PRD.md`, `05_UX_FLOWS.md`,
+  `07_DATA_MODEL.md`, `08_API_SPEC.md`, `09_LOCAL_AUTH_AND_TENNIS_ADMIN.md`.
+- Acceptance/traceability: `requirements/11_ACCEPTANCE_TEST_CATALOG.md`,
+  `requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md`.
+- Live backlog: `BACKLOG.md`; standalone DATA-005 и DATA-006 переведены в
+  `ready`, tournament downstream policy выделена в DATA-007
+  (`blocked_decision`), BUG-002 расширен текущим cancel authz drift.
+- Code, immutable baseline и production не изменялись.
+
+### Verification
+- `node scripts/audit/check-docs.mjs`: 45 files, 0 broken links/anchors, 49
+  unique complete findings, 0 duplicate/malformed IDs or invalid statuses.
+- `git diff --check`: passed.
+
+### Remaining
+- D23–D26 описывают target, но не исправляют code: BUG-002, DATA-006 и
+  standalone/ledger DATA-005 требуют Red/Green; DATA-007 остаётся
+  `blocked_decision` до ответа Q-MATCH-003. Нужны API, real-PostgreSQL и browser
+  tests.
+- Backup/RPO/RTO для будущих ценных данных остаётся Q-OPS-003; любые production
+  data operations по-прежнему требуют отдельного явного разрешения.
+
+## 2026-09-06 — Audit foundation и правила Codex/Cursor
+
+### Scope
+- Immutable baseline: `audits/2026-09-06-baseline.md`
+- Live backlog: `BACKLOG.md` (`SEC`, `BUG`, `GAP`, `DATA`, `OPS`, `TECH` IDs)
+- Accepted ADR: D16–D22; updated HISTORY/MATCH/time/cold-start acceptance
+- Backlog lifecycle unified: `confirmed → ready → in_progress → verified_local → verified_prod → done`, with `blocked_decision` branch
+- External blocker: SEC-001 credential rotation; значение секрета не сохраняется
+- Canonical Git: `Gleb20/10is_ball` `main`; рабочая ветка
+  `codex/audit-foundation`; commit/push/deploy не выполнялись
+
+### Changed
+- Canonical docs: `docs/README.md`, `PROJECT_STATUS.md`, `BACKLOG.md`,
+  `CAPABILITY_MATRIX.md`, `OPEN_QUESTIONS.md`, `WORKFLOW.md`, `DECISIONS.md`
+- Entry/deploy/QA: `../README.md`, `DEPLOY.md`, `VERSIONING.md`,
+  `A11Y_CHECKLIST.md`
+- As-built: `architecture/AS_BUILT.md`, `architecture/API_AS_BUILT.md`,
+  `architecture/DATA_MODEL_AS_BUILT.md`, `operations/DEPLOYMENT_AS_BUILT.md`
+- Requirements governance: `requirements/00_README.md`, `04_PRD.md`,
+  `06_NFR_CONSTRAINTS.md`, `11_ACCEPTANCE_TEST_CATALOG.md`,
+  `12_IMPLEMENTATION_ROADMAP_TDD.md`, `13_REQUIREMENTS_TEST_TRACEABILITY.md`,
+  `14_CURSOR_INSTRUCTIONS.md`,
+  `MANIFEST.json`
+- Agent rules (параллельная audit-foundation работа): `../AGENTS.md`,
+  `../apps/api/AGENTS.md`, `../apps/web/AGENTS.md`,
+  `../packages/shared/AGENTS.md`, `../.cursor/rules/*.mdc`
+- Runtime/security: Node 24.20.0 pins, default-off bootstrap без fallback,
+  atomic create/existing outcome и system audit; production без `DATABASE_URL`
+  не запускается; startup/migration errors redacted
+- Database tooling: `TEST_DATABASE_URL` не имеет fallback, ограничен loopback
+  test-named DB и требует `ALLOW_TEST_DATABASE_RESET=1`; `db:migrate` требует
+  explicit complete PostgreSQL URL и не подменяет его PGlite smoke
+- Local PostgreSQL DX: root/API env examples согласованы, Compose требует явные
+  значения и публикует порт только на `127.0.0.1`; existing volume caveat описан
+- Audit automation: docs/link/ID gate, exact route↔OpenAPI baseline drift,
+  staged/worktree/all-refs secret scan и отдельный local-env incident mode,
+  read-only production capture, guarded synthetic seed и `BUG-015`
+  characterization reproducer
+- Evidence: production/local visual baseline 360/440/768/1440, local synthetic
+  route smoke, production HTTP/fingerprint и PostgreSQL 16 critical CI lane
+
+### Verified
+- Исходный baseline был красным: API 2 failed / 40 passed / 1 skipped. После
+  изоляции RNG выполнены три последовательных green full suite; дефект busy+bye
+  не скрыт, а вынесен в `BUG-015` deterministic characterization
+- Node 24.20.0 full test: shared 517 passed + 1 todo; test-utils 4 passed;
+  web 70 passed; API 83 passed + 3 guarded PostgreSQL tests skipped
+- Exact Node 24.20.0 `pnpm install --frozen-lockfile` и полный `pnpm run ci`
+  завершились успешно: audit gates, lint, typecheck, tests, API/web builds
+- Bootstrap focused integration: два concurrent seed дают ровно один `created`,
+  один `existing` и одну durable audit row с system actor
+- Live: Vercel web, direct Render health и proxied health ответили 200 после cold start
+- Browser: public production login на 4 viewport; synthetic local home на 4
+  viewport, key screens на 360px, 17 organizer routes + отдельный admin pass;
+  горизонтальный overflow не найден, полный PRD E2E/axe не заявляется
+- Documentation: automated link/anchor/schema check покрывает immutable baseline
+  48 findings и live backlog 49 после выделения DATA-007
+- Cursor compatibility rules: 6/6 `.mdc` files have delimited frontmatter,
+  non-empty `description` and boolean `alwaysApply`
+- Secret scan: worktree + index + all refs, 0 unreviewed candidates, 0 skipped
+  inputs; 11 exact-hash benign findings в 9 historical loopback blobs reviewed;
+  staged-only blob self-test проходит. Это не подтверждает external rotation
+- Route/OpenAPI: source 60 operations / 54 paths, OpenAPI 15 operations /
+  12 paths, exact inventory unchanged against saved baseline
+- Local web build fingerprint совпал с production HTML/JS/CSS capture; deployed
+  commit SHA этим не доказан
+- PostgreSQL 16 CI lane добавлен и fail-closed; local PostgreSQL runtime был
+  недоступен, поэтому 3 real-PG tests и hosted lane остаются pending
+- Dependency audit: 17 production advisories — 12 high и 5 moderate
+
+### Remaining
+- Исправление product backlog ещё не начато; foundation устранил только риски
+  самого audit/dev контура и bootstrap/runtime configuration.
+- SEC-001 требует внешнего действия в Neon/Render и отрицательной проверки старого доступа.
+- Current production = interim visual regression baseline; Figma = historical,
+  non-authoritative reference (D22).
+
+## 2026-07-25 — Historical Figma visual parity + interaction Screen Flows
+
+> Historical design work. Superseded by D22 on 2026-09-06: этот файл не является
+> authoritative source; current production используется как interim regression baseline.
+
+### Design
+- Rebuilt [10is](https://www.figma.com/design/WBUbQBLKsijwYnQTCVw2Uy/10is) screens for 1:1 layout parity with localhost (Handjet only intentional font delta)
+- New kit pieces: AuthCard, HeroCard, PodiumSlot, ScoreDisplay, Segment, BottomNav v2, JudgeSide
+- Interaction flows: Auth (login states → first password → Home), Start→Match create→Detail, Judge setup/scoring/pending, Tournament sequence, overlays on Match detail
+- Old schematic frames moved to `_Deprecated schematic`
+
+### Docs
+- Visual parity rebuild note (this entry)
+
+## 2026-07-25 — Historical Figma UI Kit + Screen Flows (10is)
+
+> Historical design artifact; source-of-truth claim below was superseded by D22.
+
+### Design
+- Figma file [10is](https://www.figma.com/design/WBUbQBLKsijwYnQTCVw2Uy/10is): Foundations (variables + Handjet text styles), Components (variants + Auto Layout), Shell (iPhone 17 Pro Max 440×956), Screen Flows (auth, primary tabs, matches, tournaments, more, judge, overlays)
+- Typography in mockups: Handjet (pixel direction); web still `Moscow Sans W` until follow-up CSS change
+
+### Docs
+- Historical decision note: Q-UI-4 тогда объявлял Figma + Handjet source of truth;
+  это отменено D22, Handjet rollout не одобрен
+- `PROJECT_STATUS.md` step log
+
+### How to verify
+- Open file in Figma Desktop; pages Cover → Foundations → Components → Flows / *
+
 ## 2026-07-22 — CI: build shared packages before lint
 
 ### CI / root

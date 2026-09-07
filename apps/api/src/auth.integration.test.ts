@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { FakeClock } from "@tab10/test-utils";
 import { users } from "./db/schema.js";
-import { createPgliteDb } from "./db/client.js";
+import { createMigratedPgliteDb } from "./db/client.js";
 import { buildApp } from "./app.js";
 import type { FastifyInstance } from "fastify";
 import type { AppServices } from "./app.js";
@@ -11,7 +11,7 @@ describe("API_GET_health__ok", () => {
   let close: () => Promise<void>;
 
   beforeEach(async () => {
-    const ctx = await createPgliteDb();
+    const ctx = await createMigratedPgliteDb();
     close = ctx.close;
     const built = await buildApp({ db: ctx.db, clock: new FakeClock() });
     app = built.app;
@@ -36,7 +36,7 @@ describe("auth and admin integration", () => {
   let clock: FakeClock;
 
   beforeEach(async () => {
-    const ctx = await createPgliteDb();
+    const ctx = await createMigratedPgliteDb();
     close = ctx.close;
     clock = new FakeClock();
     const built = await buildApp({ db: ctx.db, clock });
@@ -286,6 +286,48 @@ describe("auth and admin integration", () => {
     });
     const adminId = adminMe.json().user.id as string;
     expect(users.every((u) => u.id !== adminId)).toBe(true);
+  });
+
+  it("API_PATCH_me_profile__PROFILE_003__AT-PROFILE-001__response_allowlist__SEC-002", async () => {
+    const token = await loginAsAdmin();
+    const response = await app.inject({
+      method: "PATCH",
+      url: "/api/v1/me/profile",
+      cookies: { tab10_session: token },
+      payload: {
+        firstName: "Safe",
+        lastName: "Profile",
+        birthDate: "1990-01-02",
+        organizationText: "Tab 10",
+        positionText: "Player",
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const user = response.json().user as Record<string, unknown>;
+    expect(Object.keys(user).sort()).toEqual(
+      [
+        "avatarKey",
+        "birthDate",
+        "email",
+        "firstName",
+        "id",
+        "lastName",
+        "mustChangePassword",
+        "organizationText",
+        "positionText",
+        "role",
+        "status",
+      ].sort(),
+    );
+    expect(user).toMatchObject({
+      email: "admin@tab10.local",
+      firstName: "Safe",
+      lastName: "Profile",
+      birthDate: "1990-01-02",
+      organizationText: "Tab 10",
+      positionText: "Player",
+    });
   });
 
   it("INT_admin__role_create_promote_demote_guards", async () => {

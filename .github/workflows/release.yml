@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-main
+  cancel-in-progress: true
+
+jobs:
+  public-stand:
+    name: Wait for exact-SHA public stand
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TAB10_RELEASE_SHA: ${{ github.sha }}
+      TAB10_ENVIRONMENT: production
+      TAB10_RELEASE_DIRTY: "false"
+      TAB10_PUBLIC_RELEASE_RESULT: .verify-evidence/public-release.json
+    steps:
+      - name: Check out the CI-approved commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Set up the exact Node runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+
+      - name: Export the product version from the checked-out commit
+        run: node scripts/release/export-github-release-env.mjs
+
+      - name: Prove the public release wait uses the exact clean SHA
+        run: node scripts/release/assert-clean-checkout.mjs
+
+      - name: Wait for the exact release on the public stand
+        run: >-
+          node scripts/release/wait-for-public-release.mjs
+          --timeout-ms 1500000
+          --interval-ms 15000
+          --result-file "$TAB10_PUBLIC_RELEASE_RESULT"
+
+      - name: Upload redacted public release evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: public-release-${{ github.sha }}
+          path: .verify-evidence/public-release.json
+          if-no-files-found: error
+          retention-days: 30

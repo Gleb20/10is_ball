@@ -17,6 +17,8 @@ apps/api/dist
 apps/web/dist
 playwright-report
 test-results
+.vercel
 *.tsbuildinfo
 .turbo
 .pnpm-store
+.verify-evidence

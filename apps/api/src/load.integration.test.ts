@@ -1,7 +1,7 @@
 import { describe, expect, it, afterEach, beforeEach } from "vitest";
 import type { FastifyInstance } from "fastify";
 import { FakeClock, percentile } from "@tab10/test-utils";
-import { createPgliteDb } from "./db/client.js";
+import { createMigratedPgliteDb } from "./db/client.js";
 import { buildApp, type AppServices } from "./app.js";
 
 /** NFR 06 §2 — target load: 10 parallel matches. */
@@ -30,7 +30,7 @@ describe("Phase 9 load — 10 parallel matches", () => {
   let adminCookie: string;
 
   beforeEach(async () => {
-    const ctx = await createPgliteDb();
+    const ctx = await createMigratedPgliteDb();
     close = ctx.close;
     const built = await buildApp({ db: ctx.db, clock: new FakeClock() });
     app = built.app;

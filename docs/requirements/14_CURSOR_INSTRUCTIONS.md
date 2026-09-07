@@ -1,4 +1,9 @@
-# Instructions for Cursor
+# Historical Cursor instructions (deprecated)
+
+Этот документ сохранён для истории пакета v2.0. Active rules для Cursor и Codex
+находятся в [`../../AGENTS.md`](../../AGENTS.md), scoped `AGENTS.md` и thin pointers
+в `.cursor/rules/`. Канонический процесс — [`../WORKFLOW.md`](../WORKFLOW.md).
+При конфликте следовать active rules/ADR, а не этому историческому тексту.
 
 ## 1. Перед началом
 

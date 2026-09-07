@@ -26,7 +26,7 @@
 - password policy.
 
 ### Integration
-С реальной PostgreSQL:
+Обязательный release lane работает с реальной PostgreSQL `16.15`:
 - транзакции очка и Undo;
 - unique judge lock;
 - optimistic version;
@@ -107,9 +107,16 @@
 
 ## 8. Database testing
 
-- Каждый integration suite запускается на чистой ephemeral PostgreSQL.
-- Миграции применяются с нуля.
-- Проверяется rollback или forward-fix стратегия.
+- PostgreSQL/migration/concurrency suites запускаются на чистой disposable
+  PostgreSQL `16.15`; контейнер использует tmpfs и всегда удаляется в `finally` и
+  по сигналу.
+- PGlite остаётся быстрым hermetic слоем, но не заменяет обязательный PostgreSQL
+  lane и запускается явно через `dev:pglite` при локальной разработке.
+- Миграции проверяются с нуля, на точной historical adoption schema и как
+  sequential upgrade; catalog profile включает enum, columns/defaults/nullability,
+  constraints и indexes.
+- Проверяется forward-fix/recovery стратегия. Down-migrations и automatic
+  production restore запрещены.
 - Запрещены SQLite substitutes для PostgreSQL-specific поведения.
 
 ## 9. Frontend TDD
@@ -123,17 +130,18 @@
 
 ## 10. CI gates
 
-Каждый PR:
-1. lint/typecheck;
-2. unit;
-3. integration;
-4. API contract;
-5. build;
-6. critical E2E;
-7. migration check;
-8. traceability check.
+Каждый PR и повторно точный merge SHA выполняют три независимые required lanes:
 
-Merge запрещён при любом падении.
+1. `quality`: audit, lint, typecheck, hermetic unit/component/PGlite и build;
+2. `postgres-integration`: fresh/adoption/upgrade migration и concurrency checks;
+3. `browser-prodlike`: compiled API/web, PostgreSQL `16.15`, same-origin proxy и
+   Playwright-managed Chromium на desktop/mobile.
+
+`release-gate` проверяет, что все три результата именно `success`, без
+`skipped`/`neutral`. Тестовые reporters требуют ненулевое число tests и `0 failed`,
+`0 skipped`, `0 todo`. Merge запрещён при любом другом результате. После merge
+D31 разрешает native Git deploy текущего disposable public stand; GitHub
+вручную выполняет только bounded read-only exact-SHA smoke после deploy.
 
 ## 11. Bug workflow
 

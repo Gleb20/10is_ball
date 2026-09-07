@@ -1,13 +1,11 @@
 ---
-description: Engineering quality — modular UI, isolated logic, reuse primitives, small composable components, run build/typecheck/tests after substantive changes, avoid over-abstraction.
+description: Compatibility pointer to canonical engineering and verification instructions.
 globs: "**/*.{ts,tsx,js,jsx,mjs,cjs,vue,svelte}"
 alwaysApply: false
 ---
 
-# Engineering Quality Rules
+# Engineering compatibility pointer
 
-- Build modular components and isolate business logic from presentation.
-- Reuse existing primitives before creating new abstractions.
-- Keep components small and composable.
-- After a meaningful set of changes: run build, typecheck, and tests.
-- Prefer file-local clarity over over-abstraction.
+Follow [`../../AGENTS.md`](../../AGENTS.md), the nearest nested `AGENTS.md`, and
+[`../../docs/WORKFLOW.md`](../../docs/WORKFLOW.md). This file adds no independent
+engineering, testing, or permission policy.

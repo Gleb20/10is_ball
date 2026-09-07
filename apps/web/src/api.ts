@@ -8,7 +8,7 @@ export type User = {
   avatarKey?: string | null;
 };
 
-/** Production: set VITE_API_BASE_URL to API origin (no trailing slash). Dev: empty + Vite proxy. */
+/** Every delivery environment uses relative API paths through its same-origin proxy. */
 const API_BASE = String(import.meta.env.VITE_API_BASE_URL ?? "").replace(
   /\/$/,
   "",
