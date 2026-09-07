@@ -14,31 +14,30 @@ invalid/replay-required с отдельным repair flow? Ledger, actor policy 
 compensation можно реализовать независимо; завершение tournament void зависит от
 этого решения.
 
-## Q-OPS-002 — Production release policy
-
-Render dashboard read-only inspection подтвердил linked branch `main` и deployed
-SHA `1a98a5f7e516762bed12c3d9b20ceefc06a6be06`. Ещё требуется установить Vercel
-deployed SHA, фактические auto-deploy/PR-preview policies обеих платформ, целевую
-release policy и того, кто подтверждает release/smoke.
-
 ## Q-OPS-003 — Данные и восстановление
 
 Текущий production объявлен не содержащим ценных данных, требующих сохранения V1
 DE (D25). Для будущих данных остаётся решить: когда они становятся ценными, какой
 допустим RPO/RTO, где хранится backup и как подтверждается restore. Бесплатная
-схема сейчас не доказывает ежедневный backup/restore. Любой reset/recreate даже
-текущего production всё равно требует отдельного явного разрешения.
-
-## Q-OPS-004 — Аккаунты и границы production-тестирования
-
-Есть ли отдельные production test accounts для ролей admin/organizer/participant/
-judge/outsider и разрешено ли создавать синтетические матчи/турниры в опубликованном
-сервисе? До отдельного разрешения запрещены изменяющие продуктовые тестовые
-сценарии в production. Отдельно разрешённые incident-операции SEC-001 выполняются
-только по своему test plan. Credentials не следует присылать в документацию или
-коммитить — их нужно передать/настроить безопасным способом.
+схема сейчас не доказывает ежедневный backup/restore. Одноразовый reset
+disposable public stand для OPS-004 явно разрешён 2026-09-07 в D31; любой
+последующий reset или работа с будущими ценными данными требует нового решения.
 
 ## Закрытые вопросы
+
+### Q-OPS-002 — Production release policy
+
+**Closed 2026-09-07 by ADR D29, superseded for the current stand by D31.** Merge
+в защищённый `main` публикуется native Git integrations Render/Vercel после
+обязательного PR/main CI. GitHub выполняет read-only bounded monitor, а web/API
+обязаны в итоге сообщить одинаковые SHA/version.
+
+### Q-OPS-004 — Аккаунты и границы production-тестирования
+
+**Closed 2026-09-07 by ADR D29, superseded for the current stand by D31.**
+Изменяющие browser/E2E сценарии выполняются только локально/в CI на disposable
+PostgreSQL. Public stand получает только read-only health/readiness/release/
+proxy/OpenAPI smoke; test accounts для release gate не требуются.
 
 ### Q-OPS-001 — Статус ротации credential
 

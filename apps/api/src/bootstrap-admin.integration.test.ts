@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { FakeClock } from "@tab10/test-utils";
 import { and, eq } from "drizzle-orm";
-import { createPgliteDb } from "./db/client.js";
+import { createMigratedPgliteDb } from "./db/client.js";
 import { auditLogs } from "./db/schema.js";
 import { AuthService } from "./modules/auth/auth-service.js";
 
@@ -14,7 +14,7 @@ describe("bootstrap admin persistence", () => {
   });
 
   it("atomically distinguishes concurrent create/existing and writes one audit record", async () => {
-    const context = await createPgliteDb();
+    const context = await createMigratedPgliteDb();
     close = context.close;
     const auth = new AuthService(context.db, new FakeClock());
 

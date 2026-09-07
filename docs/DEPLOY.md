@@ -1,5 +1,10 @@
 # Free temporary hosting for Tab-10 (API + DB + Web)
 
+> **Superseded 2026-09-07:** это историческая ручная инструкция и не должна
+> использоваться для новых релизов. Канонический exact-SHA процесс описан в
+> [`DELIVERY.md`](DELIVERY.md); фактический provider-state — в
+> [`operations/DEPLOYMENT_AS_BUILT.md`](operations/DEPLOYMENT_AS_BUILT.md).
+
 Фактический снимок и известные риски: [operations/DEPLOYMENT_AS_BUILT.md](operations/DEPLOYMENT_AS_BUILT.md).
 
 > **SEC-001 status:** credential БД, ранее попавший в tracked example, ротирован

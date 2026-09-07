@@ -5,14 +5,23 @@
   "description": "Tab-10 — closed table tennis tournament web service",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev": "PGLITE_DATA_DIR=${PGLITE_DATA_DIR:-.data/pglite} pnpm run --parallel --filter @tab10/api --filter @tab10/web dev",
+    "dev": "node scripts/verify/run-dev.mjs",
+    "dev:pglite": "node scripts/verify/run-dev-pglite.mjs",
     "dev:ephemeral": "AUDIT_EPHEMERAL=1 DATABASE_URL= TEST_DATABASE_URL= PGLITE_DATA_DIR= pnpm run --parallel --filter @tab10/api --filter @tab10/web dev",
     "seed:local-players": "node scripts/seed-local-meme-players.mjs",
     "seed:audit": "node scripts/audit/seed-ephemeral.mjs",
     "build": "pnpm -r run build",
+    "build:api": "pnpm --filter @tab10/api... run build",
+    "build:web": "pnpm --filter @tab10/web... run build",
+    "build:release": "pnpm run build:api && pnpm run build:web",
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck",
-    "test": "pnpm -r run test",
+    "test": "pnpm test:fast",
+    "test:fast": "node scripts/verify/run-fast.mjs",
+    "test:postgres": "node scripts/verify/run-postgres.mjs",
+    "test:migrations": "node scripts/verify/run-migrations.mjs",
+    "test:e2e": "pnpm test:e2e:prodlike",
+    "test:e2e:prodlike": "node scripts/verify/run-prodlike-e2e.mjs",
     "test:unit": "pnpm -r --filter './packages/*' --filter @tab10/api run test:unit",
     "test:integration": "pnpm --filter @tab10/api run test:integration",
     "test:load": "pnpm --filter @tab10/api run test:load",
@@ -26,11 +35,20 @@
     "audit:production": "node scripts/audit/capture-production-baseline.mjs",
     "audit:reproduce-busy-bye": "node scripts/audit/reproduce-tournament-busy-bye.mjs",
     "audit:check": "pnpm audit:docs && pnpm audit:routes && pnpm audit:secrets:self-test && pnpm audit:secrets && pnpm audit:reproduce-busy-bye",
-    "ci": "pnpm --filter @tab10/shared --filter @tab10/test-utils run build && pnpm audit:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "doctor": "node scripts/verify/doctor.mjs --require-docker --require-browser",
+    "verify:fast": "node scripts/verify/doctor.mjs && pnpm --filter @tab10/shared --filter @tab10/test-utils run build && pnpm audit:check && pnpm lint && pnpm typecheck && pnpm build && pnpm test:fast",
+    "verify:postgres": "node scripts/verify/run-postgres.mjs",
+    "verify:e2e": "node scripts/verify/run-prodlike-e2e.mjs",
+    "playwright:install": "playwright install chromium",
+    "verify:all": "node scripts/verify/run-local.mjs",
+    "ci": "pnpm run verify:all",
     "db:generate": "pnpm --filter @tab10/api run db:generate",
-    "db:migrate": "pnpm --filter @tab10/api run db:migrate"
+    "db:migrate": "node scripts/bin/run-compiled-migration.mjs"
   },
   "engines": {
-    "node": "24.x"
+    "node": "24.20.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
   }
 }

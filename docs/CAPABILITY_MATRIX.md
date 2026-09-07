@@ -1,6 +1,6 @@
 # Capability matrix
 
-Снимок на **2026-09-06**. Это оценка end-to-end способности, а не наличия файла
+Снимок на **2026-09-07**. Это оценка end-to-end способности, а не наличия файла
 или зелёного unit test.
 
 Статусы: `verified` — целевой сценарий подтверждён на достаточном уровне;
@@ -36,11 +36,12 @@
 | Accessibility/responsive | 360px+, keyboard, WCAG AA, judge landscape | `broken` | public production и synthetic local viewport baseline сохранён; touch/contrast/semantics/layout defects остаются, axe/keyboard/judge landscape не пройдены | GAP-011, TECH-002 |
 | Audit trail | Immutable security/sporting ledger | `broken` | audit table есть, но технические события изменяемы/удаляемы | DATA-005 |
 | API contract | Complete current OpenAPI and target spec | `broken` | source: 60 operations/54 paths; OpenAPI: 15 operations/12 paths | OPS-001 |
-| Database evolution | Versioned safe PostgreSQL migrations | `broken` | boot-time DDL и drift risks | DATA-003 |
-| Backup/restore | Safe rehearsed recovery | `unknown` | script есть, production policy/evidence отсутствуют и script опасен | OPS-003, Q-OPS-003 |
-| Observability/readiness | Diagnose API/DB/requests/incidents | `missing` | logger disabled; health only liveness | OPS-002 |
-| Deterministic CI | Full repeatable green quality gate | `verified` | RNG leak устранён; три последовательных full suite и final local Node 24 `pnpm run ci` зелёные; GitHub run 34048623246 green для Quality/PGlite и PostgreSQL 16 | TECH-001, TECH-002 |
-| Runtime/build portability | One Node version across local/CI/hosting | `partial` | configs aligned; local Node 24.20.0 и hosted GitHub quality/PostgreSQL jobs green; Vercel/Render build/deploy этого snapshot не выполнялись | TECH-004, OPS-004 |
+| Database evolution | Versioned safe PostgreSQL migrations | `partial` | PR1 заменяет boot DDL immutable `0000` migration с ledger/lock/timeouts и разделёнными ролями; focused PGlite/PostgreSQL проверки green, full gate и fresh public bootstrap ещё впереди | DATA-003, OPS-004 |
+| Backup/restore | Safe rehearsed recovery | `partial` | manual Free snapshot и exact aggregate restore comparison выполнены; restore непреднамеренно сменил primary branch identity, независимые ежедневные backups/RPO/RTO отсутствуют | OPS-003, Q-OPS-003 |
+| Observability/readiness | Diagnose API/DB/requests/incidents | `partial` | PR1 добавляет DB-aware `/ready` и release identity без raw URL logging; structured request/incident observability остаётся неполной | OPS-002, OPS-004 |
+| Deterministic CI | Full repeatable green quality gate | `partial` | прежний quality/PostgreSQL baseline green; PR1 вводит строгие fast/PostgreSQL/compiled-browser lanes с нулём skip/todo, но финальный `verify:all` и hosted `release-gate` ещё не зафиксированы | TECH-001, TECH-002, OPS-004 |
+| Runtime/build portability | One Node version across local/CI/hosting | `partial` | exact Node 24.20.0/pnpm 9.15.0 и toolchain doctor подтверждены локально; provider settings/build/deploy и одинаковая release identity ещё не доказаны | TECH-004, OPS-004 |
+| Exact-SHA release delivery | Protected PR → native-Git public stand → manual read-only smoke | `partial` | repo config/metadata реализуются в OPS-004; main protection, provider settings и один exact-SHA public release ещё отсутствуют | OPS-004 |
 
 Изменение статуса требует evidence по [Definition of done](WORKFLOW.md#3-definition-of-done),
 а не только закрытия связанного backlog item.

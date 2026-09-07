@@ -1,6 +1,6 @@
 # Tab-10 — статус проекта
 
-Обновлено: **2026-09-06**. Версия в корневом `package.json`: **1.10.1**.
+Обновлено: **2026-09-07**. Версия в корневом `package.json`: **1.10.1**.
 
 ## Итог
 
@@ -12,23 +12,26 @@
 
 ## Проверенный снимок
 
-| Область | Состояние на 2026-09-06 |
+| Область | Состояние на 2026-09-07 |
 |---|---|
-| Production web/API | После credential rotation Render deploy `dep-daerpe8u01pc73fpfh80` вышел в `live`; direct и Vercel-proxied health ответили 200; Vercel не изменялся |
-| Node 24 | repo, CI, Render и package engines закреплены на 24; SEC-002 validation выполнена на bundled Node **24.19.0** с pnpm 9.15.0, foundation baseline — на 24.20.0 |
-| Текущий full test | shared 517 passed + 1 todo; test-utils 4 passed; web 70 passed; API 84 passed + 3 real-PostgreSQL tests skipped |
+| Public stand web/API | Это disposable испытательный стенд без ценных данных; application release пока на прежнем SHA, direct и Vercel-proxied health отвечают 200 |
+| OPS-004 PR1 | Delivery foundation реализуется в отдельном clean worktree от `b62afee`; исходный dirty worktree и внешний recovery snapshot сохранены; PR ещё не создан и в `main` ничего не слито |
+| Закреплённый stack | Repo target: Node **24.20.0**, pnpm **9.15.0**, PostgreSQL **16.15-alpine** по digest, Playwright **1.63.0**/Chromium **153.0.8010.12**; fresh frozen install и `doctor` прошли |
+| Текущий full test | Финальный OPS-004 `verify:all` ожидает заморозки release workflow; предыдущий baseline: shared 517 passed + 1 todo, test-utils 4, web 70, API 84 + 3 PostgreSQL skipped — он не считается новым acceptance evidence |
 | Детерминизм | после изоляции RNG три последовательных full suite и последний Node 24 run зелёные; известный busy+bye дефект закреплён отдельным `BUG-015` characterization test |
-| Local quality/build | foundation frozen install/full CI прошли на exact Node 24.20.0; SEC-002 повторил полный `pnpm run ci` на bundled Node 24.19.0 — audit gates, lint, typecheck, tests и API/web builds зелёные |
+| Local quality/build | New foundation требует `0 failed / 0 skipped / 0 todo` и compiled builds; frozen install/doctor зелёные, итоговый `verify:all` ещё не заявлен |
 | Hosted CI | commit `f925efc`: GitHub run `34048623246` green — Quality/PGlite и PostgreSQL 16 jobs passed; evidence в `audit/evidence/hosted-ci-foundation.json` |
 | Web artifact fingerprint | local build HTML/JS/CSS hashes совпали с production capture; это не заменяет commit SHA/release metadata |
 | Browser baseline | production login: 4 viewport; local synthetic data: 4 home viewport, key 360px screens и smoke 17 organizer routes + admin; это не полный PRD E2E/axe |
-| PostgreSQL verification | corrected hosted job `101528083822`: 3/3 passed — fresh-schema/date, concurrent `200/409` + one-time stats, final + third-place advancement; local PostgreSQL runtime отсутствует |
+| PostgreSQL verification | Локальный Docker/Colima и exact PostgreSQL 16.15 доступны; новый migration suite прошёл focused checks, но полное единое acceptance evidence фиксируется финальным `verify:all` |
 | Secret incident | Neon role credential ротирован, Render `DATABASE_URL` обновлён, `SEED_ADMIN=0`, 26 admin-сессий отозваны и 0 остались active; independent old-URI auth probe недоступен через plugin, поэтому SEC-001=`verified_prod` |
 | Security dependencies | 17 production advisories: 12 high и 5 moderate |
 | Route/OpenAPI inventory | source: 60 operations / 54 paths; OpenAPI: 15 operations / 12 paths (25% operation coverage); live version 0.1.0 |
 | Product decisions | D23: cancel только active admin/creator; D24: creator/admin soft void без mandatory reason/second approver; D25: V1 DE preservation не требуется; D26: полный PRD v2 остаётся target |
 | Documentation | immutable baseline: 48 findings; live backlog: 49 после выделения DATA-007; links/anchors/IDs/status schema проверяются автоматически |
-| Релизная синхронизация | версия и опубликованный набор функций не подтверждены единым release artifact |
+| Релизная синхронизация | D31 упрощает контур: Render/Vercel native Git deploy каждого `main`, после него ручной read-only smoke ждёт одинаковый SHA/version; provider API orchestration и отдельный staging исключены; public API временно использует `neondb_owner` |
+| Public DB bootstrap | Пользователь разрешил одноразово пересоздать `public`/`drizzle` на точном Neon target и применить `0000` с нуля; последующие releases только apply-only |
+| Recovery | Существующий manual snapshot/recovery copy сохранён как ручная страховка, но не является release barrier для disposable stand |
 
 ## Главные блокеры
 
@@ -47,17 +50,22 @@
 
 ## Следующий этап
 
-Внешняя ротация секрета и отзыв сессий выполнены; SEC-001 остаётся
-`verified_prod`, пока нет безопасного independent old-URI negative probe.
-SEC-002 исправлен и проверен локально, но ещё не выпущен; следующая реализация
-начинается с оставшихся P0: SEC-003/005/006/007 и DATA-001/002.
-Локальный quality baseline уже зелёный; real-PostgreSQL CI и затем browser E2E
-должны подтверждать каждое core-flow исправление.
+Текущий приоритет — завершить `OPS-004`: получить чистый локальный `verify:all`,
+создать и проверить PR1, защитить `main`, один раз пересоздать disposable public
+schema и провести native-Git release после пользовательского merge. Один
+успешный exact-SHA smoke переводит item в `verified_prod`. Product/story delta и
+migrations `0001–0003` переносятся следующей волной, но больше не блокируют
+рабочий delivery-контур.
+
+SEC-001 остаётся `verified_prod`, пока нет безопасного independent old-URI
+negative probe. SEC-002 исправлен локально, но ещё не выпущен; после delivery
+foundation остаются P0 SEC-003/005/006/007 и DATA-001/002.
 Q-MATCH-001, Q-MATCH-002, Q-DATA-001 и Q-PRODUCT-001 закрыты решениями D23–D26; BUG-002,
 DATA-006 и standalone/ledger DATA-005 готовы к реализации; DATA-007 остаётся
 `blocked_decision` до ответа Q-MATCH-003 о void турнирного матча с уже сыгранными
-downstream matches. Полный PRD v2 закреплён D26. Ни один reset/recreate production
-этой фиксацией не разрешён. Новые
+downstream matches. Полный PRD v2 закреплён D26. Одноразовый reset текущей
+публичной тестовой schema явно разрешён D31; это не разрешение удалять будущие
+ценные данные. Новые
 продуктовые решения принимаются только через
 [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) и [DECISIONS.md](DECISIONS.md).
 

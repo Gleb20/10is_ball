@@ -13,12 +13,14 @@ describe("REQ_ui__status_labels", () => {
   it("maps match and tournament statuses to Russian", () => {
     expect(statusLabel("in_progress")).toBe("Идёт");
     expect(statusLabel("waiting")).toBe("Ожидание");
+    expect(statusLabel("voided")).toBe("Аннулирован");
     expect(statusLabel("collecting", "tournament")).toBe("Сбор");
     expect(statusLabel("blocked", "user")).toBe("Заблокирован");
     expect(formatLabel("single_elimination")).toBe("Single elim.");
   });
 
   it("assigns tone for StatusChip colors", () => {
+    expect(statusTone("voided")).toBe("error");
     expect(statusTone("finished")).toBe("success");
     expect(statusTone("cancelled")).toBe("error");
     expect(statusTone("in_progress")).toBe("warning");

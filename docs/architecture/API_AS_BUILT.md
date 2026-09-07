@@ -1,15 +1,16 @@
 # API as-built
 
 Снимок регистрации Fastify routes в
-[`../../apps/api/src/app.ts`](../../apps/api/src/app.ts) на **2026-09-06**.
+[`../../apps/api/src/app.ts`](../../apps/api/src/app.ts) на **2026-09-07**.
 Это inventory, а не обещание корректности или полноты. Все `/api/v1/*`, кроме
 login/OpenAPI, требуют session; state-changing routes вне test требуют CSRF.
 
-## System и auth (9)
+## System и auth (10)
 
 | Method | Path |
 |---|---|
 | GET | `/health` |
+| GET | `/ready` |
 | GET | `/api/v1/openapi.json` |
 | POST | `/api/v1/auth/login` |
 | POST | `/api/v1/auth/logout` |
@@ -93,13 +94,14 @@ Counting `GET, POST` as two route registrations gives 18. Point/undo require an
 | GET | `/api/v1/faq` |
 | POST | `/api/v1/feedback` |
 
-Итого: **60 registered operations / 54 unique paths**. Встроенный OpenAPI описывает
-**15 operations / 12 paths** (25% operations). Машинный снимок:
+Итого: **61 registered operations / 55 unique paths**. Встроенный OpenAPI описывает
+**16 operations / 13 paths** (26.2% operations). Машинный снимок:
 [`../audit/evidence/route-openapi-inventory.json`](../audit/evidence/route-openapi-inventory.json).
 
 ## Contract drift
 
-- Live OpenAPI 2026-09-06: version `0.1.0`, 12 paths.
+- Artifact OpenAPI берёт version из той же release metadata, что `/health` и
+  `/ready`; production останется историческим `0.1.0`, пока PR1 не выпущен.
 - [`../requirements/08_API_SPEC.md`](../requirements/08_API_SPEC.md) — целевой,
   частично устаревший контракт.
 - Shared types и runtime responses также расходятся (например, статус
@@ -108,3 +110,12 @@ Counting `GET, POST` as two route registrations gives 18. Point/undo require an
 До закрытия `OPS-001` при изменении API обновляйте одновременно route inventory,
 runtime validation, target spec и tests. Authorization defects: `SEC-003`,
 `SEC-006`, `SEC-007`, `BUG-001`, `BUG-002` в [`../BACKLOG.md`](../BACKLOG.md).
+
+## Release и readiness contract
+
+`GET /health` проверяет liveness процесса, `GET /ready` выполняет DB probe и при
+ошибке возвращает redacted `503`. Оба ответа включают одинаковый `release`:
+`{ sha, version, environment, dirty }`. В staging/production принимается только
+full 40-character SHA, `dirty=false` и root-package version. Web публикует ту же
+структуру отдельно в `/release.json`; exact-SHA smoke сравнивает direct и proxy
+ответы, а не только HTTP status.

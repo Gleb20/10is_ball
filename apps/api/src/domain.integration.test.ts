@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { FakeClock } from "@tab10/test-utils";
-import { createPgliteDb } from "./db/client.js";
+import { createMigratedPgliteDb } from "./db/client.js";
 import { buildApp } from "./app.js";
 import type { FastifyInstance } from "fastify";
 import type { AppServices } from "./app.js";
@@ -16,7 +16,7 @@ describe("match and judge integration", () => {
   let userBId: string;
 
   beforeEach(async () => {
-    const ctx = await createPgliteDb();
+    const ctx = await createMigratedPgliteDb();
     close = ctx.close;
     const built = await buildApp({ db: ctx.db, clock: new FakeClock() });
     app = built.app;
@@ -1887,7 +1887,7 @@ describe("match and judge integration", () => {
 
 describe("INT_migrations__apply_from_scratch", () => {
   it("applies schema on empty pglite", async () => {
-    const ctx = await createPgliteDb();
+    const ctx = await createMigratedPgliteDb();
     const res = await ctx.client.query(
       "SELECT tablename FROM pg_tables WHERE schemaname='public'",
     );
@@ -1906,7 +1906,7 @@ describe("INT_migrations__apply_from_scratch", () => {
   });
 
   it("backfills existing Po2 V2 as power_of_two not compact", async () => {
-    const ctx = await createPgliteDb();
+    const ctx = await createMigratedPgliteDb();
     // Insert legacy-shaped row as if migration had not run column yet — column exists with NULL
     await ctx.client.query(
       `INSERT INTO users (id, email, password_hash, first_name, last_name, role, status, must_change_password)

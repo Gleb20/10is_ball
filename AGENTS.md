@@ -80,7 +80,7 @@ and obtain a decision when fixing it would change product behavior.
 - For UI changes, check loading, empty, error, success, disabled, unauthorized,
   stale-session, narrow-mobile, desktop, keyboard, focus, and contrast states as
   applicable. Static DOM tests do not replace browser layout checks.
-- Run repository-wide `pnpm ci` when the change crosses packages, changes a
+- Run repository-wide `pnpm run ci` when the change crosses packages, changes a
   contract, migration, shared domain rule, or critical journey. Otherwise run
   the relevant package typecheck/tests plus any focused browser or integration
   checks. Record exactly what ran.
@@ -97,6 +97,16 @@ Require explicit user approval before any of the following:
 - commit, tag, or bump a product version unless the task explicitly includes it;
 - run migrations, reset, truncate, restore, or seed any non-ephemeral database;
 - rotate credentials or change hosting, DNS, billing, or access controls.
+
+ADR D31 defines one narrow standing authorization for the current disposable
+public stand: when the user merges a pull request into protected `main`, native
+Render/Vercel Git integrations may publish that merge and Render may apply its
+immutable migrations after required CI checks pass. GitHub then performs only a
+read-only exact-SHA smoke. This does not cover another branch, manual/fallback
+deploys, version/tag changes, mutating public E2E, down-migrations, automatic
+restore, DNS/billing/access changes or bypassing a failed/skipped gate. The
+separately approved one-time reset for OPS-004 is not standing authorization for
+future resets or deletion of valuable data.
 
 Never use production as a test fixture. Production may be inspected read-only as
 a visual/behavioral baseline when access is available. Do not bypass approval by

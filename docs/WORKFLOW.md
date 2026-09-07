@@ -36,6 +36,19 @@
 локального work item переход `verified_prod` требует явно записанного подтверждения,
 что production scope отсутствует; иначе item остаётся `verified_local`.
 
+### Release authorization по D31
+
+Пользовательский merge pull request в защищённый `main` является подтверждением
+native Git release этого merge на текущий disposable public stand. Render ждёт
+успешных CI checks, применяет immutable migrations и запускает API; Vercel
+публикует production branch `main`. GitHub не управляет провайдерами и после CI
+только ждёт, пока web/API сообщат один exact SHA/version.
+
+Это разрешение не распространяется на иной branch, tag/version bump, mutating
+public E2E, down-migration, автоматический restore, повторный reset/recreate,
+DNS, billing или access-control changes. Такие операции требуют отдельного
+явного разрешения. Read-only monitor привязывается к merge SHA/version.
+
 ## 2. Во время изменения
 
 - Делать минимальный тематический diff; не смешивать чужие изменения.

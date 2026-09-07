@@ -33,5 +33,5 @@ This file extends the repository `AGENTS.md` for `apps/web`.
   use end-to-end/visual coverage for auth, match creation, judge, tournament,
   notifications, reload recovery, and responsive regressions.
 - Run focused component tests first, then `pnpm --filter @tab10/web typecheck` and
-  `pnpm --filter @tab10/web test`. Run repository `pnpm ci` for shared contracts or
+  `pnpm --filter @tab10/web test`. Run repository `pnpm run ci` for shared contracts or
   critical cross-layer journeys.

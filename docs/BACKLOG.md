@@ -548,7 +548,7 @@
 - **Type:** documentation-contract
 - **Priority:** P1
 - **Status:** ready
-- **Evidence:** live `/api/v1/openapi.json` сообщает version 0.1.0 и 12 paths, тогда как [`app.ts`](../apps/api/src/app.ts) регистрирует 60 operations/54 paths; target [`08_API_SPEC.md`](requirements/08_API_SPEC.md) также расходится. Exact source/OpenAPI counts: `docs/audit/evidence/route-openapi-inventory.json:8`, `docs/audit/evidence/route-openapi-inventory.json:9`, `docs/audit/evidence/route-openapi-inventory.json:10`, `docs/audit/evidence/route-openapi-inventory.json:11`; live snapshot: `docs/audit/evidence/production-http-baseline.json:68`.
+- **Evidence:** live baseline `/api/v1/openapi.json` сообщает version 0.1.0 и 12 paths; current [`app.ts`](../apps/api/src/app.ts) регистрирует 61 operation / 55 paths, а встроенный current OpenAPI описывает 16 operations / 13 paths. Target [`08_API_SPEC.md`](requirements/08_API_SPEC.md) также расходится. Exact current counts: `docs/audit/evidence/route-openapi-inventory.json:8`, `docs/audit/evidence/route-openapi-inventory.json:9`, `docs/audit/evidence/route-openapi-inventory.json:10`, `docs/audit/evidence/route-openapi-inventory.json:11`; historical live snapshot: `docs/audit/evidence/production-http-baseline.json:68`.
 - **Expected:** generated/validated OpenAPI покрывает все public routes, auth, payloads, errors и текущую release version.
 - **Actual:** три несовместимых представления API: live OpenAPI, код и target spec.
 - **Repro:** сравнить route inventory с OpenAPI paths и API spec.
@@ -585,15 +585,46 @@
 ### OPS-004 — Release/version drift
 
 - **Type:** release-management
-- **Priority:** P1
-- **Status:** confirmed
-- **Evidence:** package 1.10.1, live OpenAPI 0.1.0, docs называли unreleased endpoints, а production уже отдаёт некоторые из них; deployed commits не зафиксированы. Current package version: `package.json:4`; live API version: `docs/audit/evidence/production-http-baseline.json:68`.
-- **Expected:** один release version/commit для web+API, documented deploy status и smoke evidence.
-- **Actual:** невозможно доказать, какая версия опубликована и какие функции поддерживаются.
-- **Repro:** сравнить package, OpenAPI, changelog, Vercel/Render commit metadata.
-- **Risk:** регрессии и rollback без воспроизводимого artifact.
-- **Verification:** release checklist, build metadata endpoint/UI, deploy smoke tied to commit SHA.
-- **Dependencies:** [Q-OPS-002](OPEN_QUESTIONS.md#q-ops-002--production-release-policy).
+- **Priority:** P0
+- **Status:** in_progress
+- **Evidence:** package 1.10.1, live OpenAPI 0.1.0, docs называли unreleased
+  endpoints, а production уже отдаёт некоторые из них; deployed commits не были
+  связаны единым manifest. Baseline:
+  [`production-http-baseline.json`](audit/evidence/production-http-baseline.json).
+  Pre-PR1 aggregate fingerprint/manual snapshot/restore comparison:
+  [`ops-004-pre-pr1-production-recovery.json`](audit/evidence/ops-004-pre-pr1-production-recovery.json).
+- **Expected:** один воспроизводимый local → public-stand pipeline на Node
+  `24.20.0`, pnpm `9.15.0`, PostgreSQL `16.15`; каждый PR проходит обязательные
+  quality/PostgreSQL/compiled-browser lanes, merge в `main` автоматически
+  публикуется native Git integrations, а read-only monitor подтверждает один
+  SHA/version у web и API.
+- **Actual:** delivery foundation реализуется изолированным PR1 от `b62afee`:
+  exact toolchain, default local PostgreSQL, versioned `0000`, strict local/CI
+  lanes и ReleaseMetadata находятся в clean worktree. D31 заменил отдельный
+  staging/provider orchestration на Render/Vercel native `main` Git deploy и
+  ручной passive exact-SHA smoke. Public runtime и migrations временно используют
+  `neondb_owner`; split-role проверки сохранены local/CI. Frozen product/story delta и migrations
+  `0001–0003` остаются следующей волной и не блокируют foundation. Исходный dirty
+  worktree и внешний recovery snapshot не изменяются.
+- **Repro:** выполнить fresh `pnpm ci`, затем после merge проверить `/health`,
+  `/ready`, `/release.json` и proxied OpenAPI на одинаковые SHA/version.
+- **Risk:** временная частичная доступность, если Render и Vercel заканчивают
+  deploy в разное время; deploy до повторного merge-SHA CI; повышенные права API;
+  downtime при первой пересборке схемы; отсутствие production-grade backup до
+  VPS. Ручной smoke делает рассинхронизацию видимой.
+- **Permissions:** 2026-09-07 пользователь явно разрешил одноразово удалить и
+  пересоздать текущую публичную Neon schema, поскольку ценных данных на стенде
+  нет. Последующие deploy используют apply-only. Mutating public E2E,
+  down-migration и automatic restore не разрешены.
+- **Non-goals:** version bump/tag, платные планы, отдельный staging,
+  production-grade recovery/zero-downtime и продуктовые migrations `0001–0003`.
+- **Verification:** AT-OPS-DELIVERY-001..009 и
+  [`test-plans/OPS-004-delivery-parity.md`](test-plans/OPS-004-delivery-parity.md):
+  clean checkout без `.env` → `pnpm run verify:all` с 0 failed/skipped/todo и полным
+  cleanup; negative unit/migration/browser gates; fresh 17-table schema; один
+  native-Git public release с exact-SHA smoke и redacted artifact.
+- **Dependencies:** D31; main protection и provider Git settings. Q-OPS-003
+  переносится в обязательный VPS-readiness scope и не блокирует disposable stand.
 
 ### OPS-005 — Cold start не имеет явного UX состояния
 

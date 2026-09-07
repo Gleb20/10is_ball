@@ -25,6 +25,6 @@ This file extends the repository `AGENTS.md` for `apps/api`.
   response-contract tests for each affected endpoint; add concurrency and
   idempotency cases for critical mutations.
 - Run focused tests first. Before handoff, run `pnpm --filter @tab10/api typecheck`
-  and the relevant unit/integration suites. Run repository `pnpm ci` for shared
+  and the relevant unit/integration suites. Run repository `pnpm run ci` for shared
   contracts, migrations, auth, scoring, tournament progression, or cross-package
   changes.

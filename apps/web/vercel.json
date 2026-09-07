@@ -1,12 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "installCommand": "cd ../.. && corepack enable && corepack prepare pnpm@9.15.0 --activate && pnpm install --frozen-lockfile --prod=false --filter \"@tab10/web...\"",
-  "buildCommand": "cd ../.. && pnpm --filter @tab10/shared build && pnpm --filter @tab10/web build",
+  "installCommand": "cd ../.. && npm install --global --prefix \"$HOME/.local\" node@24.20.0 pnpm@9.15.0 && export PATH=\"$HOME/.local/bin:$PATH\" && node --version && pnpm --version && pnpm install --frozen-lockfile --prod=false --filter \"@tab10/web...\"",
+  "buildCommand": "cd ../.. && export PATH=\"$HOME/.local/bin:$PATH\" && node --version && pnpm --version && pnpm run build:web",
   "outputDirectory": "dist",
   "git": {
     "deploymentEnabled": {
-      "codex/audit-foundation": false
+      "main": true,
+      "*": false
     }
   },
   "rewrites": [
@@ -17,6 +18,10 @@
     {
       "source": "/health",
       "destination": "https://one0is-ball.onrender.com/health"
+    },
+    {
+      "source": "/ready",
+      "destination": "https://one0is-ball.onrender.com/ready"
     },
     {
       "source": "/(.*)",

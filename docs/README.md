@@ -53,7 +53,8 @@
 | Деплой as-built | [operations/DEPLOYMENT_AS_BUILT.md](operations/DEPLOYMENT_AS_BUILT.md) |
 | Audit evidence (JSON/screenshots) | [audit/evidence/](audit/evidence/) |
 | Активный incident plan | [SEC-001 credential rotation](test-plans/SEC-001-credential-rotation.md) |
-| Инструкция по бесплатному деплою | [DEPLOY.md](DEPLOY.md) |
+| Канонический local/public-stand delivery | [DELIVERY.md](DELIVERY.md) |
+| Историческая ручная инструкция Free hosting | [DEPLOY.md](DEPLOY.md) |
 | Продуктовые решения | [DECISIONS.md](DECISIONS.md) |
 | Техническая хронология | [CHANGELOG_DEV.md](CHANGELOG_DEV.md) |
 | Требования и acceptance | [requirements/00_README.md](requirements/00_README.md) |

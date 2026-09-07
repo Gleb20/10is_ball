@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { FakeClock } from "@tab10/test-utils";
 import { users } from "./db/schema.js";
-import { createPgliteDb } from "./db/client.js";
+import { createMigratedPgliteDb } from "./db/client.js";
 import { buildApp } from "./app.js";
 import type { FastifyInstance } from "fastify";
 import type { AppServices } from "./app.js";
@@ -11,7 +11,7 @@ describe("API_GET_health__ok", () => {
   let close: () => Promise<void>;
 
   beforeEach(async () => {
-    const ctx = await createPgliteDb();
+    const ctx = await createMigratedPgliteDb();
     close = ctx.close;
     const built = await buildApp({ db: ctx.db, clock: new FakeClock() });
     app = built.app;
@@ -36,7 +36,7 @@ describe("auth and admin integration", () => {
   let clock: FakeClock;
 
   beforeEach(async () => {
-    const ctx = await createPgliteDb();
+    const ctx = await createMigratedPgliteDb();
     close = ctx.close;
     clock = new FakeClock();
     const built = await buildApp({ db: ctx.db, clock });

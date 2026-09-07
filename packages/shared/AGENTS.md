@@ -21,5 +21,5 @@ This file extends the repository `AGENTS.md` for `packages/shared`.
 - When a shared type or rule changes, inspect all consumers, update contract and
   traceability documentation, build the package, run its tests, and run affected
   API/web tests. Use `pnpm --filter @tab10/shared typecheck`,
-  `pnpm --filter @tab10/shared test`, and repository `pnpm ci` when the contract
+  `pnpm --filter @tab10/shared test`, and repository `pnpm run ci` when the contract
   crosses package boundaries.

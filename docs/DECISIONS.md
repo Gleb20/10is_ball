@@ -34,6 +34,9 @@
 | D24 | Finished-match void authorization | active |
 | D25 | Legacy V1 DE retirement and data-operation boundary | active |
 | D26 | Full PRD v2 remains the product target | active |
+| D29 | Exact-SHA local → staging → production release topology | superseded by D31 for the disposable public stand |
+| D30 | Historical-schema adoption and Free recovery exception | superseded by D31 for the disposable public stand |
+| D31 | Native-Git delivery to a disposable public stand | active |
 
 ## D16 — Documentation governance (2026-09-06)
 
@@ -179,6 +182,91 @@ does not silently reduce the target.
 Backlog priority may change as evidence changes; omission from the current sprint
 does not mean removal from the product.
 
+## D29 — Exact-SHA local → staging → production release topology (2026-09-07)
+
+**Decision:** Node `24.20.0`, pnpm `9.15.0` and PostgreSQL `16.15` form one
+repository-controlled delivery stack. `pnpm dev` uses local PostgreSQL;
+`pnpm dev:pglite` is an explicitly reduced-fidelity mode. A pull request and its
+eventual merge SHA must pass the same three required lanes: hermetic quality,
+PostgreSQL integration/migrations and compiled browser production-like E2E. The
+`release-gate` aggregator accepts only successful, non-skipped results.
+
+Render and Vercel native Git deployments are disabled. A merge to `main` is the
+user's approval to release exactly that current `main` SHA through synthetic
+staging and then production. GitHub is the orchestrator; queued stale SHAs stop
+before any production mutation. API and web expose the same root-package version
+and full commit SHA through `/health`, `/ready` and `/release.json`.
+
+State-changing E2E is allowed only against disposable local PostgreSQL and the
+isolated synthetic staging environment. Production verification is read-only:
+release identity, health/readiness, proxy and OpenAPI checks. Failure in staging
+does not touch production; candidate web deployment is promoted only after its
+direct and proxied checks pass.
+
+**Resolution:** This closes Q-OPS-002 and Q-OPS-004. Provider availability may
+block a release, but it is not part of the reproducible story-development gate.
+
+## D30 — Historical-schema adoption and Free recovery exception (2026-09-07)
+
+**Decision:** The historical 17-table production catalog may enter the migration
+ledger exactly once through `db:migrate -- --mode=adopt-unversioned`. Adoption is
+allowed only when the migration ledger is absent or canonically empty and the
+normalized catalog plus declared data-change manifest exactly match the reviewed
+baseline. It runs on one reserved direct connection as migration owner, under an
+advisory lock and bounded lock/statement timeouts. A mismatch never stamps the
+ledger. Normal releases use `--mode=apply`; startup accepts the exact known prefix
+and may tolerate only newer trailing migrations during application rollback.
+
+Before a production schema release, the same immutable migration artifact is
+rehearsed on a branch cloned from production and its catalog/data digests are
+compared. The workflow creates `recovery/<sha>`, temporarily stops API writers,
+re-attests the target and applies the migration transactionally, always resuming
+the old compatible API in `finally`. Down-migrations and automatic production
+restore are forbidden; an incompatible post-release state is repaired forward,
+while restoring a recovery branch requires a separate explicit decision.
+
+Neon Free does not satisfy the desired seven daily independent backups. One
+manual snapshot and restore rehearsal is required before the first adoption;
+the newest three recovery branches are retained. This is a documented exception,
+not a claim of full backup coverage, so Q-OPS-003 remains open as a P0 residual
+risk without a date-based automatic release block.
+
+## D31 — Native-Git delivery to a disposable public stand (2026-09-07)
+
+**Supersedes D29/D30 for the current public stand.** Их production-grade схема
+остаётся историей проектирования и возвращается на рассмотрение перед появлением
+ценных данных или переездом на оплачиваемый VPS.
+
+**Decision:** текущие Render, Vercel и Neon образуют один публичный испытательный
+стенд без ценных данных. Отдельный staging, rehearsal/recovery branches,
+автоматический writer drain и provider API orchestration сейчас не требуются.
+Обязательный барьер разработки полностью воспроизводится без провайдеров:
+`quality`, PostgreSQL 16 migrations/integration и compiled browser E2E агрегирует
+`Release gate`.
+
+После merge защищённого `main` Render выполняет native Git deploy каждого commit,
+запускает immutable migrations и compiled API. Vercel публикует production branch
+`main`. Оба artifact получают SHA от провайдера и корневую version; после deploy
+ручной read-only GitHub smoke ждёт их совпадения на `/health`, `/ready` и
+`/release.json`. Required `Release gate` остаётся барьером PR, но повторный CI
+merge SHA не задерживает disposable deploy.
+
+Для ускорения текущий стенд использует `neondb_owner` и в pooled runtime URL, и
+в direct migration URL. Это явное временное исключение: local/CI продолжают
+проверять раздельные owner/runtime roles, а ограниченная hosted runtime role
+обязательна до появления ценных данных или переезда на VPS.
+
+Пользователь отдельно разрешил одноразово полностью пересоздать `public` и
+`drizzle` на текущей публичной Neon БД вместо adoption исторической схемы. После
+fresh `0000` все следующие releases используют только `--mode=apply` и не
+сбрасывают данные. Production mutating E2E по-прежнему отсутствуют.
+
+**Accepted debt:** бесплатный public stand может deploy-иться до завершения
+повторного CI merge SHA, API работает с повышенными правами `neondb_owner`, smoke
+запускается вручную, возможны downtime и ручной application rollback. Стенд не
+обещает production-grade backups, zero-downtime schema rollout или автоматический
+restore. Эти гарантии обязательны до переноса реальных данных на VPS.
+
 ## D1 — Stack (2026-07-20)
 
 **Decision:** TypeScript monorepo with pnpm workspaces; Fastify + Drizzle API; Vite + React 19 + ic-kit web; Vitest; Playwright later for E2E.
@@ -187,7 +275,10 @@ does not mean removal from the product.
 
 ## D2 — Test database without Docker (2026-07-20)
 
-**Decision:** Use PGlite (`@electric-sql/pglite`) for local/CI integration tests when Docker is unavailable. Production/dev with Docker uses real PostgreSQL 16 via `docker-compose.yml` and `DATABASE_URL`.
+**Decision:** Use PGlite (`@electric-sql/pglite`) only for the explicit reduced-
+fidelity `dev:pglite` mode and hermetic fast tests. Default `dev`, the mandatory
+PostgreSQL lane and public stand use PostgreSQL 16; D31 pins the delivery baseline
+to `16.15` and makes the real-PostgreSQL lane non-optional.
 
 **Why:** NFR forbids SQLite substitutes; PGlite is Postgres-compatible WASM. Document fidelity risk: rare PG features may differ — CI with real Postgres service is preferred when available.
 

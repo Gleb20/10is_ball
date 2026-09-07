@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+
+import { runPnpmDispatcher } from "../verify/pnpm-dispatch.mjs";
+
+process.exitCode = runPnpmDispatcher(process.argv.slice(2));

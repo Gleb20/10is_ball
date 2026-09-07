@@ -1,7 +1,7 @@
 # Модель данных as-built
 
 Снимок [`../../apps/api/src/db/schema.ts`](../../apps/api/src/db/schema.ts) и
-boot-time DDL на **2026-09-06**. Целевая модель в
+immutable baseline migration на **2026-09-07**. Целевая модель в
 [`../requirements/07_DATA_MODEL.md`](../requirements/07_DATA_MODEL.md) не полностью
 совпадает с этим состоянием.
 
@@ -42,10 +42,23 @@ boot-time DDL на **2026-09-06**. Целевая модель в
 
 ## Фактическое создание/обновление схемы
 
-При boot [`../../apps/api/src/db/client.ts`](../../apps/api/src/db/client.ts)
-выполняет `CREATE TABLE IF NOT EXISTS` и набор `ALTER ... ADD COLUMN IF NOT EXISTS`.
-Drizzle mapping и boot DDL могут расходиться; versioned migration ledger нет.
-Локально/в большинстве tests используется PGlite, production — Neon PostgreSQL.
+PR1 содержит ровно [`0000_data_003_baseline.sql`](../../apps/api/drizzle/0000_data_003_baseline.sql):
+17 public tables и Drizzle ledger в отдельной schema `drizzle`. API startup не
+выполняет DDL и допускает только точный известный ledger prefix; более новые
+trailing migrations разрешены лишь для запуска предыдущего совместимого API при
+rollback. После explicit migration требуется exact ledger и полный catalog
+profile (enum, columns/defaults/nullability, constraints, indexes).
+
+`db:migrate -- --mode=apply` создаёт fresh schema либо продолжает exact prefix.
+Одноразовый `--mode=adopt-unversioned` принимает только exact historical 17-table
+catalog с отсутствующим/канонически пустым ledger и проверенным backfill manifest.
+Оба режима используют dedicated direct `MIGRATION_DATABASE_URL`, одну reserved
+connection, advisory lock и bounded timeouts. Ошибка не выполняет ручной stamp.
+
+Default local runtime — PostgreSQL 16.15 с разделёнными owner/runtime roles;
+PGlite остаётся explicit reduced-fidelity mode и hermetic test layer. TypeScript
+mapping умеет безопасно прочитать будущий match status `voided`, но migration
+0000 его не создаёт и PR1 не имеет write route/UI action для этого состояния.
 
 ## Необеспеченные invariants
 
@@ -56,7 +69,7 @@ Drizzle mapping и boot DDL могут расходиться; versioned migrati
 - Audit log не immutable; source events могут физически исчезать.
 - Hard delete standalone match противоречит принятой void-only модели.
 
-Исправления отслеживаются как `DATA-001..006`, `SEC-007` в
+Оставшиеся исправления отслеживаются как `DATA-001..006`, `SEC-007` в
 [`../BACKLOG.md`](../BACKLOG.md). При любом schema change обновить этот файл,
 целевой data model, migration evidence и traceability по
 [`../WORKFLOW.md`](../WORKFLOW.md).

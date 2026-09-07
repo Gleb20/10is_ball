@@ -3,6 +3,101 @@
 Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
 записи сохраняются как история и могут быть помечены `superseded` новой записью.
 
+## 2026-09-07 — OPS-004 public-stand simplification (in progress)
+
+- По явному уточнению пользователя текущий public contour классифицирован как
+  disposable испытательный стенд без ценных данных; production-grade D29/D30
+  superseded для этого контура новым D31.
+- Отдельный staging, rehearsal/recovery branches, writer pause и provider API
+  orchestration удаляются из active release path. Render и Vercel используют
+  native Git deploy каждого `main`, GitHub вручную выполняет только bounded
+  read-only exact-SHA/version smoke после deploy.
+- По отдельному разрешению disposable public API и migrator используют одну
+  `neondb_owner` role, а deploy не ждёт повторного CI merge SHA. Split-role и
+  полный release gate остаются обязательными local/PR проверками; это accepted
+  debt до VPS.
+- Пользователь разрешил одноразово пересоздать `public` и `drizzle` текущей Neon
+  БД вместо historical adoption. Следующие releases используют apply-only и не
+  сбрасывают данные.
+- Локальные гарантии не ослаблены: exact Node/pnpm/PostgreSQL/Playwright/Chromium,
+  quality/PostgreSQL/compiled-browser lanes, ReleaseMetadata и zero-skip policy
+  остаются обязательными. Vercel CLI удалён из local toolchain: web публикуется
+  native Git deployment. Production-grade recovery/backup/staging возвращаются
+  отдельным scope перед переносом ценных данных на оплачиваемый VPS.
+- Verification: clean `pnpm ci` на Node `24.20.0`/pnpm `9.15.0`/PostgreSQL
+  `16.15`/Playwright Chromium — `816 passed, 0 failed, 0 skipped, 0 todo,
+  0 interrupted`; disposable containers/networks удалены. Hosted `Release gate`,
+  merge пользователем, public reset/bootstrap и одинаковый SHA web/API ожидаются.
+
+## 2026-09-07 — OPS-004 delivery foundation (historical D29/D30 design)
+
+### Scope
+
+- D29/D30; `AT-OPS-DELIVERY-001..009`; только PR1 baseline migration
+  `0000_data_003_baseline`. Product/story delta и migrations `0001–0003`
+  зарезервированы для PR2; version/tag остаются `1.10.1`.
+- Исходный dirty worktree не переключался. Его tracked/untracked SHA-256 recovery
+  snapshot хранится вне repository; `.agents/**` и `skills-lock.json` не входят в
+  publishable branch.
+
+### Changed
+
+- Закреплены Node `24.20.0`, pnpm `9.15.0`, PostgreSQL `16.15-alpine` по digest,
+  Playwright `1.63.0`/lockfile Chromium и Vercel CLI `59.11.7`; единый lockfile и
+  одинаковые install/build команды используются локально, в CI и provider build.
+- `.mise.toml` добавляет безопасный repository-local pnpm dispatcher: bare
+  `mise exec -- pnpm doctor` и `mise exec -- pnpm ci` больше не перехватываются
+  встроенными командами pnpm, а остальные команды без изменений идут через
+  Corepack `pnpm@9.15.0`.
+- `pnpm dev` запускает PostgreSQL с раздельными migration/runtime roles;
+  `pnpm dev:pglite` оставлен явным reduced-fidelity режимом. Оба local runner
+  очищают inherited hosted/provider/Vite origin environment и принудительно
+  используют loopback same-origin proxy. Добавлены строгие `doctor`,
+  `verify:fast`, `verify:postgres`, `verify:e2e`, `verify:all` и `pnpm run ci`.
+- Boot-time DDL заменяется immutable migration ledger. Runner выполняет exact
+  17-table adoption profile, data-change manifest, URL/control-plane/role
+  attestation, reserved-connection advisory lock и bounded timeouts; ручной stamp
+  и down-migration отсутствуют.
+- API `/health`/`/ready` и web `/release.json` публикуют единый ReleaseMetadata;
+  staging/production fail closed на неверном SHA/version/environment/dirty state.
+  Vite dev и compiled preview используют одинаковый same-origin proxy contract.
+- Добавлены три required PR/main lane и первоначальный exact-SHA staging →
+  production workflow с
+  stale-main guard, Neon rehearsal/recovery, bounded writer pause, exact Render
+  deploy, unaliased Vercel candidate/promotion и read-only production smoke.
+  Provider tokens/URLs/credentials не должны попадать в logs или artifacts.
+  Этот provider workflow superseded упрощённым D31 выше до публикации в `main`.
+- Документационный drift по runtime, 17/18 tables, route inventory, migration
+  rollback и release topology согласован; Q-OPS-002/Q-OPS-004 закрыты D29,
+  Q-OPS-003 сохранён как P0 residual risk.
+
+### Verified so far
+
+- Fresh frozen install и `pnpm run doctor` прошли на Node `24.20.0`, pnpm
+  `9.15.0`, Docker CLI `29.8.0`/server `29.5.2`, Compose `5.5.1`, Playwright
+  `1.63.0`, Chromium `153.0.8010.12` и Vercel CLI `59.11.7`.
+- Focused migration/release policy: 50/50 PGlite/URL/startup tests; 13/13 final
+  PostgreSQL migration tests, включая fresh/adoption/drift/failure/race/no-op;
+  compiled CLI fresh/no-op, API typecheck и diff check прошли.
+- Отдельный staging Neon создан; runtime login проверен как non-superuser без
+  createdb/createrole/replication/bypassrls и с runtime/default ACL.
+- Перед PR1 сохранены aggregate production fingerprints и manual Free snapshot.
+  Restore comparison подтвердил 17 tables, 201 aggregate rows, catalog/data
+  digests и direct/proxied health 200. Redacted evidence:
+  [`audit/evidence/ops-004-pre-pr1-production-recovery.json`](audit/evidence/ops-004-pre-pr1-production-recovery.json).
+
+### Incident disclosure and remaining
+
+- Restore rehearsal был ошибочно финализирован control plane: стабильный Neon
+  endpoint сохранился, но primary branch identity сменилась; прежняя primary
+  оставлена recovery copy. Fingerprints совпали, migration/application writes не
+  выполнялись. Обратное переключение не делается автоматически, чтобы не потерять
+  возможные последующие production writes.
+- Итоговый `pnpm run verify:all`, hosted three-lane `release-gate`, Render/Vercel
+  staging, native auto-deploy disable, GitHub Environments/main protection, новый
+  PR и оба пользовательски подтверждённых release ещё не выполнены. OPS-004
+  остаётся `in_progress`.
+
 ## 2026-09-06 — SEC-002 profile response allowlist
 
 - Scope: SEC-002; PROFILE-001/003; NFR Security §4; AT-PROFILE-001. Полный

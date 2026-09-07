@@ -17,6 +17,25 @@ const ROOT = valueAfter("--root")
       encoding: "utf8",
     }).trim();
 const MAX_BLOB_BYTES = 20_000_000;
+const RELEASE_SECRET_ASSIGNMENT_NAMES = [
+  "MIGRATION_DATABASE_URL",
+  "RUNTIME_DATABASE_URL",
+  "NEON_API_KEY",
+  "RENDER_API_KEY",
+  "VERCEL_TOKEN",
+  "E2E_ADMIN_PASSWORD",
+];
+const SECRET_ASSIGNMENT_NAMES = [
+  "SEED_ADMIN_PASSWORD",
+  "TAB10_POSTGRES_PASSWORD",
+  "DATABASE_PASSWORD",
+  "DB_PASSWORD",
+  "POSTGRES_PASSWORD",
+  "JWT_SECRET",
+  "SESSION_SECRET",
+  "COOKIE_SECRET",
+  ...RELEASE_SECRET_ASSIGNMENT_NAMES,
+];
 const ALLOWLIST_PATH = valueAfter("--allowlist")
   ? path.resolve(valueAfter("--allowlist"))
   : path.join(ROOT, "scripts/audit/secret-scan.allowlist.json");
@@ -104,8 +123,7 @@ function findingsFor(content, sourcePath) {
     kinds.add("bearer-token");
   }
   if (/\bAKIA[0-9A-Z]{16}\b/.test(searchable)) kinds.add("aws-access-key");
-  const secretNames =
-    "(SEED_ADMIN_PASSWORD|TAB10_POSTGRES_PASSWORD|DATABASE_PASSWORD|DB_PASSWORD|POSTGRES_PASSWORD|JWT_SECRET|SESSION_SECRET|COOKIE_SECRET)";
+  const secretNames = `(${SECRET_ASSIGNMENT_NAMES.join("|")})`;
   const assignmentPatterns = [
     new RegExp(
       `^[ \\t]*(?:export[ \\t]+)?${secretNames}[ \\t]*=[ \\t]*([^\\s#]+)`,
@@ -132,7 +150,23 @@ function findingsFor(content, sourcePath) {
         sourcePath === "docker-compose.yml" &&
         secretName === "POSTGRES_PASSWORD" &&
         value.toLowerCase() === "tab10";
-      if (!placeholderCredential(value) && !safeLocalDefault) {
+      let safePlaceholderUrl = false;
+      if (secretName.endsWith("_DATABASE_URL")) {
+        try {
+          const parsed = new URL(value);
+          safePlaceholderUrl =
+            /^postgres(?:ql)?:$/.test(parsed.protocol) &&
+            placeholderHost(parsed.hostname) &&
+            placeholderCredential(parsed.password);
+        } catch {
+          // A malformed URL still has to satisfy the ordinary placeholder rule.
+        }
+      }
+      if (
+        !placeholderCredential(value) &&
+        !safeLocalDefault &&
+        !safePlaceholderUrl
+      ) {
         kinds.add("secret-assignment");
       }
     }
@@ -143,6 +177,20 @@ function findingsFor(content, sourcePath) {
 if (args.includes("--self-test")) {
   const scheme = "postgresql" + "://";
   const bootstrapPasswordKey = "SEED_ADMIN_" + "PASSWORD";
+  const releaseAssignmentCases = RELEASE_SECRET_ASSIGNMENT_NAMES.flatMap((name) => [
+    {
+      name: `${name} opaque assignment is detected`,
+      input: `${name}=fixture-${"x".repeat(96)}`,
+      kind: "secret-assignment",
+      expected: true,
+    },
+    {
+      name: `${name} explicit placeholder is safe`,
+      input: `${name}=replace-me`,
+      kind: "secret-assignment",
+      expected: false,
+    },
+  ]);
   const cases = [
     {
       name: "real credential on loopback is not trusted",
@@ -220,6 +268,7 @@ if (args.includes("--self-test")) {
       kind: "jwt",
       expected: true,
     },
+    ...releaseAssignmentCases,
   ];
   const failures = cases.filter(
     ({ input, kind, expected }) => findingsFor(input).includes(kind) !== expected,
@@ -270,6 +319,16 @@ if (args.includes("--self-test")) {
     );
     fixtureGit(["add", "tracked.txt"]);
     await writeFile(path.join(fixtureRoot, "tracked.txt"), "safe\n");
+    const untrackedSecretPath = "untracked-release-credential.txt";
+    const untrackedPlaceholderPath = "untracked-release-placeholders.txt";
+    await writeFile(
+      path.join(fixtureRoot, untrackedSecretPath),
+      `NEON_API_KEY=fixture-${"z".repeat(128)}\n`,
+    );
+    await writeFile(
+      path.join(fixtureRoot, untrackedPlaceholderPath),
+      `${RELEASE_SECRET_ASSIGNMENT_NAMES.map((name) => `${name}=replace-me`).join("\n")}\n`,
+    );
 
     let fixtureStdout = "";
     let fixtureStatus = 0;
@@ -290,17 +349,41 @@ if (args.includes("--self-test")) {
         finding.path === "tracked.txt" &&
         finding.kind === "credential-url",
     );
-    const falseSurfaceFinding = fixtureReport.candidates?.some(
-      (finding) => finding.scope === "worktree" || finding.scope === "git-refs",
+    const untrackedFinding = fixtureReport.candidates?.some(
+      (finding) =>
+        finding.scope === "worktree" &&
+        finding.path === untrackedSecretPath &&
+        finding.kind === "secret-assignment",
+    );
+    const placeholderFinding = fixtureReport.candidates?.some(
+      (finding) => finding.path === untrackedPlaceholderPath,
+    );
+    const unexpectedFinding = fixtureReport.candidates?.some(
+      (finding) =>
+        !(
+          finding.scope === "git-index" &&
+          finding.path === "tracked.txt" &&
+          finding.kind === "credential-url"
+        ) &&
+        !(
+          finding.scope === "worktree" &&
+          finding.path === untrackedSecretPath &&
+          finding.kind === "secret-assignment"
+        ),
     );
     if (
       fixtureStatus !== 1 ||
       !indexFinding ||
-      falseSurfaceFinding ||
+      !untrackedFinding ||
+      placeholderFinding ||
+      unexpectedFinding ||
       fixtureReport.skippedInputs?.length !== 0
     ) {
       console.error(
-        JSON.stringify({ status: "failed", cases: ["staged-only index blob"] }),
+        JSON.stringify({
+          status: "failed",
+          cases: ["staged-only index and untracked named credentials"],
+        }),
       );
       process.exit(1);
     }

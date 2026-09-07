@@ -331,3 +331,59 @@ timeout и после него доступен Retry; после успешно
 ### AT-OPS-COLD-002 Warm request
 После подтверждённого пробуждения медленный/ошибочный запрос не маркируется как
 допустимый cold start: применяется обычный error/SLO path с Retry.
+
+## DELIVERY
+
+### AT-OPS-DELIVERY-001 Hermetic full gate
+Fresh checkout на Node `24.20.0` и pnpm `9.15.0` без `.env` и production secrets
+выполняет `pnpm verify:all` на автоматически созданном PostgreSQL `16.15` и
+Playwright-managed Chromium. Итог содержит `0 failed`, `0 skipped`, `0 todo`; в
+`finally` не остаётся контейнеров, volumes или дочерних процессов.
+
+### AT-OPS-DELIVERY-002 Required lanes are fail-closed
+PR и точный merge SHA имеют результаты `success` для `quality`,
+`postgres-integration` и `browser-prodlike`. `release-gate` становится зелёным
+только при всех трёх `success`; отдельно сломанный unit, migration или browser
+scenario делает его красным, а `skipped`/`neutral` не принимаются.
+
+### AT-OPS-DELIVERY-003 Release identity
+API `/health` и `/ready`, web `/release.json` публикуют одну структуру
+`{ sha, version, environment, dirty }`. В staging/production `sha` — полный
+40-символьный Git SHA, `dirty=false`, а `version` точно равна root
+`package.json`. Web, direct API и proxy API обязаны совпасть с ожидаемым SHA.
+
+### AT-OPS-DELIVERY-004 Fresh public bootstrap
+После явного одноразового разрешения точные `public`/`drizzle` текущего
+disposable Neon stand пересоздаются пустыми. Обычный `--mode=apply` создаёт
+17-table baseline и exact ledger; повторный apply — безопасный no-op. Ни project,
+ни branch, ни database, role или endpoint не удаляются.
+
+### AT-OPS-DELIVERY-005 Migration serialization and repeatability
+Два конкурентных migrator-а на одной disposable PostgreSQL используют один
+advisory lock; ровно один применяет план, второй завершается безопасным no-op.
+Повторный `--mode=apply` не меняет catalog/data/ledger. Lock и statement timeout
+ограничены.
+
+### AT-OPS-DELIVERY-006 Compiled same-origin browser
+Required E2E запускает production builds API/web с относительным API URL через
+одинаковый same-origin proxy, production cookie/CSRF path и bundled Chromium.
+Desktop `1280×800` и mobile `390×844` идут с `workers=1`, `retries=0`,
+`forbidOnly=true`.
+
+### AT-OPS-DELIVERY-007 Native main deployment
+После merge прошедшего PR gate Render native Git deploy применяет immutable
+migrations и запускает compiled API, а Vercel production branch `main` публикует
+compiled web. Provider Git metadata является SHA source; отдельные deploy tokens
+не нужны. Для disposable stand повторный CI merge SHA не задерживает deploy.
+
+### AT-OPS-DELIVERY-008 Bounded release convergence
+Вручную запущенный GitHub Release smoke не изменяет provider/DB state. Он
+ограниченно повторяет read-only probes, пока direct API, canonical web и web
+proxy не сообщат ожидаемый SHA/version, либо завершается красным по timeout.
+Повторный запуск всегда берёт текущий `main`.
+
+### AT-OPS-DELIVERY-009 Public read-only smoke
+Стабильные origins проходят `/release.json`, direct/proxy `/health`, `/ready` и
+OpenAPI checks. Redacted artifact содержит ожидаемый SHA/version и имена checks,
+но не URL, database contents или credentials. State-changing E2E на public stand
+не запускается.

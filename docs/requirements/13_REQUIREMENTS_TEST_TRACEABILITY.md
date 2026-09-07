@@ -27,6 +27,7 @@ Capability-level выводы находятся в [`../CAPABILITY_MATRIX.md`](
 | NFR a11y/compatibility | axe, browser/viewport/keyboard/safe-area matrix | jsdom smoke only | `broken` | GAP-011, TECH-002 |
 | AUDIT | immutable ledger + D24 void actor/prior-state/optional-reason/compensation integration tests | generic audit rows, no immutable enforcement | `broken` | DATA-005 |
 | NFR backup/observability | safe restore rehearsal; readiness/log assertions | unsafe rehearsal script; no readiness/structured logs | `unknown` | OPS-002/003 |
+| NFR delivery/release identity | AT-OPS-DELIVERY-001..009; exact-SHA quality/PostgreSQL/compiled-browser plus native-Git public smoke evidence | OPS-004 implementation in progress; final clean gate, main protection and one public release still required | `partial` | OPS-004; VPS recovery follow-up |
 
 ## Naming convention
 

@@ -1,7 +1,8 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { FakeClock } from "@tab10/test-utils";
 import type { FastifyInstance } from "fastify";
-import { applySchemaSql, createPostgresDb } from "./db/client.js";
+import { createPostgresDb } from "./db/client.js";
+import { runPostgresMigrations } from "./db/migrations.js";
 import { resolveTestDatabaseUrl } from "./db/test-database-url.js";
 import { buildApp, type AppServices } from "./app.js";
 
@@ -25,18 +26,15 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
     try {
       // resolveTestDatabaseUrl has already restricted this to an explicit,
       // loopback-only, test-named database with DATABASE_URL unset.
-      await sql.unsafe("DROP SCHEMA public CASCADE; CREATE SCHEMA public");
-      await applySchemaSql(
-        {
-          exec: async (q) => {
-            await sql.unsafe(q);
-          },
-        },
-        { withPgcrypto: true },
-      );
+      await sql.unsafe(`
+        DROP SCHEMA IF EXISTS drizzle CASCADE;
+        DROP SCHEMA public CASCADE;
+        CREATE SCHEMA public
+      `);
     } finally {
       await sql.end({ timeout: 5 });
     }
+    await runPostgresMigrations(databaseUrl!, "apply");
 
     const ctx = await createPostgresDb(databaseUrl!);
     close = ctx.close;

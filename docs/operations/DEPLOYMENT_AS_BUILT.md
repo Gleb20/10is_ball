@@ -1,8 +1,59 @@
 # Deployment as-built
 
-Состояние, наблюдавшееся во время baseline-аудита **2026-09-06**. Пошаговая
-инструкция — в [`../DEPLOY.md`](../DEPLOY.md); этот документ фиксирует фактическую
-схему и риски.
+Фактическое состояние репозитория и провайдеров на **2026-09-07**. Каноническая
+штатная процедура — в [`../DELIVERY.md`](../DELIVERY.md); исторический ручной
+runbook в [`../DEPLOY.md`](../DEPLOY.md) помечен superseded.
+
+## OPS-004: текущее состояние
+
+Delivery foundation реализуется в изолированном clean worktree от `b62afee` и
+ещё не слита в `main`, поэтому repo-контракты пока не являются live behavior.
+Исходный dirty worktree не переключался: tracked diff, Git-visible untracked
+files и SHA-256 manifest сохранены во внешнем закрытом recovery-каталоге.
+`.agents/**` и `skills-lock.json` в publishable branch не переносятся.
+
+Repository-controlled target уже включает exact Node/pnpm/PostgreSQL toolchain,
+production-like `pnpm dev`, reduced-fidelity `dev:pglite`, обязательные
+fast/PostgreSQL/compiled-browser lanes, immutable migration `0000` и одинаковый
+`ReleaseMetadata` у API/web.
+
+После уточнения назначения окружения принят D31: текущие Vercel/Render/Neon —
+один disposable public stand. Отдельный staging и GitHub provider orchestration
+не входят в active path. Render настроен на native Git deploy каждого commit в
+`main`, Vercel — на production branch `main`; после deploy ручной GitHub smoke
+только ждёт exact SHA на обоих origins. Public runtime и migrations временно
+используют `neondb_owner`. Старую Neon schema разрешено один раз пересоздать и
+применить `0000` с нуля. Provider settings, reset, PR merge и первый release ещё
+должны быть фактически выполнены и проверены.
+
+Локально на clean worktree выполнены frozen install, `doctor` и полный `pnpm ci`:
+`816 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted`; disposable PostgreSQL
+containers/networks удалены. До hosted PR gate, reset/bootstrap и exact-SHA smoke
+`OPS-004` остаётся `in_progress`.
+
+### Production recovery evidence 2026-09-07
+
+Перед baseline adoption сохранён обезличенный fingerprint: 17 public tables,
+201 aggregate rows, catalog SHA-256
+`4ca0e9024d0c054f5151f6f6ca82fd592d6ff7581e7417d267fea025cb4dd81a` и data
+SHA-256 `d9fd5ae005fdfc040c2c35b8a00b4c1567a002baf9257c41067aa0edb4a78f50`.
+Создан доступный manual Free snapshot.
+
+Restore был запрошен как временное доказательство, но control plane получил
+`finalize=true`: стабильный production endpoint сохранился, а identity primary
+branch перешла на восстановленную ветку; прежняя primary ветка оставлена как
+recovery copy. Это непреднамеренная инфраструктурная мутация, а не штатная схема
+rehearsal. После переключения все 17 таблиц, 201 aggregate rows и оба fingerprint
+совпали; direct и Vercel-proxied health ответили 200. Миграции и application-data
+writes этой проверкой не выполнялись. Автоматический обратный restore запрещён,
+поскольку active primary могла получить последующие пользовательские записи.
+Redacted evidence: [`../audit/evidence/ops-004-pre-pr1-production-recovery.json`](../audit/evidence/ops-004-pre-pr1-production-recovery.json).
+
+Manual snapshot и recovery branch не выдаются за полный backup. Для disposable
+stand это accepted debt; полноценный backup/restore становится обязательным до
+переноса ценных данных на VPS.
+
+## Исторический production baseline 2026-09-06
 
 ## Схема
 
@@ -151,6 +202,8 @@ Web обязан показывать явное состояние «серви
   hardening (`OPS-003`, Q-OPS-003).
 - Boot-time DDL создаёт риск drift и startup failure (`DATA-003`).
 
-Перед любым production deploy использовать checklist в
-[`../DEPLOY.md`](../DEPLOY.md) и регистрировать smoke evidence в
-[`../CHANGELOG_DEV.md`](../CHANGELOG_DEV.md).
+До merge PR1 перечисленные gaps остаются историческим состоянием live-среды.
+Любой следующий release должен идти только по fail-closed процедуре
+[`../DELIVERY.md`](../DELIVERY.md), а smoke/recovery evidence регистрируется в
+[`../CHANGELOG_DEV.md`](../CHANGELOG_DEV.md). Ручной runbook
+[`../DEPLOY.md`](../DEPLOY.md) не является разрешённым fallback.
