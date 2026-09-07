@@ -29,6 +29,10 @@
   `16.15`/Playwright Chromium — `816 passed, 0 failed, 0 skipped, 0 todo,
   0 interrupted`; disposable containers/networks удалены. Hosted `Release gate`,
   merge пользователем, public reset/bootstrap и одинаковый SHA web/API ожидаются.
+- Первый hosted run выявил clean-checkout drift: job-level `runner.temp` не
+  валиден до старта runner, относительный evidence path уходил в cwd workspace-
+  пакета, а API build не гарантировал готовые `shared`/`test-utils`. Workflow,
+  path resolution и release build scripts исправлены; повторный gate ожидается.
 
 ## 2026-09-07 — OPS-004 delivery foundation (historical D29/D30 design)
 

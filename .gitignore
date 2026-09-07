@@ -21,3 +21,4 @@ test-results
 *.tsbuildinfo
 .turbo
 .pnpm-store
+.verify-evidence

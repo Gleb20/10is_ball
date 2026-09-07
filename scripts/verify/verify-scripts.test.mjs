@@ -13,6 +13,7 @@ import {
   ROOT,
   disposableDatabaseUrl,
   readRootProductVersion,
+  resolveEvidenceDir,
 } from "./lib.mjs";
 import {
   dispatchPnpmArguments,
@@ -183,6 +184,30 @@ test("PostgreSQL runners use the canonical compiled migration command", () => {
   }
   assert.match(devRunner, /\["run", "build:api"\]/);
   assert.match(migrationRunner, /Build compiled migration entrypoint/);
+});
+
+test("release builds compile workspace dependencies before clean-checkout consumers", () => {
+  assert.equal(
+    packageJson.scripts["build:api"],
+    "pnpm --filter @tab10/shared --filter @tab10/test-utils run build && pnpm --filter @tab10/api run build",
+  );
+  assert.equal(
+    packageJson.scripts["build:web"],
+    "pnpm --filter @tab10/shared run build && pnpm --filter @tab10/web run build",
+  );
+});
+
+test("relative CI evidence paths are anchored to the repository root", (context) => {
+  const previous = process.env.VERIFY_EVIDENCE_DIR;
+  context.after(() => {
+    if (previous === undefined) delete process.env.VERIFY_EVIDENCE_DIR;
+    else process.env.VERIFY_EVIDENCE_DIR = previous;
+  });
+  process.env.VERIFY_EVIDENCE_DIR = ".verify-evidence/quality";
+  assert.equal(
+    resolveEvidenceDir("fast"),
+    path.join(ROOT, ".verify-evidence/quality"),
+  );
 });
 
 test("PGlite dev migration avoids pnpm's literal separator forwarding", () => {

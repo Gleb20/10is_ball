@@ -19,7 +19,10 @@ export function pnpmCommand() {
 
 export function resolveEvidenceDir(lane) {
   const configured = process.env.VERIFY_EVIDENCE_DIR?.trim();
-  return configured || path.join(os.tmpdir(), "tab10-evidence", `${lane}-${process.pid}`);
+  if (configured) {
+    return path.isAbsolute(configured) ? configured : path.join(ROOT, configured);
+  }
+  return path.join(os.tmpdir(), "tab10-evidence", `${lane}-${process.pid}`);
 }
 
 export function disposableDatabaseUrl({
