@@ -190,9 +190,10 @@ function normalizeAction(value: string | undefined): string {
   return (value ?? "no action").toLowerCase();
 }
 
-function normalizeDefault(value: unknown): string {
+export function normalizeCatalogDefault(value: unknown): string {
   return asString(value)
     .trim()
+    .replace(/\bpg_catalog\./gi, "")
     .replace(
       /::(?:[a-z_][a-z0-9_]*\.)?[a-z_][a-z0-9_]*(?:\[\])?/gi,
       "",
@@ -209,7 +210,7 @@ function expectedDefault(column: SnapshotColumn, tableName: string): string {
     return "'compact'";
   }
   if (column.default === undefined) return "";
-  return normalizeDefault(column.default);
+  return normalizeCatalogDefault(column.default);
 }
 
 function assertColumnDefaults(
@@ -218,7 +219,7 @@ function assertColumnDefaults(
   const byColumn = new Map(
     observed.map((column) => [
       `${asString(column.table_name)}.${asString(column.column_name)}`,
-      normalizeDefault(column.default_expression),
+      normalizeCatalogDefault(column.default_expression),
     ]),
   );
   const drift: string[] = [];
@@ -530,7 +531,7 @@ async function inspectLedger(query: MigrationQuery): Promise<LedgerInspection> {
   `);
   const columnSignatures = columns.map(
     (column) =>
-      `${asString(column.column_name)}|${asString(column.data_type)}|${column.not_null === true ? "not-null" : "nullable"}|${normalizeDefault(column.default_expression)}`,
+      `${asString(column.column_name)}|${asString(column.data_type)}|${column.not_null === true ? "not-null" : "nullable"}|${normalizeCatalogDefault(column.default_expression)}`,
   );
   assertEqualSet(
     "migration ledger columns",
