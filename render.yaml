@@ -12,7 +12,7 @@ services:
     autoDeployTrigger: commit
     healthCheckPath: /ready
     buildCommand: npm install -g pnpm@9.15.0 --prefix "$HOME/.local" && export PATH="$HOME/.local/bin:$PATH" && pnpm install --frozen-lockfile --prod=false --filter "@tab10/api..." && pnpm run build:api
-    startCommand: export PATH="$HOME/.local/bin:$PATH" && MIGRATION_DATABASE_URL="$DATABASE_URL" TAB10_MIGRATION_CONFIRM_SHA="$RENDER_GIT_COMMIT" TAB10_RELEASE_SHA="$RENDER_GIT_COMMIT" GITHUB_SHA="$RENDER_GIT_COMMIT" pnpm run db:migrate -- --mode=apply && pnpm --filter @tab10/api start
+    startCommand: export PATH="$HOME/.local/bin:$PATH" && MIGRATION_DATABASE_URL="${DATABASE_URL/-pooler/}" TAB10_MIGRATION_CONFIRM_SHA="$RENDER_GIT_COMMIT" TAB10_RELEASE_SHA="$RENDER_GIT_COMMIT" GITHUB_SHA="$RENDER_GIT_COMMIT" pnpm run db:migrate -- --mode=apply && pnpm --filter @tab10/api start
     envVars:
       - key: NODE_VERSION
         value: "24.20.0"
