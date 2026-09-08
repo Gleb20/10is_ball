@@ -3,6 +3,24 @@
 Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
 записи сохраняются как история и могут быть помечены `superseded` новой записью.
 
+## 2026-09-08 — OPS-004 exact-SHA public release verified
+
+- GitHub App Render переподключён только к `Gleb20/10is_ball`; service остаётся
+  на branch `main` с `autoDeployTrigger: commit`. Vercel native production deploy
+  из `main` также подтверждён.
+- SHA `6892d6e6fe79425eadf76c39bf052500bde5055a`: GitHub CI run
+  `34195797553` success, Render deploy `dep-dafr5egn74is73b9lt0g` live, Vercel
+  deployment `dpl_ER2ekejpxQbRN7MfTvP5VyAkPWax` READY.
+- Render startup использует apply-only migration с direct Neon URL, выведенным
+  из pooled runtime URL. Neon: 17 public tables, одна ledger record, один active
+  admin. Seed credentials сохранены только у provider и переданы пользователю
+  локально; browser login на публичном web прошёл.
+- `pnpm smoke:public`: pass с первой попытки, 1626 ms; web/API/proxy вернули один
+  SHA, version `1.10.1`, `dirty=false`. Credentials и данные БД в evidence не
+  включены. Итог: `OPS-004=verified_prod`.
+- Redacted evidence:
+  [`audit/evidence/ops-004-public-release.json`](audit/evidence/ops-004-public-release.json).
+
 ## 2026-09-07 — D32 direct-main test-stand delivery
 
 - По прямому решению пользователя до отдельной отмены работа ведётся в чистом

@@ -1,6 +1,6 @@
 # Tab-10 — статус проекта
 
-Обновлено: **2026-09-07**. Версия в корневом `package.json`: **1.10.1**.
+Обновлено: **2026-09-08**. Версия в корневом `package.json`: **1.10.1**.
 
 ## Итог
 
@@ -12,19 +12,19 @@
 
 ## Проверенный снимок
 
-| Область | Состояние на 2026-09-07 |
+| Область | Состояние на 2026-09-08 |
 |---|---|
-| Public stand web/API | Это disposable испытательный стенд без ценных данных; foundation уже в `main`, первый exact-SHA API/web release и seed-admin bootstrap завершаются |
+| Public stand web/API | Disposable испытательный стенд: exact SHA `6892d6e`/version `1.10.1` одновременно подтверждены у Vercel web, Render API и proxy; seed-admin login прошёл в браузере |
 | OPS-004 foundation | PR #4 и Neon-normalization PR #5 слиты; дальнейшая работа по D32 идёт прямыми commits/pushes в `main`; исходный dirty worktree и внешний recovery snapshot сохранены |
 | Закреплённый stack | Repo target: Node **24.20.0**, pnpm **9.15.0**, PostgreSQL **16.15-alpine** по digest, Playwright **1.63.0**/Chromium **153.0.8010.12**; fresh frozen install и `doctor` прошли |
-| Текущий full test | Финальный OPS-004 `verify:all` ожидает заморозки release workflow; предыдущий baseline: shared 517 passed + 1 todo, test-utils 4, web 70, API 84 + 3 PostgreSQL skipped — он не считается новым acceptance evidence |
+| Текущий full test | OPS-004 `pnpm ci`: `820 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted`; PostgreSQL 16 и compiled browser входят в тот же барьер |
 | Детерминизм | после изоляции RNG три последовательных full suite и последний Node 24 run зелёные; известный busy+bye дефект закреплён отдельным `BUG-015` characterization test |
-| Local quality/build | New foundation требует `0 failed / 0 skipped / 0 todo` и compiled builds; frozen install/doctor зелёные, итоговый `verify:all` ещё не заявлен |
-| Hosted CI | commit `f925efc`: GitHub run `34048623246` green — Quality/PGlite и PostgreSQL 16 jobs passed; evidence в `audit/evidence/hosted-ci-foundation.json` |
+| Local quality/build | Frozen install/doctor и полный `verify:all` зелёные с `0 failed / 0 skipped / 0 todo`; disposable PostgreSQL cleanup подтверждён |
+| Hosted CI | SHA `6892d6e`: GitHub run `34195797553` success; Quality/PGlite, PostgreSQL 16 и compiled browser lanes green |
 | Web artifact fingerprint | local build HTML/JS/CSS hashes совпали с production capture; это не заменяет commit SHA/release metadata |
 | Browser baseline | production login: 4 viewport; local synthetic data: 4 home viewport, key 360px screens и smoke 17 organizer routes + admin; это не полный PRD E2E/axe |
 | PostgreSQL verification | Локальный Docker/Colima и exact PostgreSQL 16.15 доступны; новый migration suite прошёл focused checks, но полное единое acceptance evidence фиксируется финальным `verify:all` |
-| Secret incident | Neon role credential ротирован, Render `DATABASE_URL` обновлён, `SEED_ADMIN=0`, 26 admin-сессий отозваны и 0 остались active; independent old-URI auth probe недоступен через plugin, поэтому SEC-001=`verified_prod` |
+| Secret incident | Neon role credential ротирован; disposable stand по D32 сознательно использует `neondb_owner`, `SEED_ADMIN=1`; новый seed-admin создан, credentials хранятся только в Render и переданы пользователю через локальный clipboard |
 | Security dependencies | 17 production advisories: 12 high и 5 moderate |
 | Route/OpenAPI inventory | source: 60 operations / 54 paths; OpenAPI: 15 operations / 12 paths (25% operation coverage); live version 0.1.0 |
 | Product decisions | D23: cancel только active admin/creator; D24: creator/admin soft void без mandatory reason/second approver; D25: V1 DE preservation не требуется; D26: полный PRD v2 остаётся target |
@@ -50,11 +50,10 @@
 
 ## Следующий этап
 
-Текущий приоритет — завершить `OPS-004`: применить baseline к disposable public
-schema, включить seed admin и провести первый direct-main native-Git release. Один
-успешный exact-SHA smoke переводит item в `verified_prod`. Product/story delta и
-migrations `0001–0003` переносятся следующей волной, но больше не блокируют
-рабочий delivery-контур.
+`OPS-004` достиг `verified_prod`: baseline применён к disposable public schema,
+seed admin включён, CI и первый exact-SHA public release проверены. Следующий
+этап — переносить product/story delta и migrations `0001–0003` небольшими
+прямыми commits в `main`; рабочий delivery-контур их больше не блокирует.
 
 SEC-001 остаётся `verified_prod`, пока нет безопасного independent old-URI
 negative probe. SEC-002 исправлен локально, но ещё не выпущен; после delivery

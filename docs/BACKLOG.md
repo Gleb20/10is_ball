@@ -586,7 +586,7 @@
 
 - **Type:** release-management
 - **Priority:** P0
-- **Status:** in_progress
+- **Status:** verified_prod
 - **Evidence:** package 1.10.1, live OpenAPI 0.1.0, docs называли unreleased
   endpoints, а production уже отдаёт некоторые из них; deployed commits не были
   связаны единым manifest. Baseline:
@@ -598,16 +598,20 @@
   parallel CI сохраняют quality/PostgreSQL/compiled-browser evidence, прямой push
   в `main` автоматически публикуется native Git integrations, а read-only smoke подтверждает один
   SHA/version у web и API.
-- **Actual:** delivery foundation реализуется изолированным PR1 от `b62afee`:
-  exact toolchain, default local PostgreSQL, versioned `0000`, strict local/CI
-  lanes и ReleaseMetadata находятся в clean worktree. D31 заменил отдельный
-  staging/provider orchestration на Render/Vercel native `main` Git deploy и
-  локальный `pnpm smoke:public`. D32 заменил PR-only этап прямой работой в `main`.
-  Public runtime и migrations временно используют
-  один direct `neondb_owner` URL; split-role проверки сохранены local/CI. Frozen product/story delta и migrations
-  `0001–0003` остаются следующей волной и не блокируют foundation. Исходный dirty
-  worktree и внешний recovery snapshot не изменяются.
-- **Repro:** выполнить fresh `pnpm ci`, затем после merge проверить `/health`,
+- **Actual:** foundation и Neon-normalization находятся в `main`. Node/pnpm/PG
+  toolchain, default local PostgreSQL, versioned `0000`, strict local/CI lanes,
+  compiled E2E и ReleaseMetadata работают как единый контур. D31 заменил
+  отдельный staging/provider orchestration на Render/Vercel native `main` Git
+  deploy, D32 — PR-only этап прямой работой в `main`. Disposable public runtime
+  и migrations временно используют `neondb_owner`; Render получает pooled
+  runtime URL и выводит из него direct migration URL. Первый release SHA
+  `6892d6e6fe79425eadf76c39bf052500bde5055a` подтверждён: GitHub CI green,
+  Render `live`, Vercel `READY`, `pnpm smoke:public` прошёл с первой попытки,
+  seed-admin создан и реальный browser login успешен. Redacted evidence:
+  [`ops-004-public-release.json`](audit/evidence/ops-004-public-release.json).
+  Frozen product/story delta и migrations `0001–0003` остаются следующей волной;
+  исходный dirty worktree и внешний recovery snapshot не изменяются.
+- **Repro:** выполнить fresh `pnpm ci`, затем после push проверить `/health`,
   `/ready`, `/release.json` и proxied OpenAPI на одинаковые SHA/version.
 - **Risk:** временная частичная доступность, если Render и Vercel заканчивают
   deploy в разное время; deploy до повторного merge-SHA CI; повышенные права API;
@@ -624,8 +628,11 @@
   [`test-plans/OPS-004-delivery-parity.md`](test-plans/OPS-004-delivery-parity.md):
   clean checkout без `.env` → `pnpm run verify:all` с 0 failed/skipped/todo и полным
   cleanup; negative unit/migration/browser gates; fresh 17-table schema; один
-  direct-main native-Git public release с exact-SHA smoke.
-- **Dependencies:** D32; provider Git settings. Q-OPS-003
+  direct-main native-Git public release с exact-SHA smoke. Выполнено на SHA
+  `6892d6e6fe79425eadf76c39bf052500bde5055a`: `820 passed`, CI run
+  `34195797553`, Render deploy `dep-dafr5egn74is73b9lt0g`, Vercel deployment
+  `dpl_ER2ekejpxQbRN7MfTvP5VyAkPWax`, public smoke `1/1`.
+- **Dependencies:** D32. Q-OPS-003
   переносится в обязательный VPS-readiness scope и не блокирует disposable stand.
 
 ### OPS-005 — Cold start не имеет явного UX состояния

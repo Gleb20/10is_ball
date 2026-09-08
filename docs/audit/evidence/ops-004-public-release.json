@@ -1,0 +1,51 @@
+{
+  "capturedAt": "2026-09-08T07:03:00Z",
+  "workItem": "OPS-004",
+  "environment": "disposable-public-stand",
+  "release": {
+    "sha": "6892d6e6fe79425eadf76c39bf052500bde5055a",
+    "version": "1.10.1",
+    "dirty": false
+  },
+  "github": {
+    "workflow": "CI",
+    "runId": 34195797553,
+    "conclusion": "success"
+  },
+  "render": {
+    "serviceId": "srv-d9f3odn41pts73fvpktg",
+    "deployId": "dep-dafr5egn74is73b9lt0g",
+    "status": "live",
+    "branch": "main",
+    "autoDeployTrigger": "commit",
+    "migrationMode": "apply",
+    "nodeVersion": "24.20.0"
+  },
+  "vercel": {
+    "projectId": "prj_fan8hVMOCdbpJ2uiiwfPmdJkEDcZ",
+    "deploymentId": "dpl_ER2ekejpxQbRN7MfTvP5VyAkPWax",
+    "state": "READY",
+    "target": "production",
+    "branch": "main"
+  },
+  "database": {
+    "projectId": "shiny-leaf-88815850",
+    "branchId": "br-calm-scene-asc4ye20",
+    "database": "neondb",
+    "publicTables": 17,
+    "migrationRows": 1,
+    "activeAdmins": 1
+  },
+  "checks": {
+    "publicSmoke": {
+      "result": "passed",
+      "attempts": 1,
+      "elapsedMs": 1626,
+      "mutating": false
+    },
+    "seedAdminLogin": {
+      "result": "passed",
+      "credentialsIncluded": false
+    }
+  }
+}

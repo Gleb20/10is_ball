@@ -1,6 +1,6 @@
 # Deployment as-built
 
-Фактическое состояние репозитория и провайдеров на **2026-09-07**. Каноническая
+Фактическое состояние репозитория и провайдеров на **2026-09-08**. Каноническая
 штатная процедура — в [`../DELIVERY.md`](../DELIVERY.md); исторический ручной
 runbook в [`../DEPLOY.md`](../DEPLOY.md) помечен superseded.
 
@@ -23,14 +23,20 @@ fast/PostgreSQL/compiled-browser lanes, immutable migration `0000` и одина
 не входят в active path. Render настроен на native Git deploy каждого direct
 push в `main`, Vercel — на production branch `main`; после deploy локальный
 `pnpm smoke:public` только ждёт exact SHA на обоих origins. Public runtime и migrations временно
-используют один direct `neondb_owner` URL. Старую Neon schema разрешено один раз пересоздать и
+используют `neondb_owner`: pooled URL для runtime и производный direct URL для migrator. Старую Neon schema разрешено один раз пересоздать и
 применить `0000` с нуля. Reset и оба merge выполнены; первый converged release,
-переход startup на apply-only и seed-admin bootstrap ещё должны быть проверены.
+переход startup на apply-only и seed-admin bootstrap подтверждены на SHA
+`6892d6e6fe79425eadf76c39bf052500bde5055a`.
 
 Локально на clean worktree выполнены frozen install, `doctor` и полный `pnpm ci`:
-`816 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted`; disposable PostgreSQL
-containers/networks удалены. До hosted PR gate, reset/bootstrap и exact-SHA smoke
-`OPS-004` остаётся `in_progress`.
+`820 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted`; disposable PostgreSQL
+containers/networks удалены. GitHub run `34195797553` green; Render deploy
+`dep-dafr5egn74is73b9lt0g` вышел в `live`, Vercel deployment
+`dpl_ER2ekejpxQbRN7MfTvP5VyAkPWax` — `READY`, а `pnpm smoke:public` прошёл с
+первой попытки за 1626 ms. Neon содержит 17 public tables, одну exact ledger
+record и одного active seed admin; реальный browser login успешен. `OPS-004`
+имеет статус `verified_prod`. Redacted evidence:
+[`../audit/evidence/ops-004-public-release.json`](../audit/evidence/ops-004-public-release.json).
 
 ### Production recovery evidence 2026-09-07
 
