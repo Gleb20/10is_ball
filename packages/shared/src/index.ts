@@ -16,6 +16,7 @@ export const MatchStatusSchema = z.enum([
   "finished",
   "stopped",
   "cancelled",
+  "voided",
 ]);
 export type MatchStatus = z.infer<typeof MatchStatusSchema>;
 
@@ -24,6 +25,90 @@ export type MatchKind = z.infer<typeof MatchKindSchema>;
 
 export const SideSchema = z.enum(["A", "B"]);
 export type Side = z.infer<typeof SideSchema>;
+
+export const MatchParticipantRequestSchema = z
+  .object({
+    side: SideSchema,
+    userId: z.string().uuid().optional(),
+    guestFirstName: z.string().trim().min(1).max(100).optional(),
+    guestLastName: z.string().trim().min(1).max(100).optional(),
+  })
+  .strict()
+  .superRefine((participant, ctx) => {
+    const isUser = participant.userId !== undefined;
+    const isGuest =
+      participant.guestFirstName !== undefined ||
+      participant.guestLastName !== undefined;
+    if (isUser === isGuest) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "participant must be exactly one of registered user or guest",
+      });
+    }
+    if (isGuest && (!participant.guestFirstName || !participant.guestLastName)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "guest first and last name are required",
+      });
+    }
+  });
+
+export const CreateMatchRequestSchema = z
+  .object({
+    title: z.string().trim().min(1).max(200),
+    format: MatchFormatSchema,
+    pointsToWin: z.number().int().min(1).optional(),
+    mercyEnabled: z.boolean().optional(),
+    mercyPoints: z.number().int().min(1).nullable().optional(),
+    source: z.enum(["manual", "challenge", "revenge", "tutorial"]).optional(),
+    participants: z.array(MatchParticipantRequestSchema).max(4),
+  })
+  .strict()
+  .superRefine((request, ctx) => {
+    if (request.mercyEnabled && request.mercyPoints == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["mercyPoints"],
+        message: "positive mercyPoints is required when mercy is enabled",
+      });
+    }
+  });
+export type CreateMatchRequest = z.infer<typeof CreateMatchRequestSchema>;
+
+export const StartMatchRequestSchema = z
+  .object({ firstServerParticipantId: z.string().uuid().optional() })
+  .strict()
+  .default({});
+
+export const JudgeSetupRequestSchema = z
+  .object({
+    firstServerParticipantId: z.string().uuid().optional(),
+    swapSides: z.boolean().optional(),
+    displayFlipped: z.boolean().optional(),
+  })
+  .strict()
+  .default({});
+
+export const MatchVersionRequestSchema = z
+  .object({ expectedVersion: z.number().int().min(0) })
+  .strict();
+
+export const CancelMatchRequestSchema = MatchVersionRequestSchema.extend({
+  reasonText: z.string().trim().max(500).optional(),
+}).strict();
+export type CancelMatchRequest = z.infer<typeof CancelMatchRequestSchema>;
+
+export const AwardPointRequestSchema = MatchVersionRequestSchema.extend({
+  side: SideSchema,
+}).strict();
+
+export const StopMatchRequestSchema = z
+  .object({
+    winnerSide: SideSchema,
+    reasonCode: z.enum(["injury", "time", "other"]),
+    reasonText: z.string().trim().max(500).optional(),
+  })
+  .strict();
 
 export const TournamentStatusSchema = z.enum([
   "collecting",

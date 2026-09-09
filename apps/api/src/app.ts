@@ -6,8 +6,18 @@ import Fastify, {
   type FastifyRequest,
 } from "fastify";
 import { sql } from "drizzle-orm";
-import type { ReleaseMetadata } from "@tab10/shared";
+import {
+  AwardPointRequestSchema,
+  CancelMatchRequestSchema,
+  CreateMatchRequestSchema,
+  JudgeSetupRequestSchema,
+  MatchVersionRequestSchema,
+  StartMatchRequestSchema,
+  StopMatchRequestSchema,
+  type ReleaseMetadata,
+} from "@tab10/shared";
 import type { Clock } from "@tab10/test-utils";
+import { z, type ZodType } from "zod";
 import type { Db } from "./db/client.js";
 import { authSessions, users } from "./db/schema.js";
 import { isAuditEphemeral } from "./audit-ephemeral.js";
@@ -23,6 +33,11 @@ import { resolveRuntimeReleaseMetadata } from "./release-metadata.js";
 
 const COOKIE = "tab10_session";
 const CSRF_COOKIE = "tab10_csrf";
+const TEMPORARY_PASSWORD_ALLOWED_ROUTES = new Set([
+  "GET /api/v1/auth/me",
+  "POST /api/v1/auth/logout",
+  "POST /api/v1/auth/password/first-change",
+]);
 
 /** Cookie flags: use COOKIE_SAME_SITE=none when browser talks to API on another site. Prefer Vercel /api rewrite (same-site) instead. */
 function sessionCookieOptions(httpOnly: boolean) {
@@ -77,8 +92,8 @@ export async function buildApp(opts: {
     });
   const matches = new MatchService(opts.db, clock);
   const tournaments = new TournamentService(opts.db, clock, matches);
-  matches.setTournamentMatchFinishedHook((matchId) =>
-    tournaments.onMatchFinished(matchId),
+  matches.setTournamentMatchFinishedHook((matchId, db) =>
+    tournaments.onMatchFinished(matchId, db),
   );
   const services: AppServices = {
     auth: new AuthService(opts.db, clock),
@@ -99,6 +114,12 @@ export async function buildApp(opts: {
 
   app.setErrorHandler((err, _req, reply) => {
     if (reply.sent) return;
+    if ((err as { code?: string }).code === "FST_ERR_CTP_INVALID_JSON_BODY") {
+      return reply.code(400).send({
+        code: "VALIDATION",
+        message: "Некорректный JSON",
+      });
+    }
     // Runtime exceptions can include SQL parameters, request payloads, URLs or
     // credentials. Keep provider logs useful without serializing the raw error.
     console.error(
@@ -127,12 +148,8 @@ export async function buildApp(opts: {
       });
     }
     if (req.authUser.mustChangePassword) {
-      const path = req.url;
-      if (
-        !path.includes("/auth/password/first-change") &&
-        !path.includes("/auth/logout") &&
-        !path.includes("/auth/me")
-      ) {
+      const routeKey = `${req.method} ${req.routeOptions.url}`;
+      if (!TEMPORARY_PASSWORD_ALLOWED_ROUTES.has(routeKey)) {
         return reply.code(403).send({
           code: "PASSWORD_CHANGE_REQUIRED",
           message: "Необходимо сменить пароль",
@@ -482,10 +499,15 @@ export async function buildApp(opts: {
     async (req, reply) => {
       try {
         const { matchId } = req.params as { matchId: string };
-        const body = (req.body ?? {}) as { reasonText?: string };
+        const body = parseBody(CancelMatchRequestSchema, req.body);
+        const idempotencyKey = parseIdempotencyKey(
+          req.headers["idempotency-key"],
+        );
         const match = await services.matches.adminForceCloseMatch({
           matchId,
           actorAdminId: req.authUser!.id,
+          expectedVersion: body.expectedVersion,
+          idempotencyKey,
           reasonText: body.reasonText,
         });
         return { match };
@@ -533,26 +555,14 @@ export async function buildApp(opts: {
   );
 
   // --- Matches ---
-  app.get("/api/v1/matches", { preHandler: requireAuth }, async () => {
-    const list = await services.matches.listMatches();
+  app.get("/api/v1/matches", { preHandler: requireAuth }, async (req) => {
+    const list = await services.matches.listMatches(req.authUser!.id);
     return { matches: list };
   });
 
   app.post("/api/v1/matches", { preHandler: requireAuth }, async (req, reply) => {
     try {
-      const body = req.body as {
-        title: string;
-        format: "1v1" | "2v2";
-        pointsToWin?: number;
-        mercyEnabled?: boolean;
-        mercyPoints?: number;
-        participants: Array<{
-          side: "A" | "B";
-          userId?: string;
-          guestFirstName?: string;
-          guestLastName?: string;
-        }>;
-      };
+      const body = parseBody(CreateMatchRequestSchema, req.body);
       const match = await services.matches.createMatch({
         createdByUserId: req.authUser!.id,
         ...body,
@@ -569,7 +579,10 @@ export async function buildApp(opts: {
     async (req, reply) => {
       try {
         const { matchId } = req.params as { matchId: string };
-        const match = await services.matches.getMatch(matchId);
+        const match = await services.matches.getVisibleMatch(
+          matchId,
+          req.authUser!.id,
+        );
         if (!match) {
           return reply.code(404).send({ code: "NOT_FOUND", message: "Матч не найден" });
         }
@@ -586,9 +599,10 @@ export async function buildApp(opts: {
     async (req, reply) => {
       try {
         const { matchId } = req.params as { matchId: string };
-        const body = req.body as { firstServerParticipantId?: string };
+        const body = parseBody(StartMatchRequestSchema, req.body);
         const match = await services.matches.startMatch(
           matchId,
+          req.authUser!.id,
           body?.firstServerParticipantId,
         );
         return { match };
@@ -658,11 +672,7 @@ export async function buildApp(opts: {
     async (req, reply) => {
       try {
         const { matchId } = req.params as { matchId: string };
-        const body = req.body as {
-          firstServerParticipantId?: string;
-          swapSides?: boolean;
-          displayFlipped?: boolean;
-        };
+        const body = parseBody(JudgeSetupRequestSchema, req.body);
         const match = await services.matches.judgeSetup({
           matchId,
           userId: req.authUser!.id,
@@ -684,10 +694,7 @@ export async function buildApp(opts: {
     async (req, reply) => {
       try {
         const { matchId } = req.params as { matchId: string };
-        const body = req.body as {
-          side: "A" | "B";
-          expectedVersion: number;
-        };
+        const body = parseBody(AwardPointRequestSchema, req.body);
         const idempotencyKey = req.headers["idempotency-key"];
         if (typeof idempotencyKey !== "string" || !idempotencyKey.trim()) {
           return reply.code(400).send({
@@ -716,7 +723,7 @@ export async function buildApp(opts: {
     async (req, reply) => {
       try {
         const { matchId } = req.params as { matchId: string };
-        const body = req.body as { expectedVersion: number };
+        const body = parseBody(MatchVersionRequestSchema, req.body);
         const idempotencyKey = req.headers["idempotency-key"];
         if (typeof idempotencyKey !== "string" || !idempotencyKey.trim()) {
           return reply.code(400).send({
@@ -780,11 +787,7 @@ export async function buildApp(opts: {
     async (req, reply) => {
       try {
         const { matchId } = req.params as { matchId: string };
-        const body = req.body as {
-          winnerSide: "A" | "B";
-          reasonCode: string;
-          reasonText?: string;
-        };
+        const body = parseBody(StopMatchRequestSchema, req.body);
         const match = await services.matches.stopMatch({
           matchId,
           winnerSide: body.winnerSide,
@@ -805,9 +808,40 @@ export async function buildApp(opts: {
     async (req, reply) => {
       try {
         const { matchId } = req.params as { matchId: string };
+        const body = parseBody(CancelMatchRequestSchema, req.body);
+        const idempotencyKey = parseIdempotencyKey(
+          req.headers["idempotency-key"],
+        );
         const match = await services.matches.cancelMatch({
           matchId,
           actorUserId: req.authUser!.id,
+          expectedVersion: body.expectedVersion,
+          idempotencyKey,
+          reasonText: body.reasonText,
+        });
+        return { match };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
+    "/api/v1/matches/:matchId/void",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { matchId } = req.params as { matchId: string };
+        const body = parseBody(CancelMatchRequestSchema, req.body);
+        const idempotencyKey = parseIdempotencyKey(
+          req.headers["idempotency-key"],
+        );
+        const match = await services.matches.voidMatch({
+          matchId,
+          actorUserId: req.authUser!.id,
+          expectedVersion: body.expectedVersion,
+          idempotencyKey,
+          reasonText: body.reasonText,
         });
         return { match };
       } catch (e) {
@@ -862,7 +896,7 @@ export async function buildApp(opts: {
   );
 
   app.get("/api/v1/home", { preHandler: requireAuth }, async (req) => {
-    const matches = await services.matches.listMatches(5);
+    const matches = await services.matches.listMatches(req.authUser!.id, 5);
     const rankings = await services.matches.getRankings("all_time");
     const unread = await services.notifications.unread(req.authUser!.id);
     const unreadCount = await services.notifications.unreadCount(
@@ -899,8 +933,8 @@ export async function buildApp(opts: {
   });
 
   // --- Tournaments ---
-  app.get("/api/v1/tournaments", { preHandler: requireAuth }, async () => {
-    const list = await services.tournaments.list();
+  app.get("/api/v1/tournaments", { preHandler: requireAuth }, async (req) => {
+    const list = await services.tournaments.list(req.authUser!.id);
     return { tournaments: list };
   });
 
@@ -938,11 +972,18 @@ export async function buildApp(opts: {
     { preHandler: requireAuth },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const tournament = await services.tournaments.get(id);
-      if (!tournament) {
-        return reply.code(404).send({ code: "NOT_FOUND", message: "Не найден" });
+      try {
+        const tournament = await services.tournaments.getVisible(
+          id,
+          req.authUser!.id,
+        );
+        if (!tournament) {
+          return reply.code(404).send({ code: "NOT_FOUND", message: "Не найден" });
+        }
+        return { tournament };
+      } catch (e) {
+        return sendError(reply, e);
       }
-      return { tournament };
     },
   );
 
@@ -985,6 +1026,7 @@ export async function buildApp(opts: {
         };
         const participant = await services.tournaments.addParticipant({
           tournamentId: id,
+          actorUserId: req.authUser!.id,
           ...body,
         });
         return { participant };
@@ -1083,9 +1125,11 @@ export async function buildApp(opts: {
         const body = (req.body ?? {}) as {
           constructionAlgorithm?: unknown;
         };
-        const result = await services.tournaments.generateBracket(id, {
-          constructionAlgorithm: body.constructionAlgorithm,
-        });
+        const result = await services.tournaments.generateBracket(
+          id,
+          req.authUser!.id,
+          { constructionAlgorithm: body.constructionAlgorithm },
+        );
         return result;
       } catch (e) {
         return sendError(reply, e);
@@ -1328,7 +1372,7 @@ function messageFor(code: string): string {
     BRACKET_REGEN_REQUIRED: "Нужна перегенерация сетки",
     BRACKET_MISSING: "Сетка отсутствует",
     BRACKET_CORRUPT: "Сетка повреждена",
-    BRACKET_UNSUPPORTED: "Неподдерживаемая версия сетки",
+    UNSUPPORTED_BRACKET_VERSION: "Неподдерживаемая версия сетки",
     BRACKET_VERSION_CONFLICT: "Конфликт версии сетки",
     BRACKET_ALGORITHM_MISMATCH: "Несогласованность алгоритма сетки",
     INVALID_BRACKET_CONSTRUCTION_ALGORITHM: "Неизвестный способ построения сетки",
@@ -1339,8 +1383,11 @@ function messageFor(code: string): string {
     TOURNAMENT_ALREADY_STARTED: "Турнир уже стартовал",
     PLAYER_ALREADY_IN_ACTIVE_MATCH: "Игрок уже в активном матче",
     TOURNAMENT_MATCH_FORBIDDEN:
-      "Админ может закрывать и удалять только обычные матчи",
+      "Действие доступно только для обычных матчей",
     MATCH_NOT_ACTIVE: "Матч уже закрыт",
+    MATCH_NOT_VOIDABLE: "Аннулировать можно только завершённый или остановленный матч",
+    MATCH_IMMUTABLE: "Завершённый спортивный результат нельзя удалить",
+    VALIDATION: "Некорректные данные запроса",
     EXPIRED: "Приглашение истекло",
     USE_MATCH: "Для двух игроков создайте обычный матч",
     ALREADY_IN_TOURNAMENT: "Игрок уже в составе турнира",
@@ -1350,14 +1397,76 @@ function messageFor(code: string): string {
   return map[code] ?? code;
 }
 
+function parseBody<T>(schema: ZodType<T>, body: unknown): T {
+  const parsed = schema.safeParse(body);
+  if (parsed.success) return parsed.data;
+  throw Object.assign(new Error("VALIDATION"), {
+    code: "VALIDATION",
+    details: {
+      issues: parsed.error.issues.map((issue) => ({
+        path: issue.path.join("."),
+        message: issue.message,
+      })),
+    },
+  });
+}
+
+function parseIdempotencyKey(value: string | string[] | undefined): string {
+  if (typeof value !== "string" || !value.trim()) {
+    throw Object.assign(new Error("IDEMPOTENCY_KEY_REQUIRED"), {
+      code: "IDEMPOTENCY_KEY_REQUIRED",
+    });
+  }
+  const parsed = z.string().uuid().safeParse(value.trim());
+  if (!parsed.success) {
+    throw Object.assign(new Error("VALIDATION"), {
+      code: "VALIDATION",
+      details: {
+        issues: [{ path: "Idempotency-Key", message: "must be a UUID" }],
+      },
+    });
+  }
+  return parsed.data;
+}
+
 function sendError(reply: FastifyReply, e: unknown) {
   const err = e as {
     code?: string;
     state?: unknown;
     message?: string;
     currentJudge?: { userId: string; displayName: string };
+    details?: Record<string, unknown>;
   };
   const code = err.code ?? "INTERNAL";
+  const badRequestCodes = new Set([
+    "JUDGE_BUSY",
+    "JUDGE_REQUIRED",
+    "IDEMPOTENCY_KEY_REQUIRED",
+    "PLAYER_BUSY",
+    "INVALID_STATUS",
+    "TOO_FEW",
+    "TOO_MANY",
+    "BRACKET_NOT_EDITABLE",
+    "BRACKET_REGEN_REQUIRED",
+    "BRACKET_MISSING",
+    "BRACKET_CORRUPT",
+    "UNSUPPORTED_BRACKET_VERSION",
+    "BRACKET_ALGORITHM_MISMATCH",
+    "INVALID_BRACKET_CONSTRUCTION_ALGORITHM",
+    "COMPACT_DOUBLE_ELIMINATION_UNSUPPORTED",
+    "LEGACY_BRACKET_ALGORITHM_REQUIRED",
+    "TOURNAMENT_ALREADY_STARTED",
+    "PLAYER_ALREADY_IN_ACTIVE_MATCH",
+    "TOURNAMENT_MATCH_FORBIDDEN",
+    "MATCH_NOT_ACTIVE",
+    "MATCH_NOT_VOIDABLE",
+    "MATCH_IMMUTABLE",
+    "VALIDATION",
+    "EXPIRED",
+    "USE_MATCH",
+    "ALREADY_IN_TOURNAMENT",
+    "NOT_A_PARTICIPANT",
+  ]);
   const status =
     code === "NOT_FOUND"
       ? 404
@@ -1369,8 +1478,10 @@ function sendError(reply: FastifyReply, e: unknown) {
               code === "JUDGE_TAKEN" ||
               code === "BRACKET_VERSION_CONFLICT"
             ? 409
-            : 400;
-  const details: Record<string, unknown> = {};
+            : badRequestCodes.has(code)
+              ? 400
+              : 500;
+  const details: Record<string, unknown> = { ...(err.details ?? {}) };
   if (err.state) details.state = err.state;
   if (err.currentJudge) details.currentJudge = err.currentJudge;
   const message =
@@ -1416,7 +1527,10 @@ function openApiSpec(releaseVersion: string) {
         post: { summary: "Create match" },
       },
       "/api/v1/matches/{matchId}/cancel": {
-        post: { summary: "Cancel standalone match (organizer/participant)" },
+        post: { summary: "Cancel standalone match (creator/admin)" },
+      },
+      "/api/v1/matches/{matchId}/void": {
+        post: { summary: "Void result with audit (creator/admin)" },
       },
       "/api/v1/tournaments": {
         get: { summary: "List tournaments" },

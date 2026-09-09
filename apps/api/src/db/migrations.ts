@@ -18,6 +18,9 @@ export const MIGRATIONS_FOLDER = fileURLToPath(
 const BASELINE_SNAPSHOT_PATH = fileURLToPath(
   new URL("../../drizzle/meta/0000_snapshot.json", import.meta.url),
 );
+const CURRENT_SNAPSHOT_PATH = fileURLToPath(
+  new URL("../../drizzle/meta/0001_snapshot.json", import.meta.url),
+);
 
 const MIGRATION_ADVISORY_LOCK = "7247010010001";
 const DEFAULT_LOCK_TIMEOUT_MS = 15_000;
@@ -136,6 +139,9 @@ export const ADOPTION_BACKFILL_MANIFEST = [
 const baselineSnapshot = JSON.parse(
   readFileSync(BASELINE_SNAPSHOT_PATH, "utf8"),
 ) as BaselineSnapshot;
+const currentSnapshot = JSON.parse(
+  readFileSync(CURRENT_SNAPSHOT_PATH, "utf8"),
+) as BaselineSnapshot;
 
 function expectedMigrations(migrationsFolder = MIGRATIONS_FOLDER) {
   return readMigrationFiles({ migrationsFolder });
@@ -209,12 +215,25 @@ function expectedDefault(column: SnapshotColumn, tableName: string): string {
   ) {
     return "'compact'";
   }
+  // Drizzle's generated 0001 snapshot omitted unchanged defaults inherited
+  // from immutable 0000. Carry those exact baseline defaults forward while
+  // keeping 0000 itself byte-for-byte unchanged.
+  if (column.default === undefined) {
+    const baselineTable = Object.values(baselineSnapshot.tables).find(
+      (table) => table.name === tableName,
+    );
+    const inheritedDefault = baselineTable?.columns[column.name]?.default;
+    if (inheritedDefault !== undefined) {
+      return normalizeCatalogDefault(inheritedDefault);
+    }
+  }
   if (column.default === undefined) return "";
   return normalizeCatalogDefault(column.default);
 }
 
 function assertColumnDefaults(
   observed: ReadonlyArray<Record<string, unknown>>,
+  snapshot: BaselineSnapshot,
 ): void {
   const byColumn = new Map(
     observed.map((column) => [
@@ -223,7 +242,7 @@ function assertColumnDefaults(
     ]),
   );
   const drift: string[] = [];
-  for (const table of Object.values(baselineSnapshot.tables)) {
+  for (const table of Object.values(snapshot.tables)) {
     for (const column of Object.values(table.columns)) {
       const key = `${table.name}.${column.name}`;
       const actual = byColumn.get(key) ?? "";
@@ -238,12 +257,12 @@ function assertColumnDefaults(
   }
 }
 
-function expectedTableNames(): string[] {
-  return Object.values(baselineSnapshot.tables).map((table) => table.name);
+function expectedTableNames(snapshot: BaselineSnapshot): string[] {
+  return Object.values(snapshot.tables).map((table) => table.name);
 }
 
-function expectedColumnSignatures(): string[] {
-  return Object.values(baselineSnapshot.tables).flatMap((table) =>
+function expectedColumnSignatures(snapshot: BaselineSnapshot): string[] {
+  return Object.values(snapshot.tables).flatMap((table) =>
     Object.values(table.columns).map(
       (column) =>
         `${table.name}|${column.name}|${column.type}|${column.type === "text" ? "pg_catalog.default" : ""}|${column.notNull ? "not-null" : "nullable"}`,
@@ -251,8 +270,8 @@ function expectedColumnSignatures(): string[] {
   );
 }
 
-function expectedEnumSignatures(): string[] {
-  return Object.values(baselineSnapshot.enums).map(
+function expectedEnumSignatures(snapshot: BaselineSnapshot): string[] {
+  return Object.values(snapshot.enums).map(
     (enumType) => `${enumType.name}|${enumType.values.join("\u001f")}`,
   );
 }
@@ -295,8 +314,9 @@ function expectedIndexKeySignature(
 function expectedIndexKeySignatures(
   tableName: string,
   columns: readonly string[],
+  snapshot: BaselineSnapshot,
 ): string {
-  const table = Object.values(baselineSnapshot.tables).find(
+  const table = Object.values(snapshot.tables).find(
     (candidate) => candidate.name === tableName,
   );
   if (!table) {
@@ -327,6 +347,7 @@ function expectedConstraintSignature({
   matchType = "",
   definition = "",
   backingIndex,
+  snapshot,
 }: {
   tableName: string;
   constraintName: string;
@@ -343,6 +364,7 @@ function expectedConstraintSignature({
     columns: readonly string[];
     nullsNotDistinct?: boolean;
   };
+  snapshot: BaselineSnapshot;
 }): string {
   return [
     tableName,
@@ -360,7 +382,7 @@ function expectedConstraintSignature({
     backingIndex?.name ?? "",
     backingIndex ? "btree" : "",
     backingIndex
-      ? expectedIndexKeySignatures(tableName, backingIndex.columns)
+      ? expectedIndexKeySignatures(tableName, backingIndex.columns, snapshot)
       : "",
     "",
     backingIndex
@@ -376,8 +398,8 @@ function expectedConstraintSignature({
   ].join("|");
 }
 
-function expectedConstraintSignatures(): string[] {
-  return Object.values(baselineSnapshot.tables).flatMap((table) => {
+function expectedConstraintSignatures(snapshot: BaselineSnapshot): string[] {
+  return Object.values(snapshot.tables).flatMap((table) => {
     const signatures: string[] = [];
     const inlinePrimaryKey = Object.values(table.columns)
       .filter((column) => column.primaryKey)
@@ -393,6 +415,7 @@ function expectedConstraintSignatures(): string[] {
             name: implicitConstraintName(table.name, inlinePrimaryKey, "pkey"),
             columns: inlinePrimaryKey,
           },
+          snapshot,
         }),
       );
     }
@@ -411,6 +434,7 @@ function expectedConstraintSignatures(): string[] {
               implicitConstraintName(table.name, primaryKey.columns, "pkey"),
             columns: primaryKey.columns,
           },
+          snapshot,
         }),
       );
     }
@@ -428,6 +452,7 @@ function expectedConstraintSignatures(): string[] {
             columns: unique.columns,
             nullsNotDistinct: unique.nullsNotDistinct,
           },
+          snapshot,
         }),
       );
     }
@@ -447,6 +472,7 @@ function expectedConstraintSignatures(): string[] {
           onUpdate: normalizeAction(foreignKey.onUpdate),
           onDelete: normalizeAction(foreignKey.onDelete),
           matchType: "simple",
+          snapshot,
         }),
       );
     }
@@ -457,6 +483,7 @@ function expectedConstraintSignatures(): string[] {
           constraintName: check.name || snapshotName,
           constraintType: "c",
           definition: normalizePredicate(check.value, table.name),
+          snapshot,
         }),
       );
     }
@@ -464,8 +491,8 @@ function expectedConstraintSignatures(): string[] {
   });
 }
 
-function expectedIndexSignatures(): string[] {
-  return Object.values(baselineSnapshot.tables).flatMap((table) =>
+function expectedIndexSignatures(snapshot: BaselineSnapshot): string[] {
+  return Object.values(snapshot.tables).flatMap((table) =>
     Object.values(table.indexes).map((index) =>
       [
         table.name,
@@ -796,8 +823,11 @@ async function assertAdoptionBackfillApplied(
   };
 }
 
-/** Verify the complete logical schema represented by the immutable 0000 snapshot. */
-export async function assertBaselineSchema(query: MigrationQuery): Promise<void> {
+/** Verify the complete logical schema represented by one immutable snapshot. */
+async function assertSchemaSnapshot(
+  query: MigrationQuery,
+  snapshot: BaselineSnapshot,
+): Promise<void> {
   const tables = await query(`
     SELECT relation.relname AS table_name
     FROM pg_catalog.pg_class AS relation
@@ -808,7 +838,7 @@ export async function assertBaselineSchema(query: MigrationQuery): Promise<void>
   `);
   assertEqualSet(
     "public tables",
-    expectedTableNames(),
+    expectedTableNames(snapshot),
     tables.map((row) => asString(row.table_name)),
   );
 
@@ -848,13 +878,13 @@ export async function assertBaselineSchema(query: MigrationQuery): Promise<void>
   `);
   assertEqualSet(
     "public columns",
-    expectedColumnSignatures(),
+    expectedColumnSignatures(snapshot),
     columns.map(
       (column) =>
         `${asString(column.table_name)}|${asString(column.column_name)}|${asString(column.data_type)}|${asString(column.collation_name)}|${column.not_null === true ? "not-null" : "nullable"}`,
     ),
   );
-  assertColumnDefaults(columns);
+  assertColumnDefaults(columns, snapshot);
 
   const enums = await query(`
     SELECT
@@ -870,7 +900,7 @@ export async function assertBaselineSchema(query: MigrationQuery): Promise<void>
   `);
   assertEqualSet(
     "public enums",
-    expectedEnumSignatures(),
+    expectedEnumSignatures(snapshot),
     enums.map(
       (enumType) => `${asString(enumType.enum_name)}|${asString(enumType.labels)}`,
     ),
@@ -1030,7 +1060,7 @@ export async function assertBaselineSchema(query: MigrationQuery): Promise<void>
   `);
   assertEqualSet(
     "public constraints",
-    expectedConstraintSignatures(),
+    expectedConstraintSignatures(snapshot),
     constraints.map((constraint) => {
       const tableName = asString(constraint.table_name);
       return [
@@ -1181,7 +1211,7 @@ export async function assertBaselineSchema(query: MigrationQuery): Promise<void>
   `);
   assertEqualSet(
     "public explicit indexes",
-    expectedIndexSignatures(),
+    expectedIndexSignatures(snapshot),
     indexes.map((index) => {
       const tableName = asString(index.table_name);
       return [
@@ -1204,6 +1234,16 @@ export async function assertBaselineSchema(query: MigrationQuery): Promise<void>
   );
 }
 
+/** Verify the historical unversioned schema represented by immutable 0000. */
+export async function assertBaselineSchema(query: MigrationQuery): Promise<void> {
+  await assertSchemaSnapshot(query, baselineSnapshot);
+}
+
+/** Verify the schema after every migration shipped by this binary. */
+export async function assertCurrentSchema(query: MigrationQuery): Promise<void> {
+  await assertSchemaSnapshot(query, currentSnapshot);
+}
+
 async function assertAdoptionPreconditions(
   query: MigrationQuery,
   captureManifest: boolean,
@@ -1224,7 +1264,15 @@ async function assertApplyPreconditions(query: MigrationQuery): Promise<void> {
   const ledger = await inspectLedger(query);
   if (ledger.state === "nonempty") {
     assertAppliedIsArtifactPrefix(ledger.rows);
-    await assertBaselineSchema(query);
+    if (ledger.rows.length === expectedMigrations().length) {
+      await assertCurrentSchema(query);
+    } else if (ledger.rows.length === 1) {
+      await assertBaselineSchema(query);
+    } else {
+      throw new Error(
+        `No immutable schema snapshot is registered for ${ledger.rows.length} applied migrations`,
+      );
+    }
     return;
   }
   if (!(await isLogicallyFresh(query))) {
@@ -1255,7 +1303,7 @@ export async function assertMigrationsExactlyCurrent(
     throw new Error("Database migrations are not initialized");
   }
   assertExactExpectedPrefix(ledger.rows, { allowNewer: false });
-  await assertBaselineSchema(query);
+  await assertCurrentSchema(query);
 }
 
 /**

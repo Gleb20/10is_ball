@@ -1,4 +1,4 @@
-import { and, eq, inArray, ne, or, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import {
   applyBracketResult,
   applyMatchResult,
@@ -27,6 +27,7 @@ import { randomBytes } from "node:crypto";
 import type { Clock } from "@tab10/test-utils";
 import type { Db } from "../../db/client.js";
 import {
+  judgeSessions,
   matches,
   matchParticipants,
   notifications,
@@ -40,6 +41,11 @@ import type { MatchService } from "../matches/match-service.js";
 import { loadTournamentBracket, swapSeedOrderByMatchIds } from "./bracket-load.js";
 
 type ActiveParticipant = typeof tournamentParticipants.$inferSelect;
+const COMPLETED_TOURNAMENT_STATUSES = new Set([
+  "finished",
+  "stopped",
+  "cancelled",
+]);
 
 function isActiveParticipant(p: { status?: string | null }): boolean {
   // Legacy rows / pre-migration Neon may omit status; treat as active.
@@ -229,12 +235,28 @@ export class TournamentService {
 
   async addParticipant(input: {
     tournamentId: string;
+    actorUserId: string;
     userId?: string;
     guestFirstName?: string;
     guestLastName?: string;
   }) {
     const t = await this.get(input.tournamentId);
     if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    if (t.createdByUserId !== input.actorUserId) {
+      throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+    }
+    return this.insertParticipant(t, input);
+  }
+
+  private async insertParticipant(
+    t: NonNullable<Awaited<ReturnType<TournamentService["get"]>>>,
+    input: {
+      tournamentId: string;
+      userId?: string;
+      guestFirstName?: string;
+      guestLastName?: string;
+    },
+  ) {
     if (t.status !== "collecting" && t.status !== "needs_regeneration") {
       throw Object.assign(new Error("INVALID_STATUS"), {
         code: "INVALID_STATUS",
@@ -295,10 +317,21 @@ export class TournamentService {
     ) {
       throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
     }
+    const participant = t.participants.find(
+      (entry) => entry.id === input.participantId,
+    );
+    if (!participant) {
+      throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    }
     await this.db
       .update(tournamentParticipants)
       .set({ status: "withdrawn" })
-      .where(eq(tournamentParticipants.id, input.participantId));
+      .where(
+        and(
+          eq(tournamentParticipants.id, input.participantId),
+          eq(tournamentParticipants.tournamentId, input.tournamentId),
+        ),
+      );
     if (t.status === "bracket_generated") {
       await this.db
         .update(tournaments)
@@ -387,12 +420,12 @@ export class TournamentService {
     return this.get(tournamentId);
   }
 
-  async get(id: string) {
-    const t = await this.db.query.tournaments.findFirst({
+  async get(id: string, db: Db = this.db) {
+    const t = await db.query.tournaments.findFirst({
       where: eq(tournaments.id, id),
     });
     if (!t) return null;
-    let participants = await this.db.query.tournamentParticipants.findMany({
+    let participants = await db.query.tournamentParticipants.findMany({
       where: eq(tournamentParticipants.tournamentId, id),
     });
 
@@ -404,16 +437,16 @@ export class TournamentService {
         (p) => p.userId === t.createdByUserId && isActiveParticipant(p),
       )
     ) {
-      const stats = await this.db.query.userStats.findFirst({
+      const stats = await db.query.userStats.findFirst({
         where: eq(userStats.userId, t.createdByUserId),
       });
-      await this.db.insert(tournamentParticipants).values({
+      await db.insert(tournamentParticipants).values({
         tournamentId: id,
         userId: t.createdByUserId,
         winsSnapshot: stats?.winsAllTime ?? 0,
         status: "active",
       });
-      participants = await this.db.query.tournamentParticipants.findMany({
+      participants = await db.query.tournamentParticipants.findMany({
         where: eq(tournamentParticipants.tournamentId, id),
       });
     }
@@ -423,17 +456,17 @@ export class TournamentService {
       .filter((uid): uid is string => Boolean(uid));
     const userRows =
       userIds.length > 0
-        ? await this.db.query.users.findMany({
+        ? await db.query.users.findMany({
             where: inArray(users.id, userIds),
           })
         : [];
     const usersById = new Map(userRows.map((u) => [u.id, u]));
 
-    const tournamentMatches = await this.db.query.matches.findMany({
+    const tournamentMatches = await db.query.matches.findMany({
       where: eq(matches.tournamentId, id),
     });
 
-    const invitations = await this.db.query.tournamentInvitations.findMany({
+    const invitations = await db.query.tournamentInvitations.findMany({
       where: eq(tournamentInvitations.tournamentId, id),
     });
     const inviteUserIds = [
@@ -441,7 +474,7 @@ export class TournamentService {
     ];
     const inviteUsers =
       inviteUserIds.length > 0
-        ? await this.db.query.users.findMany({
+        ? await db.query.users.findMany({
             where: inArray(users.id, inviteUserIds),
           })
         : [];
@@ -476,6 +509,23 @@ export class TournamentService {
     };
   }
 
+  async getVisible(id: string, actorUserId: string) {
+    const tournament = await this.db.query.tournaments.findFirst({
+      where: eq(tournaments.id, id),
+    });
+    if (!tournament) return null;
+    if (!COMPLETED_TOURNAMENT_STATUSES.has(tournament.status)) {
+      const scope = await this.visibleActiveTournamentIds(actorUserId);
+      if (
+        tournament.createdByUserId !== actorUserId &&
+        !scope.has(tournament.id)
+      ) {
+        throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+      }
+    }
+    return this.get(id);
+  }
+
   /** Organizer removes a declined (or pending) invitation so they can re-invite. */
   async cancelInvitation(input: {
     tournamentId: string;
@@ -507,8 +557,47 @@ export class TournamentService {
     return { ok: true };
   }
 
-  async list() {
-    return this.db.query.tournaments.findMany();
+  async list(actorUserId: string) {
+    const [rows, scopedActiveIds] = await Promise.all([
+      this.db.query.tournaments.findMany(),
+      this.visibleActiveTournamentIds(actorUserId),
+    ]);
+    return rows.filter(
+      (tournament) =>
+        COMPLETED_TOURNAMENT_STATUSES.has(tournament.status) ||
+        tournament.createdByUserId === actorUserId ||
+        scopedActiveIds.has(tournament.id),
+    );
+  }
+
+  private async visibleActiveTournamentIds(actorUserId: string) {
+    const [participantRows, judgeRows] = await Promise.all([
+      this.db.query.tournamentParticipants.findMany({
+        where: and(
+          eq(tournamentParticipants.userId, actorUserId),
+          eq(tournamentParticipants.status, "active"),
+        ),
+      }),
+      this.db.query.judgeSessions.findMany({
+        where: and(
+          eq(judgeSessions.userId, actorUserId),
+          isNull(judgeSessions.releasedAt),
+          gt(judgeSessions.expiresAt, this.clock.now()),
+        ),
+      }),
+    ]);
+    const visible = new Set(
+      participantRows.map((participant) => participant.tournamentId),
+    );
+    const judgedMatchIds = judgeRows.map((session) => session.matchId);
+    if (judgedMatchIds.length === 0) return visible;
+    const judgedMatches = await this.db.query.matches.findMany({
+      where: inArray(matches.id, judgedMatchIds),
+    });
+    for (const match of judgedMatches) {
+      if (match.tournamentId) visible.add(match.tournamentId);
+    }
+    return visible;
   }
 
   async invite(input: {
@@ -577,7 +666,11 @@ export class TournamentService {
       .set({ status, respondedAt: this.clock.now() })
       .where(eq(tournamentInvitations.id, inv.id));
     if (input.accept) {
-      await this.addParticipant({
+      const tournament = await this.get(inv.tournamentId);
+      if (!tournament) {
+        throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+      }
+      await this.insertParticipant(tournament, {
         tournamentId: inv.tournamentId,
         userId: input.userId,
       });
@@ -605,6 +698,7 @@ export class TournamentService {
 
   async generateBracket(
     tournamentId: string,
+    actorUserId: string,
     opts: {
       constructionAlgorithm?: unknown;
       rng?: () => number;
@@ -613,8 +707,14 @@ export class TournamentService {
     const rng = opts.rng ?? Math.random;
     const t = await this.get(tournamentId);
     if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    if (t.createdByUserId !== actorUserId) {
+      throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+    }
     if (t.status !== "collecting" && t.status !== "needs_regeneration" && t.status !== "bracket_generated") {
       throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
+    }
+    if (t.bracketJson) {
+      loadTournamentBracket(t.bracketJson);
     }
 
     const playing = this.playingParticipants(t);
@@ -741,6 +841,9 @@ export class TournamentService {
       t.status !== "needs_regeneration"
     ) {
       throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
+    }
+    if (t.bracketJson) {
+      loadTournamentBracket(t.bracketJson);
     }
     const [row] = await this.db
       .update(tournaments)
@@ -1131,12 +1234,15 @@ export class TournamentService {
     }
   }
 
-  async onMatchFinished(matchId: string) {
-    const match = await this.matchService.getMatch(matchId);
+  async onMatchFinished(matchId: string, db: Db) {
+    const match = await this.matchService.getMatch(matchId, db);
     if (!match || match.kind !== "tournament" || !match.tournamentId) return;
     if (match.status !== "finished" && match.status !== "stopped") return;
 
-    const t = await this.get(match.tournamentId);
+    await db.execute(
+      sql`select ${tournaments.id} from ${tournaments} where ${tournaments.id} = ${match.tournamentId} for update`,
+    );
+    const t = await this.get(match.tournamentId, db);
     if (!t || t.status !== "in_progress") return;
 
     let loaded;
@@ -1190,11 +1296,11 @@ export class TournamentService {
       next = await this.materializeReadyMatchesV1(
         { ...t, bracketJson: next },
         next,
-        { collectNotifs: pendingNotifs },
+        { db, collectNotifs: pendingNotifs },
       );
 
       const complete = isTournamentComplete(next);
-      await this.db
+      await db
         .update(tournaments)
         .set({
           bracketJson: next,
@@ -1214,7 +1320,7 @@ export class TournamentService {
           (p) => p.id === next.championParticipantId,
         );
         if (champ?.userId) {
-          await this.db.insert(notifications).values({
+          await db.insert(notifications).values({
             userId: champ.userId,
             type: "tournament_finished",
             title: "Турнир завершён",
@@ -1250,12 +1356,12 @@ export class TournamentService {
       next = await this.materializeReadyMatchesV2(
         { ...t, bracketJson: next },
         next,
-        this.db,
+        db,
         pendingNotifs,
       );
       const complete = isBracketGraphComplete(next);
       const champId = next.championParticipantId;
-      const updated = await this.db
+      const updated = await db
         .update(tournaments)
         .set({
           bracketJson: next,
@@ -1284,7 +1390,7 @@ export class TournamentService {
       if (complete && champId) {
         const champ = t.participants.find((p) => p.id === champId);
         if (champ?.userId) {
-          await this.db.insert(notifications).values({
+          await db.insert(notifications).values({
             userId: champ.userId,
             type: "tournament_finished",
             title: "Турнир завершён",
@@ -1296,7 +1402,7 @@ export class TournamentService {
     }
 
     for (const n of pendingNotifs) {
-      await this.db.insert(notifications).values({
+      await db.insert(notifications).values({
         userId: n.userId,
         type: "tournament_match_ready",
         title: "Матч турнира готов",

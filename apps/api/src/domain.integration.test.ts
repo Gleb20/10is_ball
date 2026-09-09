@@ -1359,7 +1359,13 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/admin/matches/${stuckId}/force-close`,
       cookies: { tab10_session: adminCookie },
-      payload: { reasonText: "ops cleanup" },
+      headers: {
+        "idempotency-key": "00000000-0000-4000-8000-000000000101",
+      },
+      payload: {
+        expectedVersion: (await services.matches.getMatch(stuckId))!.version,
+        reasonText: "ops cleanup",
+      },
     });
     expect(force.statusCode).toBe(200);
     expect(force.json().match.status).toBe("cancelled");
@@ -1440,7 +1446,10 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/admin/matches/${waitingId}/force-close`,
       cookies: { tab10_session: adminCookie },
-      payload: {},
+      headers: {
+        "idempotency-key": "00000000-0000-4000-8000-000000000102",
+      },
+      payload: { expectedVersion: waiting.json().match.version },
     });
     expect(force.statusCode).toBe(200);
 
@@ -1505,7 +1514,12 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/admin/matches/${matchId}/force-close`,
       cookies: { tab10_session: adminCookie },
-      payload: {},
+      headers: {
+        "idempotency-key": "00000000-0000-4000-8000-000000000103",
+      },
+      payload: {
+        expectedVersion: (await services.matches.getMatch(matchId))!.version,
+      },
     });
     expect(force.statusCode).toBe(400);
     expect(force.json().code).toBe("TOURNAMENT_MATCH_FORBIDDEN");
@@ -1519,7 +1533,7 @@ describe("match and judge integration", () => {
     expect(del.json().code).toBe("TOURNAMENT_MATCH_FORBIDDEN");
   });
 
-  it("AT-ADM-MATCH-005: delete finished reverses rankings", async () => {
+  it("AT-ADM-MATCH-007: hard delete finished is rejected without changing rankings", async () => {
     const created = await app.inject({
       method: "POST",
       url: "/api/v1/matches",
@@ -1579,14 +1593,16 @@ describe("match and judge integration", () => {
       url: `/api/v1/admin/matches/${matchId}`,
       cookies: { tab10_session: adminCookie },
     });
-    expect(del.statusCode).toBe(200);
+    expect(del.statusCode).toBe(400);
+    expect(del.json().code).toBe("MATCH_IMMUTABLE");
 
-    const gone = await app.inject({
+    const preserved = await app.inject({
       method: "GET",
       url: `/api/v1/matches/${matchId}`,
       cookies: { tab10_session: userACookie },
     });
-    expect(gone.statusCode).toBe(404);
+    expect(preserved.statusCode).toBe(200);
+    expect(preserved.json().match.status).toBe("finished");
 
     const after = await app.inject({
       method: "GET",
@@ -1596,7 +1612,7 @@ describe("match and judge integration", () => {
     const entryAfter = (
       after.json().rankings as Array<{ userId: string; wins: number }>
     ).find((r) => r.userId === userAId);
-    expect(entryAfter?.wins ?? 0).toBe((entryBefore?.wins ?? 0) - 1);
+    expect(entryAfter?.wins ?? 0).toBe(entryBefore?.wins ?? 0);
   });
 
   it("AT-ADM-MATCH-006: force-close on finished → MATCH_NOT_ACTIVE", async () => {
@@ -1647,7 +1663,12 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/admin/matches/${matchId}/force-close`,
       cookies: { tab10_session: adminCookie },
-      payload: {},
+      headers: {
+        "idempotency-key": "00000000-0000-4000-8000-000000000104",
+      },
+      payload: {
+        expectedVersion: (await services.matches.getMatch(matchId))!.version,
+      },
     });
     expect(force.statusCode).toBe(400);
     expect(force.json().code).toBe("MATCH_NOT_ACTIVE");
@@ -1719,6 +1740,10 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${waitingId}/cancel`,
       cookies: { tab10_session: userACookie },
+      headers: {
+        "idempotency-key": "00000000-0000-4000-8000-000000000105",
+      },
+      payload: { expectedVersion: waiting.json().match.version },
     });
     expect(cancel.statusCode).toBe(200);
     expect(cancel.json().match.status).toBe("cancelled");
@@ -1824,6 +1849,10 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/cancel`,
       cookies: { tab10_session: userBCookie },
+      headers: {
+        "idempotency-key": "00000000-0000-4000-8000-000000000106",
+      },
+      payload: { expectedVersion: created.json().match.version },
     });
     expect(cancel.statusCode).toBe(403);
     expect(cancel.json().code).toBe("FORBIDDEN");
@@ -1879,6 +1908,12 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/cancel`,
       cookies: { tab10_session: userACookie },
+      headers: {
+        "idempotency-key": "00000000-0000-4000-8000-000000000107",
+      },
+      payload: {
+        expectedVersion: (await services.matches.getMatch(matchId))!.version,
+      },
     });
     expect(cancel.statusCode).toBe(400);
     expect(cancel.json().code).toBe("TOURNAMENT_MATCH_FORBIDDEN");

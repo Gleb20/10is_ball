@@ -230,3 +230,44 @@ describe("REQ_MATCH__undo_and_idempotency", () => {
     expect(r.ok).toBe(false);
   });
 });
+
+describe("REQ_MATCH__invalid_events_do_not_mutate_state", () => {
+  it.each([
+    {
+      name: "unknown side",
+      event: {
+        type: "point_awarded" as const,
+        side: "C" as "A",
+        idempotencyKey: "invalid-side",
+      },
+      rules: rules11,
+    },
+    {
+      name: "non-positive points target",
+      event: {
+        type: "point_awarded" as const,
+        side: "A" as const,
+        idempotencyKey: "invalid-rules",
+      },
+      rules: { ...rules11, pointsToWin: 0 },
+    },
+  ])("rejects $name without state, history, or key changes", ({ event, rules }) => {
+    const state = createInitialScoreState("a");
+    const history: Parameters<typeof reduceMatchEvent>[4] = [];
+    const keys = new Set<string>();
+
+    const result = reduceMatchEvent(
+      state,
+      event,
+      rules,
+      { format: "1v1", participantOrder: ["a", "b"], firstServerId: "a" },
+      history,
+      keys,
+    );
+
+    expect(result).toMatchObject({ ok: false, code: "VALIDATION" });
+    expect(state).toEqual(createInitialScoreState("a"));
+    expect(history).toEqual([]);
+    expect(keys.size).toBe(0);
+  });
+});

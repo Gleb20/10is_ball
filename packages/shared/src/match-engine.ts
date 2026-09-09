@@ -147,6 +147,22 @@ export function reduceMatchEvent(
   history: MatchEvent[],
   seenIdempotencyKeys: Set<string>,
 ): ReduceResult {
+  if (
+    !Number.isInteger(rules.pointsToWin) ||
+    rules.pointsToWin < 1 ||
+    !["1v1", "2v2"].includes(rules.format) ||
+    (rules.mercyEnabled &&
+      (!Number.isInteger(rules.mercyPoints) || (rules.mercyPoints ?? 0) < 1))
+  ) {
+    return { ok: false, code: "VALIDATION", message: "Invalid match rules" };
+  }
+  if (
+    event.type === "point_awarded" &&
+    event.side !== "A" &&
+    event.side !== "B"
+  ) {
+    return { ok: false, code: "VALIDATION", message: "Invalid side" };
+  }
   if (state.status === "finished") {
     return { ok: false, code: "MATCH_IMMUTABLE", message: "Match is finished" };
   }

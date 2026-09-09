@@ -171,6 +171,128 @@ describe("auth and admin integration", () => {
     expect(newLogin.json().user.mustChangePassword).toBe(false);
   });
 
+  it("API_auth__AUTH-003__AT-AUTH-001__temporary_password_gate_exact_route_and_method__SEC-003", async () => {
+    const adminToken = await loginAsAdmin();
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/admin/users",
+      cookies: { tab10_session: adminToken },
+      payload: {
+        email: "password-gate@tab10.local",
+        firstName: "Password",
+        lastName: "Gate",
+      },
+    });
+    expect(created.statusCode).toBe(200);
+    const temporaryPassword = created.json().temporaryPassword as string;
+
+    const login = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: {
+        email: "password-gate@tab10.local",
+        password: temporaryPassword,
+      },
+    });
+    expect(login.statusCode).toBe(200);
+    const sessionCookie = login.cookies.find(
+      (cookie) => cookie.name === "tab10_session",
+    )!.value;
+
+    const blockedRequests = [
+      {
+        method: "GET" as const,
+        url: "/api/v1/home?next=/auth/me",
+      },
+      {
+        method: "PATCH" as const,
+        url: "/api/v1/me/profile?next=/auth/logout",
+        payload: { firstName: "Bypassed" },
+      },
+      {
+        method: "GET" as const,
+        url: "/api/v1/home?next=/auth/password/first-change",
+      },
+      {
+        method: "GET" as const,
+        url: "/api/v1/home?next=%2Fauth%2Fme",
+      },
+    ];
+    const blockedResults: Array<{ statusCode: number; code?: string }> = [];
+    for (const request of blockedRequests) {
+      const response = await app.inject({
+        ...request,
+        cookies: { tab10_session: sessionCookie },
+      });
+      blockedResults.push({
+        statusCode: response.statusCode,
+        code: response.json().code as string | undefined,
+      });
+    }
+    expect(blockedResults).toEqual(
+      blockedRequests.map(() => ({
+        statusCode: 403,
+        code: "PASSWORD_CHANGE_REQUIRED",
+      })),
+    );
+
+    const wrongMethod = await app.inject({
+      method: "HEAD",
+      url: "/api/v1/auth/me",
+      cookies: { tab10_session: sessionCookie },
+    });
+    expect(wrongMethod.statusCode).toBe(403);
+
+    const me = await app.inject({
+      method: "GET",
+      url: "/api/v1/auth/me",
+      cookies: { tab10_session: sessionCookie },
+    });
+    expect(me.statusCode).toBe(200);
+    expect(me.json().user.firstName).toBe("Password");
+
+    const meWithQuery = await app.inject({
+      method: "GET",
+      url: "/api/v1/auth/me?next=/api/v1/home",
+      cookies: { tab10_session: sessionCookie },
+    });
+    expect(meWithQuery.statusCode).toBe(200);
+
+    const encodedMe = await app.inject({
+      method: "GET",
+      url: "/api/v1/auth/m%65",
+      cookies: { tab10_session: sessionCookie },
+    });
+    expect(encodedMe.statusCode).toBe(200);
+
+    const logoutLogin = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: {
+        email: "password-gate@tab10.local",
+        password: temporaryPassword,
+      },
+    });
+    expect(logoutLogin.statusCode).toBe(200);
+    const logoutCookie = logoutLogin.cookies.find(
+      (cookie) => cookie.name === "tab10_session",
+    )!.value;
+    const logout = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/logout",
+      cookies: { tab10_session: logoutCookie },
+    });
+    expect(logout.statusCode).toBe(200);
+
+    const change = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/password/first-change",
+      cookies: { tab10_session: sessionCookie },
+      payload: { newPassword: "PermanentPass1!" },
+    });
+    expect(change.statusCode).toBe(200);
+  });
+
   it("INT_admin__block_revokes_sessions and last admin guard", async () => {
     const adminToken = await loginAsAdmin();
     const created = await app.inject({

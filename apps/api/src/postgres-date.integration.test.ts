@@ -280,19 +280,28 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
         cookies: { tab10_session: userACookie },
       });
       expect(matchStarted.statusCode).toBe(200);
+    }
+    for (const [index, match] of firstRound.entries()) {
       const acquired = await app.inject({
         method: "POST",
         url: `/api/v1/matches/${match.id}/judge/acquire`,
-        cookies: { tab10_session: userACookie },
+        cookies: { tab10_session: index === 0 ? userACookie : adminCookie },
       });
       expect(acquired.statusCode).toBe(200);
+    }
+
+    async function finishSemiFinal(
+      matchId: string,
+      judgeCookie: string,
+      keyPrefix: string,
+    ) {
       let version = 0;
       for (let point = 0; point < 3; point += 1) {
         const scored = await app.inject({
           method: "POST",
-          url: `/api/v1/matches/${match.id}/points`,
-          cookies: { tab10_session: userACookie },
-          headers: { "idempotency-key": `pg-bracket-${match.id}-${point}` },
+          url: `/api/v1/matches/${matchId}/points`,
+          cookies: { tab10_session: judgeCookie },
+          headers: { "idempotency-key": `${keyPrefix}-${point}` },
           payload: { side: "A", expectedVersion: version },
         });
         expect(scored.statusCode).toBe(200);
@@ -300,11 +309,16 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
       }
       const confirmed = await app.inject({
         method: "POST",
-        url: `/api/v1/matches/${match.id}/confirm-finish`,
-        cookies: { tab10_session: userACookie },
+        url: `/api/v1/matches/${matchId}/confirm-finish`,
+        cookies: { tab10_session: judgeCookie },
       });
       expect(confirmed.statusCode).toBe(200);
+      return confirmed;
     }
+    await Promise.all([
+      finishSemiFinal(firstRound[0]!.id, userACookie, "pg-bracket-a"),
+      finishSemiFinal(firstRound[1]!.id, adminCookie, "pg-bracket-b"),
+    ]);
 
     const detail = await app.inject({
       method: "GET",
@@ -320,5 +334,99 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
     expect(matches).toHaveLength(4);
     expect(matches.filter((match) => match.status === "finished")).toHaveLength(2);
     expect(matches.filter((match) => match.status === "waiting")).toHaveLength(2);
+  });
+
+  it("DATA-005/007: replays void once and enforces append-only audit on PostgreSQL", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Postgres void replay",
+        format: "1v1",
+        pointsToWin: 3,
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    expect(created.statusCode).toBe(200);
+    const matchId = created.json().match.id as string;
+    expect(
+      (
+        await app.inject({
+          method: "POST",
+          url: `/api/v1/matches/${matchId}/start`,
+          cookies: { tab10_session: userACookie },
+        })
+      ).statusCode,
+    ).toBe(200);
+    expect(
+      (
+        await app.inject({
+          method: "POST",
+          url: `/api/v1/matches/${matchId}/judge/acquire`,
+          cookies: { tab10_session: userACookie },
+        })
+      ).statusCode,
+    ).toBe(200);
+    let version = 0;
+    for (let point = 0; point < 3; point += 1) {
+      const scored = await app.inject({
+        method: "POST",
+        url: `/api/v1/matches/${matchId}/points`,
+        cookies: { tab10_session: userACookie },
+        headers: { "idempotency-key": `pg-void-point-${point}` },
+        payload: { side: "A", expectedVersion: version },
+      });
+      expect(scored.statusCode).toBe(200);
+      version = scored.json().match.version as number;
+    }
+    const finished = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/confirm-finish`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(finished.statusCode).toBe(200);
+    const key = "00000000-0000-4000-8000-000000005016";
+    const request = () =>
+      app.inject({
+        method: "POST",
+        url: `/api/v1/matches/${matchId}/void`,
+        cookies: { tab10_session: userACookie },
+        headers: { "idempotency-key": key },
+        payload: { expectedVersion: finished.json().match.version },
+      });
+
+    const responses = await Promise.all([request(), request()]);
+    expect(responses.map((response) => response.statusCode)).toEqual([200, 200]);
+    expect(responses[0]!.json().match).toEqual(responses[1]!.json().match);
+
+    const postgres = (await import("postgres")).default;
+    const sql = postgres(databaseUrl!, { max: 1 });
+    try {
+      const audits = await sql.unsafe(
+        "select id from match_void_audits where match_id = $1",
+        [matchId],
+      );
+      expect(audits).toHaveLength(1);
+      const stats = await sql.unsafe(
+        "select wins_all_time from user_stats where user_id = $1",
+        [userAId],
+      );
+      expect(stats[0]?.wins_all_time).toBe(0);
+      await expect(
+        sql.unsafe(
+          "update match_void_audits set reason_text = 'tampered' where match_id = $1",
+          [matchId],
+        ),
+      ).rejects.toThrow("append-only");
+      await expect(
+        sql.unsafe("delete from match_void_audits where match_id = $1", [matchId]),
+      ).rejects.toThrow("append-only");
+    } finally {
+      await sql.end({ timeout: 5 });
+    }
   });
 });

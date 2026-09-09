@@ -10,6 +10,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 const newId = () => randomUUID();
 
@@ -93,8 +94,6 @@ export const matchStatusEnum = pgEnum("match_status", [
   "finished",
   "stopped",
   "cancelled",
-  // Read-only rollback compatibility for the immutable PR2 enum extension.
-  // PR1 does not write this state and migration 0000 intentionally omits it.
   "voided",
 ]);
 export const matchKindEnum = pgEnum("match_kind", [
@@ -103,44 +102,56 @@ export const matchKindEnum = pgEnum("match_kind", [
   "tutorial",
 ]);
 
-export const matches = pgTable("matches", {
-  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
-  title: text("title").notNull(),
-  kind: matchKindEnum("kind").notNull().default("standalone"),
-  status: matchStatusEnum("status").notNull().default("waiting"),
-  format: matchFormatEnum("format").notNull().default("1v1"),
-  pointsToWin: integer("points_to_win").notNull().default(11),
-  mercyEnabled: boolean("mercy_enabled").notNull().default(false),
-  mercyPoints: integer("mercy_points"),
-  createdByUserId: uuid("created_by_user_id")
-    .notNull()
-    .references(() => users.id),
-  tournamentId: uuid("tournament_id"),
-  tournamentSlotId: text("tournament_slot_id"),
-  /** V2 bracket node id (e.g. W0_0); unique with tournament_id when set. */
-  tournamentBracketMatchId: text("tournament_bracket_match_id"),
-  scoreA: integer("score_a").notNull().default(0),
-  scoreB: integer("score_b").notNull().default(0),
-  currentServerParticipantId: text("current_server_participant_id"),
-  serveSequenceIndex: integer("serve_sequence_index").notNull().default(0),
-  deuceMode: boolean("deuce_mode").notNull().default(false),
-  version: integer("version").notNull().default(0),
-  startedAt: timestamp("started_at", { withTimezone: true }),
-  finishedAt: timestamp("finished_at", { withTimezone: true }),
-  winnerSide: text("winner_side"),
-  finishReason: text("finish_reason"),
-  stopReasonCode: text("stop_reason_code"),
-  stopReasonText: text("stop_reason_text"),
-  eventLog: jsonb("event_log").notNull().default([]),
-  idempotencyKeys: jsonb("idempotency_keys").notNull().default([]),
-  judgeDisplayFlipped: boolean("judge_display_flipped").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const matches = pgTable(
+  "matches",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    title: text("title").notNull(),
+    kind: matchKindEnum("kind").notNull().default("standalone"),
+    status: matchStatusEnum("status").notNull().default("waiting"),
+    format: matchFormatEnum("format").notNull().default("1v1"),
+    pointsToWin: integer("points_to_win").notNull().default(11),
+    mercyEnabled: boolean("mercy_enabled").notNull().default(false),
+    mercyPoints: integer("mercy_points"),
+    createdByUserId: uuid("created_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    tournamentId: uuid("tournament_id"),
+    tournamentSlotId: text("tournament_slot_id"),
+    /** V2 bracket node id (e.g. W0_0); unique with tournament_id when set. */
+    tournamentBracketMatchId: text("tournament_bracket_match_id"),
+    scoreA: integer("score_a").notNull().default(0),
+    scoreB: integer("score_b").notNull().default(0),
+    currentServerParticipantId: text("current_server_participant_id"),
+    serveSequenceIndex: integer("serve_sequence_index").notNull().default(0),
+    deuceMode: boolean("deuce_mode").notNull().default(false),
+    version: integer("version").notNull().default(0),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    winnerSide: text("winner_side"),
+    finishReason: text("finish_reason"),
+    stopReasonCode: text("stop_reason_code"),
+    stopReasonText: text("stop_reason_text"),
+    eventLog: jsonb("event_log").notNull().default([]),
+    idempotencyKeys: jsonb("idempotency_keys").notNull().default([]),
+    judgeDisplayFlipped: boolean("judge_display_flipped")
+      .notNull()
+      .default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("matches_tournament_bracket_match_uid")
+      .on(t.tournamentId, t.tournamentBracketMatchId)
+      .where(
+        sql`${t.tournamentBracketMatchId} IS NOT NULL AND ${t.tournamentId} IS NOT NULL`,
+      ),
+  ],
+);
 
 export const matchParticipants = pgTable("match_participants", {
   id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
@@ -155,27 +166,66 @@ export const matchParticipants = pgTable("match_participants", {
   isTutorialActor: boolean("is_tutorial_actor").notNull().default(false),
 });
 
+export const matchVoidAudits = pgTable(
+  "match_void_audits",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id),
+    actorUserId: uuid("actor_user_id")
+      .notNull()
+      .references(() => users.id),
+    idempotencyKey: uuid("idempotency_key").notNull(),
+    priorStatus: text("prior_status").notNull(),
+    priorVersion: integer("prior_version").notNull(),
+    priorResult: jsonb("prior_result").notNull(),
+    priorEventLog: jsonb("prior_event_log").notNull(),
+    reasonText: text("reason_text"),
+    compensation: jsonb("compensation").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("match_void_audits_match_uid").on(t.matchId),
+    uniqueIndex("match_void_audits_idempotency_uid").on(
+      t.matchId,
+      t.actorUserId,
+      t.idempotencyKey,
+    ),
+  ],
+);
+
 /** Active judge exclusivity enforced in app + SQL migration (partial unique). */
-export const judgeSessions = pgTable("judge_sessions", {
-  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
-  matchId: uuid("match_id")
-    .notNull()
-    .references(() => matches.id),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id),
-  authSessionId: uuid("auth_session_id")
-    .notNull()
-    .references(() => authSessions.id),
-  acquiredAt: timestamp("acquired_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  lastHeartbeatAt: timestamp("last_heartbeat_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  releasedAt: timestamp("released_at", { withTimezone: true }),
-});
+export const judgeSessions = pgTable(
+  "judge_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    authSessionId: uuid("auth_session_id")
+      .notNull()
+      .references(() => authSessions.id),
+    acquiredAt: timestamp("acquired_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    lastHeartbeatAt: timestamp("last_heartbeat_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    releasedAt: timestamp("released_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("judge_sessions_active_match")
+      .on(t.matchId)
+      .where(sql`${t.releasedAt} IS NULL`),
+  ],
+);
 
 export const tournaments = pgTable("tournaments", {
   id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),

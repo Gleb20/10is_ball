@@ -1,4 +1,5 @@
 import {
+  mkdir,
   mkdtemp,
   readFile,
   rm,
@@ -58,7 +59,7 @@ describe("versioned migration foundation on disposable PGlite", () => {
     expect(ledger.rows[0]?.count).toBe(0);
   }
 
-  it("creates the 17-table baseline from a genuinely empty database in apply mode", async () => {
+  it("creates the baseline plus the append-only void audit from a genuinely empty database in apply mode", async () => {
     const context = await freshContext();
 
     await runPgliteMigrations({
@@ -76,7 +77,65 @@ describe("versioned migration foundation on disposable PGlite", () => {
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
       ORDER BY table_name
     `);
-    expect(tables.rows.map((row) => row.table_name)).toHaveLength(17);
+    expect(tables.rows.map((row) => row.table_name)).toHaveLength(18);
+  });
+
+  it("upgrades a versioned 0000 database to 0001 without changing existing rows", async () => {
+    const context = await freshContext();
+    const baselineOnlyDirectory = await mkdtemp(
+      join(tmpdir(), "tab10-baseline-only-"),
+    );
+    temporaryDirectories.push(baselineOnlyDirectory);
+    await writeFile(
+      join(baselineOnlyDirectory, "0000_data_003_baseline.sql"),
+      await readFile(baselineSqlPath, "utf8"),
+    );
+    const metaDirectory = join(baselineOnlyDirectory, "meta");
+    await mkdir(metaDirectory);
+    await writeFile(
+      join(metaDirectory, "_journal.json"),
+      JSON.stringify({
+        version: "7",
+        dialect: "postgresql",
+        entries: [
+          {
+            idx: 0,
+            version: "7",
+            when: 1788728799411,
+            tag: "0000_data_003_baseline",
+            breakpoints: true,
+          },
+        ],
+      }),
+    );
+    await applyPgliteMigrationFiles(context.db, baselineOnlyDirectory);
+    await context.client.exec(`
+      INSERT INTO users (
+        id, email, password_hash, first_name, last_name
+      ) VALUES (
+        '00000000-0000-4000-8000-000000000091',
+        'upgrade@tab10.test', 'synthetic-hash', 'Upgrade', 'Owner'
+      )
+    `);
+
+    await runPgliteMigrations({
+      db: context.db,
+      query: context.queryMigrations,
+      mode: "apply",
+    });
+
+    const preserved = await context.client.query<{ email: string }>(`
+      SELECT email FROM users
+      WHERE id = '00000000-0000-4000-8000-000000000091'
+    `);
+    expect(preserved.rows).toEqual([{ email: "upgrade@tab10.test" }]);
+    const auditTable = await context.client.query<{ name: string }>(`
+      SELECT to_regclass('public.match_void_audits')::text AS name
+    `);
+    expect(auditTable.rows).toEqual([{ name: "match_void_audits" }]);
+    await expect(
+      assertMigrationsExactlyCurrent(context.queryMigrations),
+    ).resolves.toBeUndefined();
   });
 
   it("preserves rows while adopting the exact unversioned historical baseline", async () => {
@@ -194,8 +253,8 @@ describe("versioned migration foundation on disposable PGlite", () => {
     const after = await context.client.query<{ count: number }>(`
       SELECT count(*)::integer AS count FROM drizzle.__drizzle_migrations
     `);
-    expect(before.rows[0]?.count).toBe(1);
-    expect(after.rows[0]?.count).toBe(1);
+    expect(before.rows[0]?.count).toBe(2);
+    expect(after.rows[0]?.count).toBe(2);
   });
 
   it("does not let adoption stand in for ordinary fresh apply", async () => {
@@ -280,7 +339,6 @@ describe("versioned migration foundation on disposable PGlite", () => {
       JSON.stringify({}),
     );
     const metaDirectory = join(failureDirectory, "meta");
-    const { mkdir } = await import("node:fs/promises");
     await mkdir(metaDirectory);
     await writeFile(
       join(metaDirectory, "_journal.json"),
@@ -379,6 +437,6 @@ describe("versioned migration foundation on disposable PGlite", () => {
       FROM information_schema.tables
       WHERE table_schema = 'public'
     `);
-    expect(tables.rows[0]?.count).toBe(17);
+    expect(tables.rows[0]?.count).toBe(18);
   });
 });
