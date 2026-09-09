@@ -1,7 +1,7 @@
 # API as-built
 
 Снимок регистрации Fastify routes в
-[`../../apps/api/src/app.ts`](../../apps/api/src/app.ts) на **2026-09-07**.
+[`../../apps/api/src/app.ts`](../../apps/api/src/app.ts) на **2026-09-09**.
 Это inventory, а не обещание корректности или полноты. Все `/api/v1/*`, кроме
 login/OpenAPI, требуют session; state-changing routes вне test требуют CSRF.
 
@@ -33,13 +33,14 @@ login/OpenAPI, требуют session; state-changing routes вне test тре�
 | DELETE | `/api/v1/admin/matches/:matchId` |
 | PATCH | `/api/v1/me/profile` |
 
-Admin match hard delete конфликтует с принятой void-only моделью (`DATA-005`).
+Admin match hard delete ограничен non-terminal standalone rows; finished,
+stopped и voided sporting results не удаляются (`DATA-005/007`).
 Profile mutation теперь возвращает отдельный `OwnProfileUser` allowlist из 11
 полей и не сериализует password hash, auth timestamps или storage paths
 (`SEC-002`, local verification). Несовпадение target `/profile/me` и runtime
 `/me/profile` остаётся contract drift вне этого исправления.
 
-## Match, directory, ranking, home (18)
+## Match, directory, ranking, home (19)
 
 | Method | Path |
 |---|---|
@@ -56,13 +57,16 @@ Profile mutation теперь возвращает отдельный `OwnProfil
 | POST | `/api/v1/matches/:matchId/revert-finish` |
 | POST | `/api/v1/matches/:matchId/stop` |
 | POST | `/api/v1/matches/:matchId/cancel` |
+| POST | `/api/v1/matches/:matchId/void` |
 | POST | `/api/v1/matches/tutorial` |
 | GET | `/api/v1/users/directory` |
 | GET | `/api/v1/rankings` |
 | GET | `/api/v1/home` |
 
-Counting `GET, POST` as two route registrations gives 18. Point/undo require an
-`Idempotency-Key`; most bodies are TypeScript casts rather than runtime schemas.
+Counting `GET, POST` as two route registrations gives 19. Point/undo and
+cancel/void require an `Idempotency-Key`; core match payloads use shared Zod
+runtime schemas. Temporary-password authorization compares exact method plus
+matched router path.
 
 ## Tournament (16)
 
@@ -94,8 +98,8 @@ Counting `GET, POST` as two route registrations gives 18. Point/undo require an
 | GET | `/api/v1/faq` |
 | POST | `/api/v1/feedback` |
 
-Итого: **61 registered operations / 55 unique paths**. Встроенный OpenAPI описывает
-**16 operations / 13 paths** (26.2% operations). Машинный снимок:
+Итого: **62 registered operations / 56 unique paths**. Встроенный OpenAPI описывает
+**17 operations / 14 paths** (27.4% operations). Машинный снимок:
 [`../audit/evidence/route-openapi-inventory.json`](../audit/evidence/route-openapi-inventory.json).
 
 ## Contract drift
@@ -104,12 +108,14 @@ Counting `GET, POST` as two route registrations gives 18. Point/undo require an
   `/ready`; production останется историческим `0.1.0`, пока PR1 не выпущен.
 - [`../requirements/08_API_SPEC.md`](../requirements/08_API_SPEC.md) — целевой,
   частично устаревший контракт.
-- Shared types и runtime responses также расходятся (например, статус
-  `cancelled` не везде отражён).
+- OpenAPI остаётся неполным inventory; runtime schemas и actor checks покрывают
+  P0 match/tournament mutations, но не все исторические routes.
 
-До закрытия `OPS-001` при изменении API обновляйте одновременно route inventory,
-runtime validation, target spec и tests. Authorization defects: `SEC-003`,
-`SEC-006`, `SEC-007`, `BUG-001`, `BUG-002` в [`../BACKLOG.md`](../BACKLOG.md).
+Match/tournament list/detail применяют actor-scoped active-event visibility;
+terminal events club-visible active users. Start, direct roster/bracket,
+stop/cancel and cross-tournament participant mutation checks выполняются на
+server side. Void допускает terminal standalone/tournament result для active
+admin или creator и следует D33 preservation policy.
 
 ## Release и readiness contract
 

@@ -155,9 +155,13 @@ Validation:
 void хранит `match_id`, `actor_user_id`, `created_at`, prior result/version,
 опциональную причину и ссылки на идемпотентную stats/dependent compensation.
 Отдельного approval state нет. Void разрешён только активному `admin` или
-`match.created_by_user_id`; hard delete finished/stopped match запрещён (D19/D24).
-Повтор той же операции не создаёт повторную компенсацию, а audit/compensation и
-согласование зависимого tournament state коммитятся согласованно.
+`match.created_by_user_id`; hard delete finished/stopped/voided match запрещён
+(D19/D24).
+Повтор той же операции не создаёт повторную компенсацию, а audit/compensation
+коммитятся согласованно. Для tournament result компенсируются только counters
+целевого match; `bracket_json`, `bracket_state_version`, downstream rows/results,
+их stats и notifications остаются неизменными (D33). Audit фиксирует выбранную
+policy `preserve_bracket_and_downstream`.
 
 ### `match_participant`
 - `id`
@@ -171,6 +175,20 @@ void хранит `match_id`, `actor_user_id`, `created_at`, prior result/versio
 - `created_at`
 
 Check exactly one participant reference.
+
+Создание `match` и полного набора `match_participant` атомарно: invalid roster,
+blocked/missing registered user или ошибка любой participant write не оставляет
+частичный match. Exact 1v1/2v2 cardinality, distinct user и creator membership
+проверяются также application service; DB-level дублирующие constraints вводятся
+только через согласованный versioned migration (DATA-003).
+
+Переход `pending_confirmation → finished` и допустимый `→ stopped` используют
+status/version CAS. Terminal match row, SQL-arithmetic `user_stats`, judge release,
+tournament row-locked/CAS bracket transition, materialized next matches и
+notifications входят в одну transaction. Повтор подтверждения тем же judge
+session возвращает уже finished result без повторных counters/advancement.
+Partial unique `(tournament_id,tournament_bracket_match_id)` обеспечивает один
+actual match на V2 node независимо от application retry (`DATA-002`).
 
 ### `match_invitation`
 - `id`
@@ -375,3 +393,20 @@ production reset/recreate из этой схемы не следует и без
 - State transitions реализуются pure functions/application services.
 - Каждый invariant имеет unit test.
 - Репозитории имеют integration contract tests с реальной PostgreSQL.
+
+## 14. Schema evolution
+
+- Schema меняется только упорядоченными forward-only SQL migrations; применённые
+  migration files immutable и идентифицируются ledger timestamp/checksum.
+- Fresh database и upgrade с последней поддерживаемой historical schema должны
+  приводить к одному Drizzle-compatible shape без потери существующих rows.
+- Persistent API startup не выполняет `CREATE`, `ALTER`, `DROP`, backfill или
+  migration. До любых application writes он read-only подтверждает точное
+  соответствие migration ledger текущему artifact и fail-closed при drift.
+- Migration запускается отдельным явным operational step до нового application
+  artifact. Ошибка миграции откатывает transaction; после успешно применённой
+  backward-compatible schema rollback делается application artifact-ом, а schema
+  исправляется новым forward migration.
+- Один набор migrations проверяется на disposable PGlite и ephemeral PostgreSQL;
+  test harness никогда не использует production `DATABASE_URL` и требует
+  loopback/test-name/reset-consent guards для destructive reset test schema.

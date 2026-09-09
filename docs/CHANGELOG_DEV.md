@@ -3,6 +3,33 @@
 Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
 записи сохраняются как история и могут быть помечены `superseded` новой записью.
 
+## 2026-09-09 — Единый P0 release candidate для direct-main выпуска
+
+- SEC-003/005: temporary-password gate разрешает только точные method/route пары;
+  Fastify 5.12.3 и Drizzle 0.45.2 устранили все high/critical advisories в
+  production graph, остаются три documented moderate React Router findings.
+- SEC-006/007, DATA-001, BUG-001/002: ownership, tournament isolation, runtime
+  validation, visibility и start/stop/cancel policy теперь проверяются на сервере
+  и имеют negative/no-side-effect regressions.
+- DATA-002/005/007: finish, stats, judge release и tournament advancement
+  объединены транзакцией с lock/CAS/replay; forward-only migration `0001` добавляет
+  soft void и immutable `match_void_audits`. D33 сохраняет bracket/downstream при
+  void турнирного матча и компенсирует только его собственные stats/ranking.
+- BUG-003: rapid `+1` сериализуется FIFO с отдельными idempotency keys и
+  authoritative versions; conflict очищает очередь и принудительно обновляет UI.
+  Void имеет отдельное подтверждение и показывает статус «Аннулирован».
+- Rendered QA на disposable local PGlite: login → create/start/judge → быстрый
+  double `+1` дал authoritative `2:0`; отдельный void dialog проверен на desktop
+  и 390 px, после mutation экран показал «Аннулирован». App console без errors;
+  остаются две известные React Router v7 future-flag warnings.
+- P1 GAP-002–005, DATA-006 и migrations `0002–0003` в batch не входят. Исходный
+  dirty worktree и отдельные GAP-worktrees не изменялись.
+- Verification: Node 24.20.0/pnpm 9.15.0, frozen install; production dependency
+  audit — 0 high/critical, 3 moderate; `pnpm verify:all` — `862 passed,
+  0 failed, 0 skipped, 0 todo, 0 interrupted`, включая PostgreSQL 16.15 и
+  compiled Chromium desktop/390 px. Production exact-SHA smoke выполняется после
+  единственного push всей локальной серии.
+
 ## 2026-09-08 — OPS-004 exact-SHA public release verified
 
 - GitHub App Render переподключён только к `Gleb20/10is_ball`; service остаётся

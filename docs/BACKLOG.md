@@ -28,66 +28,71 @@
 
 - **Type:** security
 - **Priority:** P0
-- **Status:** verified_local
+- **Status:** verified_prod
 - **Requirements:** PROFILE-001, PROFILE-003, NFR Security §4, AT-PROFILE-001.
 - **Evidence:** Red API test зафиксировал 19 DB-полей, включая `passwordHash`, `blockedAt`, `lastLoginAt` и storage path. Текущий `updateProfile` возвращает отдельный `OwnProfileUser` allowlist; regression test `API_PATCH_me_profile__PROFILE_003__AT-PROFILE-001__response_allowlist__SEC-002` проверяет точный набор 11 полей.
 - **Expected:** ни один HTTP response/log не содержит password hash или другие внутренние auth-поля.
-- **Actual:** успешное обновление профиля локально сериализует только `id`, `email`, `role`, `status`, `firstName`, `lastName`, `birthDate`, `organizationText`, `positionText`, `mustChangePassword`, `avatarKey`; production release ещё не выполнялся.
+- **Actual:** успешное обновление профиля сериализует только `id`, `email`, `role`, `status`, `firstName`, `lastName`, `birthDate`, `organizationText`, `positionText`, `mustChangePassword`, `avatarKey`; исправление входит в опубликованный foundation SHA `6892d6e6fe79425eadf76c39bf052500bde5055a`.
 - **Repro:** войти, вызвать `PATCH /api/v1/me/profile`, проверить поле `user.passwordHash`.
 - **Risk:** раскрытие verifier повышает последствия XSS, логирования и утечки ответа.
 - **Verification:** focused Red → Green (1/1), полный `auth.integration.test.ts` 9/9, API suite 84 passed + 3 real-PostgreSQL skipped, API typecheck passed; grep review подтвердил, что остальные HTTP user responses уже используют `AuthUser` или route-level projection. Полный `pnpm run ci` прошёл на bundled Node 24.19.0: audit gates, lint, typecheck, 517 shared + 1 todo, 4 test-utils, 70 web, 84 API + 3 real-PostgreSQL skipped, API/web builds.
 - **Non-goals:** полный GET/edit/avatar/public-profile flow из GAP-002 и переименование существующего route.
 - **Permissions:** только локальные code/test/docs changes; production deploy и production mutation не входят в scope.
 - **Open questions:** нет.
-- **Dependencies:** для `verified_prod` нужен release/smoke по Q-OPS-002; полный profile flow остаётся GAP-002.
+- **Dependencies:** exact-SHA release/smoke закрыт evidence OPS-004; полный profile flow остаётся GAP-002.
 
 ### SEC-003 — Обход обязательной смены временного пароля
 
 - **Type:** security
 - **Priority:** P0
-- **Status:** ready
+- **Status:** verified_local
 - **Evidence:** `requireAuth` в [`app.ts`](../apps/api/src/app.ts) разрешает URL через `req.url.includes(...)`, включая совпадение в query string. Точные точки: `apps/api/src/app.ts:115`, `apps/api/src/app.ts:117`.
 - **Expected:** пользователь с `mustChangePassword=true` может вызвать только точные allowlisted route+method.
-- **Actual:** запрещённый route можно замаскировать подстрокой allowlisted path в query.
+- **Actual:** auth gate сравнивает точную пару HTTP method + matched router path;
+  query/encoding/subroute не расширяют три разрешённые пары.
 - **Repro:** с temporary-password session вызвать mutation с query, содержащим `/auth/me` или `/auth/logout`.
 - **Risk:** аккаунт получает продуктовые возможности до установки постоянного пароля.
-- **Verification:** негативные API tests для path/query/encoding и точная проверка router path+method.
+- **Verification:** exact bypass matrix green в `auth.integration.test.ts`; полный
+  local release barrier обязателен перед `verified_prod`.
 - **Dependencies:** нет.
 
 ### SEC-004 — Fail-open bootstrap администратора
 
 - **Type:** security
 - **Priority:** P0
-- **Status:** verified_local
+- **Status:** verified_prod
 - **Evidence:** baseline-аудит зафиксировал Render default `SEED_ADMIN=1` и fallback credentials; current [`render.yaml`](../render.yaml) задаёт default-off в `render.yaml:22`. Bootstrap возвращает atomic `existing`/`provisioned` outcomes в `apps/api/src/bootstrap-admin.ts:121` и `apps/api/src/bootstrap-admin.ts:127`; создание и durable system audit выполняются в одной транзакции в `apps/api/src/modules/auth/auth-service.ts:537` и `apps/api/src/modules/auth/auth-service.ts:562`. Focused concurrency/audit characterization находится в `apps/api/src/bootstrap-admin.integration.test.ts:16`.
 - **Expected:** production startup fail-closed без явно заданных secrets; bootstrap одноразовый, аудируемый и отключаемый.
-- **Actual:** baseline был fail-open; current foundation требует точный opt-in и явные valid values, ставит Render default `0`, не ротирует существующего active admin, атомарно различает созданную и уже существующую запись и пишет один durable audit event в той же транзакции. Live Render configuration теперь подтверждённо имеет `SEED_ADMIN=0`; fail-closed foundation-код ещё не задеплоен в production.
+- **Actual:** baseline был fail-open; published foundation требует точный opt-in и явные valid values, ставит Render default `0`, не ротирует существующего active admin, атомарно различает созданную и уже существующую запись и пишет один durable audit event в той же транзакции. SHA `6892d6e6fe79425eadf76c39bf052500bde5055a` подтверждён GitHub CI, Render, Vercel и exact-SHA smoke.
 - **Repro:** запустить production-like API без части `SEED_ADMIN_*`, изучить созданного/существующего admin.
 - **Risk:** полный захват приложения.
-- **Verification:** independent focused foundation run прошёл 40/40 tests в 7 files: bootstrap unit 12, bootstrap persistence 1, test DB guard 9, migration URL 7, runtime audit 7, safe log 2, env loader 2; live `SEED_ADMIN=0` и successful Render restart подтверждены, остаётся production deploy/smoke fail-closed foundation-кода.
+- **Verification:** independent focused foundation run прошёл 40/40 tests в 7 files: bootstrap unit 12, bootstrap persistence 1, test DB guard 9, migration URL 7, runtime audit 7, safe log 2, env loader 2; live `SEED_ADMIN=0`, GitHub run `34195797553`, Render `live`, Vercel `READY` и public smoke подтверждены evidence OPS-004.
 - **Dependencies:** SEC-001; решение о production bootstrap в Q-OPS-002 желательно, но fail-closed не зависит от него.
 
 ### SEC-005 — Уязвимые production dependencies
 
 - **Type:** security
 - **Priority:** P0
-- **Status:** ready
+- **Status:** verified_local
 - **Evidence:** `pnpm audit --prod --json` 2026-09-06T16:11:41.852Z: 17 advisories — 12 high, 5 moderate, 0 critical; среди затронутых цепочек Drizzle и `find-my-way`. Current lock points: `pnpm-lock.yaml:3054`, `pnpm-lock.yaml:3225`. Immutable baseline сохраняет свой исторический результат без переписывания.
 - **Expected:** нет известных high/critical advisories в production graph либо есть документированное исключение с компенсацией.
-- **Actual:** high advisories не устранены и не triaged по достижимости.
+- **Actual:** Fastify 5.12.3 и Drizzle 0.45.2 устраняют high цепочки; production
+  graph содержит 0 high/critical и 3 documented moderate React Router findings.
 - **Repro:** `pnpm audit --prod` на зафиксированном lockfile.
 - **Risk:** SQL injection/DoS и supply-chain exposure в зависимости от достижимости.
-- **Verification:** staged upgrade, полный CI, targeted security tests, повторный audit с сохранённым отчётом.
+- **Verification:** frozen install и `pnpm audit --prod --audit-level high`
+  прошли; evidence в `audit/evidence/sec-005-production-dependencies.json`.
 - **Dependencies:** совместимость Fastify/Drizzle и реальный PostgreSQL test.
 
 ### SEC-006 — Organizer-only операции доступны любому вошедшему
 
 - **Type:** authorization
 - **Priority:** P0
-- **Status:** ready
+- **Status:** verified_local
 - **Evidence:** handlers start match, add participant/guest и generate/regenerate bracket в [`app.ts`](../apps/api/src/app.ts) не передают/не проверяют actor как владельца. Точные точки без actor: `apps/api/src/app.ts:564`, `apps/api/src/app.ts:960`, `apps/api/src/app.ts:1060`.
 - **Expected:** start матча выполняет только creator/organizer; управление roster/bracket — только organizer соответствующего турнира.
-- **Actual:** любой authenticated user может мутировать чужие события через прямой API.
+- **Actual:** services получают actor и server-side отклоняют non-owner start,
+  direct roster и bracket mutation без side effects.
 - **Repro:** user B вызывает указанные endpoints для сущности user A.
 - **Risk:** подмена состава, сетки и спортивного результата.
 - **Verification:** role/ownership matrix API tests с organizer, participant, active judge, outsider и admin.
@@ -97,10 +102,11 @@
 
 - **Type:** authorization
 - **Priority:** P0
-- **Status:** ready
+- **Status:** verified_local
 - **Evidence:** participant removal в [`TournamentService`](../apps/api/src/modules/tournaments/tournament-service.ts) обновляет строку по participant ID без совместного ограничения tournament ID. Точная точка predicate: `apps/api/src/modules/tournaments/tournament-service.ts:301`.
 - **Expected:** participant mutation требует совпадения route tournament, participant tournament и organizer actor.
-- **Actual:** ID из другого турнира может быть удалён через текущий route context.
+- **Actual:** participant сначала разрешается внутри route tournament, а SQL
+  mutation ограничена одновременно participant и tournament IDs.
 - **Repro:** organizer A подставляет participantId турнира B в endpoint турнира A.
 - **Risk:** межтенантная порча roster и bracket readiness.
 - **Verification:** negative integration test на mismatched IDs и SQL predicate по обоим идентификаторам.
@@ -112,10 +118,11 @@
 
 - **Type:** correctness
 - **Priority:** P0
-- **Status:** ready
+- **Status:** verified_local
 - **Evidence:** routes в [`app.ts`](../apps/api/src/app.ts) в основном приводят `req.body` типами; существующие Zod contracts не являются runtime gate. Пример прямого type assertion без runtime schema: `apps/api/src/app.ts:517`.
 - **Expected:** schema validation и сервисные invariants отклоняют пустой/дублирующийся roster, blocked users, неверные side/winner/rules/state transitions без мутаций.
-- **Actual:** допустимы malformed payloads, self/duplicate players, изменение version/event при неверной стороне и `cancelled → stopped`; create flow неатомарен.
+- **Actual:** shared Zod schemas и service invariants fail closed; create и roster
+  writes транзакционны, invalid payload/state не меняет rows/version/event log.
 - **Repro:** создать пустой/duplicate match; отправить invalid side/winner; stop cancelled match; сравнить state/version.
 - **Risk:** невозможные матчи, ошибочная статистика и повреждённый event log.
 - **Verification:** table-driven API/domain tests на все границы и отсутствие side effects; transactional create.
@@ -125,10 +132,12 @@
 
 - **Type:** concurrency
 - **Priority:** P0
-- **Status:** ready
+- **Status:** verified_local
 - **Evidence:** [`MatchService`](../apps/api/src/modules/matches/match-service.ts) сохраняет результат/статистику отдельно от hook в [`TournamentService`](../apps/api/src/modules/tournaments/tournament-service.ts); stats используют lost-update-prone read/modify/write. Последовательные точки вне общей транзакции: `apps/api/src/modules/matches/match-service.ts:496`, `apps/api/src/modules/matches/match-service.ts:509`, `apps/api/src/modules/matches/match-service.ts:513`; read/modify/write stats виден в `apps/api/src/modules/matches/match-service.ts:1167` и `apps/api/src/modules/matches/match-service.ts:1188`.
 - **Expected:** результат, stats compensation/application и переход сетки образуют идемпотентную транзакцию с CAS/locking.
-- **Actual:** сбой/параллельные полуфиналы могут оставить частично применённые stats, duplicate/missing next match или stalled bracket; legacy V1 path не имеет CAS, а V1 DE ещё не отклоняется по D25.
+- **Actual:** match CAS, SQL stats, judge release, tournament row lock/bracket CAS,
+  next-match materialization и notifications выполняются одной transaction;
+  replay не дублирует effects. DATA-006 legacy V1 DE остаётся отдельным P1.
 - **Repro:** параллельно завершить два связанных tournament matches и инъецировать сбой между finish/stats/advance.
 - **Risk:** необратимо неверные рейтинги и сетки.
 - **Verification:** real-Postgres concurrency tests, fault injection, invariant «один node → один actual match», idempotent replay.
@@ -164,10 +173,12 @@
 
 - **Type:** data-governance
 - **Priority:** P0
-- **Status:** ready
+- **Status:** verified_local
 - **Evidence:** target actor/soft-invalidation policy принят в `docs/DECISIONS.md:131` (D24); current service всё ещё физически удаляет match в `apps/api/src/modules/matches/match-service.ts:1146`, а текущая audit table не является immutable sporting ledger (`apps/api/src/db/schema.ts:314`).
 - **Expected:** finished/stopped standalone match может void только active admin или creator; reason optional, second approver отсутствует, UI требует explicit confirmation. Исходные result/events/version и immutable actor/timestamp audit сохраняются, stats/ranking компенсируются идемпотентно в одной операции; hard delete запрещён.
-- **Actual:** полноценного void нет, а admin delete физически удаляет матч и частично разворачивает stats.
+- **Actual:** forward migration `0001` добавляет `voided` и append-only
+  `match_void_audits`; creator/active-admin flow сохраняет facts, компенсирует
+  stats once и запрещает terminal hard purge.
 - **Repro:** finished standalone удалить через current admin endpoint и проверить отсутствие match/source audit; отдельно вызвать отсутствующий creator/admin void flow.
 - **Risk:** потеря спортивной истории и недоказуемая/неполная коррекция рейтинга.
 - **Verification:** AT-MATCH-VOID-001..003 и AT-ADM-MATCH-005/007; creator/admin/participant/judge/outsider matrix, ledger/standalone compensation/idempotency tests; доказать отсутствие hard-delete finished route и browser confirmation.
@@ -190,14 +201,18 @@
 
 - **Type:** data-governance
 - **Priority:** P0
-- **Status:** blocked_decision
-- **Evidence:** D19/D24 требуют согласованного tournament reconciliation, но [Q-MATCH-003](OPEN_QUESTIONS.md#q-match-003--void-турнирного-матча-с-downstream-результатами) не выбирает между запретом, cascade-void и repair-required flow; current code отдельного void не имеет.
+- **Status:** verified_local
+- **Evidence:** D33 закрыл Q-MATCH-003 policy `preserve_bracket_and_downstream`;
+  integration test сравнивает bracket JSON/version, downstream rows,
+  notifications и unrelated stats до/после.
 - **Expected:** один наблюдаемый outcome для void upstream tournament result после сыгранных downstream matches, с атомарными ledger/compensation/bracket invariants и без hard delete.
-- **Actual:** actor и soft-invalidation policy известны, но зависимый tournament outcome и его acceptance criteria не определены.
+- **Actual:** меняются только target match, его stats и одна audit row. Уже
+  выполненное продвижение и downstream history не пересчитываются.
 - **Repro:** завершить upstream tournament match, сыграть материализованный downstream match и попытаться исправить upstream result.
 - **Risk:** молчаливое каскадное повреждение сетки, статистики и уже сыгранной спортивной истории.
-- **Verification:** после закрытия Q-MATCH-003 добавить отдельные observable acceptance scenarios и real-PostgreSQL concurrency/rollback tests для выбранного поведения.
-- **Dependencies:** Q-MATCH-003; DATA-002/003/005.
+- **Verification:** AT-MATCH-VOID-004 PGlite equality/replay test green; общий
+  PostgreSQL void replay/append-only и release barrier обязательны перед prod.
+- **Dependencies:** D33; DATA-002/003/005.
 
 ## Функциональные и UI-дефекты
 
@@ -205,10 +220,11 @@
 
 - **Type:** authorization
 - **Priority:** P0
-- **Status:** ready
+- **Status:** verified_local
 - **Evidence:** list/detail match и tournament routes в [`app.ts`](../apps/api/src/app.ts) возвращают глобальные данные любому authenticated user; tutorial может попадать в списки. Глобальные service calls без actor/scope: `apps/api/src/app.ts:510`, `apps/api/src/app.ts:546`, `apps/api/src/app.ts:876`, `apps/api/src/app.ts:915`.
 - **Expected:** active — только organizer, participants, current active judge; completed — все active non-blocked club users; tutorial изолирован.
-- **Actual:** посторонний видит активные события и историю вне разрешённого scope.
+- **Actual:** match/tournament list/detail/home применяют D17 actor scope;
+  terminal events club-visible только active users, tutorial изолирован.
 - **Repro:** создать active event user A, запросить list/detail user B; повторить для completed/blocked/tutorial.
 - **Risk:** утечка закрытых событий и несоответствие HISTORY-003.
 - **Verification:** AT-VIS-001..004 на list/detail/home/history для всех ролей и статусов.
@@ -218,10 +234,11 @@
 
 - **Type:** authorization
 - **Priority:** P0
-- **Status:** ready
+- **Status:** verified_local
 - **Evidence:** start handler не передаёт actor (`apps/api/src/app.ts:564`); [`MatchService.stopMatch`](../apps/api/src/modules/matches/match-service.ts) использует manager check, где participant проходит в `apps/api/src/modules/matches/match-service.ts:868` и active judge — в `apps/api/src/modules/matches/match-service.ts:876`. Тот же check вызывается cancel в `apps/api/src/modules/matches/match-service.ts:1047`, поэтому participant/judge получают право вопреки D23.
 - **Expected:** start — только creator/organizer; early stop — creator/organizer или current active judge; cancel — только active admin или creator, reason optional, с явным UI confirmation и server actor/state/version/idempotency checks.
-- **Actual:** outsider может start через API; обычный participant может stop; participant/current judge может cancel, тогда как admin path отделён в force-close.
+- **Actual:** server actor matrix соответствует D18/D23; cancel/force-close имеют
+  strict version + UUID key, CAS, replay и atomic judge release.
 - **Repro:** вызвать start outsider; stop обычным participant без judge session; cancel participant и active judge, которые не creator/admin.
 - **Risk:** несанкционированный запуск, искажение результата или отмена чужого матча.
 - **Verification:** AT-MATCH-START-001, AT-MATCH-STOP-001/002 и AT-MATCH-CANCEL-001..004 с creator/admin/participant/judge/outsider actor matrix и browser confirmation.
@@ -231,10 +248,12 @@
 
 - **Type:** concurrency-ui
 - **Priority:** P0
-- **Status:** ready
+- **Status:** verified_local
 - **Evidence:** [`JudgePage.tsx`](../apps/web/src/pages/JudgePage.tsx) отправляет два запроса с одним `expectedVersion`; второй conflict не ставится в очередь. `point()` читает текущую version до await в `apps/web/src/pages/JudgePage.tsx:209` и кнопка остаётся доступна в `apps/web/src/pages/JudgePage.tsx:417`.
 - **Expected:** каждое намеренное нажатие либо сериализовано и применено один раз, либо UI явно блокирует повтор до sync.
-- **Actual:** одно из двух быстрых нажатий silently/через error теряется.
+- **Actual:** UI ставит каждое намерение в FIFO с отдельным key и следующей
+  authoritative version; conflict очищает очередь, reload-ит score и явно
+  сообщает о неначисленном действии.
 - **Repro:** быстро нажать `+1` дважды до завершения первого request.
 - **Risk:** неверный счёт в основном продуктовым флоу.
 - **Verification:** fake-latency component test + browser test; проверить idempotency и итог +2.
@@ -652,10 +671,10 @@
 
 - **Type:** test-reliability
 - **Priority:** P0
-- **Status:** verified_local
+- **Status:** verified_prod
 - **Evidence:** baseline API failure остаётся immutable history в `docs/audits/2026-09-06-baseline.md:67`. После отделения deterministic acceptance seed (`apps/api/src/domain.integration.test.ts:1699`) от hermetic known-defect characterization (`apps/api/src/domain.integration.test.ts:1736`) команда `pnpm test` прошла green три раза подряд (confirmed 2026-09-06); текущий full suite на Node 24.20.0 также green: shared 517 passed + 1 todo, test-utils 4, web 70, API 83 passed + 3 PostgreSQL skipped. Initial hosted PostgreSQL job `101526650172` выполнил fresh-schema/date smoke, затем честно упал на двух неверных test expectations; corrected `AT-MATCH-007/011` и `AT-TRN-010` находятся в `apps/api/src/postgres-date.integration.test.ts:139` и `apps/api/src/postgres-date.integration.test.ts:220`. Follow-up GitHub run `34048623246` и оба job green; exact snapshot — `docs/audit/evidence/hosted-ci-foundation.json`. Passing BUG-015 characterization подтверждает воспроизводимость дефекта, а не его исправление.
 - **Expected:** полный deterministic CI зелёный; flaky тест блокирует релиз согласно NFR.
-- **Actual:** локальная repeatability подтверждена тремя полными прогонами; прежние acceptance failures были связаны со смешением seed-сценариев. Первый hosted PostgreSQL run выявил fixture drift (`pointsToWin=1` и пропущенный third-place match), исправленный без retry/skip; follow-up quality и PostgreSQL jobs прошли. BUG-015 остаётся отдельным детерминированным product defect, а не flaky test.
+- **Actual:** локальная repeatability подтверждена тремя полными прогонами; прежние acceptance failures были связаны со смешением seed-сценариев. Первый hosted PostgreSQL run выявил fixture drift (`pointsToWin=1` и пропущенный third-place match), исправленный без retry/skip; follow-up quality/PostgreSQL и опубликованный OPS-004 SHA прошли. BUG-015 остаётся отдельным детерминированным product defect, а не flaky test.
 - **Repro:** выполнить `pnpm test` последовательно; `pnpm audit:reproduce-busy-bye` должен запускать только один отдельный characterization test.
 - **Risk:** текущий configured gate воспроизводим локально/hosted, но не заменяет отсутствующие browser E2E и ещё не покрытые product races; product risk busy-bye отслеживается независимо в BUG-015.
 - **Verification:** три последовательных full suites и final Node 24.20.0 `pnpm run ci` green локально; GitHub run `34048623246` green, включая PostgreSQL fresh schema/date + `200/409` race + one-time stats + final/third-place advancement.
@@ -687,15 +706,15 @@
 - **Verification:** fake-clock unit tests success/failure/expiry/cleanup и documented production topology.
 - **Dependencies:** решение о shared store только при реальной multi-replica потребности.
 
-### TECH-004 — Node 24 alignment подтверждён локально и в CI; hosting deploy pending
+### TECH-004 — Node 24 alignment подтверждён локально, в CI и hosting
 
 - **Type:** build-tooling
 - **Priority:** P1
-- **Status:** verified_local
+- **Status:** verified_prod
 - **Evidence:** baseline configs расходились между Node 20/24; current pins согласованы в `.node-version:1`, `package.json:34`, `apps/api/package.json:7`, `render.yaml:16` и `.github/workflows/ci.yml:30`. На exact Node 24.20.0 + pnpm 9.15.0 выполнены frozen install и полный `pnpm run ci`: audit gates, lint, typecheck, tests и builds green 2026-09-06. GitHub run `34048623246` также green для Quality/PGlite и PostgreSQL 16; `docs/audit/evidence/hosted-ci-foundation.json` привязывает evidence к SHA.
 - **Expected:** install/lint/typecheck/test/build и deployment проходят на одной явно поддерживаемой Node 24 version.
-- **Actual:** repo-controlled config и локальный полный quality/build pipeline подтверждены exact Node 24.20.0; corrected GitHub Actions run green на Node 24/PostgreSQL 16. Vercel/Render build и deploy этого snapshot намеренно не выполнялись и не подтверждены.
+- **Actual:** repo-controlled config, локальный полный quality/build pipeline и GitHub Actions подтверждены exact Node 24.20.0/PostgreSQL 16; foundation SHA `6892d6e6fe79425eadf76c39bf052500bde5055a` также опубликован Render/Vercel и прошёл exact-SHA public smoke.
 - **Repro:** clean checkout с Node 24 → frozen install → `pnpm run ci`; сравнить hosting runtime metadata.
 - **Risk:** локально зелёная работа ломается в CI/hosting или наоборот.
-- **Verification:** local quality/build gate и GitHub quality + PostgreSQL lanes green на одном commit SHA; Vercel/Render build/smoke остаются отдельным approval-bounded deploy gate.
+- **Verification:** local quality/build gate, GitHub quality + PostgreSQL lanes, Vercel/Render release metadata и public smoke green на одном commit SHA; redacted release evidence ведётся в OPS-004.
 - **Dependencies:** OPS-004 release evidence; Q-OPS-002.

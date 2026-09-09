@@ -1,33 +1,33 @@
 # Tab-10 — статус проекта
 
-Обновлено: **2026-09-08**. Версия в корневом `package.json`: **1.10.1**.
+Обновлено: **2026-09-09**. Версия в корневом `package.json`: **1.10.1**.
 
 ## Итог
 
-Сервис опубликован и отвечает, но **не готов к полноценной эксплуатации**. Базовая
-цепочка login → match → judge → score и турнирный код существуют, однако аудит
-обнаружил P0-дефекты безопасности, авторизации и целостности данных. Ранее
-выставленные статусы фаз `done` означали наличие реализации, а не подтверждённую
-готовность.
+Сервис опубликован и отвечает, но **не готов к полноценной эксплуатации**.
+Единый P0 release candidate закрывает локально SEC-003/005/006/007,
+DATA-001/002/005/007 и BUG-001/002/003. До exact-SHA public smoke эти пункты
+остаются `verified_local`; остальные P1 gaps и эксплуатационные ограничения
+disposable stand сохраняются.
 
 ## Проверенный снимок
 
-| Область | Состояние на 2026-09-08 |
+| Область | Состояние на 2026-09-09 |
 |---|---|
 | Public stand web/API | Disposable испытательный стенд: exact SHA `6892d6e`/version `1.10.1` одновременно подтверждены у Vercel web, Render API и proxy; seed-admin login прошёл в браузере |
 | OPS-004 foundation | PR #4 и Neon-normalization PR #5 слиты; дальнейшая работа по D32 идёт прямыми commits/pushes в `main`; исходный dirty worktree и внешний recovery snapshot сохранены |
 | Закреплённый stack | Repo target: Node **24.20.0**, pnpm **9.15.0**, PostgreSQL **16.15-alpine** по digest, Playwright **1.63.0**/Chromium **153.0.8010.12**; fresh frozen install и `doctor` прошли |
-| Текущий full test | OPS-004 `pnpm ci`: `820 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted`; PostgreSQL 16 и compiled browser входят в тот же барьер |
+| Текущий full test | P0 release candidate `pnpm verify:all`: `862 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted`; в aggregate входят quality 810, PostgreSQL 37, compiled browser 11 и cleanup 4 |
 | Детерминизм | после изоляции RNG три последовательных full suite и последний Node 24 run зелёные; известный busy+bye дефект закреплён отдельным `BUG-015` characterization test |
-| Local quality/build | Frozen install/doctor и полный `verify:all` зелёные с `0 failed / 0 skipped / 0 todo`; disposable PostgreSQL cleanup подтверждён |
+| Local quality/build | Frozen install, doctor, docs/routes/secrets audits, lint, typecheck, builds и полный `verify:all` зелёные с `0 failed / 0 skipped / 0 todo`; disposable PostgreSQL cleanup подтверждён |
 | Hosted CI | SHA `6892d6e`: GitHub run `34195797553` success; Quality/PGlite, PostgreSQL 16 и compiled browser lanes green |
 | Web artifact fingerprint | local build HTML/JS/CSS hashes совпали с production capture; это не заменяет commit SHA/release metadata |
 | Browser baseline | production login: 4 viewport; local synthetic data: 4 home viewport, key 360px screens и smoke 17 organizer routes + admin; это не полный PRD E2E/axe |
-| PostgreSQL verification | Локальный Docker/Colima и exact PostgreSQL 16.15 доступны; новый migration suite прошёл focused checks, но полное единое acceptance evidence фиксируется финальным `verify:all` |
+| PostgreSQL verification | Exact PostgreSQL 16.15: fresh/idempotent `0000→0001`, split-role policy, DATA-002/005/007 transaction/concurrency и immutable void audit прошли в полном барьере: 37/37 |
 | Secret incident | Neon role credential ротирован; disposable stand по D32 сознательно использует `neondb_owner`, `SEED_ADMIN=1`; новый seed-admin создан, credentials хранятся только в Render и переданы пользователю через локальный clipboard |
-| Security dependencies | 17 production advisories: 12 high и 5 moderate |
-| Route/OpenAPI inventory | source: 60 operations / 54 paths; OpenAPI: 15 operations / 12 paths (25% operation coverage); live version 0.1.0 |
-| Product decisions | D23: cancel только active admin/creator; D24: creator/admin soft void без mandatory reason/second approver; D25: V1 DE preservation не требуется; D26: полный PRD v2 остаётся target |
+| Security dependencies | Production graph: 0 high/critical и 3 documented moderate React Router advisories; Fastify 5.12.3 и Drizzle 0.45.2 проверены полным барьером |
+| Route/OpenAPI inventory | source: 62 operations / 56 paths; OpenAPI: 17 operations / 14 paths (27.4% operation coverage); live version 0.1.0 |
+| Product decisions | D23: cancel только active admin/creator; D24: creator/admin soft void; D33: void турнирного матча компенсирует только его stats/ranking и сохраняет остальную сетку/downstream неизменными |
 | Documentation | immutable baseline: 48 findings; live backlog: 49 после выделения DATA-007; links/anchors/IDs/status schema проверяются автоматически |
 | Релизная синхронизация | D32: прямой verified push в `main` запускает Render/Vercel native Git deploy и параллельный CI; `pnpm smoke:public` read-only ждёт одинаковый SHA/version; public API временно использует `neondb_owner` |
 | Public DB bootstrap | Пользователь разрешил одноразово пересоздать `public`/`drizzle` на точном Neon target и применить `0000` с нуля; последующие releases только apply-only |
@@ -35,15 +35,12 @@
 
 ## Главные блокеры
 
-- Остаётся обход обязательной смены временного пароля.
-- Несколько organizer-only операций проверяют только факт входа; есть IDOR между
-  турнирами.
-- Завершение матча, статистика и продвижение сетки не образуют одну транзакцию;
-  параллельные результаты могут потеряться или повредить турнир.
-- Целевая видимость событий и права start/stop/cancel не соблюдаются; D24 void с
-  immutable audit и compensation ещё отсутствует.
-- UI допускает потерю очка при быстром двойном нажатии и не освобождает judge lock
-  при некоторых выходах.
+- Текущий P0 batch ещё должен пройти один direct-main push, hosted CI и exact-SHA
+  read-only smoke у Render API, Vercel web и proxy.
+- Public runtime временно использует owner-role, а production-grade
+  backup/recovery и отдельный staging отложены до VPS-readiness scope.
+- P1 gaps, включая полные browser journeys, profile/ranking/team/match slices и
+  известный busy-player/bye BUG-015, не входят в этот выпуск.
 
 Полный зафиксированный отчёт: [baseline audit](audits/2026-09-06-baseline.md).
 Текущие приоритеты и критерии проверки: [BACKLOG.md](BACKLOG.md).
@@ -51,20 +48,16 @@
 ## Следующий этап
 
 `OPS-004` достиг `verified_prod`: baseline применён к disposable public schema,
-seed admin включён, CI и первый exact-SHA public release проверены. Следующий
-этап — переносить product/story delta и migrations `0001–0003` небольшими
-прямыми commits в `main`; рабочий delivery-контур их больше не блокирует.
+CI и первый exact-SHA public release проверены. SEC-001/002/004 и TECH-001/004
+сверены с тем же опубликованным foundation SHA. Текущий P0 batch переносит только
+миграцию `0001`; P1 migrations `0002–0003` и GAP-002–005 исключены.
 
-SEC-001 остаётся `verified_prod`, пока нет безопасного independent old-URI
-negative probe. SEC-002 исправлен локально, но ещё не выпущен; после delivery
-foundation остаются P0 SEC-003/005/006/007 и DATA-001/002.
-Q-MATCH-001, Q-MATCH-002, Q-DATA-001 и Q-PRODUCT-001 закрыты решениями D23–D26; BUG-002,
-DATA-006 и standalone/ledger DATA-005 готовы к реализации; DATA-007 остаётся
-`blocked_decision` до ответа Q-MATCH-003 о void турнирного матча с уже сыгранными
-downstream matches. Полный PRD v2 закреплён D26. Одноразовый reset текущей
-публичной тестовой schema явно разрешён D31; это не разрешение удалять будущие
-ценные данные. Новые
-продуктовые решения принимаются только через
+Q-MATCH-003 закрыт решением D33. Следующий обязательный шаг этого batch — один
+push всей локальной серии в `origin/main`, hosted CI и read-only `smoke:public`.
+Одноразовый reset по D31 не повторяется: применяются только immutable forward
+migrations. После подтверждения exact SHA можно перевести текущие P0 пункты из
+`verified_local` в `verified_prod` отдельной честной post-release фиксацией.
+Новые продуктовые решения принимаются только через
 [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) и [DECISIONS.md](DECISIONS.md).
 
 ## Визуальный статус

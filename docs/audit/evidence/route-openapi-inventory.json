@@ -5,11 +5,11 @@
   "limitations": [
     "Routes registered dynamically, through plugins, or outside apps/api/src/app.ts require a separate inventory update"
   ],
-  "registeredCount": 61,
-  "documentedCount": 16,
-  "registeredPathCount": 55,
-  "documentedPathCount": 13,
-  "coveragePercent": 26.2,
+  "registeredCount": 62,
+  "documentedCount": 17,
+  "registeredPathCount": 56,
+  "documentedPathCount": 14,
+  "coveragePercent": 27.4,
   "registered": [
     "DELETE /api/v1/admin/matches/{matchId}",
     "DELETE /api/v1/auth/sessions/{sessionId}",
@@ -58,6 +58,7 @@
     "POST /api/v1/matches/{matchId}/start",
     "POST /api/v1/matches/{matchId}/stop",
     "POST /api/v1/matches/{matchId}/undo",
+    "POST /api/v1/matches/{matchId}/void",
     "POST /api/v1/notifications/{id}/read",
     "POST /api/v1/team-invitations/{id}/respond",
     "POST /api/v1/teams",
@@ -89,6 +90,7 @@
     "POST /api/v1/auth/login",
     "POST /api/v1/matches",
     "POST /api/v1/matches/{matchId}/cancel",
+    "POST /api/v1/matches/{matchId}/void",
     "POST /api/v1/tournaments"
   ],
   "missingFromOpenApi": [

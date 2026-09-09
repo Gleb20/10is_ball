@@ -22,6 +22,16 @@
 - `GET /auth/sessions`
 - `DELETE /auth/sessions/{sessionId}`
 
+Сессия пользователя с `mustChangePassword=true` ограничена ровно тремя
+зарегистрированными парами method+path: `GET /api/v1/auth/me`,
+`POST /api/v1/auth/logout` и `POST /api/v1/auth/password/first-change`. Любая
+другая защищённая операция, дошедшая до auth gate, возвращает
+`403 PASSWORD_CHANGE_REQUIRED`. Независимая protocol-проверка может отклонить
+невалидный запрос раньше, например mutation без корректного CSRF получает
+`CSRF_INVALID`. Auth gate использует сопоставленный router path и HTTP method:
+query string не расширяет allowlist, а эквивалентное percent-encoding
+разрешённого static path сохраняет идентичность того же маршрута.
+
 `POST /auth/login`:
 ```json
 {"email":"user@example.com","password":"..."}
@@ -123,22 +133,34 @@ Actionable действия вызывают endpoint исходной сущн�
 
 ## 8. Matches
 
+- `GET /matches`
 - `POST /matches`
 - `GET /matches/{matchId}`
 - `PATCH /matches/{matchId}` — только до старта
 - `POST /matches/{matchId}/invitations`
 - `POST /match-invitations/{id}/accept`
 - `POST /match-invitations/{id}/decline`
-- `POST /matches/{matchId}/start`
+- `POST /matches/{matchId}/start` — только `created_by_user_id`; иной active
+  actor, включая participant/current judge/admin, получает `403 FORBIDDEN`
 - `POST /matches/{matchId}/stop`
 - `POST /matches/{matchId}/cancel` — cancel active **standalone** match; только
-  active admin или `created_by_user_id`, причина опциональна (D23)
+  active admin или `created_by_user_id`, причина опциональна; strict body
+  `{expectedVersion, reasonText?}` и UUID `Idempotency-Key` обязательны (D23)
 - `POST /matches/{matchId}/void` — сохранить finished result как voided,
   компенсировать stats и согласовать dependents; только active admin или
-  `created_by_user_id`, reason optional, second approval отсутствует (D24)
+  `created_by_user_id`, strict `{expectedVersion, reasonText?}` и UUID
+  `Idempotency-Key`; reason optional, second approval отсутствует (D24/D33).
+  Для tournament match меняются только target status/version, его stats и audit;
+  bracket JSON/version, downstream rows/results/stats и notifications сохраняются
 - `POST /matches/{matchId}/no-show`
 - `POST /matches/{matchId}/confirm-result`
 - `POST /matches/{matchId}/revert-finish`
+
+`confirm-finish` и terminal `stop` выполняют match CAS, one-time SQL statistics,
+judge release и tournament advancement в одной transaction. Успешный повтор
+`confirm-finish` из того же judge/auth session возвращает уже finished match без
+повторной статистики, materialization или notification. Конкурентные результаты
+одного турнира сериализуются row lock и сохраняют bracket version CAS.
 
 Create supports:
 - title;
@@ -147,6 +169,23 @@ Create supports:
 - registered and guest participants;
 - optional judge invite;
 - source `manual|challenge|revenge|tutorial`.
+
+`GET /matches` и `GET /matches/{matchId}` применяют D17 к authenticated active
+actor. `waiting|in_progress|pending_confirmation` доступны только
+`created_by_user_id`, зарегистрированному participant или current active judge с
+неосвобождённой и неистёкшей judge session. `finished|stopped|cancelled|voided`
+доступны любому active club user. Tutorial не входит в shared list/home/history,
+а detail доступен только его organizer/participant/current active judge. Existing,
+но недоступный actor event возвращает `403 FORBIDDEN`; отсутствующий id —
+`404 NOT_FOUND`.
+
+`POST /matches` принимает только object по runtime schema: непустое название,
+`format=1v1|2v2`, положительные целые `pointsToWin`/`mercyPoints` и структурно
+валидных registered/guest participants. Service дополнительно проверяет точное
+число игроков на каждой стороне, distinct active users и участие creator в
+standalone. Ошибка или отказ при записи любого participant откатывает весь create.
+Те же runtime gates проверяют side/version в point/undo, first server/setup и
+winner/reason в stop; validation error не меняет score, event log или version.
 
 Cancel body; `reasonText` optional:
 ```json
@@ -169,10 +208,17 @@ Cancel / stop errors (also via admin force-close):
 - `FORBIDDEN`
 - `MATCH_IMMUTABLE` (stop on finished)
 
+Void errors:
+- `MATCH_NOT_VOIDABLE` — source is not finished/stopped
+- `FORBIDDEN` — actor is neither creator nor active admin
+- `VERSION_CONFLICT` — stale `expectedVersion`
+
 Client cancel/void UI требует отдельного явного confirmation action перед
 request; actor/state/version/idempotency сервер проверяет независимо. Void обязан
 быть идемпотентным и сохранять immutable actor/timestamp/prior result/version,
-опциональную reason и ссылки на compensation audit. Hard-delete route для
+опциональную reason и ссылки на compensation audit. Для tournament match UI явно
+сообщает, что остальная сетка и downstream history останутся без изменений.
+Hard-delete route для
 finished/stopped/voided результата запрещён. Unauthorized/stale request не меняет
 match, audit, stats или dependent tournament state.
 
@@ -208,20 +254,30 @@ Errors:
 
 ## 10. Tournaments
 
+- `GET /tournaments`
 - `POST /tournaments`
 - `GET /tournaments/{tournamentId}`
 - `PATCH /tournaments/{tournamentId}` — до старта
-- `POST /tournaments/{tournamentId}/participants`
-- `DELETE /tournaments/{tournamentId}/participants/{participantId}`
+- `POST /tournaments/{tournamentId}/participants` — organizer-only direct roster mutation
+- `DELETE /tournaments/{tournamentId}/participants/{participantId}` —
+  organizer-only; `participantId` обязан принадлежать route tournament, иначе
+  `404 NOT_FOUND` без изменения обеих сущностей
 - `POST /tournaments/{tournamentId}/invitations`
 - `POST /tournament-invitations/{id}/accept`
 - `POST /tournament-invitations/{id}/decline`
-- `POST /tournaments/{tournamentId}/generate-bracket`
+- `POST /tournaments/{tournamentId}/generate-bracket` — organizer-only
 - `PATCH /tournaments/{tournamentId}/bracket`
 - `POST /tournaments/{tournamentId}/dissolve-bracket`
 - `POST /tournaments/{tournamentId}/start`
 - `POST /tournaments/{tournamentId}/withdraw`
 - `POST /tournaments/{tournamentId}/stop`
+
+`GET /tournaments` и `GET /tournaments/{tournamentId}` используют тот же D17
+read scope. `collecting|bracket_generated|needs_regeneration|in_progress` видят
+organizer, active tournament participant и current active judge любого дочернего
+match с неосвобождённой и неистёкшей judge session. `finished|stopped|cancelled`
+видит любой active club user. Existing hidden active tournament возвращает
+`403 FORBIDDEN`, неизвестный id — `404 NOT_FOUND`.
 
 Errors:
 - `INSUFFICIENT_PLAYERS`
@@ -232,6 +288,8 @@ Errors:
 - `PLAYER_ALREADY_IN_ACTIVE_MATCH`
 - `UNSUPPORTED_BRACKET_VERSION` — legacy V1 double-elimination не исполняется;
   ответ bounded и не запускает implicit reset/migration (D25)
+- `FORBIDDEN` — actor не является organizer route tournament
+- `NOT_FOUND` — route tournament или связанный с route participant не найден
 
 ## 11. FAQ / feedback
 
@@ -253,9 +311,12 @@ Errors:
 - match update before start — organizer.
 - standalone cancel — active admin or match creator; participant/current judge
   без одной из этих ролей недостаточен.
-- finished/stopped match void — active admin or match creator; no second approver.
+- finished/stopped standalone или tournament match void — active admin or match
+  creator; no second approver; tournament downstream state preserved by D33.
 - judge mutations — active judge session.
-- tournament bracket — organizer before start.
+- tournament direct roster mutation and bracket generation/edit — organizer of
+  the route tournament before start; invitation response and self-withdraw use
+  their own contextual actor rules.
 - team edit/invite/remove — captain.
 - view active event — participant/judge/organizer.
 - view completed event — any active user.

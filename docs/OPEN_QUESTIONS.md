@@ -5,15 +5,6 @@
 на ID вопроса. Закрытые ID сохраняются в конце для traceability и ссылаются на ADR
 либо операционное evidence.
 
-## Q-MATCH-003 — Void турнирного матча с downstream-результатами
-
-D24 требует согласованно инвалидировать/reconcile зависимую сетку, но не определяет
-наблюдаемый outcome, если после ошибочного матча уже сыграны следующие матчи:
-запретить void до ручного разбора, cascade-void всех потомков или пометить турнир
-invalid/replay-required с отдельным repair flow? Ledger, actor policy и standalone
-compensation можно реализовать независимо; завершение tournament void зависит от
-этого решения.
-
 ## Q-OPS-003 — Данные и восстановление
 
 Текущий production объявлен не содержащим ценных данных, требующих сохранения V1
@@ -24,6 +15,13 @@ disposable public stand для OPS-004 явно разрешён 2026-09-07 в D
 последующий reset или работа с будущими ценными данными требует нового решения.
 
 ## Закрытые вопросы
+
+### Q-MATCH-003 — Void турнирного матча с downstream-результатами
+
+**Closed 2026-09-09 by ADR D33.** Void компенсирует только статистику самого
+целевого матча и добавляет immutable audit. Уже выполненное продвижение,
+`bracket_json`/version, downstream matches/results/stats и notifications остаются
+неизменными; cascade/replacement/repair flow не создаётся.
 
 ### Q-OPS-002 — Production release policy
 

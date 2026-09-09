@@ -1,7 +1,7 @@
 # Модель данных as-built
 
 Снимок [`../../apps/api/src/db/schema.ts`](../../apps/api/src/db/schema.ts) и
-immutable baseline migration на **2026-09-07**. Целевая модель в
+forward migrations на **2026-09-09**. Целевая модель в
 [`../requirements/07_DATA_MODEL.md`](../requirements/07_DATA_MODEL.md) не полностью
 совпадает с этим состоянием.
 
@@ -14,6 +14,7 @@ immutable baseline migration на **2026-09-07**. Целевая модель в
 | `temporary_password_issues` | выдача/потребление временного пароля | user + issuing admin |
 | `matches` | правила, score snapshot, lifecycle | creator; optional tournament; JSON event log/idempotency keys |
 | `match_participants` | стороны A/B, user или guest | guest хранится в строке; constraints «ровно один тип» недостаточны |
+| `match_void_audits` | append-only ledger коррекции результата | unique match/key; actor, prior result/events/version, reason и compensation; trigger запрещает update/delete |
 | `judge_sessions` | judge lock/heartbeat/expiry | match, user, auth session; exclusivity частично app/SQL |
 | `tournaments` | config/lifecycle/bracket | bracket JSON, DB-only bracket version, construction algorithm |
 | `tournament_participants` | user/guest roster, seed, wins snapshot | status text; uniqueness/invariants неполны |
@@ -42,8 +43,10 @@ immutable baseline migration на **2026-09-07**. Целевая модель в
 
 ## Фактическое создание/обновление схемы
 
-PR1 содержит ровно [`0000_data_003_baseline.sql`](../../apps/api/drizzle/0000_data_003_baseline.sql):
-17 public tables и Drizzle ledger в отдельной schema `drizzle`. API startup не
+Migration set содержит immutable
+[`0000_data_003_baseline.sql`](../../apps/api/drizzle/0000_data_003_baseline.sql)
+и forward-only [`0001_data_005_match_void.sql`](../../apps/api/drizzle/0001_data_005_match_void.sql):
+18 public tables и Drizzle ledger в отдельной schema `drizzle`. API startup не
 выполняет DDL и допускает только точный известный ledger prefix; более новые
 trailing migrations разрешены лишь для запуска предыдущего совместимого API при
 rollback. После explicit migration требуется exact ledger и полный catalog
@@ -56,20 +59,24 @@ catalog с отсутствующим/канонически пустым ledger
 connection, advisory lock и bounded timeouts. Ошибка не выполняет ручной stamp.
 
 Default local runtime — PostgreSQL 16.15 с разделёнными owner/runtime roles;
-PGlite остаётся explicit reduced-fidelity mode и hermetic test layer. TypeScript
-mapping умеет безопасно прочитать будущий match status `voided`, но migration
-0000 его не создаёт и PR1 не имеет write route/UI action для этого состояния.
+PGlite остаётся explicit reduced-fidelity mode и hermetic test layer. Migration
+`0001` добавляет `voided`, immutable ledger, indexes and trigger without rewriting
+`0000`; current snapshot проверяется отдельно от historical adoption snapshot.
 
 ## Необеспеченные invariants
 
 - Нет полного DB-level запрета duplicate/self players и invalid user/guest rows.
 - Judge exclusivity по пользователю/сессии и cleanup expired rows неполны.
 - Invite/membership uniqueness и atomic state transitions неполны.
-- Match finish, stats и bracket advancement не единая транзакция.
-- Audit log не immutable; source events могут физически исчезать.
-- Hard delete standalone match противоречит принятой void-only модели.
+- Generic `audit_logs` остаётся mutable; dedicated sporting void ledger immutable.
+- Invitation/membership races и часть judge lifecycle constraints остаются P1.
 
-Оставшиеся исправления отслеживаются как `DATA-001..006`, `SEC-007` в
+Match terminal write, SQL-arithmetic stats, judge release and tournament
+advancement now share one transaction with match CAS, tournament row lock,
+bracket version CAS and unique actual-match-per-node index. D33 tournament void
+does not touch the bracket or downstream history and reverses only target stats.
+
+Оставшиеся исправления отслеживаются в
 [`../BACKLOG.md`](../BACKLOG.md). При любом schema change обновить этот файл,
 целевой data model, migration evidence и traceability по
 [`../WORKFLOW.md`](../WORKFLOW.md).

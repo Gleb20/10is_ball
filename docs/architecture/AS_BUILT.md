@@ -1,6 +1,6 @@
 # Архитектура as-built
 
-Снимок кода на **2026-09-07**. Целевые требования находятся в
+Снимок кода на **2026-09-09**. Целевые требования находятся в
 [`../requirements/`](../requirements/); этот документ описывает то, что существует,
 включая известные ограничения.
 
@@ -54,23 +54,28 @@ packages/ic-kit     vendored built UI kit
 4. Большинство routes используют `requireAuth`; admin routes — `requireAdmin`.
 5. Вне `NODE_ENV=test` state-changing requests требуют равенства CSRF cookie и
    `x-csrf-token`.
-6. Services читают/изменяют Drizzle tables. Нет queue, Redis, WebSocket или
-   background worker.
+6. Core match payloads проходят shared Zod runtime validation; services
+   independently enforce actor/ownership and visibility.
+7. Services читают/изменяют Drizzle tables. Нет Redis, WebSocket или background
+   worker; scoring UI держит только in-memory FIFO intents.
 
 Delivery foundation добавляет fail-closed/atomic/audited bootstrap config до
 подключения к DB, production DB guard, отдельный destructive-consent-protected
 `TEST_DATABASE_URL` и release identity. `/health` и `/ready` публикуют одну
 `ReleaseMetadata`; web artifact содержит тот же объект в `/release.json`.
 
-Текущая защита не является достаточной: ownership/visibility gaps перечислены в
-[`../BACKLOG.md`](../BACKLOG.md) (`SEC-003`, `SEC-006`, `SEC-007`, `BUG-001`).
+Temporary-password gate uses exact method+matched-path allowlist. Active event
+visibility and P0 match/tournament ownership checks are server-side.
 
 ## Match/tournament coupling
 
-`MatchService` хранит snapshot счёта и JSON event log в строке match. При finish
-он применяет user stats и вызывает установленный `TournamentService` hook.
-`TournamentService` обновляет `tournaments.bracket_json` и материализует следующие
-match rows. Эти действия не образуют одну транзакцию; см. `DATA-002`.
+`MatchService` хранит snapshot счёта и JSON event log в строке match. Terminal
+result CAS, stats, judge release and `TournamentService` advancement execute in
+one transaction; tournament row locking plus bracket version CAS serialize
+parallel advancement and a partial unique index prevents duplicate actual rows.
+Void uses the same transactional compensation boundary and immutable ledger.
+D33 preserves bracket JSON/version, downstream matches/results/stats and
+notifications for tournament corrections.
 
 Новая генерация bracket использует schemaVersion 2. Legacy V1 JSON остаётся
 read/playable по текущему коду/ADR, но для V1 DE известен hang risk (`DATA-006`).
@@ -102,7 +107,8 @@ Authenticated shell: `/`, `/history`, `/start`, `/admin`, `/matches`,
 - PGlite не покрывает полную семантику PostgreSQL; поэтому он не является
   release gate без обязательного PostgreSQL 16.15 lane.
 - Polling реализован неравномерно, server push отсутствует.
-- Runtime validation не следует формальным схемам системно.
+- Runtime validation is explicit for P0 match mutations but remains incomplete
+  across older non-P0 routes.
 - `app.ts` объединяет routing, serialization и authorization, из-за чего легко
   пропустить actor/field filtering.
 - Structured request logging и полноценная telemetry отсутствуют; `/ready`

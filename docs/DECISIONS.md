@@ -268,6 +268,24 @@ fresh `0000` все следующие releases используют тольк�
 обещает production-grade backups, zero-downtime schema rollout или автоматический
 restore. Эти гарантии обязательны до переноса реальных данных на VPS.
 
+## D33 — Tournament void preserves downstream history (2026-09-09)
+
+**Decision:** finished or stopped tournament match uses the same active-admin or
+`created_by_user_id` soft-void boundary as a standalone match. The operation
+changes only the target match to `voided`, compensates that match's own
+wins/losses/ranking contribution once and appends one immutable audit row.
+
+Winner/loser advancement already recorded in the tournament remains a historical
+fact. `bracket_json`, `bracket_state_version`, downstream match rows and results,
+their statistics, and notifications are not recalculated or removed. The product
+does not create a replacement match, cascade void, or repair/replay-required flow.
+The confirmation UI must state this preservation policy before sending the
+request. This closes Q-MATCH-003 and defines DATA-007.
+
+**Why:** rewriting a played dependency graph would silently alter additional
+sporting facts and notifications. A narrow compensating record is deterministic,
+auditable, idempotent and keeps the correction boundary explicit.
+
 ## D32 — Direct-main solo delivery and test-stand admin (2026-09-07)
 
 **Supersedes the PR-only procedure in D31 until the user explicitly changes the

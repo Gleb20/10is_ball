@@ -7,7 +7,11 @@
 ### AT-AUTH-001 Первый вход
 **Given** администратор создал активного пользователя с временным паролем  
 **When** пользователь входит  
-**Then** он не попадает на главную, пока не задаст новый валидный пароль.
+**Then** до установки нового валидного пароля он не может читать или изменять
+продуктовые данные. Ограниченная сессия допускает только точные
+`GET /api/v1/auth/me`, `POST /api/v1/auth/logout` и
+`POST /api/v1/auth/password/first-change`; другой method, path, query substring
+или encoding не расширяет этот allowlist.
 
 ### AT-AUTH-002 Временный пароль одноразовый
 После успешной смены временный пароль больше не позволяет войти.
@@ -105,7 +109,11 @@ Tournament match → cancel → `TOURNAMENT_MATCH_FORBIDDEN`.
 ### AT-MATCH-CANCEL-004 Explicit confirmation and stale request
 Первое нажатие Cancel только открывает confirmation с match name и последствиями;
 request отправляется отдельным подтверждающим действием. Отмена dialog не создаёт
-request. Stale `expectedVersion` не отменяет матч и предлагает обновить state.
+request. Missing/invalid `Idempotency-Key` и stale `expectedVersion` не отменяют
+матч и предлагают исправить/обновить state. Повтор actor + match + key возвращает
+тот же outcome без второй смены version; два разных key с одной expectedVersion
+дают ровно один success и один conflict, а judge release входит в тот же atomic
+transition.
 
 ### AT-MATCH-001 Обычная победа
 При лимите 11 счёт 11:9 предлагает завершение; 11:10 не завершает.
@@ -154,6 +162,20 @@ Participant, который не creator/organizer и не current active judge,
 ### AT-MATCH-012 Tutorial isolation
 Матч с Призрачным Олегом не меняет статистику, рейтинг, историю и rival calculations.
 
+### AT-MATCH-013 Validation, roster invariants and atomic create
+Malformed/non-object payload, неизвестные поля, неверные side/winner/version/rules,
+пустой или не соответствующий формату roster, duplicate/self user и blocked/missing
+registered user отклоняются без изменения match, participants, score, event log или
+version. Creator входит в standalone roster. Ошибка записи любого participant
+откатывает match и весь roster; start повторно проверяет состав и first server.
+
+### AT-MATCH-014 Atomic completion and idempotent replay
+Injected failure после terminal match write, stats или judge release откатывает
+все эти эффекты вместе с tournament advancement. Повтор успешного confirmation
+тем же judge/auth session возвращает `200 finished`, не меняет version повторно и
+не дублирует wins/losses, bracket materialization или notifications. Manual stop
+использует ту же transactional terminal-write boundary.
+
 ### AT-MATCH-VOID-001 No hard delete
 После void finished standalone match исходный результат и event/audit facts остаются,
 физическое удаление недоступно, а повторный void идемпотентен.
@@ -169,8 +191,13 @@ Active admin и creator могут void finished/stopped standalone match с о�
 с описанием soft invalidation и stats impact; закрытие dialog без подтверждения
 оставляет всё без изменений, stale version не создаёт audit/compensation.
 
-Tournament downstream acceptance добавляется только после закрытия
-Q-MATCH-003/DATA-007; текущие AT-MATCH-VOID-001..003 не определяют его outcome.
+### AT-MATCH-VOID-004 Tournament history preservation
+После void finished/stopped tournament match меняются только target
+status/version, его собственный stats/ranking contribution и одна append-only
+audit row. `bracket_json`, `bracket_state_version`, downstream rows/results/stats
+и notifications до/после равны; прежнее продвижение winner/loser сохраняется.
+Повтор того же key возвращает тот же outcome. Confirmation отдельно сообщает,
+что остальная сетка не будет пересчитана (D33/DATA-007).
 
 ## JUDGE
 
@@ -242,6 +269,25 @@ Legacy schemaVersion 1 double-elimination input завершается bounded �
 сетку и не инициирует migration/reset/recreate. V2 SE/DE lifecycle продолжает
 работать; V1 SE не изменяется этим сценарием.
 
+### AT-TRN-016 Organizer-only roster and bracket
+Только organizer route-турнира напрямую добавляет/удаляет participant и
+генерирует/перегенерирует bracket. Participant, active judge другого события,
+outsider и admin без contextual ownership получают `403`; roster, bracket и
+status не меняются. Organizer happy paths сохраняются.
+
+### AT-TRN-017 Cross-tournament participant mismatch
+Organizer турнира A передаёт в route турнира A `participantId` турнира B →
+`404 NOT_FOUND`; participant турнира B остаётся active, а турнир A сохраняет
+исходные bracket/status. Authorization organizer турнира A проверяется до
+participant existence, mutation ограничена обоими IDs.
+
+### AT-TRN-018 Concurrent advancement
+Два полуфинала одного V2 single-elimination tournament подтверждаются параллельно
+разными активными судьями. Оба результата коммитятся, `bracket_state_version`
+переходит последовательно, final и third-place materialize ровно по одному разу,
+каждый node имеет один `actualMatchId`, а статистика всех четырёх игроков учтена
+ровно один раз. Retry одного confirmation не создаёт дополнительных matches.
+
 ## RANKING
 
 ### AT-RANK-001 Sort
@@ -296,15 +342,19 @@ Blocked user отсутствует в текущем рейтинге.
 
 ### AT-VIS-001 Active event
 Active event доступен organizer, participant и current active judge. Бывший/expired
-judge и outsider получают 403 как на detail, так и через list/home/history.
+judge и outsider получают 403 на detail и не получают событие через
+list/home/history. Для турнира current active judge подтверждается
+неосвобождённой и неистёкшей judge session его дочернего match, а не только
+назначением default judge.
 
 ### AT-VIS-002 Completed event
 Любой active (`status != blocked`) club user открывает завершённое событие, даже
-если не участвовал.
+если не участвовал. Completed history включает `finished|stopped|cancelled` для
+match и tournament; остальные текущие статусы считаются active.
 
 ### AT-VIS-004 Blocked and tutorial isolation
 Blocked user не получает завершённое событие; tutorial event не появляется в
-общих list/home/history и не открывается посторонним.
+общих list/home/history даже после завершения и не открывается посторонним.
 
 ### AT-VIS-003 History filters
 Комбинация фильтров и поиска возвращает только соответствующие события и стабильную пагинацию.
@@ -319,6 +369,20 @@ Blocked user не получает завершённое событие; tutori
 
 ### AT-EMPTY-001 Zero data
 Новый пользователь видит осмысленные empty states и CTA, а не нули без объяснения.
+
+## DATABASE EVOLUTION
+
+### AT-DATA-MIG-001 Fresh and historical upgrade
+Один ordered migration set на clean PGlite/PostgreSQL создаёт текущие 18 public
+tables, required indexes и version ledger. Тот же set принимает historical
+unversioned boot schema, сохраняет sentinel rows/JSON, добавляет известные columns,
+выполняет documented backfill и при повторном запуске не добавляет ledger rows.
+
+### AT-DATA-MIG-002 Startup fails closed on schema drift
+Persistent API startup не выполняет schema DDL и до любых bootstrap/seed/listen
+действий отклоняет missing, pending, unexpected, reordered или checksum-mismatched
+migration ledger. Exact current ledger допускает startup. In-process migration
+разрешена только explicit in-memory `AUDIT_EPHEMERAL=1` fixture.
 
 ## OPERATIONS UX
 
