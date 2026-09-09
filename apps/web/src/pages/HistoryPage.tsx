@@ -99,7 +99,10 @@ export function HistoryPage() {
             const canDelete =
               isAdmin &&
               item.kind === "match" &&
-              item.matchKind === "standalone";
+              item.matchKind === "standalone" &&
+              item.status !== "finished" &&
+              item.status !== "stopped" &&
+              item.status !== "voided";
             return (
               <div
                 key={`${item.kind}-${item.id}`}
@@ -151,8 +154,8 @@ export function HistoryPage() {
         onMainButton={() => void onDeleteConfirm()}
       >
         <p>
-          Матч будет удалён безвозвратно. Если результат уже учтён в рейтинге,
-          победы и поражения будут откачены.
+          Незавершённый матч будет удалён безвозвратно. Завершённые и
+          остановленные результаты удалить нельзя.
         </p>
       </Dialog>
     </PageLayout>

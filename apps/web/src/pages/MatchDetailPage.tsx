@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Avatar, Button, Dialog } from "../ui";
+import { Avatar, Button, Dialog, TextField } from "../ui";
 import { PageLayout } from "../layout";
 import { AsyncState, FilterBar, StatusChip } from "../patterns";
 import { api } from "../api";
@@ -27,6 +27,9 @@ export function MatchDetailPage() {
   const [stopPending, setStopPending] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelPending, setCancelPending] = useState(false);
+  const [voidOpen, setVoidOpen] = useState(false);
+  const [voidPending, setVoidPending] = useState(false);
+  const [voidReason, setVoidReason] = useState("");
   const [adminConfirm, setAdminConfirm] = useState<AdminConfirm>(null);
   const [adminPending, setAdminPending] = useState(false);
   const [now, setNow] = useState(() => new Date());
@@ -63,18 +66,32 @@ export function MatchDetailPage() {
     match?.status === "in_progress" ||
     match?.status === "pending_confirmation";
 
-  const canManageMatch =
-    Boolean(user?.id) &&
-    (match?.createdByUserId === user?.id ||
-      participants.some((p) => p.userId === user?.id) ||
-      activeJudge?.userId === user?.id);
+  const isCreator = Boolean(user?.id) && match?.createdByUserId === user?.id;
+  const isCurrentJudge =
+    Boolean(user?.id) && activeJudge?.userId === user?.id;
+  const canStart = match?.status === "waiting" && isCreator;
+  const canStop =
+    (match?.status === "in_progress" ||
+      match?.status === "pending_confirmation") &&
+    (isCreator || isCurrentJudge);
 
   const canCancel =
-    match?.kind === "standalone" && isActiveStatus && canManageMatch;
+    match?.kind === "standalone" &&
+    isActiveStatus &&
+    (isCreator || user?.role === "admin");
+  const canVoid =
+    (match?.kind === "standalone" || match?.kind === "tournament") &&
+    (match?.status === "finished" || match?.status === "stopped") &&
+    (isCreator || user?.role === "admin");
 
   const isAdminStandalone =
     user?.role === "admin" && match?.kind === "standalone";
   const canForceClose = isAdminStandalone && isActiveStatus;
+  const canAdminPurge =
+    isAdminStandalone &&
+    match?.status !== "finished" &&
+    match?.status !== "stopped" &&
+    match?.status !== "voided";
 
   const durationLabel =
     match?.startedAt != null
@@ -110,7 +127,11 @@ export function MatchDetailPage() {
     setCancelPending(true);
     setError(null);
     try {
-      const res = await api.cancelMatch(id);
+      const res = await api.cancelMatch(
+        id,
+        Number(match?.version),
+        crypto.randomUUID(),
+      );
       setMatch(res.match);
       setCancelOpen(false);
     } catch (e) {
@@ -121,13 +142,39 @@ export function MatchDetailPage() {
     }
   }
 
+  async function onVoidConfirm() {
+    if (!id) return;
+    setVoidPending(true);
+    setError(null);
+    try {
+      const res = await api.voidMatch(
+        id,
+        Number(match?.version),
+        crypto.randomUUID(),
+        voidReason.trim() || undefined,
+      );
+      setMatch(res.match);
+      setVoidOpen(false);
+      setVoidReason("");
+    } catch (e) {
+      setError((e as Error).message);
+      setVoidOpen(false);
+    } finally {
+      setVoidPending(false);
+    }
+  }
+
   async function onAdminConfirm() {
     if (!adminConfirm || !id) return;
     setAdminPending(true);
     setError(null);
     try {
       if (adminConfirm === "force-close") {
-        const res = await api.adminForceCloseMatch(id);
+        const res = await api.adminForceCloseMatch(
+          id,
+          Number(match?.version),
+          crypto.randomUUID(),
+        );
         setMatch(res.match);
         setAdminConfirm(null);
       } else {
@@ -186,7 +233,7 @@ export function MatchDetailPage() {
               ) : null}
             </div>
             <div className="stack stack--actions">
-              {match.status === "waiting" && (
+              {canStart && (
                 <Button
                   onClick={() =>
                     api
@@ -222,8 +269,7 @@ export function MatchDetailPage() {
                   </Button>
                 </>
               )}
-              {(match.status === "in_progress" ||
-                match.status === "pending_confirmation") && (
+              {canStop && (
                 <Button variant="secondary" onClick={() => setStopOpen((v) => !v)}>
                   {stopOpen ? "Скрыть остановку" : "Остановить матч"}
                 </Button>
@@ -236,6 +282,14 @@ export function MatchDetailPage() {
                   Отменить матч
                 </Button>
               ) : null}
+              {canVoid ? (
+                <Button
+                  variant="secondary"
+                  onClick={() => setVoidOpen(true)}
+                >
+                  Аннулировать результат
+                </Button>
+              ) : null}
               {canForceClose ? (
                 <Button
                   variant="secondary"
@@ -244,7 +298,7 @@ export function MatchDetailPage() {
                   Принудительно закрыть
                 </Button>
               ) : null}
-              {isAdminStandalone ? (
+              {canAdminPurge ? (
                 <Button
                   variant="secondary"
                   onClick={() => setAdminConfirm("delete")}
@@ -318,9 +372,46 @@ export function MatchDetailPage() {
               onMainButton={() => void onCancelConfirm()}
             >
               <p>
-                Матч будет аннулирован без победителя и без влияния на рейтинг.
+                Матч «{String(match.title)}» будет аннулирован без победителя и
+                без влияния на рейтинг.
                 Участники снова смогут играть в других матчах и турнирах.
               </p>
+            </Dialog>
+            <Dialog
+              open={voidOpen}
+              onClose={() => (!voidPending ? setVoidOpen(false) : undefined)}
+              title="Аннулировать результат?"
+              width="sm"
+              secondaryButtonLabel="Отмена"
+              onSecondaryButton={() =>
+                !voidPending ? setVoidOpen(false) : undefined
+              }
+              mainButtonLabel={
+                voidPending ? "…" : "Подтвердить аннулирование"
+              }
+              onMainButton={() => void onVoidConfirm()}
+            >
+              <div className="stack">
+                <p>
+                  Исходный результат матча «{String(match.title)}» сохранится в
+                  журнале аудита. Уже учтённые победы, поражения и рейтинг будут
+                  компенсированы.
+                </p>
+                {match.kind === "tournament" ? (
+                  <p>
+                    Остальная турнирная сетка сохранится без изменений: уже
+                    продвинутые участники, следующие матчи и уведомления не будут
+                    пересчитаны.
+                  </p>
+                ) : null}
+                <TextField
+                  label="Причина (необязательно)"
+                  value={voidReason}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setVoidReason(event.target.value)
+                  }
+                />
+              </div>
             </Dialog>
             <Dialog
               open={adminConfirm !== null}
@@ -348,8 +439,8 @@ export function MatchDetailPage() {
             >
               <p>
                 {adminConfirm === "force-close"
-                  ? "Матч будет аннулирован (статус «Отменён») без победителя и без влияния на рейтинг. Игроки снова смогут участвовать в других матчах."
-                  : "Матч будет удалён безвозвратно. Если результат уже учтён в рейтинге, победы и поражения будут откачены."}
+                  ? `Матч «${String(match.title)}» будет аннулирован (статус «Отменён») без победителя и без влияния на рейтинг. Игроки снова смогут участвовать в других матчах.`
+                  : `Незавершённый матч «${String(match.title)}» будет удалён безвозвратно. Завершённые и остановленные результаты удалить нельзя.`}
               </p>
             </Dialog>
           </>

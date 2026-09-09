@@ -1,5 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, cleanup, within } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  cleanup,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { JudgePage } from "./JudgePage";
@@ -68,6 +75,16 @@ function renderJudge(path = "/matches/m1/judge") {
       </Routes>
     </MemoryRouter>,
   );
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
 }
 
 describe("REQ_ui__judge_immersive", () => {
@@ -142,6 +159,105 @@ describe("REQ_ui__judge_immersive", () => {
     });
     await user.click(btn);
     expect(awardPoint).toHaveBeenCalledWith("m1", "A", 5, expect.any(String));
+  });
+
+  it("AT-JUDGE-007 serializes two rapid +1 intents with the authoritative version", async () => {
+    const user = userEvent.setup();
+    const firstPoint = deferred<{ match: typeof matchBody }>();
+    const secondPoint = deferred<{ match: typeof matchBody }>();
+    awardPoint
+      .mockImplementationOnce(() => firstPoint.promise)
+      .mockImplementationOnce(() => secondPoint.promise);
+    renderJudge();
+    const btn = await screen.findByRole("button", {
+      name: /\+1 очко: анна а/i,
+    });
+
+    await user.click(btn);
+    await user.click(btn);
+
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("status")).toHaveTextContent("В очереди: 2");
+    expect(
+      screen.getByRole("button", { name: /отменить последнее очко/i }),
+    ).toBeDisabled();
+    expect(awardPoint).toHaveBeenNthCalledWith(
+      1,
+      "m1",
+      "A",
+      5,
+      expect.any(String),
+    );
+
+    await act(async () => {
+      firstPoint.resolve({
+        match: { ...matchBody, scoreA: 4, version: 6 },
+      });
+      await firstPoint.promise;
+    });
+
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(2));
+    expect(awardPoint).toHaveBeenNthCalledWith(
+      2,
+      "m1",
+      "A",
+      6,
+      expect.any(String),
+    );
+    expect(awardPoint.mock.calls[1]?.[3]).not.toBe(
+      awardPoint.mock.calls[0]?.[3],
+    );
+
+    await act(async () => {
+      secondPoint.resolve({
+        match: { ...matchBody, scoreA: 5, version: 7 },
+      });
+      await secondPoint.promise;
+    });
+
+    await waitFor(() => {
+      expect(
+        within(screen.getByTestId("judge-side-A")).getByText("5"),
+      ).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /отменить последнее очко/i }),
+    ).toBeEnabled();
+  });
+
+  it("AT-JUDGE-007 stops the queue and shows authoritative score on version conflict", async () => {
+    const user = userEvent.setup();
+    const pointRequest = deferred<{ match: typeof matchBody }>();
+    awardPoint.mockImplementationOnce(() => pointRequest.promise);
+    renderJudge();
+    const btn = await screen.findByRole("button", {
+      name: /\+1 очко: анна а/i,
+    });
+
+    await user.click(btn);
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, scoreA: 4, version: 6 },
+    });
+    await act(async () => {
+      pointRequest.reject(
+        Object.assign(new Error("Версия матча изменилась"), {
+          code: "VERSION_CONFLICT",
+        }),
+      );
+      await pointRequest.promise.catch(() => undefined);
+    });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /счёт изменился на другом устройстве/i,
+    );
+    expect(
+      within(screen.getByTestId("judge-side-A")).getByText("4"),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(btn).toBeEnabled();
+    expect(awardPoint).toHaveBeenCalledTimes(1);
   });
 
   it("shows setup as board with swap and start match", async () => {

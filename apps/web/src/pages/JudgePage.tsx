@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState, type KeyboardEvent, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button, Avatar } from "../ui";
 import { api } from "../api";
@@ -27,6 +34,10 @@ type Phase =
   | "setup"
   | "scoring"
   | "readonly";
+type PointIntent = {
+  side: "A" | "B";
+  idempotencyKey: string;
+};
 
 function ServeBadge({ active }: { active: boolean }) {
   if (!active) {
@@ -47,11 +58,16 @@ export function JudgePage() {
   const readonlyMode = searchParams.get("mode") === "readonly";
 
   const [match, setMatch] = useState<MatchState | null>(null);
+  const matchRef = useRef<MatchState | null>(null);
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [flashSide, setFlashSide] = useState<"A" | "B" | null>(null);
   const [undoPending, setUndoPending] = useState(false);
+  const [pointPendingCount, setPointPendingCount] = useState(0);
+  const pointQueueRef = useRef<PointIntent[]>([]);
+  const pointQueueRunningRef = useRef(false);
+  const flashTimeoutRef = useRef<number | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [viewport, setViewport] = useState(() => ({
     w: typeof window !== "undefined" ? window.innerWidth : 800,
@@ -62,11 +78,16 @@ export function JudgePage() {
   const [swapSides, setSwapSides] = useState(false);
   const [setupPending, setSetupPending] = useState(false);
 
+  const updateMatch = useCallback((nextMatch: MatchState) => {
+    matchRef.current = nextMatch;
+    setMatch(nextMatch);
+  }, []);
+
   const load = useCallback(async () => {
     const res = await api.getMatch(id!);
-    setMatch(res.match as MatchState);
+    updateMatch(res.match as MatchState);
     return res.match as MatchState;
-  }, [id]);
+  }, [id, updateMatch]);
 
   const exitAfterJudge = useCallback(
     (m: MatchState | null) => {
@@ -136,6 +157,15 @@ export function JudgePage() {
     };
   }, []);
 
+  useEffect(
+    () => () => {
+      if (flashTimeoutRef.current !== null) {
+        window.clearTimeout(flashTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     if (phase !== "scoring" && phase !== "readonly") return;
     const tick = window.setInterval(() => setNow(new Date()), 1000);
@@ -191,7 +221,7 @@ export function JudgePage() {
         firstServerParticipantId: firstServerId,
         swapSides,
       });
-      setMatch(res.match as MatchState);
+      updateMatch(res.match as MatchState);
       setPhase("scoring");
     } catch (e) {
       setError((e as Error).message);
@@ -200,23 +230,74 @@ export function JudgePage() {
     }
   }
 
-  async function point(side: "A" | "B") {
-    if (!match || phase !== "scoring") return;
+  async function drainPointQueue(initialMatch: MatchState) {
+    if (!id || pointQueueRunningRef.current) return;
+    pointQueueRunningRef.current = true;
+    let authoritativeMatch = initialMatch;
+
     try {
-      const res = await api.awardPoint(
-        id!,
-        side,
-        Number(match.version),
-        crypto.randomUUID(),
-      );
-      setMatch(res.match as MatchState);
-      setError(null);
-      setFlashSide(side);
-      window.setTimeout(() => setFlashSide(null), 350);
-    } catch (e) {
-      setError((e as Error).message);
-      await load();
+      while (pointQueueRef.current.length > 0) {
+        const intent = pointQueueRef.current[0]!;
+        if (authoritativeMatch.status !== "in_progress") {
+          pointQueueRef.current = [];
+          setPointPendingCount(0);
+          setError(
+            "Матч больше не принимает очки. Проверьте итоговый счёт перед продолжением.",
+          );
+          break;
+        }
+
+        try {
+          const res = await api.awardPoint(
+            id,
+            intent.side,
+            Number(authoritativeMatch.version),
+            intent.idempotencyKey,
+          );
+          authoritativeMatch = res.match as MatchState;
+          pointQueueRef.current.shift();
+          setPointPendingCount(pointQueueRef.current.length);
+          updateMatch(authoritativeMatch);
+          setError(null);
+          setFlashSide(intent.side);
+          if (flashTimeoutRef.current !== null) {
+            window.clearTimeout(flashTimeoutRef.current);
+          }
+          flashTimeoutRef.current = window.setTimeout(() => {
+            setFlashSide(null);
+            flashTimeoutRef.current = null;
+          }, 350);
+        } catch (e) {
+          const err = e as Error & { code?: string };
+          pointQueueRef.current = [];
+          setPointPendingCount(0);
+          try {
+            authoritativeMatch = await load();
+          } catch {
+            // Preserve the mutation error; the existing screen remains usable.
+          }
+          setError(
+            err.code === "VERSION_CONFLICT" ||
+              err.code === "MATCH_VERSION_CONFLICT"
+              ? "Счёт изменился на другом устройстве. Очередь остановлена: проверьте счёт и повторите неначисленное очко."
+              : `Очко не подтверждено: ${err.message}. Очередь остановлена: проверьте счёт и повторите.`,
+          );
+          break;
+        }
+      }
+    } finally {
+      pointQueueRunningRef.current = false;
     }
+  }
+
+  function point(side: "A" | "B") {
+    if (!id || !match || phase !== "scoring") return;
+    pointQueueRef.current.push({
+      side,
+      idempotencyKey: crypto.randomUUID(),
+    });
+    setPointPendingCount(pointQueueRef.current.length);
+    void drainPointQueue(matchRef.current ?? match);
   }
 
   async function undo() {
@@ -228,7 +309,7 @@ export function JudgePage() {
         Number(match.version),
         crypto.randomUUID(),
       );
-      setMatch(res.match as MatchState);
+      updateMatch(res.match as MatchState);
       setError(null);
     } catch (e) {
       setError((e as Error).message);
@@ -251,7 +332,7 @@ export function JudgePage() {
     try {
       const res = await api.confirmFinish(id!);
       const finished = (res.match ?? match) as MatchState;
-      setMatch(finished);
+      updateMatch(finished);
       exitAfterJudge(finished);
     } catch (e) {
       setError((e as Error).message);
@@ -263,7 +344,7 @@ export function JudgePage() {
     const next = !match.judgeDisplayFlipped;
     try {
       const res = await api.judgeSetup(id, { displayFlipped: next });
-      setMatch(res.match as MatchState);
+      updateMatch(res.match as MatchState);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -455,6 +536,13 @@ export function JudgePage() {
           {readonly ? (
             <span className="judge-readonly-badge">Только просмотр</span>
           ) : null}
+          {pointPendingCount > 0 ? (
+            <span className="judge-pending-badge" role="status" aria-live="polite">
+              {pointPendingCount === 1
+                ? "Отправка очка…"
+                : `В очереди: ${pointPendingCount}`}
+            </span>
+          ) : null}
         </div>
         <div className="judge-toolbar__actions">
           {isSetup ? (
@@ -471,7 +559,7 @@ export function JudgePage() {
                 variant="secondary"
                 className="judge-touch"
                 onClick={() => void undo()}
-                disabled={locked || undoPending}
+                disabled={locked || undoPending || pointPendingCount > 0}
                 aria-label="Отменить последнее очко"
               >
                 Undo
@@ -480,6 +568,7 @@ export function JudgePage() {
                 variant="secondary"
                 className="judge-touch"
                 onClick={() => setMenuOpen((v) => !v)}
+                disabled={pointPendingCount > 0}
                 aria-expanded={menuOpen}
                 aria-controls="judge-more-menu"
               >
@@ -540,7 +629,7 @@ export function JudgePage() {
                   void api
                     .revertFinish(id!)
                     .then((r) => {
-                      setMatch(r.match as MatchState);
+                      updateMatch(r.match as MatchState);
                       setMenuOpen(false);
                     })
                     .catch((e) => setError(e.message))
@@ -613,7 +702,7 @@ export function JudgePage() {
             onClick={() =>
               void api
                 .revertFinish(id!)
-                .then((r) => setMatch(r.match as MatchState))
+                .then((r) => updateMatch(r.match as MatchState))
                 .catch((e) => setError(e.message))
             }
           >

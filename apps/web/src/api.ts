@@ -100,12 +100,18 @@ export const api = {
       `/api/v1/admin/users/${userId}/reset-password`,
       { method: "POST" },
     ),
-  adminForceCloseMatch: (matchId: string, reasonText?: string) =>
+  adminForceCloseMatch: (
+    matchId: string,
+    expectedVersion: number,
+    idempotencyKey: string,
+    reasonText?: string,
+  ) =>
     request<{ match: Record<string, unknown> }>(
       `/api/v1/admin/matches/${matchId}/force-close`,
       {
         method: "POST",
-        body: JSON.stringify(reasonText ? { reasonText } : {}),
+        headers: { "Idempotency-Key": idempotencyKey },
+        body: JSON.stringify({ expectedVersion, reasonText }),
       },
     ),
   adminDeleteMatch: (matchId: string) =>
@@ -187,11 +193,31 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-  cancelMatch: (id: string) =>
+  cancelMatch: (
+    id: string,
+    expectedVersion: number,
+    idempotencyKey: string,
+    reasonText?: string,
+  ) =>
     request<{ match: Record<string, unknown> }>(
       `/api/v1/matches/${id}/cancel`,
-      { method: "POST" },
+      {
+        method: "POST",
+        headers: { "Idempotency-Key": idempotencyKey },
+        body: JSON.stringify({ expectedVersion, reasonText }),
+      },
     ),
+  voidMatch: (
+    id: string,
+    expectedVersion: number,
+    idempotencyKey: string,
+    reasonText?: string,
+  ) =>
+    request<{ match: Record<string, unknown> }>(`/api/v1/matches/${id}/void`, {
+      method: "POST",
+      headers: { "Idempotency-Key": idempotencyKey },
+      body: JSON.stringify({ expectedVersion, reasonText }),
+    }),
   rankings: (period = "all_time") =>
     request<{ rankings: Array<Record<string, unknown>> }>(
       `/api/v1/rankings?period=${period}`,
