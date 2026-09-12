@@ -1,11 +1,27 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button, TextField } from "../ui";
 import { AuthLayout } from "../authUi";
 import { api } from "../api";
 import { useAuth } from "../auth";
 
-export function LoginPage() {
+function safeReturnPath(value: unknown): string {
+  if (typeof value !== "string" || !value.startsWith("/")) {
+    return "/";
+  }
+  const base = "https://tab10.invalid";
+  const parsed = new URL(value, base);
+  if (parsed.origin !== base || parsed.pathname === "/login") return "/";
+  return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+}
+
+export function LoginPage({
+  returnTo,
+  sessionExpired = false,
+}: {
+  returnTo?: string;
+  sessionExpired?: boolean;
+} = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -13,6 +29,9 @@ export function LoginPage() {
   const [pending, setPending] = useState(false);
   const { setUser, refresh } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const routeState = location.state as { returnTo?: unknown } | null;
+  const destination = safeReturnPath(returnTo ?? routeState?.returnTo);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,7 +44,7 @@ export function LoginPage() {
         navigate("/first-password");
       } else {
         await refresh();
-        navigate("/");
+        navigate(destination, { replace: true, state: null });
       }
     } catch (err) {
       setError((err as Error).message || "Ошибка входа");
@@ -37,7 +56,11 @@ export function LoginPage() {
   return (
     <AuthLayout
       title="Вход"
-      subtitle="Сервис настольного тенниса для закрытой группы"
+      subtitle={
+        sessionExpired
+          ? "Сессия завершена. Войдите снова, чтобы продолжить с этого места."
+          : "Сервис настольного тенниса для закрытой группы"
+      }
     >
       <form className="stack" onSubmit={onSubmit} aria-label="Форма входа">
         <TextField
@@ -49,6 +72,7 @@ export function LoginPage() {
             setEmail(e.target.value)
           }
           autoComplete="username"
+          autoFocus={sessionExpired}
           required
         />
         <TextField

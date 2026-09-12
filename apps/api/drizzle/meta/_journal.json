@@ -15,6 +15,20 @@
       "when": 1788733991772,
       "tag": "0001_data_005_match_void",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788737309261,
+      "tag": "0002_data_004_invitation_membership_races",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788745103349,
+      "tag": "0003_bug_012_onboarding_resume",
+      "breakpoints": true
     }
   ]
 }

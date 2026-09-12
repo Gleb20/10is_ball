@@ -33,6 +33,23 @@ export type MatchPair = {
   round: number;
 };
 
+export class UnsupportedBracketVersionError extends Error {
+  readonly code = "UNSUPPORTED_BRACKET_VERSION";
+  readonly schemaVersion: number;
+
+  constructor(schemaVersion: number) {
+    super("UNSUPPORTED_BRACKET_VERSION");
+    this.name = "UnsupportedBracketVersionError";
+    this.schemaVersion = schemaVersion;
+  }
+}
+
+function assertLegacyBracketSupported(bracket: Bracket): void {
+  if (bracket.format === "double_elimination") {
+    throw new UnsupportedBracketVersionError(1);
+  }
+}
+
 function nextPowerOf2(n: number): number {
   let p = 1;
   while (p < n) p *= 2;
@@ -371,6 +388,7 @@ function standardPlacement(size: number): number[] {
 export function thirdPlaceParticipantIds(
   bracket: Bracket,
 ): { semiLoserA: string | null; semiLoserB: string | null } | null {
+  assertLegacyBracketSupported(bracket);
   if (bracket.format !== "single_elimination") return null;
   const thirds = bracket.slots
     .filter((s) => s.side === "third_place")
@@ -382,193 +400,17 @@ export function thirdPlaceParticipantIds(
   };
 }
 
-/**
- * Double elimination (Challonge-style):
- * - Winners bracket = Po2 SE without third-place / terminal champion slot
- * - Losers: alternating drop-in rounds + internal rounds
- * - Grand Final + optional final_reset slots (filled when LB champ wins GF1)
- */
+/** Retired by D25. Double elimination is supported only by bracket V2. */
 export function generateDoubleEliminationBracket(
-  seededIds: string[],
-  idFactory: () => string,
+  _seededIds: string[],
+  _idFactory: () => string,
 ): Bracket {
-  const single = generatePowerOf2SingleEliminationBracket(
-    seededIds,
-    idFactory,
-  );
-  const size = single.size;
-  const wbDepth = Math.log2(size); // rounds of WB matches: 0..wbDepth-1
-
-  // Keep WB match rounds only (drop SE champion resting slot at round wbDepth)
-  const mainSlots = single.slots
-    .filter((s) => s.side === "main" && s.round < wbDepth)
-    .map((s) => ({
-      ...s,
-      loserToSlotId: null as string | null,
-    }));
-
-  // Clear advances on last WB round — will point to GF
-  for (const s of mainSlots) {
-    if (s.round === wbDepth - 1) s.advancesToSlotId = null;
-  }
-
-  const lbRoundCount = 2 * (wbDepth - 1);
-  const losersByRound: BracketSlot[][] = [];
-
-  for (let lr = 0; lr < lbRoundCount; lr += 1) {
-    const matchCount = Math.ceil(
-      size / 2 ** (Math.floor(lr / 2) + 2),
-    );
-    const roundSlots: BracketSlot[] = [];
-    for (let i = 0; i < matchCount * 2; i += 1) {
-      roundSlots.push(
-        emptySlot({
-          id: idFactory(),
-          round: lr,
-          position: i,
-          side: "losers",
-          participantId: null,
-          isBye: false,
-          advancesToSlotId: null,
-          loserToSlotId: null,
-        }),
-      );
-    }
-    losersByRound.push(roundSlots);
-  }
-
-  // Wire LB advances: each pair → next round (or GF later)
-  for (let lr = 0; lr < lbRoundCount; lr += 1) {
-    const roundSlots = losersByRound[lr]!;
-    const next = losersByRound[lr + 1];
-    for (let i = 0; i + 1 < roundSlots.length; i += 2) {
-      const a = roundSlots[i]!;
-      const b = roundSlots[i + 1]!;
-      if (next) {
-        // Even→odd (drop-in) rounds: winners go to even positions of next
-        // Odd→even (internal) rounds: winners fill next pair in order
-        const matchIndex = Math.floor(i / 2);
-        if (lr % 2 === 0 && next.length === roundSlots.length) {
-          // same match count: survivor vs drop — advance to even slot of same match index
-          const target = next[matchIndex * 2];
-          if (target) {
-            a.advancesToSlotId = target.id;
-            b.advancesToSlotId = target.id;
-          }
-        } else {
-          const target = next[matchIndex];
-          // when next is half size, each match feeds one slot of next pair
-          const dest =
-            next.length === roundSlots.length / 2
-              ? next[matchIndex]
-              : next[matchIndex * 2];
-          const t = dest ?? target;
-          if (t) {
-            a.advancesToSlotId = t.id;
-            b.advancesToSlotId = t.id;
-          }
-        }
-      }
-    }
-  }
-
-  // WB R0 losers → LB R0 (one loser per WB match → distinct LB slots)
-  const wb0 = mainSlots.filter((s) => s.round === 0).sort((a, b) => a.position - b.position);
-  const lb0 = losersByRound[0] ?? [];
-  for (let m = 0; m < wb0.length / 2; m += 1) {
-    const target = lb0[m];
-    if (!target) continue;
-    wb0[m * 2]!.loserToSlotId = target.id;
-    wb0[m * 2 + 1]!.loserToSlotId = target.id;
-  }
-
-  // WB later rounds drop into odd LB rounds (1, 3, …)
-  for (let wr = 1; wr < wbDepth; wr += 1) {
-    const lbRoundIndex = wr * 2 - 1; // WB1 → LB1, WB2 → LB3, …
-    const lbRound = losersByRound[lbRoundIndex];
-    if (!lbRound) continue;
-    const wbRound = mainSlots
-      .filter((s) => s.round === wr)
-      .sort((a, b) => a.position - b.position);
-    for (let m = 0; m < wbRound.length / 2; m += 1) {
-      // Drop into odd position of match m (even = LB survivor)
-      const dropSlot = lbRound[m * 2 + 1] ?? lbRound[m * 2];
-      if (!dropSlot) continue;
-      wbRound[m * 2]!.loserToSlotId = dropSlot.id;
-      wbRound[m * 2 + 1]!.loserToSlotId = dropSlot.id;
-    }
-  }
-
-  const finalA = emptySlot({
-    id: idFactory(),
-    round: 0,
-    position: 0,
-    side: "final",
-    participantId: null,
-    isBye: false,
-    advancesToSlotId: null,
-    loserToSlotId: null,
-  });
-  const finalB = emptySlot({
-    id: idFactory(),
-    round: 0,
-    position: 1,
-    side: "final",
-    participantId: null,
-    isBye: false,
-    advancesToSlotId: null,
-    loserToSlotId: null,
-  });
-  // Pre-create reset slots (filled only if LB wins GF1)
-  const resetA = emptySlot({
-    id: idFactory(),
-    round: 0,
-    position: 0,
-    side: "final_reset",
-    participantId: null,
-    isBye: false,
-    advancesToSlotId: null,
-    loserToSlotId: null,
-  });
-  const resetB = emptySlot({
-    id: idFactory(),
-    round: 0,
-    position: 1,
-    side: "final_reset",
-    participantId: null,
-    isBye: false,
-    advancesToSlotId: null,
-    loserToSlotId: null,
-  });
-
-  // WB final winners → GF A
-  for (const s of mainSlots.filter((x) => x.round === wbDepth - 1)) {
-    s.advancesToSlotId = finalA.id;
-  }
-  // LB final winners → GF B
-  const lastLb = losersByRound[lbRoundCount - 1] ?? [];
-  for (const s of lastLb) {
-    s.advancesToSlotId = finalB.id;
-  }
-
-  return {
-    slots: [
-      ...mainSlots,
-      ...losersByRound.flat(),
-      finalA,
-      finalB,
-      resetA,
-      resetB,
-    ],
-    size,
-    format: "double_elimination",
-    thirdPlaceSlotId: null,
-    championParticipantId: null,
-  };
+  throw new UnsupportedBracketVersionError(1);
 }
 
 /** Pairs of sibling slots that share the same advancesTo (or third/final pair). */
 export function listMatchPairs(bracket: Bracket): MatchPair[] {
+  assertLegacyBracketSupported(bracket);
   const pairs: MatchPair[] = [];
   const byKey = new Map<string, BracketSlot[]>();
 
@@ -621,6 +463,7 @@ export function applyMatchResult(
   loserParticipantId: string,
   matchId: string,
 ): Bracket {
+  assertLegacyBracketSupported(bracket);
   const slots = bracket.slots.map((s) => ({ ...s }));
   const byId = new Map(slots.map((s) => [s.id, s]));
 
@@ -730,6 +573,7 @@ export function applyMatchResult(
 }
 
 export function isTournamentComplete(bracket: Bracket): boolean {
+  assertLegacyBracketSupported(bracket);
   return Boolean(bracket.championParticipantId);
 }
 
@@ -738,6 +582,7 @@ export function attachMatchId(
   slotIds: [string, string],
   matchId: string,
 ): Bracket {
+  assertLegacyBracketSupported(bracket);
   return {
     ...bracket,
     slots: bracket.slots.map((s) =>

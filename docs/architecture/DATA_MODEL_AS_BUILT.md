@@ -1,7 +1,7 @@
 # Модель данных as-built
 
 Снимок [`../../apps/api/src/db/schema.ts`](../../apps/api/src/db/schema.ts) и
-forward migrations на **2026-09-09**. Целевая модель в
+forward migrations на **2026-09-13**. Целевая модель в
 [`../requirements/07_DATA_MODEL.md`](../requirements/07_DATA_MODEL.md) не полностью
 совпадает с этим состоянием.
 
@@ -9,7 +9,7 @@ forward migrations на **2026-09-09**. Целевая модель в
 
 | Таблица | Назначение | Важные связи/заметки |
 |---|---|---|
-| `users` | аккаунт, роль/status, профиль, avatar, onboarding | unique email; содержит password hash и session-related flags |
+| `users` | аккаунт, роль/status, профиль, avatar, onboarding | unique email; `onboarding_step` bounded 0..6, nullable completion timestamp; содержит password hash и session-related flags |
 | `auth_sessions` | hashed session tokens | user FK, expiry/revocation |
 | `temporary_password_issues` | выдача/потребление временного пароля | user + issuing admin |
 | `matches` | правила, score snapshot, lifecycle | creator; optional tournament; JSON event log/idempotency keys |
@@ -17,11 +17,11 @@ forward migrations на **2026-09-09**. Целевая модель в
 | `match_void_audits` | append-only ledger коррекции результата | unique match/key; actor, prior result/events/version, reason и compensation; trigger запрещает update/delete |
 | `judge_sessions` | judge lock/heartbeat/expiry | match, user, auth session; exclusivity частично app/SQL |
 | `tournaments` | config/lifecycle/bracket | bracket JSON, DB-only bracket version, construction algorithm |
-| `tournament_participants` | user/guest roster, seed, wins snapshot | status text; uniqueness/invariants неполны |
-| `tournament_invitations` | invite lifecycle | invited/inviter users, expiry/status |
+| `tournament_participants` | user/guest roster, seed, wins snapshot | status text; partial unique active registered user per tournament |
+| `tournament_invitations` | invite lifecycle | invited/inviter users, expiry/status; partial unique pending invite per tournament/user |
 | `teams` | team/captain/status | unique slug |
-| `team_memberships` | membership history | leftAt/leaveReason вместо hard delete |
-| `team_invitations` | team invite lifecycle | expiry/status |
+| `team_memberships` | membership history | leftAt/leaveReason вместо hard delete; partial unique active membership per team/user |
+| `team_invitations` | team invite lifecycle | expiry/status; partial unique pending invite per team/user |
 | `notifications` | per-user messages | JSON payload, readAt |
 | `audit_logs` | generic technical audit entries | actor/action/entity/meta; bootstrap writes `admin.bootstrap_provisioned` with nullable system actor; append-only не обеспечен DB |
 | `faq_articles` | help content | category/sort |
@@ -80,3 +80,12 @@ does not touch the bracket or downstream history and reverses only target stats.
 [`../BACKLOG.md`](../BACKLOG.md). При любом schema change обновить этот файл,
 целевой data model, migration evidence и traceability по
 [`../WORKFLOW.md`](../WORKFLOW.md).
+
+## Wave A migration safety
+
+Immutable migrations 0000/0001 are preserved. Migration 0002 reconciles duplicate
+active memberships and collecting/unbracketed participants before adding partial
+unique indexes; it fails before writes for duplicate participants in any tournament
+with a bracket or progress. Migration 0003 adds onboarding step 0..6 and backfills
+legacy active accounts as completed. Ledger-prefix schema attestation supports
+intermediate snapshots; malformed index predicates/check bounds remain rejected.

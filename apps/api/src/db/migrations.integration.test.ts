@@ -80,34 +80,21 @@ describe("versioned migration foundation on disposable PGlite", () => {
     expect(tables.rows.map((row) => row.table_name)).toHaveLength(18);
   });
 
-  it("upgrades a versioned 0000 database to 0001 without changing existing rows", async () => {
+  it.each([1, 2, 3])("upgrades a %i-migration released prefix without changing existing rows", async (prefixLength) => {
     const context = await freshContext();
     const baselineOnlyDirectory = await mkdtemp(
       join(tmpdir(), "tab10-baseline-only-"),
     );
     temporaryDirectories.push(baselineOnlyDirectory);
-    await writeFile(
-      join(baselineOnlyDirectory, "0000_data_003_baseline.sql"),
-      await readFile(baselineSqlPath, "utf8"),
-    );
+    const artifactDirectory = fileURLToPath(new URL("../../drizzle/", import.meta.url));
+    const journal = JSON.parse(await readFile(join(artifactDirectory, "meta/_journal.json"), "utf8"));
+    journal.entries = journal.entries.slice(0, prefixLength);
+    for (const entry of journal.entries) {
+      await writeFile(join(baselineOnlyDirectory, `${entry.tag}.sql`), await readFile(join(artifactDirectory, `${entry.tag}.sql`)));
+    }
     const metaDirectory = join(baselineOnlyDirectory, "meta");
     await mkdir(metaDirectory);
-    await writeFile(
-      join(metaDirectory, "_journal.json"),
-      JSON.stringify({
-        version: "7",
-        dialect: "postgresql",
-        entries: [
-          {
-            idx: 0,
-            version: "7",
-            when: 1788728799411,
-            tag: "0000_data_003_baseline",
-            breakpoints: true,
-          },
-        ],
-      }),
-    );
+    await writeFile(join(metaDirectory, "_journal.json"), JSON.stringify(journal));
     await applyPgliteMigrationFiles(context.db, baselineOnlyDirectory);
     await context.client.exec(`
       INSERT INTO users (
@@ -136,6 +123,36 @@ describe("versioned migration foundation on disposable PGlite", () => {
     await expect(
       assertMigrationsExactlyCurrent(context.queryMigrations),
     ).resolves.toBeUndefined();
+  });
+
+  it("fails closed rather than withdrawing a participant already referenced by a bracket", async () => {
+    const context = await historicalContext();
+    await context.client.exec(`
+      INSERT INTO users(id,email,password_hash,first_name,last_name) VALUES
+        ('00000000-0000-4000-8000-000000000081','duplicate@tab10.test','synthetic','Test','Player');
+      INSERT INTO tournaments(id,title,created_by_user_id,status,bracket_json) VALUES
+        ('00000000-0000-4000-8000-000000000082','Existing bracket','00000000-0000-4000-8000-000000000081','bracket_generated','{"seedOrder":["00000000-0000-4000-8000-000000000083","00000000-0000-4000-8000-000000000084"]}');
+      INSERT INTO tournament_participants(id,tournament_id,user_id) VALUES
+        ('00000000-0000-4000-8000-000000000083','00000000-0000-4000-8000-000000000082','00000000-0000-4000-8000-000000000081'),
+        ('00000000-0000-4000-8000-000000000084','00000000-0000-4000-8000-000000000082','00000000-0000-4000-8000-000000000081');
+    `);
+    await expect(runPgliteMigrations({ db: context.db, query: context.queryMigrations, mode: "adopt-unversioned" })).rejects.toThrow("DATA_004_DUPLICATE_BRACKET_PARTICIPANTS");
+    const participants = await context.client.query<{status:string}>("SELECT status FROM tournament_participants ORDER BY id");
+    expect(participants.rows).toEqual([{status:"active"},{status:"active"}]);
+    await expectNoLedgerRows(context);
+  });
+
+  it("rejects drift in onboarding check semantics and invitation partial indexes", async () => {
+    const context = await freshContext();
+    await runPgliteMigrations({ db: context.db, query: context.queryMigrations, mode: "apply" });
+    await context.client.exec(`ALTER TABLE users DROP CONSTRAINT users_onboarding_step_range;
+      ALTER TABLE users ADD CONSTRAINT users_onboarding_step_range CHECK (onboarding_step BETWEEN 0 AND 7);`);
+    await expect(assertMigrationsExactlyCurrent(context.queryMigrations)).rejects.toThrow("public constraints");
+    await context.client.exec(`ALTER TABLE users DROP CONSTRAINT users_onboarding_step_range;
+      ALTER TABLE users ADD CONSTRAINT users_onboarding_step_range CHECK (onboarding_step BETWEEN 0 AND 6);
+      DROP INDEX team_invitations_pending_user_uid;
+      CREATE UNIQUE INDEX team_invitations_pending_user_uid ON team_invitations(team_id, invited_user_id) WHERE status = 'accepted';`);
+    await expect(assertMigrationsExactlyCurrent(context.queryMigrations)).rejects.toThrow("public explicit indexes");
   });
 
   it("preserves rows while adopting the exact unversioned historical baseline", async () => {
@@ -253,8 +270,8 @@ describe("versioned migration foundation on disposable PGlite", () => {
     const after = await context.client.query<{ count: number }>(`
       SELECT count(*)::integer AS count FROM drizzle.__drizzle_migrations
     `);
-    expect(before.rows[0]?.count).toBe(2);
-    expect(after.rows[0]?.count).toBe(2);
+    expect(before.rows[0]?.count).toBe(4);
+    expect(after.rows[0]?.count).toBe(4);
   });
 
   it("does not let adoption stand in for ordinary fresh apply", async () => {

@@ -17,20 +17,81 @@ export type RankingEntry = {
 
 export type RankingScope = "all_time" | "week" | "month";
 
-/** Monday 00:00 UTC of the calendar week containing `now`. */
-export function calendarWeekStartUTC(now: Date): Date {
-  const d = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+const MOSCOW_TIME_ZONE = "Europe/Moscow";
+const moscowDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: MOSCOW_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const moscowDateTimeFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: MOSCOW_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+});
+
+function numericParts(formatter: Intl.DateTimeFormat, instant: Date) {
+  const values = new Map(
+    formatter
+      .formatToParts(instant)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, Number(part.value)]),
   );
-  const mondayOffset = (d.getUTCDay() + 6) % 7;
-  d.setUTCDate(d.getUTCDate() - mondayOffset);
-  return d;
+  return {
+    year: values.get("year")!,
+    month: values.get("month")!,
+    day: values.get("day")!,
+    hour: values.get("hour") ?? 0,
+    minute: values.get("minute") ?? 0,
+    second: values.get("second") ?? 0,
+  };
 }
 
-/** First day 00:00 UTC of the calendar month containing `now`. */
-export function calendarMonthStartUTC(now: Date): Date {
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+/** Convert a Moscow calendar date at local 00:00 to its absolute UTC instant. */
+function moscowMidnight(year: number, month: number, day: number): Date {
+  const utcNoon = new Date(Date.UTC(year, month - 1, day, 12));
+  const localNoon = numericParts(moscowDateTimeFormatter, utcNoon);
+  const offsetMs =
+    Date.UTC(
+      localNoon.year,
+      localNoon.month - 1,
+      localNoon.day,
+      localNoon.hour,
+      localNoon.minute,
+      localNoon.second,
+    ) - utcNoon.getTime();
+  return new Date(Date.UTC(year, month - 1, day) - offsetMs);
 }
+
+/** Monday 00:00 Europe/Moscow of the calendar week containing `now`. */
+export function calendarWeekStartMoscow(now: Date): Date {
+  const local = numericParts(moscowDateFormatter, now);
+  const localDate = new Date(Date.UTC(local.year, local.month - 1, local.day));
+  const mondayOffset = (localDate.getUTCDay() + 6) % 7;
+  localDate.setUTCDate(localDate.getUTCDate() - mondayOffset);
+  return moscowMidnight(
+    localDate.getUTCFullYear(),
+    localDate.getUTCMonth() + 1,
+    localDate.getUTCDate(),
+  );
+}
+
+/** First day 00:00 Europe/Moscow of the calendar month containing `now`. */
+export function calendarMonthStartMoscow(now: Date): Date {
+  const local = numericParts(moscowDateFormatter, now);
+  return moscowMidnight(local.year, local.month, 1);
+}
+
+/** @deprecated Use the explicitly named Europe/Moscow boundary helper. */
+export const calendarWeekStartUTC = calendarWeekStartMoscow;
+
+/** @deprecated Use the explicitly named Europe/Moscow boundary helper. */
+export const calendarMonthStartUTC = calendarMonthStartMoscow;
 
 export function winRate(wins: number, matchesPlayed: number): number {
   if (matchesPlayed <= 0) return 0;

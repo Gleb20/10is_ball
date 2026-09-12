@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { FakeClock } from "@tab10/test-utils";
-import { users } from "./db/schema.js";
+import { auditLogs, users } from "./db/schema.js";
 import { createMigratedPgliteDb } from "./db/client.js";
 import { buildApp } from "./app.js";
 import type { FastifyInstance } from "fastify";
@@ -34,9 +34,11 @@ describe("auth and admin integration", () => {
   let services: AppServices;
   let close: () => Promise<void>;
   let clock: FakeClock;
+  let db: Awaited<ReturnType<typeof createMigratedPgliteDb>>["db"];
 
   beforeEach(async () => {
     const ctx = await createMigratedPgliteDb();
+    db = ctx.db;
     close = ctx.close;
     clock = new FakeClock();
     const built = await buildApp({ db: ctx.db, clock });
@@ -69,6 +71,99 @@ describe("auth and admin integration", () => {
     });
     expect(res.statusCode).toBe(401);
     expect(res.json().code).toBe("INVALID_CREDENTIALS");
+  });
+
+  it("TECH-003/AT-AUTH-010: successful logins do not consume the failure budget", async () => {
+    const statuses: number[] = [];
+    for (let attempt = 0; attempt < 11; attempt += 1) {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/login",
+        payload: {
+          email: "ADMIN@tab10.local",
+          password: "AdminPass1!",
+        },
+      });
+      statuses.push(response.statusCode);
+    }
+
+    expect(statuses).toEqual(Array.from({ length: 11 }, () => 200));
+    expect(
+      (services.auth as unknown as { loginAttempts: Map<string, unknown> })
+        .loginAttempts.size,
+    ).toBe(0);
+  });
+
+  it("TECH-003/AT-AUTH-010: ten failures fill one fixed window and RATE_LIMITED expires at its boundary", async () => {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/login",
+        payload: { email: "admin@tab10.local", password: "wrong" },
+      });
+      expect(response.statusCode, `failure ${attempt + 1}`).toBe(401);
+    }
+
+    const limited = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: { email: "admin@tab10.local", password: "wrong" },
+    });
+    expect(limited.statusCode).toBe(429);
+    expect(limited.json().code).toBe("RATE_LIMITED");
+
+    clock.advanceMs(15 * 60_000 - 1);
+    const stillLimited = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: { email: "admin@tab10.local", password: "wrong" },
+    });
+    expect(stillLimited.statusCode).toBe(429);
+    expect(stillLimited.json().code).toBe("RATE_LIMITED");
+
+    clock.advanceMs(1);
+    const nextWindow = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: { email: "admin@tab10.local", password: "wrong" },
+    });
+    expect(nextWindow.statusCode).toBe(401);
+    expect(nextWindow.json().code).toBe("INVALID_CREDENTIALS");
+  });
+
+  it("TECH-003/AT-AUTH-010: unique live keys are bounded", () => {
+    const limiter = services.auth as unknown as {
+      checkRateLimit(email: string, ip: string): unknown;
+      loginAttempts: Map<string, unknown>;
+    };
+
+    for (let attempt = 0; attempt < 10_001; attempt += 1) {
+      expect(
+        limiter.checkRateLimit(`unique-${attempt}@tab10.local`, "127.0.0.1"),
+      ).toBeTruthy();
+    }
+
+    expect(limiter.loginAttempts.size).toBe(10_000);
+    expect(
+      [...limiter.loginAttempts.keys()].every((key) => key.length === 64),
+    ).toBe(true);
+  });
+
+  it("TECH-003/AT-AUTH-010: expired unique keys are cleaned on the next attempt", () => {
+    const limiter = services.auth as unknown as {
+      checkRateLimit(email: string, ip: string): unknown;
+      loginAttempts: Map<string, unknown>;
+    };
+
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      limiter.checkRateLimit(`expired-${attempt}@tab10.local`, "127.0.0.1");
+    }
+    expect(limiter.loginAttempts.size).toBe(100);
+
+    clock.advanceMs(15 * 60_000);
+    limiter.checkRateLimit("fresh@tab10.local", "127.0.0.1");
+
+    expect(limiter.loginAttempts.size).toBe(1);
   });
 
   it("API_POST_admin_users__returns_temp_password_once", async () => {
@@ -112,7 +207,38 @@ describe("auth and admin integration", () => {
       },
     });
     expect(conflict.statusCode).toBe(409);
-    expect(conflict.json().code).toBe("EMAIL_TAKEN");
+    expect(conflict.json().code).toBe("EMAIL_ALREADY_EXISTS");
+  });
+
+  it("BUG-009: concurrent normalized duplicate user creation stores one user", async () => {
+    const token = await loginAsAdmin();
+    const payload = {
+      firstName: "Single",
+      lastName: "Flight",
+    };
+    const [first, duplicate] = await Promise.all([
+      app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: token },
+        payload: { ...payload, email: "single-flight@tab10.local" },
+      }),
+      app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: token },
+        payload: { ...payload, email: "Single-Flight@tab10.local" },
+      }),
+    ]);
+
+    expect([first.statusCode, duplicate.statusCode].sort()).toEqual([200, 409]);
+    expect(
+      [first, duplicate].find((response) => response.statusCode === 409)?.json()
+        .code,
+    ).toBe("EMAIL_ALREADY_EXISTS");
+    expect(
+      await services.auth.listUsers("single-flight@tab10.local"),
+    ).toHaveLength(1);
   });
 
   it("API_POST_auth_password_first_change__one_time_temp", async () => {
@@ -293,7 +419,7 @@ describe("auth and admin integration", () => {
     expect(change.statusCode).toBe(200);
   });
 
-  it("INT_admin__block_revokes_sessions and last admin guard", async () => {
+  it("BUG-011/AT-ADM-006: safe block and unblock actor/session matrix", async () => {
     const adminToken = await loginAsAdmin();
     const created = await app.inject({
       method: "POST",
@@ -355,6 +481,85 @@ describe("auth and admin integration", () => {
     });
     expect(last.statusCode).toBe(409);
     expect(last.json().code).toBe("LAST_ADMIN");
+
+    const createdAdmin = await app.inject({
+      method: "POST",
+      url: "/api/v1/admin/users",
+      cookies: { tab10_session: adminToken },
+      payload: {
+        email: "second-admin@tab10.local",
+        firstName: "Second",
+        lastName: "Admin",
+        role: "admin",
+      },
+    });
+    expect(createdAdmin.statusCode).toBe(200);
+
+    const selfBlock = await app.inject({
+      method: "POST",
+      url: `/api/v1/admin/users/${admin.id}/block`,
+      cookies: { tab10_session: adminToken },
+    });
+    expect(selfBlock.statusCode).toBe(403);
+    expect(selfBlock.json().code).toBe("SELF_BLOCK_FORBIDDEN");
+
+    const stillAdmin = await app.inject({
+      method: "GET",
+      url: "/api/v1/auth/me",
+      cookies: { tab10_session: adminToken },
+    });
+    expect(stillAdmin.statusCode).toBe(200);
+
+    const nonAdminUnblock = await app.inject({
+      method: "POST",
+      url: `/api/v1/admin/users/${userId}/unblock`,
+      cookies: { tab10_session: sessionCookie },
+    });
+    expect(nonAdminUnblock.statusCode).toBe(401);
+
+    const unblock = await app.inject({
+      method: "POST",
+      url: `/api/v1/admin/users/${userId}/unblock`,
+      cookies: { tab10_session: adminToken },
+    });
+    expect(unblock.statusCode).toBe(200);
+
+    const revokedSessionStaysRevoked = await app.inject({
+      method: "GET",
+      url: "/api/v1/auth/me",
+      cookies: { tab10_session: sessionCookie },
+    });
+    expect(revokedSessionStaysRevoked.statusCode).toBe(401);
+
+    const loginAfterUnblock = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: {
+        email: "blockme@tab10.local",
+        password: "BlockPass1!",
+      },
+    });
+    expect(loginAfterUnblock.statusCode).toBe(200);
+    const targetAfterUnblock = (await services.auth.listUsers()).find(
+      (candidate) => candidate.id === userId,
+    );
+    expect(targetAfterUnblock?.status).toBe("active");
+    const lifecycleAudits = (await db.select().from(auditLogs)).filter(
+      (entry) => entry.entityId === userId,
+    );
+    expect(lifecycleAudits.map((entry) => entry.action)).toEqual(
+      expect.arrayContaining(["user.blocked", "user.unblocked"]),
+    );
+    const activeUserToken = loginAfterUnblock.cookies.find(
+      (cookie) => cookie.name === "tab10_session",
+    )!.value;
+    const activeNonAdminUnblock = await app.inject({
+      method: "POST",
+      url: `/api/v1/admin/users/${userId}/unblock`,
+      cookies: { tab10_session: activeUserToken },
+    });
+    expect(activeNonAdminUnblock.statusCode).toBe(403);
+    expect(activeNonAdminUnblock.json().code).toBe("FORBIDDEN");
   });
 
   it("INT_auth__session_sliding_ttl_7d", async () => {
@@ -436,6 +641,8 @@ describe("auth and admin integration", () => {
         "id",
         "lastName",
         "mustChangePassword",
+        "onboardingCompletedAt",
+        "onboardingStep",
         "organizationText",
         "positionText",
         "role",

@@ -21,7 +21,7 @@ import { waitForPublicRelease } from "./wait-for-public-release.mjs";
 import { writeWebRelease } from "./write-web-release.mjs";
 
 const SHA = "0123456789abcdef0123456789abcdef01234567";
-const VERSION = "1.10.1";
+const VERSION = JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8")).version;
 const expected = createReleaseMetadata({
   sha: SHA,
   version: VERSION,

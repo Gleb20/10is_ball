@@ -1,6 +1,7 @@
 import {
   detectStoredConstructionAlgorithm,
   parseBracketJson,
+  UnsupportedBracketVersionError,
   type Bracket,
   type BracketGraphV2,
 } from "@tab10/shared";
@@ -22,10 +23,7 @@ export function loadTournamentBracket(raw: unknown): LoadedBracket {
         message: parsed.message,
       });
     case "unsupported":
-      throw Object.assign(new Error("BRACKET_UNSUPPORTED"), {
-        code: "BRACKET_UNSUPPORTED",
-        schemaVersion: parsed.schemaVersion,
-      });
+      throw new UnsupportedBracketVersionError(parsed.schemaVersion);
     case "v1":
       return { kind: "v1", bracket: parsed.raw as Bracket };
     case "v2":

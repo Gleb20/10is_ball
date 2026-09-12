@@ -244,7 +244,7 @@ describePostgres.sequential(
         `;
         expect(tables).toHaveLength(18);
       });
-      await expectLedgerCount(2);
+      await expectLedgerCount(4);
     });
 
     it("produces the same exact catalog and database-generated UUIDs for fresh and adopted baselines", async () => {
@@ -344,7 +344,77 @@ describePostgres.sequential(
         `;
         expect(user).toEqual([{ email: "historical@tab10.test" }]);
       });
-      await expectLedgerCount(2);
+      await expectLedgerCount(4);
+    });
+
+    it("rejects duplicate active participants in a bracket without mutating rows or recording migrations", async () => {
+      await resetDatabase();
+      await createHistoricalBaseline();
+      await withClient(async (client) => {
+        await client.unsafe(`
+          INSERT INTO users (
+            id, email, password_hash, first_name, last_name
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000021',
+            'duplicate-bracket@tab10.test',
+            'synthetic-hash',
+            'Duplicate',
+            'Participant'
+          );
+          INSERT INTO tournaments (
+            id, title, created_by_user_id, status,
+            bracket_json, bracket_construction_algorithm
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000022',
+            'Duplicate bracket participants',
+            '00000000-0000-4000-8000-000000000021',
+            'bracket_generated',
+            '{"schemaVersion":2,"format":"single_elimination"}'::jsonb,
+            NULL
+          );
+          INSERT INTO tournament_participants (
+            id, tournament_id, user_id, status
+          ) VALUES
+            (
+              '00000000-0000-4000-8000-000000000023',
+              '00000000-0000-4000-8000-000000000022',
+              '00000000-0000-4000-8000-000000000021',
+              'active'
+            ),
+            (
+              '00000000-0000-4000-8000-000000000024',
+              '00000000-0000-4000-8000-000000000022',
+              '00000000-0000-4000-8000-000000000021',
+              'active'
+            );
+        `);
+      });
+
+      await expect(
+        runPostgresMigrations(databaseUrl!, "adopt-unversioned"),
+      ).rejects.toThrow("DATA_004_DUPLICATE_BRACKET_PARTICIPANTS");
+
+      await withClient(async (client) => {
+        const participants = await client<
+          { id: string; status: string }[]
+        >`
+          SELECT id::text, status
+          FROM tournament_participants
+          WHERE tournament_id = '00000000-0000-4000-8000-000000000022'
+          ORDER BY id
+        `;
+        expect(participants).toEqual([
+          {
+            id: "00000000-0000-4000-8000-000000000023",
+            status: "active",
+          },
+          {
+            id: "00000000-0000-4000-8000-000000000024",
+            status: "active",
+          },
+        ]);
+      });
+      await expectLedgerCount(0);
     });
 
     it.each([
@@ -530,7 +600,7 @@ describePostgres.sequential(
       expect(retryEvidence.adoption?.actualAfterDigest).toBe(
         retryEvidence.adoption?.expectedAfterDigest,
       );
-      await expectLedgerCount(2);
+      await expectLedgerCount(4);
     });
 
     it("serializes concurrent migrators into one baseline and repeatable no-ops", async () => {
@@ -543,7 +613,7 @@ describePostgres.sequential(
       ]);
 
       expect(results.every((result) => result.status === "fulfilled")).toBe(true);
-      await expectLedgerCount(2);
+      await expectLedgerCount(4);
       await withClient(async (client) => {
         await expect(
           assertMigrationsExactlyCurrent(queryMigrations(client)),
@@ -558,7 +628,7 @@ describePostgres.sequential(
       await runPostgresMigrations(databaseUrl!, "apply", { environment });
       await runPostgresMigrations(databaseUrl!, "apply", { environment });
 
-      await expectLedgerCount(2);
+      await expectLedgerCount(4);
       await withClient(async (client) => {
         await expect(
           assertMigrationsExactlyCurrent(queryMigrations(client)),

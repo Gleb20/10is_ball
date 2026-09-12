@@ -6,7 +6,12 @@
  * Usage (API must be up):
  *   node scripts/seed-local-meme-players.mjs
  */
-const API = process.env.API_BASE ?? "http://localhost:3001";
+import { validateSeedApiBase } from "./ops-safety.mjs";
+
+const API = validateSeedApiBase(
+  process.env.API_BASE ?? "http://localhost:3001",
+  process.env.NODE_ENV,
+);
 
 const PLAYERS = [
   { email: "ivan.ivanov@tab10.local", firstName: "Иван", lastName: "Иванов" },

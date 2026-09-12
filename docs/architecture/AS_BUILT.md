@@ -1,6 +1,6 @@
 # Архитектура as-built
 
-Снимок кода на **2026-09-09**. Целевые требования находятся в
+Снимок кода на **2026-09-13**. Целевые требования находятся в
 [`../requirements/`](../requirements/); этот документ описывает то, что существует,
 включая известные ограничения.
 
@@ -88,6 +88,13 @@ Authenticated shell: `/`, `/history`, `/start`, `/admin`, `/matches`,
 `/notifications`. Judge route `/matches/:id/judge` immersive. Вне shell:
 `/login`, `/first-password`; `*` показывает Not Found.
 
+Wave A добавляет centralized runtime-401 recovery с сохранением безопасного
+внутреннего return path и незавершённого draft, bounded initial cold-start state,
+persisted onboarding, полный Home dashboard, notification lifecycle, guarded
+form submissions и общий visible-only refresh primitive. JudgePage сохраняет
+отдельный ownership heartbeat, сериализованную score queue и D33 terminal/void
+read-only behavior.
+
 ## Delivery boundary
 
 - `pnpm dev` поднимает закреплённый PostgreSQL 16.15 и запускает явную migration
@@ -106,7 +113,8 @@ Authenticated shell: `/`, `/history`, `/start`, `/admin`, `/matches`,
 - API и web — один deployable каждый; shared package компилируется отдельно.
 - PGlite не покрывает полную семантику PostgreSQL; поэтому он не является
   release gate без обязательного PostgreSQL 16.15 lane.
-- Polling реализован неравномерно, server push отсутствует.
+- Home, active lists/details используют единый visible-only 30-second refresh;
+  JudgePage сохраняет отдельный ownership heartbeat. Server push отсутствует.
 - Runtime validation is explicit for P0 match mutations but remains incomplete
   across older non-P0 routes.
 - `app.ts` объединяет routing, serialization и authorization, из-за чего легко

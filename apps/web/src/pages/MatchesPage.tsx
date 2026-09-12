@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../ui";
+import { Alert, Button } from "../ui";
 import { PageLayout } from "../layout";
-import { AsyncState, ListRow, StatusChip } from "../patterns";
+import {
+  AsyncState,
+  ListRow,
+  RefreshButton,
+  StatusChip,
+} from "../patterns";
 import { api } from "../api";
+import { useVisibleRefresh } from "../useVisibleRefresh";
 
 /** Secondary list of matches (not a primary tab). */
 export function MatchesPage() {
@@ -11,31 +17,31 @@ export function MatchesPage() {
   const [matches, setMatches] = useState<Array<Record<string, unknown>> | null>(
     null,
   );
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void api
-      .listMatches()
-      .then((res) => setMatches(res.matches))
-      .catch((e) => setError(e.message));
+  const load = useCallback(async () => {
+    const res = await api.listMatches();
+    setMatches(res.matches);
   }, []);
+  const { error, refreshing, refreshNow } = useVisibleRefresh(load);
 
   return (
     <PageLayout
       title="Матчи"
       action={
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => navigate("/matches/new")}
-        >
-          Новый
-        </Button>
+        <div className="row">
+          <RefreshButton refreshing={refreshing} onRefresh={refreshNow} />
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => navigate("/matches/new")}
+          >
+            Новый
+          </Button>
+        </div>
       }
     >
       <AsyncState
         loading={matches === null && !error}
-        error={error}
+        error={!matches ? error : null}
         empty={matches !== null && matches.length === 0}
         emptyTitle="Нет матчей"
         emptyDescription="Создайте первый матч через «Начать»."
@@ -44,6 +50,14 @@ export function MatchesPage() {
         }
       >
         <div className="stack">
+          {matches && error ? (
+            <Alert
+              type="warning"
+              variant="tonal"
+              title="Не удалось обновить"
+              description={error}
+            />
+          ) : null}
           {(matches ?? []).map((m) => (
             <ListRow
               key={String(m.id)}

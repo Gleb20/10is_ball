@@ -3,6 +3,7 @@ import { Button, TextField } from "../ui";
 import { PageLayout } from "../layout";
 import { AsyncState, ListRow } from "../patterns";
 import { api } from "../api";
+import { useSingleFlight } from "../useSingleFlight";
 
 export function TeamsPage() {
   const [teams, setTeams] = useState<Array<Record<string, unknown>> | null>(
@@ -11,6 +12,7 @@ export function TeamsPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const submission = useSingleFlight();
 
   async function load() {
     const res = await api.listTeams();
@@ -21,21 +23,26 @@ export function TeamsPage() {
     void load().catch((e) => setLoadError(e.message));
   }, []);
 
+  async function create(e: React.FormEvent) {
+    e.preventDefault();
+    await submission.run(async () => {
+      setFormError(null);
+      try {
+        await api.createTeam({ name });
+        setName("");
+        await load();
+      } catch (error) {
+        setFormError((error as Error).message);
+      }
+    });
+  }
+
   return (
     <PageLayout title="Команды">
       <form
         className="card stack"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void api
-            .createTeam({ name })
-            .then(() => {
-              setName("");
-              setFormError(null);
-              return load();
-            })
-            .catch((err) => setFormError((err as Error).message));
-        }}
+        onSubmit={create}
+        aria-label="Создание команды"
       >
         <TextField
           label="Название команды"
@@ -45,8 +52,10 @@ export function TeamsPage() {
           }
           required
         />
-        <Button type="submit">Создать</Button>
-        {formError ? <p className="error">{formError}</p> : null}
+        <Button type="submit" disabled={submission.pending}>
+          {submission.pending ? "Создание…" : "Создать"}
+        </Button>
+        {formError ? <p className="error" role="alert">{formError}</p> : null}
       </form>
 
       <AsyncState

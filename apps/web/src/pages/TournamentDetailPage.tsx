@@ -1,8 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Alert, Button, TextField } from "../ui";
 import { PageLayout } from "../layout";
-import { AsyncState, StatusChip, formatLabel } from "../patterns";
+import {
+  AsyncState,
+  RefreshButton,
+  StatusChip,
+  formatLabel,
+} from "../patterns";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { UserPicker } from "../components/UserPicker";
@@ -23,6 +28,8 @@ import {
   BRACKET_ALGORITHM_DIALOG,
 } from "../bracketAlgorithmCopy";
 import { statusLabel } from "../statusLabels";
+import { useVisibleRefresh } from "../useVisibleRefresh";
+import { useSingleFlight } from "../useSingleFlight";
 
 type Participant = {
   id: string;
@@ -53,6 +60,8 @@ type MatchRow = {
 
 export function TournamentDetailPage() {
   const { id } = useParams();
+  const currentIdRef = useRef(id);
+  currentIdRef.current = id;
   const navigate = useNavigate();
   const { user } = useAuth();
   const [tournament, setTournament] = useState<Record<string, unknown> | null>(
@@ -63,23 +72,33 @@ export function TournamentDetailPage() {
   const [pickInput, setPickInput] = useState("");
   const [inviteUserId, setInviteUserId] = useState("");
   const [inviteInput, setInviteInput] = useState("");
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionHint, setActionHint] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const { pending: busy, run: runSingleFlight } = useSingleFlight();
   const [algoDialogOpen, setAlgoDialogOpen] = useState(false);
   const [algoSelected, setAlgoSelected] =
     useState<BracketConstructionAlgorithm>("compact");
 
-  async function load() {
-    const res = await api.getTournament(id!);
-    setTournament(res.tournament);
-    setLoadError(null);
-  }
-
-  useEffect(() => {
-    void load().catch((e) => setLoadError(e.message));
+  const load = useCallback(async () => {
+    const requestedId = id;
+    if (!requestedId) return;
+    const res = await api.getTournament(requestedId);
+    if (currentIdRef.current === requestedId) setTournament(res.tournament);
   }, [id]);
+
+  const tournamentIsActive =
+    tournament === null ||
+    !["finished", "stopped", "cancelled", "dissolved"].includes(
+      String(tournament.status),
+    );
+  const {
+    error: loadError,
+    refreshing,
+    refreshNow,
+  } = useVisibleRefresh(load, {
+    pollingEnabled: tournamentIsActive,
+    refreshKey: id,
+  });
 
   const participants = (tournament?.participants as Participant[]) ?? [];
   const invitations = (tournament?.invitations as InvitationRow[]) ?? [];
@@ -210,17 +229,16 @@ export function TournamentDetailPage() {
   );
 
   async function runAction(fn: () => Promise<void>, okHint?: string) {
-    setBusy(true);
-    setActionError(null);
-    setActionHint(null);
-    try {
-      await fn();
-      if (okHint) setActionHint(okHint);
-    } catch (e) {
-      setActionError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
+    await runSingleFlight(async () => {
+      setActionError(null);
+      setActionHint(null);
+      try {
+        await fn();
+        if (okHint) setActionHint(okHint);
+      } catch (e) {
+        setActionError((e as Error).message);
+      }
+    });
   }
 
   function participantLabel(p: Participant) {
@@ -232,10 +250,26 @@ export function TournamentDetailPage() {
   }
 
   return (
-    <PageLayout title={tournament ? String(tournament.title) : "Турнир"}>
-      <AsyncState loading={!tournament && !loadError} error={loadError}>
+    <PageLayout
+      title={tournament ? String(tournament.title) : "Турнир"}
+      action={
+        <RefreshButton refreshing={refreshing} onRefresh={refreshNow} />
+      }
+    >
+      <AsyncState
+        loading={!tournament && !loadError}
+        error={!tournament ? loadError : null}
+      >
         {tournament ? (
           <div className="stack page-layout">
+            {loadError ? (
+              <Alert
+                type="warning"
+                variant="tonal"
+                title="Не удалось обновить"
+                description={loadError}
+              />
+            ) : null}
             <div className="row">
               <StatusChip
                 status={String(tournament.status)}

@@ -272,6 +272,18 @@ Errors:
 - `POST /tournaments/{tournamentId}/withdraw`
 - `POST /tournaments/{tournamentId}/stop`
 
+Tournament invitation contract аналогичен team flow: organizer-only invite,
+один pending invite и один active registered participant на пару, actor-scoped
+response и stable terminal retry. Invite/respond/direct roster add/bracket close
+сериализуются по tournament row; notification и invitation/participant state
+коммитятся вместе.
+
+`POST /tournaments/{tournamentId}/start` до materialization проверяет весь
+игровой roster, включая organizer/participant с bye. Любой зарегистрированный
+игрок в active standalone match получает HTTP 400
+`PLAYER_ALREADY_IN_ACTIVE_MATCH`; tournament status, `started_at`, bracket
+JSON/version, matches и notifications остаются без изменений.
+
 `GET /tournaments` и `GET /tournaments/{tournamentId}` используют тот же D17
 read scope. `collecting|bracket_generated|needs_regeneration|in_progress` видят
 organizer, active tournament participant и current active judge любого дочернего
@@ -286,8 +298,11 @@ Errors:
 - `BRACKET_REGEN_REQUIRED`
 - `TOURNAMENT_ALREADY_STARTED`
 - `PLAYER_ALREADY_IN_ACTIVE_MATCH`
-- `UNSUPPORTED_BRACKET_VERSION` — legacy V1 double-elimination не исполняется;
-  ответ bounded и не запускает implicit reset/migration (D25)
+- `UNSUPPORTED_BRACKET_VERSION` — HTTP 400 для legacy V1 double-elimination на
+  `POST /bracket`, `PATCH /bracket`, `POST /start` и
+  `POST /dissolve-bracket`; ответ формируется до обхода slot graph, не меняет
+  tournament/bracket/match/notification state и не запускает implicit
+  reset/migration (D25)
 - `FORBIDDEN` — actor не является organizer route tournament
 - `NOT_FOUND` — route tournament или связанный с route participant не найден
 

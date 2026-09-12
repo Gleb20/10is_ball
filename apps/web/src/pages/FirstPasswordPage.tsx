@@ -4,6 +4,7 @@ import { Button, TextField } from "../ui";
 import { AuthLayout } from "../authUi";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { useSingleFlight } from "../useSingleFlight";
 
 export function FirstPasswordPage() {
   const { user, refresh } = useAuth();
@@ -11,6 +12,7 @@ export function FirstPasswordPage() {
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const submission = useSingleFlight();
   const navigate = useNavigate();
 
   if (!user) return <Navigate to="/login" replace />;
@@ -23,15 +25,19 @@ export function FirstPasswordPage() {
       setError("Пароли не совпадают");
       return;
     }
-    try {
-      await api.firstPasswordChange(password);
-      await refresh();
-      navigate("/onboarding");
-    } catch (err) {
-      const details = (err as { details?: { errors?: string[] } }).details;
-      const extra = details?.errors?.join("; ");
-      setError(extra ? `${(err as Error).message}: ${extra}` : (err as Error).message);
-    }
+    await submission.run(async () => {
+      try {
+        await api.firstPasswordChange(password);
+        await refresh();
+        navigate("/onboarding");
+      } catch (err) {
+        const details = (err as { details?: { errors?: string[] } }).details;
+        const extra = details?.errors?.join("; ");
+        setError(
+          extra ? `${(err as Error).message}: ${extra}` : (err as Error).message,
+        );
+      }
+    });
   }
 
   return (
@@ -81,8 +87,15 @@ export function FirstPasswordPage() {
           </p>
         )}
         <div className="stack stack--actions">
-          <Button type="submit">Сохранить</Button>
-          <Button type="button" variant="secondary" onClick={() => navigate("/login")}>
+          <Button type="submit" disabled={submission.pending}>
+            {submission.pending ? "Сохранение…" : "Сохранить"}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={submission.pending}
+            onClick={() => navigate("/login")}
+          >
             Выйти
           </Button>
         </div>

@@ -7,6 +7,7 @@ import { initialsFromName } from "../rankingUi";
 import { avatarSrc } from "../avatarSrc";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { useSingleFlight } from "../useSingleFlight";
 
 export function ProfilePage() {
   const { user, setUser } = useAuth();
@@ -16,6 +17,20 @@ export function ProfilePage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const onboardingRestart = useSingleFlight();
+
+  function restartOnboarding() {
+    void onboardingRestart.run(async () => {
+      setError(null);
+      try {
+        const result = await api.restartOnboarding();
+        setUser(result.user);
+        navigate("/onboarding");
+      } catch (restartError) {
+        setError((restartError as Error).message);
+      }
+    });
+  }
 
   useEffect(() => {
     void api
@@ -81,9 +96,13 @@ export function ProfilePage() {
         />
         <ListRow to="/help" title="Помощь" subtitle="FAQ и обратная связь" />
         <ListRow
-          to="/onboarding"
-          title="Онбординг"
-          subtitle="Учебный матч с Призрачным Олегом"
+          onClick={restartOnboarding}
+          title={
+            onboardingRestart.pending
+              ? "Запускаем онбординг…"
+              : "Пройти онбординг заново"
+          }
+          subtitle="Начать с первого шага и при желании сыграть учебный матч"
         />
         {user?.role === "admin" ? (
           <ListRow

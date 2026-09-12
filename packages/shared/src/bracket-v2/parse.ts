@@ -16,11 +16,21 @@ export function parseBracketJson(raw: unknown): ParseResult {
   const obj = raw as Record<string, unknown>;
   if (!("schemaVersion" in obj)) {
     // Legacy slot graph
-    if (Array.isArray(obj.slots)) return { kind: "v1", raw };
+    if (Array.isArray(obj.slots)) {
+      if (obj.format === "double_elimination") {
+        return { kind: "unsupported", schemaVersion: 1 };
+      }
+      return { kind: "v1", raw };
+    }
     return { kind: "corrupt", message: "no schemaVersion and no slots" };
   }
   const v = obj.schemaVersion;
-  if (v === 1) return { kind: "v1", raw };
+  if (v === 1) {
+    if (obj.format === "double_elimination") {
+      return { kind: "unsupported", schemaVersion: 1 };
+    }
+    return { kind: "v1", raw };
+  }
   if (v === 2) {
     if (!Array.isArray(obj.matches) || !Array.isArray(obj.seedOrder)) {
       return { kind: "corrupt", message: "v2 missing matches/seedOrder" };

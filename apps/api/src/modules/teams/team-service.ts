@@ -1,7 +1,6 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, lte } from "drizzle-orm";
 import {
   TEAM_INVITATION_TTL_MS,
-  isInvitationExpired,
   selectNewCaptain,
 } from "@tab10/shared";
 import type { Clock } from "@tab10/test-utils";
@@ -13,6 +12,7 @@ import {
   teams,
   users,
 } from "../../db/schema.js";
+import { markInvitationNotificationsRead } from "../notifications/notification-service.js";
 
 function slugify(name: string): string {
   return (
@@ -75,30 +75,81 @@ export class TeamService {
     invitedUserId: string;
     invitedByUserId: string;
   }) {
-    const team = await this.get(input.teamId);
-    if (!team) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
-    if (team.captainUserId !== input.invitedByUserId) {
-      throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
-    }
-    const now = this.clock.now();
-    const [inv] = await this.db
-      .insert(teamInvitations)
-      .values({
-        teamId: input.teamId,
-        invitedUserId: input.invitedUserId,
-        invitedByUserId: input.invitedByUserId,
-        expiresAt: new Date(now.getTime() + TEAM_INVITATION_TTL_MS),
-        status: "pending",
-      })
-      .returning();
-    await this.db.insert(notifications).values({
-      userId: input.invitedUserId,
-      type: "team_invitation",
-      title: "Приглашение в команду",
-      body: `Вас пригласили в команду «${team.name}»`,
-      payload: { invitationId: inv!.id, teamId: team.id },
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      const [team] = await db
+        .select()
+        .from(teams)
+        .where(eq(teams.id, input.teamId))
+        .for("update");
+      if (!team) {
+        throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+      }
+      if (team.captainUserId !== input.invitedByUserId) {
+        throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+      }
+
+      const activeMembership = await db.query.teamMemberships.findFirst({
+        where: and(
+          eq(teamMemberships.teamId, input.teamId),
+          eq(teamMemberships.userId, input.invitedUserId),
+          isNull(teamMemberships.leftAt),
+        ),
+      });
+      if (activeMembership) {
+        throw Object.assign(new Error("ALREADY_IN_TEAM"), {
+          code: "ALREADY_IN_TEAM",
+        });
+      }
+
+      const now = this.clock.now();
+      const expired = await db
+        .update(teamInvitations)
+        .set({ status: "expired", respondedAt: now })
+        .where(
+          and(
+            eq(teamInvitations.teamId, input.teamId),
+            eq(teamInvitations.invitedUserId, input.invitedUserId),
+            eq(teamInvitations.status, "pending"),
+            lte(teamInvitations.expiresAt, now),
+          ),
+        )
+        .returning({ id: teamInvitations.id });
+      await markInvitationNotificationsRead(db, {
+        userId: input.invitedUserId,
+        type: "team_invitation",
+        invitationIds: expired.map((invite) => invite.id),
+        readAt: now,
+      });
+
+      const existing = await db.query.teamInvitations.findFirst({
+        where: and(
+          eq(teamInvitations.teamId, input.teamId),
+          eq(teamInvitations.invitedUserId, input.invitedUserId),
+          eq(teamInvitations.status, "pending"),
+        ),
+      });
+      if (existing) return existing;
+
+      const [invitation] = await db
+        .insert(teamInvitations)
+        .values({
+          teamId: input.teamId,
+          invitedUserId: input.invitedUserId,
+          invitedByUserId: input.invitedByUserId,
+          expiresAt: new Date(now.getTime() + TEAM_INVITATION_TTL_MS),
+          status: "pending",
+        })
+        .returning();
+      await db.insert(notifications).values({
+        userId: input.invitedUserId,
+        type: "team_invitation",
+        title: "Приглашение в команду",
+        body: `Вас пригласили в команду «${team.name}»`,
+        payload: { invitationId: invitation!.id, teamId: team.id },
+      });
+      return invitation;
     });
-    return inv;
   }
 
   async respondInvitation(input: {
@@ -106,36 +157,95 @@ export class TeamService {
     userId: string;
     accept: boolean;
   }) {
-    const inv = await this.db.query.teamInvitations.findFirst({
+    const invitation = await this.db.query.teamInvitations.findFirst({
       where: eq(teamInvitations.id, input.invitationId),
     });
-    if (!inv || inv.invitedUserId !== input.userId) {
+    if (!invitation || invitation.invitedUserId !== input.userId) {
       throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
     }
-    const now = this.clock.now().getTime();
-    if (
-      inv.status !== "pending" ||
-      isInvitationExpired(inv.createdAt.getTime(), now)
-    ) {
-      await this.db
+
+    const outcome = await this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await db
+        .select({ id: teams.id })
+        .from(teams)
+        .where(eq(teams.id, invitation.teamId))
+        .for("update");
+      const [inv] = await db
+        .select()
+        .from(teamInvitations)
+        .where(eq(teamInvitations.id, input.invitationId))
+        .for("update");
+      if (!inv || inv.invitedUserId !== input.userId) {
+        throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+      }
+      if (inv.status === "accepted" || inv.status === "declined") {
+        return { kind: "responded" as const, status: inv.status };
+      }
+      const now = this.clock.now();
+      if (
+        inv.status === "expired" ||
+        inv.status === "cancelled" ||
+        inv.expiresAt.getTime() <= now.getTime()
+      ) {
+        if (inv.status === "pending") {
+          await db
+            .update(teamInvitations)
+            .set({ status: "expired", respondedAt: now })
+            .where(
+              and(
+                eq(teamInvitations.id, inv.id),
+                eq(teamInvitations.status, "pending"),
+              ),
+            );
+        }
+        await markInvitationNotificationsRead(db, {
+          userId: input.userId,
+          type: "team_invitation",
+          invitationIds: [inv.id],
+          readAt: now,
+        });
+        return { kind: "expired" as const };
+      }
+
+      const status = input.accept ? "accepted" : "declined";
+      await db
         .update(teamInvitations)
-        .set({ status: "expired" })
-        .where(eq(teamInvitations.id, inv.id));
+        .set({ status, respondedAt: now })
+        .where(
+          and(
+            eq(teamInvitations.id, inv.id),
+            eq(teamInvitations.status, "pending"),
+          ),
+        );
+      if (input.accept) {
+        const activeMembership = await db.query.teamMemberships.findFirst({
+          where: and(
+            eq(teamMemberships.teamId, inv.teamId),
+            eq(teamMemberships.userId, input.userId),
+            isNull(teamMemberships.leftAt),
+          ),
+        });
+        if (!activeMembership) {
+          await db.insert(teamMemberships).values({
+            teamId: inv.teamId,
+            userId: input.userId,
+            joinedAt: now,
+          });
+        }
+      }
+      await markInvitationNotificationsRead(db, {
+        userId: input.userId,
+        type: "team_invitation",
+        invitationIds: [inv.id],
+        readAt: now,
+      });
+      return { kind: "responded" as const, status };
+    });
+    if (outcome.kind === "expired") {
       throw Object.assign(new Error("EXPIRED"), { code: "EXPIRED" });
     }
-    const status = input.accept ? "accepted" : "declined";
-    await this.db
-      .update(teamInvitations)
-      .set({ status, respondedAt: this.clock.now() })
-      .where(eq(teamInvitations.id, inv.id));
-    if (input.accept) {
-      await this.db.insert(teamMemberships).values({
-        teamId: inv.teamId,
-        userId: input.userId,
-        joinedAt: this.clock.now(),
-      });
-    }
-    return { status };
+    return { status: outcome.status };
   }
 
   async transferCaptainOnBlock(blockedUserId: string) {

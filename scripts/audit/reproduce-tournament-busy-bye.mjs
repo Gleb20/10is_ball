@@ -6,7 +6,7 @@ import path from "node:path";
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const API_ROOT = path.join(ROOT, "apps/api");
 const TEST_TITLE =
-  "BUG-015 characterization: busy organizer with a bye incorrectly starts tournament";
+  "AT-TRN-020/BUG-015: busy organizer with a bye cannot start and tournament state is unchanged";
 const result = spawnSync(
   process.execPath,
   [
@@ -14,7 +14,7 @@ const result = spawnSync(
     "run",
     "src/domain.integration.test.ts",
     "-t",
-    "BUG-015 characterization",
+    TEST_TITLE,
     "--reporter=json",
   ],
   {
@@ -36,22 +36,22 @@ const assertions =
 const matchingAssertion = assertions.find(
   (assertion) => assertion.title === TEST_TITLE,
 );
-const reproduced =
+const verified =
   result.status === 0 &&
   report?.success === true &&
   report?.numPassedTests === 1 &&
   matchingAssertion?.status === "passed";
 
-if (reproduced) {
+if (verified) {
   console.log(
-    "Reproduced deterministic busy-player/bye defect with the audit bye seed.",
+    "Verified the deterministic busy-player/bye tournament-start regression.",
   );
   console.log(
-    "The tournament incorrectly starts because the busy organizer receives a bye.",
+    "The busy organizer receives a bye, start is rejected, and tournament state is unchanged.",
   );
 } else {
   console.error(
-    "Known defect characterization did not pass. Inspect BUG-015 and update its backlog status.",
+    "BUG-015 regression verification did not pass. Inspect the tournament-start guard.",
   );
   console.error(`Focused test exit status: ${result.status}`);
   const summary = output.trim().slice(-2500);

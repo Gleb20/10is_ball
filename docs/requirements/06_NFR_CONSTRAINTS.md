@@ -95,6 +95,14 @@ production-grade backup принято как временный риск и н�
 До переноса реальных данных на VPS обязательны согласованные RPO/RTO, независимые
 backup copies и доказанный restore; Q-OPS-003 остаётся открытым.
 
+Любой rehearsal по умолчанию fail-closed: source разрешён только на loopback и
+только для явно test/local/dev-named database, restore database имеет отдельный
+bounded allowlist имени и должна отсутствовать до запуска. Destructive DDL
+использует quoted identifier через `psql` stdin. Временный dump создаётся через
+unique system temp и удаляется trap-ом. Local demo seed запрещён при
+`NODE_ENV=production` и для non-loopback API origin. Эти safeguards не
+подтверждают RPO/RTO или production backup policy — они остаются Q-OPS-003.
+
 ## 8. Наблюдаемость
 
 Минимум:

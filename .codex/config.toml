@@ -1,0 +1,10 @@
+# Project defaults; explicit user/session selections take precedence.
+model = "gpt-6-astra"
+model_reasoning_effort = "high"
+
+[agents]
+# Three children plus the primary. The live runtime can impose a lower cap.
+max_concurrent_threads_per_session = 3
+# Unclassified implementation must not silently fall back to the explorer model.
+default_subagent_model = "gpt-5.6-sol"
+default_subagent_reasoning_effort = "medium"

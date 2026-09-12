@@ -1,7 +1,7 @@
 # API as-built
 
 Снимок регистрации Fastify routes в
-[`../../apps/api/src/app.ts`](../../apps/api/src/app.ts) на **2026-09-09**.
+[`../../apps/api/src/app.ts`](../../apps/api/src/app.ts) на **2026-09-13**.
 Это inventory, а не обещание корректности или полноты. Все `/api/v1/*`, кроме
 login/OpenAPI, требуют session; state-changing routes вне test требуют CSRF.
 
@@ -20,7 +20,7 @@ login/OpenAPI, требуют session; state-changing routes вне test тре�
 | GET | `/api/v1/auth/sessions` |
 | DELETE | `/api/v1/auth/sessions/:sessionId` |
 
-## Admin и profile (9)
+## Admin и profile (10)
 
 | Method | Path |
 |---|---|
@@ -32,6 +32,7 @@ login/OpenAPI, требуют session; state-changing routes вне test тре�
 | POST | `/api/v1/admin/matches/:matchId/force-close` |
 | DELETE | `/api/v1/admin/matches/:matchId` |
 | PATCH | `/api/v1/me/profile` |
+| PATCH | `/api/v1/me/onboarding` |
 
 Admin match hard delete ограничен non-terminal standalone rows; finished,
 stopped и voided sporting results не удаляются (`DATA-005/007`).
@@ -86,7 +87,7 @@ matched router path.
 | POST | `/api/v1/tournaments/:id/start` |
 | POST | `/api/v1/tournaments/:id/stop` |
 
-## Teams, notifications, help (8)
+## Teams, notifications, help (9)
 
 | Method | Path |
 |---|---|
@@ -95,11 +96,12 @@ matched router path.
 | POST | `/api/v1/team-invitations/:id/respond` |
 | GET | `/api/v1/notifications` |
 | POST | `/api/v1/notifications/:id/read` |
+| POST | `/api/v1/notifications/read-visible` |
 | GET | `/api/v1/faq` |
 | POST | `/api/v1/feedback` |
 
-Итого: **62 registered operations / 56 unique paths**. Встроенный OpenAPI описывает
-**17 operations / 14 paths** (27.4% operations). Машинный снимок:
+Итого: **64 registered operations / 58 unique paths**. Встроенный OpenAPI описывает
+**64 operations / 58 paths** (100%). Машинный снимок обновляет родитель интеграции:
 [`../audit/evidence/route-openapi-inventory.json`](../audit/evidence/route-openapi-inventory.json).
 
 ## Contract drift
@@ -108,8 +110,19 @@ matched router path.
   `/ready`; production останется историческим `0.1.0`, пока PR1 не выпущен.
 - [`../requirements/08_API_SPEC.md`](../requirements/08_API_SPEC.md) — целевой,
   частично устаревший контракт.
-- OpenAPI остаётся неполным inventory; runtime schemas и actor checks покрывают
-  P0 match/tournament mutations, но не все исторические routes.
+- Route/OpenAPI inventory 2026-09-13 совпадает 64/64 operations и 58/58 paths;
+  runtime schema/actor coverage по отдельным историческим routes остаётся
+  самостоятельным acceptance вопросом.
+
+## Wave A contracts
+
+- `GET /api/v1/home?period=all_time|month` возвращает typed dashboard aggregate.
+- `PATCH /api/v1/me/onboarding` принимает `set-step`, explicit `complete` или
+  `restart` и возвращает безопасную user projection.
+- `POST /api/v1/notifications/read-visible` атомарно отмечает переданные owner
+  notification IDs и возвращает authoritative `readAt`.
+- Tournament invite/respond/roster transitions сериализуются по tournament row;
+  start проверяет весь roster, включая bye, до первой записи.
 
 Match/tournament list/detail применяют actor-scoped active-event visibility;
 terminal events club-visible active users. Start, direct roster/bracket,

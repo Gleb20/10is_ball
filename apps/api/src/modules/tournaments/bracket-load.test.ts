@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { generateSingleEliminationV2 } from "@tab10/shared";
+import {
+  generateDoubleEliminationV2,
+  generateSingleEliminationV2,
+} from "@tab10/shared";
 import {
   loadTournamentBracket,
   swapSeedOrderByMatchIds,
@@ -14,7 +17,20 @@ describe("bracket-load", () => {
       expect.objectContaining({ code: "BRACKET_CORRUPT" }),
     );
     expect(() => loadTournamentBracket({ schemaVersion: 9 })).toThrow(
-      expect.objectContaining({ code: "BRACKET_UNSUPPORTED" }),
+      expect.objectContaining({ code: "UNSUPPORTED_BRACKET_VERSION" }),
+    );
+    expect(() =>
+      loadTournamentBracket({
+        schemaVersion: 1,
+        size: 5,
+        slots: [],
+        format: "double_elimination",
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: "UNSUPPORTED_BRACKET_VERSION",
+        schemaVersion: 1,
+      }),
     );
     const v1 = loadTournamentBracket({
       size: 4,
@@ -30,6 +46,13 @@ describe("bracket-load", () => {
     expect(v2.kind).toBe("v2");
     if (v2.kind === "v2") {
       expect(v2.graph.constructionAlgorithm).toBe("power_of_two");
+    }
+    const v2DoubleElimination = loadTournamentBracket(
+      generateDoubleEliminationV2({ seedOrder: ["a", "b", "c", "d"] }),
+    );
+    expect(v2DoubleElimination.kind).toBe("v2");
+    if (v2DoubleElimination.kind === "v2") {
+      expect(v2DoubleElimination.graph.format).toBe("double_elimination");
     }
   });
 

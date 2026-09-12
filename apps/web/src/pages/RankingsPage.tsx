@@ -6,6 +6,7 @@ import { AsyncState, FilterBar, ListRow } from "../patterns";
 import { initialsFromName, splitPodium } from "../rankingUi";
 import { avatarSrc } from "../avatarSrc";
 import { api } from "../api";
+import { useAuth } from "../auth";
 
 type RankingRow = {
   userId: string;
@@ -15,6 +16,7 @@ type RankingRow = {
 };
 
 export function RankingsPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [period, setPeriod] = useState<"all_time" | "week" | "month">(
     "all_time",
@@ -78,17 +80,19 @@ export function RankingsPage() {
                       />
                       <strong className="podium__name">{r.displayName}</strong>
                       <span className="muted">{r.wins} побед</span>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          navigate(
-                            `/matches/new?opponentId=${encodeURIComponent(r.userId)}&opponentName=${encodeURIComponent(r.displayName)}`,
-                          )
-                        }
-                      >
-                        Вызов
-                      </Button>
+                      {user && r.userId !== user.id ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() =>
+                            navigate(
+                              `/matches/new?opponentId=${encodeURIComponent(r.userId)}&opponentName=${encodeURIComponent(r.displayName)}`,
+                            )
+                          }
+                        >
+                          Вызов
+                        </Button>
+                      ) : null}
                     </div>
                   );
                 })}

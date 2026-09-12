@@ -6,8 +6,15 @@ import { AsyncState, StatusChip } from "../patterns";
 import { TempPasswordPanel } from "../authUi";
 import { api, type User } from "../api";
 import { useAuth } from "../auth";
+import { useSingleFlight } from "../useSingleFlight";
 
-type ConfirmKind = "block" | "reset" | "promote" | "demote" | null;
+type ConfirmKind =
+  | "block"
+  | "unblock"
+  | "reset"
+  | "promote"
+  | "demote"
+  | null;
 
 export function AdminPage() {
   const { user } = useAuth();
@@ -22,7 +29,8 @@ export function AdminPage() {
     kind: ConfirmKind;
     target: User | null;
   }>({ kind: null, target: null });
-  const [busy, setBusy] = useState(false);
+  const createSubmission = useSingleFlight();
+  const confirmSubmission = useSingleFlight();
 
   async function load() {
     const res = await api.listUsers();
@@ -37,51 +45,57 @@ export function AdminPage() {
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    try {
-      const res = await api.createUser({ email, firstName, lastName, role });
-      setTempPassword(res.temporaryPassword);
-      setEmail("");
-      setFirstName("");
-      setLastName("");
-      setRole("user");
-      await load();
-    } catch (err) {
-      setError((err as Error).message);
-    }
+    await createSubmission.run(async () => {
+      setError(null);
+      try {
+        const res = await api.createUser({ email, firstName, lastName, role });
+        setTempPassword(res.temporaryPassword);
+        setEmail("");
+        setFirstName("");
+        setLastName("");
+        setRole("user");
+        await load();
+      } catch (err) {
+        setError((err as Error).message);
+      }
+    });
   }
 
   async function runConfirm() {
     const target = confirm.target;
     const kind = confirm.kind;
     if (!target || !kind) return;
-    setBusy(true);
-    setError(null);
-    try {
-      if (kind === "block") {
-        await api.blockUser(target.id);
-        await load();
-      } else if (kind === "reset") {
-        const r = await api.resetPassword(target.id);
-        setTempPassword(r.temporaryPassword);
-      } else if (kind === "promote") {
-        await api.updateUserRole(target.id, "admin");
-        await load();
-      } else if (kind === "demote") {
-        await api.updateUserRole(target.id, "user");
-        await load();
+    await confirmSubmission.run(async () => {
+      setError(null);
+      try {
+        if (kind === "block") {
+          await api.blockUser(target.id);
+          await load();
+        } else if (kind === "unblock") {
+          await api.unblockUser(target.id);
+          await load();
+        } else if (kind === "reset") {
+          const r = await api.resetPassword(target.id);
+          setTempPassword(r.temporaryPassword);
+        } else if (kind === "promote") {
+          await api.updateUserRole(target.id, "admin");
+          await load();
+        } else if (kind === "demote") {
+          await api.updateUserRole(target.id, "user");
+          await load();
+        }
+        setConfirm({ kind: null, target: null });
+      } catch (err) {
+        setError((err as Error).message);
       }
-      setConfirm({ kind: null, target: null });
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
   const confirmTitle =
     confirm.kind === "block"
       ? "Заблокировать пользователя?"
+      : confirm.kind === "unblock"
+        ? "Разблокировать пользователя?"
       : confirm.kind === "reset"
         ? "Сбросить пароль?"
         : confirm.kind === "promote"
@@ -92,6 +106,8 @@ export function AdminPage() {
   const confirmBody =
     confirm.kind === "block"
       ? `Сессии ${confirm.target?.email ?? ""} будут отозваны. Продолжить?`
+      : confirm.kind === "unblock"
+        ? `${confirm.target?.email ?? ""} снова сможет войти и участвовать в новых событиях. Ранее отозванные сессии останутся недействительными.`
       : confirm.kind === "reset"
         ? `Будет выдан новый временный пароль для ${confirm.target?.email ?? ""}.`
         : confirm.kind === "promote" || confirm.kind === "demote"
@@ -143,7 +159,9 @@ export function AdminPage() {
             <option value="admin">Админ (admin)</option>
           </select>
         </label>
-        <Button type="submit">Создать</Button>
+        <Button type="submit" disabled={createSubmission.pending}>
+          {createSubmission.pending ? "Создание…" : "Создать"}
+        </Button>
         {error && (
           <Alert
             type="error"
@@ -164,6 +182,7 @@ export function AdminPage() {
         <div className="stack">
           {(users ?? []).map((u) => {
             const isSelf = u.id === user?.id;
+            const isBlocked = u.status === "blocked";
             return (
               <div
                 key={u.id}
@@ -179,7 +198,7 @@ export function AdminPage() {
                   </span>
                 </div>
                 <StatusChip
-                  status={(u as User & { status?: string }).status ?? "active"}
+                  status={u.status ?? "active"}
                   domain="user"
                 />
                 <div className="row">
@@ -203,13 +222,25 @@ export function AdminPage() {
                       Снять админа
                     </Button>
                   ) : null}
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => setConfirm({ kind: "block", target: u })}
-                  >
-                    Блок
-                  </Button>
+                  {isBlocked ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() =>
+                        setConfirm({ kind: "unblock", target: u })
+                      }
+                    >
+                      Разблокировать
+                    </Button>
+                  ) : !isSelf ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setConfirm({ kind: "block", target: u })}
+                    >
+                      Блок
+                    </Button>
+                  ) : null}
                   <Button
                     size="sm"
                     variant="secondary"
@@ -226,12 +257,16 @@ export function AdminPage() {
 
       <Dialog
         open={confirm.kind !== null}
-        onClose={() => !busy && setConfirm({ kind: null, target: null })}
+        onClose={() =>
+          !confirmSubmission.pending && setConfirm({ kind: null, target: null })
+        }
         title={confirmTitle}
         width="sm"
         secondaryButtonLabel="Отмена"
-        onSecondaryButton={() => setConfirm({ kind: null, target: null })}
-        mainButtonLabel={busy ? "…" : "Подтвердить"}
+        onSecondaryButton={() =>
+          !confirmSubmission.pending && setConfirm({ kind: null, target: null })
+        }
+        mainButtonLabel={confirmSubmission.pending ? "…" : "Подтвердить"}
         onMainButton={() => void runConfirm()}
       >
         <p>{confirmBody}</p>

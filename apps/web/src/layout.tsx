@@ -1,5 +1,10 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Icon } from "./ui";
+import { Alert, Icon } from "./ui";
+
+export type JudgeExitNotice = {
+  kind: "success" | "warning";
+  message: string;
+};
 
 const TABS = [
   { to: "/", end: true, label: "Главная", icon: "Design/Layout" },
@@ -80,6 +85,9 @@ export function AppShell({
 }) {
   const location = useLocation();
   const immersive = /\/matches\/[^/]+\/judge$/.test(location.pathname);
+  const judgeExitNotice = (
+    location.state as { judgeExitNotice?: JudgeExitNotice } | null
+  )?.judgeExitNotice;
 
   return (
     <div
@@ -99,6 +107,18 @@ export function AppShell({
           showNav ? "app-main" : "app-main app-main--no-nav"
         }
       >
+        {judgeExitNotice && !immersive ? (
+          <Alert
+            type={judgeExitNotice.kind === "success" ? "success" : "warning"}
+            variant="tonal"
+            title={
+              judgeExitNotice.kind === "success"
+                ? "Судейство завершено"
+                : "Проверьте слот судьи"
+            }
+            description={judgeExitNotice.message}
+          />
+        ) : null}
         {children}
       </main>
       {showNav ? <BottomNav /> : null}

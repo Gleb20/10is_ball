@@ -1,8 +1,8 @@
 import { and, desc, eq, gt, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import {
   buildRanking,
-  calendarMonthStartUTC,
-  calendarWeekStartUTC,
+  calendarMonthStartMoscow,
+  calendarWeekStartMoscow,
   createInitialScoreState,
   randomAvatarKey,
   reduceMatchEvent,
@@ -1282,8 +1282,8 @@ export class MatchService {
 
     const rangeStart =
       scope === "week"
-        ? calendarWeekStartUTC(now)
-        : calendarMonthStartUTC(now);
+        ? calendarWeekStartMoscow(now)
+        : calendarMonthStartMoscow(now);
     const finished = await this.db.query.matches.findMany({
       where: and(
         inArray(matches.status, ["finished", "stopped"]),

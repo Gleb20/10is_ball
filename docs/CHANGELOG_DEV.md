@@ -3,6 +3,46 @@
 Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
 записи сохраняются как история и могут быть помечены `superseded` новой записью.
 
+## 2026-09-13 — Wave A rendered recovery check
+
+- Full aggregate candidate gate passed 965/965 with no failures/skips/todo;
+  rendered review then found a stale unauthorized alert after successful login.
+- Auth recovery regression made Red (1 failed, 2 passed); MatchCreatePage now
+  leaves 401 feedback to global recovery while retaining ordinary error messages.
+  Focused auth-recovery/MatchCreatePage Green: 6/6. Browser regression added;
+  final aggregate rerun 965/965 passed. No mutation replay or draft clearing introduced.
+- Original source snapshot checked: 186 files unchanged. Scoped staged patch
+  reverse-apply check passed, without applying any rollback.
+
+## 2026-09-13 — Wave A review corrections
+
+- Детерминированно воспроизведены и исправлены три interleaving ошибки:
+  запоздалый 401 старой сессии после нового входа, выход из открытого judge menu
+  до отправки всей очереди очков, heartbeat 409 с последующим terminal refresh.
+- Fresh web evidence: focused 23/23, full 128/128, typecheck passed.
+  Итоговый browser/integration gate пока выполняется.
+- OpenAPI default version читает корневой package.json; тесты release metadata
+  больше не привязаны к прошлому релизу. API contract/metadata 9/9 и release
+  tooling 13/13 passed на кандидате 1.11.0.
+- DATA-004 migration guard запрещает reconciliation дубликатов в турнире с
+  bracket/progress; PGlite и PostgreSQL regression включены в обязательные lanes.
+  Предыдущий PostgreSQL run: 40/40, без skips. Cleanup harness устраняет только
+  свой stale ready marker перед новым дочерним процессом.
+
+## 2026-09-13 — Wave A web integration in progress
+
+- Интегрирован frozen root UI delta для `BUG-004..016`, `GAP-001` и `OPS-005`
+  поверх опубликованного `ecf7605`, без изменения D33 tournament-void policy.
+- Runtime auth recovery, bounded cold-start UX, judge release/lost-lock handling,
+  visible-only refresh, action single-flight, onboarding resume, notification
+  lifecycle, full Home composition and Moscow default titles объединены с
+  released score queue/void UI.
+- Fresh evidence: `pnpm --filter @tab10/web typecheck` green; focused Wave A
+  component tests 59/59; full web suite 125/125; `git diff --check` clean.
+- Статус остаётся `in_progress`: общий API/PostgreSQL/CI и browser desktop/390
+  acceptance выполняются после завершения интеграции. Исторические frozen
+  результаты 2026-09-07 не переименованы в fresh current evidence.
+
 ## 2026-09-09 — Единый P0 release candidate для direct-main выпуска
 
 - SEC-003/005: temporary-password gate разрешает только точные method/route пары;

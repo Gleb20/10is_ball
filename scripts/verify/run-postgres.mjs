@@ -61,6 +61,7 @@ try {
         "--no-file-parallelism",
         "src/db/migrations.postgres.integration.test.ts",
         "src/postgres-date.integration.test.ts",
+        "src/data-004.postgres.integration.test.ts",
         "--reporter=json",
         `--outputFile=${report}`,
       ],
@@ -105,6 +106,7 @@ await writeJson(path.join(evidenceDir, "postgres-summary.json"), {
   suites: [
     "apps/api/src/db/migrations.postgres.integration.test.ts",
     "apps/api/src/postgres-date.integration.test.ts",
+    "apps/api/src/data-004.postgres.integration.test.ts",
   ],
   migrations:
     "fresh and adopted baselines, exact local role initializer, migration rollback/concurrency, idempotent compiled entrypoint, and runtime-role probes",

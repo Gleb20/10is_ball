@@ -34,6 +34,29 @@ Blocked user не входит, а его активные сессии пере
 ### AT-AUTH-008 Последний admin
 Нельзя заблокировать или понизить последнего активного администратора.
 
+### AT-AUTH-009 Runtime отзыв/истечение сессии
+**Given** активный пользователь находится на защищённом route и заполнил форму без
+отправки
+
+**When** защищённый API отвечает `401` из-за истёкшей или отозванной сессии
+
+**Then** общий клиент ровно один раз инвалидирует локальный auth state, не создаёт
+request/reload loop, показывает сфокусированный экран входа на том же безопасном
+внутреннем return path и не повторяет автоматически отклонённую мутацию. После
+успешного входа исходный route и безопасный незавершённый черновик восстановлены;
+внешний или protocol-relative return target заменяется на `/`.
+
+### AT-AUTH-010 Ограничение неуспешных входов
+**Given** один process-local limiter и управляемые часы
+
+**When** один ключ `нормализованный email + IP` выполняет входы
+
+**Then** успешные входы не расходуют failure budget; первые 10 неуспешных
+попыток в фиксированном 15-минутном окне проверяются и возвращают обычную auth
+ошибку, следующая получает HTTP 429 `RATE_LIMITED`, а ровно на границе expiry
+новое окно допускает проверку. Истёкшие ключи удаляются при следующей попытке,
+live map не превышает 10 000 fixed-size fingerprint keys.
+
 ## ADMIN
 
 ### AT-ADM-001 Создание
@@ -50,6 +73,19 @@ User получает 403 на все admin endpoints.
 
 ### AT-ADM-005 Историческая сохранность
 Blocked user остаётся в завершённых матчах, но не появляется в новом participant picker.
+
+### AT-ADM-006 Безопасная блокировка и разблокировка
+**Given** active admin видит active и blocked пользователей.
+
+**When** он блокирует другого active пользователя или разблокирует blocked
+пользователя после явного подтверждения.
+
+**Then** UI показывает только допустимое для текущего статуса действие; block
+отзывает все сессии target, unblock возвращает возможность нового входа, но не
+восстанавливает ранее отозванные сессии; оба перехода фиксируются в audit.
+Self-block скрыт и прямой запрос получает `403 SELF_BLOCK_FORBIDDEN`; попытка
+заблокировать последнего active admin получает `409 LAST_ADMIN`; active non-admin
+получает `403` на block и unblock.
 
 ### AT-ADM-MATCH-001 Non-admin
 Non-admin получает 403 на admin force-close/purge endpoint. Creator с ролью
@@ -176,6 +212,12 @@ Injected failure после terminal match write, stats или judge release о�
 не дублирует wins/losses, bracket materialization или notifications. Manual stop
 использует ту же transactional terminal-write boundary.
 
+### AT-MATCH-015 Moscow default title
+При одном фиксированном UTC instant форма создания матча строит одинаковое
+`Матч {дата и время}` в `Europe/Moscow` при timezone клиента `UTC`,
+`America/Los_Angeles` и `Asia/Tokyo`. Редактируемый title payload не меняет
+контракт абсолютных UTC timestamps.
+
 ### AT-MATCH-VOID-001 No hard delete
 После void finished standalone match исходный результат и event/audit facts остаются,
 физическое удаление недоступно, а повторный void идемпотентен.
@@ -218,6 +260,28 @@ audit row. `bracket_json`, `bracket_state_version`, downstream rows/results/stat
 
 ### AT-JUDGE-006 Unauthorized score
 Пользователь без активной judge session не может начислить очко.
+
+### AT-JUDGE-007 Rapid score intent queue
+Два быстрых намеренных нажатия `+1` до ответа первого request создают два разных
+idempotency key, но только один in-flight request. Второй request начинается после
+authoritative response первого с его новой version; итоговый счёт увеличивается
+ровно на два. Pending queue видима, Undo недоступен до drain. `VERSION_CONFLICT`
+останавливает очередь, обновляет authoritative счёт и показывает явное stale
+сообщение без silent loss.
+
+### AT-JUDGE-008 Explicit exit release
+Back, setup Cancel и явный exit ожидают один release до навигации. Успех и
+best-effort failure видимы на destination; после успешного release другой судья
+может захватить слот без потери счёта. Обычный unmount не отправляет release и
+оставляет crash fallback за TTL.
+
+### AT-JUDGE-009 Lost lock and visible live sync
+Visible setup/scoring выполняет heartbeat + authoritative refresh одним
+30-секундным циклом. Hidden-состояние не имеет такого timer; visible resume
+делает один immediate sync и создаёт один timer, который очищается при unmount.
+Heartbeat `401/403/409` или lost-session code немедленно очищает point queue,
+скрывает score/Undo/confirm/stop, показывает lost-lock и синхронизирует матч.
+Внешний terminal status становится read-only без reload.
 
 ## TOURNAMENT
 
@@ -265,9 +329,52 @@ audit row. `bracket_json`, `bracket_state_version`, downstream rows/results/stat
 
 ### AT-TRN-015 Legacy V1 DE fails closed
 Legacy schemaVersion 1 double-elimination input завершается bounded ошибкой
-`UNSUPPORTED_BRACKET_VERSION`: не запускает игровой цикл, не зависает, не меняет
-сетку и не инициирует migration/reset/recreate. V2 SE/DE lifecycle продолжает
-работать; V1 SE не изменяется этим сценарием.
+`UNSUPPORTED_BRACKET_VERSION` на start, edit, regenerate и dissolve: ошибка
+возникает до обхода slots, игровой цикл не запускается, bracket JSON/version,
+status, matches и notifications не меняются, migration/reset/recreate не
+инициируется. V2 SE/DE lifecycle продолжает работать; V1 SE стартует по прежнему
+пути.
+
+### AT-TRN-016 Organizer-only roster and bracket
+Только organizer route-турнира напрямую добавляет/удаляет participant и
+генерирует/перегенерирует bracket. Participant, active judge другого события,
+outsider и admin без contextual ownership получают `403`; roster, bracket и
+status не меняются. Organizer happy paths сохраняются.
+
+### AT-TRN-017 Cross-tournament participant mismatch
+Organizer турнира A передаёт в route турнира A `participantId` турнира B →
+`404 NOT_FOUND`; participant турнира B остаётся active, а турнир A сохраняет
+исходные bracket/status. Authorization organizer турнира A проверяется до
+participant existence, mutation ограничена обоими IDs.
+
+### AT-TRN-018 Concurrent advancement
+Два полуфинала одного V2 single-elimination tournament подтверждаются параллельно
+разными активными судьями. Оба результата коммитятся, `bracket_state_version`
+переходит последовательно, final и third-place materialize ровно по одному разу,
+каждый node имеет один `actualMatchId`, а статистика всех четырёх игроков учтена
+ровно один раз. Retry одного confirmation не создаёт дополнительных matches.
+
+### AT-TRN-019 Invitation and roster concurrency
+Два параллельных invite одной пары возвращают один pending invitation и создают
+одну notification. Параллельные accept/direct add оставляют одного active
+registered participant; wrong organizer/user/entity и rollback fault не меняют
+invitation, roster или notification.
+
+### AT-TRN-020 Busy player with bye cannot start
+
+Если зарегистрированный organizer или participant уже находится в active
+standalone match, `POST /tournaments/{id}/start` возвращает
+`PLAYER_ALREADY_IN_ACTIVE_MATCH` независимо от deterministic seed и назначения
+bye. Отклонение происходит до materialization: status остаётся
+`bracket_generated`, `started_at` остаётся null, bracket JSON/version не меняются,
+tournament matches и notifications не создаются. После освобождения standalone
+match обычный non-bye start остаётся доступен.
+
+### AT-TRN-021 Moscow default title
+При одном фиксированном UTC instant форма создания турнира строит одинаковое
+`Турнир {дата и время}` в `Europe/Moscow` при timezone клиента `UTC`,
+`America/Los_Angeles` и `Asia/Tokyo`. Существующий формат label и редактируемый
+title payload сохранены; контракт абсолютных UTC timestamps не меняется.
 
 ### AT-TRN-016 Organizer-only roster and bracket
 Только organizer route-турнира напрямую добавляет/удаляет participant и
@@ -324,19 +431,34 @@ Blocked user отсутствует в текущем рейтинге.
 ### AT-TEAM-006 Archive
 После ухода последнего участника team status становится archived.
 
+### AT-TEAM-007 Invitation and membership concurrency
+Параллельный invite одной пары создаёт одну pending invitation/notification;
+параллельный accept и retry возвращают один terminal outcome и оставляют один
+active membership. Wrong captain/invited user и injected downstream fault не
+оставляют частичных строк.
+
 ## NOTIFICATIONS
 
 ### AT-NOTIF-001 Active action
 Актуальная карточка позволяет принять/отклонить и синхронизирует invitation status.
 
 ### AT-NOTIF-002 Expired reason
-Истёкшая карточка не имеет action buttons и показывает причину.
+Истёкшая/отозванная карточка не имеет action buttons и показывает причину и
+server-side время terminal перехода.
 
 ### AT-NOTIF-003 Popup suppression
 Просроченное приглашение не показывает popup после нового входа.
 
 ### AT-NOTIF-004 Minimal read state
-Открытие видимой части списка помечает карточки прочитанными без создания новых событий.
+Открытие видимой части списка одним owner-scoped batch помечает карточки
+прочитанными server clock-ом без создания новых событий. Retry сохраняет первый
+`readAt`; прочитанное pending invitation остаётся actionable, но badge очищается.
+
+### AT-NOTIF-005 Terminal invitation lifecycle
+При достижении TTL или отмене source entity invitation и notification переходят
+в terminal lifecycle атомарно. Карточка остаётся в истории как
+`expired|cancelled`, но не считается `new`, не входит в unread/actionable выборку
+и не показывает actions/popup.
 
 ## VISIBILITY / HISTORY
 
@@ -359,13 +481,70 @@ Blocked user не получает завершённое событие; tutori
 ### AT-VIS-003 History filters
 Комбинация фильтров и поиска возвращает только соответствующие события и стабильную пагинацию.
 
+### AT-HOME-001 Dashboard composition
+Авторизованный пользователь получает на главной не более одного доступного
+активного standalone-матча и одного доступного активного турнира, последние пять
+завершённых standalone-матчей/турниров в общем хронологическом порядке, полный
+hero-набор `played/wins/losses/winRate/averagePoints` и принципиального соперника
+только после трёх очных матчей. Матчи и турниры не обходят AT-VIS-001/002/004.
+
+### AT-HOME-002 Ranking period and empty actions
+Топ-3 по умолчанию строится за всё время; переключатель «за месяц» обновляет тот
+же dashboard без смешивания ответов периодов. При отсутствии активных событий,
+истории, рейтинга или принципиального соперника каждый раздел объясняет состояние
+и предлагает релевантное действие. Главная сохраняет входы в уведомления и профиль.
+
+## LIVE STATE
+
+### AT-LIVE-001 Visible cadence and resume
+
+Home, match/tournament list и active detail делают initial load и один refresh
+каждые 30 секунд при visible document. Hidden state не имеет live timer;
+hidden → visible выполняет один immediate refresh и запускает один timer. Повторный
+visible event не создаёт второй refresh/timer, unmount очищает timer. Match или
+tournament detail прекращает polling после получения terminal status.
+
+### AT-LIVE-002 Manual retry and request coalescing
+
+На каждой live surface доступно ручное «Обновить». Initial failure можно повторить
+без navigation/reload; background failure сохраняет последние валидные данные и
+показывает warning. Timer/manual/visible refresh, возникшие во время одного
+in-flight request, не создают второй параллельный request. JudgePage сохраняет
+единственный JUDGE-008/AT-JUDGE-009 heartbeat+refresh loop.
+
+## UI RESILIENCE
+
+### AT-UI-001 Loaded context survives action error
+После успешной загрузки match detail отказ start/stop/cancel/void/admin mutation
+показывает action-local alert, не заменяет карточку общим error state и сохраняет
+название, authoritative score, участников и навигацию.
+
+### AT-UI-002 Critical submit is single-flight
+Два синхронных submit/click события на create-user/team/tournament,
+first-password, feedback, onboarding или invitation response создают ровно один
+in-flight client request; связанные CTA disabled до settle. Concurrent normalized
+email create возвращает один success и один `409 EMAIL_ALREADY_EXISTS` с одной
+persisted user row; DATA-004 invite/respond retry сохраняет один invitation,
+membership/participant transition и notification effect.
+
 ## EMPTY / ONBOARDING
 
 ### AT-ONB-001 Once
-Онбординг автоматически открывается один раз и не открывается снова после завершения/пропуска.
+После первой смены временного пароля `GET /auth/me` возвращает incomplete state и
+приложение автоматически открывает onboarding. Переход с шага 4 на шаг 5
+сохраняется server-side; reload или новый login открывает шаг 5. Complete/close
+записывает timestamp до перехода на Home и onboarding сам больше не открывается.
 
 ### AT-ONB-002 Restart
-Кнопка профиля позволяет запустить его повторно.
+Кнопка профиля выполняет authenticated restart mutation, очищает completion,
+сбрасывает step на 0 и только после success открывает первый шаг. Ошибка не
+перенаправляет и доступна для retry.
+
+### AT-ONB-003 Skip and tutorial resume
+Каждый feature step можно пропустить с сохранением следующего шага. Запуск
+tutorial сначала сохраняет последний step и создаёт не более одного match при
+double-click; выход/завершение tutorial возвращает на последний шаг. До решения
+Q-ONB-001 completion остаётся отдельным explicit действием.
 
 ### AT-EMPTY-001 Zero data
 Новый пользователь видит осмысленные empty states и CTA, а не нули без объяснения.
@@ -385,6 +564,42 @@ migration ledger. Exact current ledger допускает startup. In-process mi
 разрешена только explicit in-memory `AUDIT_EPHEMERAL=1` fixture.
 
 ## OPERATIONS UX
+
+### AT-OPS-API-001 Current runtime OpenAPI
+**Given:** Fastify routes и root release version зарегистрированы в текущем
+repository source.
+**When:** выполняются OpenAPI contract test и strict route inventory.
+**Then:** `/api/v1/openapi.json` содержит ровно все зарегистрированные public
+operations без несуществующих operations, использует root release version,
+явно описывает public/session/CSRF boundary, path parameters, key request/success
+schemas и единый `{code,message,details?,requestId?}` error schema. Target-only
+или переименованные endpoints остаются явно отмеченными gap в target API spec и
+не выдаются за runtime operations.
+
+### AT-OPS-OBS-001 Liveness and DB readiness
+`GET /health` не зависит от DB probe и отвечает process liveness. `GET /ready`
+выполняет read-only DB probe: успех возвращает 200/`ready`, injected DB failure —
+503/`not_ready` с `database=failed`. Ни response, ни log не раскрывают исходный
+driver error; оба response содержат тот же request ID, что и structured logs.
+
+### AT-OPS-OBS-002 Redacted structured request/error logs
+Runtime пишет по одной JSON completion-записи на request с request ID, method,
+matched route, status и latency; 5xx/readiness failure создаёт structured error
+signal. Cookie, authorization/CSRF headers, request body, query values и raw
+exception message/stack не сериализуются. Error responses сохраняют единый
+`{code,message,details?,requestId}` contract.
+
+### AT-OPS-SAFE-001 Backup rehearsal boundary
+Без `BACKUP_REHEARSAL_CONFIRM=1`, для non-loopback source, database без
+`test|local|dev|ci|rehearsal` marker или restore identifier вне
+`tab10_restore_rehearsal_*` команда завершается до `pg_dump`/`psql`. Допустимый
+disposable flow создаёт unique temp dump, передаёт database identifier как quoted
+psql variable и удаляет restore DB/temp artifact как при успехе, так и через trap.
+
+### AT-OPS-SAFE-002 Local seed boundary
+`seed:local-players` завершается до первого HTTP request при
+`NODE_ENV=production` или non-loopback `API_BASE`; loopback development target
+остаётся разрешён.
 
 ### AT-OPS-COLD-001 Cold start
 **Given:** первый API response задержан пробуждением до 60 секунд.

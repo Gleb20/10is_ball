@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, Button } from "../ui";
 import { PageLayout } from "../layout";
 import { AsyncState, ListRow } from "../patterns";
 import { api } from "../api";
+import { useSingleFlight } from "../useSingleFlight";
 
 type NotificationRow = {
   id: string;
@@ -11,7 +12,18 @@ type NotificationRow = {
   title: string;
   body: string;
   readAt?: string | null;
-  lifecycle?: "new" | "accepted" | "declined" | "read" | "expired";
+  createdAt?: string;
+  actionable?: boolean;
+  reasonCode?: string | null;
+  lifecycleAt?: string | null;
+  expiresAt?: string | null;
+  lifecycle?:
+    | "new"
+    | "accepted"
+    | "declined"
+    | "read"
+    | "expired"
+    | "cancelled";
   payload?: {
     invitationId?: string;
     teamId?: string;
@@ -21,6 +33,9 @@ type NotificationRow = {
 };
 
 function lifecycleLabel(n: NotificationRow): string {
+  if ((n.lifecycle === "new" || !n.lifecycle) && n.readAt) {
+    return "Прочитано";
+  }
   switch (n.lifecycle) {
     case "accepted":
       return "Принято";
@@ -28,10 +43,39 @@ function lifecycleLabel(n: NotificationRow): string {
       return "Отклонено";
     case "expired":
       return "Истекло";
+    case "cancelled":
+      return "Отменено";
     case "read":
       return "Прочитано";
     default:
       return "Новое";
+  }
+}
+
+const notificationDateTime = new Intl.DateTimeFormat("ru-RU", {
+  dateStyle: "long",
+  timeStyle: "short",
+  timeZone: "Europe/Moscow",
+});
+
+function formatNotificationTime(value?: string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? null
+    : notificationDateTime.format(date);
+}
+
+function reasonLabel(reasonCode?: string | null): string | null {
+  switch (reasonCode) {
+    case "timeout":
+      return "срок приглашения истёк";
+    case "invitation_revoked":
+      return "приглашение отозвано";
+    case "source_unavailable":
+      return "исходное приглашение больше недоступно";
+    default:
+      return null;
   }
 }
 
@@ -40,8 +84,9 @@ export function NotificationsPage() {
   const [items, setItems] = useState<NotificationRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const action = useSingleFlight();
   const [onlyActual, setOnlyActual] = useState(true);
+  const readRequests = useRef(new Set<string>());
 
   async function load() {
     const res = await api.notifications();
@@ -55,8 +100,39 @@ export function NotificationsPage() {
   const visible = useMemo(() => {
     const all = items ?? [];
     if (!onlyActual) return all;
-    return all.filter((n) => (n.lifecycle ?? "new") === "new");
+    return all.filter(
+      (n) => n.actionable || (n.lifecycle ?? "new") === "new",
+    );
   }, [items, onlyActual]);
+
+  useEffect(() => {
+    const ids = visible
+      .filter((notification) => !notification.readAt)
+      .map((notification) => notification.id)
+      .filter((id) => !readRequests.current.has(id));
+    if (ids.length === 0) return;
+    ids.forEach((id) => readRequests.current.add(id));
+    void api
+      .markNotificationsReadVisible(ids)
+      .then((response) => {
+        const readAtById = new Map(
+          response.notifications.map((notification) => [
+            notification.id,
+            notification.readAt,
+          ]),
+        );
+        setItems((current) =>
+          (current ?? []).map((notification) => ({
+            ...notification,
+            readAt: readAtById.get(notification.id) ?? notification.readAt,
+          })),
+        );
+      })
+      .catch((caught: Error) => {
+        ids.forEach((id) => readRequests.current.delete(id));
+        setActionError(caught.message);
+      });
+  }, [visible]);
 
   async function markRead(id: string) {
     await api.markNotificationRead(id);
@@ -75,36 +151,34 @@ export function NotificationsPage() {
   }
 
   async function respondTeamInvite(invitationId: string, accept: boolean) {
-    setBusyId(invitationId);
-    setActionError(null);
-    try {
-      await api.respondTeamInvitation(invitationId, accept);
-      await load();
-    } catch (e) {
-      setActionError((e as Error).message);
-    } finally {
-      setBusyId(null);
-    }
+    await action.run(async () => {
+      setActionError(null);
+      try {
+        await api.respondTeamInvitation(invitationId, accept);
+        await load();
+      } catch (e) {
+        setActionError((e as Error).message);
+      }
+    });
   }
 
   async function respondTournamentInvite(
     invitationId: string,
     accept: boolean,
   ) {
-    setBusyId(invitationId);
-    setActionError(null);
-    try {
-      await api.respondTournamentInvitation(invitationId, accept);
-      await load();
-    } catch (e) {
-      setActionError((e as Error).message);
-    } finally {
-      setBusyId(null);
-    }
+    await action.run(async () => {
+      setActionError(null);
+      try {
+        await api.respondTournamentInvitation(invitationId, accept);
+        await load();
+      } catch (e) {
+        setActionError((e as Error).message);
+      }
+    });
   }
 
   const isInviteActionable = (n: NotificationRow) =>
-    (n.lifecycle ?? "new") === "new" &&
+    (n.actionable ?? (n.lifecycle ?? "new") === "new") &&
     Boolean(n.payload?.invitationId);
 
   return (
@@ -151,13 +225,26 @@ export function NotificationsPage() {
                   <span className="muted">{lifecycleLabel(n)}</span>
                 }
               />
+              {formatNotificationTime(n.createdAt) ? (
+                <time className="muted" dateTime={n.createdAt}>
+                  Создано: {formatNotificationTime(n.createdAt)}
+                </time>
+              ) : null}
+              {reasonLabel(n.reasonCode) ? (
+                <p className="muted">
+                  Причина: {reasonLabel(n.reasonCode)}
+                  {formatNotificationTime(n.lifecycleAt)
+                    ? ` · ${formatNotificationTime(n.lifecycleAt)}`
+                    : ""}
+                </p>
+              ) : null}
               {n.type === "team_invitation" &&
               n.payload?.invitationId &&
               isInviteActionable(n) ? (
                 <div className="row">
                   <Button
                     size="sm"
-                    disabled={busyId === n.payload.invitationId}
+                    disabled={action.pending}
                     onClick={() =>
                       void respondTeamInvite(n.payload!.invitationId!, true)
                     }
@@ -167,7 +254,7 @@ export function NotificationsPage() {
                   <Button
                     size="sm"
                     variant="secondary"
-                    disabled={busyId === n.payload.invitationId}
+                    disabled={action.pending}
                     onClick={() =>
                       void respondTeamInvite(n.payload!.invitationId!, false)
                     }
@@ -182,7 +269,7 @@ export function NotificationsPage() {
                 <div className="row">
                   <Button
                     size="sm"
-                    disabled={busyId === n.payload.invitationId}
+                    disabled={action.pending}
                     onClick={() =>
                       void respondTournamentInvite(
                         n.payload!.invitationId!,
@@ -195,7 +282,7 @@ export function NotificationsPage() {
                   <Button
                     size="sm"
                     variant="secondary"
-                    disabled={busyId === n.payload.invitationId}
+                    disabled={action.pending}
                     onClick={() =>
                       void respondTournamentInvite(
                         n.payload!.invitationId!,

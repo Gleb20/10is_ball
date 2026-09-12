@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyMatchResult,
+  attachMatchId,
   generateSingleEliminationBracket,
+  isTournamentComplete,
   listMatchPairs,
   pairNeedsMatch,
+  thirdPlaceParticipantIds,
+  type Bracket,
 } from "./tournament-bracket-v1.js";
 
 /**
@@ -25,7 +30,46 @@ describe("V1 characterization (legacy compact SE)", () => {
     expect(r0.filter(pairNeedsMatch).length).toBe(2);
   });
 
-  it.todo(
-    "V1 DE N=5 full playability — known hang; covered by V2 simulate tests",
-  );
+  it("AT-TRN-015: V1 DE N=5 is rejected before the known hang path traverses slots", () => {
+    let slotTraversalCount = 0;
+    const slots = new Proxy([], {
+      get(target, property, receiver) {
+        if (
+          property === Symbol.iterator ||
+          property === "map" ||
+          property === "filter" ||
+          property === "find"
+        ) {
+          slotTraversalCount += 1;
+          throw new Error("KNOWN_V1_DE_HANG_PATH_ENTERED");
+        }
+        return Reflect.get(target, property, receiver);
+      },
+    }) as Bracket["slots"];
+    const bracket: Bracket = {
+      slots,
+      size: 5,
+      format: "double_elimination",
+      thirdPlaceSlotId: null,
+      championParticipantId: null,
+    };
+
+    const entryPoints = [
+      () => listMatchPairs(bracket),
+      () => attachMatchId(bracket, ["a", "b"], "match"),
+      () => applyMatchResult(bracket, ["a", "b"], "p1", "p2", "match"),
+      () => isTournamentComplete(bracket),
+      () => thirdPlaceParticipantIds(bracket),
+    ];
+
+    for (const enterLegacyLifecycle of entryPoints) {
+      expect(enterLegacyLifecycle).toThrow(
+        expect.objectContaining({
+          code: "UNSUPPORTED_BRACKET_VERSION",
+          schemaVersion: 1,
+        }),
+      );
+    }
+    expect(slotTraversalCount).toBe(0);
+  });
 });

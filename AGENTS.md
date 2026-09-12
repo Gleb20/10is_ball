@@ -81,6 +81,15 @@ If current behavior contradicts documentation, do not silently choose one. Keep
 the intended behavior from the source hierarchy, record the implementation drift,
 and obtain a decision when fixing it would change product behavior.
 
+## Development orchestration
+
+For substantial implementation, delegate bounded independent work when the
+parent can make useful progress alongside it. Follow
+[docs/ORCHESTRATION.md](docs/ORCHESTRATION.md) and load the project
+[orchestrate-development skill](.agents/skills/orchestrate-development/SKILL.md)
+when orchestration applies. Handle small known changes directly. The parent
+owns acceptance; delegation does not expand scope, permissions, or bypass gates.
+
 ## Evidence and verification
 
 - Never claim a test, build, migration, deployment, browser flow, or production

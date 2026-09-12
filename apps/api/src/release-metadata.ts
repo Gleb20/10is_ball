@@ -9,7 +9,7 @@ import {
 
 type RuntimeEnvironment = Record<string, string | undefined>;
 
-function productVersion(): string {
+export function productVersion(): string {
   const packageJsonUrl = new URL("../../../package.json", import.meta.url);
   const parsed = JSON.parse(readFileSync(packageJsonUrl, "utf8")) as {
     version?: unknown;

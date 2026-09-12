@@ -1,4 +1,4 @@
-import { render, screen, within, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, within, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -10,6 +10,7 @@ import { TempPasswordPanel } from "../authUi";
 const listUsers = vi.fn();
 const createUser = vi.fn();
 const blockUser = vi.fn();
+const unblockUser = vi.fn();
 const resetPassword = vi.fn();
 const updateUserRole = vi.fn();
 const copyText = vi.fn().mockResolvedValue(true);
@@ -34,6 +35,7 @@ vi.mock("../api", () => ({
     listUsers: (...a: unknown[]) => listUsers(...a),
     createUser: (...a: unknown[]) => createUser(...a),
     blockUser: (...a: unknown[]) => blockUser(...a),
+    unblockUser: (...a: unknown[]) => unblockUser(...a),
     resetPassword: (...a: unknown[]) => resetPassword(...a),
     updateUserRole: (...a: unknown[]) => updateUserRole(...a),
   },
@@ -82,6 +84,7 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
   beforeEach(() => {
     listUsers.mockReset();
     blockUser.mockReset();
+    unblockUser.mockReset();
     resetPassword.mockReset();
     updateUserRole.mockReset();
     createUser.mockReset();
@@ -114,9 +117,19 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
           status: "active",
           mustChangePassword: false,
         },
+        {
+          id: "u4",
+          email: "blocked@tab10.local",
+          firstName: "Blocked",
+          lastName: "Player",
+          role: "user",
+          status: "blocked",
+          mustChangePassword: false,
+        },
       ],
     });
     blockUser.mockResolvedValue({ ok: true });
+    unblockUser.mockResolvedValue({ ok: true });
     resetPassword.mockResolvedValue({ temporaryPassword: "ResetPass1!" });
     updateUserRole.mockResolvedValue({
       user: { id: "u2", role: "admin" },
@@ -139,8 +152,12 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
 
     expect(await screen.findByText(/player@tab10.local/i)).toBeInTheDocument();
 
-    const blockButtons = screen.getAllByRole("button", { name: /^блок$/i });
-    await user.click(blockButtons[1]!);
+    const playerRow = screen
+      .getByText("player@tab10.local · user")
+      .closest(".list-row") as HTMLElement;
+    await user.click(
+      within(playerRow).getByRole("button", { name: /^блок$/i }),
+    );
     expect(
       await screen.findByText(/заблокировать пользователя/i),
     ).toBeInTheDocument();
@@ -185,6 +202,42 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
     });
   });
 
+  it("BUG-009: keeps create-user submit single-flight while the request is pending", async () => {
+    let resolveCreate!: (value: {
+      user: { id: string; role: "user" };
+      temporaryPassword: string;
+    }) => void;
+    createUser.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveCreate = resolve;
+        }),
+    );
+    render(
+      <MemoryRouter>
+        <AuthProvider>
+          <AdminPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+    const form = (await screen.findByLabelText(
+      "Создание пользователя",
+    )) as HTMLFormElement;
+
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+
+    expect(createUser).toHaveBeenCalledTimes(1);
+    const submit = within(form).getByRole("button", { name: /создание/i });
+    expect(submit).toBeDisabled();
+
+    resolveCreate({
+      user: { id: "u4", role: "user" },
+      temporaryPassword: "CreatePass1!",
+    });
+    await waitFor(() => expect(submit).not.toBeDisabled());
+  });
+
   it("confirms promote/demote and hides role buttons for self", async () => {
     const user = userEvent.setup();
     render(
@@ -197,8 +250,11 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
 
     expect(await screen.findByText(/player@tab10.local/i)).toBeInTheDocument();
 
+    const playerRow = screen
+      .getByText("player@tab10.local · user")
+      .closest(".list-row") as HTMLElement;
     expect(
-      screen.getByRole("button", { name: /^сделать админом$/i }),
+      within(playerRow).getByRole("button", { name: /^сделать админом$/i }),
     ).toBeInTheDocument();
 
     const selfEmail = screen.getByText("admin@tab10.local · admin · вы");
@@ -210,7 +266,9 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
       }),
     ).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: /^сделать админом$/i }));
+    await user.click(
+      within(playerRow).getByRole("button", { name: /^сделать админом$/i }),
+    );
     expect(
       await screen.findByText(/сделать администратором/i),
     ).toBeInTheDocument();
@@ -220,9 +278,9 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
     await user.click(screen.getByRole("button", { name: /отмена/i }));
     expect(updateUserRole).not.toHaveBeenCalled();
 
-    const promoteBtn = screen.getAllByRole("button", {
+    const promoteBtn = within(playerRow).getByRole("button", {
       name: /^сделать админом$/i,
-    })[0]!;
+    });
     await user.click(promoteBtn);
     await user.click(screen.getByRole("button", { name: /подтвердить/i }));
     expect(updateUserRole).toHaveBeenCalledWith("u2", "admin");
@@ -236,5 +294,80 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /подтвердить/i }));
     expect(updateUserRole).toHaveBeenCalledWith("u3", "user");
+  });
+
+  it("BUG-011: offers unblock only for blocked targets and hides self-block", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <AuthProvider>
+          <AdminPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText(/blocked@tab10.local/i)).toBeInTheDocument();
+
+    const selfRow = screen
+      .getByText("admin@tab10.local · admin · вы")
+      .closest(".list-row") as HTMLElement;
+    expect(
+      within(selfRow).queryByRole("button", { name: /^блок$/i }),
+    ).toBeNull();
+
+    const blockedRow = screen
+      .getByText("blocked@tab10.local · user")
+      .closest(".list-row") as HTMLElement;
+    expect(
+      within(blockedRow).queryByRole("button", { name: /^блок$/i }),
+    ).toBeNull();
+    await user.click(
+      within(blockedRow).getByRole("button", { name: /^разблокировать$/i }),
+    );
+    expect(
+      await screen.findByText(/разблокировать пользователя/i),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /подтвердить/i }));
+    expect(unblockUser).toHaveBeenCalledWith("u4");
+    expect(blockUser).not.toHaveBeenCalled();
+  });
+
+  it("BUG-011: keeps unblock single-flight and preserves context on failure", async () => {
+    let rejectUnblock!: (error: Error) => void;
+    unblockUser.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectUnblock = reject;
+        }),
+    );
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <AuthProvider>
+          <AdminPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    const blockedRow = (await screen.findByText("blocked@tab10.local · user"))
+      .closest(".list-row") as HTMLElement;
+    await user.click(
+      within(blockedRow).getByRole("button", { name: /^разблокировать$/i }),
+    );
+    const confirmButton = screen.getByRole("button", {
+      name: /^подтвердить$/i,
+    });
+    fireEvent.click(confirmButton);
+    fireEvent.click(confirmButton);
+    expect(unblockUser).toHaveBeenCalledTimes(1);
+
+    rejectUnblock(new Error("Разблокировка не выполнена"));
+    expect(
+      await screen.findByText("Разблокировка не выполнена"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("blocked@tab10.local · user")).toBeInTheDocument();
+    expect(
+      screen.getByText(/разблокировать пользователя/i),
+    ).toBeInTheDocument();
   });
 });

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import {
   ROOT,
@@ -134,6 +134,8 @@ async function fallbackCleanup(project) {
 async function runCase(definition) {
   const caseDir = await ensureDir(path.join(evidenceDir, definition.name));
   const readyFile = path.join(caseDir, "ready.json");
+  // A repeated run may reuse evidenceDir; only the new child may signal readiness.
+  await rm(readyFile, { force: true });
   const child = spawn(process.execPath, [path.join(ROOT, "scripts/verify/run-local.mjs")], {
     cwd: ROOT,
     env: {

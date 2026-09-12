@@ -8,9 +8,9 @@ import { useAuth } from "../auth";
 
 type OpponentMode = "user" | "guest";
 
-function defaultMatchTitle() {
-  const d = new Date();
+export function defaultMatchTitle(d = new Date()) {
   return `Матч ${d.toLocaleString("ru-RU", {
+    timeZone: "Europe/Moscow",
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
@@ -40,15 +40,27 @@ export function MatchCreatePage() {
   const [pending, setPending] = useState(false);
 
   const mercyPoints = defaultMercyPoints(pointsToWin);
+  const requestedOpponentId = searchParams.get("opponentId");
+  const isSelfChallenge = Boolean(
+    user?.id && requestedOpponentId === user.id,
+  );
 
   const challengeHint = useMemo(() => {
+    if (isSelfChallenge) return null;
     const name = searchParams.get("opponentName");
     return name ? `Вызов: ${name}` : null;
-  }, [searchParams]);
+  }, [isSelfChallenge, searchParams]);
 
   useEffect(() => {
-    const opp = searchParams.get("opponentId");
+    if (!user?.id) return;
+    const opp = requestedOpponentId;
     const name = searchParams.get("opponentName");
+    if (opp === user.id) {
+      setMode("user");
+      setOpponentId("");
+      setError("Нельзя вызвать самого себя");
+      return;
+    }
     if (opp) {
       setMode("user");
       setOpponentId(opp);
@@ -56,7 +68,7 @@ export function MatchCreatePage() {
     if (name) {
       setTitle(`Матч vs ${name}`);
     }
-  }, [searchParams]);
+  }, [requestedOpponentId, searchParams, user?.id]);
 
   useEffect(() => {
     void api
@@ -79,6 +91,14 @@ export function MatchCreatePage() {
     setPending(true);
     setError(null);
     try {
+      if (
+        mode === "user" &&
+        (isSelfChallenge || opponentId === user?.id)
+      ) {
+        setError("Нельзя вызвать самого себя");
+        setPending(false);
+        return;
+      }
       if (mode === "user" && !opponentId) {
         setError("Выберите соперника из списка");
         setPending(false);
@@ -110,7 +130,10 @@ export function MatchCreatePage() {
       });
       navigate(`/matches/${res.match.id}`);
     } catch (err) {
-      setError((err as Error).message);
+      // Global recovery owns unauthorized feedback; do not retain it in the draft.
+      if ((err as Error & { status?: number }).status !== 401) {
+        setError((err as Error).message);
+      }
     } finally {
       setPending(false);
     }

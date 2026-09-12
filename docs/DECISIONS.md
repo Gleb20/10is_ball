@@ -34,9 +34,12 @@
 | D24 | Finished-match void authorization | active |
 | D25 | Legacy V1 DE retirement and data-operation boundary | active |
 | D26 | Full PRD v2 remains the product target | active |
+| D27 | Visibility-aware live refresh | active |
+| D28 | Safe admin block/unblock boundary | active |
 | D29 | Exact-SHA local → staging → production release topology | superseded by D31 for the disposable public stand |
 | D30 | Historical-schema adoption and Free recovery exception | superseded by D31 for the disposable public stand |
 | D31 | Native-Git delivery to a disposable public stand | active |
+| D34 | Explicit onboarding completion | active |
 
 ## D16 — Documentation governance (2026-09-06)
 
@@ -181,6 +184,41 @@ does not silently reduce the target.
 **Resolution:** This closes Q-PRODUCT-001 and preserves the audit-plan scope.
 Backlog priority may change as evidence changes; omission from the current sprint
 does not mean removal from the product.
+
+## D27 — Visibility-aware live refresh (2026-09-07)
+
+**Decision:** Home, match/tournament lists and active match/tournament details use
+one client-side 30-second refresh cadence while the document is visible. Hidden
+documents have no live timer; hidden → visible performs one immediate refresh and
+starts exactly one timer. Requests on the same surface do not overlap, unmount
+cleans the timer, terminal details stop automatic polling, and manual refresh
+remains available for explicit retry. A failed background refresh preserves the
+last valid rendered state and exposes the error instead of blanking it.
+
+Judge heartbeat remains the dedicated JUDGE-008/AT-JUDGE-009 loop because it also
+renews ownership. General live refresh must not add a second loop to JudgePage.
+WebSocket/SSE and server push remain outside this decision.
+
+**Why:** a single bounded browser strategy keeps organizer/participant decisions
+reasonably current without background-tab traffic or interference with judge-lock
+semantics.
+
+## D28 — Safe admin block/unblock boundary (2026-09-07)
+
+**Decision:**
+
+- Block и unblock выполняет только active admin.
+- Администратор не может заблокировать собственный аккаунт. Когда он одновременно
+  sole active admin, более сильный invariant `LAST_ADMIN` проверяется первым;
+  при наличии другого active admin self-target возвращает
+  `SELF_BLOCK_FORBIDDEN`.
+- Block отзывает все auth sessions target. Unblock меняет status на `active`, но
+  не восстанавливает revoked sessions и не меняет пароль: требуется новый login.
+- UI показывает Block только для другого active target и Unblock только для
+  blocked target; оба действия требуют confirmation и server refresh.
+
+**Why:** предотвращает operational self-lockout, убирает ручной API workaround
+для восстановления пользователя и сохраняет документированную session revocation.
 
 ## D29 — Exact-SHA local → staging → production release topology (2026-09-07)
 
@@ -504,3 +542,7 @@ target where they conflict with those ADRs.
 **Decision:** При `mercyEnabled` сухая победа, когда у лидера `score >= mercyPoints` и у соперника **ровно 0**. Отрыв при ненулевом счёте соперника (5:1, 6:1…) **не** является сухой победой. Считается **текущий** счёт: отменённые (Undo) очки не «портят» сухую победу.
 
 **Why:** «В сухую» = ни одного очка у соперника на табло в момент достижения порога.
+
+## D34 — Explicit onboarding completion (2026-09-13)
+
+**Decision:** completing or exiting the optional tutorial returns the user to the persisted final onboarding step. The user explicitly completes onboarding with the final button; a tutorial result does not auto-complete the guide. This resolves Q-ONB-001 and preserves the approved BUG-012 behavior.

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, cleanup, within } from "@testing-library/react";
+import { fireEvent, render, screen, cleanup, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -478,7 +478,9 @@ describe("AT-MATCH-VOID-003 confirmation", () => {
     );
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveTextContent(/остальная турнирная сетка сохранится/i);
-    expect(dialog).toHaveTextContent(/следующие матчи и уведомления не будут пересчитаны/i);
+    expect(dialog).toHaveTextContent(
+      /следующие матчи и уведомления не будут пересчитаны/i,
+    );
   });
 
   it("hides void for a tournament participant who is not its creator", async () => {
@@ -518,5 +520,79 @@ describe("AT-MATCH-VOID-003 confirmation", () => {
 
     expect(await screen.findByText("Турнирный финал")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /аннулировать результат/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("BUG-006/BUG-009 match action failures", () => {
+  afterEach(() => cleanup());
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    me.mockResolvedValue({
+      user: {
+        id: "creator",
+        email: "creator@tab10.local",
+        role: "user",
+        mustChangePassword: false,
+        firstName: "Creator",
+        lastName: "User",
+      },
+    });
+    getMatch.mockResolvedValue({
+      match: {
+        id: "action-error",
+        title: "Матч остаётся видимым",
+        kind: "standalone",
+        status: "in_progress",
+        version: 3,
+        scoreA: 4,
+        scoreB: 2,
+        createdByUserId: "creator",
+        participants: [
+          { side: "A", userId: "creator", displayName: "Creator User" },
+          { side: "B", userId: "rival", displayName: "Rival User" },
+        ],
+        activeJudge: null,
+      },
+    });
+  });
+
+  it("keeps loaded match context and action-local error while blocking duplicate stop", async () => {
+    let rejectStop!: (reason: Error) => void;
+    stopMatch.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectStop = reject;
+        }),
+    );
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/matches/action-error"]}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/matches/:id" element={<MatchDetailPage />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Матч остаётся видимым")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /остановить матч/i }));
+    const submit = screen.getByRole("button", {
+      name: /подтвердить остановку/i,
+    });
+    fireEvent.click(submit);
+    fireEvent.click(submit);
+
+    expect(stopMatch).toHaveBeenCalledTimes(1);
+    expect(submit).toBeDisabled();
+    rejectStop(new Error("Недостаточно прав"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Недостаточно прав",
+    );
+    expect(screen.getByText("Матч остаётся видимым")).toBeInTheDocument();
+    expect(screen.getByText("4 : 2")).toBeInTheDocument();
+    await waitFor(() => expect(submit).not.toBeDisabled());
   });
 });

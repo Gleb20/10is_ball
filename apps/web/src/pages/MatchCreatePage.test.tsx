@@ -68,4 +68,25 @@ describe("REQ_ui__match_create_autocomplete", () => {
     await user.click(screen.getByRole("button", { name: /^игрок$/i }));
     expect(await screen.findByText(/соперник/i)).toBeInTheDocument();
   });
+
+  it("BUG-010: rejects a self-challenge supplied through the URL", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter
+        initialEntries={["/matches/new?opponentId=u1&opponentName=A%20User"]}
+      >
+        <AuthProvider>
+          <MatchCreatePage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByText(/нельзя вызвать самого себя/i),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /создать матч/i }));
+
+    expect(createMatch).not.toHaveBeenCalled();
+    expect(screen.getByText(/нельзя вызвать самого себя/i)).toBeInTheDocument();
+  });
 });

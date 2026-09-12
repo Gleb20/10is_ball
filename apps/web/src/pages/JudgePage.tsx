@@ -26,6 +26,7 @@ import {
 import { statusLabel } from "../statusLabels";
 import { initialsFromName } from "../rankingUi";
 import { avatarSrc } from "../avatarSrc";
+import type { JudgeExitNotice } from "../layout";
 
 type MatchState = Record<string, unknown> & JudgeMatchLike;
 type Phase =
@@ -33,11 +34,56 @@ type Phase =
   | "blocked"
   | "setup"
   | "scoring"
+  | "lost_lock"
   | "readonly";
 type PointIntent = {
   side: "A" | "B";
   idempotencyKey: string;
 };
+
+type ApiError = Error & { code?: string; status?: number };
+
+const LOST_JUDGE_CODES = new Set([
+  "UNAUTHORIZED",
+  "FORBIDDEN",
+  "PASSWORD_CHANGE_REQUIRED",
+  "JUDGE_NOT_ACTIVE",
+  "JUDGE_REQUIRED",
+  "JUDGE_TAKEN",
+]);
+
+function isLostJudgeError(
+  error: unknown,
+  heartbeatStatusFallback = false,
+): error is ApiError {
+  const candidate = error as ApiError;
+  return (
+    candidate.status === 401 ||
+    candidate.status === 403 ||
+    (heartbeatStatusFallback && candidate.status === 409) ||
+    Boolean(candidate.code && LOST_JUDGE_CODES.has(candidate.code))
+  );
+}
+
+function lostJudgeMessage(error: ApiError): string {
+  if (error.status === 401 || error.code === "UNAUTHORIZED") {
+    return "Слот судьи потерян: сессия входа завершена. Счёт обновлён с сервера; начисление очков заблокировано.";
+  }
+  if (
+    error.status === 403 ||
+    error.code === "FORBIDDEN" ||
+    error.code === "PASSWORD_CHANGE_REQUIRED"
+  ) {
+    return "Слот судьи потерян: доступ к судейству больше не подтверждён. Счёт обновлён с сервера; действия заблокированы.";
+  }
+  return "Слот судьи потерян или истёк. Счёт обновлён с сервера; действия заблокированы.";
+}
+
+function isTerminalMatchStatus(status: unknown): boolean {
+  return ["finished", "stopped", "cancelled", "voided"].includes(
+    String(status ?? ""),
+  );
+}
 
 function ServeBadge({ active }: { active: boolean }) {
   if (!active) {
@@ -67,7 +113,14 @@ export function JudgePage() {
   const [pointPendingCount, setPointPendingCount] = useState(0);
   const pointQueueRef = useRef<PointIntent[]>([]);
   const pointQueueRunningRef = useRef(false);
+  const judgeLockOwnedRef = useRef(false);
+  const liveSyncRunningRef = useRef(false);
+  const exitPendingRef = useRef(false);
   const flashTimeoutRef = useRef<number | null>(null);
+  const [exitPending, setExitPending] = useState(false);
+  const [documentVisible, setDocumentVisible] = useState(
+    () => typeof document === "undefined" || document.visibilityState === "visible",
+  );
   const [now, setNow] = useState(() => new Date());
   const [viewport, setViewport] = useState(() => ({
     w: typeof window !== "undefined" ? window.innerWidth : 800,
@@ -90,15 +143,72 @@ export function JudgePage() {
   }, [id, updateMatch]);
 
   const exitAfterJudge = useCallback(
-    (m: MatchState | null) => {
-      const tournamentId = m?.tournamentId ? String(m.tournamentId) : null;
-      if (tournamentId) {
-        navigate(`/tournaments/${tournamentId}`);
+    (m: MatchState | null, notice?: JudgeExitNotice) => {
+      if (m?.kind === "tutorial") {
+        navigate("/onboarding");
         return;
       }
-      navigate(id ? `/matches/${id}` : "/history");
+      const tournamentId = m?.tournamentId ? String(m.tournamentId) : null;
+      const options = notice ? { state: { judgeExitNotice: notice } } : undefined;
+      if (tournamentId) {
+        navigate(`/tournaments/${tournamentId}`, options);
+        return;
+      }
+      navigate(id ? `/matches/${id}` : "/history", options);
     },
     [id, navigate],
+  );
+
+  const loseJudgeLock = useCallback(
+    async (error: ApiError) => {
+      judgeLockOwnedRef.current = false;
+      pointQueueRef.current = [];
+      setPointPendingCount(0);
+      setUndoPending(false);
+      setMenuOpen(false);
+      setPhase("lost_lock");
+      setError(lostJudgeMessage(error));
+      try {
+        const fresh = await load();
+        if (isTerminalMatchStatus(fresh.status)) {
+          setPhase("readonly");
+          setError(null);
+        }
+      } catch {
+        // Preserve the last authoritative screen when read access is also gone.
+      }
+    },
+    [load],
+  );
+
+  const syncLiveState = useCallback(
+    async (ownsLock: boolean) => {
+      if (!id || liveSyncRunningRef.current) return;
+      liveSyncRunningRef.current = true;
+      try {
+        if (ownsLock) await api.heartbeatJudge(id);
+        const fresh = await load();
+        if (isTerminalMatchStatus(fresh.status)) {
+          judgeLockOwnedRef.current = false;
+          pointQueueRef.current = [];
+          setPointPendingCount(0);
+          setMenuOpen(false);
+          setPhase("readonly");
+          setError(null);
+        }
+      } catch (error) {
+        if (ownsLock && isLostJudgeError(error, true)) {
+          await loseJudgeLock(error);
+        } else {
+          setError(
+            `Не удалось обновить состояние матча: ${(error as Error).message}`,
+          );
+        }
+      } finally {
+        liveSyncRunningRef.current = false;
+      }
+    },
+    [id, load, loseJudgeLock],
   );
 
   const initJudge = useCallback(async () => {
@@ -107,16 +217,16 @@ export function JudgePage() {
     setError(null);
     try {
       const detail = await load();
-      const status = String(detail.status ?? "");
       if (
         readonlyMode ||
-        status === "finished" ||
-        status === "stopped"
+        isTerminalMatchStatus(detail.status)
       ) {
+        judgeLockOwnedRef.current = false;
         setPhase("readonly");
         return;
       }
       await api.acquireJudge(id);
+      judgeLockOwnedRef.current = true;
       const refreshed = await load();
       if (needsJudgeSetup(refreshed)) {
         const participants = (refreshed.participants ?? []) as JudgeParticipant[];
@@ -147,6 +257,14 @@ export function JudgePage() {
   }, [initJudge]);
 
   useEffect(() => {
+    const onVisibilityChange = () =>
+      setDocumentVisible(document.visibilityState === "visible");
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, []);
+
+  useEffect(() => {
     const onResize = () =>
       setViewport({ w: window.innerWidth, h: window.innerHeight });
     window.addEventListener("resize", onResize);
@@ -173,20 +291,17 @@ export function JudgePage() {
   }, [phase]);
 
   useEffect(() => {
-    if (!id || (phase !== "scoring" && phase !== "readonly")) return;
-    const poll = window.setInterval(() => {
-      void load().catch(() => undefined);
-    }, phase === "readonly" ? 30_000 : 60_000);
-    return () => window.clearInterval(poll);
-  }, [id, load, phase]);
+    const ownsLock = phase === "setup" || phase === "scoring";
+    const watchesMatch = ownsLock || phase === "readonly";
+    if (!id || !documentVisible || !watchesMatch) return;
 
-  useEffect(() => {
-    if (phase !== "scoring" || !id) return;
-    const tick = window.setInterval(() => {
-      void api.heartbeatJudge(id).catch(() => undefined);
-    }, 30_000);
-    return () => window.clearInterval(tick);
-  }, [phase, id]);
+    void syncLiveState(ownsLock);
+    const liveTimer = window.setInterval(
+      () => syncLiveState(ownsLock),
+      30_000,
+    );
+    return () => window.clearInterval(liveTimer);
+  }, [documentVisible, id, phase, syncLiveState]);
 
   function previewMatchFrom(base: MatchState): JudgeMatchLike {
     const participants = (base.participants ?? []) as JudgeParticipant[];
@@ -224,7 +339,11 @@ export function JudgePage() {
       updateMatch(res.match as MatchState);
       setPhase("scoring");
     } catch (e) {
-      setError((e as Error).message);
+      if (isLostJudgeError(e)) {
+        await loseJudgeLock(e);
+      } else {
+        setError((e as Error).message);
+      }
     } finally {
       setSetupPending(false);
     }
@@ -254,6 +373,16 @@ export function JudgePage() {
             Number(authoritativeMatch.version),
             intent.idempotencyKey,
           );
+          if (!judgeLockOwnedRef.current) {
+            pointQueueRef.current = [];
+            setPointPendingCount(0);
+            try {
+              await load();
+            } catch {
+              // The lost-lock alert remains authoritative for the user.
+            }
+            break;
+          }
           authoritativeMatch = res.match as MatchState;
           pointQueueRef.current.shift();
           setPointPendingCount(pointQueueRef.current.length);
@@ -271,6 +400,10 @@ export function JudgePage() {
           const err = e as Error & { code?: string };
           pointQueueRef.current = [];
           setPointPendingCount(0);
+          if (isLostJudgeError(e)) {
+            await loseJudgeLock(e);
+            break;
+          }
           try {
             authoritativeMatch = await load();
           } catch {
@@ -291,11 +424,19 @@ export function JudgePage() {
   }
 
   function point(side: "A" | "B") {
-    if (!id || !match || phase !== "scoring") return;
+    if (
+      !id ||
+      !match ||
+      phase !== "scoring" ||
+      !judgeLockOwnedRef.current
+    ) {
+      return;
+    }
     pointQueueRef.current.push({
       side,
       idempotencyKey: crypto.randomUUID(),
     });
+    setMenuOpen(false);
     setPointPendingCount(pointQueueRef.current.length);
     void drainPointQueue(matchRef.current ?? match);
   }
@@ -312,30 +453,68 @@ export function JudgePage() {
       updateMatch(res.match as MatchState);
       setError(null);
     } catch (e) {
-      setError((e as Error).message);
-      await load();
+      if (isLostJudgeError(e)) {
+        await loseJudgeLock(e);
+      } else {
+        setError((e as Error).message);
+        await load();
+      }
     } finally {
       setUndoPending(false);
     }
   }
 
   async function releaseAndExit() {
-    try {
-      await api.releaseJudge(id!);
-      exitAfterJudge(match);
-    } catch (e) {
-      setError((e as Error).message);
+    if (
+      !id ||
+      exitPendingRef.current ||
+      pointQueueRunningRef.current ||
+      pointQueueRef.current.length > 0
+    ) {
+      return;
     }
+    exitPendingRef.current = true;
+    setExitPending(true);
+    let notice: JudgeExitNotice;
+    try {
+      if (judgeLockOwnedRef.current) {
+        await api.releaseJudge(id);
+        judgeLockOwnedRef.current = false;
+        notice = {
+          kind: "success",
+          message: "Слот судьи освобождён. Другой пользователь может занять его сразу.",
+        };
+      } else {
+        notice = {
+          kind: "warning",
+          message: "Слот судьи уже не был активен. Проверьте актуального судью в карточке матча.",
+        };
+      }
+    } catch (e) {
+      judgeLockOwnedRef.current = false;
+      notice = {
+        kind: "warning",
+        message: `Не удалось подтвердить освобождение слота: ${(e as Error).message}. Он освободится по TTL, если запрос не дошёл.`,
+      };
+    }
+    exitPendingRef.current = false;
+    setExitPending(false);
+    exitAfterJudge(matchRef.current ?? match, notice);
   }
 
   async function onConfirmFinish() {
     try {
       const res = await api.confirmFinish(id!);
       const finished = (res.match ?? match) as MatchState;
+      judgeLockOwnedRef.current = false;
       updateMatch(finished);
       exitAfterJudge(finished);
     } catch (e) {
-      setError((e as Error).message);
+      if (isLostJudgeError(e)) {
+        await loseJudgeLock(e);
+      } else {
+        setError((e as Error).message);
+      }
     }
   }
 
@@ -346,7 +525,11 @@ export function JudgePage() {
       const res = await api.judgeSetup(id, { displayFlipped: next });
       updateMatch(res.match as MatchState);
     } catch (e) {
-      setError((e as Error).message);
+      if (isLostJudgeError(e)) {
+        await loseJudgeLock(e);
+      } else {
+        setError((e as Error).message);
+      }
     }
   }
 
@@ -375,7 +558,15 @@ export function JudgePage() {
           >
             Смотреть счёт
           </Button>
-          <Button variant="secondary" onClick={() => navigate(`/matches/${id}`)}>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              judgeLockOwnedRef.current
+                ? void releaseAndExit()
+                : navigate(`/matches/${id}`)
+            }
+            disabled={exitPending}
+          >
             Назад к матчу
           </Button>
           {tournamentId ? (
@@ -405,8 +596,11 @@ export function JudgePage() {
   }
 
   const isSetup = phase === "setup";
+  const lostLock = phase === "lost_lock";
   const locked =
-    match.status === "pending_confirmation" || match.status === "finished";
+    lostLock ||
+    match.status === "pending_confirmation" ||
+    match.status === "finished";
   const readonly = phase === "readonly";
   const boardMatch = isSetup ? previewMatchFrom(match) : match;
   const serve = isSetup
@@ -488,7 +682,7 @@ export function JudgePage() {
         <ServeBadge active={Boolean(serving)} />
         {isSetup ? (
           <span className="judge-point-spacer" aria-hidden />
-        ) : !readonly ? (
+        ) : !readonly && !lostLock ? (
           <Button
             className="judge-point-btn judge-touch"
             onClick={(e: MouseEvent) => {
@@ -510,7 +704,9 @@ export function JudgePage() {
   return (
     <div
       className="judge-screen"
-      data-testid={isSetup ? "judge-setup" : "judge-screen"}
+      data-testid={
+        isSetup ? "judge-setup" : lostLock ? "judge-lost-lock" : "judge-screen"
+      }
     >
       {showHint ? (
         <p className="judge-rotate-hint" role="status">
@@ -523,6 +719,8 @@ export function JudgePage() {
           <span className="judge-status">
             {isSetup
               ? "Перед стартом"
+              : lostLock
+                ? "Слот судьи потерян"
               : statusLabel(String(match.status), "match")}
           </span>
           {!isSetup && match.startedAt ? (
@@ -535,6 +733,9 @@ export function JudgePage() {
           ) : null}
           {readonly ? (
             <span className="judge-readonly-badge">Только просмотр</span>
+          ) : null}
+          {lostLock ? (
+            <span className="judge-readonly-badge">Действия заблокированы</span>
           ) : null}
           {pointPendingCount > 0 ? (
             <span className="judge-pending-badge" role="status" aria-live="polite">
@@ -549,12 +750,29 @@ export function JudgePage() {
             <Button
               variant="secondary"
               className="judge-touch"
-              onClick={() => navigate(`/matches/${id}`)}
+              onClick={() => void releaseAndExit()}
+              disabled={exitPending}
             >
-              Отмена
+              {exitPending ? "Выходим…" : "Отмена"}
+            </Button>
+          ) : lostLock ? (
+            <Button
+              variant="secondary"
+              className="judge-touch"
+              onClick={() => exitAfterJudge(matchRef.current ?? match)}
+            >
+              К матчу
             </Button>
           ) : !readonly ? (
             <>
+              <Button
+                variant="secondary"
+                className="judge-touch"
+                onClick={() => void releaseAndExit()}
+                disabled={exitPending || pointPendingCount > 0}
+              >
+                {exitPending ? "Выходим…" : "Назад"}
+              </Button>
               <Button
                 variant="secondary"
                 className="judge-touch"
@@ -594,7 +812,7 @@ export function JudgePage() {
         </p>
       ) : null}
 
-      {menuOpen && !readonly && !isSetup ? (
+      {menuOpen && !readonly && !lostLock && !isSetup ? (
         <div
           id="judge-more-menu"
           className="judge-more"
@@ -632,7 +850,13 @@ export function JudgePage() {
                       updateMatch(r.match as MatchState);
                       setMenuOpen(false);
                     })
-                    .catch((e) => setError(e.message))
+                    .catch(async (e) => {
+                      if (isLostJudgeError(e)) {
+                        await loseJudgeLock(e);
+                      } else {
+                        setError(e.message);
+                      }
+                    })
                 }
               >
                 Продолжить игру
@@ -643,8 +867,9 @@ export function JudgePage() {
             variant="secondary"
             className="judge-touch"
             onClick={() => void releaseAndExit()}
+            disabled={exitPending || pointPendingCount > 0}
           >
-            Освободить слот и выйти
+            {exitPending ? "Освобождаем…" : "Освободить слот и выйти"}
           </Button>
         </div>
       ) : null}

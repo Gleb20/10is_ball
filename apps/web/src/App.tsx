@@ -1,7 +1,8 @@
+import { Activity } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth";
 import { AppShell, shouldShowBottomNav } from "./layout";
-import { Skeleton } from "./ui";
+import { Alert, Button, Skeleton } from "./ui";
 import { LoginPage } from "./pages/LoginPage";
 import { FirstPasswordPage } from "./pages/FirstPasswordPage";
 import { HomePage } from "./pages/HomePage";
@@ -23,17 +24,48 @@ import { NotificationsPage } from "./pages/NotificationsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 function Protected({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, reauthRequired } = useAuth();
+  const location = useLocation();
   if (loading) return <Skeleton variant="rectangular" height={120} />;
-  if (!user) return <Navigate to="/login" replace />;
-  if (user.mustChangePassword) return <Navigate to="/first-password" replace />;
-  return <>{children}</>;
+  if (!user && !reauthRequired) {
+    const returnTo = `${location.pathname}${location.search}${location.hash}`;
+    return <Navigate to="/login" replace state={{ returnTo }} />;
+  }
+  if (user?.mustChangePassword) return <Navigate to="/first-password" replace />;
+  const tutorialJudgeRoute =
+    /^\/matches\/[^/]+\/judge$/.test(location.pathname) &&
+    new URLSearchParams(location.search).get("tutorial") === "1";
+  if (
+    user?.onboardingCompletedAt === null &&
+    location.pathname !== "/onboarding" &&
+    !tutorialJudgeRoute
+  ) {
+    return <Navigate to="/onboarding" replace />;
+  }
+  const returnTo = `${location.pathname}${location.search}${location.hash}`;
+  return (
+    <>
+      <Activity mode={reauthRequired ? "hidden" : "visible"}>
+        {children}
+      </Activity>
+      {reauthRequired ? (
+        <LoginPage returnTo={returnTo} sessionExpired />
+      ) : null}
+    </>
+  );
 }
 
 function AppRoutes() {
-  const { user, loading } = useAuth();
+  const {
+    user,
+    loading,
+    startupPhase,
+    startupError,
+    retryStartup,
+  } = useAuth();
   const location = useLocation();
-  const showNav = shouldShowBottomNav(location.pathname, {
+  const onboardingActive = user?.onboardingCompletedAt === null;
+  const showNav = !onboardingActive && shouldShowBottomNav(location.pathname, {
     authenticated: Boolean(user),
     mustChangePassword: Boolean(user?.mustChangePassword),
   });
@@ -41,7 +73,36 @@ function AppRoutes() {
   if (loading) {
     return (
       <AppShell showNav={false}>
-        <Skeleton variant="rectangular" height={120} />
+        <div className="card stack" role="status" aria-live="polite">
+          <strong>
+            {startupPhase === "waking"
+              ? "Сервис просыпается…"
+              : "Подключаемся к сервису…"}
+          </strong>
+          {startupPhase === "waking" ? (
+            <p className="muted">
+              Бесплатный сервер запускается после паузы. Это может занять до
+              минуты.
+            </p>
+          ) : null}
+          <Skeleton variant="rectangular" height={72} />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (startupPhase === "failed") {
+    return (
+      <AppShell showNav={false}>
+        <div className="card stack">
+          <Alert
+            type="error"
+            variant="tonal"
+            title={startupError ?? "Не удалось подключиться к сервису"}
+            description="Проверьте соединение и попробуйте ещё раз."
+          />
+          <Button onClick={retryStartup}>Повторить</Button>
+        </div>
       </AppShell>
     );
   }

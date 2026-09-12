@@ -3,6 +3,7 @@ import { Alert, Button, TextField } from "../ui";
 import { PageLayout } from "../layout";
 import { AsyncState } from "../patterns";
 import { api } from "../api";
+import { useSingleFlight } from "../useSingleFlight";
 
 export function HelpPage() {
   const [articles, setArticles] = useState<Array<Record<string, unknown>> | null>(
@@ -11,6 +12,23 @@ export function HelpPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const submission = useSingleFlight();
+
+  async function sendFeedback(e: React.FormEvent) {
+    e.preventDefault();
+    await submission.run(async () => {
+      setFormError(null);
+      setSent(false);
+      try {
+        await api.feedback("question", message);
+        setMessage("");
+        setSent(true);
+      } catch (feedbackError) {
+        setFormError((feedbackError as Error).message);
+      }
+    });
+  }
 
   useEffect(() => {
     void api
@@ -41,13 +59,8 @@ export function HelpPage() {
 
       <form
         className="card stack"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void api.feedback("question", message).then(() => {
-            setMessage("");
-            setSent(true);
-          });
-        }}
+        onSubmit={sendFeedback}
+        aria-label="Обратная связь"
       >
         <h2 className="section-title">Обратная связь</h2>
         <TextField
@@ -58,7 +71,17 @@ export function HelpPage() {
           }
           required
         />
-        <Button type="submit">Отправить</Button>
+        <Button type="submit" disabled={submission.pending}>
+          {submission.pending ? "Отправка…" : "Отправить"}
+        </Button>
+        {formError ? (
+          <Alert
+            type="error"
+            variant="tonal"
+            title="Не удалось отправить"
+            description={formError}
+          />
+        ) : null}
         {sent && (
           <Alert
             type="success"

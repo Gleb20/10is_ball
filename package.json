@@ -1,7 +1,7 @@
 {
   "name": "10is-ball",
   "private": true,
-  "version": "1.10.1",
+  "version": "1.11.0",
   "description": "Tab-10 — closed table tennis tournament web service",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
@@ -44,12 +44,14 @@
     "verify:all": "node scripts/verify/run-local.mjs",
     "ci": "pnpm run verify:all",
     "db:generate": "pnpm --filter @tab10/api run db:generate",
-    "db:migrate": "node scripts/bin/run-compiled-migration.mjs"
+    "db:migrate": "node scripts/bin/run-compiled-migration.mjs",
+    "test:ops-safety": "node --test scripts/ops-safety.test.mjs"
   },
   "engines": {
     "node": "24.20.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@playwright/test": "1.63.0"
   }
 }

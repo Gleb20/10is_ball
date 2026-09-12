@@ -1,3 +1,5 @@
+import { AUTH_UNAUTHORIZED_EVENT } from "./authEvents";
+
 export type User = {
   id: string;
   email: string;
@@ -6,6 +8,71 @@ export type User = {
   firstName?: string;
   lastName?: string;
   avatarKey?: string | null;
+  status?: "active" | "blocked";
+  onboardingStep?: number;
+  onboardingCompletedAt?: string | null;
+};
+
+export type HomeRanking = {
+  userId: string;
+  displayName: string;
+  wins: number;
+  avatarKey?: string | null;
+};
+
+export type HomeMatchEvent = {
+  type: "match";
+  id: string;
+  title: string;
+  status: string;
+  scoreA: number;
+  scoreB: number;
+  sideA?: string;
+  sideB?: string;
+  winnerName?: string | null;
+  durationSeconds?: number | null;
+  format?: string;
+  judgeName?: string | null;
+  userRole?: "participant" | "judge" | "organizer" | "viewer";
+  occurredAt?: string;
+};
+
+export type HomeTournamentEvent = {
+  type: "tournament";
+  id: string;
+  title: string;
+  status: string;
+  topThree?: string[];
+  durationSeconds?: number | null;
+  userRole?: "participant" | "judge" | "organizer" | "viewer";
+  occurredAt?: string;
+};
+
+export type HomeResponse = {
+  rankingPeriod: "all_time" | "month";
+  myStats: {
+    rank: number | null;
+    matchesPlayed: number;
+    wins: number;
+    losses: number;
+    winRate: number;
+    averagePoints: number;
+    displayName: string;
+    avatarKey?: string | null;
+    rival: {
+      userId: string;
+      displayName: string;
+      matchCount: number;
+    } | null;
+  };
+  activeEvents: {
+    match: HomeMatchEvent | null;
+    tournament: HomeTournamentEvent | null;
+  };
+  recentEvents: Array<HomeMatchEvent | HomeTournamentEvent>;
+  topRankings: HomeRanking[];
+  unreadNotifications: Array<Record<string, unknown>>;
+  unreadCount: number;
 };
 
 /** Every delivery environment uses relative API paths through its same-origin proxy. */
@@ -14,10 +81,37 @@ const API_BASE = String(import.meta.env.VITE_API_BASE_URL ?? "").replace(
   "",
 );
 
+type ApiError = Error & {
+  code?: string;
+  status: number;
+  details?: unknown;
+};
+
+let blockedByUnauthorized: ApiError | null = null;
+let authGeneration = 0;
+
+function isAuthRecoveryRequest(path: string): boolean {
+  return path === "/api/v1/auth/login" || path === "/api/v1/auth/me";
+}
+
+function notifyUnauthorized(error: ApiError) {
+  if (blockedByUnauthorized) return;
+  blockedByUnauthorized = error;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent(AUTH_UNAUTHORIZED_EVENT, { detail: { error } }),
+    );
+  }
+}
+
 async function request<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
+  if (blockedByUnauthorized && !isAuthRecoveryRequest(path)) {
+    throw blockedByUnauthorized;
+  }
+  const requestAuthGeneration = authGeneration;
   const headers = new Headers(init.headers);
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
@@ -38,11 +132,23 @@ async function request<T>(
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw Object.assign(new Error(data.message ?? res.statusText), {
+    const error = Object.assign(new Error(data.message ?? res.statusText), {
       code: data.code,
       status: res.status,
       details: data.details,
-    });
+    }) as ApiError;
+    if (
+      res.status === 401 &&
+      path !== "/api/v1/auth/login" &&
+      requestAuthGeneration === authGeneration
+    ) {
+      notifyUnauthorized(error);
+    }
+    throw error;
+  }
+  if (isAuthRecoveryRequest(path)) {
+    authGeneration += 1;
+    blockedByUnauthorized = null;
   }
   return data as T;
 }
@@ -55,13 +161,15 @@ export const api = {
     }),
   logout: () =>
     request<{ ok: boolean }>("/api/v1/auth/logout", { method: "POST" }),
-  me: () => request<{ user: User }>("/api/v1/auth/me"),
+  me: (options: { signal?: AbortSignal } = {}) =>
+    request<{ user: User }>("/api/v1/auth/me", { signal: options.signal }),
   firstPasswordChange: (newPassword: string) =>
     request<{ ok: boolean }>("/api/v1/auth/password/first-change", {
       method: "POST",
       body: JSON.stringify({ newPassword }),
     }),
-  home: () => request<Record<string, unknown>>("/api/v1/home"),
+  home: (period: "all_time" | "month" = "all_time") =>
+    request<HomeResponse>(`/api/v1/home?period=${period}`),
   directory: (q?: string) =>
     request<{
       users: Array<{
@@ -93,6 +201,10 @@ export const api = {
     }),
   blockUser: (userId: string) =>
     request<{ ok: boolean }>(`/api/v1/admin/users/${userId}/block`, {
+      method: "POST",
+    }),
+  unblockUser: (userId: string) =>
+    request<{ ok: boolean }>(`/api/v1/admin/users/${userId}/unblock`, {
       method: "POST",
     }),
   resetPassword: (userId: string) =>
@@ -313,6 +425,14 @@ export const api = {
     request<{ ok: boolean }>(`/api/v1/notifications/${id}/read`, {
       method: "POST",
     }),
+  markNotificationsReadVisible: (notificationIds: string[]) =>
+    request<{
+      updated: number;
+      notifications: Array<{ id: string; readAt: string }>;
+    }>("/api/v1/notifications/read-visible", {
+      method: "POST",
+      body: JSON.stringify({ notificationIds }),
+    }),
   respondTeamInvitation: (invitationId: string, accept: boolean) =>
     request<{ ok?: boolean; team?: Record<string, unknown> }>(
       `/api/v1/team-invitations/${invitationId}/respond`,
@@ -333,9 +453,19 @@ export const api = {
       method: "POST",
     }),
   completeOnboarding: () =>
-    request("/api/v1/me/profile", {
+    request<{ user: User }>("/api/v1/me/onboarding", {
       method: "PATCH",
-      body: JSON.stringify({ onboardingCompleted: true }),
+      body: JSON.stringify({ action: "complete" }),
+    }),
+  setOnboardingStep: (step: number) =>
+    request<{ user: User }>("/api/v1/me/onboarding", {
+      method: "PATCH",
+      body: JSON.stringify({ action: "set-step", step }),
+    }),
+  restartOnboarding: () =>
+    request<{ user: User }>("/api/v1/me/onboarding", {
+      method: "PATCH",
+      body: JSON.stringify({ action: "restart" }),
     }),
   sessions: () =>
     request<{

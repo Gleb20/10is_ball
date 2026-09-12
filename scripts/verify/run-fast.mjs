@@ -34,14 +34,9 @@ const exclusions = [
     coveredBy: "scripts/verify/run-postgres.mjs",
   },
   {
-    path: "packages/shared/src/tournament-bracket-v1.characterization.test.ts",
-    reason:
-      "Contains the pre-existing D25 V1 DE hang todo. The bounded product fix belongs to the product wave, outside delivery-foundation PR1.",
-    activeCoverage: [
-      "packages/shared/src/tournament-bracket-v1.test.ts",
-      "packages/shared/src/bracket-v2/property.test.ts",
-      "packages/shared/src/bracket-v2/bracket-v2.test.ts",
-    ],
+    path: "apps/api/src/data-004.postgres.integration.test.ts",
+    reason: "Required concurrency suite executed by verify:postgres.",
+    coveredBy: "scripts/verify/run-postgres.mjs",
   },
 ];
 await writeJson(path.join(evidenceDir, "fast-suite-manifest.json"), {
@@ -54,7 +49,7 @@ const suites = [
   {
     name: "shared",
     filter: "@tab10/shared",
-    extraArgs: ["--exclude", "src/tournament-bracket-v1.characterization.test.ts"],
+    extraArgs: [],
   },
   { name: "test-utils", filter: "@tab10/test-utils", extraArgs: [] },
   { name: "web", filter: "@tab10/web", extraArgs: [] },
@@ -66,6 +61,8 @@ const suites = [
       "src/postgres-date.integration.test.ts",
       "--exclude",
       "src/db/migrations.postgres.integration.test.ts",
+      "--exclude",
+      "src/data-004.postgres.integration.test.ts",
     ],
   },
 ];
@@ -107,6 +104,7 @@ for (const suite of suites) {
 }
 
 const nodeSuites = [
+  { name: "ops-safety", file: "scripts/ops-safety.test.mjs", label: "Disposable operations safety" },
   {
     name: "release-scripts",
     file: "scripts/release/release-scripts.test.mjs",

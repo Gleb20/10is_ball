@@ -45,6 +45,7 @@
 |---|---|
 | Статус и следующий этап | [PROJECT_STATUS.md](PROJECT_STATUS.md) |
 | Живой backlog | [BACKLOG.md](BACKLOG.md) |
+| Оркестрация разработки | [ORCHESTRATION.md](ORCHESTRATION.md) |
 | Возможности продукта | [CAPABILITY_MATRIX.md](CAPABILITY_MATRIX.md) |
 | Нерешённые вопросы | [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) |
 | Архитектура as-built | [architecture/AS_BUILT.md](architecture/AS_BUILT.md) |

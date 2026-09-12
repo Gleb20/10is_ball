@@ -1,6 +1,6 @@
 # Deployment as-built
 
-Фактическое состояние репозитория и провайдеров на **2026-09-08**. Каноническая
+Исторический снимок репозитория и провайдеров на **2026-09-08**. Каноническая
 штатная процедура — в [`../DELIVERY.md`](../DELIVERY.md); исторический ручной
 runbook в [`../DEPLOY.md`](../DEPLOY.md) помечен superseded.
 
@@ -214,3 +214,9 @@ Web обязан показывать явное состояние «серви
 [`../DELIVERY.md`](../DELIVERY.md), а smoke/recovery evidence регистрируется в
 [`../CHANGELOG_DEV.md`](../CHANGELOG_DEV.md). Ручной runbook
 [`../DEPLOY.md`](../DEPLOY.md) не является разрешённым fallback.
+
+## Кандидат Wave A — 2026-09-13
+
+Public web/API readiness по read-only metadata остаются на ecf7605 / 1.10.1 до публикации. Кандидат 1.11.0 сохраняет D32/native delivery и добавляет immutable 0002/0003. Local PostgreSQL16 gate40 passed; public migration не выполнялась. Миграция0002 fail-closed при дублях участника в турнирной сетке; read-only preflight выявил0 таких пар на текущем стенде.
+
+OPS-002 readiness/logging интегрированы с release metadata и request IDs. OPS-003 local rehearsal создаёт только новую disposable restore DB, передаёт quoted identifier через psql stdin и не удаляет pre-existing target. Boundary tests7 passed; реальные backup/RPO/RTO публичного стенда этим не подтверждены.

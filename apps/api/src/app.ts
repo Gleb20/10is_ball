@@ -22,6 +22,7 @@ import type { Db } from "./db/client.js";
 import { authSessions, users } from "./db/schema.js";
 import { isAuditEphemeral } from "./audit-ephemeral.js";
 import { AuthService, type AuthUser } from "./modules/auth/auth-service.js";
+import { HomeService } from "./modules/home/home-service.js";
 import { MatchService } from "./modules/matches/match-service.js";
 import {
   HelpService,
@@ -29,7 +30,10 @@ import {
 } from "./modules/notifications/notification-service.js";
 import { TeamService } from "./modules/teams/team-service.js";
 import { TournamentService } from "./modules/tournaments/tournament-service.js";
+import { openApiSpec } from "./openapi.js";
 import { resolveRuntimeReleaseMetadata } from "./release-metadata.js";
+
+export { openApiSpec } from "./openapi.js";
 
 const COOKIE = "tab10_session";
 const CSRF_COOKIE = "tab10_csrf";
@@ -38,6 +42,14 @@ const TEMPORARY_PASSWORD_ALLOWED_ROUTES = new Set([
   "POST /api/v1/auth/logout",
   "POST /api/v1/auth/password/first-change",
 ]);
+const OnboardingMutationSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("set-step"), step: z.number().int().min(0).max(6) }),
+  z.object({ action: z.literal("complete") }),
+  z.object({ action: z.literal("restart") }),
+]);
+const NotificationReadVisibleSchema = z.object({
+  notificationIds: z.array(z.string().uuid()).min(1).max(100),
+});
 
 /** Cookie flags: use COOKIE_SAME_SITE=none when browser talks to API on another site. Prefer Vercel /api rewrite (same-site) instead. */
 function sessionCookieOptions(httpOnly: boolean) {
@@ -67,6 +79,7 @@ export type AppServices = {
   teams: TeamService;
   notifications: NotificationService;
   help: HelpService;
+  home: HomeService;
   clock: Clock;
 };
 
@@ -74,6 +87,7 @@ declare module "fastify" {
   interface FastifyRequest {
     authUser?: AuthUser;
     authSessionId?: string;
+    observabilityStartedAt?: number;
   }
 }
 
@@ -82,6 +96,8 @@ export async function buildApp(opts: {
   clock?: Clock;
   releaseMetadata?: ReleaseMetadata;
   readinessProbe?: () => Promise<void>;
+  requestIdFactory?: () => string;
+  logDestination?: { write(line: string): void };
 }): Promise<{ app: FastifyInstance; services: AppServices }> {
   const clock = opts.clock ?? { now: () => new Date() };
   const release = opts.releaseMetadata ?? resolveRuntimeReleaseMetadata();
@@ -100,19 +116,81 @@ export async function buildApp(opts: {
     matches,
     tournaments,
     teams: new TeamService(opts.db, clock),
-    notifications: new NotificationService(opts.db),
+    notifications: new NotificationService(opts.db, clock),
     help: new HelpService(opts.db),
+    home: new HomeService(opts.db, clock, matches, tournaments),
     clock,
   };
 
-  const app = Fastify({ logger: false });
+  const loggingEnabled =
+    opts.logDestination !== undefined || process.env.NODE_ENV !== "test";
+  const app = Fastify({
+    logger: loggingEnabled
+      ? {
+          level: opts.logDestination
+            ? "info"
+            : safeLogLevel(process.env.LOG_LEVEL),
+          ...(opts.logDestination ? { stream: opts.logDestination } : {}),
+          redact: {
+            paths: [
+              "req.headers.authorization",
+              "req.headers.cookie",
+              "req.headers['x-csrf-token']",
+            ],
+            censor: "[REDACTED]",
+          },
+        }
+      : false,
+    logController: new Fastify.LogController({ disableRequestLogging: true }),
+    genReqId: opts.requestIdFactory ?? (() => crypto.randomUUID()),
+  });
   await app.register(cors, {
     origin: corsOrigin(),
     credentials: true,
   });
   await app.register(cookie);
 
-  app.setErrorHandler((err, _req, reply) => {
+  app.addHook("onRequest", async (req, reply) => {
+    req.observabilityStartedAt = performance.now();
+    reply.header("x-request-id", req.id);
+  });
+
+  app.addHook("preSerialization", async (req, reply, payload) => {
+    if (
+      reply.statusCode >= 400 &&
+      payload !== null &&
+      typeof payload === "object" &&
+      !Array.isArray(payload)
+    ) {
+      const errorPayload = payload as Record<string, unknown>;
+      if (
+        typeof errorPayload.code === "string" &&
+        typeof errorPayload.message === "string"
+      ) {
+        return { ...errorPayload, requestId: req.id };
+      }
+    }
+    return payload;
+  });
+
+  app.addHook("onResponse", async (req, reply) => {
+    const startedAt = req.observabilityStartedAt ?? performance.now();
+    const fields = {
+      event: "request_completed",
+      requestId: req.id,
+      method: req.method,
+      route: req.routeOptions.url ?? safeRequestPath(req.url),
+      statusCode: reply.statusCode,
+      latencyMs: Math.max(0, Number((performance.now() - startedAt).toFixed(3))),
+    };
+    if (reply.statusCode >= 500) {
+      req.log.error(fields, "request completed with server error");
+    } else {
+      req.log.info(fields, "request completed");
+    }
+  });
+
+  app.setErrorHandler((err, req, reply) => {
     if (reply.sent) return;
     if ((err as { code?: string }).code === "FST_ERR_CTP_INVALID_JSON_BODY") {
       return reply.code(400).send({
@@ -120,16 +198,27 @@ export async function buildApp(opts: {
         message: "Некорректный JSON",
       });
     }
-    // Runtime exceptions can include SQL parameters, request payloads, URLs or
-    // credentials. Keep provider logs useful without serializing the raw error.
-    console.error(
-      JSON.stringify({ level: "error", event: "request_failed", code: "INTERNAL" }),
+    req.log.error(
+      {
+        event: "request_error",
+        requestId: req.id,
+        error: safeErrorSignal(err),
+      },
+      "request failed",
     );
     return reply.code(500).send({
       code: "INTERNAL",
       message: "Внутренняя ошибка сервера",
     });
   });
+
+  app.setNotFoundHandler((req, reply) =>
+    reply.code(404).send({
+      code: "NOT_FOUND",
+      message: "Ресурс не найден",
+      requestId: req.id,
+    }),
+  );
 
   app.addHook("onRequest", async (req) => {
     const token = req.cookies[COOKIE];
@@ -201,13 +290,34 @@ export async function buildApp(opts: {
     ...(isAuditEphemeral(process.env) ? { auditEphemeral: true } : {}),
   }));
 
-  app.get("/ready", async (_req, reply) => {
-    const time = clock.now().toISOString();
+  app.get("/ready", async (req, reply) => {
     try {
       await readinessProbe();
-      return { status: "ready", time, release };
-    } catch {
-      return reply.code(503).send({ status: "not_ready", time, release });
+      return {
+        status: "ready",
+        checks: { database: "ok" },
+        time: clock.now().toISOString(),
+        release,
+      };
+    } catch (error) {
+      req.log.error(
+        {
+          event: "readiness_failed",
+          requestId: req.id,
+          check: "database",
+          error: safeErrorSignal(error),
+        },
+        "readiness check failed",
+      );
+      return reply.code(503).send({
+        code: "NOT_READY",
+        message: "Сервис временно не готов",
+        status: "not_ready",
+        checks: { database: "failed" },
+        time: clock.now().toISOString(),
+        release,
+        requestId: req.id,
+      });
     }
   });
 
@@ -251,6 +361,8 @@ export async function buildApp(opts: {
         firstName: result.user.firstName,
         lastName: result.user.lastName,
         email: result.user.email,
+        onboardingStep: result.user.onboardingStep,
+        onboardingCompletedAt: result.user.onboardingCompletedAt,
       },
       csrfToken: csrf,
     };
@@ -395,7 +507,7 @@ export async function buildApp(opts: {
         const err = e as { code?: string };
         if (err.code === "EMAIL_TAKEN") {
           return reply.code(409).send({
-            code: "EMAIL_TAKEN",
+            code: "EMAIL_ALREADY_EXISTS",
             message: "Email уже занят",
           });
         }
@@ -463,6 +575,12 @@ export async function buildApp(opts: {
           return reply.code(409).send({
             code: "LAST_ADMIN",
             message: "Нельзя заблокировать последнего администратора",
+          });
+        }
+        if (err.code === "SELF_BLOCK_FORBIDDEN") {
+          return reply.code(403).send({
+            code: "SELF_BLOCK_FORBIDDEN",
+            message: "Нельзя заблокировать собственный аккаунт",
           });
         }
         throw e;
@@ -551,6 +669,23 @@ export async function buildApp(opts: {
           : undefined,
       });
       return { user: row };
+    },
+  );
+
+  app.patch(
+    "/api/v1/me/onboarding",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const input = parseBody(OnboardingMutationSchema, req.body);
+        const user = await services.auth.updateOnboarding(
+          req.authUser!.id,
+          input,
+        );
+        return { user };
+      } catch (error) {
+        return sendError(reply, error);
+      }
     },
   );
 
@@ -896,39 +1031,20 @@ export async function buildApp(opts: {
   );
 
   app.get("/api/v1/home", { preHandler: requireAuth }, async (req) => {
-    const matches = await services.matches.listMatches(req.authUser!.id, 5);
-    const rankings = await services.matches.getRankings("all_time");
+    const query = req.query as { period?: string };
+    const rankingPeriod = query.period === "month" ? "month" : "all_time";
+    const dashboard = await services.home.dashboard(
+      req.authUser!.id,
+      rankingPeriod,
+    );
     const unread = await services.notifications.unread(req.authUser!.id);
     const unreadCount = await services.notifications.unreadCount(
       req.authUser!.id,
     );
-    const myRankIndex = rankings.findIndex(
-      (r) => r && r.userId === req.authUser!.id,
-    );
-    const myEntry = myRankIndex >= 0 ? rankings[myRankIndex] : null;
     return {
-      lastMatches: matches,
-      topRankings: rankings.slice(0, 5),
+      ...dashboard,
       unreadNotifications: unread.slice(0, 5),
       unreadCount,
-      myStats: myEntry
-        ? {
-            rank: myRankIndex + 1,
-            wins: myEntry.wins,
-            losses: myEntry.losses,
-            displayName: myEntry.displayName,
-            avatarKey: myEntry.avatarKey ?? null,
-          }
-        : null,
-      hero: rankings[0]
-        ? {
-            type: "leader",
-            userId: rankings[0].userId,
-            displayName: rankings[0].displayName,
-            wins: rankings[0].wins,
-            avatarKey: rankings[0].avatarKey ?? null,
-          }
-        : { type: "empty" },
     };
   });
 
@@ -1319,8 +1435,28 @@ export async function buildApp(opts: {
     { preHandler: requireAuth },
     async (req) => {
       const { id } = req.params as { id: string };
-      await services.notifications.markRead(req.authUser!.id, id);
-      return { ok: true };
+      const notification = await services.notifications.markRead(
+        req.authUser!.id,
+        id,
+      );
+      return { ok: true, notification };
+    },
+  );
+
+  app.post(
+    "/api/v1/notifications/read-visible",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const body = parseBody(NotificationReadVisibleSchema, req.body);
+        const updated = await services.notifications.markVisibleRead(
+          req.authUser!.id,
+          body.notificationIds,
+        );
+        return { updated: updated.length, notifications: updated };
+      } catch (error) {
+        return sendError(reply, error);
+      }
     },
   );
 
@@ -1355,11 +1491,14 @@ function messageFor(code: string): string {
     PASSWORD_POLICY: "Пароль не соответствует политике",
     PASSWORD_CHANGE_REQUIRED: "Необходимо сменить пароль",
     LAST_ADMIN: "Нельзя заблокировать последнего администратора",
+    SELF_BLOCK_FORBIDDEN: "Нельзя заблокировать собственный аккаунт",
     EMAIL_TAKEN: "Email уже занят",
+    EMAIL_ALREADY_EXISTS: "Email уже занят",
     NOT_FOUND: "Не найдено",
     FORBIDDEN: "Недостаточно прав",
     JUDGE_TAKEN: "Судейская сессия занята",
     JUDGE_BUSY: "Вы уже судите другой матч",
+    JUDGE_NOT_ACTIVE: "Слот судьи больше не активен",
     JUDGE_REQUIRED: "Требуется судейская сессия",
     CSRF_INVALID: "Недействительный CSRF-токен",
     IDEMPOTENCY_KEY_REQUIRED: "Нужен заголовок Idempotency-Key",
@@ -1395,6 +1534,51 @@ function messageFor(code: string): string {
     INTERNAL: "Внутренняя ошибка сервера",
   };
   return map[code] ?? code;
+}
+
+function safeLogLevel(value: string | undefined): string {
+  return new Set([
+    "fatal",
+    "error",
+    "warn",
+    "info",
+    "debug",
+    "trace",
+    "silent",
+  ]).has(value ?? "")
+    ? value!
+    : "info";
+}
+
+function safeRequestPath(url: string): string {
+  try {
+    return new URL(url, "http://localhost").pathname;
+  } catch {
+    return url.split("?", 1)[0] || "/";
+  }
+}
+
+function safeErrorSignal(error: unknown): { type: string; code: string } {
+  const unsafeType = error instanceof Error ? error.name : "UnknownError";
+  const type = new Set([
+    "Error",
+    "TypeError",
+    "RangeError",
+    "SyntaxError",
+    "AggregateError",
+    "UnknownError",
+  ]).has(unsafeType)
+    ? unsafeType
+    : "Error";
+  const unsafeCode = (error as { code?: unknown } | null)?.code;
+  const code =
+    typeof unsafeCode === "string" &&
+    new Set(["ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "ENOTFOUND"]).has(
+      unsafeCode,
+    )
+      ? unsafeCode
+      : "INTERNAL";
+  return { type, code };
 }
 
 function parseBody<T>(schema: ZodType<T>, body: unknown): T {
@@ -1437,7 +1621,11 @@ function sendError(reply: FastifyReply, e: unknown) {
     currentJudge?: { userId: string; displayName: string };
     details?: Record<string, unknown>;
   };
-  const code = err.code ?? "INTERNAL";
+  const rawCode = err.code;
+  // PostgreSQL/PGlite SQLSTATEs are infrastructure errors, not public domain
+  // codes. Do not leak them or misclassify them as a client-side 400.
+  const code =
+    rawCode && !/^[0-9A-Z]{5}$/.test(rawCode) ? rawCode : "INTERNAL";
   const badRequestCodes = new Set([
     "JUDGE_BUSY",
     "JUDGE_REQUIRED",
@@ -1476,6 +1664,7 @@ function sendError(reply: FastifyReply, e: unknown) {
           ? 500
           : code === "VERSION_CONFLICT" ||
               code === "JUDGE_TAKEN" ||
+              code === "JUDGE_NOT_ACTIVE" ||
               code === "BRACKET_VERSION_CONFLICT"
             ? 409
             : badRequestCodes.has(code)
@@ -1499,48 +1688,4 @@ function cryptoRandom(): string {
   return [...crypto.getRandomValues(new Uint8Array(16))]
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-}
-
-function openApiSpec(releaseVersion: string) {
-  return {
-    openapi: "3.0.3",
-    info: { title: "Tab-10 API", version: releaseVersion },
-    paths: {
-      "/health": { get: { summary: "Process health and release identity" } },
-      "/ready": { get: { summary: "Database readiness and release identity" } },
-      "/api/v1/auth/login": { post: { summary: "Login" } },
-      "/api/v1/admin/users": {
-        get: { summary: "List users" },
-        post: { summary: "Create user" },
-      },
-      "/api/v1/admin/users/{userId}": {
-        patch: { summary: "Update user role (admin only)" },
-      },
-      "/api/v1/admin/matches/{matchId}/force-close": {
-        post: { summary: "Admin force-close standalone match" },
-      },
-      "/api/v1/admin/matches/{matchId}": {
-        delete: { summary: "Admin delete standalone match" },
-      },
-      "/api/v1/matches": {
-        get: { summary: "List matches" },
-        post: { summary: "Create match" },
-      },
-      "/api/v1/matches/{matchId}/cancel": {
-        post: { summary: "Cancel standalone match (creator/admin)" },
-      },
-      "/api/v1/matches/{matchId}/void": {
-        post: { summary: "Void result with audit (creator/admin)" },
-      },
-      "/api/v1/tournaments": {
-        get: { summary: "List tournaments" },
-        post: { summary: "Create tournament" },
-      },
-      "/api/v1/rankings": { get: { summary: "Rankings" } },
-      "/api/v1/users/directory": {
-        get: { summary: "User directory for pickers" },
-      },
-      "/api/v1/home": { get: { summary: "Home dashboard" } },
-    },
-  };
 }

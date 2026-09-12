@@ -19,7 +19,7 @@ const BASELINE_SNAPSHOT_PATH = fileURLToPath(
   new URL("../../drizzle/meta/0000_snapshot.json", import.meta.url),
 );
 const CURRENT_SNAPSHOT_PATH = fileURLToPath(
-  new URL("../../drizzle/meta/0001_snapshot.json", import.meta.url),
+  new URL("../../drizzle/meta/0003_snapshot.json", import.meta.url),
 );
 
 const MIGRATION_ADVISORY_LOCK = "7247010010001";
@@ -143,6 +143,11 @@ const currentSnapshot = JSON.parse(
   readFileSync(CURRENT_SNAPSHOT_PATH, "utf8"),
 ) as BaselineSnapshot;
 
+const intermediateSnapshots = ["0001", "0002"].map((prefix) =>
+  JSON.parse(readFileSync(fileURLToPath(new URL(`../../drizzle/meta/${prefix}_snapshot.json`, import.meta.url)), "utf8")) as BaselineSnapshot,
+);
+const snapshotsByAppliedCount = [baselineSnapshot, ...intermediateSnapshots, currentSnapshot];
+
 function expectedMigrations(migrationsFolder = MIGRATIONS_FOLDER) {
   return readMigrationFiles({ migrationsFolder });
 }
@@ -189,7 +194,14 @@ function normalizePredicate(value: string, tableName: string): string {
     .toLowerCase()
     .replaceAll('"', "")
     .replaceAll(`${tableName.toLowerCase()}.`, "")
+    .replace(/::text\b/g, "")
     .replace(/[()\s]/g, "");
+}
+
+function normalizeCheck(value: string, tableName: string): string {
+  return normalizePredicate(value, tableName)
+    .replace(/^check/, "")
+    .replace(/([a-z_][a-z0-9_]*)between(-?\d+)and(-?\d+)/g, "$1>=$2and$1<=$3");
 }
 
 function normalizeAction(value: string | undefined): string {
@@ -482,7 +494,10 @@ function expectedConstraintSignatures(snapshot: BaselineSnapshot): string[] {
           tableName: table.name,
           constraintName: check.name || snapshotName,
           constraintType: "c",
-          definition: normalizePredicate(check.value, table.name),
+          columns: Object.keys(table.columns).filter((column) =>
+            new RegExp(`\\b${column}\\b`).test(check.value),
+          ),
+          definition: normalizeCheck(check.value, table.name),
           snapshot,
         }),
       );
@@ -1107,7 +1122,7 @@ async function assertSchemaSnapshot(
             ? "live"
             : "not-live"
           : "",
-        normalizePredicate(asString(constraint.definition), tableName),
+        normalizeCheck(asString(constraint.definition), tableName),
       ].join("|");
     }),
   );
@@ -1264,10 +1279,9 @@ async function assertApplyPreconditions(query: MigrationQuery): Promise<void> {
   const ledger = await inspectLedger(query);
   if (ledger.state === "nonempty") {
     assertAppliedIsArtifactPrefix(ledger.rows);
-    if (ledger.rows.length === expectedMigrations().length) {
-      await assertCurrentSchema(query);
-    } else if (ledger.rows.length === 1) {
-      await assertBaselineSchema(query);
+    const snapshot = snapshotsByAppliedCount[ledger.rows.length - 1];
+    if (snapshot) {
+      await assertSchemaSnapshot(query, snapshot);
     } else {
       throw new Error(
         `No immutable schema snapshot is registered for ${ledger.rows.length} applied migrations`,

@@ -1,8 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Avatar, Button, Dialog, TextField } from "../ui";
+import { Alert, Avatar, Button, Dialog, TextField } from "../ui";
 import { PageLayout } from "../layout";
-import { AsyncState, FilterBar, StatusChip } from "../patterns";
+import {
+  AsyncState,
+  FilterBar,
+  RefreshButton,
+  StatusChip,
+} from "../patterns";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import {
@@ -12,36 +17,46 @@ import {
 } from "../judgeUi";
 import { initialsFromName } from "../rankingUi";
 import { avatarSrc } from "../avatarSrc";
+import { useVisibleRefresh } from "../useVisibleRefresh";
+import { useSingleFlight } from "../useSingleFlight";
 
 type AdminConfirm = "force-close" | "delete" | null;
 
 export function MatchDetailPage() {
   const { id } = useParams();
+  const currentIdRef = useRef(id);
+  currentIdRef.current = id;
   const navigate = useNavigate();
   const { user } = useAuth();
   const [match, setMatch] = useState<Record<string, unknown> | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [stopOpen, setStopOpen] = useState(false);
   const [stopSide, setStopSide] = useState<"A" | "B">("A");
   const [stopReason, setStopReason] = useState("injury");
-  const [stopPending, setStopPending] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [cancelPending, setCancelPending] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
-  const [voidPending, setVoidPending] = useState(false);
   const [voidReason, setVoidReason] = useState("");
   const [adminConfirm, setAdminConfirm] = useState<AdminConfirm>(null);
-  const [adminPending, setAdminPending] = useState(false);
+  const action = useSingleFlight();
   const [now, setNow] = useState(() => new Date());
 
-  async function load() {
-    const res = await api.getMatch(id!);
-    setMatch(res.match);
-  }
-
-  useEffect(() => {
-    void load().catch((e) => setError(e.message));
+  const load = useCallback(async () => {
+    const requestedId = id;
+    if (!requestedId) return;
+    const res = await api.getMatch(requestedId);
+    if (currentIdRef.current === requestedId) setMatch(res.match);
   }, [id]);
+
+  const pollingEnabled =
+    match === null ||
+    match.status === "waiting" ||
+    match.status === "in_progress" ||
+    match.status === "pending_confirmation";
+  const {
+    error: refreshError,
+    refreshing,
+    refreshNow,
+  } = useVisibleRefresh(load, { pollingEnabled, refreshKey: id });
 
   useEffect(() => {
     if (match?.status !== "in_progress") return;
@@ -106,95 +121,119 @@ export function MatchDetailPage() {
       : null;
 
   async function onStop() {
-    setStopPending(true);
-    setError(null);
-    try {
-      const res = await api.stopMatch(id!, {
-        winnerSide: stopSide,
-        reasonCode: stopReason,
-      });
-      setMatch(res.match);
-      setStopOpen(false);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setStopPending(false);
-    }
+    await action.run(async () => {
+      setActionError(null);
+      try {
+        const res = await api.stopMatch(id!, {
+          winnerSide: stopSide,
+          reasonCode: stopReason,
+        });
+        setMatch(res.match);
+        setStopOpen(false);
+      } catch (e) {
+        setActionError((e as Error).message);
+      }
+    });
+  }
+
+  async function onStart() {
+    await action.run(async () => {
+      setActionError(null);
+      try {
+        const result = await api.startMatch(id!);
+        setMatch(result.match);
+      } catch (error) {
+        setActionError((error as Error).message);
+      }
+    });
   }
 
   async function onCancelConfirm() {
     if (!id) return;
-    setCancelPending(true);
-    setError(null);
-    try {
-      const res = await api.cancelMatch(
-        id,
-        Number(match?.version),
-        crypto.randomUUID(),
-      );
-      setMatch(res.match);
-      setCancelOpen(false);
-    } catch (e) {
-      setError((e as Error).message);
-      setCancelOpen(false);
-    } finally {
-      setCancelPending(false);
-    }
-  }
-
-  async function onVoidConfirm() {
-    if (!id) return;
-    setVoidPending(true);
-    setError(null);
-    try {
-      const res = await api.voidMatch(
-        id,
-        Number(match?.version),
-        crypto.randomUUID(),
-        voidReason.trim() || undefined,
-      );
-      setMatch(res.match);
-      setVoidOpen(false);
-      setVoidReason("");
-    } catch (e) {
-      setError((e as Error).message);
-      setVoidOpen(false);
-    } finally {
-      setVoidPending(false);
-    }
-  }
-
-  async function onAdminConfirm() {
-    if (!adminConfirm || !id) return;
-    setAdminPending(true);
-    setError(null);
-    try {
-      if (adminConfirm === "force-close") {
-        const res = await api.adminForceCloseMatch(
+    await action.run(async () => {
+      setActionError(null);
+      try {
+        const res = await api.cancelMatch(
           id,
           Number(match?.version),
           crypto.randomUUID(),
         );
         setMatch(res.match);
-        setAdminConfirm(null);
-      } else {
-        await api.adminDeleteMatch(id);
-        setAdminConfirm(null);
-        navigate("/history");
+        setCancelOpen(false);
+      } catch (e) {
+        setActionError((e as Error).message);
+        setCancelOpen(false);
       }
-    } catch (e) {
-      setError((e as Error).message);
-      setAdminConfirm(null);
-    } finally {
-      setAdminPending(false);
-    }
+    });
+  }
+
+  async function onVoidConfirm() {
+    if (!id) return;
+    await action.run(async () => {
+      setActionError(null);
+      try {
+        const res = await api.voidMatch(
+          id,
+          Number(match?.version),
+          crypto.randomUUID(),
+          voidReason.trim() || undefined,
+        );
+        setMatch(res.match);
+        setVoidOpen(false);
+        setVoidReason("");
+      } catch (e) {
+        setActionError((e as Error).message);
+        setVoidOpen(false);
+      }
+    });
+  }
+
+  async function onAdminConfirm() {
+    if (!adminConfirm || !id) return;
+    await action.run(async () => {
+      setActionError(null);
+      try {
+        if (adminConfirm === "force-close") {
+          const res = await api.adminForceCloseMatch(
+            id,
+            Number(match?.version),
+            crypto.randomUUID(),
+          );
+          setMatch(res.match);
+          setAdminConfirm(null);
+        } else {
+          await api.adminDeleteMatch(id);
+          setAdminConfirm(null);
+          navigate("/history");
+        }
+      } catch (e) {
+        setActionError((e as Error).message);
+        setAdminConfirm(null);
+      }
+    });
   }
 
   return (
-    <PageLayout title={match ? String(match.title) : "Матч"}>
-      <AsyncState loading={!match && !error} error={error}>
+    <PageLayout
+      title={match ? String(match.title) : "Матч"}
+      action={
+        <RefreshButton refreshing={refreshing} onRefresh={refreshNow} />
+      }
+    >
+      <AsyncState
+        loading={!match && !refreshError}
+        error={!match ? refreshError : null}
+      >
         {match ? (
           <>
+            {refreshError ? (
+              <Alert
+                type="warning"
+                variant="tonal"
+                title="Не удалось обновить"
+                description={refreshError}
+              />
+            ) : null}
             <div className="card stack">
               <div className="row">
                 <StatusChip status={String(match.status)} />
@@ -235,14 +274,10 @@ export function MatchDetailPage() {
             <div className="stack stack--actions">
               {canStart && (
                 <Button
-                  onClick={() =>
-                    api
-                      .startMatch(id!)
-                      .then((r) => setMatch(r.match))
-                      .catch((e) => setError(e.message))
-                  }
+                  disabled={action.pending}
+                  onClick={() => void onStart()}
                 >
-                  Старт
+                  {action.pending ? "Запуск…" : "Старт"}
                 </Button>
               )}
               {(match.status === "in_progress" ||
@@ -270,13 +305,18 @@ export function MatchDetailPage() {
                 </>
               )}
               {canStop && (
-                <Button variant="secondary" onClick={() => setStopOpen((v) => !v)}>
+                <Button
+                  variant="secondary"
+                  disabled={action.pending}
+                  onClick={() => setStopOpen((v) => !v)}
+                >
                   {stopOpen ? "Скрыть остановку" : "Остановить матч"}
                 </Button>
               )}
               {canCancel ? (
                 <Button
                   variant="secondary"
+                  disabled={action.pending}
                   onClick={() => setCancelOpen(true)}
                 >
                   Отменить матч
@@ -285,6 +325,7 @@ export function MatchDetailPage() {
               {canVoid ? (
                 <Button
                   variant="secondary"
+                  disabled={action.pending}
                   onClick={() => setVoidOpen(true)}
                 >
                   Аннулировать результат
@@ -293,6 +334,7 @@ export function MatchDetailPage() {
               {canForceClose ? (
                 <Button
                   variant="secondary"
+                  disabled={action.pending}
                   onClick={() => setAdminConfirm("force-close")}
                 >
                   Принудительно закрыть
@@ -301,6 +343,7 @@ export function MatchDetailPage() {
               {canAdminPurge ? (
                 <Button
                   variant="secondary"
+                  disabled={action.pending}
                   onClick={() => setAdminConfirm("delete")}
                 >
                   Удалить из истории
@@ -320,6 +363,14 @@ export function MatchDetailPage() {
                 Назад
               </Button>
             </div>
+            {actionError ? (
+              <Alert
+                type="error"
+                variant="tonal"
+                title="Не удалось выполнить действие"
+                description={actionError}
+              />
+            ) : null}
             {stopOpen ? (
               <div className="card stack">
                 <p className="muted">
@@ -354,21 +405,21 @@ export function MatchDetailPage() {
                     { value: "other", label: "Другое" },
                   ]}
                 />
-                <Button disabled={stopPending} onClick={() => void onStop()}>
-                  {stopPending ? "Сохранение…" : "Подтвердить остановку"}
+                <Button disabled={action.pending} onClick={() => void onStop()}>
+                  {action.pending ? "Сохранение…" : "Подтвердить остановку"}
                 </Button>
               </div>
             ) : null}
             <Dialog
               open={cancelOpen}
-              onClose={() => (!cancelPending ? setCancelOpen(false) : undefined)}
+              onClose={() => (!action.pending ? setCancelOpen(false) : undefined)}
               title="Отменить матч?"
               width="sm"
               secondaryButtonLabel="Нет"
               onSecondaryButton={() =>
-                !cancelPending ? setCancelOpen(false) : undefined
+                !action.pending ? setCancelOpen(false) : undefined
               }
-              mainButtonLabel={cancelPending ? "…" : "Отменить матч"}
+              mainButtonLabel={action.pending ? "…" : "Отменить матч"}
               onMainButton={() => void onCancelConfirm()}
             >
               <p>
@@ -379,15 +430,15 @@ export function MatchDetailPage() {
             </Dialog>
             <Dialog
               open={voidOpen}
-              onClose={() => (!voidPending ? setVoidOpen(false) : undefined)}
+              onClose={() => (!action.pending ? setVoidOpen(false) : undefined)}
               title="Аннулировать результат?"
               width="sm"
               secondaryButtonLabel="Отмена"
               onSecondaryButton={() =>
-                !voidPending ? setVoidOpen(false) : undefined
+                !action.pending ? setVoidOpen(false) : undefined
               }
               mainButtonLabel={
-                voidPending ? "…" : "Подтвердить аннулирование"
+                action.pending ? "…" : "Подтвердить аннулирование"
               }
               onMainButton={() => void onVoidConfirm()}
             >
@@ -416,7 +467,7 @@ export function MatchDetailPage() {
             <Dialog
               open={adminConfirm !== null}
               onClose={() =>
-                !adminPending ? setAdminConfirm(null) : undefined
+                !action.pending ? setAdminConfirm(null) : undefined
               }
               title={
                 adminConfirm === "force-close"
@@ -426,10 +477,10 @@ export function MatchDetailPage() {
               width="sm"
               secondaryButtonLabel="Отмена"
               onSecondaryButton={() =>
-                !adminPending ? setAdminConfirm(null) : undefined
+                !action.pending ? setAdminConfirm(null) : undefined
               }
               mainButtonLabel={
-                adminPending
+                action.pending
                   ? "…"
                   : adminConfirm === "force-close"
                     ? "Закрыть"

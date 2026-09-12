@@ -17,11 +17,30 @@ import {
 } from "../../db/schema.js";
 
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const LOGIN_FAILURE_LIMIT = 10;
+const LOGIN_FAILURE_WINDOW_MS = 15 * 60_000;
+const LOGIN_FAILURE_MAX_KEYS = 10_000;
 const ARGON_OPTS = {
   memoryCost: 19456,
   timeCost: 2,
   parallelism: 1,
 };
+
+function isUniqueConstraintError(error: unknown, constraint: string): boolean {
+  let current = error;
+  while (current && typeof current === "object") {
+    const candidate = current as {
+      code?: unknown;
+      constraint?: unknown;
+      cause?: unknown;
+    };
+    if (candidate.code === "23505" && candidate.constraint === constraint) {
+      return true;
+    }
+    current = candidate.cause;
+  }
+  return false;
+}
 
 export function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
@@ -47,12 +66,19 @@ export type AuthUser = {
   lastName: string;
   mustChangePassword: boolean;
   avatarKey: string | null;
+  onboardingStep: number;
+  onboardingCompletedAt: Date | null;
 };
 
 export type OwnProfileUser = AuthUser & {
   birthDate: string | null;
   organizationText: string | null;
   positionText: string | null;
+};
+
+type LoginAttemptReservation = {
+  key: string;
+  resetAt: number;
 };
 
 function toAuthUser(row: typeof users.$inferSelect): AuthUser {
@@ -65,6 +91,8 @@ function toAuthUser(row: typeof users.$inferSelect): AuthUser {
     lastName: row.lastName,
     mustChangePassword: row.mustChangePassword,
     avatarKey: row.generatedAvatarKey ?? null,
+    onboardingStep: row.onboardingStep,
+    onboardingCompletedAt: row.onboardingCompletedAt ?? null,
   };
 }
 
@@ -78,6 +106,8 @@ function toOwnProfileUser(row: typeof users.$inferSelect): OwnProfileUser {
 }
 
 export class AuthService {
+  // Deliberately process-local. Horizontal replicas need an accepted shared-store
+  // design before this can be treated as a fleet-wide security boundary.
   private loginAttempts = new Map<string, { count: number; resetAt: number }>();
 
   constructor(
@@ -86,20 +116,45 @@ export class AuthService {
   ) {}
 
   private rateLimitKey(email: string, ip: string): string {
-    return `${normalizeEmail(email)}|${ip}`;
+    return createHash("sha256")
+      .update(`${normalizeEmail(email)}\0${ip}`)
+      .digest("hex");
   }
 
-  checkRateLimit(email: string, ip: string): boolean {
+  private pruneExpiredLoginAttempts(now: number): void {
+    for (const [key, entry] of this.loginAttempts) {
+      if (entry.resetAt > now) break;
+      this.loginAttempts.delete(key);
+    }
+  }
+
+  private checkRateLimit(
+    email: string,
+    ip: string,
+  ): LoginAttemptReservation | null {
     const key = this.rateLimitKey(email, ip);
     const now = this.clock.now().getTime();
+    this.pruneExpiredLoginAttempts(now);
     const entry = this.loginAttempts.get(key);
-    if (!entry || entry.resetAt < now) {
-      this.loginAttempts.set(key, { count: 1, resetAt: now + 15 * 60_000 });
-      return true;
+    if (!entry) {
+      if (this.loginAttempts.size >= LOGIN_FAILURE_MAX_KEYS) {
+        const oldestKey = this.loginAttempts.keys().next().value;
+        if (oldestKey !== undefined) this.loginAttempts.delete(oldestKey);
+      }
+      const resetAt = now + LOGIN_FAILURE_WINDOW_MS;
+      this.loginAttempts.set(key, { count: 1, resetAt });
+      return { key, resetAt };
     }
-    if (entry.count >= 10) return false;
+    if (entry.count >= LOGIN_FAILURE_LIMIT) return null;
     entry.count += 1;
-    return true;
+    return { key, resetAt: entry.resetAt };
+  }
+
+  private releaseSuccessfulLogin(reservation: LoginAttemptReservation): void {
+    const entry = this.loginAttempts.get(reservation.key);
+    if (!entry || entry.resetAt !== reservation.resetAt) return;
+    entry.count -= 1;
+    if (entry.count === 0) this.loginAttempts.delete(reservation.key);
   }
 
   async createUser(input: {
@@ -126,22 +181,30 @@ export class AuthService {
     const passwordHash = await hashPassword(temporaryPassword);
     const avatarKey = randomAvatarKey(randomBytes(1)[0]!);
 
-    const [row] = await this.db
-      .insert(users)
-      .values({
-        email,
-        passwordHash,
-        role: input.role,
-        firstName: input.firstName,
-        lastName: input.lastName,
-        birthDate: input.birthDate,
-        organizationText: input.organizationText ?? "Moscow transport",
-        positionText: input.positionText,
-        mustChangePassword: true,
-        generatedAvatarKey: avatarKey,
-        avatarSource: "generated",
-      })
-      .returning();
+    let row: typeof users.$inferSelect | undefined;
+    try {
+      [row] = await this.db
+        .insert(users)
+        .values({
+          email,
+          passwordHash,
+          role: input.role,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          birthDate: input.birthDate,
+          organizationText: input.organizationText ?? "Moscow transport",
+          positionText: input.positionText,
+          mustChangePassword: true,
+          generatedAvatarKey: avatarKey,
+          avatarSource: "generated",
+        })
+        .returning();
+    } catch (error) {
+      if (isUniqueConstraintError(error, "users_email_unique")) {
+        throw Object.assign(new Error("EMAIL_TAKEN"), { code: "EMAIL_TAKEN" });
+      }
+      throw error;
+    }
 
     await this.db.insert(temporaryPasswordIssues).values({
       userId: row!.id,
@@ -167,44 +230,56 @@ export class AuthService {
     | { ok: true; user: AuthUser; sessionToken: string; sessionId: string }
     | { ok: false; code: string }
   > {
-    if (!this.checkRateLimit(input.email, input.ip)) {
+    const reservation = this.checkRateLimit(input.email, input.ip);
+    if (!reservation) {
       return { ok: false, code: "RATE_LIMITED" };
     }
-    const email = normalizeEmail(input.email);
-    const user = await this.db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
-    if (!user) return { ok: false, code: "INVALID_CREDENTIALS" };
-    if (user.status === "blocked") return { ok: false, code: "ACCOUNT_BLOCKED" };
+    try {
+      const email = normalizeEmail(input.email);
+      const user = await this.db.query.users.findFirst({
+        where: eq(users.email, email),
+      });
+      if (!user) return { ok: false, code: "INVALID_CREDENTIALS" };
+      if (user.status === "blocked") {
+        return { ok: false, code: "ACCOUNT_BLOCKED" };
+      }
 
-    const valid = await verifyPassword(input.password, user.passwordHash);
-    if (!valid) return { ok: false, code: "INVALID_CREDENTIALS" };
+      const valid = await verifyPassword(input.password, user.passwordHash);
+      if (!valid) return { ok: false, code: "INVALID_CREDENTIALS" };
 
-    const token = randomBytes(32).toString("hex");
-    const now = this.clock.now();
-    const [session] = await this.db
-      .insert(authSessions)
-      .values({
-        userId: user.id,
-        tokenHash: hashToken(token),
-        userAgent: input.userAgent,
-        ipFingerprint: createHash("sha256").update(input.ip).digest("hex").slice(0, 16),
-        lastSeenAt: now,
-        expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
-      })
-      .returning();
+      const token = randomBytes(32).toString("hex");
+      const now = this.clock.now();
+      const [session] = await this.db
+        .insert(authSessions)
+        .values({
+          userId: user.id,
+          tokenHash: hashToken(token),
+          userAgent: input.userAgent,
+          ipFingerprint: createHash("sha256")
+            .update(input.ip)
+            .digest("hex")
+            .slice(0, 16),
+          lastSeenAt: now,
+          expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
+        })
+        .returning();
 
-    await this.db
-      .update(users)
-      .set({ lastLoginAt: now, updatedAt: now })
-      .where(eq(users.id, user.id));
+      await this.db
+        .update(users)
+        .set({ lastLoginAt: now, updatedAt: now })
+        .where(eq(users.id, user.id));
 
-    return {
-      ok: true,
-      user: toAuthUser(user),
-      sessionToken: token,
-      sessionId: session!.id,
-    };
+      this.releaseSuccessfulLogin(reservation);
+      return {
+        ok: true,
+        user: toAuthUser(user),
+        sessionToken: token,
+        sessionId: session!.id,
+      };
+    } catch (error) {
+      this.releaseSuccessfulLogin(reservation);
+      throw error;
+    }
   }
 
   async resolveSession(
@@ -369,6 +444,11 @@ export class AuthService {
 
   async blockUser(adminId: string, userId: string): Promise<void> {
     await this.ensureNotLastAdmin(userId);
+    if (adminId === userId) {
+      throw Object.assign(new Error("SELF_BLOCK_FORBIDDEN"), {
+        code: "SELF_BLOCK_FORBIDDEN",
+      });
+    }
     const now = this.clock.now();
     await this.db
       .update(users)
@@ -538,6 +618,36 @@ export class AuthService {
       .where(eq(users.id, userId))
       .returning();
     return toOwnProfileUser(row!);
+  }
+
+  async updateOnboarding(
+    userId: string,
+    input:
+      | { action: "set-step"; step: number }
+      | { action: "complete" }
+      | { action: "restart" },
+  ): Promise<AuthUser> {
+    const now = this.clock.now();
+    const patch =
+      input.action === "set-step"
+        ? { onboardingStep: input.step, updatedAt: now }
+        : input.action === "complete"
+          ? {
+              onboardingStep: 6,
+              onboardingCompletedAt: now,
+              updatedAt: now,
+            }
+          : {
+              onboardingStep: 0,
+              onboardingCompletedAt: null,
+              updatedAt: now,
+            };
+    const [row] = await this.db
+      .update(users)
+      .set(patch)
+      .where(eq(users.id, userId))
+      .returning();
+    return toAuthUser(row!);
   }
 
   async seedAdmin(

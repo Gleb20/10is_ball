@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import {
   Alert,
+  Button,
   ButtonGroup,
   Chip,
   EmptyState,
@@ -139,6 +140,25 @@ export function AsyncState({
     );
   }
   return <>{children}</>;
+}
+
+export function RefreshButton({
+  refreshing,
+  onRefresh,
+}: {
+  refreshing: boolean;
+  onRefresh: () => Promise<void>;
+}) {
+  return (
+    <Button
+      size="sm"
+      variant="secondary"
+      disabled={refreshing}
+      onClick={() => void onRefresh()}
+    >
+      {refreshing ? "Обновление…" : "Обновить"}
+    </Button>
+  );
 }
 
 export function FilterBar({

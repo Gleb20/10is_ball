@@ -296,8 +296,32 @@ describe("bracket-v2 DE complete sims", () => {
 describe("parseBracketJson", () => {
   it("discriminates missing / v1 / v2 / unsupported / corrupt", () => {
     expect(parseBracketJson(null).kind).toBe("missing");
-    expect(parseBracketJson({ slots: [] }).kind).toBe("v1");
-    expect(parseBracketJson({ schemaVersion: 1 }).kind).toBe("v1");
+    expect(
+      parseBracketJson({ slots: [], format: "single_elimination" }).kind,
+    ).toBe("v1");
+    expect(
+      parseBracketJson({
+        schemaVersion: 1,
+        slots: [],
+        format: "single_elimination",
+      }).kind,
+    ).toBe("v1");
+    expect(
+      parseBracketJson({
+        schemaVersion: 1,
+        slots: [],
+        format: "double_elimination",
+      }),
+    ).toEqual({
+      kind: "unsupported",
+      schemaVersion: 1,
+    });
+    expect(
+      parseBracketJson({ slots: [], format: "double_elimination" }),
+    ).toEqual({
+      kind: "unsupported",
+      schemaVersion: 1,
+    });
     const g = generateSingleEliminationV2({ seedOrder: ids(4) });
     expect(parseBracketJson(g).kind).toBe("v2");
     expect(parseBracketJson({ schemaVersion: 99 }).kind).toBe("unsupported");

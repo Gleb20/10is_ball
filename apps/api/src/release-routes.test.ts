@@ -71,13 +71,16 @@ describe("release health routes", () => {
       "://runtime:request-secret@database.invalid/tab10",
     ].join("");
     const logged: string[] = [];
-    vi.spyOn(console, "error").mockImplementation((...values: unknown[]) => {
-      logged.push(values.map(String).join(" "));
-    });
     const { app } = await buildApp({
       db: {} as Db,
       releaseMetadata: RELEASE,
       readinessProbe: async () => undefined,
+      requestIdFactory: () => "release-route-error-request",
+      logDestination: {
+        write(line: string) {
+          logged.push(line);
+        },
+      },
     });
     apps.push(app);
     app.get("/__test/runtime-error", async () => {
@@ -93,14 +96,22 @@ describe("release health routes", () => {
     expect(response.json()).toEqual({
       code: "INTERNAL",
       message: "Внутренняя ошибка сервера",
+      requestId: "release-route-error-request",
     });
-    expect(logged).toEqual([
-      JSON.stringify({
-        level: "error",
-        event: "request_failed",
-        code: "INTERNAL",
-      }),
-    ]);
+    expect(logged.map((line) => JSON.parse(line))).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          event: "request_error",
+          requestId: "release-route-error-request",
+          error: { type: "Error", code: "INTERNAL" },
+        }),
+        expect.objectContaining({
+          event: "request_completed",
+          requestId: "release-route-error-request",
+          statusCode: 500,
+        }),
+      ]),
+    );
     expect(logged.join("\n")).not.toContain(sentinel);
     expect(logged.join("\n")).not.toContain("request-secret");
   });

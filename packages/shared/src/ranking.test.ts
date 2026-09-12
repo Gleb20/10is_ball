@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   buildRanking,
-  calendarMonthStartUTC,
-  calendarWeekStartUTC,
+  calendarMonthStartMoscow,
+  calendarWeekStartMoscow,
   compareRankingEntries,
   pickRival,
   teamAggregateWins,
@@ -62,17 +62,36 @@ describe("REQ_RANK__comparator", () => {
     expect(ranking.map((r) => r.userId)).toEqual(["2"]);
   });
 
-  it("calendar week starts on Monday UTC", () => {
-    const wed = new Date("2026-07-15T12:00:00Z");
-    const start = calendarWeekStartUTC(wed);
-    expect(start.toISOString()).toBe("2026-07-13T00:00:00.000Z");
+  it.each([
+    ["mid-week", "2026-07-15T12:00:00Z", "2026-07-12T21:00:00.000Z"],
+    [
+      "after Moscow Monday but still Sunday UTC",
+      "2026-07-12T22:30:00Z",
+      "2026-07-12T21:00:00.000Z",
+    ],
+    [
+      "before Moscow Monday",
+      "2026-07-12T20:59:59Z",
+      "2026-07-05T21:00:00.000Z",
+    ],
+  ])("AT-RANK-002 week: %s", (_name, now, expected) => {
+    expect(calendarWeekStartMoscow(new Date(now)).toISOString()).toBe(expected);
   });
 
-  it("calendar month starts on first day UTC", () => {
-    const mid = new Date("2026-07-15T12:00:00Z");
-    expect(calendarMonthStartUTC(mid).toISOString()).toBe(
-      "2026-07-01T00:00:00.000Z",
-    );
+  it.each([
+    ["mid-month", "2026-07-15T12:00:00Z", "2026-06-30T21:00:00.000Z"],
+    [
+      "after Moscow month start but still previous UTC day",
+      "2026-06-30T22:00:00Z",
+      "2026-06-30T21:00:00.000Z",
+    ],
+    [
+      "before Moscow month start",
+      "2026-06-30T20:59:59Z",
+      "2026-05-31T21:00:00.000Z",
+    ],
+  ])("AT-RANK-002 month: %s", (_name, now, expected) => {
+    expect(calendarMonthStartMoscow(new Date(now)).toISOString()).toBe(expected);
   });
 
   it("compareRankingEntries matches buildRanking order", () => {

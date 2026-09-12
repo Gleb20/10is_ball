@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { BottomNav, shouldShowBottomNav } from "./layout";
+import { AppShell, BottomNav, shouldShowBottomNav } from "./layout";
 
 describe("REQ_shell__bottom_nav_d5", () => {
   it("renders five primary tabs from ADR D5", () => {
@@ -65,5 +65,30 @@ describe("REQ_shell__hide_nav_on_judge_and_auth", () => {
         mustChangePassword: false,
       }),
     ).toBe(true);
+  });
+
+  it("BUG-004 renders the judge release result at the destination", () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/matches/m1",
+            state: {
+              judgeExitNotice: {
+                kind: "warning",
+                message: "Не удалось подтвердить освобождение слота",
+              },
+            },
+          },
+        ]}
+      >
+        <AppShell showNav={false}>Матч</AppShell>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Проверьте слот судьи")).toBeInTheDocument();
+    expect(
+      screen.getByText("Не удалось подтвердить освобождение слота"),
+    ).toBeInTheDocument();
   });
 });

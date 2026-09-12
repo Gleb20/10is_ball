@@ -4,7 +4,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
-const SOURCE = path.join(ROOT, "apps/api/src/app.ts");
+const ROUTE_SOURCE = path.join(ROOT, "apps/api/src/app.ts");
+const OPENAPI_SOURCE = path.join(ROOT, "apps/api/src/openapi.ts");
 const args = process.argv.slice(2);
 
 function valueAfter(flag) {
@@ -78,17 +79,19 @@ function documentedOperations(source) {
   return [...new Set(operations)].sort();
 }
 
-const source = await readFile(SOURCE, "utf8");
-const registered = registeredOperations(source);
-const documented = documentedOperations(source);
+const routeSource = await readFile(ROUTE_SOURCE, "utf8");
+const openApiSource = await readFile(OPENAPI_SOURCE, "utf8");
+const registered = registeredOperations(routeSource);
+const documented = documentedOperations(openApiSource);
 const registeredPaths = [...new Set(registered.map((item) => item.slice(item.indexOf(" ") + 1)))];
 const documentedPaths = [...new Set(documented.map((item) => item.slice(item.indexOf(" ") + 1)))];
 const missingFromOpenApi = registered.filter((item) => !documented.includes(item));
 const notRegistered = documented.filter((item) => !registered.includes(item));
 const report = {
   schemaVersion: 1,
-  source: path.relative(ROOT, SOURCE),
-  inventoryMethod: "direct literal app.<method>() registrations and openApiSpec paths",
+  source: path.relative(ROOT, ROUTE_SOURCE),
+  openApiSource: path.relative(ROOT, OPENAPI_SOURCE),
+  inventoryMethod: "direct literal app.<method>() registrations and openApiSpec paths across their source files",
   limitations: [
     "Routes registered dynamically, through plugins, or outside apps/api/src/app.ts require a separate inventory update",
   ],

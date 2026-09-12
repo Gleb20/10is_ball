@@ -8,6 +8,7 @@ import type { AppServices } from "./app.js";
 describe("match and judge integration", () => {
   let app: FastifyInstance;
   let services: AppServices;
+  let clock: FakeClock;
   let close: () => Promise<void>;
   let adminCookie: string;
   let userACookie: string;
@@ -18,7 +19,8 @@ describe("match and judge integration", () => {
   beforeEach(async () => {
     const ctx = await createMigratedPgliteDb();
     close = ctx.close;
-    const built = await buildApp({ db: ctx.db, clock: new FakeClock() });
+    clock = new FakeClock();
+    const built = await buildApp({ db: ctx.db, clock });
     app = built.app;
     services = built.services;
     await services.auth.seedAdmin("admin@tab10.local", "AdminPass1!");
@@ -275,6 +277,73 @@ describe("match and judge integration", () => {
     });
     expect(detail.json().match.activeJudge?.userId).toBe(userBId);
     expect(detail.json().match.scoreA).toBe(0);
+  });
+
+  it("AT-JUDGE-003/005: heartbeat reports unauthorized and lost lock deterministically", async () => {
+    const created = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Heartbeat lifecycle",
+        format: "1v1",
+        participants: [
+          { side: "A", userId: userAId },
+          { side: "B", userId: userBId },
+        ],
+      },
+    });
+    const matchId = created.json().match.id as string;
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/start`,
+      cookies: { tab10_session: userACookie },
+      payload: {},
+    });
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/acquire`,
+      cookies: { tab10_session: userACookie },
+    });
+
+    const unauthorized = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/heartbeat`,
+    });
+    expect(unauthorized.statusCode).toBe(401);
+    expect(unauthorized.json().code).toBe("UNAUTHORIZED");
+
+    clock.advanceMs(120_001);
+    const expired = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/heartbeat`,
+      cookies: { tab10_session: userACookie },
+    });
+    expect(expired.statusCode).toBe(409);
+    expect(expired.json()).toMatchObject({
+      code: "JUDGE_NOT_ACTIVE",
+      message: "Слот судьи больше не активен",
+    });
+
+    const acquireB = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/acquire`,
+      cookies: { tab10_session: userBCookie },
+    });
+    expect(acquireB.statusCode).toBe(200);
+    await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/release`,
+      cookies: { tab10_session: userBCookie },
+    });
+
+    const released = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/heartbeat`,
+      cookies: { tab10_session: userBCookie },
+    });
+    expect(released.statusCode).toBe(409);
+    expect(released.json().code).toBe("JUDGE_NOT_ACTIVE");
   });
 
   it("JUDGE-002: any active user can acquire free judge slot", async () => {
@@ -1758,7 +1827,7 @@ describe("match and judge integration", () => {
     expect(started.json().tournament.status).toBe("in_progress");
   });
 
-  it("BUG-015 characterization: busy organizer with a bye incorrectly starts tournament", async () => {
+  it("AT-TRN-020/BUG-015: busy organizer with a bye cannot start and tournament state is unchanged", async () => {
     const waiting = await app.inject({
       method: "POST",
       url: "/api/v1/matches",
@@ -1788,6 +1857,7 @@ describe("match and judge integration", () => {
     expect(tournament.statusCode).toBe(200);
     const tournamentId = tournament.json().tournament.id as string;
 
+    const tournamentUserIds = [userAId];
     for (const email of ["bye1@t.local", "bye2@t.local"]) {
       const user = await app.inject({
         method: "POST",
@@ -1796,6 +1866,7 @@ describe("match and judge integration", () => {
         payload: { email, firstName: "P", lastName: "L" },
       });
       expect(user.statusCode).toBe(200);
+      tournamentUserIds.push(user.json().user.id as string);
       const added = await app.inject({
         method: "POST",
         url: `/api/v1/tournaments/${tournamentId}/participants`,
@@ -1817,16 +1888,152 @@ describe("match and judge integration", () => {
       random.mockRestore();
     }
 
+    const beforeStart = await services.tournaments.get(tournamentId);
+    expect(beforeStart?.status).toBe("bracket_generated");
+    expect(beforeStart?.matches).toHaveLength(0);
+    const organizerParticipant = beforeStart?.participants.find(
+      (participant) => participant.userId === userAId,
+    );
+    expect(
+      (beforeStart?.bracketJson as { seedOrder: string[] }).seedOrder.at(-1),
+    ).toBe(organizerParticipant?.id);
+    const notificationsBefore = (
+      await Promise.all(
+        tournamentUserIds.map((userId) => services.notifications.list(userId)),
+      )
+    ).flat();
+
     const started = await app.inject({
       method: "POST",
       url: `/api/v1/tournaments/${tournamentId}/start`,
       cookies: { tab10_session: userACookie },
     });
 
-    // This is the observed defective result. Once BUG-015 is fixed, change
-    // this into an acceptance assertion for 400 / PLAYER_ALREADY_IN_ACTIVE_MATCH.
-    expect(started.statusCode).toBe(200);
-    expect(started.json().tournament.status).toBe("in_progress");
+    expect(started.statusCode).toBe(400);
+    expect(started.json().code).toBe("PLAYER_ALREADY_IN_ACTIVE_MATCH");
+
+    const afterStart = await services.tournaments.get(tournamentId);
+    expect(afterStart?.status).toBe("bracket_generated");
+    expect(afterStart?.startedAt).toBeNull();
+    expect(afterStart?.matches).toHaveLength(0);
+    expect(afterStart?.bracketStateVersion).toBe(
+      beforeStart?.bracketStateVersion,
+    );
+    expect(afterStart?.bracketJson).toEqual(beforeStart?.bracketJson);
+    const notificationsAfter = (
+      await Promise.all(
+        tournamentUserIds.map((userId) => services.notifications.list(userId)),
+      )
+    ).flat();
+    expect(notificationsAfter).toEqual(notificationsBefore);
+  });
+
+  it("AT-TRN-020/BUG-015: busy participant with a bye cannot start and tournament state is unchanged", async () => {
+    const waiting = await app.inject({
+      method: "POST",
+      url: "/api/v1/matches",
+      cookies: { tab10_session: userBCookie },
+      payload: {
+        title: "Busy participant with bye",
+        format: "1v1",
+        participants: [
+          { side: "A", userId: userBId },
+          { side: "B", guestFirstName: "Free", guestLastName: "Guest" },
+        ],
+      },
+    });
+    expect(waiting.statusCode).toBe(200);
+    expect(waiting.json().match.status).toBe("waiting");
+
+    const tournament = await app.inject({
+      method: "POST",
+      url: "/api/v1/tournaments",
+      cookies: { tab10_session: userACookie },
+      payload: {
+        title: "Busy participant bye guard",
+        format: "single_elimination",
+        organizerParticipates: false,
+      },
+    });
+    expect(tournament.statusCode).toBe(200);
+    const tournamentId = tournament.json().tournament.id as string;
+
+    const participantUserIds = [userBId];
+    const addedBusyParticipant = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tournamentId}/participants`,
+      cookies: { tab10_session: userACookie },
+      payload: { userId: userBId },
+    });
+    expect(addedBusyParticipant.statusCode).toBe(200);
+    for (const email of ["participant-bye1@t.local", "participant-bye2@t.local"]) {
+      const user = await app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: { email, firstName: "P", lastName: "L" },
+      });
+      expect(user.statusCode).toBe(200);
+      participantUserIds.push(user.json().user.id as string);
+      const added = await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${tournamentId}/participants`,
+        cookies: { tab10_session: userACookie },
+        payload: { userId: user.json().user.id },
+      });
+      expect(added.statusCode).toBe(200);
+    }
+
+    const random = vi.spyOn(Math, "random").mockReturnValue(0);
+    try {
+      const bracket = await app.inject({
+        method: "POST",
+        url: `/api/v1/tournaments/${tournamentId}/bracket`,
+        cookies: { tab10_session: userACookie },
+      });
+      expect(bracket.statusCode).toBe(200);
+    } finally {
+      random.mockRestore();
+    }
+
+    const beforeStart = await services.tournaments.get(tournamentId);
+    expect(beforeStart?.status).toBe("bracket_generated");
+    expect(beforeStart?.matches).toHaveLength(0);
+    const busyParticipant = beforeStart?.participants.find(
+      (participant) => participant.userId === userBId,
+    );
+    expect(
+      (beforeStart?.bracketJson as { seedOrder: string[] }).seedOrder.at(-1),
+    ).toBe(busyParticipant?.id);
+    const notificationsBefore = (
+      await Promise.all(
+        participantUserIds.map((userId) => services.notifications.list(userId)),
+      )
+    ).flat();
+
+    const started = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tournamentId}/start`,
+      cookies: { tab10_session: userACookie },
+    });
+
+    expect(started.statusCode).toBe(400);
+    expect(started.json().code).toBe("PLAYER_ALREADY_IN_ACTIVE_MATCH");
+
+    const afterStart = await services.tournaments.get(tournamentId);
+    expect(afterStart?.status).toBe("bracket_generated");
+    expect(afterStart?.startedAt).toBeNull();
+    expect(afterStart?.matches).toHaveLength(0);
+    expect(afterStart?.bracketStateVersion).toBe(
+      beforeStart?.bracketStateVersion,
+    );
+    expect(afterStart?.bracketJson).toEqual(beforeStart?.bracketJson);
+    const notificationsAfter = (
+      await Promise.all(
+        participantUserIds.map((userId) => services.notifications.list(userId)),
+      )
+    ).flat();
+    expect(notificationsAfter).toEqual(notificationsBefore);
   });
 
   it("AT-MATCH-CANCEL-002: non-participant cannot cancel", async () => {

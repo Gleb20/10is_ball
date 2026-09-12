@@ -1,16 +1,28 @@
 # Tab-10 — статус проекта
 
-Обновлено: **2026-09-09**. Версия в корневом `package.json`: **1.10.1**.
+Обновлено: **2026-09-13**. Локальный кандидат: **1.11.0**; опубликованная версия: **1.10.1**.
 
 ## Итог
 
-Сервис опубликован и отвечает, но **не готов к полноценной эксплуатации**.
-Единый P0 release candidate закрывает локально SEC-003/005/006/007,
-DATA-001/002/005/007 и BUG-001/002/003. До exact-SHA public smoke эти пункты
-остаются `verified_local`; остальные P1 gaps и эксплуатационные ограничения
-disposable stand сохраняются.
+Выполняется принятый план завершения PRD v2 волнами A–F:
+[очередь и критерии приёмки](test-plans/OPS-004-completion-waves.md).
+Read-only проверка public web/API 2026-09-13 подтвердила
+`ecf7605fe8d0e5857fb9bb0eebf5ef548c90226a`, version `1.10.1`.
+Волна A интегрирована в отдельный clean checkout; локальный кандидат `1.11.0`
+проходит финальные проверки. Коммит, push и deployment этой волны ещё не выполнены.
+Полная готовность PRD v2 не заявляется: последующие GAP-002..011 остаются открыты.
 
-## Проверенный снимок
+## Текущая проверка кандидата
+
+- Финальный `pnpm run verify:all`: **965 passed**, 0 failed/skipped/todo/interrupted;
+  quality 906, PostgreSQL 40, compiled browser 15 (6 journeys + 9 foundation), cleanup 4.
+- Исправления гонок и устаревшей ошибки после reauth прошли независимое ревью;
+  desktop/390 browser проверяет сохранённый результат и восстановленный черновик.
+- [Обезличенный отчёт](audit/evidence/wave-a-local.json). Scope волны A переведён
+  в `verified_local`; public release ещё ожидается. GAP-002..011 остаются открыты.
+- Backlog содержит 51 canonical ID. Исходные 186 файлов совпадают со снимком.
+
+## Исторический снимок 2026-09-09 (superseded текущей проверкой выше)
 
 | Область | Состояние на 2026-09-09 |
 |---|---|
@@ -26,14 +38,15 @@ disposable stand сохраняются.
 | PostgreSQL verification | Exact PostgreSQL 16.15: fresh/idempotent `0000→0001`, split-role policy, DATA-002/005/007 transaction/concurrency и immutable void audit прошли в полном барьере: 37/37 |
 | Secret incident | Neon role credential ротирован; disposable stand по D32 сознательно использует `neondb_owner`, `SEED_ADMIN=1`; новый seed-admin создан, credentials хранятся только в Render и переданы пользователю через локальный clipboard |
 | Security dependencies | Production graph: 0 high/critical и 3 documented moderate React Router advisories; Fastify 5.12.3 и Drizzle 0.45.2 проверены полным барьером |
-| Route/OpenAPI inventory | source: 62 operations / 56 paths; OpenAPI: 17 operations / 14 paths (27.4% operation coverage); live version 0.1.0 |
+| Route/OpenAPI inventory | current source/OpenAPI: 64 operations / 58 paths, 100% inventory coverage; live/public artifact remains tied to the last released SHA until Wave A release |
 | Product decisions | D23: cancel только active admin/creator; D24: creator/admin soft void; D33: void турнирного матча компенсирует только его stats/ranking и сохраняет остальную сетку/downstream неизменными |
+| Wave A integration | `BUG-004..016`, `GAP-001`, `OPS-005` — `in_progress`; frozen 2026-09-07 evidence историческое, текущий web gate: typecheck green, focused 59/59, full 125/125; API/PostgreSQL/CI/browser gates выполняются отдельно |
 | Documentation | immutable baseline: 48 findings; live backlog: 49 после выделения DATA-007; links/anchors/IDs/status schema проверяются автоматически |
 | Релизная синхронизация | D32: прямой verified push в `main` запускает Render/Vercel native Git deploy и параллельный CI; `pnpm smoke:public` read-only ждёт одинаковый SHA/version; public API временно использует `neondb_owner` |
 | Public DB bootstrap | Пользователь разрешил одноразово пересоздать `public`/`drizzle` на точном Neon target и применить `0000` с нуля; последующие releases только apply-only |
 | Recovery | Существующий manual snapshot/recovery copy сохранён как ручная страховка, но не является release barrier для disposable stand |
 
-## Главные блокеры
+## Блокеры исторического снимка 2026-09-09
 
 - Текущий P0 batch ещё должен пройти один direct-main push, hosted CI и exact-SHA
   read-only smoke у Render API, Vercel web и proxy.

@@ -16,7 +16,7 @@
 | Session management | sliding session, list/revoke/change password | `partial` | API есть; runtime 401 не синхронизирует web auth state | BUG-007 |
 | Own profile | view/edit/stats/avatar/sessions | `broken` | edit response локально защищён точным allowlist; значительная часть PRD отсутствует | GAP-002 |
 | Public player profile | privacy-safe card + challenge | `missing` | отдельного полного route/экрана нет | GAP-002 |
-| Home dashboard | hero, active/recent events, stats/rival | `partial` | сокращённый aggregate; нет полного HOME-001..006 | GAP-001 |
+| Home dashboard | hero, active/recent events, stats/rival | `in_progress` | Wave A typed UI and component 3/3 cover full agreed Home composition; API/browser acceptance pending | GAP-001 |
 | Rankings | all/week/month ordered ranking | `broken` | базовые scopes есть, но UTC boundaries расходятся с Europe/Moscow; team/public-card gaps | BUG-014, GAP-004 |
 | Event visibility | Active scoped; completed visible active club-wide | `partial` | API list/detail/home enforce organizer/participant/current-judge active scope and club-wide terminal visibility; full history UX remains | GAP-003 |
 | Match creation | Valid 1v1/2v2 roster and rules | `partial` | strict runtime validation and atomic create are present; broader DB constraints/flows remain | BUG-010, GAP-005 |
@@ -31,7 +31,7 @@
 | Tournament visibility/history | То же правило event visibility | `verified` | active scope and club-wide terminal API matrix implemented | — |
 | Teams | captain/invite/member/leave/archive/use-in-event | `partial` | backend/UI реализуют только часть, race conditions | DATA-004, GAP-007 |
 | Notifications | actionable current items/read/expiry/popup | `partial` | list/read есть, semantics/types/UI incomplete | BUG-013, GAP-008 |
-| Onboarding | once/resume/skip/restart/tutorial isolation | `broken` | статический неполный flow; tutorial isolation не везде | BUG-012, GAP-009 |
+| Onboarding | once/resume/skip/restart/tutorial isolation | `in_progress` | Wave A UI covers persisted resume, explicit completion, restart and tutorial return; API/browser acceptance pending | BUG-012, GAP-009 |
 | Help/feedback | FAQ, categories, context help | `partial` | FAQ/feedback endpoints есть; UI/категории неполны | GAP-009 |
 | Accessibility/responsive | 360px+, keyboard, WCAG AA, judge landscape | `broken` | public production и synthetic local viewport baseline сохранён; touch/contrast/semantics/layout defects остаются, axe/keyboard/judge landscape не пройдены | GAP-011, TECH-002 |
 | Audit trail | Immutable security/sporting ledger | `partial` | dedicated match void ledger is append-only; generic technical audit remains mutable | — |

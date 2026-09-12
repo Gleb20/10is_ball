@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   applyBracketResult,
   applyMatchResult,
-  generateDoubleEliminationBracket,
   generateSingleEliminationBracket,
   generateSingleEliminationV2,
   getMatchSides,
   listMatchPairs,
   type Bracket,
+  type BracketSlot,
 } from "@tab10/shared";
 import {
   buildBracketViewModel,
@@ -44,32 +44,58 @@ describe("resolvePlayerFate", () => {
     ).toBe("advance");
   });
 
-  it("marks DE winners-bracket loser as drop", () => {
-    const bracket = generateDoubleEliminationBracket(
-      ["p1", "p2", "p3", "p4"],
-      () => crypto.randomUUID(),
-    );
-    const byId = new Map(bracket.slots.map((s) => [s.id, s]));
-    const r0 = listMatchPairs(bracket).find(
-      (p) => p.side === "main" && p.round === 0,
-    )!;
-    expect(r0.slotA.loserToSlotId).toBeTruthy();
+  it("marks a loser with a loser-bracket destination as drop", () => {
+    const slot: BracketSlot = {
+      id: "winners-slot",
+      round: 0,
+      position: 0,
+      side: "main",
+      participantId: "p1",
+      isBye: false,
+      advancesToSlotId: "winners-next",
+      loserToSlotId: "losers-next",
+      matchId: "match-1",
+      winnerParticipantId: "p2",
+    };
+    const destination: BracketSlot = {
+      ...slot,
+      id: "losers-next",
+      side: "losers",
+      participantId: null,
+      advancesToSlotId: null,
+      loserToSlotId: null,
+      matchId: null,
+      winnerParticipantId: null,
+    };
     expect(
-      resolvePlayerFate(r0.slotA, false, true, byId),
+      resolvePlayerFate(
+        slot,
+        false,
+        true,
+        new Map([
+          [slot.id, slot],
+          [destination.id, destination],
+        ]),
+      ),
     ).toBe("drop");
   });
 
-  it("marks DE losers-bracket loser as eliminated", () => {
-    const bracket = generateDoubleEliminationBracket(
-      ["p1", "p2", "p3", "p4"],
-      () => crypto.randomUUID(),
+  it("marks a loser without a destination as eliminated", () => {
+    const slot: BracketSlot = {
+      id: "losers-slot",
+      round: 0,
+      position: 0,
+      side: "losers",
+      participantId: "p1",
+      isBye: false,
+      advancesToSlotId: "losers-next",
+      loserToSlotId: null,
+      matchId: "match-2",
+      winnerParticipantId: "p2",
+    };
+    expect(resolvePlayerFate(slot, false, true, new Map([[slot.id, slot]]))).toBe(
+      "eliminated",
     );
-    const byId = new Map(bracket.slots.map((s) => [s.id, s]));
-    const lb = listMatchPairs(bracket).find((p) => p.side === "losers")!;
-    expect(lb.slotA.loserToSlotId).toBeNull();
-    expect(
-      resolvePlayerFate(lb.slotA, false, true, byId),
-    ).toBe("eliminated");
   });
 });
 

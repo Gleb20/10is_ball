@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
   boolean,
+  check,
   integer,
   jsonb,
   pgEnum,
@@ -43,6 +44,7 @@ export const users = pgTable(
     onboardingCompletedAt: timestamp("onboarding_completed_at", {
       withTimezone: true,
     }),
+    onboardingStep: integer("onboarding_step").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -52,7 +54,13 @@ export const users = pgTable(
     blockedAt: timestamp("blocked_at", { withTimezone: true }),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   },
-  (t) => [uniqueIndex("users_email_unique").on(t.email)],
+  (t) => [
+    uniqueIndex("users_email_unique").on(t.email),
+    check(
+      "users_onboarding_step_range",
+      sql`${t.onboardingStep} BETWEEN 0 AND 6`,
+    ),
+  ],
 );
 
 export const authSessions = pgTable("auth_sessions", {
@@ -265,38 +273,54 @@ export const tournaments = pgTable("tournaments", {
   finishedAt: timestamp("finished_at", { withTimezone: true }),
 });
 
-export const tournamentParticipants = pgTable("tournament_participants", {
-  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
-  tournamentId: uuid("tournament_id")
-    .notNull()
-    .references(() => tournaments.id),
-  userId: uuid("user_id").references(() => users.id),
-  guestFirstName: text("guest_first_name"),
-  guestLastName: text("guest_last_name"),
-  guestAvatarKey: text("guest_avatar_key"),
-  seed: integer("seed"),
-  winsSnapshot: integer("wins_snapshot").notNull().default(0),
-  status: text("status").notNull().default("active"),
-});
+export const tournamentParticipants = pgTable(
+  "tournament_participants",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    tournamentId: uuid("tournament_id")
+      .notNull()
+      .references(() => tournaments.id),
+    userId: uuid("user_id").references(() => users.id),
+    guestFirstName: text("guest_first_name"),
+    guestLastName: text("guest_last_name"),
+    guestAvatarKey: text("guest_avatar_key"),
+    seed: integer("seed"),
+    winsSnapshot: integer("wins_snapshot").notNull().default(0),
+    status: text("status").notNull().default("active"),
+  },
+  (t) => [
+    uniqueIndex("tournament_participants_active_user_uid")
+      .on(t.tournamentId, t.userId)
+      .where(sql`${t.userId} IS NOT NULL AND ${t.status} = 'active'`),
+  ],
+);
 
-export const tournamentInvitations = pgTable("tournament_invitations", {
-  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
-  tournamentId: uuid("tournament_id")
-    .notNull()
-    .references(() => tournaments.id),
-  invitedUserId: uuid("invited_user_id")
-    .notNull()
-    .references(() => users.id),
-  invitedByUserId: uuid("invited_by_user_id")
-    .notNull()
-    .references(() => users.id),
-  status: text("status").notNull().default("pending"),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  respondedAt: timestamp("responded_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const tournamentInvitations = pgTable(
+  "tournament_invitations",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    tournamentId: uuid("tournament_id")
+      .notNull()
+      .references(() => tournaments.id),
+    invitedUserId: uuid("invited_user_id")
+      .notNull()
+      .references(() => users.id),
+    invitedByUserId: uuid("invited_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    status: text("status").notNull().default("pending"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    respondedAt: timestamp("responded_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("tournament_invitations_pending_user_uid")
+      .on(t.tournamentId, t.invitedUserId)
+      .where(sql`${t.status} = 'pending'`),
+  ],
+);
 
 export const teams = pgTable("teams", {
   id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
@@ -317,37 +341,55 @@ export const teams = pgTable("teams", {
   archivedAt: timestamp("archived_at", { withTimezone: true }),
 });
 
-export const teamMemberships = pgTable("team_memberships", {
-  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
-  teamId: uuid("team_id")
-    .notNull()
-    .references(() => teams.id),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id),
-  joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
-  leftAt: timestamp("left_at", { withTimezone: true }),
-  leaveReason: text("leave_reason"),
-});
+export const teamMemberships = pgTable(
+  "team_memberships",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    joinedAt: timestamp("joined_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    leftAt: timestamp("left_at", { withTimezone: true }),
+    leaveReason: text("leave_reason"),
+  },
+  (t) => [
+    uniqueIndex("team_memberships_active_user_uid")
+      .on(t.teamId, t.userId)
+      .where(sql`${t.leftAt} IS NULL`),
+  ],
+);
 
-export const teamInvitations = pgTable("team_invitations", {
-  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
-  teamId: uuid("team_id")
-    .notNull()
-    .references(() => teams.id),
-  invitedUserId: uuid("invited_user_id")
-    .notNull()
-    .references(() => users.id),
-  invitedByUserId: uuid("invited_by_user_id")
-    .notNull()
-    .references(() => users.id),
-  status: text("status").notNull().default("pending"),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  respondedAt: timestamp("responded_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const teamInvitations = pgTable(
+  "team_invitations",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id),
+    invitedUserId: uuid("invited_user_id")
+      .notNull()
+      .references(() => users.id),
+    invitedByUserId: uuid("invited_by_user_id")
+      .notNull()
+      .references(() => users.id),
+    status: text("status").notNull().default("pending"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    respondedAt: timestamp("responded_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("team_invitations_pending_user_uid")
+      .on(t.teamId, t.invitedUserId)
+      .where(sql`${t.status} = 'pending'`),
+  ],
+);
 
 export const notifications = pgTable("notifications", {
   id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),

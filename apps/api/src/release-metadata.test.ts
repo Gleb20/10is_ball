@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  productVersion,
   releaseEnvironmentFrom,
   resolveRuntimeReleaseMetadata,
 } from "./release-metadata.js";
@@ -15,7 +16,7 @@ describe("API runtime release metadata", () => {
       }),
     ).toEqual({
       sha: SHA,
-      version: "1.10.1",
+      version: productVersion(),
       environment: "production",
       dirty: false,
     });
@@ -27,7 +28,7 @@ describe("API runtime release metadata", () => {
       resolveRuntimeReleaseMetadata({
         NODE_ENV: "production",
         TAB10_RELEASE_SHA: explicitSha,
-        TAB10_RELEASE_VERSION: "1.10.1",
+        TAB10_RELEASE_VERSION: productVersion(),
         TAB10_ENVIRONMENT: "production",
         TAB10_RELEASE_DIRTY: "false",
         RENDER_GIT_COMMIT: SHA,
