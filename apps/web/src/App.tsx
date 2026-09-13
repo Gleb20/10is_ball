@@ -1,4 +1,4 @@
-import { Activity } from "react";
+import { Activity, useRef } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth";
 import { AppShell, shouldShowBottomNav } from "./layout";
@@ -26,6 +26,8 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 function Protected({ children }: { children: React.ReactNode }) {
   const { user, loading, reauthRequired } = useAuth();
   const location = useLocation();
+  const protectedActorRef = useRef(user?.id ?? "anonymous");
+  if (user?.id) protectedActorRef.current = user.id;
   if (loading) return <Skeleton variant="rectangular" height={120} />;
   if (!user && !reauthRequired) {
     const returnTo = `${location.pathname}${location.search}${location.hash}`;
@@ -45,7 +47,10 @@ function Protected({ children }: { children: React.ReactNode }) {
   const returnTo = `${location.pathname}${location.search}${location.hash}`;
   return (
     <>
-      <Activity mode={reauthRequired ? "hidden" : "visible"}>
+      <Activity
+        key={protectedActorRef.current}
+        mode={reauthRequired ? "hidden" : "visible"}
+      >
         {children}
       </Activity>
       {reauthRequired ? (
@@ -219,6 +224,14 @@ function AppRoutes() {
         />
         <Route
           path="/profile"
+          element={
+            <Protected>
+              <ProfilePage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/players/:userId"
           element={
             <Protected>
               <ProfilePage />

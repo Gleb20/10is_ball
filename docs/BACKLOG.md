@@ -37,7 +37,7 @@ focused Wave A 59/59 и полный web suite 125/125.
 - **Priority:** P0
 - **Status:** verified_prod
 - **Requirements:** PROFILE-001, PROFILE-003, NFR Security §4, AT-PROFILE-001.
-- **Evidence:** Red API test зафиксировал 19 DB-полей, включая `passwordHash`, `blockedAt`, `lastLoginAt` и storage path. Текущий `updateProfile` возвращает отдельный `OwnProfileUser` allowlist; regression test `API_PATCH_me_profile__PROFILE_003__AT-PROFILE-001__response_allowlist__SEC-002` проверяет точный набор 11 полей.
+- **Evidence:** Historical Red API test зафиксировал 19 DB-полей, включая `passwordHash`, `blockedAt`, `lastLoginAt` и storage path. Текущий `updateProfile` возвращает отдельный `OwnProfileUser` allowlist; regression test `API_PATCH_me_profile__PROFILE_003__AT-PROFILE-001__response_allowlist__SEC-002` проверяет точный набор 13 полей (10 `AuthUser` + 3 profile fields).
 - **Expected:** ни один HTTP response/log не содержит password hash или другие внутренние auth-поля.
 - **Actual:** успешное обновление профиля сериализует только `id`, `email`, `role`, `status`, `firstName`, `lastName`, `birthDate`, `organizationText`, `positionText`, `mustChangePassword`, `avatarKey`; исправление входит в опубликованный foundation SHA `6892d6e6fe79425eadf76c39bf052500bde5055a`.
 - **Repro:** войти, вызвать `PATCH /api/v1/me/profile`, проверить поле `user.passwordHash`.
@@ -579,49 +579,55 @@ focused Wave A 59/59 и полный web suite 125/125.
 
 - **Type:** product-gap
 - **Priority:** P2
-- **Status:** confirmed
+- **Status:** verified_local
 - **Evidence:** [`ProfilePage.tsx`](../apps/web/src/pages/ProfilePage.tsx) не покрывает PROFILE-001..006; нет полноценного public profile route/avatar/session management UI. Реализация начинается как own-profile view в `apps/web/src/pages/ProfilePage.tsx:11`; current gap отражён в `docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md:14`.
 - **Expected:** собственный/public профиль, privacy fields, stats/facts, edit/avatar и sessions по PRD/ADR D10.
-- **Actual:** сокращённая карточка и часть редактирования.
+- **Actual:** Wave B реализует канонический own/public profile DTO, privacy-safe blocked-target behavior, stats/facts/teams, own edit, read-only preset avatar, sessions/revoke и profile → challenge navigation. Полный aggregate gate ещё выполняется; status остаётся `in_progress`.
 - **Repro:** пройти PROFILE requirements по UI/routes.
 - **Risk:** неполный identity/stats сценарий и несогласованность avatar требований с D10.
-- **Verification:** contract/component/E2E matrix для own/public/blocked users.
+- **Verification:** Wave B API 220/220 и web 148/148; browser own/public/blocked/profile-session/challenge flows прошли на desktop и 390px. Aggregate/final gate pending.
 - **Dependencies:** reconcile PRD PROFILE-004 с ADR D10.
 - **Execution slices (wave B):** 1) Перенести профильный сервис и own/public DTO из bc9c, закрыть privacy и blocked-target проверки. 2) Перенести edit/stats/facts/session UI и совместимый старый PATCH. 3) Проверить own/public/blocked, revoke session, переход в challenge в браузере. Профильный сервис единолично владеет GET /players/:userId; upload/regenerate не вводить.
 - **Acceptance mapping:** PROFILE-001..006; ADR D10; verification evidence фиксируется по каждой slice, полный ID закрывается после всех slices и release gate.
 
 
+- **Final local acceptance 2026-09-13:** `pnpm run verify:all` 1010/1010, zero failures/skips/todo; strengthened compiled browser rerun 19/19. Desktop/390 rendered review accepted. [Wave B evidence](audit/evidence/wave-b-local.json) supersedes pending checks above; public release pending.
+
 ### GAP-003 — История без фильтров, поиска и пагинации
 
 - **Type:** product-gap
 - **Priority:** P2
-- **Status:** confirmed
+- **Status:** verified_local
 - **Evidence:** [`HistoryPage.tsx`](../apps/web/src/pages/HistoryPage.tsx) использует общие списки без HISTORY-002/AT-VIS-003 contract. Она вызывает два полных list endpoint в `apps/web/src/pages/HistoryPage.tsx:33` и объединяет их в памяти в `apps/web/src/pages/HistoryPage.tsx:56`; отсутствие dedicated API/E2E записано в `docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md:16`.
 - **Expected:** match+tournament feed, filters/search/stable pagination и visibility.
-- **Actual:** упрощённая выдача без dedicated history API.
+- **Actual:** server-side period/role/result/event/search filters, stable opaque cursor pagination, tournament outcome mapping and visibility/tutorial/void semantics are implemented. History selector/interaction issues remain under the aggregate full gate; status remains `in_progress`.
 - **Repro:** искать/фильтровать по периоду, роли, исходу, типу и имени.
 - **Risk:** история не масштабируется и раскрывает лишние данные до BUG-001.
-- **Verification:** AT-VIS-003 API+E2E; pagination stability tests.
+- **Verification:** Wave B API history 2/2 PostgreSQL checks and browser history journey are recorded; final aggregate gate and selector correction remain pending.
 - **Dependencies:** BUG-001, DATA-003 indexes.
 - **Execution slices (wave B):** 1) Перенести HistoryService из e263 с серверными фильтрами и курсором. 2) Проверить одинаковые timestamps, границы периода, void/tutorial/visibility и отсутствие повторов между страницами. 3) Подключить UI фильтров, поиска, следующей страницы и проверить возврат из деталей.
 - **Acceptance mapping:** HISTORY-001..004; AT-VIS-003; verification evidence фиксируется по каждой slice, полный ID закрывается после всех slices и release gate.
 
 
+- **Final local acceptance 2026-09-13:** `pnpm run verify:all` 1010/1010, zero failures/skips/todo; strengthened compiled browser rerun 19/19. Desktop/390 rendered review accepted. [Wave B evidence](audit/evidence/wave-b-local.json) supersedes pending checks above; public release pending.
+
 ### GAP-004 — Рейтинг без team filter и public profile flow
 
 - **Type:** product-gap
 - **Priority:** P2
-- **Status:** confirmed
+- **Status:** verified_local
 - **Evidence:** [`RankingsPage.tsx`](../apps/web/src/pages/RankingsPage.tsx) не покрывает RANK-004/005; challenge доступен не для всех строк и содержит BUG-010. UI предлагает только period filter в `apps/web/src/pages/RankingsPage.tsx:38`; current coverage отмечен broken в `docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md:15`.
 - **Expected:** all/week/month, team comparison, public card and safe challenge CTA.
-- **Actual:** базовая individual ranking выдача.
+- **Actual:** all/week/month ranking, active-member team filter and aggregate, privacy-safe public profile navigation and self/blocked challenge boundaries are implemented. Aggregate/final gate remains pending; status stays `in_progress`.
 - **Repro:** пройти RANK-001..005 на UI.
 - **Risk:** заявленный социальный/командный сценарий отсутствует.
-- **Verification:** AT-RANK-* + component/E2E navigation.
+- **Verification:** Wave B API 220/220 and web 148/148; ranking → public profile → challenge and Moscow-boundary flows passed in desktop and 390px browser checks. Aggregate/final gate pending.
 - **Dependencies:** BUG-010, GAP-002, timezone ADR D20.
 - **Execution slices (wave B):** 1) Перенести team/period ranking из 76bc без дублирующего playerCard endpoint. 2) Использовать публичный DTO GAP-002 и active-membership фильтр; проверить недоступную команду и self challenge. 3) Проверить ranking → public profile → challenge и границы Moscow в браузере.
 - **Acceptance mapping:** RANK-001..005; AT-RANK-*; verification evidence фиксируется по каждой slice, полный ID закрывается после всех slices и release gate.
 
+
+- **Final local acceptance 2026-09-13:** `pnpm run verify:all` 1010/1010, zero failures/skips/todo; strengthened compiled browser rerun 19/19. Desktop/390 rendered review accepted. [Wave B evidence](audit/evidence/wave-b-local.json) supersedes pending checks above; public release pending.
 
 ### GAP-005 — Match create/detail/judge покрывают только часть требований
 
@@ -904,6 +910,8 @@ focused Wave A 59/59 и полный web suite 125/125.
 - **Risk:** визуальные/интеграционные дефекты проходят CI.
 - **Verification:** [`test-plans/TECH-002-browser-e2e.md`](test-plans/TECH-002-browser-e2e.md); Playwright 1.63.0/system Chrome 4/4 green локально (2 journeys × desktop/mobile), serious/critical axe и horizontal geometry included. Combined Node 24 CI green: audits, lint/typecheck, shared 522, test-utils 4, web 124, API 150 + 7 guarded PostgreSQL skipped, builds. GitHub quality job теперь устанавливает Chrome и запускает тот же `pnpm test:e2e`; hosted run требует commit/push approval и ещё не выполнялся. Screenshots/traces сохраняются only-on-failure.
 - **Dependencies:** сначала стабилизировать TECH-001 и P0 API invariants.
+
+- **Wave B build evidence:** `tests/e2e/wave-b.spec.ts` covers profile/ranking/history journeys at desktop and 390px; production-build mode regression passed 17/17 Node tests and artifact inspection found dev React 0, prod React 1, `jsxDEV` 0. Final aggregate gate remains pending.
 
 ### TECH-003 — Login rate limiter неверно считает и не масштабируется
 

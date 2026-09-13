@@ -124,3 +124,10 @@ read-only behavior.
 
 Детали: [API as-built](API_AS_BUILT.md), [data model as-built](DATA_MODEL_AS_BUILT.md),
 [deployment as-built](../operations/DEPLOYMENT_AS_BUILT.md).
+
+## Wave B candidate services
+
+ProfileService owns own/public DTO and aggregate statistics. HistoryService owns
+a parameterized union/keyset feed across visible matches/tournaments; PostgreSQL
+is a required acceptance lane. RankingService narrows MatchService ranking data
+to active team membership. Existing auth, migration and D33 boundaries remain.

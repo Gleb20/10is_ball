@@ -416,7 +416,10 @@ export class AuthService {
     });
   }
 
-  async revokeSession(userId: string, sessionId: string): Promise<boolean> {
+  async revokeSession(userId: string, sessionId: string, currentSessionId?: string): Promise<boolean> {
+    if (sessionId === currentSessionId) {
+      throw Object.assign(new Error("CURRENT_SESSION_FORBIDDEN"), { code: "CURRENT_SESSION_FORBIDDEN" });
+    }
     const now = this.clock.now();
     const result = await this.db
       .update(authSessions)

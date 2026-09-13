@@ -1,6 +1,6 @@
 # Requirements ↔ Tests Traceability
 
-Обновлено **2026-09-07**. Таблица показывает существующий
+Обновлено **2026-09-13**. Таблица показывает существующий
 evidence и пробелы; перечисление слоя не означает, что слой уже реализован.
 Capability-level выводы находятся в [`../CAPABILITY_MATRIX.md`](../CAPABILITY_MATRIX.md),
 дефекты — в [`../BACKLOG.md`](../BACKLOG.md).
@@ -11,9 +11,9 @@ Capability-level выводы находятся в [`../CAPABILITY_MATRIX.md`](
 | ADM-001..008 | AT-ADM-001..005, AT-AUTH-008; admin role/user/audit journeys | integration/API и AdminPage tests частично | `partial` | SEC-004, BUG-011, GAP-010 |
 | ADM-MATCH / void | AT-ADM-MATCH-001..007; AT-MATCH-VOID-001..004 | BUG-002 cancel/force-close и DATA-005/007 void green локально: creator/active-admin actor matrix, stale/outsider rejection, one-time compensation, immutable audit, purge safeguard and tournament downstream preservation | `partial` | GAP-005 |
 | HOME-001..006 | AT-HOME-001/002; AT-EMPTY-001; active/recent/stats/rival states | Wave A UI covers active standalone+tournament, hero+rival, combined recent-5, all-time/month top-3 and actionable empty states; component 3/3 and API focused gates green, browser pending | `partial` | GAP-001 (`in_progress`) |
-| PROFILE-001..006 | AT-PROFILE-001; own/public/privacy/edit/avatar/session contracts | exact 11-field profile mutation allowlist API test; нет полного public flow | `broken` | GAP-002 |
-| RANK-001..005 | AT-RANK-001..004; timezone boundary cases | Wave A includes Moscow-boundary shared/API regressions and self-challenge UI guard; web regression green, full integration pending | `partial` | BUG-010/014 (`in_progress`), GAP-004 |
-| HISTORY-001..004 | AT-VIS-001..004; AT-VIS-003 filters/pagination | `visibility.integration.test.ts` локально покрывает AT-VIS-001/002/004 на match/tournament list+detail/home, включая terminal `finished|stopped|cancelled`; DATA-005 API/browser подтверждает club-visible `voided`, а `HistoryPage.test.tsx` запрещает terminal purge CTA. Dedicated AT-VIS-003 API/browser flow отсутствует | `partial` | GAP-003 |
+| PROFILE-001..006 | AT-PROFILE-001..005; own/public/privacy/edit/avatar/session contracts | Wave B API 220/220 and web 148/148 cover nested DTO/privacy/blocked/current-session/strict mutation; browser own/public/blocked/profile-session/challenge passed at desktop and 390px; aggregate gate pending | `partial` | GAP-002 (`in_progress`) |
+| RANK-001..005 | AT-RANK-001..006; timezone/team/card cases | Wave B team/period API and web contracts consume canonical public profile DTO; ranking → profile → challenge and Moscow-boundary browser checks passed at desktop and 390px; aggregate gate pending | `partial` | GAP-004 (`in_progress`) |
+| HISTORY-001..004 | AT-VIS-001..004; AT-VIS-003 filters/pagination | Existing visibility/void/tutorial coverage plus Wave B dedicated history API covers server filters, keyset and tournament results; PostgreSQL history 2/2 and browser journey recorded, selector issues/final aggregate gate pending | `partial` | GAP-003 (`in_progress`) |
 | MATCH-001..017 | AT-MATCH-001..015, START/STOP, CANCEL-001..004, VOID-001..004 | Wave A preserves D33 void UI and adds Moscow title, self-challenge and action-resilience coverage; MatchDetail 11/11 green, full integration pending | `partial` | BUG-006/009/010/016 (`in_progress`), GAP-005 |
 | JUDGE-001..012 | AT-JUDGE-001..009; two-client browser lifecycle | JudgePage regressions cover FIFO, queued-menu exits, lost lock, post-409 terminal readonly, visible sync and tutorial return; API/two-browser acceptance pending | `partial` | BUG-004/005 (`in_progress`), GAP-005 |
 | TOURNAMENT-001..019 | AT-TRN-001..018 and AT-MATCH-VOID-004; deterministic V2 SE/DE E2E | local API covers organizer ownership, cross-tournament isolation, DATA-002 rollback/replay and D33 tournament void preserving bracket/downstream/notifications; PostgreSQL concurrency and full browser lifecycle are release gates | `partial` | GAP-006 |
@@ -27,10 +27,10 @@ Capability-level выводы находятся в [`../CAPABILITY_MATRIX.md`](
 | NFR performance/cold start | load SLO; AT-OPS-COLD-001/002 | Wave A fake-timer 3/3 covers checking→waking, bounded abort/Retry and warm-request isolation; public cold smoke pending | `partial` | OPS-005 (`in_progress`), TECH-002 |
 | NFR schema evolution | AT-DATA-MIG-001/002; fresh + historical upgrade on PGlite/PostgreSQL; read-only startup preflight | DATA-003 PGlite fresh/0000→0001/no-op/checksum/startup policy is green; DATA-005 adds forward migration `0001_data_005_match_void.sql`, current-snapshot drift checks and an append-only trigger. PostgreSQL 16 remains a release gate | `partial` | DATA-003 |
 | NFR security | negative authz/schema/secret/dependency tests | DATA-001 match payload runtime validation/no-side-effect table, SEC-002/003 и SEC-006/007 negative API matrices verified locally; SEC-005 working-tree audit 0 high/critical and full CI green; 3 moderate React Router findings triaged; credential rotation verified_prod | `broken` | SEC-001, SEC-004/005 |
-| NFR a11y/compatibility | axe, browser/viewport/keyboard/safe-area matrix | jsdom smoke only | `broken` | GAP-011, TECH-002 |
+| NFR a11y/compatibility | axe, browser/viewport/keyboard/safe-area matrix | TECH-002 build-mode regression: 17/17 Node tests; production artifact inspection dev React 0, prod React 1, jsxDEV 0; Wave B browser surfaces checked at desktop/390px; full keyboard/safe-area/landscape/cross-browser matrix remains | `partial` | GAP-011, TECH-002 (`in_progress`) |
 | AUDIT | immutable ledger + D24/D33 actor/prior-state/optional-reason/compensation integration tests | dedicated `match_void_audits` preserves actor/key/prior version/result/events/reason/compensation and tournament policy; tests reject update/delete and prove rollback/replay. Generic technical audit remains outside the sporting-void scope | `partial` | — |
 | NFR backup/observability | AT-OPS-SAFE-001/002, AT-OPS-OBS-001/002; safe restore rehearsal; readiness/log assertions | OPS safety 7/7 green after stdin-quoted identifier fix and fail-closed new restore-target rule; API readiness/log focused evidence exists, production dashboard/RPO/RTO remain open | `partial` | OPS-002/003, Q-OPS-002/003 |
-| NFR delivery/release identity | AT-OPS-DELIVERY-001..009; quality/PostgreSQL/compiled-browser plus native-Git exact-SHA public smoke | D32 direct-main command and native deploy configured; first converged public smoke still required | `partial` | OPS-004; VPS recovery follow-up |
+| NFR delivery/release identity | AT-OPS-DELIVERY-001..009; quality/PostgreSQL/compiled-browser plus native-Git exact-SHA public smoke | D32 direct-main command and native deploy configured; b193e9d/1.11.0 exact-SHA public smoke and all four CI jobs passed | `partial` | OPS-004; VPS recovery follow-up |
 
 ## Naming convention
 
@@ -55,3 +55,13 @@ Capability-level выводы находятся в [`../CAPABILITY_MATRIX.md`](
 
 Нельзя указывать `E2E` как текущее покрытие без существующего browser test и
 сохранённого результата прогона.
+
+### Wave B final local evidence (2026-09-13)
+
+The earlier pending Wave B checks above are superseded by
+[wave-b-local.json](../audit/evidence/wave-b-local.json): aggregate 1010/1010,
+then strengthened loaded-card browser 19/19. `tests/e2e/wave-b.spec.ts` covers
+AT-PROFILE-001..005, AT-RANK-005..006 and AT-VIS-003 at desktop and 390px,
+including persisted edit/revoke, public privacy after load, team scopes, challenge,
+21-row pagination and detail/back context. Production-mode harness regression is
+in `scripts/verify/verify-scripts.test.mjs`; 17/17 passed. Public release pending.

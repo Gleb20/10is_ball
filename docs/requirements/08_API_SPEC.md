@@ -346,3 +346,23 @@ Errors:
 - invalid state transition;
 - concurrency/idempotency where relevant;
 - response schema snapshot or typed contract.
+
+## Wave B contract clarifications
+
+- PROFILE canonical GET/PATCH `/profile/me`, GET `/players/:userId` use one nested
+  `{profile}` DTO, with own-only email/birthDate; avatar is read-only under D10.
+  PATCH accepts exactly five local profile fields, validates real calendar dates,
+  and returns the existing safe `{user}`. Legacy `/me/profile` remains compatible.
+- Session revoke is other-own only: current session409, absent/foreign404,
+  malformed UUID400, no mutation on rejection.
+- History query: role player/judge, result win/loss, eventType match/tournament,
+  ISO instants from/to, q up to100chars, opaque cursor, limit1..50(default20).
+  Day controls use Moscow boundaries. Items include type/id/title/status/occurredAt/
+  roles/result/matchKind/scoreA/scoreB/format; nextCursor null ends pagination.
+  Finished tournament champion wins, other active participant loses; unknown
+  champion, stopped/cancelled or nonparticipant have null result. Doubles opponent
+  search excludes a participating actor's teammates.
+- Rankings query canonical scopes all_time/calendar_week/calendar_month;
+  compatibility week/month aliases supported. Response retains internal
+  all_time/week/month scope plus team context, availableTeams and rankings.
+  Team membership is enforced server-side; arbitrary query fields are rejected.

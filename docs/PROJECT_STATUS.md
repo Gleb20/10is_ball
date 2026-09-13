@@ -1,16 +1,24 @@
 # Tab-10 — статус проекта
 
-Обновлено: **2026-09-13**. Локальный кандидат: **1.11.0**; опубликованная версия: **1.10.1**.
+Обновлено: **2026-09-13**. Опубликована **1.11.0**; выполняется волна B.
+
+## Current accepted candidate 2.0.0 (supersedes local evidence below)
+
+Wave B GAP-002/003/004 is verified_local: `pnpm run verify:all` passed 1010/1010
+with zero failures/skips/todo/interrupted (quality 945, PostgreSQL 42, browser 19,
+cleanup 4). Strengthened loaded-card browser check rerun passed 19/19.
+Desktop/390 profile, rankings and history return reviewed.
+[Evidence](audit/evidence/wave-b-local.json). Public release pending.
+Original 186 files unchanged. GAP-005..011 remain open; Wave C is next.
 
 ## Итог
 
 Выполняется принятый план завершения PRD v2 волнами A–F:
 [очередь и критерии приёмки](test-plans/OPS-004-completion-waves.md).
-Read-only проверка public web/API 2026-09-13 подтвердила
-`ecf7605fe8d0e5857fb9bb0eebf5ef548c90226a`, version `1.10.1`.
-Волна A интегрирована в отдельный clean checkout; локальный кандидат `1.11.0`
-проходит финальные проверки. Коммит, push и deployment этой волны ещё не выполнены.
-Полная готовность PRD v2 не заявляется: последующие GAP-002..011 остаются открыты.
+Read-only public smoke подтвердил `b193e9de7f6448a722ae061cb106825fe273d352`,
+version `1.11.0` у web/API/proxy. GitHub CI run `34726774716` завершился success
+во всех четырёх jobs. Волна A опубликована, волна B (GAP-002/003/004) выполняется.
+Полная готовность PRD v2 не заявляется: GAP-002..011 остаются открыты.
 
 ## Текущая проверка кандидата
 
@@ -19,7 +27,7 @@ Read-only проверка public web/API 2026-09-13 подтвердила
 - Исправления гонок и устаревшей ошибки после reauth прошли независимое ревью;
   desktop/390 browser проверяет сохранённый результат и восстановленный черновик.
 - [Обезличенный отчёт](audit/evidence/wave-a-local.json). Scope волны A переведён
-  в `verified_local`; public release ещё ожидается. GAP-002..011 остаются открыты.
+  в `verified_local`; public release подтверждён exact-SHA smoke и CI. GAP-002..011 остаются открыты.
 - Backlog содержит 51 canonical ID. Исходные 186 файлов совпадают со снимком.
 
 ## Исторический снимок 2026-09-09 (superseded текущей проверкой выше)

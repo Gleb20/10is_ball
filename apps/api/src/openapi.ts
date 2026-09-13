@@ -198,6 +198,38 @@ const schemas: Record<string, JsonSchema> = {
     },
     additionalProperties: true,
   },
+  HistoryItem: {
+    type: "object",
+    required: ["type", "id", "title", "status", "occurredAt", "roles", "result", "matchKind", "scoreA", "scoreB", "format"],
+    properties: {
+      type: { type: "string", enum: ["match", "tournament"] },
+      id: { type: "string", format: "uuid" },
+      title: { type: "string" },
+      status: { type: "string" },
+      occurredAt: { type: "string", format: "date-time" },
+      roles: {
+        type: "array",
+        minItems: 1,
+        uniqueItems: true,
+        items: { type: "string", enum: ["player", "judge", "organizer", "viewer"] },
+      },
+      result: { type: "string", enum: ["win", "loss"], nullable: true },
+      matchKind: { type: "string", nullable: true },
+      scoreA: { type: "integer", nullable: true },
+      scoreB: { type: "integer", nullable: true },
+      format: { type: "string", nullable: true },
+    },
+    additionalProperties: false,
+  },
+  HistoryFeed: {
+    type: "object",
+    required: ["items", "nextCursor"],
+    properties: {
+      items: { type: "array", items: ref("HistoryItem") },
+      nextCursor: { type: "string", nullable: true },
+    },
+    additionalProperties: false,
+  },
   User: {
     type: "object",
     required: ["id", "email", "role", "status", "firstName", "lastName", "mustChangePassword"],
@@ -240,6 +272,72 @@ const schemas: Record<string, JsonSchema> = {
       lastSeenAt: { type: "string", format: "date-time" },
       current: { type: "boolean" },
     },
+    additionalProperties: false,
+  },
+  PlayerProfile: {
+    type: "object",
+    required: ["isOwn", "canChallenge", "identity", "avatar", "stats", "facts", "teams"],
+    properties: {
+      isOwn: { type: "boolean" },
+      canChallenge: { type: "boolean" },
+      identity: {
+        type: "object",
+        required: ["id", "firstName", "lastName", "displayName", "avatarKey", "organizationText", "positionText"],
+        properties: {
+          id: { type: "string", format: "uuid" },
+          firstName: { type: "string" },
+          lastName: { type: "string" },
+          displayName: { type: "string" },
+          avatarKey: { type: "string", nullable: true },
+          organizationText: { type: "string", nullable: true },
+          positionText: { type: "string", nullable: true },
+          email: { type: "string", format: "email" },
+          birthDate: { type: "string", format: "date", nullable: true },
+        },
+        additionalProperties: false,
+      },
+      avatar: {
+        type: "object",
+        required: ["key", "editable"],
+        properties: {
+          key: { type: "string", nullable: true },
+          editable: { type: "boolean", enum: [false] },
+        },
+        additionalProperties: false,
+      },
+      stats: {
+        type: "object",
+        required: ["matchesPlayed", "wins", "losses", "winRate", "averagePoints", "tournamentsPlayed", "tournamentWins", "tournamentsCreated", "judgedMatches", "rank"],
+        properties: {
+          matchesPlayed: { type: "integer", minimum: 0 },
+          wins: { type: "integer", minimum: 0 },
+          losses: { type: "integer", minimum: 0 },
+          winRate: { type: "number", minimum: 0, maximum: 1 },
+          averagePoints: { type: "number", minimum: 0 },
+          tournamentsPlayed: { type: "integer", minimum: 0 },
+          tournamentWins: { type: "integer", minimum: 0 },
+          tournamentsCreated: { type: "integer", minimum: 0 },
+          judgedMatches: { type: "integer", minimum: 0 },
+          rank: { type: "integer", minimum: 1, nullable: true },
+        },
+        additionalProperties: false,
+      },
+      facts: { type: "object", additionalProperties: true },
+      teams: {
+        type: "array",
+        items: {
+          type: "object",
+          required: ["id", "name", "role"],
+          properties: {
+            id: { type: "string", format: "uuid" },
+            name: { type: "string" },
+            role: { type: "string", enum: ["captain", "member"] },
+          },
+          additionalProperties: false,
+        },
+      },
+    },
+    additionalProperties: false,
   },
   Match: {
     type: "object",
@@ -338,15 +436,48 @@ const schemas: Record<string, JsonSchema> = {
   },
   Ranking: {
     type: "object",
-    required: ["userId", "displayName", "wins", "losses"],
+    required: ["userId", "displayName", "wins", "losses", "matchesPlayed", "winRate", "avatarKey"],
     properties: {
       userId: { type: "string" },
       displayName: { type: "string" },
       wins: { type: "integer", minimum: 0 },
       losses: { type: "integer", minimum: 0 },
+      matchesPlayed: { type: "integer", minimum: 0 },
+      winRate: { type: "number", minimum: 0, maximum: 1 },
       avatarKey: { type: "string", nullable: true },
     },
     additionalProperties: true,
+  },
+  RankingTeamOption: {
+    type: "object",
+    required: ["id", "name"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+      name: { type: "string" },
+    },
+    additionalProperties: false,
+  },
+  RankingTeamContext: {
+    type: "object",
+    required: ["id", "name", "activeMemberCount", "winsAllTime"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+      name: { type: "string" },
+      activeMemberCount: { type: "integer", minimum: 0 },
+      winsAllTime: { type: "integer", minimum: 0 },
+    },
+    additionalProperties: false,
+  },
+  RankingResponse: {
+    type: "object",
+    required: ["scope", "team", "availableTeams", "rankings"],
+    properties: {
+      scope: { type: "string", enum: ["all_time", "week", "month"] },
+      team: { ...ref("RankingTeamContext"), nullable: true },
+      availableTeams: { type: "array", items: ref("RankingTeamOption") },
+      rankings: { type: "array", items: ref("Ranking") },
+    },
+    additionalProperties: false,
   },
   LoginRequest: {
     type: "object",
@@ -403,6 +534,17 @@ const schemas: Record<string, JsonSchema> = {
       organizationText: { type: "string", nullable: true },
       positionText: { type: "string", nullable: true },
       onboardingCompleted: { type: "boolean" },
+    },
+    additionalProperties: false,
+  },
+  ProfileLocalUpdateRequest: {
+    type: "object",
+    properties: {
+      firstName: { type: "string", minLength: 1, maxLength: 100 },
+      lastName: { type: "string", minLength: 1, maxLength: 100 },
+      birthDate: { type: "string", format: "date", nullable: true },
+      organizationText: { type: "string", maxLength: 200, nullable: true },
+      positionText: { type: "string", maxLength: 200, nullable: true },
     },
     additionalProperties: false,
   },
@@ -669,10 +811,36 @@ export function openApiSpec(releaseVersion = productVersion()) {
         delete: operation({ operationId: "adminDeleteMatch", summary: "Purge eligible standalone match", tag: "Admin", mutation: true, parameters: pathParameters("matchId"), response: ref("GenericObject") }),
       },
       "/api/v1/me/profile": {
-        patch: operation({ operationId: "updateOwnProfile", summary: "Update own profile (runtime name)", tag: "Profile", mutation: true, parameters: [], request: "ProfileUpdateRequest", response: objectRef("user", "User") }),
+        patch: operation({ operationId: "updateOwnProfileLegacyAlias", summary: "Update own profile (compatibility alias)", tag: "Profile", mutation: true, parameters: [], request: "ProfileUpdateRequest", response: objectRef("user", "User") }),
+      },
+      "/api/v1/profile/me": {
+        get: operation({ operationId: "getOwnProfile", summary: "Get complete own profile", tag: "Profile", response: objectRef("profile", "PlayerProfile") }),
+        patch: operation({ operationId: "updateOwnProfile", summary: "Update own local profile fields", tag: "Profile", mutation: true, request: "ProfileLocalUpdateRequest", response: objectRef("user", "User") }),
+      },
+      "/api/v1/players/{userId}": {
+        get: operation({ operationId: "getPlayerProfile", summary: "Get privacy-safe player profile", tag: "Profile", parameters: [{ name: "userId", in: "path", required: true, schema: { type: "string", format: "uuid" } }], response: objectRef("profile", "PlayerProfile") }),
       },
       "/api/v1/me/onboarding": {
         patch: operation({ operationId: "updateOwnOnboarding", summary: "Update onboarding progress (runtime name)", tag: "Profile", mutation: true, request: "OnboardingMutationRequest", response: objectRef("user", "User") }),
+      },
+      "/api/v1/history": {
+        get: operation({
+          operationId: "listHistory",
+          summary: "List visible match and tournament history",
+          tag: "History",
+          parameters: [
+            queryParameter("role", { type: "string", enum: ["player", "judge"] }),
+            queryParameter("result", { type: "string", enum: ["win", "loss"] }),
+            queryParameter("eventType", { type: "string", enum: ["match", "tournament"] }),
+            queryParameter("from", { type: "string", format: "date-time" }),
+            queryParameter("to", { type: "string", format: "date-time" }),
+            queryParameter("q", { type: "string", maxLength: 100 }),
+            queryParameter("cursor", { type: "string", maxLength: 500 }),
+            queryParameter("limit", { type: "integer", minimum: 1, maximum: 50, default: 20 }),
+          ],
+          response: ref("HistoryFeed"),
+          errors: [400, 401, 403, 500],
+        }),
       },
       "/api/v1/matches": {
         get: operation({ operationId: "listMatches", summary: "List visible matches", tag: "Matches", response: arrayRef("matches", "Match") }),
@@ -724,7 +892,7 @@ export function openApiSpec(releaseVersion = productVersion()) {
         get: operation({ operationId: "listUserDirectory", summary: "List active users for pickers", tag: "Users", parameters: [queryParameter("q")], response: arrayRef("users", "DirectoryUser") }),
       },
       "/api/v1/rankings": {
-        get: operation({ operationId: "getRankings", summary: "Get rankings", tag: "Rankings", parameters: [queryParameter("period", { type: "string", enum: ["all_time", "week", "month", "calendar_week", "calendar_month"] }), queryParameter("scope", { type: "string", enum: ["all_time", "week", "month", "calendar_week", "calendar_month"] })], response: arrayRef("rankings", "Ranking") }),
+        get: operation({ operationId: "getRankings", summary: "Get global or current-team rankings", tag: "Rankings", parameters: [queryParameter("period", { type: "string", enum: ["all_time", "week", "month", "calendar_week", "calendar_month"] }), queryParameter("scope", { type: "string", enum: ["all_time", "week", "month", "calendar_week", "calendar_month"] }), queryParameter("teamId", { type: "string", format: "uuid" })], response: ref("RankingResponse") }),
       },
       "/api/v1/home": {
         get: operation({ operationId: "getHome", summary: "Get home dashboard", tag: "Home", parameters: [queryParameter("period", { type: "string", enum: ["all_time", "month"] })], response: ref("HomeDashboard") }),

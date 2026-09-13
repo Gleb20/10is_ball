@@ -20,7 +20,7 @@ login/OpenAPI, требуют session; state-changing routes вне test тре�
 | GET | `/api/v1/auth/sessions` |
 | DELETE | `/api/v1/auth/sessions/:sessionId` |
 
-## Admin и profile (10)
+## Admin и profile (13)
 
 | Method | Path |
 |---|---|
@@ -32,16 +32,17 @@ login/OpenAPI, требуют session; state-changing routes вне test тре�
 | POST | `/api/v1/admin/matches/:matchId/force-close` |
 | DELETE | `/api/v1/admin/matches/:matchId` |
 | PATCH | `/api/v1/me/profile` |
+| GET, PATCH | `/api/v1/profile/me` |
+| GET | `/api/v1/players/:userId` |
 | PATCH | `/api/v1/me/onboarding` |
 
 Admin match hard delete ограничен non-terminal standalone rows; finished,
 stopped и voided sporting results не удаляются (`DATA-005/007`).
-Profile mutation теперь возвращает отдельный `OwnProfileUser` allowlist из 11
+Profile mutation теперь возвращает отдельный `OwnProfileUser` allowlist из 13
 полей и не сериализует password hash, auth timestamps или storage paths
-(`SEC-002`, local verification). Несовпадение target `/profile/me` и runtime
-`/me/profile` остаётся contract drift вне этого исправления.
+(`SEC-002`, local verification). Wave B добавляет канонический `/profile/me`; legacy `/me/profile` сохраняется для совместимости.
 
-## Match, directory, ranking, home (19)
+## Match, directory, ranking, history, home (20)
 
 | Method | Path |
 |---|---|
@@ -63,8 +64,9 @@ Profile mutation теперь возвращает отдельный `OwnProfil
 | GET | `/api/v1/users/directory` |
 | GET | `/api/v1/rankings` |
 | GET | `/api/v1/home` |
+| GET | `/api/v1/history` |
 
-Counting `GET, POST` as two route registrations gives 19. Point/undo and
+Counting `GET, POST` as two route registrations gives 20. Point/undo and
 cancel/void require an `Idempotency-Key`; core match payloads use shared Zod
 runtime schemas. Temporary-password authorization compares exact method plus
 matched router path.
@@ -100,17 +102,17 @@ matched router path.
 | GET | `/api/v1/faq` |
 | POST | `/api/v1/feedback` |
 
-Итого: **64 registered operations / 58 unique paths**. Встроенный OpenAPI описывает
-**64 operations / 58 paths** (100%). Машинный снимок обновляет родитель интеграции:
+Итого: **68 registered operations / 61 unique paths**. Встроенный OpenAPI описывает
+**68 operations / 61 paths** (100%). Машинный снимок обновляет родитель интеграции:
 [`../audit/evidence/route-openapi-inventory.json`](../audit/evidence/route-openapi-inventory.json).
 
 ## Contract drift
 
 - Artifact OpenAPI берёт version из той же release metadata, что `/health` и
-  `/ready`; production останется историческим `0.1.0`, пока PR1 не выпущен.
+  `/ready`; public1.11.0 уже подтверждён exact-SHA smoke b193e9d.
 - [`../requirements/08_API_SPEC.md`](../requirements/08_API_SPEC.md) — целевой,
   частично устаревший контракт.
-- Route/OpenAPI inventory 2026-09-13 совпадает 64/64 operations и 58/58 paths;
+- Route/OpenAPI inventory 2026-09-13 совпадает 68/68 operations и 61/61 paths;
   runtime schema/actor coverage по отдельным историческим routes остаётся
   самостоятельным acceptance вопросом.
 
@@ -138,3 +140,28 @@ admin или creator и следует D33 preservation policy.
 full 40-character SHA, `dirty=false` и root-package version. Web публикует ту же
 структуру отдельно в `/release.json`; exact-SHA smoke сравнивает direct и proxy
 ответы, а не только HTTP status.
+
+## Wave B profile/history/ranking contracts (candidate)
+
+Все routes ниже требуют активного пользователя. `GET /api/v1/profile/me` и
+`GET /api/v1/players/:userId` возвращают единый `{profile}`: isOwn, canChallenge,
+identity, avatar, stats, facts, teams. Только собственная identity содержит email
+и birthDate; blocked историческая цель читается без challenge. UUID валидируется.
+`PATCH /api/v1/profile/me` принимает только firstName/lastName/birthDate/
+organizationText/positionText; невозможная дата и неизвестные поля дают400 без
+записи. Legacy PATCH сохраняет прежний контракт. DELETE auth/sessions/:sessionId
+отклоняет текущую сессию409; logout остаётся способом выхода.
+
+`GET /api/v1/history` принимает role, result, eventType, from/to, q, cursor, limit
+(1..50, default20). Ответ `{items,nextCursor}` объединяет доступные события,
+исключает tutorial и сохраняет voided result-neutral. Сортировка occurredAt/type/id
+descending, cursor даёт устойчивый порядок, но не transactional snapshot.
+Finished tournament result вычисляется по сохранённому чемпиону; stopped/cancelled
+без результата. PostgreSQL/PGlite различия raw results и ISO timestamp binding
+обработаны в сервисе и покрыты отдельным обязательным PostgreSQL тестом.
+
+`GET /api/v1/rankings` сохраняет rankings и добавляет scope/team/availableTeams.
+Запрос принимает all_time/calendar_week/calendar_month и совместимые week/month;
+response.scope остаётся all_time/week/month. teamId доступен только текущему
+участнику активной команды; строки исключают left/blocked, командный winsAllTime
+следует D3/Q2. Публичная карточка принадлежит ProfileService, второго flat DTO нет.

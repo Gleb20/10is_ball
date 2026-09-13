@@ -1,3 +1,6 @@
+import { RankingService } from "./modules/rankings/ranking-service.js";
+import { HistoryService } from "./modules/history/history-service.js";
+import { ProfileService } from "./modules/profile/profile-service.js";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import Fastify, {
@@ -51,6 +54,68 @@ const NotificationReadVisibleSchema = z.object({
   notificationIds: z.array(z.string().uuid()).min(1).max(100),
 });
 
+const ProfileUpdateSchema = z
+  .object({
+    firstName: z.string().trim().min(1).max(100).optional(),
+    lastName: z.string().trim().min(1).max(100).optional(),
+    birthDate: z
+      .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
+        const date = new Date(`${value}T00:00:00.000Z`);
+        return Number(value.slice(0, 4)) > 0 && Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+      }, "Invalid calendar date"), z.null()])
+      .optional(),
+    organizationText: z.union([z.string().trim().max(200), z.null()]).optional(),
+    positionText: z.union([z.string().trim().max(200), z.null()]).optional(),
+  })
+  .strict();
+
+const HistoryQuerySchema = z
+  .object({
+    role: z.enum(["player", "judge"]).optional(),
+    result: z.enum(["win", "loss"]).optional(),
+    eventType: z.enum(["match", "tournament"]).optional(),
+    from: z.string().datetime({ offset: true }).optional(),
+    to: z.string().datetime({ offset: true }).optional(),
+    q: z.string().trim().max(100).optional(),
+    cursor: z.string().min(1).max(500).optional(),
+    limit: z.coerce.number().int().min(1).max(50).default(20),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.from && value.to && Date.parse(value.from) > Date.parse(value.to)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "from must not be after to",
+        path: ["from"],
+      });
+    }
+  });
+
+const RankingScopeQuerySchema = z.enum([
+  "all_time",
+  "week",
+  "month",
+  "calendar_week",
+  "calendar_month",
+]);
+const RankingQuerySchema = z
+  .object({
+    period: RankingScopeQuerySchema.optional(),
+    scope: RankingScopeQuerySchema.optional(),
+    teamId: z.string().uuid().optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.period && value.scope && value.period !== value.scope) {
+      context.addIssue({
+        code: "custom",
+        path: ["scope"],
+        message: "scope and period must match when both are provided",
+      });
+    }
+  });
+const PlayerParamsSchema = z.object({ userId: z.string().uuid() });
+
 /** Cookie flags: use COOKIE_SAME_SITE=none when browser talks to API on another site. Prefer Vercel /api rewrite (same-site) instead. */
 function sessionCookieOptions(httpOnly: boolean) {
   const crossSite = process.env.COOKIE_SAME_SITE === "none";
@@ -80,6 +145,9 @@ export type AppServices = {
   notifications: NotificationService;
   help: HelpService;
   home: HomeService;
+  rankings: RankingService;
+  history: HistoryService;
+  profile: ProfileService;
   clock: Clock;
 };
 
@@ -119,6 +187,9 @@ export async function buildApp(opts: {
     notifications: new NotificationService(opts.db, clock),
     help: new HelpService(opts.db),
     home: new HomeService(opts.db, clock, matches, tournaments),
+    rankings: new RankingService(opts.db, matches),
+    history: new HistoryService(opts.db, clock),
+    profile: new ProfileService(opts.db, matches),
     clock,
   };
 
@@ -449,13 +520,12 @@ export async function buildApp(opts: {
     "/api/v1/auth/sessions/:sessionId",
     { preHandler: requireAuth },
     async (req, reply) => {
-      const { sessionId } = req.params as { sessionId: string };
-      const ok = await services.auth.revokeSession(
-        req.authUser!.id,
-        sessionId,
-      );
-      if (!ok) return reply.code(404).send({ code: "NOT_FOUND", message: "Сессия не найдена" });
-      return { ok: true };
+      try {
+        const { sessionId } = parseBody(z.object({ sessionId: z.string().uuid() }), req.params);
+        const ok = await services.auth.revokeSession(req.authUser!.id, sessionId, req.authSessionId);
+        if (!ok) return reply.code(404).send({ code: "NOT_FOUND", message: "Сессия не найдена" });
+        return { ok: true };
+      } catch (error) { return sendError(reply, error); }
     },
   );
 
@@ -653,6 +723,49 @@ export async function buildApp(opts: {
   );
 
   // --- Profile ---
+  app.get(
+    "/api/v1/profile/me",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        return {
+          profile: await services.profile.getProfile(
+            req.authUser!.id,
+            req.authUser!.id,
+          ),
+        };
+      } catch (error) {
+        return sendError(reply, error);
+      }
+    },
+  );
+
+  app.get(
+    "/api/v1/players/:userId",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { userId } = parseBody(PlayerParamsSchema, req.params);
+        return {
+          profile: await services.profile.getProfile(
+            req.authUser!.id,
+            userId,
+          ),
+        };
+      } catch (error) {
+        return sendError(reply, error);
+      }
+    },
+  );
+
+  app.patch("/api/v1/profile/me", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const body = parseBody(ProfileUpdateSchema, req.body);
+      return { user: await services.auth.updateProfile(req.authUser!.id, body) };
+    } catch (error) { return sendError(reply, error); }
+  });
+
+
   app.patch(
     "/api/v1/me/profile",
     { preHandler: requireAuth },
@@ -690,6 +803,22 @@ export async function buildApp(opts: {
   );
 
   // --- Matches ---
+  app.get("/api/v1/history", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const parsed = parseBody(HistoryQuerySchema, req.query);
+      return await services.history.list(req.authUser!.id, {
+        ...parsed,
+        limit: parsed.limit ?? 20,
+        q: parsed.q || undefined,
+        from: parsed.from ? new Date(parsed.from) : undefined,
+        to: parsed.to ? new Date(parsed.to) : undefined,
+      });
+    } catch (error) {
+      return sendError(reply, error);
+    }
+  });
+
+
   app.get("/api/v1/matches", { preHandler: requireAuth }, async (req) => {
     const list = await services.matches.listMatches(req.authUser!.id);
     return { matches: list };
@@ -1014,19 +1143,24 @@ export async function buildApp(opts: {
   app.get(
     "/api/v1/rankings",
     { preHandler: requireAuth },
-    async (req) => {
-      const q = req.query as { period?: string; scope?: string };
-      const raw = q.scope ?? q.period ?? "all_time";
-      const scopeMap: Record<string, "all_time" | "week" | "month"> = {
-        all_time: "all_time",
-        week: "week",
-        month: "month",
-        calendar_week: "week",
-        calendar_month: "month",
-      };
-      const scope = scopeMap[raw] ?? "all_time";
-      const rankings = await services.matches.getRankings(scope);
-      return { rankings };
+    async (req, reply) => {
+      try {
+        const query = parseBody(RankingQuerySchema, req.query);
+        const raw = query.scope ?? query.period ?? "all_time";
+        const scope =
+          raw === "calendar_week"
+            ? "week"
+            : raw === "calendar_month"
+              ? "month"
+              : raw;
+        return await services.rankings.list({
+          actorUserId: req.authUser!.id,
+          scope,
+          teamId: query.teamId,
+        });
+      } catch (error) {
+        return sendError(reply, error);
+      }
     },
   );
 
@@ -1492,6 +1626,7 @@ function messageFor(code: string): string {
     PASSWORD_CHANGE_REQUIRED: "Необходимо сменить пароль",
     LAST_ADMIN: "Нельзя заблокировать последнего администратора",
     SELF_BLOCK_FORBIDDEN: "Нельзя заблокировать собственный аккаунт",
+    CURRENT_SESSION_FORBIDDEN: "Текущую сессию можно завершить только через выход",
     EMAIL_TAKEN: "Email уже занят",
     EMAIL_ALREADY_EXISTS: "Email уже занят",
     NOT_FOUND: "Не найдено",
@@ -1665,7 +1800,8 @@ function sendError(reply: FastifyReply, e: unknown) {
           : code === "VERSION_CONFLICT" ||
               code === "JUDGE_TAKEN" ||
               code === "JUDGE_NOT_ACTIVE" ||
-              code === "BRACKET_VERSION_CONFLICT"
+              code === "BRACKET_VERSION_CONFLICT" ||
+              code === "CURRENT_SESSION_FORBIDDEN"
             ? 409
             : badRequestCodes.has(code)
               ? 400

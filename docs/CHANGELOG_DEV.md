@@ -3,6 +3,39 @@
 Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
 записи сохраняются как история и могут быть помечены `superseded` новой записью.
 
+## 2026-09-13 Wave B local acceptance
+
+- GAP-002/003/004: full profiles and private fields, other-session revoke,
+  history filters/search/cursor/return context, team rankings and player cards.
+- `pnpm run verify:all` passed 1010/1010 with zero skips/failures. Strengthened
+  loaded-card browser check rerun passed 19/19. Desktop/390 rendered review passed.
+- Independent bounded reviews corrected withdrawn tournament counts, doubles
+  opponent search, cursor UUIDs, stale profile errors and cross-account state.
+- Original 186 files unchanged. Candidate 2.0.0 awaits direct-main release;
+  GAP-005..011 remain open. [Evidence](audit/evidence/wave-b-local.json).
+
+## 2026-09-13 — TECH-002 production build mode correction
+
+The compiled browser harness now overrides inherited NODE_ENV=test during build,
+so React/Vite output matches production mode. Disposable database and loopback
+guards remain unchanged. Deterministic Red reproduced the inherited setting;
+verify-scripts tests passed 17/17 after the correction. Built artifact inspection
+confirmed production React with no development React or jsxDEV. The final Wave B
+aggregate remains pending.
+
+## 2026-09-13 — Wave B integration in progress
+
+- Wave A released1.11.0 at b193e9d: hostedCI34726774716 all4 jobs success,
+  read-only public smoke matched web/API/proxy. Original worktree preserved.
+- GAP-002/003/004 integrated selectively from old worktrees, preserving one
+  profile DTO, auth-generation recovery and D33. Initial API Red12/12→Green12/12;
+  web Red18/19→Green19/19, full web145/145 and typecheck passed.
+- Review added calendar-date/unknown-query/current-session validation and
+  tournament history outcomes. PGlite/contracts19/19 and real PostgreSQL2/2 passed
+  after fixing raw array response and ISO date binding (separate deterministic Reds).
+- Final review corrections and browser/aggregate acceptance pending. Candidate
+  version2.0.0 follows VERSIONING because public player route introduces a new flow.
+
 ## 2026-09-13 — Wave A rendered recovery check
 
 - Full aggregate candidate gate passed 965/965 with no failures/skips/todo;

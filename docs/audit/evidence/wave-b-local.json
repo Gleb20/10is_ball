@@ -1,14 +1,14 @@
 {
   "date": "2026-09-13",
-  "candidateVersion": "1.11.0",
-  "baseSha": "ecf7605fe8d0e5857fb9bb0eebf5ef548c90226a",
+  "candidateVersion": "2.0.0",
+  "baseSha": "b193e9de7f6448a722ae061cb106825fe273d352",
   "command": "pnpm run verify:all",
   "node": "24.20.0",
   "pnpm": "9.15.0",
   "postgres": "16.15",
   "totals": {
-    "total": 965,
-    "passed": 965,
+    "total": 1010,
+    "passed": 1010,
     "failed": 0,
     "skipped": 0,
     "todo": 0,
@@ -28,8 +28,8 @@
     {
       "name": "quality",
       "status": "passed",
-      "total": 906,
-      "passed": 906,
+      "total": 945,
+      "passed": 945,
       "failed": 0,
       "skipped": 0,
       "todo": 0,
@@ -38,8 +38,8 @@
     {
       "name": "postgres",
       "status": "passed",
-      "total": 40,
-      "passed": 40,
+      "total": 42,
+      "passed": 42,
       "failed": 0,
       "skipped": 0,
       "todo": 0,
@@ -48,25 +48,17 @@
     {
       "name": "browser-prodlike",
       "status": "passed",
-      "total": 15,
-      "passed": 15,
+      "total": 19,
+      "passed": 19,
       "failed": 0,
       "skipped": 0,
       "todo": 0,
       "interrupted": 0
     }
   ],
-  "review": "Independent bounded review passed; final stale-alert regression 6/6 independently rerun",
-  "browser": "6 compiled same-origin journeys at1280x800 and390x844; contrast exclusion remains GAP-011",
+  "review": "Independent API and web bounded reviews passed; parent integration acceptance; separate Terra unavailable",
+  "browser": "10 compiled same-origin journeys at 1280x800 and 390x844; strengthened loaded-public-card assertion rerun passed 19/19 including 9 foundation checks; contrast exclusion remains GAP-011",
+  "buildMode": "Explicit production React build; development React and jsxDEV absent",
   "originalSnapshotFilesUnchanged": 186,
-  "publicRelease": {
-    "sha": "b193e9de7f6448a722ae061cb106825fe273d352",
-    "version": "1.11.0",
-    "readOnlySmoke": "passed",
-    "attempts": 7,
-    "elapsedMs": 84895,
-    "githubRun": "34726774716",
-    "githubConclusion": "success",
-    "migrationMode": "native startup apply-only"
-  }
+  "publicRelease": "pending"
 }

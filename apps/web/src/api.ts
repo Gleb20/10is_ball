@@ -13,6 +13,104 @@ export type User = {
   onboardingCompletedAt?: string | null;
 };
 
+export type ProfileIdentity = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  avatarKey: string | null;
+  organizationText: string | null;
+  positionText: string | null;
+  email?: string;
+  birthDate?: string | null;
+};
+
+export type PlayerProfile = {
+  isOwn: boolean;
+  canChallenge: boolean;
+  identity: ProfileIdentity;
+  avatar: { key: string | null; editable: false };
+  stats: {
+    matchesPlayed: number;
+    wins: number;
+    losses: number;
+    winRate: number;
+    averagePoints: number;
+    tournamentsPlayed: number;
+    tournamentWins: number;
+    tournamentsCreated: number;
+    judgedMatches: number;
+    rank: number | null;
+  };
+  facts: {
+    longestMatch: {
+      matchId: string;
+      title: string;
+      durationSeconds: number;
+    } | null;
+    bestWinningScore: { matchId: string; title: string; score: string } | null;
+    frequentOpponent: {
+      userId: string;
+      displayName: string;
+      matchCount: number;
+    } | null;
+    rival: { userId: string; displayName: string; matchCount: number } | null;
+  };
+  teams: Array<{ id: string; name: string; role: "captain" | "member" }>;
+};
+
+export type AuthSession = {
+  id: string;
+  userAgent: string | null;
+  createdAt: string;
+  lastSeenAt: string;
+  current: boolean;
+};
+export type HistoryItem = {
+  type: "match" | "tournament";
+  id: string;
+  title: string;
+  status: string;
+  occurredAt: string;
+  roles: Array<"player" | "judge" | "organizer" | "viewer">;
+  result: "win" | "loss" | null;
+  matchKind: string | null;
+  scoreA: number | null;
+  scoreB: number | null;
+  format: string | null;
+};
+export type HistoryFilters = {
+  role?: "player" | "judge";
+  result?: "win" | "loss";
+  eventType?: "match" | "tournament";
+  from?: string;
+  to?: string;
+  q?: string;
+  cursor?: string;
+  limit?: number;
+  signal?: AbortSignal;
+};
+export type RankingScope = "all_time" | "calendar_week" | "calendar_month";
+export type RankingRow = {
+  userId: string;
+  displayName: string;
+  wins: number;
+  losses: number;
+  matchesPlayed: number;
+  winRate: number;
+  avatarKey: string | null;
+};
+export type RankingTeamOption = { id: string; name: string };
+export type RankingResponse = {
+  scope: "all_time" | "week" | "month";
+  team: (RankingTeamOption & {
+    activeMemberCount: number;
+    winsAllTime: number;
+  }) | null;
+  availableTeams: RankingTeamOption[];
+  rankings: RankingRow[];
+};
+
 export type HomeRanking = {
   userId: string;
   displayName: string;
@@ -170,6 +268,17 @@ export const api = {
     }),
   home: (period: "all_time" | "month" = "all_time") =>
     request<HomeResponse>(`/api/v1/home?period=${period}`),
+  history: ({ signal, ...filters }: HistoryFilters = {}) => {
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && value !== "") query.set(key, String(value));
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    return request<{ items: HistoryItem[]; nextCursor: string | null }>(
+      `/api/v1/history${suffix}`,
+      { signal },
+    );
+  },
   directory: (q?: string) =>
     request<{
       users: Array<{
@@ -330,10 +439,11 @@ export const api = {
       headers: { "Idempotency-Key": idempotencyKey },
       body: JSON.stringify({ expectedVersion, reasonText }),
     }),
-  rankings: (period = "all_time") =>
-    request<{ rankings: Array<Record<string, unknown>> }>(
-      `/api/v1/rankings?period=${period}`,
-    ),
+  rankings: (scope: RankingScope = "all_time", teamId?: string) => {
+    const query = new URLSearchParams({ scope });
+    if (teamId) query.set("teamId", teamId);
+    return request<RankingResponse>(`/api/v1/rankings?${query.toString()}`);
+  },
   listTournaments: () =>
     request<{ tournaments: Array<Record<string, unknown>> }>(
       "/api/v1/tournaments",
@@ -467,12 +577,27 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ action: "restart" }),
     }),
+  ownProfile: () => request<{ profile: PlayerProfile }>("/api/v1/profile/me"),
+  playerProfile: (userId: string) =>
+    request<{ profile: PlayerProfile }>(
+      `/api/v1/players/${encodeURIComponent(userId)}`,
+    ),
+  updateProfile: (payload: {
+    firstName: string;
+    lastName: string;
+    birthDate: string | null;
+    organizationText: string | null;
+    positionText: string | null;
+  }) =>
+    request<{ user: User }>("/api/v1/profile/me", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  revokeSession: (sessionId: string) =>
+    request<{ ok: boolean }>(
+      `/api/v1/auth/sessions/${encodeURIComponent(sessionId)}`,
+      { method: "DELETE" },
+    ),
   sessions: () =>
-    request<{
-      sessions: Array<{
-        id: string;
-        userAgent: string | null;
-        current: boolean;
-      }>;
-    }>("/api/v1/auth/sessions"),
+    request<{ sessions: AuthSession[] }>("/api/v1/auth/sessions"),
 };

@@ -476,3 +476,10 @@ test("verify:all aggregate fails closed before printing success", () => {
   );
   assert.match(localRunner, /assertAggregateTestSummary\(/);
 });
+
+test("prodlike artifact build overrides inherited test NODE_ENV", () => {
+  const buildEnvironment = prodlikeRunner.match(/const buildEnvironment = \{([\s\S]*?)\n\};/)?.[1];
+  assert.ok(buildEnvironment, "The artifact build must have an explicit environment");
+  assert.match(buildEnvironment, /NODE_ENV:\s*["']production["']/);
+  assert.match(prodlikeRunner, /env: buildEnvironment/);
+});

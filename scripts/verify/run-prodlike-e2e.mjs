@@ -75,6 +75,7 @@ for (const key of [
 
 const buildEnvironment = {
   ...cleanEnvironment,
+  NODE_ENV: "production",
   VITE_API_BASE_URL: "",
   TAB10_API_PROXY_TARGET: "http://127.0.0.1:3101",
   TAB10_RELEASE_SHA: release.sha,

@@ -1257,10 +1257,10 @@ export class MatchService {
     }
   }
 
-  async getRankings(scope: RankingScope = "all_time") {
+  async getRankings(scope: RankingScope = "all_time", includedUserIds?: ReadonlySet<string>) {
     const now = this.clock.now();
     const allUsers = await this.db.query.users.findMany();
-    const activeUsers = allUsers.filter((u) => u.status === "active");
+    const activeUsers = allUsers.filter((u) => u.status === "active" && (!includedUserIds || includedUserIds.has(u.id)));
 
     if (scope === "all_time") {
       const stats = await this.db.query.userStats.findMany();

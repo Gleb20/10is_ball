@@ -10,8 +10,8 @@ Remote main and public web/API readiness were observed at `ecf7605fe8d0e5857fb9b
 
 | Wave | Canonical IDs | Acceptance and dependencies | State |
 |---|---|---|---|
-| A | Remaining SEC/DATA-001..006, BUG-001..016, GAP-001, OPS-001..005, TECH-001..004 | Preserve released fixes; integrate root-source delta, immutable migrations 0002/0003, exact-SHA quality/PostgreSQL/browser/public gates | in_progress |
-| B | GAP-002, GAP-003, GAP-004 | Profile/privacy/sessions, dedicated filtered cursor history, team ranking/challenge. Reuse bc9c/e263/76bc worktrees selectively; profile service owns shared public-card DTO | pending A |
+| A | Remaining SEC/DATA-001..006, BUG-001..016, GAP-001, OPS-001..005, TECH-001..004 | Preserve released fixes; integrate root-source delta, immutable migrations 0002/0003, exact-SHA quality/PostgreSQL/browser/public gates | released 1.11.0 |
+| B | GAP-002, GAP-003, GAP-004 | Profile/privacy/sessions, dedicated filtered cursor history, team ranking/challenge. Reuse bc9c/e263/76bc worktrees selectively; profile service owns shared public-card DTO | in_progress |
 | C | GAP-005, DATA-007 | 1v1/2v2/rules/serve/revenge/log/no-show/handover/correction; reuse 82fe. Preserve D33; two-client acceptance | pending B |
 | D | GAP-007 then GAP-006 | Team captain/invite/leave/transfer/archive, then complete SE/DE 3/5/8-player lifecycle and placements with PostgreSQL races | pending C |
 | E | GAP-008, GAP-009, GAP-010 | Notification event matrix/popups, explicit onboarding/help/feedback, full admin role/state/audit matrix | pending D |
@@ -77,3 +77,49 @@ Includes the rendered stale-alert correction, independently reviewed with6/6
 focused tests. Mobile screenshot confirms restored draft without unauthorized
 alert. Local Wave A IDs are `verified_local`; public release remains pending.
 See [redacted evidence](../audit/evidence/wave-a-local.json).
+
+### Wave A released / Wave B started
+
+Direct main commit `b193e9de7f6448a722ae061cb106825fe273d352` published 1.11.0.
+GitHub run34726774716: all4 jobs success. GET-only smoke: web/API/proxy exact
+SHA/version matched after7 attempts (84895ms). No public mutating E2E/reset.
+Forward migrations run through native startup. This closes the Wave A release
+barrier; functional evidence remains locally tested plus released exact SHA.
+
+Wave B frozen parent baseline: b193e9d, snapshot-b-parent outside Git. Parent owns
+API services/app/auth/match changes; web worker owns api/App/styles/profile/history/
+ranking pages and tests; route worker owns API tests/OpenAPI. Initial Red12/12
+missing contract tests; parent integration Green12/12 on PGlite. Real-PG history
+query and additional validation tests pending. Rechecked debt: prioritize the
+bounded source timezone, history context, and raw PostgreSQL-result corrections
+inside these IDs before considering unrelated bundle-size work.
+
+### Wave B integration review
+
+API review corrected withdrawn tournament counts, doubles opponent search and
+strict cursor UUID validation. Full API suite passed 220/220; real PostgreSQL
+history tests passed 2/2, including raw query rows, dates and cursor boundaries.
+Web review corrected cross-account retained state, stale profile errors and own
+card routing. Full web suite passed 148/148. Independent reviews were performed
+by the opposite bounded implementation worker; a separate Terra reviewer was
+unavailable in this runtime. Parent retains final acceptance.
+
+TECH-002 harness regression: the build inherited NODE_ENV=test despite the
+production preview. A deterministic script test failed before the fix and all
+17 script tests passed after buildEnvironment explicitly set production. The
+compiled bundle now contains production React and no development React/jsxDEV.
+Earlier Wave A browser evidence remains historical compiled-flow evidence; it
+does not establish this corrected build-mode parity.
+
+Compiled Wave B browser acceptance and final aggregate remain pending. Initial
+new-journey failures were traced to fixture period selection and accessible-name
+selectors, corrected without changing product behavior.
+
+### Wave B accepted locally
+
+Candidate 2.0.0: aggregate 1010/1010 (quality 945, PostgreSQL 42, browser 19,
+cleanup 4), zero failed/skipped/todo/interrupted. Rendered review strengthened the
+public-card check to wait for actual stats/challenge before privacy assertions;
+that browser lane was rerun and passed 19/19. Desktop and 390px profile, ranking,
+public card and history return screenshots reviewed. Original 186 files unchanged.
+GAP-002/003/004 are verified_local. Public release remains pending.

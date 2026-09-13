@@ -24,6 +24,11 @@ await assertToolchain({ lane: "fast", directory: evidenceDir });
 
 const exclusions = [
   {
+    path: "apps/api/src/history.postgres.integration.test.ts",
+    reason: "History SQL result and cursor parity run against required PostgreSQL.",
+    coveredBy: "scripts/verify/run-postgres.mjs",
+  },
+  {
     path: "apps/api/src/postgres-date.integration.test.ts",
     reason: "Executed as a required, zero-skip suite by verify:postgres.",
     coveredBy: "scripts/verify/run-postgres.mjs",
@@ -63,6 +68,8 @@ const suites = [
       "src/db/migrations.postgres.integration.test.ts",
       "--exclude",
       "src/data-004.postgres.integration.test.ts",
+      "--exclude",
+      "src/history.postgres.integration.test.ts",
     ],
   },
 ];

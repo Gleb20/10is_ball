@@ -14,7 +14,7 @@ type OpenApiOperation = {
   requestBody?: { content?: Record<string, { schema?: unknown }> };
   responses?: Record<
     string,
-    { content?: Record<string, { schema?: { $ref?: string } }> }
+    { content?: Record<string, { schema?: Record<string, unknown> }> }
   >;
   security?: Array<Record<string, string[]>>;
 };
@@ -43,6 +43,7 @@ const BODY_OPERATIONS = new Set([
   "PATCH /api/v1/admin/users/{userId}",
   "POST /api/v1/admin/matches/{matchId}/force-close",
   "PATCH /api/v1/me/profile",
+  "PATCH /api/v1/profile/me",
   "PATCH /api/v1/me/onboarding",
   "POST /api/v1/matches",
   "POST /api/v1/matches/{matchId}/start",
@@ -189,5 +190,46 @@ describe("AT-OPS-API-001 runtime OpenAPI contract", () => {
         }
       }
     }
+  });
+
+  it("keeps Wave B history, ranking, and nested profile DTOs distinct", () => {
+    const successSchema = (route: string) =>
+      spec.paths[route]?.get?.responses?.["200"]?.content?.["application/json"]
+        ?.schema;
+
+    expect(successSchema("/api/v1/history")).toEqual({
+      $ref: "#/components/schemas/HistoryFeed",
+    });
+    expect(successSchema("/api/v1/rankings")).toEqual({
+      $ref: "#/components/schemas/RankingResponse",
+    });
+    expect(successSchema("/api/v1/players/{userId}")).toMatchObject({
+      type: "object",
+      required: ["profile"],
+      properties: {
+        profile: { $ref: "#/components/schemas/PlayerProfile" },
+      },
+    });
+    expect(spec.components?.schemas).not.toHaveProperty("PublicPlayer");
+    expect(spec.components?.schemas?.RankingResponse).toMatchObject({
+      properties: {
+        scope: { enum: ["all_time", "week", "month"] },
+        rankings: {
+          type: "array",
+          items: { $ref: "#/components/schemas/Ranking" },
+        },
+      },
+    });
+
+    expect(
+      spec.paths["/api/v1/profile/me"]?.patch?.requestBody?.content?.[
+        "application/json"
+      ]?.schema,
+    ).toEqual({ $ref: "#/components/schemas/ProfileLocalUpdateRequest" });
+    expect(
+      spec.paths["/api/v1/me/profile"]?.patch?.requestBody?.content?.[
+        "application/json"
+      ]?.schema,
+    ).toEqual({ $ref: "#/components/schemas/ProfileUpdateRequest" });
   });
 });
