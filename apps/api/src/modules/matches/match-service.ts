@@ -20,14 +20,20 @@ import type { Clock } from "@tab10/test-utils";
 import type { Db } from "../../db/client.js";
 import {
   judgeSessions,
+  matchInvitations,
   matchParticipants,
   matchVoidAudits,
   matches,
   userStats,
   users,
+  tournaments,
+  teamMemberships,
+  teams,
+  notifications,
 } from "../../db/schema.js";
 
 const JUDGE_TTL_MS = 120_000;
+const MATCH_INVITATION_TTL_MS = 10 * 60_000;
 const FINISH_CONFIRMATION_KEY_PREFIX = "finish-confirmed:";
 const STOP_REASON_CODES = ["injury", "time", "other"] as const;
 const COMPLETED_MATCH_STATUSES = new Set([
@@ -42,7 +48,8 @@ function finishConfirmationKey(judgeSessionId: string): string {
   return `${FINISH_CONFIRMATION_KEY_PREFIX}${digest}`;
 }
 
-type MatchParticipantInput = {
+export type MatchParticipantInput = {
+  id?: string;
   side: Side;
   userId?: string;
   guestFirstName?: string;
@@ -51,7 +58,7 @@ type MatchParticipantInput = {
   isTutorialActor?: boolean;
 };
 
-type CreateMatchInput = {
+export type CreateMatchInput = {
   createdByUserId: string;
   title: string;
   format: "1v1" | "2v2";
@@ -64,8 +71,19 @@ type CreateMatchInput = {
   tournamentId?: string;
   tournamentSlotId?: string;
   tournamentBracketMatchId?: string;
+  judgeUserId?: string;
   participants: MatchParticipantInput[];
 };
+
+export type UpdateWaitingMatchPatch = Partial<{
+  title: string;
+  format: "1v1" | "2v2";
+  pointsToWin: number;
+  mercyEnabled: boolean;
+  mercyPoints: number | null;
+  firstServerMethod: "random" | "manual" | "rally";
+  participants: MatchParticipantInput[];
+}>;
 
 function validationError(message: string) {
   return Object.assign(new Error(message), { code: "VALIDATION" });
@@ -95,10 +113,282 @@ export class MatchService {
     );
   }
 
+  private async lockTournamentForMatch(matchId: string, db: Db) {
+    const [match] = await db
+      .select({ tournamentId: matches.tournamentId })
+      .from(matches)
+      .where(eq(matches.id, matchId));
+    if (!match?.tournamentId) return;
+    await db.execute(
+      sql`select ${tournaments.id} from ${tournaments} where ${tournaments.id} = ${match.tournamentId} for update`,
+    );
+  }
+
   private async lockUser(userId: string, db: Db) {
     await db.execute(
       sql`select ${users.id} from ${users} where ${users.id} = ${userId} for update`,
     );
+  }
+
+  private async lockUsers(userIds: string[], db: Db) {
+    for (const userId of [...new Set(userIds)].sort()) {
+      await this.lockUser(userId, db);
+    }
+  }
+
+  private async assertActiveActor(userId: string, db: Db) {
+    const actor = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+    if (!actor || actor.status !== "active") {
+      throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+    }
+  }
+
+  private async sameTeamUserIds(
+    creatorUserId: string,
+    candidateUserIds: string[],
+    db: Db,
+  ): Promise<Set<string>> {
+    if (candidateUserIds.length === 0) return new Set();
+    const creatorTeams = await db
+      .select({ teamId: teamMemberships.teamId })
+      .from(teamMemberships)
+      .innerJoin(teams, eq(teams.id, teamMemberships.teamId))
+      .where(
+        and(
+          eq(teamMemberships.userId, creatorUserId),
+          isNull(teamMemberships.leftAt),
+          eq(teams.status, "active"),
+        ),
+      );
+    if (creatorTeams.length === 0) return new Set();
+    const memberships = await db
+      .select({ userId: teamMemberships.userId })
+      .from(teamMemberships)
+      .where(
+        and(
+          inArray(teamMemberships.teamId, creatorTeams.map((row) => row.teamId)),
+          inArray(teamMemberships.userId, candidateUserIds),
+          isNull(teamMemberships.leftAt),
+        ),
+      );
+    return new Set(memberships.map((row) => row.userId));
+  }
+
+  private async insertMatchInvitation(
+    input: {
+      matchId: string;
+      matchParticipantId?: string;
+      participantSide?: Side;
+      invitedUserId: string;
+      invitedByUserId: string;
+      kind: "player" | "judge";
+    },
+    db: Db,
+  ) {
+    const [invitation] = await db
+      .insert(matchInvitations)
+      .values({
+        matchId: input.matchId,
+        matchParticipantId: input.matchParticipantId,
+        participantSide: input.participantSide,
+        invitedUserId: input.invitedUserId,
+        invitedByUserId: input.invitedByUserId,
+        kind: input.kind,
+        expiresAt: new Date(this.clock.now().getTime() + MATCH_INVITATION_TTL_MS),
+      })
+      .returning();
+    await db.insert(notifications).values({
+      userId: input.invitedUserId,
+      type: input.kind === "player" ? "match_invitation" : "judge_invitation",
+      title: input.kind === "player" ? "Приглашение в матч" : "Приглашение судить",
+      body:
+        input.kind === "player"
+          ? "Вас пригласили сыграть матч"
+          : "Вас пригласили судить матч",
+      payload: {
+        invitationId: invitation!.id,
+        matchId: input.matchId,
+        kind: input.kind,
+      },
+    });
+    return invitation!;
+  }
+
+  private async markMatchInvitationNotificationsRead(
+    invitationIds: string[],
+    userId: string,
+    readAt: Date,
+    db: Db,
+  ) {
+    if (invitationIds.length === 0) return;
+    const rows = await db.query.notifications.findMany({
+      where: and(
+        eq(notifications.userId, userId),
+        inArray(notifications.type, ["match_invitation", "judge_invitation"]),
+        isNull(notifications.readAt),
+      ),
+    });
+    const ids = new Set(invitationIds);
+    const notificationIds = rows.flatMap((row) => {
+      const payload = (row.payload ?? {}) as { invitationId?: string };
+      return payload.invitationId && ids.has(payload.invitationId) ? [row.id] : [];
+    });
+    if (notificationIds.length > 0) {
+      await db
+        .update(notifications)
+        .set({ readAt })
+        .where(inArray(notifications.id, notificationIds));
+    }
+  }
+
+  private async notifyRegisteredParticipants(
+    match: { id: string; title: string; participants: Array<{ userId: string | null }> },
+    actorUserId: string,
+    event: "stopped" | "cancelled",
+    db: Db,
+  ) {
+    const recipients = [...new Set(
+      match.participants.flatMap((participant) =>
+        participant.userId && participant.userId !== actorUserId
+          ? [participant.userId]
+          : [],
+      ),
+    )];
+    if (recipients.length === 0) return;
+    await db.insert(notifications).values(recipients.map((userId) => ({
+      userId,
+      type: event === "stopped" ? "match_stopped" : "match_cancelled",
+      title: event === "stopped" ? "Матч остановлен" : "Матч отменён",
+      body: `Матч «${match.title}» ${event === "stopped" ? "остановлен" : "отменён"}`,
+      payload: { matchId: match.id },
+    })));
+  }
+
+  private async createInitialInvitations(
+    match: typeof matches.$inferSelect,
+    participants: Array<typeof matchParticipants.$inferSelect>,
+    judgeUserId: string | undefined,
+    db: Db,
+  ) {
+    if (match.kind !== "standalone") return;
+    const candidates = participants.flatMap((participant) =>
+      participant.userId && participant.userId !== match.createdByUserId
+        ? [participant.userId]
+        : [],
+    );
+    const sameTeam = await this.sameTeamUserIds(
+      match.createdByUserId,
+      candidates,
+      db,
+    );
+    for (const participant of participants) {
+      if (
+        participant.userId &&
+        participant.userId !== match.createdByUserId &&
+        !sameTeam.has(participant.userId)
+      ) {
+        await this.insertMatchInvitation(
+          {
+            matchId: match.id,
+            matchParticipantId: participant.id,
+            participantSide: participant.side as Side,
+            invitedUserId: participant.userId,
+            invitedByUserId: match.createdByUserId,
+            kind: "player",
+          },
+          db,
+        );
+      }
+    }
+    if (judgeUserId) {
+      await this.assertActiveRegisteredParticipants(
+        [{ side: "A", userId: judgeUserId }],
+        db,
+      );
+      await this.insertMatchInvitation(
+        {
+          matchId: match.id,
+          invitedUserId: judgeUserId,
+          invitedByUserId: match.createdByUserId,
+          kind: "judge",
+        },
+        db,
+      );
+    }
+  }
+
+  private async reconcileWaitingSideSwapConsent(
+    match: NonNullable<Awaited<ReturnType<MatchService["getMatch"]>>>,
+    db: Db,
+  ) {
+    if (match.kind !== "standalone" || match.status !== "waiting") return;
+    const consentParticipants = match.participants.filter((participant) =>
+      participant.userId && match.invitations.some((invitation) =>
+        invitation.kind === "player" &&
+        invitation.matchParticipantId === participant.id,
+      ),
+    );
+    if (consentParticipants.length === 0) return;
+    // Invitation FKs also lock the creator; acquire the full set in one UUID order.
+    await this.lockUsers(
+      [match.createdByUserId, ...consentParticipants.map((participant) => participant.userId!)],
+      db,
+    );
+    await this.assertActiveRegisteredParticipants(
+      consentParticipants.map((participant) => ({
+        side: participant.side as Side,
+        userId: participant.userId!,
+      })),
+      db,
+    );
+    const now = this.clock.now();
+    for (const participant of consentParticipants) {
+      const nextSide: Side = participant.side === "A" ? "B" : "A";
+      const history = match.invitations.filter((invitation) =>
+        invitation.kind === "player" &&
+        invitation.matchParticipantId === participant.id,
+      );
+      const obsoletePending = history.filter((invitation) =>
+        invitation.status === "pending" && invitation.participantSide !== nextSide,
+      );
+      if (obsoletePending.length > 0) {
+        await db
+          .update(matchInvitations)
+          .set({
+            status: "cancelled",
+            respondedAt: now,
+            expiryReason: "side_changed",
+          })
+          .where(inArray(matchInvitations.id, obsoletePending.map((row) => row.id)));
+        await this.markMatchInvitationNotificationsRead(
+          obsoletePending.map((row) => row.id),
+          participant.userId!,
+          now,
+          db,
+        );
+      }
+      if (
+        history.some((invitation) =>
+          invitation.participantSide === nextSide &&
+          (invitation.status === "accepted" || invitation.status === "pending"),
+        )
+      ) {
+        continue;
+      }
+      await this.insertMatchInvitation(
+        {
+          matchId: match.id,
+          matchParticipantId: participant.id,
+          participantSide: nextSide,
+          invitedUserId: participant.userId!,
+          invitedByUserId: match.createdByUserId,
+          kind: "player",
+        },
+        db,
+      );
+    }
   }
 
   /**
@@ -112,6 +402,12 @@ export class MatchService {
     this.assertValidCreateInput(input);
 
     const create = async (executor: Db) => {
+      if ((input.kind ?? "standalone") === "standalone") {
+        await this.lockUsers([
+          ...input.participants.flatMap((row) => row.userId ? [row.userId] : []),
+          ...(input.judgeUserId ? [input.judgeUserId] : []),
+        ], executor);
+      }
       await this.assertActiveRegisteredParticipants(input.participants, executor);
       const [match] = await executor
         .insert(matches)
@@ -132,20 +428,31 @@ export class MatchService {
         })
         .returning();
 
+      const insertedParticipants: Array<typeof matchParticipants.$inferSelect> = [];
       for (const p of input.participants) {
         const isGuest = !p.userId && (p.guestFirstName || p.guestLastName);
-        await executor.insert(matchParticipants).values({
-          matchId: match!.id,
-          side: p.side,
-          userId: p.userId,
-          guestFirstName: p.guestFirstName?.trim(),
-          guestLastName: p.guestLastName?.trim(),
-          guestAvatarKey: isGuest
-            ? (p.guestAvatarKey ?? randomAvatarKey(randomBytes(1)[0]!))
-            : null,
-          isTutorialActor: p.isTutorialActor ?? false,
-        });
+        const [participant] = await executor
+          .insert(matchParticipants)
+          .values({
+            matchId: match!.id,
+            side: p.side,
+            userId: p.userId,
+            guestFirstName: p.guestFirstName?.trim(),
+            guestLastName: p.guestLastName?.trim(),
+            guestAvatarKey: isGuest
+              ? (p.guestAvatarKey ?? randomAvatarKey(randomBytes(1)[0]!))
+              : null,
+            isTutorialActor: p.isTutorialActor ?? false,
+          })
+          .returning();
+        insertedParticipants.push(participant!);
       }
+      await this.createInitialInvitations(
+        match!,
+        insertedParticipants,
+        input.judgeUserId,
+        executor,
+      );
       return match!.id;
     };
 
@@ -277,6 +584,10 @@ export class MatchService {
     const usersById = new Map(userRows.map((u) => [u.id, u]));
     const activeJudge = await this.getActiveJudge(matchId, db);
     const judgeReservation = await this.getJudgeReservation(matchId, db);
+    const invitations = await db.query.matchInvitations.findMany({
+      where: eq(matchInvitations.matchId, matchId),
+      orderBy: [desc(matchInvitations.createdAt), desc(matchInvitations.id)],
+    });
     return {
       ...match,
       participants: participants.map((p) => ({
@@ -288,7 +599,187 @@ export class MatchService {
       })),
       activeJudge,
       judgeReservation,
+      invitations,
     };
+  }
+
+  async createInvitation(
+    matchId: string,
+    actorUserId: string,
+    input: { userId: string; kind: "player" | "judge" },
+  ) {
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await this.lockMatch(matchId, db);
+      const match = await this.getMatch(matchId, db);
+      if (!match) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+      if (match.createdByUserId !== actorUserId) {
+        throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+      }
+      if (match.kind !== "standalone" || match.status !== "waiting") {
+        throw Object.assign(new Error("MATCH_IMMUTABLE"), { code: "MATCH_IMMUTABLE" });
+      }
+      await this.lockUsers([actorUserId, input.userId], db);
+      await this.assertActiveActor(actorUserId, db);
+      await this.assertActiveRegisteredParticipants(
+        [{ side: "A", userId: input.userId }],
+        db,
+      );
+      const participant = input.kind === "player"
+        ? match.participants.find((row) => row.userId === input.userId)
+        : undefined;
+      if (input.kind === "player" && !participant) {
+        throw validationError("player invitation requires a current participant");
+      }
+      const now = this.clock.now();
+      if (participant) {
+        // Older waiting-side swaps could leave pending consent on the previous side.
+        const obsolete = await db.update(matchInvitations)
+          .set({ status: "cancelled", respondedAt: now, expiryReason: "side_changed" })
+          .where(and(
+            eq(matchInvitations.matchId, matchId),
+            eq(matchInvitations.matchParticipantId, participant.id),
+            eq(matchInvitations.invitedUserId, input.userId),
+            eq(matchInvitations.kind, "player"),
+            eq(matchInvitations.status, "pending"),
+            ne(matchInvitations.participantSide, participant.side),
+          ))
+          .returning({ id: matchInvitations.id });
+        await this.markMatchInvitationNotificationsRead(
+          obsolete.map((row) => row.id), input.userId, now, db,
+        );
+      }
+      const history = await db.query.matchInvitations.findMany({
+        where: and(
+          eq(matchInvitations.matchId, matchId),
+          eq(matchInvitations.invitedUserId, input.userId),
+          eq(matchInvitations.kind, input.kind),
+          ...(participant
+            ? [
+                eq(matchInvitations.matchParticipantId, participant.id),
+                eq(matchInvitations.participantSide, participant.side),
+              ]
+            : []),
+        ),
+        orderBy: [desc(matchInvitations.createdAt), desc(matchInvitations.id)],
+      });
+      const accepted = history.find((row) => row.status === "accepted");
+      if (accepted) return accepted;
+      const pending = history.find((row) => row.status === "pending");
+      if (pending && pending.expiresAt > now) return pending;
+      if (pending) {
+        await db
+          .update(matchInvitations)
+          .set({ status: "expired", respondedAt: now, expiryReason: "expired" })
+          .where(eq(matchInvitations.id, pending.id));
+        await this.markMatchInvitationNotificationsRead(
+          [pending.id],
+          pending.invitedUserId,
+          now,
+          db,
+        );
+      }
+      return this.insertMatchInvitation(
+        {
+          matchId,
+          matchParticipantId: participant?.id,
+          participantSide: participant?.side as Side | undefined,
+          invitedUserId: input.userId,
+          invitedByUserId: actorUserId,
+          kind: input.kind,
+        },
+        db,
+      );
+    });
+  }
+
+  async respondInvitation(
+    invitationId: string,
+    actorUserId: string,
+    accept: boolean,
+  ) {
+    const initial = await this.db.query.matchInvitations.findFirst({
+      where: eq(matchInvitations.id, invitationId),
+    });
+    if (!initial || initial.invitedUserId !== actorUserId) {
+      throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    }
+    const outcome = await this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await this.lockMatch(initial.matchId, db);
+      await this.lockUser(actorUserId, db);
+      await this.assertActiveActor(actorUserId, db);
+      await db.execute(
+        sql`select ${matchInvitations.id} from ${matchInvitations} where ${matchInvitations.id} = ${invitationId} for update`,
+      );
+      const invitation = await db.query.matchInvitations.findFirst({
+        where: eq(matchInvitations.id, invitationId),
+      });
+      if (!invitation || invitation.invitedUserId !== actorUserId) {
+        return { error: "NOT_FOUND" as const };
+      }
+      if (invitation.status !== "pending") return { invitation };
+      const match = await db.query.matches.findFirst({
+        where: eq(matches.id, invitation.matchId),
+      });
+      const now = this.clock.now();
+      let terminalError: "INVITATION_EXPIRED" | "MATCH_IMMUTABLE" | null = null;
+      let status: "accepted" | "declined" | "expired" | "cancelled" = accept
+        ? "accepted"
+        : "declined";
+      let expiryReason: string | null = null;
+      if (invitation.expiresAt <= now) {
+        status = "expired";
+        expiryReason = "expired";
+        terminalError = "INVITATION_EXPIRED";
+      } else if (!match || match.status !== "waiting") {
+        status = "cancelled";
+        expiryReason = !match
+          ? "source_unavailable"
+          : match.status === "cancelled"
+            ? "match_cancelled"
+            : ["finished", "stopped", "voided"].includes(match.status)
+              ? "match_finished"
+              : "match_started";
+        terminalError = "MATCH_IMMUTABLE";
+      } else if (invitation.kind === "player") {
+        const currentParticipant = invitation.matchParticipantId
+          ? await db.query.matchParticipants.findFirst({
+              where: and(
+                eq(matchParticipants.id, invitation.matchParticipantId),
+                eq(matchParticipants.matchId, invitation.matchId),
+                eq(matchParticipants.userId, invitation.invitedUserId),
+              ),
+            })
+          : null;
+        if (
+          !currentParticipant ||
+          currentParticipant.side !== invitation.participantSide
+        ) {
+          status = "cancelled";
+          expiryReason = "roster_changed";
+          terminalError = "MATCH_IMMUTABLE";
+        }
+      }
+      const [updated] = await db
+        .update(matchInvitations)
+        .set({ status, respondedAt: now, expiryReason })
+        .where(and(eq(matchInvitations.id, invitationId), eq(matchInvitations.status, "pending")))
+        .returning();
+      await this.markMatchInvitationNotificationsRead(
+        [invitationId],
+        actorUserId,
+        now,
+        db,
+      );
+      return terminalError
+        ? { invitation: updated!, error: terminalError }
+        : { invitation: updated! };
+    });
+    if ("error" in outcome && outcome.error) {
+      throw Object.assign(new Error(outcome.error), { code: outcome.error });
+    }
+    return outcome.invitation;
   }
 
   async getVisibleMatch(matchId: string, actorUserId: string) {
@@ -420,6 +911,138 @@ export class MatchService {
     ).slice(0, limit);
   }
 
+  async updateWaitingMatch(
+    matchId: string,
+    actorUserId: string,
+    patch: UpdateWaitingMatchPatch,
+  ) {
+    if (Object.keys(patch).length === 0) {
+      throw validationError("match patch must not be empty");
+    }
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await this.lockMatch(matchId, db);
+      const current = await this.getMatch(matchId, db);
+      if (!current) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+      if (current.createdByUserId !== actorUserId) {
+        throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+      }
+      if (current.kind !== "standalone" || current.status !== "waiting") {
+        throw Object.assign(new Error("MATCH_IMMUTABLE"), { code: "MATCH_IMMUTABLE" });
+      }
+      const requestedParticipants = patch.participants ?? current.participants.map((row) => ({
+        id: row.id,
+        side: row.side as Side,
+        userId: row.userId ?? undefined,
+        guestFirstName: row.guestFirstName ?? undefined,
+        guestLastName: row.guestLastName ?? undefined,
+        guestAvatarKey: row.guestAvatarKey ?? undefined,
+      }));
+      const merged: CreateMatchInput = {
+        createdByUserId: current.createdByUserId,
+        title: patch.title ?? current.title,
+        format: patch.format ?? current.format,
+        pointsToWin: patch.pointsToWin ?? current.pointsToWin,
+        mercyEnabled: patch.mercyEnabled ?? current.mercyEnabled,
+        mercyPoints: patch.mercyPoints === undefined ? current.mercyPoints : patch.mercyPoints,
+        firstServerMethod: patch.firstServerMethod ?? current.firstServerMethod as "random" | "manual" | "rally",
+        source: current.source as CreateMatchInput["source"],
+        kind: "standalone",
+        participants: requestedParticipants,
+      };
+      this.assertValidCreateInput(merged);
+      await this.lockUsers(
+        requestedParticipants.flatMap((row) => row.userId ? [row.userId] : []),
+        db,
+      );
+      await this.assertActiveRegisteredParticipants(requestedParticipants, db);
+
+      if (patch.participants) {
+        const currentById = new Map(current.participants.map((row) => [row.id, row]));
+        const requestedIds = new Set<string>();
+        for (const participant of patch.participants) {
+          if (!participant.id) continue;
+          if (requestedIds.has(participant.id)) {
+            throw validationError("participant ids must be distinct");
+          }
+          requestedIds.add(participant.id);
+          const previous = currentById.get(participant.id);
+          if (!previous) throw validationError("participant id does not belong to match");
+          if (
+            previous.side !== participant.side ||
+            (previous.userId ?? undefined) !== participant.userId ||
+            Boolean(previous.userId) !== Boolean(participant.userId)
+          ) {
+            throw validationError("retained participant identity and side are immutable");
+          }
+        }
+        const removedIds = current.participants
+          .filter((row) => !requestedIds.has(row.id))
+          .map((row) => row.id);
+        const now = this.clock.now();
+        if (removedIds.length > 0) {
+          const cancelledInvitations = await db
+            .update(matchInvitations)
+            .set({ status: "cancelled", respondedAt: now, expiryReason: "roster_changed" })
+            .where(and(
+              inArray(matchInvitations.matchParticipantId, removedIds),
+              eq(matchInvitations.status, "pending"),
+            )).returning({ id: matchInvitations.id, userId: matchInvitations.invitedUserId });
+          for (const invitation of cancelledInvitations) {
+            await this.markMatchInvitationNotificationsRead([invitation.id], invitation.userId, now, db);
+          }
+          await db.delete(matchParticipants).where(inArray(matchParticipants.id, removedIds));
+        }
+        const inserted: Array<typeof matchParticipants.$inferSelect> = [];
+        for (const participant of patch.participants) {
+          if (participant.id) {
+            if (!participant.userId) {
+              await db
+                .update(matchParticipants)
+                .set({
+                  guestFirstName: participant.guestFirstName?.trim(),
+                  guestLastName: participant.guestLastName?.trim(),
+                  guestAvatarKey: participant.guestAvatarKey,
+                })
+                .where(eq(matchParticipants.id, participant.id));
+            }
+            continue;
+          }
+          const isGuest = !participant.userId;
+          const [row] = await db
+            .insert(matchParticipants)
+            .values({
+              matchId,
+              side: participant.side,
+              userId: participant.userId,
+              guestFirstName: participant.guestFirstName?.trim(),
+              guestLastName: participant.guestLastName?.trim(),
+              guestAvatarKey: isGuest
+                ? (participant.guestAvatarKey ?? randomAvatarKey(randomBytes(1)[0]!))
+                : null,
+            })
+            .returning();
+          inserted.push(row!);
+        }
+        await this.createInitialInvitations(current, inserted, undefined, db);
+      }
+
+      await db
+        .update(matches)
+        .set({
+          title: merged.title.trim(),
+          format: merged.format,
+          pointsToWin: merged.pointsToWin,
+          mercyEnabled: merged.mercyEnabled,
+          mercyPoints: merged.mercyPoints,
+          firstServerMethod: merged.firstServerMethod,
+          updatedAt: this.clock.now(),
+        })
+        .where(and(eq(matches.id, matchId), eq(matches.status, "waiting")));
+      return this.getMatch(matchId, db);
+    });
+  }
+
   async startMatch(
     matchId: string,
     actorUserId: string,
@@ -483,6 +1106,32 @@ export class MatchService {
       participants: participantInputs,
     });
     await this.assertActiveRegisteredParticipants(participantInputs, db);
+    const currentParticipantIds = detail.participants.map((row) => row.id);
+    const playerConsentHistory = currentParticipantIds.length === 0
+      ? []
+      : await db.query.matchInvitations.findMany({
+          where: and(
+            eq(matchInvitations.matchId, matchId),
+            eq(matchInvitations.kind, "player"),
+            inArray(matchInvitations.matchParticipantId, currentParticipantIds),
+          ),
+        });
+    for (const participant of detail.participants) {
+      const history = playerConsentHistory.filter(
+        (invitation) => invitation.matchParticipantId === participant.id,
+      );
+      if (
+        history.length > 0 &&
+        !history.some((invitation) =>
+          invitation.status === "accepted" &&
+          invitation.participantSide === participant.side,
+        )
+      ) {
+        throw Object.assign(new Error("PLAYER_CONSENT_REQUIRED"), {
+          code: "PLAYER_CONSENT_REQUIRED",
+        });
+      }
+    }
     if (
       firstServerParticipantId &&
       !detail.participants.some(
@@ -542,6 +1191,27 @@ export class MatchService {
       .returning({ id: matches.id });
     if (updated.length === 0) {
       throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
+    }
+    const pendingJudgeInvitations = await db.query.matchInvitations.findMany({
+      where: and(
+        eq(matchInvitations.matchId, matchId),
+        eq(matchInvitations.kind, "judge"),
+        eq(matchInvitations.status, "pending"),
+      ),
+    });
+    if (pendingJudgeInvitations.length > 0) {
+      await db
+        .update(matchInvitations)
+        .set({ status: "cancelled", respondedAt: now, expiryReason: "match_started" })
+        .where(inArray(matchInvitations.id, pendingJudgeInvitations.map((row) => row.id)));
+      for (const invitation of pendingJudgeInvitations) {
+        await this.markMatchInvitationNotificationsRead(
+          [invitation.id],
+          invitation.invitedUserId,
+          now,
+          db,
+        );
+      }
     }
     return this.getMatch(matchId, db);
   }
@@ -921,6 +1591,7 @@ export class MatchService {
   }) {
     return this.db.transaction(async (transaction) => {
       const db = transaction as unknown as Db;
+      await this.lockTournamentForMatch(input.matchId, db);
       await this.lockMatch(input.matchId, db);
       const detail = await this.getMatch(input.matchId, db);
       if (!detail) {
@@ -1107,6 +1778,7 @@ export class MatchService {
     }
     return this.db.transaction(async (transaction) => {
       const db = transaction as unknown as Db;
+      await this.lockTournamentForMatch(input.matchId, db);
       await this.lockMatch(input.matchId, db);
       const detail = await this.getMatch(input.matchId, db);
       if (!detail) {
@@ -1155,6 +1827,7 @@ export class MatchService {
           state: current,
         });
       }
+      await this.notifyRegisteredParticipants(detail, input.actorUserId, "stopped", db);
       const updated = await this.getMatch(input.matchId, db);
       if (updated && updated.kind !== "tutorial") {
         await this.applyStats(updated, db);
@@ -1184,6 +1857,7 @@ export class MatchService {
   }) {
     return this.db.transaction(async (transaction) => {
       const db = transaction as unknown as Db;
+      await this.lockTournamentForMatch(input.matchId, db);
       await this.lockMatch(input.matchId, db);
       const detail = await this.getMatch(input.matchId, db);
       if (!detail) {
@@ -1648,6 +2322,13 @@ export class MatchService {
         expiresAt,
         reservedForUserId: input.toUserId,
       });
+      await db.insert(notifications).values({
+        userId: input.toUserId,
+        type: "judge_handover_offered",
+        title: "Передача судейства",
+        body: "Вам предлагают принять судейство матча",
+        payload: { matchId: input.matchId },
+      });
       return {
         userId: target.id,
         displayName: `${target.lastName} ${target.firstName}`.trim(),
@@ -1697,6 +2378,7 @@ export class MatchService {
     const now = this.clock.now();
 
     if (input.swapSides && totalPoints === 0) {
+      await this.reconcileWaitingSideSwapConsent(detail, db);
       for (const p of detail.participants) {
         const nextSide = p.side === "A" ? "B" : "A";
         await db
@@ -2060,6 +2742,19 @@ export class MatchService {
             isNull(judgeSessions.releasedAt),
           ),
         );
+      await tx
+        .update(matchInvitations)
+        .set({ status: "cancelled", respondedAt: now, expiryReason: "match_cancelled" })
+        .where(and(
+          eq(matchInvitations.matchId, input.matchId),
+          eq(matchInvitations.status, "pending"),
+        ));
+      await this.notifyRegisteredParticipants(
+        input.detail,
+        input.actorUserId,
+        "cancelled",
+        tx as unknown as Db,
+      );
       return this.getMatch(input.matchId, tx as unknown as Db);
     });
     if (updated) return updated;
@@ -2188,36 +2883,26 @@ export class MatchService {
 
   /** Admin ops (D15 narrowed by D19/D24): purge non-finished standalone only. */
   async adminDeleteMatch(input: { matchId: string; actorAdminId: string }) {
-    const detail = await this.getMatch(input.matchId);
-    if (!detail) {
-      throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
-    }
-    if (detail.kind !== "standalone") {
-      throw Object.assign(new Error("TOURNAMENT_MATCH_FORBIDDEN"), {
-        code: "TOURNAMENT_MATCH_FORBIDDEN",
-      });
-    }
-
-    if (
-      detail.status === "finished" ||
-      detail.status === "stopped" ||
-      detail.status === "voided"
-    ) {
-      throw Object.assign(new Error("MATCH_IMMUTABLE"), {
-        code: "MATCH_IMMUTABLE",
-      });
-    }
-
-    await this.db.transaction(async (tx) => {
-      await tx
-        .delete(judgeSessions)
-        .where(eq(judgeSessions.matchId, input.matchId));
-      await tx
-        .delete(matchParticipants)
-        .where(eq(matchParticipants.matchId, input.matchId));
-      await tx.delete(matches).where(eq(matches.id, input.matchId));
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await this.lockMatch(input.matchId, db);
+      const detail = await this.getMatch(input.matchId, db);
+      if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+      if (detail.kind !== "standalone") {
+        throw Object.assign(new Error("TOURNAMENT_MATCH_FORBIDDEN"), { code: "TOURNAMENT_MATCH_FORBIDDEN" });
+      }
+      if (["finished", "stopped", "voided"].includes(detail.status)) {
+        throw Object.assign(new Error("MATCH_IMMUTABLE"), { code: "MATCH_IMMUTABLE" });
+      }
+      for (const invitation of detail.invitations) {
+        await this.markMatchInvitationNotificationsRead([invitation.id], invitation.invitedUserId, this.clock.now(), db);
+      }
+      await db.delete(matchInvitations).where(eq(matchInvitations.matchId, input.matchId));
+      await db.delete(judgeSessions).where(eq(judgeSessions.matchId, input.matchId));
+      await db.delete(matchParticipants).where(eq(matchParticipants.matchId, input.matchId));
+      await db.delete(matches).where(eq(matches.id, input.matchId));
+      return { ok: true as const };
     });
-    return { ok: true as const };
   }
 
   private async reverseStats(

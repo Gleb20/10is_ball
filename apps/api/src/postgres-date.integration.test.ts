@@ -101,6 +101,15 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
     if (close) await close();
   });
 
+  async function acceptRequiredPlayerInvitations(matchId: string) {
+    const match = await services.matches.getMatch(matchId);
+    for (const invitation of match?.invitations ?? []) {
+      if (invitation.kind === "player" && invitation.status === "pending") {
+        await services.matches.respondInvitation(invitation.id, invitation.invitedUserId, true);
+      }
+    }
+  }
+
   it("POST/GET match and week rankings do not throw on Date params", async () => {
     const created = await app.inject({
       method: "POST",
@@ -151,6 +160,7 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
     });
     expect(created.statusCode).toBe(200);
     const matchId = created.json().match.id as string;
+    await acceptRequiredPlayerInvitations(matchId);
 
     const started = await app.inject({
       method: "POST",
@@ -275,6 +285,7 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
     expect(firstRound).toHaveLength(2);
 
     for (const match of firstRound) {
+      await acceptRequiredPlayerInvitations(match.id);
       const matchStarted = await app.inject({
         method: "POST",
         url: `/api/v1/matches/${match.id}/start`,
@@ -355,6 +366,7 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
     });
     expect(created.statusCode).toBe(200);
     const matchId = created.json().match.id as string;
+    await acceptRequiredPlayerInvitations(matchId);
     expect(
       (
         await app.inject({

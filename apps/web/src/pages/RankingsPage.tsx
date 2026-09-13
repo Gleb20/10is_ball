@@ -81,8 +81,8 @@ export function RankingsPage() {
           { value: "calendar_month", label: "Месяц" },
         ]}
       />
-      <p className="muted ranking-time-note">
-        Неделя и месяц считаются по московскому времени.
+      <p className="muted ranking-time-note context-tip" role="note" aria-label="Подсказка о периодах рейтинга">
+        «Всё время» охватывает всю историю. Неделя и месяц считаются по московскому времени.
       </p>
 
       {data && data.availableTeams.length > 0 ? (
@@ -202,6 +202,7 @@ export function RankingsPage() {
                       src={avatarSrc(row.avatarKey)}
                       initials={initialsFromName(row.displayName)}
                       alt=""
+                      aria-hidden="true"
                     />
                     <span className="ranking-row__body">
                       <strong>{row.displayName}</strong>

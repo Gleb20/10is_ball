@@ -177,6 +177,63 @@ export const matchParticipants = pgTable("match_participants", {
   isTutorialActor: boolean("is_tutorial_actor").notNull().default(false),
 });
 
+export const matchInvitations = pgTable(
+  "match_invitations",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    matchId: uuid("match_id").notNull(),
+    matchParticipantId: uuid("match_participant_id"),
+    participantSide: text("participant_side"),
+    invitedUserId: uuid("invited_user_id").notNull(),
+    invitedByUserId: uuid("invited_by_user_id").notNull(),
+    kind: text("kind").notNull(),
+    status: text("status").notNull().default("pending"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    respondedAt: timestamp("responded_at", { withTimezone: true }),
+    expiryReason: text("expiry_reason"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      name: "match_invitations_match_id_fkey",
+      columns: [table.matchId],
+      foreignColumns: [matches.id],
+    }),
+    foreignKey({
+      name: "match_invitations_invited_user_id_fkey",
+      columns: [table.invitedUserId],
+      foreignColumns: [users.id],
+    }),
+    foreignKey({
+      name: "match_invitations_invited_by_user_id_fkey",
+      columns: [table.invitedByUserId],
+      foreignColumns: [users.id],
+    }),
+    check(
+      "match_invitations_kind_check",
+      sql`${table.kind} = ANY (ARRAY['player'::text, 'judge'::text])`,
+    ),
+    check(
+      "match_invitations_status_check",
+      sql`${table.status} = ANY (ARRAY['pending'::text, 'accepted'::text, 'declined'::text, 'expired'::text, 'cancelled'::text])`,
+    ),
+    check(
+      "match_invitations_side_check",
+      sql`(${table.matchParticipantId} IS NOT NULL AND ${table.participantSide} = ANY (ARRAY['A'::text, 'B'::text]) AND ${table.kind} = 'player') OR (${table.matchParticipantId} IS NULL AND ${table.participantSide} IS NULL AND ${table.kind} = 'judge')`,
+    ),
+    uniqueIndex("match_invitations_pending_user_kind_uid")
+      .on(table.matchId, table.invitedUserId, table.kind)
+      .where(sql`${table.status} = 'pending'`),
+    uniqueIndex("match_invitations_pending_participant_uid")
+      .on(table.matchParticipantId)
+      .where(
+        sql`${table.kind} = 'player' AND ${table.status} = 'pending' AND ${table.matchParticipantId} IS NOT NULL`,
+      ),
+  ],
+);
+
 export const matchVoidAudits = pgTable(
   "match_void_audits",
   {

@@ -227,7 +227,7 @@ async function insertFaqWithoutId(): Promise<string> {
 describePostgres.sequential(
   "migration foundation on a guarded disposable PostgreSQL database",
   () => {
-    it("creates a fresh 18-table database and repeats as a no-op", async () => {
+    it("creates a fresh 19-table database and repeats as a no-op", async () => {
       await resetDatabase();
 
       await runPostgresMigrations(databaseUrl!, "apply");
@@ -242,9 +242,9 @@ describePostgres.sequential(
           FROM information_schema.tables
           WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
         `;
-        expect(tables).toHaveLength(18);
+        expect(tables).toHaveLength(19);
       });
-      await expectLedgerCount(5);
+      await expectLedgerCount(6);
     });
 
     it("produces the same exact catalog and database-generated UUIDs for fresh and adopted baselines", async () => {
@@ -263,7 +263,7 @@ describePostgres.sequential(
       const uuidDefaults = freshProfile.columns.filter(
         (column) => column.column_name === "id" && column.data_type === "uuid",
       );
-      expect(uuidDefaults).toHaveLength(17);
+      expect(uuidDefaults).toHaveLength(18);
       expect(
         uuidDefaults.every(
           (column) => column.default_expression === "gen_random_uuid()",
@@ -344,7 +344,7 @@ describePostgres.sequential(
         `;
         expect(user).toEqual([{ email: "historical@tab10.test" }]);
       });
-      await expectLedgerCount(5);
+      await expectLedgerCount(6);
     });
 
     it("rejects duplicate active participants in a bracket without mutating rows or recording migrations", async () => {
@@ -600,7 +600,7 @@ describePostgres.sequential(
       expect(retryEvidence.adoption?.actualAfterDigest).toBe(
         retryEvidence.adoption?.expectedAfterDigest,
       );
-      await expectLedgerCount(5);
+      await expectLedgerCount(6);
     });
 
     it("serializes concurrent migrators into one baseline and repeatable no-ops", async () => {
@@ -613,7 +613,7 @@ describePostgres.sequential(
       ]);
 
       expect(results.every((result) => result.status === "fulfilled")).toBe(true);
-      await expectLedgerCount(5);
+      await expectLedgerCount(6);
       await withClient(async (client) => {
         await expect(
           assertMigrationsExactlyCurrent(queryMigrations(client)),
@@ -628,7 +628,7 @@ describePostgres.sequential(
       await runPostgresMigrations(databaseUrl!, "apply", { environment });
       await runPostgresMigrations(databaseUrl!, "apply", { environment });
 
-      await expectLedgerCount(5);
+      await expectLedgerCount(6);
       await withClient(async (client) => {
         await expect(
           assertMigrationsExactlyCurrent(queryMigrations(client)),

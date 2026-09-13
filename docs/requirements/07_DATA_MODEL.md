@@ -193,6 +193,8 @@ actual match на V2 node независимо от application retry (`DATA-002
 ### `match_invitation`
 - `id`
 - `match_id`
+- `match_participant_id` nullable: immutable historical UUID for player consent; retained after roster replacement, intentionally no participant FK
+- `participant_side` nullable `A|B`: historical player side; judge invitations have neither participant field
 - `invited_user_id`
 - `invited_by_user_id`
 - `kind` enum `player|judge`
@@ -201,6 +203,14 @@ actual match на V2 node независимо от application retry (`DATA-002
 - `responded_at` nullable
 - `expiry_reason` nullable
 - `created_at`
+
+Player consent attaches to a particular roster identity and side. A prestart edit that
+keeps the participant ID/user/side retains accepted consent; replacement creates a
+new participant and cancels prior pending consent while retaining its history. New
+standalone registered outsiders require consent; creator, same active team and guests
+do not. Legacy matches without invitation history retain compatibility. Optional judge
+consent never reserves a judge session or gates start. Pending invitation uniqueness
+is enforced per match/target/kind and per historical participant.
 
 ### `judge_session`
 - `id`

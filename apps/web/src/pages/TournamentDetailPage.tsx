@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Alert, Button, TextField } from "../ui";
+import { Alert, Button, Dialog, TextField } from "../ui";
 import { PageLayout } from "../layout";
 import {
   AsyncState,
@@ -8,7 +8,7 @@ import {
   StatusChip,
   formatLabel,
 } from "../patterns";
-import { api } from "../api";
+import { api, type Tournament } from "../api";
 import { useAuth } from "../auth";
 import { UserPicker } from "../components/UserPicker";
 import { TournamentBracket } from "../components/TournamentBracket";
@@ -64,9 +64,9 @@ export function TournamentDetailPage() {
   currentIdRef.current = id;
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [tournament, setTournament] = useState<Record<string, unknown> | null>(
-    null,
-  );
+  const currentUserIdRef = useRef(user?.id);
+  currentUserIdRef.current = user?.id;
+  const [tournament, setTournament] = useState<Tournament | null>(null);
   const [guest, setGuest] = useState("");
   const [pickUserId, setPickUserId] = useState("");
   const [pickInput, setPickInput] = useState("");
@@ -78,12 +78,49 @@ export function TournamentDetailPage() {
   const [algoDialogOpen, setAlgoDialogOpen] = useState(false);
   const [algoSelected, setAlgoSelected] =
     useState<BracketConstructionAlgorithm>("compact");
+  const [editingSettings, setEditingSettings] = useState(false);
+  const [settings, setSettings] = useState({
+    title: "",
+    format: "single_elimination" as
+      | "single_elimination"
+      | "double_elimination",
+    organizerParticipates: true,
+    pointsToWin: 11,
+    mercyEnabled: false,
+    mercyPoints: 2,
+  });
+  const [swapA, setSwapA] = useState("seed:1");
+  const [swapB, setSwapB] = useState("seed:2");
+  const [stopDialogOpen, setStopDialogOpen] = useState(false);
+  const [stopReason, setStopReason] = useState("");
+  const requestSequence = useRef(0);
+  const mutationPendingRef = useRef(false);
 
-  const load = useCallback(async () => {
+  useEffect(() => {
+    requestSequence.current += 1;
+    setTournament(null);
+    setEditingSettings(false);
+    setSwapA("seed:1");
+    setSwapB("seed:2");
+    setStopDialogOpen(false);
+    setStopReason("");
+    setActionError(null);
+    setActionHint(null);
+  }, [id]);
+
+  const load = useCallback(async (allowDuringMutation = false) => {
     const requestedId = id;
-    if (!requestedId) return;
+    const requestedUserId = user?.id;
+    if (!requestedId || (mutationPendingRef.current && !allowDuringMutation)) return;
+    const sequence = ++requestSequence.current;
     const res = await api.getTournament(requestedId);
-    if (currentIdRef.current === requestedId) setTournament(res.tournament);
+    if (
+      sequence === requestSequence.current &&
+      currentIdRef.current === requestedId &&
+      (!requestedUserId || currentUserIdRef.current === requestedUserId)
+    ) {
+      setTournament(res.tournament);
+    }
   }, [id]);
 
   const tournamentIsActive =
@@ -159,15 +196,17 @@ export function TournamentDetailPage() {
     bracketV2 ?? bracketV1;
   const hasBracket = Boolean(bracketV1?.slots || bracketV2);
   const matches = (tournament?.matches as MatchRow[]) ?? [];
+  const summary = tournament?.summary;
   const status = String(tournament?.status ?? "");
-  const canEditRoster =
-    status === "collecting" || status === "needs_regeneration";
-  const canGenerate = canEditRoster && activeParticipants.length >= 3;
-  const canStart = status === "bracket_generated";
-  const canStop = status === "in_progress";
   const isOrganizer = Boolean(
     user?.id && tournament?.createdByUserId === user.id,
   );
+  const canEditRoster =
+    status === "collecting" || status === "needs_regeneration";
+  const canGenerate =
+    isOrganizer && canEditRoster && activeParticipants.length >= 3;
+  const canStart = isOrganizer && status === "bracket_generated";
+  const canStop = isOrganizer && status === "in_progress";
   const iAmActiveParticipant = activeParticipants.some(
     (p) => p.userId && user?.id && p.userId === user.id,
   );
@@ -183,11 +222,18 @@ export function TournamentDetailPage() {
       status === "bracket_generated" ||
       status === "needs_regeneration");
   const canDissolve =
-    status === "bracket_generated" || status === "needs_regeneration";
+    isOrganizer &&
+    (status === "bracket_generated" || status === "needs_regeneration");
   const canChangeAlgorithm =
+    isOrganizer &&
     (status === "bracket_generated" || status === "needs_regeneration") &&
     hasBracket;
   const canBuildBracket = canGenerate || canChangeAlgorithm;
+  const canEditSettings =
+    isOrganizer &&
+    (status === "collecting" ||
+      status === "bracket_generated" ||
+      status === "needs_regeneration");
 
   const format = (String(tournament?.format ?? "single_elimination") ===
   "double_elimination"
@@ -227,18 +273,115 @@ export function TournamentDetailPage() {
       m.status === "in_progress" ||
       m.status === "pending_confirmation",
   );
+  const ownParticipantIds = useMemo(
+    () =>
+      new Set(
+        activeParticipants
+          .filter((participant) => participant.userId === user?.id)
+          .map((participant) => participant.id),
+      ),
+    [activeParticipants, user?.id],
+  );
+  const ownMatchIds = useMemo(
+    () =>
+      new Set(
+        (summary?.matchParticipants ?? [])
+          .filter((row) =>
+            row.participantIds.some((participantId) =>
+              ownParticipantIds.has(participantId),
+            ),
+          )
+          .map((row) => row.matchId),
+      ),
+    [ownParticipantIds, summary?.matchParticipants],
+  );
+  const terminalTournament = ["finished", "stopped", "cancelled", "dissolved"].includes(status);
+  const currentOwnMatch = terminalTournament
+    ? undefined
+    : matches.find(
+        (match) =>
+          ownMatchIds.has(match.id) &&
+          (match.status === "in_progress" ||
+            match.status === "pending_confirmation"),
+      );
+  const nextOwnMatch = terminalTournament
+    ? undefined
+    : matches.find(
+        (match) => ownMatchIds.has(match.id) && match.status === "waiting",
+      );
+  const nextOwnBracketNode = useMemo(() => {
+    if (!bracketV2 || nextOwnMatch || terminalTournament) return null;
+    const nodesById = new Map(bracketV2.matches.map((node) => [node.id, node]));
+    const sourceParticipantId = (source: (typeof bracketV2.matches)[number]["sourceA"]) => {
+      if (source.type === "seed") return bracketV2.seedOrder[source.seed - 1] ?? null;
+      if (source.type === "winner") {
+        return nodesById.get(source.bracketMatchId)?.winnerParticipantId ?? null;
+      }
+      if (source.type === "loser") {
+        return nodesById.get(source.bracketMatchId)?.loserParticipantId ?? null;
+      }
+      return null;
+    };
+    return (
+      bracketV2.matches.find(
+        (node) =>
+          !node.actualMatchId &&
+          !node.winnerParticipantId &&
+          !node.cancelled &&
+          [sourceParticipantId(node.sourceA), sourceParticipantId(node.sourceB)].some(
+            (participantId) =>
+              participantId != null && ownParticipantIds.has(participantId),
+          ),
+      ) ?? null
+    );
+  }, [bracketV2, nextOwnMatch, ownParticipantIds, terminalTournament]);
+  const seedOrder = bracketV2?.seedOrder ?? [];
 
   async function runAction(fn: () => Promise<void>, okHint?: string) {
+    const actionId = id;
+    const actionUserId = user?.id;
     await runSingleFlight(async () => {
+      mutationPendingRef.current = true;
+      requestSequence.current += 1;
       setActionError(null);
       setActionHint(null);
       try {
         await fn();
-        if (okHint) setActionHint(okHint);
+        if (
+          okHint &&
+          currentIdRef.current === actionId &&
+          (!actionUserId || currentUserIdRef.current === actionUserId)
+        ) {
+          setActionHint(okHint);
+        }
       } catch (e) {
-        setActionError((e as Error).message);
+        if (
+          (e as Error & { status?: number }).status !== 401 &&
+          currentIdRef.current === actionId &&
+          (!actionUserId || currentUserIdRef.current === actionUserId)
+        ) {
+          setActionError((e as Error).message);
+        }
+      } finally {
+        mutationPendingRef.current = false;
       }
     });
+  }
+
+  function replaceTournamentIfCurrent(
+    next: Tournament,
+    requestedId = id,
+    requestedUserId = user?.id,
+  ) {
+    if (
+      requestedId &&
+      currentIdRef.current === requestedId &&
+      (!requestedUserId || currentUserIdRef.current === requestedUserId)
+    ) {
+      setTournament(next);
+      return true;
+    }
+    return false;
   }
 
   function participantLabel(p: Participant) {
@@ -280,6 +423,145 @@ export function TournamentDetailPage() {
               </span>
             </div>
 
+            <div className="card stack">
+              <div className="row">
+                <h2 className="section-title">Настройки и правила</h2>
+                {canEditSettings && !editingSettings ? (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setSettings({
+                        title: String(tournament.title ?? ""),
+                        format,
+                        organizerParticipates:
+                          tournament.organizerParticipates !== false,
+                        pointsToWin: Number(tournament.pointsToWin ?? 11),
+                        mercyEnabled: tournament.mercyEnabled === true,
+                        mercyPoints: Number(tournament.mercyPoints ?? 2),
+                      });
+                      setEditingSettings(true);
+                    }}
+                  >
+                    Изменить
+                  </Button>
+                ) : null}
+              </div>
+              {editingSettings ? (
+                <>
+                  <TextField
+                    label="Название"
+                    value={settings.title}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      setSettings((current) => ({
+                        ...current,
+                        title: event.target.value,
+                      }))
+                    }
+                  />
+                  <label>
+                    Формат
+                    <select
+                      aria-label="Формат"
+                      value={settings.format}
+                      onChange={(event) =>
+                        setSettings((current) => ({
+                          ...current,
+                          format: event.target.value as typeof current.format,
+                        }))
+                      }
+                    >
+                      <option value="single_elimination">Single elimination</option>
+                      <option value="double_elimination">Double elimination</option>
+                    </select>
+                  </label>
+                  <TextField
+                    label="Очков для победы"
+                    type="number"
+                    value={String(settings.pointsToWin)}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      setSettings((current) => ({
+                        ...current,
+                        pointsToWin: Number(event.target.value),
+                      }))
+                    }
+                  />
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={settings.organizerParticipates}
+                      onChange={(event) =>
+                        setSettings((current) => ({
+                          ...current,
+                          organizerParticipates: event.target.checked,
+                        }))
+                      }
+                    />{" "}
+                    Организатор участвует
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={settings.mercyEnabled}
+                      onChange={(event) =>
+                        setSettings((current) => ({
+                          ...current,
+                          mercyEnabled: event.target.checked,
+                        }))
+                      }
+                    />{" "}
+                    Правило преимущества
+                  </label>
+                  {settings.mercyEnabled ? (
+                    <TextField
+                      label="Разница очков"
+                      type="number"
+                      value={String(settings.mercyPoints)}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                        setSettings((current) => ({
+                          ...current,
+                          mercyPoints: Number(event.target.value),
+                        }))
+                      }
+                    />
+                  ) : null}
+                  <div className="row">
+                    <Button
+                      disabled={busy || !settings.title.trim()}
+                      onClick={() =>
+                        void runAction(async () => {
+                          const response = await api.patchTournament(id!, {
+                            ...settings,
+                            title: settings.title.trim(),
+                          });
+                          if (replaceTournamentIfCurrent(response.tournament)) {
+                            setEditingSettings(false);
+                          }
+                        }, "Настройки сохранены")
+                      }
+                    >
+                      Сохранить
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() => setEditingSettings(false)}
+                    >
+                      Отмена
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <p className="muted">
+                  До {Number(tournament.pointsToWin ?? 11)} очков
+                  {tournament.mercyEnabled
+                    ? ` · преимущество ${Number(tournament.mercyPoints ?? 2)}`
+                    : " · без правила преимущества"}
+                  {` · ${tournament.organizerParticipates === false ? "организатор не играет" : "организатор играет"}`}
+                </p>
+              )}
+            </div>
+
             {actionError ? (
               <Alert
                 type="error"
@@ -316,7 +598,7 @@ export function TournamentDetailPage() {
                   onClick={() =>
                     void runAction(async () => {
                       await api.dissolveBracket(id!);
-                      await load();
+                      await load(true);
                     })
                   }
                 >
@@ -329,7 +611,7 @@ export function TournamentDetailPage() {
                   onClick={() =>
                     void runAction(async () => {
                       const r = await api.startTournament(id!);
-                      setTournament(r.tournament);
+                      replaceTournamentIfCurrent(r.tournament);
                     }, "Турнир стартовал")
                   }
                 >
@@ -340,14 +622,7 @@ export function TournamentDetailPage() {
                 <Button
                   variant="secondary"
                   disabled={busy}
-                  onClick={() =>
-                    void runAction(async () => {
-                      const r = await api.stopTournament(id!, {
-                        code: "other",
-                      });
-                      setTournament(r.tournament);
-                    })
-                  }
+                  onClick={() => setStopDialogOpen(true)}
                 >
                   Остановить турнир
                 </Button>
@@ -360,7 +635,7 @@ export function TournamentDetailPage() {
                   onClick={() =>
                     void runAction(async () => {
                       const r = await api.cancelTournament(id!);
-                      setTournament(r.tournament);
+                      replaceTournamentIfCurrent(r.tournament);
                     }, "Турнир отменён")
                   }
                 >
@@ -374,9 +649,8 @@ export function TournamentDetailPage() {
                   onClick={() =>
                     void runAction(async () => {
                       const r = await api.withdrawTournament(id!);
-                      setTournament(
-                        (r as { tournament: Record<string, unknown> })
-                          .tournament,
+                      replaceTournamentIfCurrent(
+                        (r as { tournament: Tournament }).tournament,
                       );
                     })
                   }
@@ -386,7 +660,7 @@ export function TournamentDetailPage() {
               ) : null}
             </div>
 
-            {canEditRoster ? (
+            {canEditRoster && isOrganizer ? (
             <div className="card stack">
               <h2 className="section-title">
                 Участники ({activeParticipants.length})
@@ -412,7 +686,7 @@ export function TournamentDetailPage() {
                       onClick={() =>
                         void runAction(async () => {
                           await api.removeTournamentParticipant(id!, p.id);
-                          await load();
+                          await load(true);
                         })
                       }
                     >
@@ -442,7 +716,7 @@ export function TournamentDetailPage() {
                     onClick={() =>
                       void runAction(async () => {
                         await api.cancelTournamentInvitation(id!, inv.id);
-                        await load();
+                        await load(true);
                       }, "Приглашение удалено")
                     }
                   >
@@ -468,7 +742,7 @@ export function TournamentDetailPage() {
                     });
                     setPickUserId("");
                     setPickInput("");
-                    await load();
+                    await load(true);
                   }, "Игрок добавлен")
                 }
               >
@@ -491,7 +765,7 @@ export function TournamentDetailPage() {
                     await api.inviteTournament(id!, inviteUserId);
                     setInviteUserId("");
                     setInviteInput("");
-                    await load();
+                    await load(true);
                   }, "Приглашение отправлено")
                 }
               >
@@ -515,7 +789,7 @@ export function TournamentDetailPage() {
                       guestLastName: rest.join(" ") || "Гость",
                     });
                     setGuest("");
-                    await load();
+                    await load(true);
                   }, "Гость добавлен");
                 }}
               >
@@ -560,6 +834,26 @@ export function TournamentDetailPage() {
               </div>
             ) : null}
 
+            {currentOwnMatch || nextOwnMatch || nextOwnBracketNode ? (
+              <div className="card stack">
+                <h2 className="section-title">Ваши матчи</h2>
+                {currentOwnMatch ? (
+                  <Link to={`/matches/${currentOwnMatch.id}`}>
+                    Текущий матч: {currentOwnMatch.title ?? "Открыть"}
+                  </Link>
+                ) : null}
+                {nextOwnMatch ? (
+                  <Link to={`/matches/${nextOwnMatch.id}`}>
+                    Следующий матч: {nextOwnMatch.title ?? "Открыть"}
+                  </Link>
+                ) : nextOwnBracketNode ? (
+                  <span className="muted">
+                    Следующий матч: №{nextOwnBracketNode.displayNumber} формируется
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
             {hasBracket ? (
               <div className="card stack">
                 <h2 className="section-title">
@@ -583,6 +877,48 @@ export function TournamentDetailPage() {
                     {BRACKET_ALGORITHM_DIALOG.changeAction}
                   </Button>
                 ) : null}
+                {isOrganizer && status === "bracket_generated" && seedOrder.length > 1 ? (
+                  <div className="row" aria-label="Перестановка посева">
+                    <select
+                      aria-label="Первая позиция"
+                      value={swapA}
+                      onChange={(event) => setSwapA(event.target.value)}
+                    >
+                      {seedOrder.map((participantId, index) => (
+                        <option key={`a-${index}`} value={`seed:${index + 1}`}>
+                          {index + 1}. {nameMap.get(participantId) ?? "BYE"}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      aria-label="Вторая позиция"
+                      value={swapB}
+                      onChange={(event) => setSwapB(event.target.value)}
+                    >
+                      {seedOrder.map((participantId, index) => (
+                        <option key={`b-${index}`} value={`seed:${index + 1}`}>
+                          {index + 1}. {nameMap.get(participantId) ?? "BYE"}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy || swapA === swapB}
+                      onClick={() => {
+                        if (!window.confirm("Поменять выбранные позиции сетки?")) return;
+                        void runAction(async () => {
+                          await api.patchTournamentBracket(id!, [
+                            { slotIdA: swapA, slotIdB: swapB },
+                          ]);
+                          await load(true);
+                        }, "Позиции изменены");
+                      }}
+                    >
+                      Поменять позиции
+                    </Button>
+                  </div>
+                ) : null}
                 {bracketV2 ? (
                   <TournamentBracket
                     graph={bracketV2}
@@ -590,6 +926,7 @@ export function TournamentDetailPage() {
                     matches={matches}
                     avatars={avatarMap}
                     seeds={seedMap}
+                    highlightedParticipantIds={ownParticipantIds}
                   />
                 ) : bracketV1 ? (
                   <TournamentBracket
@@ -598,19 +935,93 @@ export function TournamentDetailPage() {
                     matches={matches}
                     avatars={avatarMap}
                     seeds={seedMap}
+                    highlightedParticipantIds={ownParticipantIds}
                   />
                 ) : null}
               </div>
             ) : null}
 
             {status === "finished" || status === "stopped" ? (
-              <p className="muted">
-                Турнир завершён. Можно открыть сыгранные матчи из сетки.
-              </p>
+              <div className="stack">
+                <p className="muted">
+                  Турнир завершён. Можно открыть сыгранные матчи из сетки.
+                </p>
+                {status === "stopped" && tournament.stopReasonText ? (
+                  <p>Причина остановки: {String(tournament.stopReasonText)}</p>
+                ) : null}
+              </div>
+            ) : null}
+            {summary ? (
+              <div className="card stack">
+                <h2 className="section-title">Итоги</h2>
+                <p className="muted">
+                  {summary.durationSeconds == null
+                    ? "Длительность не определена"
+                    : `Длительность: ${Math.floor(summary.durationSeconds / 60)} мин`}
+                  {` · сыграно матчей: ${summary.playedMatchCount}`}
+                </p>
+                {status === "finished" && summary.top3.length > 0 ? (
+                  <p>Призовые места: {summary.top3.map((id) => nameMap.get(id) ?? "Участник").join(", ")}</p>
+                ) : null}
+                {summary.results.length > 0 ? (
+                  <table>
+                    <thead><tr><th>Участник</th><th>Место</th><th>Очки</th><th>Матчи</th></tr></thead>
+                    <tbody>
+                      {summary.results.map((result) => (
+                        <tr key={result.participantId}>
+                          <td>{nameMap.get(result.participantId) ?? "Участник"}</td>
+                          <td>{result.place ?? "—"}</td>
+                          <td>{result.points}</td>
+                          <td>{result.playedMatches}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : <p className="muted">Итогов пока нет</p>}
+              </div>
             ) : null}
           </div>
         ) : null}
       </AsyncState>
+
+      <Dialog
+        open={stopDialogOpen}
+        onClose={() => (!busy ? setStopDialogOpen(false) : undefined)}
+        title="Остановить турнир?"
+        width="sm"
+        secondaryButtonLabel="Отмена"
+        onSecondaryButton={() => (!busy ? setStopDialogOpen(false) : undefined)}
+      >
+        <div className="stack">
+          <TextField
+            label="Причина остановки"
+            value={stopReason}
+            maxLength={500}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              setStopReason(event.target.value)
+            }
+          />
+          <Button
+            disabled={busy || !stopReason.trim()}
+            onClick={() => {
+              const text = stopReason.trim();
+              if (!text || busy) return;
+              void runAction(async () => {
+                const response = await api.stopTournament(id!, {
+                  code: "other",
+                  text,
+                });
+                if (replaceTournamentIfCurrent(response.tournament)) {
+                  setStopDialogOpen(false);
+                  setStopReason("");
+                }
+              }, "Турнир остановлен");
+            }}
+          >
+            {busy ? "Сохранение…" : "Подтвердить остановку"}
+          </Button>
+        </div>
+      </Dialog>
 
       <BracketAlgorithmDialog
         open={algoDialogOpen}
@@ -626,7 +1037,7 @@ export function TournamentDetailPage() {
               constructionAlgorithm: algoSelected,
             });
             setAlgoDialogOpen(false);
-            await load();
+            await load(true);
           }, "Сетка построена");
         }}
       />

@@ -46,6 +46,8 @@ const BODY_OPERATIONS = new Set([
   "PATCH /api/v1/profile/me",
   "PATCH /api/v1/me/onboarding",
   "POST /api/v1/matches",
+  "PATCH /api/v1/matches/{matchId}",
+  "POST /api/v1/matches/{matchId}/invitations",
   "POST /api/v1/matches/{matchId}/start",
   "POST /api/v1/matches/{matchId}/judge/handover",
   "POST /api/v1/matches/{matchId}/manual-correction",
@@ -66,6 +68,9 @@ const BODY_OPERATIONS = new Set([
   "POST /api/v1/tournaments/{id}/stop",
   "POST /api/v1/teams",
   "POST /api/v1/teams/{id}/invite",
+  "PATCH /api/v1/teams/{id}",
+  "POST /api/v1/teams/{id}/invitations",
+  "POST /api/v1/teams/{id}/captain-transfer",
   "POST /api/v1/team-invitations/{id}/respond",
   "POST /api/v1/notifications/read-visible",
   "POST /api/v1/feedback",
@@ -249,4 +254,41 @@ describe("GAP-005 match/judge extension contracts", () => {
     expect(document.components?.schemas?.CreateMatchRequest).toMatchObject({ properties: { firstServerMethod: { enum: ["random", "manual", "rally"] } } });
     expect(document.components?.schemas?.Match).toMatchObject({ properties: { judgeReservation: { nullable: true } } });
   });
+});
+
+describe("GAP-007 team contracts", () => {
+  it("documents lifecycle, metadata limits and invitation welcome response", () => {
+    const spec = openApiSpec() as OpenApiDocument;
+    expect(spec.components?.schemas?.CreateTeamRequest).toMatchObject({ additionalProperties: false, properties: { name: { minLength: 1, maxLength: 200 }, welcomeText: { maxLength: 2000 } } });
+    expect(spec.components?.schemas?.UpdateTeamRequest).toMatchObject({ minProperties: 1, additionalProperties: false });
+    for (const action of ["leave", "captain-transfer"]) expect(spec.paths[`/api/v1/teams/{id}/${action}`]?.post).toBeDefined();
+    expect(spec.paths["/api/v1/teams/{id}/members/{userId}"]?.delete).toBeDefined();
+    expect(spec.components?.schemas?.TeamInvitationResponse).toMatchObject({ required: ["status", "teamId"] });
+  });
+});
+
+it("GAP-006 stop body documents the required bounded reason", () => {
+  const spec = openApiSpec() as any;
+  expect(spec.paths["/api/v1/tournaments/{id}/stop"].post.requestBody.required).toBe(true);
+  expect(spec.components.schemas.TournamentStopRequest.required).toEqual(["code"]);
+  expect(spec.components.schemas.TournamentStopRequest.properties.text.maxLength).toBe(500);
+});
+
+
+it("GAP-010 admin edit and catalog expose bounded profile fields without email edits", () => {
+  const spec = openApiSpec() as any;
+  expect(spec.paths["/api/v1/admin/users"].get.parameters).toEqual(expect.arrayContaining([expect.objectContaining({ name: "status", schema: { type: "string", enum: ["active", "blocked"] } })]));
+  expect(spec.paths["/api/v1/admin/users/{userId}"].patch.requestBody.content["application/json"].schema.$ref).toBe("#/components/schemas/AdminUserUpdateRequest");
+  expect(spec.components.schemas.AdminUserUpdateRequest).toMatchObject({ additionalProperties: false, minProperties: 1, properties: { firstName: { maxLength: 100 }, birthDate: { nullable: true }, organizationText: { maxLength: 200 } } });
+  expect(spec.components.schemas.AdminUserUpdateRequest.properties.email).toBeUndefined();
+  expect(spec.components.schemas.AdminUser.properties).toMatchObject({ lastLoginAt: { nullable: true, format: "date-time" }, createdAt: { format: "date-time" }, birthDate: { nullable: true } });
+});
+
+it("GAP-008 documents consent, prestart editing and immutable invitation response", () => {
+  const spec = openApiSpec() as any;
+  expect(spec.paths["/api/v1/matches/{matchId}"].patch.requestBody.content["application/json"].schema.$ref).toBe("#/components/schemas/UpdateMatchRequest");
+  for (const action of ["accept", "decline"]) expect(spec.paths[`/api/v1/match-invitations/{id}/${action}`].post.responses[200]).toBeDefined();
+  expect(spec.components.schemas.MatchInvitationRequest.properties.kind.enum).toEqual(["player", "judge"]);
+  expect(spec.components.schemas.CreateMatchRequest.properties.judgeUserId.format).toBe("uuid");
+  expect(spec.components.schemas.Match.properties.invitations.items.$ref).toBe("#/components/schemas/MatchInvitation");
 });

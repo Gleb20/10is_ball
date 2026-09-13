@@ -554,6 +554,28 @@ focused Wave A 59/59 и полный web suite 125/125.
 
 - **Wave A current evidence (2026-09-13):** integrated candidate 1.11.0 passed the aggregate 965 checks (quality 906, PostgreSQL 40, browser 15 including 6 journeys, cleanup 4), with 0 failures/skips/todo. Old source-worktree evidence above is historical. Final BUG-007 stale-alert correction also passed the fresh 965/965 aggregate and rendered review. Public release is not yet verified. [Redacted aggregate](audit/evidence/wave-a-local.json). See [wave plan](test-plans/OPS-004-completion-waves.md).
 
+
+### BUG-017 — Judge device conflict incorrectly returns HTTP 500
+
+- **Type:** bug
+- **Priority:** P1
+- **Status:** verified_local
+- **Requirements / acceptance:** JUDGE-004; AT-JUDGE-002; API judge acquire.
+- **Evidence:** Wave F local browser request a975e61f-5771-4d63-8e7e-a544c3e6188e returned500 at judge/acquire. Source separately confirms MatchService throws JUDGE_OTHER_DEVICE but app.ts omits that code from message/status mapping. Browser fixture cleanup may explain the retained first session; it does not justify a500 for this domain conflict.
+- **Expected:** second auth session receives409 JUDGE_OTHER_DEVICE with meaningful Russian message; first judge authority and persisted session remain unchanged.
+- **Actual:** JUDGE_OTHER_DEVICE now maps to409 and a Russian recovery message; same/cross-match second-session tests preserve first judge authority.
+- **Repro:** create two auth sessions for one active user; acquire a valid waiting match in the first, then acquire from the second; capture deterministic API Red before mapping repair.
+- **User-visible outcome:** device conflict is explained without implying a server failure or granting a second judge slot.
+- **Non-goals:** change device exclusivity, judge TTL/release, schema, web UI, broad error refactor or production.
+- **Permissions:** scoped local API/test/OpenAPI changes and disposable PGlite; no commit/push/version/release.
+- **Risk:** confusing recovery from a valid device conflict; ensure no extra judge row or authority change.
+- **Open questions:** none; existing JUDGE-004 rule retained.
+- **Verification:** Focused Red2→Green2, four related judge cases, typecheck and scoped review PASS; fresh full D+E+F gate1249/1249 accepted. [Evidence](audit/evidence/bug-017-local.json). Public release remains pending.
+- **Dependencies:** independent of F shared web changes; app.ts/OpenAPI/new API test assigned to separate BUG-017 task, parent owns canonical docs.
+
+
+- **Focused result:** mapping repaired with two added lines; deterministic API Red2/2 at500 -> Green2/2 at409. Four selected existing judge cases pass (29 outside filter), API typecheck/rollback and parent scoped review pass. [Evidence](audit/evidence/bug-017-local.json). Remains in_progress until final F integration gate; no release.
+
 ### GAP-001 — Главная не покрывает PRD
 
 - **Type:** product-gap
@@ -647,48 +669,50 @@ focused Wave A 59/59 и полный web suite 125/125.
 
 - **Wave C review scope:** retain D33 and A/B recovery; close MATCH-004 groups, reservation exclusivity, handover vs old-judge writes, no-show replay. Parent requires real PostgreSQL ordered race/rollback and two-client browser acceptance.
 
-- **Accepted Wave C 2026-09-13:** full `verify:all` 1056/1056 (quality980, PostgreSQL47, browser25, cleanup4), zero failures/skips/todo/interrupted; 16 compiled desktop/390 journeys and rendered review. Independent review repairs and authoritative persisted-state assertions passed. [Evidence](audit/evidence/wave-c-local.json). Candidate2.1.0 awaits exact-SHA public release.
+- **Accepted Wave C 2026-09-13:** full `verify:all` 1056/1056 (quality980, PostgreSQL47, browser25, cleanup4), zero failures/skips/todo/interrupted; 16 compiled desktop/390 journeys and rendered review. Independent review repairs and authoritative persisted-state assertions passed. [Evidence](audit/evidence/wave-c-local.json). Released2.1.0 at615169c780a4522591d3359530177e7574923f14; CI34730792219 and GET-only exact-SHA smoke passed (public functional mutations not tested).
 
-### GAP-006 — Турнирный флоу и управление сеткой неполны
+### GAP-006 — Турнирный флоу и управление сеткой локально проверены
 
 - **Type:** product-gap
 - **Priority:** P2
-- **Status:** confirmed
-- **Evidence:** [`TournamentDetailPage.tsx`](../apps/web/src/pages/TournamentDetailPage.tsx) не покрывает full rule config, pair/bye edit UX, current/next/duration/placements/top-3; тесты преимущественно проверяют algorithm dialog. Current page entrypoint — `apps/web/src/pages/TournamentDetailPage.tsx:54`; отсутствие full browser lifecycle отмечено в `docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md:19`.
+- **Status:** verified_local
+- **Evidence:** исходный baseline выше был актуален до Wave D и теперь superseded. [`TournamentDetailPage.tsx`](../apps/web/src/pages/TournamentDetailPage.tsx) покрывает настройки и их invalidation, seed/BYE swaps, regeneration, current/next/highlight, duration, results и призовые места; API сохраняет полную summary и причину остановки. Первый полный aggregate прошёл 1133/1133, после чего rendered review выявил ложную подсказку о следующем auto-BYE матче завершённого турнира. Regression сначала был Red, исправление прошло 17/17 focused tests и typecheck, затем финальный aggregate прошёл 1135/1135: quality 1034, PostgreSQL 56, browser 41 (32 journeys + 9 foundation), cleanup 4, без failed/skipped/todo/interrupted. Desktop, 390px и landscape rendered states просмотрены. [Evidence](audit/evidence/wave-d-local.json).
 - **Expected:** TOURNAMENT-001..019 и browser-usable V2 SE/DE lifecycle; V1 DE bounded fail-closed.
-- **Actual:** create/roster/generate/start/stop и bracket render существуют частично, с concurrency risks; V1 DE ещё достигает known hang path.
+- **Actual:** реализованы и локально проверены organizer-owned create/roster/settings/generate/regenerate/start/advance/stop/cancel/dissolve, редактирование seed/BYE с подтверждением invalidation, V2 SE/DE 3/5/8, summary с duration/results/top-3 и персональным current/next/highlight. Stopped tournament не получает places/top-3; D33 void не входит в статистику, сохраняя bracket places. Legacy V1 DE fail-closed исправлен ранее. Wave D ещё не опубликована.
 - **Repro:** пройти турниры 3/5/8 игроков SE/DE от invite до placement.
-- **Risk:** главный сценарий продукта может застрять или требовать ручных обходов.
+- **Risk:** локальная проверка не подтверждает hosted CI или публичный artifact до отдельного release.
 - **Verification:** deterministic end-to-end tournament suite и responsive bracket QA.
 - **Dependencies:** DATA-002/006, SEC-006/007, ADR D25.
 - **Execution slices (wave D, после GAP-007):** 1) Полные настройки/roster/pair/bye editing и invalidation/regenerate. 2) Start/advance/stop/cancel/dissolve, current/next/duration/placements/top-3. 3) SE/DE 3/5/8 участников, busy-bye, concurrent advancement и D33; browser portrait/landscape bracket.
-- **Acceptance mapping:** TOURNAMENT-001..019; AT-TRN-001..021; verification evidence фиксируется по каждой slice, полный ID закрывается после всех slices и release gate.
+- **Acceptance mapping:** TOURNAMENT-001..019; AT-TRN-001..021 локально закрыты; переход к `verified_prod` требует release evidence.
 
 
-### GAP-007 — Teams остаются функциональным stub
+- **Read summary slice:** duration, played counts, game points and placements выводятся из persisted matches/bracket; stopped не имеет placements/top, D33 void сохраняет bracket places и исключается из статистики. Участники одного elimination round делят место; points не назначают победителя. Pure Red→Green tests покрывают SE/DE 3/5/8; финальный aggregate и rendered browser review прошли.
+
+### GAP-007 — Полный team lifecycle локально проверен
 
 - **Type:** product-gap
 - **Priority:** P2
-- **Status:** confirmed
-- **Evidence:** [`TeamsPage.tsx`](../apps/web/src/pages/TeamsPage.tsx) не реализует полный TEAM-001..009 lifecycle. Страница ограничена list/create flow начиная с `apps/web/src/pages/TeamsPage.tsx:7`; sparse coverage записан в `docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md:20`.
+- **Status:** verified_local
+- **Evidence:** исходный stub baseline superseded Wave D. [`TeamsPage.tsx`](../apps/web/src/pages/TeamsPage.tsx) и `TeamDetailPage.tsx` покрывают list/create/detail, welcome, edit, invite/history/respond, captain transfer, member removal, leave и архивное состояние. Service/API дополнительно проверяют privacy-safe DTO, historical membership access и transactional captain/archive invariants. Финальный aggregate прошёл 1135/1135: quality 1034, PostgreSQL 56, browser 41 (32 journeys + 9 foundation), cleanup 4, без failed/skipped/todo/interrupted. Desktop и 390px rendered states просмотрены. [Evidence](audit/evidence/wave-d-local.json).
 - **Expected:** captain management, invite/respond, leave/transfer/archive и использование состава в event picker.
-- **Actual:** доступна лишь часть list/create/invite flow.
+- **Actual:** реализованы и локально проверены TEAM-001..009: enriched member data без private user fields, captain-only invitation metadata, доступ current/former members и pending invitees, automatic archive при отсутствии active members, cancel pending invitations при archive и atomic block→captain reassignment/archive. Event picker использует active own teams. Публичного Wave D release нет.
 - **Repro:** пройти создание → invite → accept → use member → transfer/leave/archive.
-- **Risk:** обещанный командный workflow не завершён.
-- **Verification:** AT-TEAM-001..006 + component/E2E.
+- **Risk:** локальная проверка не подтверждает hosted CI или публичный artifact до отдельного release.
+- **Verification:** AT-TEAM-001..007 + service/API/component/E2E и deterministic PostgreSQL concurrency.
 - **Dependencies:** DATA-004; полный PRD v2 закреплён D26.
 - **Execution slices (wave D, до GAP-006):** 1) Captain/invite/respond/detail с active-membership invariants. 2) Leave/transfer/archive и недопустимые переходы. 3) Подключение состава к event picker и браузерный lifecycle нескольких пользователей; конкурентные изменения на PostgreSQL.
-- **Recheck 2026-09-13:** current service has create/get/list/invite/respond and block-triggered captain selection; no update/remove/leave/manual-transfer/archive API or team-detail UI. `matchCreateOptions` already includes own active teams and was verified in Wave C. Reuse it instead of duplicating a picker service.
+- **Recheck 2026-09-13 (superseded baseline):** до Wave D service имел create/get/list/invite/respond и block-triggered captain selection, но не имел update/remove/leave/manual-transfer/archive API или team-detail UI. Текущий candidate закрыл эти пункты; `matchCreateOptions` продолжает использовать own active teams без отдельного picker service.
 - **Bounded orders:** domain transaction/DTO and captain invariants → canonical route/OpenAPI contracts with legacy invite/respond compatibility → team detail/welcome/controls → multi-user browser and real PostgreSQL captain/leave/accept races. Inspect blockUser→transferCaptainOnBlock atomicity before changing lifecycle; preserve historical memberships and current team ranking semantics.
 
-- **Acceptance mapping:** TEAM-001..009; AT-TEAM-001..006; verification evidence фиксируется по каждой slice, полный ID закрывается после всех slices и release gate.
+- **Acceptance mapping:** TEAM-001..009; AT-TEAM-001..007 локально закрыты; переход к `verified_prod` требует release evidence.
 
 
 ### GAP-008 — Notifications реализованы частично
 
 - **Type:** product-gap
 - **Priority:** P2
-- **Status:** confirmed
+- **Status:** verified_local
 - **Evidence:** backend/UI покрывают ограниченный набор типов; popup и полный action lifecycle отсутствуют. UI явно ветвится только по текущим типам начиная с `apps/web/src/pages/NotificationsPage.tsx:154`; partial lifecycle зафиксирован в `docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md:21`.
 - **Expected:** NOTIF-001..006 с приглашениями, актуальностью, read-state и popup suppression.
 - **Actual:** list/read и часть tournament уведомлений.
@@ -700,11 +724,17 @@ focused Wave A 59/59 и полный web suite 125/125.
 - **Acceptance mapping:** NOTIF-001..006; AT-NOTIF-*; verification evidence фиксируется по каждой slice, полный ID закрывается после всех slices и release gate.
 
 
+- **Wave E implementation checkpoint:** added historical match/player/judge consent, strict organizer prestart patch, persisted invitation expiry/read state and one dismissible popup with judge/tutorial suppression. Focused API contract1/1, lifecycle6/6, PostgreSQL concurrency2/2 and popup/notification UI8/8 passed. Event matrix, full fixture reconciliation and browser gates remain open; not production-verified. Consent changes apply to new standalone outsider participants, preserve same-team/guest and legacy matches.
+
+- **Coordinator recheck:** independent review reproduced cross-match PostgreSQL40P01 in side swap versus reinvite/create; nonplaying tournament creator versus judge reinvite reproduced the same omitted-creator lock dependency (also DATA-002/GAP-006). Creator is added to each operation's existing sorted lock set; focused regression/re-review pending. Initial E aggregate was interrupted before PG/browser acceptance, not passed. Original186 source files remain unchanged.
+
+- **Final local acceptance 2026-09-13:** [Wave E evidence](audit/evidence/wave-e-local.json) combines successful cleanup4, quality1112, PostgreSQL66 and browser47 (38 journeys plus9 foundation), total1229 with zero failed/skipped/todo/interrupted. The initial full command failed solely because Chromium could not launch inside macOS sandbox; only that lane was repeated with local authorization. Relevant functional desktop/390 journeys passed. Accessibility/responsive quality remains GAP-011/TECH-002, public release pending.
+
 ### GAP-009 — Onboarding и Help не достигают заявленного результата
 
 - **Type:** product-gap
 - **Priority:** P2
-- **Status:** confirmed
+- **Status:** verified_local
 - **Evidence:** onboarding статичен; [`HelpPage.tsx`](../apps/web/src/pages/HelpPage.tsx) использует фиксированный feedback kind и не покрывает категории/context tips. Фиксированный kind находится в `apps/web/src/pages/HelpPage.tsx:46`, а static guided-state gap — в `docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md:22`.
 - **Expected:** ONB-001..005 и HELP-001..003.
 - **Actual:** отдельные страницы существуют, но workflow сокращён.
@@ -716,39 +746,50 @@ focused Wave A 59/59 и полный web suite 125/125.
 - **Acceptance mapping:** ONB-001..005; HELP-001..003; D34; verification evidence фиксируется по каждой slice, полный ID закрывается после всех slices и release gate.
 
 
+- **Wave E bounded recheck:** preserve D34 and existing auth/security guards; implement only PRD help categories/context tips and admin catalog/profile fields. Parent owns acceptance, rollback snapshot and final browser/PostgreSQL gates. No audit viewer, attachments or new production mutation tests.
+
+- **Final local acceptance 2026-09-13:** [Wave E evidence](audit/evidence/wave-e-local.json) combines successful cleanup4, quality1112, PostgreSQL66 and browser47 (38 journeys plus9 foundation), total1229 with zero failed/skipped/todo/interrupted. The initial full command failed solely because Chromium could not launch inside macOS sandbox; only that lane was repeated with local authorization. Relevant functional desktop/390 journeys passed. Accessibility/responsive quality remains GAP-011/TECH-002, public release pending.
+
 ### GAP-010 — Admin UI не покрывает каталог операций
 
 - **Type:** product-gap
 - **Priority:** P2
-- **Status:** confirmed
+- **Status:** verified_local
 - **Evidence:** [`AdminPage.tsx`](../apps/web/src/pages/AdminPage.tsx) без полного search/filter/profile edit/unblock/created/last-login набора ADM-002..008. Current page загружает единый user list в `apps/web/src/pages/AdminPage.tsx:28`; coverage summary — `docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md:11`.
-- **Expected:** безопасное управление users и audit visibility по PRD.
+- **Expected:** безопасное управление users по ADM-002..008, включая persisted audit для административных изменений по ADM-008.
 - **Actual:** create, role, block/reset и match ops представлены частично.
 - **Repro:** сверить каждое ADM requirement с control/API response.
 - **Risk:** эксплуатация требует прямых API/DB действий.
-- **Verification:** admin component/E2E matrix и audit assertions.
+- **Verification:** admin component/E2E matrix и assertions persisted audit.
 - **Dependencies:** BUG-011, DATA-005.
-- **Execution slices (wave E):** 1) Search/filter/profile edit/created/last-login и audit visibility. 2) Ролевые запреты, self/last-admin, session revocation и пустые результаты поиска. 3) Полный browser admin lifecycle и persisted audit assertions.
+- **Execution slices (wave E):** 1) Search/filter/profile edit/created/last-login и persisted audit. 2) Ролевые запреты, self/last-admin, session revocation и пустые результаты поиска. 3) Полный browser admin lifecycle и persisted audit assertions.
 - **Acceptance mapping:** ADM-002..008; AT-AUTH-008; verification evidence фиксируется по каждой slice, полный ID закрывается после всех slices и release gate.
 
+
+- **Wave E bounded recheck:** preserve D34 and existing auth/security guards; implement only PRD help categories/context tips and admin catalog/profile fields. Parent owns acceptance, rollback snapshot and final browser/PostgreSQL gates. No audit viewer, attachments or new production mutation tests.
+
+- **Final local acceptance 2026-09-13:** [Wave E evidence](audit/evidence/wave-e-local.json) combines successful cleanup4, quality1112, PostgreSQL66 and browser47 (38 journeys plus9 foundation), total1229 with zero failed/skipped/todo/interrupted. The initial full command failed solely because Chromium could not launch inside macOS sandbox; only that lane was repeated with local authorization. Relevant functional desktop/390 journeys passed. Accessibility/responsive quality remains GAP-011/TECH-002, public release pending.
 
 ### GAP-011 — Accessibility и responsive качество не подтверждены
 
 - **Type:** accessibility
 - **Priority:** P2
-- **Status:** confirmed
-- **Evidence:** большинство controls меньше 44px; selected ButtonGroup contrast около 1.73:1; auth nested `100dvh`, safe-area double apply, menu/aria-live/avatar semantics и bracket navigation имеют дефекты. Точные audit findings: `docs/A11Y_CHECKLIST.md:13`, `docs/A11Y_CHECKLIST.md:14`, `docs/A11Y_CHECKLIST.md:16`; nested viewport rule виден в `apps/web/src/styles.css:766`, а quality gap — в `docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md:27`.
+- **Status:** in_progress
+- **Evidence:** Baseline defects are preserved in the visual audit. Current source/Red/Green/review: [Wave F local evidence](audit/evidence/wave-f-local.json).
 - **Expected:** [A11Y checklist](A11Y_CHECKLIST.md), WCAG AA для ключевых элементов, 360px+ и judge landscape без overflow/semantic violations.
-- **Actual:** public production login и synthetic local viewports перечислены в `docs/audit/evidence/visual-baseline/README.md:9`; они подтвердили отсутствие horizontal overflow на снятых экранах, но не закрывают axe, keyboard, contrast, judge landscape и полный PRD state matrix.
+- **Actual:** Shared44px/contrast/auth geometry, Dialog current-controls/focus recovery, judge disclosure/live summary, bracket keyboard/touch/zoom and decorative ranking avatar repaired. Fresh full gate1249/1249 and Firefox7/7 pass. WebKit fails before app page creation; complete compatibility/device/AT coverage remains open.
 - **Repro:** browser audit на 360×640, mobile Safari safe-area, keyboard и screen-reader semantics.
 - **Risk:** продукт труден или недоступен на целевых устройствах.
-- **Verification:** axe + Playwright geometry/keyboard + ручная contrast/safe-area/judge/bracket проверка.
+- **Verification:** Chromium48 journeys +9foundation, full web227, PostgreSQL66, independent review PASS; [engine results](audit/evidence/wave-f-compatibility.json) explicitly retain WebKit7 runtime failures and axe incomplete checks. This ID remains in_progress for full NFR breadth.
 - **Dependencies:** current production — interim regression baseline по D22; будущий redesign не блокирует исправление подтверждённых defects.
 
 ## Эксплуатация и качество
 - **Execution slices (wave F и в каждой UI-задаче):** 1) Закрывать geometry/44px/contrast/keyboard/focus/safe-area по мере интеграции страниц. 2) Убрать временное исключение color-contrast из critical E2E после исправления. 3) Полный desktop/390/360/judge-landscape и доступный WebKit проход; неподтверждённые physical-device проверки явно оставить residual, не объявлять выполненными.
 - **Acceptance mapping:** A11Y checklist; UX state matrix; verification evidence фиксируется по каждой slice, полный ID закрывается после всех slices и release gate.
 
+
+
+- **Wave F start:** exclusive web/test task dispatched after E functional acceptance and443-file frozen snapshot. Work order covers44px/contrast/keyboard/safe-area/judge/bracket and browser matrix; no F acceptance yet. Parent retains canonical docs, independent acceptance and release.
 
 ### OPS-001 — OpenAPI не описывает фактический API
 
@@ -813,6 +854,8 @@ focused Wave A 59/59 и полный web suite 125/125.
 - **Wave A current evidence (2026-09-13):** integrated candidate 1.11.0 passed the aggregate 965 checks (quality 906, PostgreSQL 40, browser 15 including 6 journeys, cleanup 4), with 0 failures/skips/todo. Old source-worktree evidence above is historical. Final BUG-007 stale-alert correction also passed the fresh 965/965 aggregate and rendered review. Public release is not yet verified. [Redacted aggregate](audit/evidence/wave-a-local.json). See [wave plan](test-plans/OPS-004-completion-waves.md).
 
 ### OPS-004 — Release/version drift
+
+- **3.0.0 pre-publication checkpoint (2026-09-13):** user-approved D+E+F/BUG-017 release; fresh1249/1249 local gate,449 source identities unchanged. [Evidence](audit/evidence/release-3.0.0-local.json). Hosted/public verification follows the main push.
 
 - **Type:** release-management
 - **Priority:** P0
@@ -906,16 +949,16 @@ focused Wave A 59/59 и полный web suite 125/125.
 - **Priority:** P1
 - **Status:** in_progress
 - **Requirements:** AUTH-001/005; MATCH-001/005/008/013; JUDGE-001/003/006/007; AT-AUTH-009, AT-MATCH-001/005/008/013, AT-JUDGE-001/003/006/007; NFR accessibility/compatibility.
-- **Evidence:** Red: `pnpm test:e2e` отсутствовал. Текущие `playwright.config.ts` и `tests/e2e/critical.spec.ts` запускают два acceptance journey в system Chrome на 1280×800 и 390×844 через attested in-memory `AUDIT_EPHEMERAL=1` API.
+- **Evidence:** Current playwright.prodlike.config.ts and verify:e2e run compiled API/web with disposable PostgreSQL16.15 and managed Chromium; historical initial PGlite/system-Chrome evidence below is superseded.
 - **Expected:** критические auth/match/judge/tournament/admin journeys и negative authz проверяются на real browser; coverage thresholds измеряются, но не заменяют сценарии.
-- **Actual:** bounded first slice повторяемо проходит login → guest match create → judge acquire/setup → rapid score 5:0 → persisted finish и runtime session revoke → focused re-login → same route/draft без mutation replay. Login/Home/Judge/recovery form проходят serious/critical axe gate (известный `color-contrast` GAP-011 явно исключён), проверенные surfaces не имеют horizontal overflow. Tournament/admin/team/handover и cross-browser/device breadth ещё не покрыты.
+- **Actual:** Fresh full verify:all1249/1249 includes48 desktop/mobile journeys across auth, history/profile/ranking, matches/judge/handover, teams/tournaments, consent/admin/onboarding/help and F. color-contrast exclusion removed. Separate Firefox7/7 passes; WebKit7 page-creation crashes leave cross-browser breadth incomplete.
 - **User-visible outcome:** regressions в критическом standalone match/judge и runtime re-auth path ловятся реальным браузером до релиза на desktop и mobile widths.
-- **Non-goals:** production/external services, deploy/version bump, визуальный redesign и remediation GAP-011 в этом slice.
-- **Permissions:** loopback browser/API/web и disposable PGlite only.
-- **Open questions:** расширение на Safari/Firefox/real devices, tournament/admin и multi-context handover остаётся продолжением TECH-002/GAP-011.
+- **Non-goals:** Public mutating tests, OS/security configuration changes, dependency/browser-version upgrades and release/version operations.
+- **Permissions:** Loopback compiled browser/API/web, disposable PostgreSQL and isolated pinned browser cache; no production mutation.
+- **Open questions:** WebKit native runtime failure, latest-two released browsers and real-device/AT breadth remain under GAP-011/TECH-002.
 - **Repro:** на Node 24/pnpm 9 выполнить `pnpm test:e2e`.
 - **Risk:** визуальные/интеграционные дефекты проходят CI.
-- **Verification:** [`test-plans/TECH-002-browser-e2e.md`](test-plans/TECH-002-browser-e2e.md); Playwright 1.63.0/system Chrome 4/4 green локально (2 journeys × desktop/mobile), serious/critical axe и horizontal geometry included. Combined Node 24 CI green: audits, lint/typecheck, shared 522, test-utils 4, web 124, API 150 + 7 guarded PostgreSQL skipped, builds. GitHub quality job теперь устанавливает Chrome и запускает тот же `pnpm test:e2e`; hosted run требует commit/push approval и ещё не выполнялся. Screenshots/traces сохраняются only-on-failure.
+- **Verification:** [Current browser plan](test-plans/TECH-002-browser-e2e.md), [full local gate](audit/evidence/wave-f-local.json) and [partial additional-engine lane](audit/evidence/wave-f-compatibility.json). No hosted CI for this uncommitted candidate; full ID remains in_progress.
 - **Dependencies:** сначала стабилизировать TECH-001 и P0 API invariants.
 
 - **Wave B build evidence:** `tests/e2e/wave-b.spec.ts` covers profile/ranking/history journeys at desktop and 390px; production-build mode regression passed 17/17 Node tests and artifact inspection found dev React 0, prod React 1, `jsxDEV` 0. Final aggregate gate remains pending.
@@ -976,3 +1019,67 @@ focused Wave A 59/59 и полный web suite 125/125.
 - **Verification:** config loader, skill validation, docs audit и отдельный
   runtime profile smoke; product REQ/AT не применимы.
 - **Dependencies:** capabilities текущего Codex; production scope отсутствует.
+
+### Wave F independent review checkpoint — 2026-09-13
+
+F15-path candidate delivered with web223/223, main browser21/21 and last
+ButtonGroup/link correction11/11. The earlier21/21 is not an aggregate over the
+last CSS bytes. Parent inspected auth360, admin1440, bracket360, judge640 and
+text200, bootstrap and dialog text200 screenshots. Independent reviewer matched
+all15 hashes and found two P2 Dialog focus gaps: a CSS-hidden ancestor is not
+filtered and disable/remove of the focused control can send focus outside the
+panel. Returned to the same F task for deterministic Red→Green and live browser
+regression. No F acceptance or full aggregate yet. BUG-017 focused patch is
+reviewed and remains pending that aggregate. Compatibility/device/actual screen
+reader coverage remains open. No version/commit/push/deploy.
+
+### F aggregate checkpoint — 2026-09-13
+
+R1/R2 re-review PASS on corrected15-path F delta
+(6a9ece081695589ab77a8b03bb4a91bffd3ba768633859b4d19e4b802e2d22a8).
+First coordinator `verify:all` f-coordinator-final FAILED1247/1249:
+quality1122, PostgreSQL66, cleanup4 pass; browser46/48+9foundation. Both
+failures are the F rankings fixture waiting for the empty-team CreateTeam link
+after Wave B gives the shared admin a team. RankingsPage correctly renders this
+link only when availableTeams is empty. Same F task owns test-only deterministic
+fixture correction. Product447-file pre-run snapshot matched after completion;
+no product source regression inferred. Full browser lane must rerun after the
+actual correction; do not call the original aggregate successful.
+42 selected D/E synthetic screenshots retained and representative SE-finished
+and DE-generated desktop images reviewed; full-page captures alone do not prove
+fixed-navigation placement. Firefox/WebKit preparation ready, no engine test yet.
+No version, commit, push or public release.
+
+### F ranking integration correction — 2026-09-13
+
+F now16 paths: a one-attribute RankingsPage decorative-avatar correction plus
+the isolated real-user geometry fixture. Role-img-alt Red is retained in
+f-membership-green-browser; no axe exclusion. Parent review verified named
+links/visible names remain and at least4 real ranking entries force a rest-row.
+RankingsPage5/5 and typecheck pass. WaveB mobile failure in f-avatar-green-browser
+was traced to expecting1 month row without seeding a played match and accepting
+stale all-time rendering. Parent changed only tests/e2e/wave-b.spec.ts: await
+exact month/team response, settle loading and verify own-member/empty-or-rendered
+state against that response. All-time single-member assertion retained.
+Fresh f-period-green passes4/4 WaveB→F journeys (desktop/mobile) +9foundation.
+No rankings response mocks, sleeps, retries or disabled assertions. Product/source
+rollback snapshots remain outside Git. A fresh full verify:all is the next gate;
+compatibility waits its frozen compiled output. Original failed aggregates remain
+failed historical evidence. No version/commit/push/deploy.
+
+### Final Wave F local checkpoint — 2026-09-13
+
+Supersedes earlier pending/rework checkpoints for the current candidate. Fresh
+`verify:all` passed1249/1249 (quality1122, PostgreSQL66, browser57 including48
+journeys, cleanup4), no failed/skipped/todo/interrupted. F16 paths plus parent
+WaveB period-test correction passed independent review;447 source hashes stayed
+unchanged through the gate. BUG-017 is verified_local. GAP-011/TECH-002 retain
+in_progress because additional engine lane is partial: Firefox7/7, WebKit7
+native page-creation failures before app assertions, and device/AT/version breadth
+remains unverified. See wave-f-local and wave-f-compatibility evidence.
+
+Bounded next debt/QA slice: isolate WebKit runtime on a compatible pinned runner,
+then actual mobile safe-area/keyboard and VoiceOver/TalkBack acceptance. Reconfirm
+the failure before changing anything; do not change app assertions to hide it.
+Existing Q-OPS-003 and SEC-001 negative credential probe remain separate. No new
+backlog ID, version, commit, push or public deployment was created.

@@ -87,6 +87,15 @@ describe("Phase 9 load — 10 parallel matches", () => {
     };
   }
 
+  async function acceptRequiredPlayerInvitations(matchId: string) {
+    const match = await services.matches.getMatch(matchId);
+    for (const invitation of match?.invitations ?? []) {
+      if (invitation.kind === "player" && invitation.status === "pending") {
+        await services.matches.respondInvitation(invitation.id, invitation.invitedUserId, true);
+      }
+    }
+  }
+
   it("INT_load__ten_parallel_matches_meet_slo", async () => {
     const playerCount = PARALLEL_MATCH_COUNT * 2;
     const players: { id: string; cookie: string }[] = [];
@@ -116,6 +125,7 @@ describe("Phase 9 load — 10 parallel matches", () => {
       });
       expect(created.statusCode).toBe(200);
       const matchId = created.json().match.id as string;
+      await acceptRequiredPlayerInvitations(matchId);
 
       const started = await app.inject({
         method: "POST",

@@ -132,7 +132,18 @@ describe("BUG-002 match action authorization", () => {
       },
     });
     expect(created.statusCode).toBe(200);
-    return created.json().match as Record<string, unknown>;
+    const match = created.json().match as Record<string, unknown>;
+    await acceptRequiredPlayerInvitations(String(match.id));
+    return match;
+  }
+
+  async function acceptRequiredPlayerInvitations(matchId: string) {
+    const match = await services.matches.getMatch(matchId);
+    for (const invitation of match?.invitations ?? []) {
+      if (invitation.kind === "player" && invitation.status === "pending") {
+        await services.matches.respondInvitation(invitation.id, invitation.invitedUserId, true);
+      }
+    }
   }
 
   async function getMatch(matchId: string) {

@@ -13,6 +13,31 @@ export type User = {
   onboardingCompletedAt?: string | null;
 };
 
+export type AdminUser = {
+  id: string;
+  email: string;
+  role: "admin" | "user";
+  status: "active" | "blocked";
+  mustChangePassword: boolean;
+  firstName: string;
+  lastName: string;
+  avatarKey?: string | null;
+  birthDate: string | null;
+  organizationText: string | null;
+  positionText: string | null;
+  createdAt: string;
+  lastLoginAt: string | null;
+};
+
+export type AdminUserUpdate = {
+  firstName?: string;
+  lastName?: string;
+  birthDate?: string | null;
+  organizationText?: string | null;
+  positionText?: string | null;
+  role?: "admin" | "user";
+};
+
 export type ProfileIdentity = {
   id: string;
   firstName: string;
@@ -123,6 +148,89 @@ export type MatchCreateOptions = {
   teams: Array<{ id: string; name: string; userIds: string[] }>;
   recentOpponentIds: string[];
   frequentOpponentIds: string[];
+};
+
+export type MatchInvitation = {
+  id: string;
+  matchId: string;
+  matchParticipantId: string | null;
+  participantSide: "A" | "B" | null;
+  invitedUserId: string;
+  invitedByUserId: string;
+  kind: "player" | "judge";
+  status: "pending" | "accepted" | "declined" | "expired" | "cancelled";
+  expiresAt: string;
+  respondedAt: string | null;
+  expiryReason: string | null;
+  createdAt: string;
+};
+
+export type MatchParticipantInput = {
+  id?: string;
+  side: "A" | "B";
+  userId?: string;
+  guestFirstName?: string;
+  guestLastName?: string;
+};
+
+export type MatchUpdatePayload = Partial<{
+  title: string;
+  format: "1v1" | "2v2";
+  pointsToWin: number;
+  mercyEnabled: boolean;
+  mercyPoints: number | null;
+  firstServerMethod: "random" | "manual" | "rally";
+  participants: MatchParticipantInput[];
+}>;
+
+export type TeamMember = {
+  id: string;
+  userId: string;
+  joinedAt: string;
+  displayName: string;
+  avatarKey: string | null;
+};
+
+export type TeamInvitation = {
+  id: string;
+  invitedUserId: string;
+  displayName?: string;
+  avatarKey?: string | null;
+  status: string;
+  expiresAt: string;
+  respondedAt: string | null;
+};
+
+export type Team = {
+  id: string;
+  name: string;
+  slogan: string | null;
+  welcomeText: string | null;
+  captainUserId: string;
+  status: "active" | "archived";
+  createdAt: string;
+  archivedAt: string | null;
+  members: TeamMember[];
+  isMember: boolean;
+  isCaptain: boolean;
+  invitations?: TeamInvitation[];
+};
+
+export type TournamentSummary = {
+  durationSeconds: number | null;
+  playedMatchCount: number;
+  results: Array<{
+    participantId: string;
+    points: number;
+    playedMatches: number;
+    place: number | null;
+  }>;
+  top3: string[];
+  matchParticipants: Array<{ matchId: string; participantIds: string[] }>;
+};
+
+export type Tournament = Record<string, unknown> & {
+  summary?: TournamentSummary;
 };
 
 export type HomeRanking = {
@@ -305,10 +413,13 @@ export const api = {
     }>(`/api/v1/users/directory${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   matchCreateOptions: () =>
     request<MatchCreateOptions>("/api/v1/matches/create-options"),
-  listUsers: (q?: string) =>
-    request<{ users: User[] }>(
-      `/api/v1/admin/users${q ? `?q=${encodeURIComponent(q)}` : ""}`,
-    ),
+  listUsers: (q?: string, status?: "active" | "blocked") => {
+    const query = new URLSearchParams();
+    if (q) query.set("q", q);
+    if (status) query.set("status", status);
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    return request<{ users: AdminUser[] }>(`/api/v1/admin/users${suffix}`);
+  },
   createUser: (payload: {
     email: string;
     firstName: string;
@@ -320,9 +431,14 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   updateUserRole: (userId: string, role: "admin" | "user") =>
-    request<{ user: User }>(`/api/v1/admin/users/${userId}`, {
+    request<{ user: AdminUser }>(`/api/v1/admin/users/${userId}`, {
       method: "PATCH",
       body: JSON.stringify({ role }),
+    }),
+  updateAdminUser: (userId: string, payload: AdminUserUpdate) =>
+    request<{ user: AdminUser }>(`/api/v1/admin/users/${userId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
     }),
   blockUser: (userId: string) =>
     request<{ ok: boolean }>(`/api/v1/admin/users/${userId}/block`, {
@@ -357,13 +473,41 @@ export const api = {
     }),
   listMatches: () =>
     request<{ matches: Array<Record<string, unknown>> }>("/api/v1/matches"),
-  createMatch: (payload: unknown) =>
+  createMatch: (payload: {
+    title: string;
+    format: "1v1" | "2v2";
+    pointsToWin: number;
+    mercyEnabled: boolean;
+    mercyPoints: number | null;
+    firstServerMethod: "random" | "manual" | "rally";
+    source: "manual" | "challenge" | "revenge";
+    judgeUserId?: string;
+    participants: MatchParticipantInput[];
+  }) =>
     request<{ match: Record<string, unknown> }>("/api/v1/matches", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
   getMatch: (id: string) =>
     request<{ match: Record<string, unknown> }>(`/api/v1/matches/${id}`),
+  updateMatch: (id: string, payload: MatchUpdatePayload) =>
+    request<{ match: Record<string, unknown> }>(`/api/v1/matches/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  createMatchInvitation: (
+    matchId: string,
+    payload: { userId: string; kind: "player" | "judge" },
+  ) =>
+    request<{ invitation: MatchInvitation }>(`/api/v1/matches/${matchId}/invitations`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  respondMatchInvitation: (invitationId: string, accept: boolean) =>
+    request<{ invitation: MatchInvitation }>(
+      `/api/v1/match-invitations/${invitationId}/${accept ? "accept" : "decline"}`,
+      { method: "POST", body: JSON.stringify({}) },
+    ),
   startMatch: (id: string, body?: { firstServerParticipantId?: string }) =>
     request<{ match: Record<string, unknown> }>(
       `/api/v1/matches/${id}/start`,
@@ -510,7 +654,7 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getTournament: (id: string) =>
-    request<{ tournament: Record<string, unknown> }>(
+    request<{ tournament: Tournament }>(
       `/api/v1/tournaments/${id}`,
     ),
   addTournamentParticipant: (id: string, payload: unknown) =>
@@ -526,8 +670,18 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload ?? {}),
     }),
-  patchTournament: (id: string, payload: unknown) =>
-    request<{ tournament: Record<string, unknown> }>(
+  patchTournament: (
+    id: string,
+    payload: {
+      title?: string;
+      format?: "single_elimination" | "double_elimination";
+      organizerParticipates?: boolean;
+      pointsToWin?: number;
+      mercyEnabled?: boolean;
+      mercyPoints?: number;
+    },
+  ) =>
+    request<{ tournament: Tournament }>(
       `/api/v1/tournaments/${id}`,
       { method: "PATCH", body: JSON.stringify(payload) },
     ),
@@ -577,12 +731,48 @@ export const api = {
       { method: "POST" },
     ),
   listTeams: () =>
-    request<{ teams: Array<Record<string, unknown>> }>("/api/v1/teams"),
-  createTeam: (payload: unknown) =>
-    request<{ team: Record<string, unknown> }>("/api/v1/teams", {
+    request<{ teams: Team[] }>("/api/v1/teams"),
+  createTeam: (payload: { name: string; slogan?: string; welcomeText?: string }) =>
+    request<{ team: Team }>("/api/v1/teams", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  getTeam: (id: string) =>
+    request<{ team: Team }>(`/api/v1/teams/${id}`),
+  updateTeam: (
+    id: string,
+    payload: { name?: string; slogan?: string; welcomeText?: string },
+  ) =>
+    request<{ team: Team }>(`/api/v1/teams/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  inviteTeamMember: (id: string, userId: string) =>
+    request<{ invitation: TeamInvitation }>(`/api/v1/teams/${id}/invitations`, {
+      method: "POST",
+      body: JSON.stringify({ userId }),
+    }),
+  leaveTeam: (id: string) =>
+    request<{ team: Team }>(`/api/v1/teams/${id}/leave`, { method: "POST" }),
+  removeTeamMember: (id: string, userId: string) =>
+    request<{ team: Team }>(`/api/v1/teams/${id}/members/${userId}`, {
+      method: "DELETE",
+    }),
+  transferTeamCaptain: (id: string, userId: string) =>
+    request<{ team: Team }>(`/api/v1/teams/${id}/captain-transfer`, {
+      method: "POST",
+      body: JSON.stringify({ userId }),
+    }),
+  acceptTeamInvitation: (invitationId: string) =>
+    request<{ status: string; teamId: string }>(
+      `/api/v1/team-invitations/${invitationId}/accept`,
+      { method: "POST" },
+    ),
+  declineTeamInvitation: (invitationId: string) =>
+    request<{ status: string; teamId: string }>(
+      `/api/v1/team-invitations/${invitationId}/decline`,
+      { method: "POST" },
+    ),
   notifications: () =>
     request<{ notifications: Array<Record<string, unknown>> }>(
       "/api/v1/notifications",
@@ -600,7 +790,12 @@ export const api = {
       body: JSON.stringify({ notificationIds }),
     }),
   respondTeamInvitation: (invitationId: string, accept: boolean) =>
-    request<{ ok?: boolean; team?: Record<string, unknown> }>(
+    request<{
+      ok?: boolean;
+      team?: Record<string, unknown>;
+      status?: string;
+      teamId?: string;
+    }>(
       `/api/v1/team-invitations/${invitationId}/respond`,
       {
         method: "POST",

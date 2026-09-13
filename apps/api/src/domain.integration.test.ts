@@ -79,6 +79,14 @@ describe("match and judge integration", () => {
     if (close) await close();
   });
 
+  // These domain fixtures model players who have agreed to participate.
+  async function acceptFixturePlayers(matchId: string) {
+    const match = await services.matches.getMatch(matchId);
+    for (const invitation of match!.invitations.filter(row => row.kind === "player" && row.status === "pending")) {
+      await services.matches.respondInvitation(invitation.id, invitation.invitedUserId, true);
+    }
+  }
+
   it("INT_match__get_after_create_returns_activeJudge", async () => {
     const created = await app.inject({
       method: "POST",
@@ -97,6 +105,7 @@ describe("match and judge integration", () => {
     expect(created.statusCode).toBe(200);
     expect(created.json().match.activeJudge).toBeNull();
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
 
     const detail = await app.inject({
       method: "GET",
@@ -125,6 +134,7 @@ describe("match and judge integration", () => {
     });
     expect(created.statusCode).toBe(200);
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
 
     await app.inject({
       method: "POST",
@@ -205,6 +215,7 @@ describe("match and judge integration", () => {
       },
     });
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
     await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
@@ -243,6 +254,7 @@ describe("match and judge integration", () => {
       },
     });
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
     await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
@@ -295,6 +307,7 @@ describe("match and judge integration", () => {
       },
     });
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
     await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
@@ -397,6 +410,7 @@ describe("match and judge integration", () => {
       },
     });
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
     await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
@@ -436,6 +450,7 @@ describe("match and judge integration", () => {
       },
     });
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
     await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
@@ -489,6 +504,7 @@ describe("match and judge integration", () => {
       },
     });
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
     await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
@@ -552,6 +568,7 @@ describe("match and judge integration", () => {
       },
     });
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
     await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
@@ -624,6 +641,7 @@ describe("match and judge integration", () => {
       },
     });
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
     const participants = created.json().match.participants as Array<{
       id: string;
       side: string;
@@ -1361,6 +1379,7 @@ describe("match and judge integration", () => {
       },
     });
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
 
     const force = await app.inject({
       method: "POST",
@@ -1394,6 +1413,7 @@ describe("match and judge integration", () => {
       },
     });
     const stuckId = stuck.json().match.id as string;
+    await acceptFixturePlayers(stuckId);
     await app.inject({
       method: "POST",
       url: `/api/v1/matches/${stuckId}/start`,
@@ -1416,6 +1436,7 @@ describe("match and judge integration", () => {
       },
     });
     const nextId = next.json().match.id as string;
+    await acceptFixturePlayers(nextId);
     const busy = await app.inject({
       method: "POST",
       url: `/api/v1/matches/${nextId}/start`,
@@ -1619,6 +1640,7 @@ describe("match and judge integration", () => {
       },
     });
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
     await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
@@ -1701,6 +1723,7 @@ describe("match and judge integration", () => {
       },
     });
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
     await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
@@ -2052,6 +2075,7 @@ describe("match and judge integration", () => {
       },
     });
     const matchId = created.json().match.id as string;
+    await acceptFixturePlayers(matchId);
 
     const cancel = await app.inject({
       method: "POST",

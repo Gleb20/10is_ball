@@ -65,3 +65,10 @@ describe("bracket-load", () => {
     expect(next[0]).not.toBe(g.seedOrder[0]);
   });
 });
+
+it("GAP-006 swaps either seed position, including a seed with a bye, and rejects invalid positions", () => {
+  const graph = generateSingleEliminationV2({ seedOrder: ["a", "b", "c", "d", "e"], thirdPlaceEnabled: true });
+  expect(swapSeedOrderByMatchIds(graph, graph.seedOrder, "seed:2", "seed:5")).toEqual(["a", "e", "c", "d", "b"]);
+  expect(() => swapSeedOrderByMatchIds(graph, graph.seedOrder, "seed:0", "seed:1")).toThrow(expect.objectContaining({ code: "VALIDATION" }));
+  expect(() => swapSeedOrderByMatchIds(graph, graph.seedOrder, "missing", "seed:1")).toThrow(expect.objectContaining({ code: "VALIDATION" }));
+});

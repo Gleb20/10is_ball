@@ -24,6 +24,15 @@ function namedConnection(name: string): NamedConnection {
   return { client, db, service: new MatchService(db, clock) };
 }
 
+async function acceptRequiredPlayerInvitations(service: MatchService, matchId: string) {
+  const match = await service.getMatch(matchId);
+  for (const invitation of match?.invitations ?? []) {
+    if (invitation.kind === "player" && invitation.status === "pending") {
+      await service.respondInvitation(invitation.id, invitation.invitedUserId, true);
+    }
+  }
+}
+
 async function waitUntilBlocked(observer: Sql, applicationName: string) {
   for (let attempt = 0; attempt < 1_000; attempt += 1) {
     const [row] = await observer<{ blocked: boolean }[]>`
@@ -126,6 +135,7 @@ describe("GAP-005 PostgreSQL judge serialization", () => {
         { side: "B", userId: userB.id },
       ],
     });
+    await acceptRequiredPlayerInvitations(services.matches, match!.id);
     await services.matches.startMatch(match!.id, userA.id, match!.participants[0]!.id);
     const session = await services.matches.acquireJudge({
       matchId: match!.id,
@@ -157,6 +167,10 @@ describe("GAP-005 PostgreSQL judge serialization", () => {
         { side: "B", userId: userB.id },
       ],
     });
+    await Promise.all([
+      acceptRequiredPlayerInvitations(services.matches, first!.id),
+      acceptRequiredPlayerInvitations(services.matches, second!.id),
+    ]);
     const left = namedConnection("gap005-start-left");
     const right = namedConnection("gap005-start-right");
     extraClients.push(left.client, right.client);

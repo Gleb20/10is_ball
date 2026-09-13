@@ -14,9 +14,13 @@ import {
   AwardPointRequestSchema,
   CancelMatchRequestSchema,
   CreateMatchRequestSchema,
+  UpdateMatchRequestSchema,
+  MatchInvitationRequestSchema,
   JudgeHandoverRequestSchema,
   ManualCorrectionRequestSchema,
   NoShowRequestSchema,
+  TeamCreateRequestSchema,
+  TeamUpdateRequestSchema,
   JudgeSetupRequestSchema,
   MatchVersionRequestSchema,
   StartMatchRequestSchema,
@@ -58,6 +62,23 @@ const NotificationReadVisibleSchema = z.object({
   notificationIds: z.array(z.string().uuid()).min(1).max(100),
 });
 
+const TournamentCreateSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  format: z.enum(["single_elimination", "double_elimination"]).optional(),
+  organizerParticipates: z.boolean().optional(),
+  pointsToWin: z.number().int().min(1).optional(),
+  mercyEnabled: z.boolean().optional(),
+  mercyPoints: z.number().int().min(1).nullable().optional(),
+}).strict();
+const TournamentPatchSchema = TournamentCreateSchema.partial().refine((value) => Object.keys(value).length > 0, "At least one field is required");
+const TournamentStopSchema = z.object({
+  code: z.string().trim().min(1).max(100),
+  text: z.string().trim().max(500).optional(),
+}).strict().refine((value) => value.code !== "other" || Boolean(value.text), "Specify the stop reason");
+const TournamentBracketPatchSchema = z.object({
+  swaps: z.array(z.object({ slotIdA: z.string().min(1).max(100), slotIdB: z.string().min(1).max(100) }).strict()).max(100).optional(),
+}).strict();
+
 const ProfileUpdateSchema = z
   .object({
     firstName: z.string().trim().min(1).max(100).optional(),
@@ -72,6 +93,18 @@ const ProfileUpdateSchema = z
     positionText: z.union([z.string().trim().max(200), z.null()]).optional(),
   })
   .strict();
+const AdminUsersQuerySchema = z
+  .object({
+    q: z.string().trim().max(100).optional(),
+    status: z.enum(["active", "blocked"]).optional(),
+  })
+  .strict();
+const AdminUserParamsSchema = z.object({ userId: z.string().uuid() }).strict();
+const AdminUserPatchSchema = ProfileUpdateSchema.extend({
+  role: z.enum(["admin", "user"]).optional(),
+}).refine((value) => Object.keys(value).length > 0, {
+  message: "At least one field is required",
+});
 
 const HistoryQuerySchema = z
   .object({
@@ -184,11 +217,14 @@ export async function buildApp(opts: {
   matches.setTournamentMatchFinishedHook((matchId, db) =>
     tournaments.onMatchFinished(matchId, db),
   );
+  const auth = new AuthService(opts.db, clock);
+  const teams = new TeamService(opts.db, clock);
+  auth.setUserBlockedHook((userId, db) => teams.transferCaptainOnBlock(userId, db));
   const services: AppServices = {
-    auth: new AuthService(opts.db, clock),
+    auth,
     matches,
     tournaments,
-    teams: new TeamService(opts.db, clock),
+    teams,
     notifications: new NotificationService(opts.db, clock),
     help: new HelpService(opts.db),
     home: new HomeService(opts.db, clock, matches, tournaments),
@@ -538,21 +574,13 @@ export async function buildApp(opts: {
   app.get(
     "/api/v1/admin/users",
     { preHandler: requireAdmin },
-    async (req) => {
-      const q = (req.query as { q?: string }).q;
-      const list = await services.auth.listUsers(q);
-      return {
-        users: list.map((u: typeof users.$inferSelect) => ({
-          id: u.id,
-          email: u.email,
-          role: u.role,
-          status: u.status,
-          firstName: u.firstName,
-          lastName: u.lastName,
-          mustChangePassword: u.mustChangePassword,
-          createdAt: u.createdAt,
-        })),
-      };
+    async (req, reply) => {
+      try {
+        const query = parseBody(AdminUsersQuerySchema, req.query);
+        return { users: await services.auth.listAdminUsers(query) };
+      } catch (error) {
+        return sendError(reply, error);
+      }
     },
   );
 
@@ -595,19 +623,13 @@ export async function buildApp(opts: {
     "/api/v1/admin/users/:userId",
     { preHandler: requireAdmin },
     async (req, reply) => {
-      const { userId } = req.params as { userId: string };
-      const body = req.body as { role?: "admin" | "user" };
-      if (body?.role !== "admin" && body?.role !== "user") {
-        return reply.code(400).send({
-          code: "VALIDATION",
-          message: "role должен быть admin или user",
-        });
-      }
       try {
-        const user = await services.auth.updateUserRole(
+        const { userId } = parseBody(AdminUserParamsSchema, req.params);
+        const body = parseBody(AdminUserPatchSchema, req.body);
+        const user = await services.auth.updateAdminUser(
           req.authUser!.id,
           userId,
-          body.role,
+          body,
         );
         return { user };
       } catch (e) {
@@ -630,7 +652,13 @@ export async function buildApp(opts: {
             message: "Пользователь не найден",
           });
         }
-        throw e;
+        if (err.code === "FORBIDDEN") {
+          return reply.code(403).send({
+            code: "FORBIDDEN",
+            message: "Недостаточно прав",
+          });
+        }
+        return sendError(reply, e);
       }
     },
   );
@@ -642,7 +670,6 @@ export async function buildApp(opts: {
       const { userId } = req.params as { userId: string };
       try {
         await services.auth.blockUser(req.authUser!.id, userId);
-        await services.teams.transferCaptainOnBlock(userId);
         return { ok: true };
       } catch (e) {
         const err = e as { code?: string };
@@ -840,6 +867,35 @@ export async function buildApp(opts: {
     } catch (e) {
       return sendError(reply, e);
     }
+  });
+
+  app.patch("/api/v1/matches/:matchId", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { matchId } = parseBody(z.object({ matchId: z.string().uuid() }), req.params);
+      const body = parseBody(UpdateMatchRequestSchema, req.body);
+      return { match: await services.matches.updateWaitingMatch(matchId, req.authUser!.id, body) };
+    } catch (error) { return sendError(reply, error); }
+  });
+  app.post("/api/v1/matches/:matchId/invitations", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { matchId } = parseBody(z.object({ matchId: z.string().uuid() }), req.params);
+      const body = parseBody(MatchInvitationRequestSchema, req.body);
+      return { invitation: await services.matches.createInvitation(matchId, req.authUser!.id, body) };
+    } catch (error) { return sendError(reply, error); }
+  });
+  app.post("/api/v1/match-invitations/:id/accept", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { id } = parseBody(z.object({ id: z.string().uuid() }), req.params);
+      parseBody(z.object({}).strict().default({}), req.body);
+      return { invitation: await services.matches.respondInvitation(id, req.authUser!.id, true) };
+    } catch (error) { return sendError(reply, error); }
+  });
+  app.post("/api/v1/match-invitations/:id/decline", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { id } = parseBody(z.object({ id: z.string().uuid() }), req.params);
+      parseBody(z.object({}).strict().default({}), req.body);
+      return { invitation: await services.matches.respondInvitation(id, req.authUser!.id, false) };
+    } catch (error) { return sendError(reply, error); }
   });
 
   app.get(
@@ -1275,14 +1331,7 @@ export async function buildApp(opts: {
     { preHandler: requireAuth },
     async (req, reply) => {
       try {
-        const body = req.body as {
-          title: string;
-          format?: "single_elimination" | "double_elimination";
-          organizerParticipates?: boolean;
-          pointsToWin?: number;
-          mercyEnabled?: boolean;
-          mercyPoints?: number | null;
-        };
+        const body = parseBody(TournamentCreateSchema, req.body);
         const tournament = await services.tournaments.create({
           title: body.title,
           format: body.format ?? "single_elimination",
@@ -1324,20 +1373,9 @@ export async function buildApp(opts: {
     { preHandler: requireAuth },
     async (req, reply) => {
       try {
-        const { id } = req.params as { id: string };
-        const body = req.body as Record<string, unknown>;
-        const tournament = await services.tournaments.patch(
-          id,
-          req.authUser!.id,
-          body as {
-            title?: string;
-            format?: "single_elimination" | "double_elimination";
-            organizerParticipates?: boolean;
-            pointsToWin?: number;
-            mercyEnabled?: boolean;
-            mercyPoints?: number | null;
-          },
-        );
+        const { id } = parseBody(z.object({ id: z.string().uuid() }), req.params);
+        const body = parseBody(TournamentPatchSchema, req.body);
+        const tournament = await services.tournaments.patch(id, req.authUser!.id, body);
         return { tournament };
       } catch (e) {
         return sendError(reply, e);
@@ -1474,10 +1512,8 @@ export async function buildApp(opts: {
     { preHandler: requireAuth },
     async (req, reply) => {
       try {
-        const { id } = req.params as { id: string };
-        const body = req.body as {
-          swaps?: Array<{ slotIdA: string; slotIdB: string }>;
-        };
+        const { id } = parseBody(z.object({ id: z.string().uuid() }), req.params);
+        const body = parseBody(TournamentBracketPatchSchema, req.body ?? {});
         const result = await services.tournaments.patchBracket(
           id,
           req.authUser!.id,
@@ -1563,8 +1599,8 @@ export async function buildApp(opts: {
     { preHandler: requireAuth },
     async (req, reply) => {
       try {
-        const { id } = req.params as { id: string };
-        const body = (req.body as { code?: string; text?: string }) ?? {};
+        const { id } = parseBody(z.object({ id: z.string().uuid() }), req.params);
+        const body = parseBody(TournamentStopSchema, req.body);
         const tournament = await services.tournaments.stop(
           id,
           req.authUser!.id,
@@ -1578,63 +1614,81 @@ export async function buildApp(opts: {
   );
 
   // --- Teams ---
+  const teamIdParams = z.object({ id: z.string().uuid() });
+  const teamUserBody = z.object({ userId: z.string().uuid() }).strict();
   app.get("/api/v1/teams", { preHandler: requireAuth }, async (req) => {
-    const list = await services.teams.listForUser(req.authUser!.id);
-    return { teams: list };
+    return { teams: await services.teams.listForUser(req.authUser!.id) };
   });
-
-  app.post("/api/v1/teams", { preHandler: requireAuth }, async (req) => {
-    const body = req.body as {
-      name: string;
-      slogan?: string;
-      welcomeText?: string;
-    };
-    const team = await services.teams.create({
-      name: body.name,
-      captainUserId: req.authUser!.id,
-      slogan: body.slogan,
-      welcomeText: body.welcomeText,
-    });
-    return { team };
+  app.post("/api/v1/teams", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const body = parseBody(TeamCreateRequestSchema, req.body);
+      const team = await services.teams.create({ ...body, captainUserId: req.authUser!.id });
+      return { team: await services.teams.getForUser(team!.id, req.authUser!.id) };
+    } catch (error) { return sendError(reply, error); }
   });
-
-  app.post(
-    "/api/v1/teams/:id/invite",
-    { preHandler: requireAuth },
-    async (req, reply) => {
-      try {
-        const { id } = req.params as { id: string };
-        const body = req.body as { userId: string };
-        const invitation = await services.teams.invite({
-          teamId: id,
-          invitedUserId: body.userId,
-          invitedByUserId: req.authUser!.id,
-        });
-        return { invitation };
-      } catch (e) {
-        return sendError(reply, e);
-      }
-    },
-  );
-
-  app.post(
-    "/api/v1/team-invitations/:id/respond",
-    { preHandler: requireAuth },
-    async (req, reply) => {
-      try {
-        const { id } = req.params as { id: string };
-        const body = req.body as { accept: boolean };
-        const result = await services.teams.respondInvitation({
-          invitationId: id,
-          userId: req.authUser!.id,
-          accept: body.accept,
-        });
-        return result;
-      } catch (e) {
-        return sendError(reply, e);
-      }
-    },
-  );
+  app.get("/api/v1/teams/:id", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { id } = parseBody(teamIdParams, req.params);
+      return { team: await services.teams.getForUser(id, req.authUser!.id) };
+    } catch (error) { return sendError(reply, error); }
+  });
+  app.patch("/api/v1/teams/:id", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { id } = parseBody(teamIdParams, req.params);
+      const body = parseBody(TeamUpdateRequestSchema, req.body);
+      return { team: await services.teams.update(id, req.authUser!.id, body) };
+    } catch (error) { return sendError(reply, error); }
+  });
+  const inviteTeam = async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { id } = parseBody(teamIdParams, req.params);
+      const body = parseBody(teamUserBody, req.body);
+      return { invitation: await services.teams.invite({ teamId: id, invitedUserId: body.userId, invitedByUserId: req.authUser!.id }) };
+    } catch (error) { return sendError(reply, error); }
+  };
+  app.post("/api/v1/teams/:id/invite", { preHandler: requireAuth }, inviteTeam);
+  app.post("/api/v1/teams/:id/invitations", { preHandler: requireAuth }, inviteTeam);
+  app.post("/api/v1/team-invitations/:id/respond", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { id } = parseBody(teamIdParams, req.params);
+      const body = parseBody(z.object({ accept: z.boolean() }).strict(), req.body);
+      return await services.teams.respondInvitation({ invitationId: id, userId: req.authUser!.id, accept: body.accept });
+    } catch (error) { return sendError(reply, error); }
+  });
+  app.post("/api/v1/team-invitations/:id/accept", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { id } = parseBody(teamIdParams, req.params);
+      parseBody(z.object({}).strict(), req.body ?? {});
+      return await services.teams.respondInvitation({ invitationId: id, userId: req.authUser!.id, accept: true });
+    } catch (error) { return sendError(reply, error); }
+  });
+  app.post("/api/v1/team-invitations/:id/decline", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { id } = parseBody(teamIdParams, req.params);
+      parseBody(z.object({}).strict(), req.body ?? {});
+      return await services.teams.respondInvitation({ invitationId: id, userId: req.authUser!.id, accept: false });
+    } catch (error) { return sendError(reply, error); }
+  });
+  app.post("/api/v1/teams/:id/leave", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { id } = parseBody(teamIdParams, req.params);
+      parseBody(z.object({}).strict(), req.body ?? {});
+      return { team: await services.teams.leave(id, req.authUser!.id) };
+    } catch (error) { return sendError(reply, error); }
+  });
+  app.delete("/api/v1/teams/:id/members/:userId", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { id, userId } = parseBody(z.object({ id: z.string().uuid(), userId: z.string().uuid() }), req.params);
+      return { team: await services.teams.removeMember(id, req.authUser!.id, userId) };
+    } catch (error) { return sendError(reply, error); }
+  });
+  app.post("/api/v1/teams/:id/captain-transfer", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { id } = parseBody(teamIdParams, req.params);
+      const body = parseBody(teamUserBody, req.body);
+      return { team: await services.teams.transferCaptain(id, req.authUser!.id, body.userId) };
+    } catch (error) { return sendError(reply, error); }
+  });
 
   // --- Notifications / Help ---
   app.get(
@@ -1685,14 +1739,12 @@ export async function buildApp(opts: {
   app.post(
     "/api/v1/feedback",
     { preHandler: requireAuth },
-    async (req) => {
-      const body = req.body as { kind: string; message: string };
-      const feedback = await services.help.submitFeedback({
-        userId: req.authUser!.id,
-        kind: body.kind,
-        message: body.message,
-      });
-      return { feedback };
+    async (req, reply) => {
+      try {
+        const body = parseBody(z.object({ kind: z.enum(["bug", "idea", "question", "other"]), message: z.string().trim().min(1).max(4000) }).strict(), req.body);
+        const feedback = await services.help.submitFeedback({ userId: req.authUser!.id, ...body });
+        return { feedback };
+      } catch (error) { return sendError(reply, error); }
     },
   );
 
@@ -1701,6 +1753,8 @@ export async function buildApp(opts: {
 
 function messageFor(code: string): string {
   const map: Record<string, string> = {
+    PLAYER_CONSENT_REQUIRED: "Дождитесь согласия всех приглашённых игроков",
+    INVITATION_EXPIRED: "Срок приглашения истёк. Попросите организатора отправить новое",
     INVALID_CREDENTIALS: "Неверный email или пароль",
     ACCOUNT_BLOCKED: "Аккаунт заблокирован",
     RATE_LIMITED: "Слишком много попыток",
@@ -1715,7 +1769,11 @@ function messageFor(code: string): string {
     FORBIDDEN: "Недостаточно прав",
     JUDGE_TAKEN: "Судейская сессия занята",
     JUDGE_RESERVED: "Слот судьи зарезервирован для другого пользователя",
+    TEAM_ARCHIVED: "Команда в архиве: доступен только просмотр",
+    MEMBER_NOT_FOUND: "Активный участник команды не найден",
+    CAPTAIN_TRANSFER_REQUIRED: "Сначала передайте капитанство другому участнику",
     JUDGE_BUSY: "Вы уже судите другой матч",
+    JUDGE_OTHER_DEVICE: "Вы уже судите с другого устройства. Освободите там слот судьи, чтобы продолжить здесь",
     JUDGE_NOT_ACTIVE: "Слот судьи больше не активен",
     JUDGE_REQUIRED: "Требуется судейская сессия",
     CSRF_INVALID: "Недействительный CSRF-токен",
@@ -1869,6 +1927,7 @@ function sendError(reply: FastifyReply, e: unknown) {
     "MATCH_IMMUTABLE",
     "VALIDATION",
     "EXPIRED",
+    "INVITATION_EXPIRED",
     "USE_MATCH",
     "ALREADY_IN_TOURNAMENT",
     "NOT_A_PARTICIPANT",
@@ -1880,8 +1939,10 @@ function sendError(reply: FastifyReply, e: unknown) {
         ? 403
         : code === "INTERNAL"
           ? 500
-          : code === "VERSION_CONFLICT" ||
+          : code === "PLAYER_CONSENT_REQUIRED" ||
+              code === "VERSION_CONFLICT" ||
               code === "JUDGE_TAKEN" ||
+              code === "JUDGE_OTHER_DEVICE" ||
               code === "JUDGE_RESERVED" ||
               code === "JUDGE_NOT_ACTIVE" ||
               code === "BRACKET_VERSION_CONFLICT" ||

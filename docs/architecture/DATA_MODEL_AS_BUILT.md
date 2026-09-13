@@ -14,6 +14,7 @@ forward migrations на **2026-09-13**. Целевая модель в
 | `temporary_password_issues` | выдача/потребление временного пароля | user + issuing admin |
 | `matches` | правила, score snapshot, lifecycle | creator; optional tournament; JSON event log/idempotency keys; `first_server_method`, `source` |
 | `match_participants` | стороны A/B, user или guest | guest хранится в строке; constraints «ровно один тип» недостаточны |
+| `match_invitations` | historical player/judge consent | match/user/inviter FKs; historical participant UUID without FK, saved side, pending uniqueness and 10-minute TTL |
 | `match_void_audits` | append-only ledger коррекции результата | unique match/key; actor, prior result/events/version, reason и compensation; trigger запрещает update/delete |
 | `judge_sessions` | judge lock/heartbeat/expiry | match, user, auth session, optional `reserved_for_user_id`; active match/user/reservation exclusivity app/SQL |
 | `tournaments` | config/lifecycle/bracket | bracket JSON, DB-only bracket version, construction algorithm |
@@ -47,8 +48,8 @@ Migration set содержит immutable
 [`0000_data_003_baseline.sql`](../../apps/api/drizzle/0000_data_003_baseline.sql)
 и forward-only migrations [`0001_data_005_match_void.sql`](../../apps/api/drizzle/0001_data_005_match_void.sql),
 `0002_data_004_invitation_membership_races.sql`, `0003_bug_012_onboarding_resume.sql`
-и `0004_gap_005_match_judge_flows.sql`:
-18 public tables и Drizzle ledger в отдельной schema `drizzle`. API startup не
+`0004_gap_005_match_judge_flows.sql` и `0005_gap_008_match_consent.sql`:
+19 public tables и Drizzle ledger в отдельной schema `drizzle`. API startup не
 выполняет DDL и допускает только точный известный ledger prefix; более новые
 trailing migrations разрешены лишь для запуска предыдущего совместимого API при
 rollback. После explicit migration требуется exact ledger и полный catalog
@@ -102,3 +103,20 @@ preserving historical judge/profile counts. Claim activates the reserved row.
 New finish confirmation adds `finish-confirmed:<sha256(judge-session-id)>` to the
 existing match `idempotency_keys` JSON array; no additional schema migration is
 needed. This marker records retry provenance rather than a client idempotency key.
+
+Wave D team lifecycle uses the existing membership, invitation and team schema; no migration
+is required. User blocking and captain succession/archive share one transaction. User locks
+precede team locks for create/invite/accept so a block cannot race in a new active membership
+or sole captain. Captain removal/leave requires prior transfer; memberships are retained for
+history. Archived teams cancel pending invitations and disappear from active team pickers.
+Tournament summary is derived from persisted bracket and actual match scores; it adds no
+stored leaderboard and excludes voided match statistics while preserving D33 bracket places.
+
+### Wave E candidate persistence
+
+Migration0005 creates consent history without a legacy backfill. Removing a prestart
+roster row retains the historical participant UUID and side; pending history becomes
+cancelled. Accepted consent is usable only by the unchanged current row. Match,
+invitation and user locks serialize responses, retries and starts; tested concurrent
+accept/start and reinvite produce one persisted outcome and one pending notification.
+PGlite migration21/21 and focused PostgreSQL2/2 passed; full PostgreSQL gate pending.

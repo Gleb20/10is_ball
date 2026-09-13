@@ -1,6 +1,7 @@
 import {
   useCallback,
   useLayoutEffect,
+  useId,
   useRef,
   useState,
   type CSSProperties,
@@ -25,6 +26,7 @@ type Props = {
   matches: BracketMatchLike[];
   avatars?: Map<string, string | null> | Record<string, string | null>;
   seeds?: Map<string, number | null> | Record<string, number | null>;
+  highlightedParticipantIds?: ReadonlySet<string>;
 } & (
   | { bracket: Bracket; graph?: undefined }
   | { graph: BracketGraphV2; bracket?: undefined }
@@ -65,10 +67,12 @@ function PlayerRow({
   card,
   side,
   scoreDigit,
+  highlightedParticipantIds,
 }: {
   card: BracketCard;
   side: "a" | "b";
   scoreDigit: string | null;
+  highlightedParticipantIds?: ReadonlySet<string>;
 }) {
   const slot = side === "a" ? card.slotA : card.slotB;
   return (
@@ -76,6 +80,9 @@ function PlayerRow({
       className={[
         "tournament-bracket__player",
         slot.isBye ? "tournament-bracket__player--bye" : "",
+        slot.participantId && highlightedParticipantIds?.has(slot.participantId)
+          ? "tournament-bracket__player--current"
+          : "",
         slot.isWinner ? "tournament-bracket__player--winner" : "",
         card.decided && !slot.isWinner && !slot.isBye
           ? "tournament-bracket__player--loser"
@@ -91,7 +98,8 @@ function PlayerRow({
           variant="tonal"
           src={avatarSrc(slot.avatarKey)}
           initials={initialsFromName(slot.displayName)}
-          alt={slot.displayName}
+          alt=""
+          aria-hidden="true"
         />
       ) : (
         <span className="tournament-bracket__bye-mark">BYE</span>
@@ -113,9 +121,11 @@ function PlayerRow({
 function MatchCard({
   card,
   registerCard,
+  highlightedParticipantIds,
 }: {
   card: BracketCard;
   registerCard: (key: string, el: HTMLElement | null) => void;
+  highlightedParticipantIds?: ReadonlySet<string>;
 }) {
   const navigate = useNavigate();
   const scoreParts = card.scoreLabel?.split(":") ?? null;
@@ -143,11 +153,13 @@ function MatchCard({
         card={card}
         side="a"
         scoreDigit={scoreParts?.[0] ?? null}
+        highlightedParticipantIds={highlightedParticipantIds}
       />
       <PlayerRow
         card={card}
         side="b"
         scoreDigit={scoreParts?.[1] ?? null}
+        highlightedParticipantIds={highlightedParticipantIds}
       />
       <div className="tournament-bracket__cta">
         {card.cta === "bye" ? (
@@ -163,6 +175,7 @@ function MatchCard({
         {card.cta === "judge" && card.matchId ? (
           <Button
             size="sm"
+            aria-label={`Судить: ${card.slotA.displayName} — ${card.slotB.displayName}`}
             onClick={() => navigate(`/matches/${card.matchId}/judge`)}
           >
             Судить
@@ -172,6 +185,7 @@ function MatchCard({
           <Button
             size="sm"
             variant="secondary"
+            aria-label={`Открыть: ${card.slotA.displayName} — ${card.slotB.displayName}`}
             onClick={() => navigate(`/matches/${card.matchId}`)}
           >
             Открыть
@@ -262,8 +276,25 @@ function BandConnectors({
   );
 }
 
-function BracketBandView({ band }: { band: BracketBand }) {
+function BracketBandView({
+  band,
+  highlightedParticipantIds,
+}: {
+  band: BracketBand;
+  highlightedParticipantIds?: ReadonlySet<string>;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const headingId = useId();
+  const [zoom, setZoom] = useState(100);
+  const [edges, setEdges] = useState({ start: true, end: false });
+  const updateEdges = useCallback(() => {
+    const scroll = scrollRef.current;
+    if (scroll) setEdges({ start: scroll.scrollLeft <= 1, end: scroll.scrollLeft + scroll.clientWidth >= scroll.scrollWidth - 1 });
+  }, []);
+  function scrollRound(direction: number) {
+    const scroll = scrollRef.current;
+    scroll?.scrollBy({ left: direction * (220 * zoom / 100 + 48), behavior: "auto" });
+  }
   const columnsRef = useRef<HTMLDivElement>(null);
   const cardEls = useRef(new Map<string, HTMLElement>()).current;
   const [revision, setRevision] = useState(0);
@@ -279,7 +310,7 @@ function BracketBandView({ band }: { band: BracketBand }) {
   useLayoutEffect(() => {
     const root = columnsRef.current;
     if (!root) return;
-    const bump = () => setRevision((n) => n + 1);
+    const bump = () => { setRevision((n) => n + 1); updateEdges(); };
     bump();
     const ro = new ResizeObserver(bump);
     ro.observe(root);
@@ -292,14 +323,31 @@ function BracketBandView({ band }: { band: BracketBand }) {
       scroll?.removeEventListener("scroll", bump);
       window.removeEventListener("resize", bump);
     };
-  }, [band, cardEls]);
+  }, [band, cardEls, updateEdges, zoom]);
 
   return (
     <section
       className={`tournament-bracket__band tournament-bracket__band--${band.id}`}
     >
-      <h3 className="tournament-bracket__band-title">{band.title}</h3>
-      <div className="tournament-bracket__scroll" ref={scrollRef}>
+      <h3 id={headingId} className="tournament-bracket__band-title">{band.title}</h3>
+      <div className="row tournament-bracket__navigation" role="group" aria-label={`Навигация: ${band.title}`}>
+        <Button variant="secondary" disabled={edges.start} onClick={() => scrollRound(-1)} aria-label={`Предыдущий раунд: ${band.title}`}>←</Button>
+        <Button variant="secondary" disabled={edges.end} onClick={() => scrollRound(1)} aria-label={`Следующий раунд: ${band.title}`}>→</Button>
+        <Button variant="secondary" disabled={zoom === 100} onClick={() => setZoom((value) => Math.max(100, value - 25))} aria-label={`Уменьшить сетку: ${band.title}`}>−</Button>
+        <output aria-label={`Масштаб: ${band.title}`}>{zoom}%</output>
+        <Button variant="secondary" disabled={zoom === 150} onClick={() => setZoom((value) => Math.min(150, value + 25))} aria-label={`Увеличить сетку: ${band.title}`}>+</Button>
+      </div>
+      <div className="tournament-bracket__scroll" ref={scrollRef} role="region" aria-labelledby={headingId} tabIndex={0}
+        style={{ "--bracket-scale": zoom / 100 } as CSSProperties}
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return;
+          if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+            event.preventDefault(); scrollRound(event.key === "ArrowRight" ? 1 : -1);
+          } else if (event.key === "Home" || event.key === "End") {
+            event.preventDefault(); event.currentTarget.scrollLeft = event.key === "Home" ? 0 : event.currentTarget.scrollWidth;
+          }
+        }}
+      >
         <div className="tournament-bracket__columns" ref={columnsRef}>
           <BandConnectors
             band={band}
@@ -342,6 +390,7 @@ function BracketBandView({ band }: { band: BracketBand }) {
                       key={card.key}
                       card={card}
                       registerCard={registerCard}
+                      highlightedParticipantIds={highlightedParticipantIds}
                     />
                   ))}
                 </div>
@@ -355,7 +404,7 @@ function BracketBandView({ band }: { band: BracketBand }) {
 }
 
 export function TournamentBracket(props: Props) {
-  const { names, matches, avatars, seeds } = props;
+  const { names, matches, avatars, seeds, highlightedParticipantIds } = props;
   const vm =
     "graph" in props && props.graph
       ? buildBracketViewModelV2(props.graph, names, matches, {
@@ -377,7 +426,8 @@ export function TournamentBracket(props: Props) {
             color="primary"
             src={avatarSrc(vm.championAvatarKey)}
             initials={initialsFromName(vm.championName)}
-            alt={vm.championName}
+            alt=""
+            aria-hidden="true"
           />
           <span>
             Чемпион: <strong>{vm.championName}</strong>
@@ -386,7 +436,11 @@ export function TournamentBracket(props: Props) {
       ) : null}
 
       {vm.bands.map((band) => (
-        <BracketBandView key={band.id} band={band} />
+        <BracketBandView
+          key={band.id}
+          band={band}
+          highlightedParticipantIds={highlightedParticipantIds}
+        />
       ))}
     </div>
   );

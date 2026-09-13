@@ -123,6 +123,18 @@ runtime alias `/api/v1/me/profile` остаётся contract drift в OPS-001 и
 - `DELETE /teams/{teamId}/members/{userId}`
 - `POST /teams/{teamId}/captain-transfer`
 
+Team metadata contracts: create requires trimmed `name` (1–200 characters),
+optional `slogan` (≤300) and `welcomeText` (≤2000). PATCH accepts a nonempty subset
+of those fields; extra keys are rejected. Empty optional strings clear the text.
+UUID path/body identifiers are validated. Compatibility aliases `/teams/{id}/invite`
+and `/team-invitations/{id}/respond` remain supported with identical authority.
+Accept/decline responses include `{status, teamId}` for the welcome destination.
+Detail is available to current/former members and the addressed pending invitee;
+invitation metadata is captain-only. Mutations require an active team and the
+specified captain/member. Captain cannot leave or remove self before transfer.
+Archive is an automatic transition when no active members remain, not a destructive
+team deletion; historical membership and event rows are retained.
+
 ## 7. Notifications
 
 - `GET /notifications?cursor=`
@@ -136,8 +148,8 @@ Actionable действия вызывают endpoint исходной сущн�
 - `GET /matches`
 - `POST /matches`
 - `GET /matches/{matchId}`
-- `PATCH /matches/{matchId}` — только до старта
-- `POST /matches/{matchId}/invitations`
+- `PATCH /matches/{matchId}` — organizer-only waiting standalone; strict nonempty partial settings/full optional roster. Unchanged participant ID + user + side retains consent; source/judgeUserId immutable here
+- `POST /matches/{matchId}/invitations` — strict `{userId, kind: player|judge}`; idempotent reuse of pending/accepted consent
 - `POST /match-invitations/{id}/accept`
 - `POST /match-invitations/{id}/decline`
 - `POST /matches/{matchId}/start` — только `created_by_user_id`; иной active
@@ -224,7 +236,7 @@ match, audit, stats или dependent tournament state.
 
 ## 9. Judge
 
-- `POST /matches/{matchId}/judge/acquire`
+- `POST /matches/{matchId}/judge/acquire` — конфликт с активной judge session того же пользователя на другом устройстве: `409 JUDGE_OTHER_DEVICE`; первая сессия сохраняется.
 - `POST /matches/{matchId}/judge/heartbeat`
 - `POST /matches/{matchId}/judge/release`
 - `POST /matches/{matchId}/judge/handover`
@@ -366,3 +378,38 @@ Errors:
   compatibility week/month aliases supported. Response retains internal
   all_time/week/month scope plus team context, availableTeams and rankings.
   Team membership is enforced server-side; arbitrary query fields are rejected.
+
+### GAP-006 tournament read summary and draft edits
+
+`GET /tournaments/{id}` includes `tournament.summary`: `durationSeconds` (null before start),
+`playedMatchCount`, `results[{participantId,points,playedMatches,place}]`, `top3` participant IDs,
+and `matchParticipants[{matchId,participantIds}]`. Places derive from the stored bracket,
+with equal elimination rounds sharing a place; game points do not break bracket ties.
+`top3` lists occupants of places 1–3, including tied third-place participants in old
+brackets without a bronze match; it does not truncate tied participants by points or ID.
+Only finished tournaments expose places/top. Finished/stopped matches contribute actual
+scores and played counts; voided matches do not, while their bracket placements remain (D33).
+Settings PATCH is a nonempty strict object; title trims to 1–200 characters and game points
+are positive integers. Format or organizer-roster changes invalidate an existing bracket.
+V2 bracket PATCH `swaps` accepts explicit `seed:N` references (1-based seedOrder positions)
+for either participant, including a bye recipient; existing match-node references remain
+compatible. Unknown/out-of-range references fail validation. Seed/graph writes are atomic
+and may only affect an unstarted generated bracket.
+
+Tournament stop returns the complete detail DTO including participants, matches and summary.
+It requires a nonblank reason code (max100); code `other` also requires trimmed nonempty
+text (max500). Specific reason codes remain compatible. Missing/invalid reason requests fail
+before any mutation; the stopped detail displays the persisted explanation.
+
+### Wave E strict contract reconciliation
+
+Match creation accepts optional UUID `judgeUserId`. A new standalone outsider player
+invitation gates start with409 `PLAYER_CONSENT_REQUIRED`; judge consent does not gate.
+Invitation accept/decline use strict empty bodies and return `{invitation}`; another
+recipient sees404, elapsed TTL yields400 `INVITATION_EXPIRED` after persisted expiry.
+`GET /admin/users` supports optional `q` (maximum100 chars), `status=active|blocked`.
+Safe admin DTO adds birthDate, organizationText, positionText, createdAt, lastLoginAt.
+Admin profile PATCH is strict and nonempty; email is immutable, nullable profile fields
+can be cleared. Profile-only edit keeps sessions; role changes revoke them.
+Feedback requires `kind=bug|idea|question|other` and trimmed nonempty message <=4000.
+Material links remain message text; there is no attachment upload contract.

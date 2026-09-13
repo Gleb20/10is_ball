@@ -1,6 +1,6 @@
 import { useId } from "react";
 import type { BracketConstructionAlgorithm } from "@tab10/shared";
-import { Dialog } from "../ui";
+import { Button, Dialog } from "../ui";
 import {
   BRACKET_ALGORITHM_DIALOG,
   BRACKET_ALGORITHM_OPTIONS,
@@ -38,14 +38,6 @@ export function BracketAlgorithmDialog({
       onClose={() => !busy && onCancel()}
       title={BRACKET_ALGORITHM_DIALOG.title}
       width="md"
-      secondaryButtonLabel={BRACKET_ALGORITHM_DIALOG.cancel}
-      onSecondaryButton={() => !busy && onCancel()}
-      mainButtonLabel={
-        busy ? "…" : BRACKET_ALGORITHM_DIALOG.submit
-      }
-      onMainButton={() => {
-        if (canSubmit) onConfirm();
-      }}
     >
       <div data-testid="bracket-algorithm-dialog">
       <p className="bracket-algo-dialog__subtitle">
@@ -86,6 +78,7 @@ export function BracketAlgorithmDialog({
                 name={`bracket-algo-${groupId}`}
                 value={key}
                 checked={checked}
+                disabled={busy}
                 onChange={() => onSelect(key)}
               />
               <span className="bracket-algo-card__title">{opt.title}</span>
@@ -94,6 +87,10 @@ export function BracketAlgorithmDialog({
             </label>
           );
         })}
+      </div>
+      <div className="row bracket-algo-dialog__actions">
+        <Button variant="secondary" disabled={busy} onClick={onCancel}>{BRACKET_ALGORITHM_DIALOG.cancel}</Button>
+        <Button disabled={!canSubmit} onClick={() => { if (canSubmit) onConfirm(); }}>{busy ? "…" : BRACKET_ALGORITHM_DIALOG.submit}</Button>
       </div>
       </div>
     </Dialog>

@@ -87,7 +87,7 @@ export function UserPicker({
         fullWidth
         disabled={disabled}
       />
-      {loadError ? <p className="muted">{loadError}</p> : null}
+      {loadError ? <p className="muted" role="alert">{loadError}</p> : null}
     </div>
   );
 }

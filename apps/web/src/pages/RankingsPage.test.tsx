@@ -99,7 +99,9 @@ describe("BUG-010 ranking challenge guard", () => {
 
     await screen.findByText("Self Player");
     expect(rankings).toHaveBeenCalledWith("all_time", undefined);
-    expect(screen.getByText(/неделя и месяц.*по московскому времени/i)).toBeInTheDocument();
+    expect(screen.getByRole("note", { name: "Подсказка о периодах рейтинга" })).toHaveTextContent(
+      /всё время.*всю историю.*неделя и месяц.*по московскому времени/i,
+    );
 
     await user.click(screen.getByRole("button", { name: "Неделя" }));
     await waitFor(() => expect(rankings).toHaveBeenCalledWith("calendar_week", undefined));

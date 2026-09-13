@@ -96,6 +96,15 @@ describe("DATA-001 match validation and invariants", () => {
     expect(await db.query.matchParticipants.findMany()).toHaveLength(0);
   }
 
+  async function acceptRequiredPlayerInvitations(matchId: string) {
+    const match = await services.matches.getMatch(matchId);
+    for (const invitation of match?.invitations ?? []) {
+      if (invitation.kind === "player" && invitation.status === "pending") {
+        await services.matches.respondInvitation(invitation.id, invitation.invitedUserId, true);
+      }
+    }
+  }
+
   it("INT_match__malformed_create_payloads_are_rejected_without_writes", async () => {
     const cases: Array<{ name: string; payload: unknown }> = [
       { name: "null body", payload: null },
@@ -246,6 +255,7 @@ describe("DATA-001 match validation and invariants", () => {
     });
     expect(created.statusCode).toBe(200);
     const matchId = created.json().match.id as string;
+    await acceptRequiredPlayerInvitations(matchId);
 
     const started = await app.inject({
       method: "POST",
@@ -311,6 +321,7 @@ describe("DATA-001 match validation and invariants", () => {
       payload: validCreate(),
     });
     const matchId = created.json().match.id as string;
+    await acceptRequiredPlayerInvitations(matchId);
     const before = await services.matches.getMatch(matchId);
 
     const invalidServer = await app.inject({

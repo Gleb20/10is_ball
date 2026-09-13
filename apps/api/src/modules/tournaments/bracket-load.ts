@@ -45,26 +45,19 @@ export function swapSeedOrderByMatchIds(
   matchIdA: string,
   matchIdB: string,
 ): string[] {
-  const a = graph.matches.find((m) => m.id === matchIdA);
-  const b = graph.matches.find((m) => m.id === matchIdB);
-  if (!a || !b) return seedOrder;
-
-  const seedsA: number[] = [];
-  const seedsB: number[] = [];
-  for (const src of [a.sourceA, a.sourceB]) {
-    if (src.type === "seed") seedsA.push(src.seed);
-  }
-  for (const src of [b.sourceA, b.sourceB]) {
-    if (src.type === "seed") seedsB.push(src.seed);
-  }
-  if (seedsA.length === 0 || seedsB.length === 0) return seedOrder;
-
+  const indexFor = (reference: string) => {
+    const explicit = /^seed:([1-9]\d*)$/.exec(reference);
+    const node = graph.matches.find((m) => m.id === reference);
+    const source = node && [node.sourceA, node.sourceB].find((src) => src.type === "seed");
+    const index = explicit ? Number(explicit[1]) - 1 : source?.type === "seed" ? source.seed - 1 : -1;
+    if (!Number.isInteger(index) || index < 0 || index >= seedOrder.length) {
+      throw Object.assign(new Error("VALIDATION"), { code: "VALIDATION" });
+    }
+    return index;
+  };
+  const i = indexFor(matchIdA);
+  const j = indexFor(matchIdB);
   const next = [...seedOrder];
-  const i = seedsA[0]! - 1;
-  const j = seedsB[0]! - 1;
-  if (i < 0 || j < 0 || i >= next.length || j >= next.length) {
-    return seedOrder;
-  }
   const tmp = next[i]!;
   next[i] = next[j]!;
   next[j] = tmp;

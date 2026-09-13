@@ -58,3 +58,9 @@ describe("UserPicker", () => {
     expect(screen.queryByText("Уже Вростере")).toBeNull();
   });
 });
+
+it("GAP-011 announces directory failure", async () => {
+  directory.mockRejectedValue(new Error("offline"));
+  render(<UserPicker label="Игрок" value="" onChange={() => undefined} />);
+  expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось загрузить список игроков");
+});

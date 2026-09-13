@@ -1,0 +1,61 @@
+import { afterEach, expect, it } from "vitest";
+import { FakeClock } from "@tab10/test-utils";
+import { prepareBracketGraph, simulateBracket } from "@tab10/shared";
+import { eq } from "drizzle-orm";
+import { buildApp } from "./app.js";
+import { createMigratedPgliteDb } from "./db/client.js";
+import { matches, tournaments } from "./db/schema.js";
+let cleanup: (() => Promise<void>) | undefined;
+afterEach(async () => { await cleanup?.(); });
+it("GAP-006 API: persisted outcome summary, stopped suppression and D33 void statistics", async () => {
+  const context = await createMigratedPgliteDb();
+  const clock = new FakeClock(new Date("2026-09-13T09:02:00Z"));
+  const { app, services } = await buildApp({ db: context.db, clock });
+  cleanup = async () => { await app.close(); await context.close(); };
+  await services.auth.seedAdmin("tournament@contract.test", "Tournament9!");
+  const login = await app.inject({ method: "POST", url: "/api/v1/auth/login", payload: { email: "tournament@contract.test", password: "Tournament9!" } });
+  const actor = login.json().user.id as string;
+  const cookies = { tab10_session: login.cookies.find((cookie) => cookie.name === "tab10_session")!.value };
+  for (const payload of [{ title: " " }, { title: "Bad", pointsToWin: -1 }, { title: "Bad", extra: true }]) {
+    expect((await app.inject({ method: "POST", url: "/api/v1/tournaments", cookies, payload })).statusCode).toBe(400);
+  }
+  const t = (await services.tournaments.create({ title: "Summary", format: "single_elimination", createdByUserId: actor, organizerParticipates: false }))!;
+  expect((await app.inject({ method: "PATCH", url: `/api/v1/tournaments/${t.id}`, cookies, payload: {} })).statusCode).toBe(400);
+  expect((await app.inject({ method: "PATCH", url: `/api/v1/tournaments/${t.id}/bracket`, cookies, payload: { swaps: "bad" } })).statusCode).toBe(400);
+  for (const name of ["A", "B", "C", "D", "E"]) await services.tournaments.addParticipant({ tournamentId: t.id, actorUserId: actor, guestFirstName: name, guestLastName: "Fixture" });
+  const roster = (await services.tournaments.get(t.id))!.participants.map((p) => p.id);
+  await services.tournaments.generateBracket(t.id, actor, { constructionAlgorithm: "compact", rng: () => 0.5 });
+  const changed = (await services.tournaments.patch(t.id, actor, { format: "double_elimination" }))!;
+  expect(changed.status).toBe("needs_regeneration"); expect(changed.thirdPlaceEnabled).toBe(false);
+  await services.tournaments.patch(t.id, actor, { format: "single_elimination" });
+  await services.tournaments.generateBracket(t.id, actor, { constructionAlgorithm: "compact", rng: () => 0.5 });
+  const invalidated = (await services.tournaments.patch(t.id, actor, { organizerParticipates: true }))!;
+  expect(invalidated.status).toBe("needs_regeneration");
+  await services.tournaments.patch(t.id, actor, { organizerParticipates: false });
+  const graph = simulateBracket(prepareBracketGraph({ seedOrder: roster, format: "single_elimination", constructionAlgorithm: "compact", thirdPlaceEnabled: true }));
+  const rows = await context.db.insert(matches).values(graph.matches.filter((node) => node.loserParticipantId).map((node) => ({ title: node.id, createdByUserId: actor, tournamentId: t.id, tournamentSlotId: node.id, kind: "tournament" as const, status: "finished" as const, scoreA: 11, scoreB: 7 }))).returning();
+  await context.db.update(tournaments).set({ status: "finished", bracketJson: graph, startedAt: new Date("2026-09-13T09:00:00Z"), finishedAt: new Date("2026-09-13T09:01:30Z") }).where(eq(tournaments.id, t.id));
+  const response = await app.inject({ method: "GET", url: `/api/v1/tournaments/${t.id}`, cookies });
+  expect(response.statusCode).toBe(200);
+  const summary = response.json().tournament.summary;
+  expect(summary.durationSeconds).toBe(90); expect(summary.playedMatchCount).toBe(rows.length); expect(summary.top3).toHaveLength(3);
+  expect(summary.matchParticipants.every((row: { participantIds: string[] }) => row.participantIds.length === 2)).toBe(true);
+  expect(summary.results.reduce((sum: number, row: { points: number }) => sum + row.points, 0)).toBe(rows.length * 18);
+  const points = await services.tournaments.participantPoints(t.id, roster[0]!);
+  expect(points).toBe(summary.results.find((row: { participantId: string }) => row.participantId === roster[0]).points);
+  await context.db.update(matches).set({ status: "voided" }).where(eq(matches.id, rows[0]!.id));
+  const voided = (await services.tournaments.get(t.id))!;
+  expect(voided.summary.top3).toEqual(summary.top3); expect(voided.summary.playedMatchCount).toBe(rows.length - 1); expect(voided.bracketJson).toEqual(graph);
+  await context.db.update(tournaments).set({ status: "in_progress" }).where(eq(tournaments.id, t.id));
+  for (const payload of [{}, { code: "other" }, { code: "other", text: " " }, { code: "other", text: "x".repeat(501) }]) {
+    expect((await app.inject({ method: "POST", url: `/api/v1/tournaments/${t.id}/stop`, cookies, payload })).statusCode).toBe(400);
+    expect((await services.tournaments.get(t.id))!.status).toBe("in_progress");
+  }
+  const stopResponse = await app.inject({ method: "POST", url: `/api/v1/tournaments/${t.id}/stop`, cookies, payload: { code: "other", text: "Fixture complete" } });
+  expect(stopResponse.statusCode).toBe(200);
+  expect(stopResponse.json().tournament).toMatchObject({ stopReasonText: "Fixture complete", summary: { top3: [] } });
+  expect(stopResponse.json().tournament.participants).toHaveLength(roster.length + 1);
+  expect(stopResponse.json().tournament.matches).toHaveLength(rows.length);
+  const stopped = (await services.tournaments.get(t.id))!.summary;
+  expect(stopped.top3).toEqual([]); expect(stopped.results.every((row) => row.place === null)).toBe(true);
+});

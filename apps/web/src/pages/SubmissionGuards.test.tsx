@@ -11,6 +11,7 @@ import { App } from "../App";
 import { HelpPage } from "./HelpPage";
 import { TeamsPage } from "./TeamsPage";
 import { TournamentsPage } from "./TournamentsPage";
+import { AuthProvider } from "../auth";
 
 const me = vi.fn();
 const firstPasswordChange = vi.fn();
@@ -77,7 +78,9 @@ describe("BUG-009 scoped critical form submission guards", () => {
       renderPage: () =>
         render(
           <MemoryRouter>
-            <TeamsPage />
+            <AuthProvider>
+              <TeamsPage />
+            </AuthProvider>
           </MemoryRouter>,
         ),
       buttonName: /^создать$/i,
@@ -101,7 +104,7 @@ describe("BUG-009 scoped critical form submission guards", () => {
       renderPage: () =>
         render(
           <MemoryRouter>
-            <HelpPage />
+            <AuthProvider><HelpPage /></AuthProvider>
           </MemoryRouter>,
         ),
       buttonName: /^отправить$/i,

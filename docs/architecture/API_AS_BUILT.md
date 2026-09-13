@@ -198,3 +198,68 @@ one auth session are checked so release/reacquire still permits the true confirm
 Legacy finished matches without a marker retain the historical user/auth fallback.
 The UI may acquire a free slot after a contextual detail 403 on a writable judge
 route (D7); read-only routes never acquire or weaken detail visibility.
+
+### Wave D candidate: teams and tournament read/draft contracts
+
+Teams expose strict create/read/update, captain-only invite/remove/transfer, and member leave.
+Responses carry safe members, current actor flags, archive timestamps, and captain-only
+invitation metadata; arbitrary outsiders cannot read details. Canonical invitation accept/
+decline returns status + teamId for the welcome route; legacy respond/invite remain compatible.
+Blocking and role changes serialize administrator checks and transactionally revoke sessions
+and audit. The blocking hook performs captain succession/archive within that same transaction;
+team create/invite/accept lock and revalidate the relevant user before locking the team.
+
+Tournament read responses include the documented summary projection. Settings/seed edits
+serialize against the tournament row; format/organizer roster changes invalidate a built
+bracket. Explicit seed:N positions allow either member of a first-round pair and bye recipient
+to be moved; invalid references fail validation. Full Wave D browser/aggregate acceptance is
+pending; this records implementation, not a public release claim.
+
+### Wave E candidate contract
+
+OpenAPI and literal route inventory agree at84 operations /75 paths. Added organizer
+prestart match PATCH, match invitation create and accept/decline; exact contracts are
+in requirements08 and OpenAPI. Missing player consent returns409, expired invitation
+400 after persisted expiry, recipient mismatch404. Match detail includes invitation
+history; unchanged roster rows retain consent.
+Admin listing supports q/status and safe profile/date fields; profile PATCH excludes
+email and preserves sessions unless role changes. Feedback accepts four categories
+and bounded text. Focused OpenAPI9/9 and runtime consent contract1/1 passed. Broader
+Wave E browser/aggregate acceptance remains pending.
+
+### Wave E consent review checkpoint
+
+Waiting side changes retain accepted history, cancel obsolete pending invitations
+with `side_changed`, mark those notifications read, and require current-side
+consent. Reinvitation cancels legacy old-side pending history in the same
+transaction before reusing or creating a current-side invitation; this avoids
+the unique-pending conflict without deleting history. Start accepts only current
+participant identity and side when consent history exists. Legacy matches with
+no player-consent history remain start-compatible; changing team membership
+does not strand participants whose prior consent requires renewal.
+
+Create/respond revalidate active actors under user locks. A terminal response
+persists cancellation and read state before returning MATCH_IMMUTABLE: active
+play/pending confirmation maps to match_started, cancellation to match_cancelled,
+and finished/stopped/voided to match_finished. Expired TTL takes precedence.
+Focused worker evidence is42 PGlite/5 PostgreSQL cases; independent review
+identified an unverified cross-match user/FK lock cycle in side swap versus
+reinvite. Aggregate acceptance is paused for a deterministic concurrency probe.
+
+The lock-cycle checkpoint above is superseded by focused Red/Green: three
+cross-match PostgreSQL40P01 cases are repaired by locking creator with all
+required users in one sorted group. This applies before waiting-side consent
+renewal and before tournament-start materialization, including a nonplaying
+organizer. Final consent PostgreSQL file passes8/8, related tournament PG2/2.
+[Focused evidence](../audit/evidence/wave-e-consent-focused.json); full E
+aggregate and final review remain separate gates.
+
+### BUG-017 judge device conflict
+
+A second auth session attempting judge acquire while the same user already
+judges elsewhere receives409 JUDGE_OTHER_DEVICE and a Russian message to
+release the other device's slot. The former500 mapping is fixed. Same-match
+and cross-match route tests preserve the original judge/match rows, deny
+second-session heartbeat and retain first-session heartbeat/release. Existing
+OpenAPI409 ApiError already covers the response. Focused2/2 and four selected
+judge regressions pass; full F integration remains pending.

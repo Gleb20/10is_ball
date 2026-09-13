@@ -1,0 +1,148 @@
+{
+  "date": "2026-09-13",
+  "status": "verified_local",
+  "scope": "D+E+F candidate and BUG-017; bounded local acceptance, not complete NFR compatibility or a release",
+  "versionUnderTest": "2.1.0",
+  "baseSha": "615169c780a4522591d3359530177e7574923f14",
+  "sourceDirty": true,
+  "gateMode": "One fresh successful pnpm run verify:all after deterministic corrections",
+  "totals": {
+    "total": 1249,
+    "passed": 1249,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "lanes": [
+    {
+      "name": "cleanup-foundation",
+      "status": "passed",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "quality",
+      "status": "passed",
+      "total": 1122,
+      "passed": 1122,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "postgres",
+      "status": "passed",
+      "total": 66,
+      "passed": 66,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "browser-prodlike",
+      "status": "passed",
+      "total": 57,
+      "passed": 57,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    }
+  ],
+  "artifactRoot": "/private/tmp/tab10-completion-4F4jia",
+  "aggregate": "f-coordinator-accepted/local-summary.json",
+  "inputSnapshot": {
+    "path": "f-accepted-input-snapshot/manifest.json",
+    "files": 447,
+    "unchangedThroughAggregate": true
+  },
+  "fDelta": {
+    "files": 16,
+    "patchSha256": "794d7da1736ccf813f0e388b8ea4316ec2a3880cafffcbccb821a6998a0d2cdf",
+    "manifestSha256": "4594dfac659b2f57de804ab14fe4f11f6d55a2f4172126c59846d39cf2fa18d1",
+    "paths": [
+      "apps/web/src/ui.tsx",
+      "apps/web/src/styles.css",
+      "apps/web/src/pages/JudgePage.tsx",
+      "apps/web/src/components/TournamentBracket.tsx",
+      "apps/web/src/components/BracketAlgorithmDialog.tsx",
+      "apps/web/src/components/BracketAlgorithmDialog.css",
+      "apps/web/src/components/UserPicker.tsx",
+      "apps/web/src/a11y.smoke.test.tsx",
+      "apps/web/src/ui.a11y.test.tsx",
+      "apps/web/src/pages/JudgePage.test.tsx",
+      "apps/web/src/components/BracketAlgorithmDialog.test.tsx",
+      "apps/web/src/components/UserPicker.test.tsx",
+      "tests/e2e/critical.spec.ts",
+      "tests/e2e/wave-f-a11y.spec.ts",
+      "apps/web/src/onboarding-resume.test.tsx",
+      "apps/web/src/pages/RankingsPage.tsx"
+    ]
+  },
+  "additionalParentTest": "tests/e2e/wave-b.spec.ts",
+  "review": "Independent R1/R2 and final ranking/avatar/period integration reviews PASS; historical REWORK preserved in wave-f-independent-review.md",
+  "browser": {
+    "chromiumJourneys": 48,
+    "foundationChecks": 9,
+    "fAxeReports": 22,
+    "violations": 0,
+    "incompleteNodesByRule": {
+      "aria-prohibited-attr": 20,
+      "color-contrast": 11
+    },
+    "fCaptures": 62,
+    "selectedDECaptures": 42,
+    "viewports": [
+      "360x640",
+      "390x844",
+      "440x956",
+      "768x1024",
+      "1440x900",
+      "judge640x360",
+      "judge844x390"
+    ],
+    "renderedReview": "Parent and independent reviews cover auth, admin, rankings, Dialog/text200/busy, judge/landscape/text200, SE/DE/terminal bracket and Help. Full-page D/E captures alone do not prove fixed-nav positioning."
+  },
+  "deterministicCorrections": [
+    "Dialog CSS-hidden ancestors and disabled/removed active focus: component Red4 and browser Red2; repaired focused14 and browser13",
+    "Shared-admin team membership made the empty-team rankings link assumption invalid; real isolated user and at least4 rankings now exercise the link and non-podium avatar",
+    "Ranking decorative Avatar role-img-alt Red repaired by one aria-hidden attribute",
+    "Wave B month assertion assumed prior completed matches and could accept stale all-time rendering; awaits exact month/team response and verifies settled member/empty state; focused WaveB-to-F4journeys+9foundation passed"
+  ],
+  "historicalFailures": [
+    {
+      "artifact": "f-coordinator-final/local-summary.json",
+      "passed": 1247,
+      "failed": 2,
+      "reason": "F fixture expected empty-team link for shared admin after prior Wave B membership"
+    },
+    {
+      "artifact": "f-membership-green-browser/browser-prodlike/browser-summary.json",
+      "passed": 12,
+      "failed": 1,
+      "reason": "ranking decorative role-img-alt"
+    },
+    {
+      "artifact": "f-avatar-green-browser/browser-prodlike/browser-summary.json",
+      "passed": 12,
+      "failed": 1,
+      "reason": "Wave B month row assumption"
+    }
+  ],
+  "rollback": "F16-byte restore and foreign-edit refusal tested; parent WaveB test reverse/forward roundtrip tested; candidate not reverted",
+  "release": "No version bump, commit, push or deployment; proposed3.0.0 still requires explicit version approval",
+  "compatibilityEvidence": "wave-f-compatibility.json",
+  "residuals": [
+    "WebKit page-creation native crash prevents app acceptance",
+    "Latest-two browser release matrix and actual iOS/Android/safe-area/keyboard/VoiceOver/TalkBack not verified",
+    "Axe incomplete checks retained; no universal WCAG declaration",
+    "Q-OPS-003 and SEC-001 old-credential negative probe remain separate existing residuals"
+  ]
+}

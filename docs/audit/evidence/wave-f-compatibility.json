@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-13",
+  "status": "partial",
+  "combinedLaneStatus": "failed",
+  "artifactRoot": "/private/tmp/tab10-completion-4F4jia/f-compat/run-1789283699275-1644",
+  "inputManifestSha256": "38136b179decbe638f39a245a9c151eb4bd53200b69f1698caa35167e654ce4e",
+  "sourceAndBuildFiles": 689,
+  "identityUnchanged": true,
+  "resourcesRemain": false,
+  "rebuild": false,
+  "playwright": "1.63.0",
+  "firefox": {
+    "engineVersion": "155.0",
+    "revision": 1543,
+    "passed": 7,
+    "failed": 0,
+    "axeReports": 11,
+    "violations": 0,
+    "captures": 31,
+    "incompleteNodesByRule": {
+      "aria-prohibited-attr": 10,
+      "color-contrast": 5
+    }
+  },
+  "webkit": {
+    "engineVersion": "26.6",
+    "revision": 2359,
+    "passed": 0,
+    "failed": 7,
+    "failurePhase": "browserContext.newPage before application assertions",
+    "observedFailure": "SIGSEGV during native WKWebView/AppKit headless page creation on macOS26.0.1",
+    "preciseCause": "not independently established; not seven demonstrated app regressions"
+  },
+  "foundation": {
+    "passed": 9,
+    "failed": 0
+  },
+  "totals": {
+    "passed": 16,
+    "failed": 7,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "scope": "Existing2critical+5F tests per desktop engine, internally resized360..1440 and judge landscape; no native mobile CDP touch branch",
+  "executions": "one; every test attempted once; no retry-to-green",
+  "sanitizedTraces": 7,
+  "report": "f-compat-result.md",
+  "archiveProvenance": "f-compat/archive-provenance.json",
+  "residuals": [
+    "WebKit app acceptance",
+    "latest-two Chrome/Safari/Firefox/Edge releases",
+    "physical iOS/Android, nonzero safe areas, virtual keyboards, gestures/rotation",
+    "VoiceOver/TalkBack spoken output",
+    "axe incomplete checks"
+  ]
+}

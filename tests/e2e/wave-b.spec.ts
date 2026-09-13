@@ -43,7 +43,7 @@ async function noOverflow(page: Page) {
 
 test("Wave B AT-PROFILE-001..005 AT-RANK-005..006 own edit, revoke, team and private public card", async ({ page }, info) => {
   const suffix = info.project.name;
-  const { context: admin } = await adminContext(`wave-b-fixture-${suffix}`);
+  const { context: admin, user: adminUser } = await adminContext(`wave-b-fixture-${suffix}`);
   const { context: extra } = await adminContext(`wave-b-revoke-${suffix}`);
   const created = await mutate(admin, "POST", "/api/v1/admin/users", {
     email: `rival-${suffix}@tab10.test`, firstName: "Соперник", lastName: suffix,
@@ -76,9 +76,30 @@ test("Wave B AT-PROFILE-001..005 AT-RANK-005..006 own edit, revoke, team and pri
     await page.goto("/rankings");
     await page.getByRole("button", { name: team.team.name, exact: true }).click();
     await expect(page.getByLabel("Итог команды")).toBeVisible();
-    await page.getByRole("button", { name: "Неделя", exact: true }).click();
-    await page.getByRole("button", { name: "Месяц", exact: true }).click();
     await expect(page.getByRole("link", { name: /Открыть карточку/ })).toHaveCount(1);
+    await page.getByRole("button", { name: "Неделя", exact: true }).click();
+    const monthlyResponse = page.waitForResponse(response => {
+      const url = new URL(response.url());
+      return url.pathname === "/api/v1/rankings" &&
+        url.searchParams.get("scope") === "calendar_month" &&
+        url.searchParams.get("teamId") === team.team.id;
+    });
+    await page.getByRole("button", { name: "Месяц", exact: true }).click();
+    const monthly = await monthlyResponse;
+    expect(monthly.status()).toBe(200);
+    const monthlyData = await monthly.json();
+    expect(monthlyData.team.id).toBe(team.team.id);
+    expect(monthlyData.rankings.length).toBeLessThanOrEqual(1);
+    expect(monthlyData.rankings.every((entry: { userId: string }) => entry.userId === adminUser.id)).toBe(true);
+    // This test owns no completed match: a fresh period may have no ranked member.
+    // Wait for the current response to settle instead of accepting stale all-time rows.
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /Открыть карточку/ })).toHaveCount(monthlyData.rankings.length);
+    if (monthlyData.rankings.length === 0) {
+      await expect(page.getByText("У команды пока нет результатов", { exact: true })).toBeVisible();
+    } else {
+      await expect(page.getByRole("link", { name: `Открыть карточку ${monthlyData.rankings[0].displayName}`, exact: true })).toBeVisible();
+    }
     await page.getByRole("button", { name: "Общий", exact: true }).click();
     await page.getByRole("button", { name: "Всё время", exact: true }).click();
     await expect(page.getByRole("link", { name: `Открыть карточку ${suffix} Соперник` })).toBeVisible();

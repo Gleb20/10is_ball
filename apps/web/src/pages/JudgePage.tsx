@@ -102,7 +102,7 @@ function ServeBadge({ active }: { active: boolean }) {
     return <span className="judge-serve-badge judge-serve-badge--empty" />;
   }
   return (
-    <span className="judge-serve-badge" aria-live="polite">
+    <span className="judge-serve-badge">
       <TableTennisRacketIcon size={16} />
       Подача
     </span>
@@ -876,7 +876,8 @@ export function JudgePage() {
             className="judge-side__avatar"
             src={avatarSrc(sideAvatarKey(boardMatch, side))}
             initials={initialsFromName(label)}
-            alt={label}
+            alt=""
+            aria-hidden="true"
           />
           {label}
         </span>
@@ -991,6 +992,7 @@ export function JudgePage() {
                 disabled={undoPending || terminalPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
                 aria-expanded={menuOpen}
                 aria-controls="judge-more-menu"
+                id="judge-more-trigger"
               >
                 Ещё
               </Button>
@@ -1006,6 +1008,14 @@ export function JudgePage() {
           )}
         </div>
       </header>
+
+      <p className="visually-hidden" data-testid="judge-score-announcement" aria-live="polite" aria-atomic="true">
+        {!isSetup ? `${sideDisplayName(match, "A")}: ${match.scoreA}. ${sideDisplayName(match, "B")}: ${match.scoreB}.${serve ? ` Подаёт ${sideDisplayName(match, serve)}.` : ""}` : ""}
+      </p>
+
+      <p className="judge-screen__context-tip" role="note" aria-label="Подсказка судье">
+        Только активный судья этой сессии меняет счёт. Undo отменяет последнее действующее очко.
+      </p>
 
       {isSetup ? (
         <div className="judge-screen__hint stack">
@@ -1043,7 +1053,13 @@ export function JudgePage() {
         <div
           id="judge-more-menu"
           className="judge-more"
-          role="menu"
+          role="group"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault(); setMenuOpen(false);
+              document.getElementById("judge-more-trigger")?.focus();
+            }
+          }}
           aria-label="Действия судьи"
         >
           <Button

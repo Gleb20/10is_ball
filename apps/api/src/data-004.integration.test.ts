@@ -171,8 +171,8 @@ describe("DATA-004 invitation and membership concurrency", () => {
         accept: true,
       }),
     ]);
-    expect(first).toEqual({ status: "accepted" });
-    expect(replay).toEqual({ status: "accepted" });
+    expect(first).toEqual({ status: "accepted", teamId: team!.id });
+    expect(replay).toEqual({ status: "accepted", teamId: team!.id });
     expect(
       await db.query.teamMemberships.findMany({
         where: and(
@@ -195,7 +195,7 @@ describe("DATA-004 invitation and membership concurrency", () => {
         userId: INVITEE_ID,
         accept: true,
       }),
-    ).resolves.toEqual({ status: "accepted" });
+    ).resolves.toEqual({ status: "accepted", teamId: team!.id });
 
     const notification = (
       await db.query.notifications.findMany({

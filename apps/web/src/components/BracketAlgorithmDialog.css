@@ -99,3 +99,8 @@
   white-space: nowrap;
   border: 0;
 }
+
+.bracket-algo-dialog__actions { margin-top: 20px; justify-content: flex-end; }
+
+/* Unitless leading scales with enlarged text, including the option title/hint. */
+.bracket-algo-card { line-height: 1.45; }

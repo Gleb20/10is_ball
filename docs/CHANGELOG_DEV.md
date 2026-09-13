@@ -1,7 +1,103 @@
+## 2026-09-13 — Release 3.0.0 local gate passed (OPS-004)
+
+Fresh `pnpm run verify:all`:1249/1249, quality1122/PostgreSQL66/browser57/cleanup4,
+zero failures/skips/todo/interrupted. All449 source hashes unchanged through run.
+[Redacted release evidence](audit/evidence/release-3.0.0-local.json). Metadata-only
+version delta from reviewed D+E+F; no extra compatibility rerun. Hosted CI/public
+identity will be checked after main publication. The next entries are historical.
+
+## 2026-09-13 — Approved release 3.0.0 preparation (OPS-004)
+
+User explicitly approved version3.0.0 and publication of accepted D+E+F/BUG-017.
+Root version, user changelog and VERSIONING synchronized; remote main still615169c.
+Before mutation the complete449-file accepted snapshot matched byte-for-byte.
+Prior full local gate1249/1249 remains evidence for version2.1.0; fresh3.0.0 gate
+and public/hosted-CI convergence will be recorded after execution. WebKit/device/
+AT residuals remain open. Native forward migration0005 only; no reset or public E2E.
+
+## 2026-09-13 — BUG-017 focused repair reviewed
+
+Two app.ts mapping lines change second-device judge conflict from500/raw code
+to409 with a Russian recovery message. API Red2 -> Green2; four selected judge
+regressions pass (29 intentionally outside name filter), typecheck and scoped
+rollback pass. Parent read diff and complete no-write/authority tests; PASS for
+this bounded change. [Evidence](audit/evidence/bug-017-local.json). Full F gate
+is still required before backlog closure; no OpenAPI/schema/service/web change.
+
+## 2026-09-13 — F Red findings and BUG-017 contract investigation
+
+F reports reproduced sub44px/contrast/scroll-focus/disclosure defects and
+component Red3fail/39pass -> Green42/42. These are worker progress, not accepted F.
+Parent read F API log and source: device conflict JUDGE_OTHER_DEVICE is missing
+from HTTP/message mapping; BUG-017 records a bounded API Red→Green task. F's
+first cancel cleanup failed required expectedVersion/idempotency input and is
+being corrected in its fixture with persisted terminal/released assertions.
+No backend lifecycle redesign or release authorization is implied. Parent owns
+canonical docs; API and F web write scopes do not overlap.
+
+## 2026-09-13 — Wave E functional local acceptance
+
+GAP-008/009/010 verified_local. Successful lanes total1229/1229: cleanup4,
+quality1112, PostgreSQL66, browser47 (38 journeys +9 foundation), zero failures
+or skips. First aggregate browser launch was denied by macOS MachPort; only the
+browser lane reran with local authorization and a fresh disposable database.
+Independent four-file review PASS after three40P01 Red→Green regressions;
+creator joins existing sorted user locks for waiting swap and tournament start.
+Admin/consent desktop390 and desktop Help captures reviewed. Mobile Help capture
+was lost during harness cleanup; its functional browser scenario passed. F still
+owns contrast,44px, keyboard, safe-area and visual/compatibility acceptance.
+[Evidence](audit/evidence/wave-e-local.json). Source preservation186/186. No release.
+
+## 2026-09-13 — Coordinator recovery and Wave E consent review
+
+Recovered the current D+E candidate and the user's separate-chat task workflow.
+Confirmed the previously hidden consent task is active by its real thread ID;
+original186-file source snapshot remains unchanged. Consent finishing task
+verified42 PGlite/5 PostgreSQL cases, API typecheck and3-file rollback. Its
+legacy old-side pending reinvite correction prevents a unique-index conflict.
+Independent read-only review identified a further cross-match user/FK lock
+cycle requiring deterministic reproduction. Parent interrupted the initial E
+aggregate before PostgreSQL/browser: shared534 and test-utils4 passed, no full
+gate claim. Same bounded task owns the concurrency follow-up; separate Wave F
+chat may prepare a source-only plan while E writes remain isolated.
+Documentation snapshot: disposable coordinator-01a0993c-docs; no version, commit,
+push, production data or release change. `pnpm run audit:docs` passed72 files/51
+backlog IDs; `git diff --check` passed.
+
+## 2026-09-13 — Wave D local acceptance: team lifecycle and tournament completion
+
+- Teams: detail/welcome, metadata, invitations, captain transfer/removal/leave/archive;
+  privacy-safe current/former/pending membership access, strict80-operation OpenAPI
+  inventory, transactional captain invariants, blocking and role changes.
+- Review repaired late responses, same-user recovery, route draft leakage and expired
+  invitation picker exclusion. Focused team UI24/24 and real PostgreSQL7/7 passed.
+- Tournament summary: SE/DE3/5/8, legacy SE, exact side scores, stopped suppression,
+  D33 void and historical withdrawals; pure13/13 passed. Settings invalidation and
+  explicit seed/BYE swaps, organizer transitions, persisted stop reason and personal
+  current/next/highlight have Red→Green evidence; API/OpenAPI7/7 passed.
+- A later complete aggregate passed1133/1133 (quality1032, PostgreSQL56, browser41,
+  cleanup4). Rendered review then found a terminal auto-BYE "next match" hint;
+  its regression was Red and the repair passed17/17 focused tests plus typecheck.
+  The final aggregate passed1135/1135 (quality1034, PostgreSQL56, browser41 with
+  32 journeys + 9 foundation checks, cleanup4), zero failed/skipped/todo/interrupted.
+  Desktop/390 repaired terminal state and landscape bracket were reviewed.
+  [Evidence](audit/evidence/wave-d-local.json). Wave D is `verified_local` but not
+  publicly released; root/public remain2.1.0 pending separately approved direct3.0.0.
+  Earlier failed or interrupted attempts remain historical evidence, not acceptance.
+  Original source worktree remains preserved.
+
 # Dev Changelog
 
 Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
 записи сохраняются как история и могут быть помечены `superseded` новой записью.
+
+## 2026-09-13 — Wave C released; GAP-007 implementation
+
+Main615169c published2.1.0; CI34730792219 all four jobs success; read-only smoke
+matched web/API/proxy after5 attempts (82087ms). Neon read-only ledger5/newcolumns3.
+GAP-007 work orders separate team/auth domain, web lifecycle and parent contracts.
+OpenAPI route inventory Red then6/6 Green for new lifecycle endpoints. Full domain,
+PostgreSQL and browser acceptance remain pending. No new avatar/storage pipeline.
 
 ## 2026-09-13 — Wave C local acceptance (2.1.0)
 
@@ -1180,3 +1276,101 @@ corepack enable && pnpm install && pnpm run ci && pnpm dev
 3. Login as user → set password → home
 4. Create match with guest → judge → score → confirm
 5. Create tournament with 3 guests → generate bracket
+
+### Wave E work in progress — consent, notification, help and admin integration
+
+GAP-008/009/010: isolated implementation adds match consent and prestart editing,
+notification popup/lifecycle, contextual help and administrative profile catalog.
+Focused API invitation contract1/1, notification lifecycle6/6, popup/center8/8,
+match web33/33 and PostgreSQL concurrency2/2 passed. Full verification, browser
+acceptance and canonical contract/schema reconciliation remain open; no completion
+or release claim. See the OPS-004 completion-waves plan checkpoint.
+
+
+### 2026-09-13 — OPS-004 coordinator continuation
+
+- Rechecked the original source against its frozen SHA-256 manifest:186/186
+  unchanged. Confirmed the active D+E candidate in the disposable E checkout.
+- Reconciled the current D/E queue and next local acceptance step; retained
+  historical gate evidence and the unresolved version3.0.0 approval boundary.
+- Requested a separate bounded GAP-008 consent task. App returned only
+  client-new-thread:41654c13-76c9-470a-b2e2-95bbcc4b1ea3; no resolvable task ID
+  or worker result was available at this checkpoint. Ownership remains assigned.
+- Reviewed existing mobile admin/help captures: small targets/selects remain
+  Wave F findings. This is saved-image review, not a fresh browser gate.
+- Verification: Node24 pnpm run audit:docs passed72files/51IDs; git diff --check
+  passed. No implementation, aggregate, version, commit or public release change
+  was performed by the resumed coordinator.
+
+### Wave F independent review checkpoint — 2026-09-13
+
+F15-path candidate delivered with web223/223, main browser21/21 and last
+ButtonGroup/link correction11/11. The earlier21/21 is not an aggregate over the
+last CSS bytes. Parent inspected auth360, admin1440, bracket360, judge640 and
+text200, bootstrap and dialog text200 screenshots. Independent reviewer matched
+all15 hashes and found two P2 Dialog focus gaps: a CSS-hidden ancestor is not
+filtered and disable/remove of the focused control can send focus outside the
+panel. Returned to the same F task for deterministic Red→Green and live browser
+regression. No F acceptance or full aggregate yet. BUG-017 focused patch is
+reviewed and remains pending that aggregate. Compatibility/device/actual screen
+reader coverage remains open. No version/commit/push/deploy.
+
+### F aggregate checkpoint — 2026-09-13
+
+R1/R2 re-review PASS on corrected15-path F delta
+(6a9ece081695589ab77a8b03bb4a91bffd3ba768633859b4d19e4b802e2d22a8).
+First coordinator `verify:all` f-coordinator-final FAILED1247/1249:
+quality1122, PostgreSQL66, cleanup4 pass; browser46/48+9foundation. Both
+failures are the F rankings fixture waiting for the empty-team CreateTeam link
+after Wave B gives the shared admin a team. RankingsPage correctly renders this
+link only when availableTeams is empty. Same F task owns test-only deterministic
+fixture correction. Product447-file pre-run snapshot matched after completion;
+no product source regression inferred. Full browser lane must rerun after the
+actual correction; do not call the original aggregate successful.
+42 selected D/E synthetic screenshots retained and representative SE-finished
+and DE-generated desktop images reviewed; full-page captures alone do not prove
+fixed-navigation placement. Firefox/WebKit preparation ready, no engine test yet.
+No version, commit, push or public release.
+
+### F ranking integration correction — 2026-09-13
+
+F now16 paths: a one-attribute RankingsPage decorative-avatar correction plus
+the isolated real-user geometry fixture. Role-img-alt Red is retained in
+f-membership-green-browser; no axe exclusion. Parent review verified named
+links/visible names remain and at least4 real ranking entries force a rest-row.
+RankingsPage5/5 and typecheck pass. WaveB mobile failure in f-avatar-green-browser
+was traced to expecting1 month row without seeding a played match and accepting
+stale all-time rendering. Parent changed only tests/e2e/wave-b.spec.ts: await
+exact month/team response, settle loading and verify own-member/empty-or-rendered
+state against that response. All-time single-member assertion retained.
+Fresh f-period-green passes4/4 WaveB→F journeys (desktop/mobile) +9foundation.
+No rankings response mocks, sleeps, retries or disabled assertions. Product/source
+rollback snapshots remain outside Git. A fresh full verify:all is the next gate;
+compatibility waits its frozen compiled output. Original failed aggregates remain
+failed historical evidence. No version/commit/push/deploy.
+
+### Final local candidate acceptance — 2026-09-13
+
+Fresh f-coordinator-accepted verify:all PASS1249/1249:1122 quality,66 PostgreSQL,
+57 browser (48 journeys+9foundation),4 cleanup; no failures/skips/todo/interrupted.
+All447 input files unchanged through the run. Independent F focus and final
+ranking/avatar/period-test reviews PASS. BUG-017 verified_local; D+E functional
+acceptance retained. F implementation16 files plus parent WaveB test correction;
+source snapshot/patch/rollback evidence outside Git, canonical evidence linked
+from PROJECT_STATUS. Source/browser metadata remains version2.1.0 at base615169c
+with uncommitted delta, not a published3.0.0 or hosted-CI result.
+
+Additional engine lane is PARTIAL: Firefox155.0 7/7, WebKit26.6 0/7 due native
+page-creation SIGSEGV before app assertions;9foundation pass. Its combined16/23
+failed status is retained.689 source+dist identities unchanged; ports free and
+no disposable resources remain. GAP-011/TECH-002 retain full compatibility/device/
+AT residuals. No source fix is justified by the WebKit crash evidence alone.
+
+Next decision: explicit user confirmation for proposed3.0.0 release. Earlier
+auto-review twice rejected version/CHANGELOG/VERSIONING mutation; do not retry
+without new authorization. No version, commit, push, migration or deploy occurred
+in this coordinator stage. Q-OPS-003 and SEC-001 negative old-credential probe
+remain existing separate residuals. A bounded next QA slice should recheck WebKit
+runtime on a compatible pinned runner, then physical mobile and spoken AT.
+
+Final documentation audit:72 files/52 canonical IDs, zero broken links/anchors/status errors; git diff --check PASS. Only documentation changed after the accepted gate, and original186-file hashes remain unchanged.

@@ -232,3 +232,12 @@ duplicate unreleased judge users, zero unreleased sessions and four applied migr
 The local PostgreSQL gate applies all five entries and verifies repeat/adoption,
 rollback and concurrent migrators. Public 0004 applies only through native release;
 no reset, seed fixture or mutating public E2E is part of this wave.
+
+### Wave E candidate migration, not deployed
+
+Forward migration0005 adds match invitation history (19 public tables, six ledger entries).
+It does not backfill legacy matches. PGlite fresh/prefix checks passed; the fresh PostgreSQL
+foundation passed9/9 and exposed old consent fixtures in subsequent concurrency tests,
+which are being reconciled. Migration/deployment remains pending the release gate; this
+entry is not evidence of production schema change. Preserve the same owner/runtime-role
+separation and exact-SHA read-only public smoke required by the delivery checklist.

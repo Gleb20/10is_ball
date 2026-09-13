@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, Button } from "../ui";
 import { PageLayout } from "../layout";
@@ -52,6 +52,11 @@ export function OnboardingPage() {
     STEPS.length - 1,
   );
   const step = STEPS[stepIndex]!;
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    stepHeadingRef.current?.focus();
+  }, [stepIndex]);
 
   function advance() {
     void action.run(async () => {
@@ -97,11 +102,22 @@ export function OnboardingPage() {
   return (
     <PageLayout title="Онбординг">
       <div className="card stack">
-        <p className="muted">
+        <p className="muted" role="status" aria-live="polite">
           Шаг {stepIndex + 1} из {STEPS.length}
         </p>
-        <h2>{step.title}</h2>
+        <h2 ref={stepHeadingRef} tabIndex={-1}>{step.title}</h2>
         <p>{step.description}</p>
+        {stepIndex === 3 ? (
+          <aside className="onboarding-context-target" role="note" aria-label="Где найти уведомления">
+            <strong>Вход в уведомления</strong>
+            <span>После обучения он доступен на Главной и в Профиле.</span>
+          </aside>
+        ) : null}
+        {stepIndex === STEPS.length - 1 ? (
+          <p className="context-tip" role="note" aria-label="Завершение онбординга">
+            После учебного матча вы вернётесь сюда. Онбординг завершится только после явного выбора «Завершить без учебного матча».
+          </p>
+        ) : null}
         <p className="muted">
           Прогресс сохраняется в профиле. Можно закрыть страницу и продолжить с
           этого шага после следующего входа.

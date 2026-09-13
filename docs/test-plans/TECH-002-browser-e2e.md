@@ -42,7 +42,7 @@ job installs Chrome and runs the same E2E command after the deterministic CI
 gate; a hosted run remains unverified until an authorized commit/push.
 Expansion beyond this bounded slice keeps `TECH-002` in progress.
 
-## Current integration — 2026-09-13
+## Historical first integration — 2026-09-13
 
 The source journeys are integrated into `playwright.prodlike.config.ts` and
 `pnpm run verify:e2e`, using compiled API/web, disposable PostgreSQL16 and
@@ -54,3 +54,25 @@ verified-state screenshots are retained on success outside Git.
 Current aggregate browser: 6/6 journeys and 9/9 foundation checks passed. Historical 4/4 remains source evidence.
 GAP-011 contrast remains explicitly excluded from this bounded slice and must
 be removed from exclusions during waveF acceptance.
+
+## Current F integration — 2026-09-13
+
+Current compiled/local PostgreSQL gate passes1249/1249 with48 Chromium journeys
+and9 browser foundation checks. It includes B–E product flows and5 F journeys per
+project. Known color-contrast exclusion is removed. Shared-admin membership and
+period-row assumptions were repaired with real isolated fixtures, exact response
+waits and empty-state assertions; no retry/skip/axe exclusion. Details and source
+identity: [wave-f-local](../audit/evidence/wave-f-local.json).
+
+Additional isolated external harness ran the same2critical+5F tests on two pinned
+desktop engines, without rebuilding. Firefox155.0 passes7/7; WebKit26.6 fails7
+times in native page creation before app assertions. The combined23-check lane
+therefore fails16pass/7fail, although cleanup and identity preservation pass.
+[Compatibility evidence](../audit/evidence/wave-f-compatibility.json). It does
+not replace the checked-in Chromium release gate or claim full latest-two/device
+coverage. Source and compiled manifest689 files stayed unchanged during the run.
+
+Remaining work is explicit in GAP-011/TECH-002: compatible pinned WebKit runner,
+real-device/safe-area/keyboard/AT and released-browser version breadth. Reproduce
+the native runtime failure before choosing a correction; do not weaken app tests.
+No public mutation testing, version change or deployment is implied.

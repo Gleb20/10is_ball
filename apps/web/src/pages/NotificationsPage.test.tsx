@@ -6,8 +6,10 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { NotificationsPage } from "./NotificationsPage";
+
+vi.mock("../auth", () => ({ useAuth: () => ({ user: { id: "test-user" } }) }));
 
 const notifications = vi.fn();
 const respondTeamInvitation = vi.fn();
@@ -24,6 +26,8 @@ vi.mock("../api", () => ({
     respondTournamentInvitation: vi.fn(),
   },
 }));
+
+function LocationProbe() { const location = useLocation(); return <output data-testid="destination">{location.pathname}{location.search}</output>; }
 
 describe("AT-NOTIF-005 terminal invitation lifecycle", () => {
   beforeEach(() => {
@@ -76,6 +80,14 @@ describe("AT-NOTIF-005 terminal invitation lifecycle", () => {
   });
 
   afterEach(() => cleanup());
+
+  it("AT-TEAM-005 opens the accepted team's welcome screen", async () => {
+    const teamId = "12345678-1234-4234-8234-123456789abc";
+    respondTeamInvitation.mockResolvedValue({ status: "accepted", teamId });
+    render(<MemoryRouter><NotificationsPage /><LocationProbe /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole("button", { name: "Принять" }));
+    await waitFor(() => expect(screen.getByTestId("destination")).toHaveTextContent(`/teams/${teamId}?welcome=1`));
+  });
 
   it("filters terminal cards from actual and never renders their actions", async () => {
     render(

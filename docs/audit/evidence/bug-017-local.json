@@ -1,0 +1,39 @@
+{
+  "date": "2026-09-13",
+  "status": "verified_local",
+  "change": "JUDGE_OTHER_DEVICE maps to HTTP409 and Russian recovery message",
+  "scope": [
+    "apps/api/src/app.ts",
+    "apps/api/src/bug-017.integration.test.ts"
+  ],
+  "requirements": [
+    "JUDGE-004",
+    "AT-JUDGE-002"
+  ],
+  "red": {
+    "failed": 2,
+    "actualStatus": 500
+  },
+  "green": {
+    "newApiTestsPassed": 2,
+    "selectedExistingJudgeTestsPassed": 4,
+    "existingCasesExcludedByNameFilter": 29,
+    "apiTypecheck": "passed"
+  },
+  "review": "Parent scoped diff/test/evidence review PASS; no separate reviewer required for two-line mapping",
+  "invariants": [
+    "same and cross-match device conflict",
+    "judge and match rows unchanged",
+    "second session heartbeat rejected",
+    "first session heartbeat and release retained"
+  ],
+  "rollback": "Scoped reverse/forward passed; final hashes inspected",
+  "openApi": "existing judge acquire409 ApiError sufficient; unchanged",
+  "remainingGate": "Public release/version approval; local integration complete",
+  "release": "not attempted",
+  "integration": {
+    "evidence": "wave-f-local.json",
+    "passed": 1249,
+    "failed": 0
+  }
+}

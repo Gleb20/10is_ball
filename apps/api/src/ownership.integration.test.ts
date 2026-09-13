@@ -102,7 +102,18 @@ describe("API ownership boundaries", () => {
       },
     });
     expect(created.statusCode).toBe(200);
-    return created.json().match.id as string;
+    const matchId = created.json().match.id as string;
+    await acceptRequiredPlayerInvitations(matchId);
+    return matchId;
+  }
+
+  async function acceptRequiredPlayerInvitations(matchId: string) {
+    const match = await services.matches.getMatch(matchId);
+    for (const invitation of match?.invitations ?? []) {
+      if (invitation.kind === "player" && invitation.status === "pending") {
+        await services.matches.respondInvitation(invitation.id, invitation.invitedUserId, true);
+      }
+    }
   }
 
   async function createTournament(createdBy = organizer) {

@@ -1,0 +1,89 @@
+{
+  "date": "2026-09-13",
+  "status": "verified_local",
+  "versionUnderTest": "2.1.0",
+  "baseSha": "615169c780a4522591d3359530177e7574923f14",
+  "gateMode": "combined successful lanes; original verify:all failed only on macOS browser launch, browser-only rerun passed",
+  "totals": {
+    "total": 1229,
+    "passed": 1229,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "lanes": [
+    {
+      "name": "cleanup-foundation",
+      "status": "passed",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "quality",
+      "status": "passed",
+      "total": 1112,
+      "passed": 1112,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "postgres",
+      "status": "passed",
+      "total": 66,
+      "passed": 66,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "browser-prodlike",
+      "status": "passed",
+      "total": 47,
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    }
+  ],
+  "commands": [
+    "pnpm run verify:all (cleanup/quality/PostgreSQL passed; Chromium MachPort launch denied)",
+    "node /private/tmp/tab10-completion-4F4jia/run-e-browser.mjs -> pnpm run verify:e2e (authorized local rerun, passed)"
+  ],
+  "sourceUnchangedBetweenSuccessfulLanes": true,
+  "review": "Independent four-file consent and creator-lock re-review PASS; prior E reviews documented in handoff",
+  "browser": {
+    "journeys": 38,
+    "viewports": [
+      "1280x800",
+      "390x844"
+    ],
+    "renderedReview": [
+      "desktop admin",
+      "desktop consent",
+      "desktop Help",
+      "390px admin",
+      "390px consent"
+    ],
+    "limitation": "Last mobile Help capture was removed by harness before collector copied it; its browser journey passed. Dedicated F visual review remains."
+  },
+  "originalSource": {
+    "files": 186,
+    "changed": 0
+  },
+  "cleanup": "Both aggregate disposable PostgreSQL and authorized browser-only disposable PostgreSQL stopped/removed",
+  "residuals": [
+    "GAP-011/TECH-002 final accessibility and responsive acceptance remain Wave F",
+    "color-contrast exclusion and sub-44px controls remain known F work",
+    "No WebKit/physical-device acceptance",
+    "No version bump, commit, push, deployment or public smoke performed"
+  ]
+}

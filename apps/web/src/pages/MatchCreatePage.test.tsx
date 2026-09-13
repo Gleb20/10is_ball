@@ -52,6 +52,9 @@ describe("REQ_ui__match_create_autocomplete", () => {
       await screen.findByRole("combobox", { name: "Соперник" }),
     ).toBeInTheDocument();
     expect(screen.getByText(/сухая победа при счёте 5:0/i)).toBeInTheDocument();
+    expect(screen.getByRole("note", { name: "Подсказка о подаче" })).toHaveTextContent(
+      /двух подач.*после достижения порога.*каждого очка/i,
+    );
   });
 
   it("offers guest and player modes", async () => {
@@ -130,6 +133,8 @@ describe("REQ_ui__match_create_autocomplete", () => {
     await user.click(await screen.findByText("Rival Three"));
     await user.click(screen.getByLabelText("Соперник 2"));
     await user.click(await screen.findByText("Rival Four"));
+    await user.click(screen.getByLabelText("Судья (необязательно)"));
+    await user.click(await screen.findByText("Partner Two"));
     await user.click(screen.getByRole("button", { name: /создать матч/i }));
 
     expect(createMatch).toHaveBeenCalledWith(expect.objectContaining({
@@ -137,6 +142,7 @@ describe("REQ_ui__match_create_autocomplete", () => {
       pointsToWin: 15,
       mercyPoints: 7,
       firstServerMethod: "random",
+      judgeUserId: "u2",
       participants: [
         { side: "A", userId: "u1" },
         { side: "A", userId: "u2" },

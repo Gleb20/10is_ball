@@ -118,6 +118,8 @@ export function MatchCreatePage() {
     opponent2: emptySlot(),
   });
   const [options, setOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [judgeOptions, setJudgeOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [judgeUserId, setJudgeUserId] = useState("");
   const [createOptions, setCreateOptions] = useState<MatchCreateOptions | null>(null);
   const [directoryState, setDirectoryState] = useState<"loading" | "ready" | "error">("loading");
   const [prefillState, setPrefillState] = useState<"idle" | "loading" | "error">("idle");
@@ -140,6 +142,10 @@ export function MatchCreatePage() {
     try {
       const response = await api.matchCreateOptions();
       setCreateOptions(response);
+      setJudgeOptions(response.users.map((candidate) => ({
+        value: candidate.id,
+        label: `${candidate.firstName ?? ""} ${candidate.lastName ?? ""}`.trim(),
+      })));
       setOptions(
         response.users
           .filter((candidate) => candidate.id !== user?.id)
@@ -296,6 +302,7 @@ export function MatchCreatePage() {
         mercyPoints: mercyEnabled ? mercy : null,
         firstServerMethod,
         source,
+        ...(judgeUserId ? { judgeUserId } : {}),
         participants,
       });
       navigate(`/matches/${response.match.id}`);
@@ -348,6 +355,9 @@ export function MatchCreatePage() {
           onChange={(value) => setFirstServerMethod(value as FirstServerMethod)}
           options={[{ value: "manual", label: "Вручную" }, { value: "random", label: "Случайно" }, { value: "rally", label: "Розыгрыш" }]}
         />
+        <p className="context-tip" role="note" aria-label="Подсказка о подаче">
+          До победного порога подача меняется после двух подач. После достижения порога — после каждого очка, пока не появится отрыв в два.
+        </p>
         {directoryState === "loading" ? <p role="status" className="muted">Загружаем список игроков…</p> : null}
         {directoryState === "error" ? (
           <Alert type="warning" variant="tonal" title="Список игроков недоступен" description="Можно добавить гостей или повторить загрузку." actionLabel="Повторить" onAction={() => void loadDirectory()} />
@@ -386,6 +396,17 @@ export function MatchCreatePage() {
             ) : null}
           </section>
         ) : null}
+        <Autocomplete
+          key={`judge-${judgeUserId}`}
+          label="Судья (необязательно)"
+          placeholder="Выберите активного пользователя"
+          options={judgeOptions}
+          value={judgeUserId}
+          defaultInputValue={judgeOptions.find((option) => option.value === judgeUserId)?.label ?? ""}
+          onChange={setJudgeUserId}
+          clearable
+          fullWidth
+        />
         {format === "2v2" ? <SlotEditor label="Партнёр" slot={slots.partner} options={options} onChange={(value) => updateSlot("partner", value)} /> : null}
         <SlotEditor label={format === "2v2" ? "Соперник 1" : "Соперник"} slot={slots.opponent1} options={options} onChange={(value) => updateSlot("opponent1", value)} />
         {format === "2v2" ? <SlotEditor label="Соперник 2" slot={slots.opponent2} options={options} onChange={(value) => updateSlot("opponent2", value)} /> : null}

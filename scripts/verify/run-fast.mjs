@@ -23,6 +23,14 @@ const evidenceDir = await ensureDir(resolveEvidenceDir("fast"));
 await assertToolchain({ lane: "fast", directory: evidenceDir });
 
 const exclusions = [
+  { path: "apps/api/src/gap-010.postgres.integration.test.ts", reason: "Admin and match lock ordering requires PostgreSQL.", coveredBy: "scripts/verify/run-postgres.mjs" },
+  { path: "apps/api/src/gap-008.postgres.integration.test.ts", reason: "Notification lifecycle and concurrency require PostgreSQL.", coveredBy: "scripts/verify/run-postgres.mjs" },
+  { path: "apps/api/src/gap-006.postgres.integration.test.ts", reason: "Tournament start/edit/stop serialization requires PostgreSQL.", coveredBy: "scripts/verify/run-postgres.mjs" },
+  {
+    path: "apps/api/src/gap-007.postgres.integration.test.ts",
+    reason: "Team captain and blocking concurrency require PostgreSQL.",
+    coveredBy: "scripts/verify/run-postgres.mjs",
+  },
   {
     path: "apps/api/src/gap-005.postgres.integration.test.ts",
     reason: "Match start and handover concurrency run against required PostgreSQL.",
@@ -77,6 +85,14 @@ const suites = [
       "src/history.postgres.integration.test.ts",
       "--exclude",
       "src/gap-005.postgres.integration.test.ts",
+      "--exclude",
+      "src/gap-007.postgres.integration.test.ts",
+      "--exclude",
+      "src/gap-006.postgres.integration.test.ts",
+      "--exclude",
+      "src/gap-008.postgres.integration.test.ts",
+      "--exclude",
+      "src/gap-010.postgres.integration.test.ts",
     ],
   },
 ];

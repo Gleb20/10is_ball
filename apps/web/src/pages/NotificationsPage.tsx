@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, Button } from "../ui";
 import { PageLayout } from "../layout";
 import { AsyncState, ListRow } from "../patterns";
+import { useAuth } from "../auth";
+import { useVisibleRefresh } from "../useVisibleRefresh";
 import { api } from "../api";
 import { useSingleFlight } from "../useSingleFlight";
 
@@ -70,6 +72,12 @@ function reasonLabel(reasonCode?: string | null): string | null {
   switch (reasonCode) {
     case "timeout":
       return "срок приглашения истёк";
+    case "match_started": return "матч уже начался";
+    case "event_started": return "событие уже началось";
+    case "match_finished": case "event_finished": return "событие завершено";
+    case "match_cancelled": case "event_cancelled": return "событие отменено";
+    case "side_changed": return "сторона игрока изменена";
+    case "roster_changed": case "roster_closed": return "состав изменён или закрыт";
     case "invitation_revoked":
       return "приглашение отозвано";
     case "source_unavailable":
@@ -80,21 +88,31 @@ function reasonLabel(reasonCode?: string | null): string | null {
 }
 
 export function NotificationsPage() {
+  const { user } = useAuth();
+  return <ActorNotificationsPage key={user?.id ?? "anonymous"} userId={user?.id} />;
+}
+
+function ActorNotificationsPage({ userId }: { userId?: string }) {
   const navigate = useNavigate();
+  const sequence = useRef(0);
+  const mounted = useRef(true);
+  const mutating = useRef(false);
   const [items, setItems] = useState<NotificationRow[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const action = useSingleFlight();
   const [onlyActual, setOnlyActual] = useState(true);
   const readRequests = useRef(new Set<string>());
 
-  async function load() {
+  const load = useCallback(async (force = false) => {
+    if (!userId || (mutating.current && !force)) return;
+    const current = ++sequence.current;
     const res = await api.notifications();
-    setItems(res.notifications as NotificationRow[]);
-  }
-
+    if (mounted.current && current === sequence.current) setItems(res.notifications as NotificationRow[]);
+  }, [userId]);
+  const { error, refreshNow } = useVisibleRefresh(load, { refreshKey: userId });
   useEffect(() => {
-    void load().catch((e) => setError(e.message));
+    mounted.current = true;
+    return () => { mounted.current = false; };
   }, []);
 
   const visible = useMemo(() => {
@@ -115,6 +133,7 @@ export function NotificationsPage() {
     void api
       .markNotificationsReadVisible(ids)
       .then((response) => {
+        if (!mounted.current) return;
         const readAtById = new Map(
           response.notifications.map((notification) => [
             notification.id,
@@ -129,13 +148,16 @@ export function NotificationsPage() {
         );
       })
       .catch((caught: Error) => {
+        if (!mounted.current) return;
         ids.forEach((id) => readRequests.current.delete(id));
-        setActionError(caught.message);
+        if ((caught as Error & { status?: number }).status !== 401) setActionError(caught.message);
       });
   }, [visible]);
 
   async function markRead(id: string) {
+    try {
     await api.markNotificationRead(id);
+    if (!mounted.current) return;
     setItems((prev) =>
       (prev ?? []).map((n) =>
         n.id === id
@@ -148,16 +170,30 @@ export function NotificationsPage() {
           : n,
       ),
     );
+    } catch (cause) {
+      if (!mounted.current) return;
+      if ((cause as Error & { status?: number }).status !== 401) setActionError((cause as Error).message);
+    }
   }
 
   async function respondTeamInvite(invitationId: string, accept: boolean) {
     await action.run(async () => {
+      mutating.current = true;
+      sequence.current += 1;
       setActionError(null);
       try {
-        await api.respondTeamInvitation(invitationId, accept);
-        await load();
+        const result = await api.respondTeamInvitation(invitationId, accept);
+        if (!mounted.current) return;
+        if (accept && result?.status === "accepted" && result.teamId) {
+          navigate(`/teams/${result.teamId}?welcome=1`);
+          return;
+        }
+        await load(true);
       } catch (e) {
-        setActionError((e as Error).message);
+        if (!mounted.current) return;
+        if ((e as Error & { status?: number }).status !== 401) { setActionError((e as Error).message); await load(true); }
+      } finally {
+        mutating.current = false;
       }
     });
   }
@@ -167,12 +203,40 @@ export function NotificationsPage() {
     accept: boolean,
   ) {
     await action.run(async () => {
+      mutating.current = true;
+      sequence.current += 1;
       setActionError(null);
       try {
         await api.respondTournamentInvitation(invitationId, accept);
-        await load();
+        if (!mounted.current) return;
+        await load(true);
       } catch (e) {
-        setActionError((e as Error).message);
+        if (!mounted.current) return;
+        if ((e as Error & { status?: number }).status !== 401) { setActionError((e as Error).message); await load(true); }
+      } finally {
+        mutating.current = false;
+      }
+    });
+  }
+
+  async function respondMatchInvite(invitationId: string, accept: boolean, judge: boolean) {
+    await action.run(async () => {
+      mutating.current = true;
+      sequence.current += 1;
+      setActionError(null);
+      try {
+        const result = await api.respondMatchInvitation(invitationId, accept);
+        if (!mounted.current) return;
+        if (accept && result.invitation.status === "accepted") {
+          navigate(`/matches/${result.invitation.matchId}${judge ? "/judge" : ""}`);
+          return;
+        }
+        await load(true);
+      } catch (cause) {
+        if (!mounted.current) return;
+        if ((cause as Error & { status?: number }).status !== 401) { setActionError((cause as Error).message); await load(true); }
+      } finally {
+        mutating.current = false;
       }
     });
   }
@@ -199,6 +263,7 @@ export function NotificationsPage() {
       {actionError ? (
         <Alert type="error" variant="tonal" title="Ошибка" description={actionError} />
       ) : null}
+      <Button variant="secondary" disabled={action.pending} onClick={() => void refreshNow()}>Обновить уведомления</Button>
       <AsyncState
         loading={items === null && !error}
         error={error}
@@ -237,6 +302,12 @@ export function NotificationsPage() {
                     ? ` · ${formatNotificationTime(n.lifecycleAt)}`
                     : ""}
                 </p>
+              ) : null}
+              {["match_invitation", "judge_invitation"].includes(n.type) && n.payload?.invitationId && isInviteActionable(n) ? (
+                <div className="row">
+                  <Button disabled={action.pending} onClick={() => void respondMatchInvite(n.payload!.invitationId!, true, n.type === "judge_invitation")}>Принять</Button>
+                  <Button variant="secondary" disabled={action.pending} onClick={() => void respondMatchInvite(n.payload!.invitationId!, false, n.type === "judge_invitation")}>Отклонить</Button>
+                </div>
               ) : null}
               {n.type === "team_invitation" &&
               n.payload?.invitationId &&
@@ -294,20 +365,13 @@ export function NotificationsPage() {
                   </Button>
                 </div>
               ) : null}
-              {n.type === "tournament_match_ready" &&
-              n.payload?.matchId &&
-              (n.lifecycle ?? "new") === "new" ? (
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    void markRead(n.id);
-                    navigate(`/matches/${n.payload!.matchId}`);
-                  }}
-                >
-                  Открыть матч
-                </Button>
+              {!isInviteActionable(n) && n.payload?.matchId && !["expired", "cancelled", "declined"].includes(n.lifecycle ?? "") ? (
+                <Button variant="secondary" onClick={() => navigate(`/matches/${n.payload!.matchId}${["judge_invitation", "judge_handover", "judge_handover_offered"].includes(n.type) ? "/judge" : ""}`)}>Открыть матч</Button>
               ) : null}
+              {!isInviteActionable(n) && n.payload?.teamId && ["team_captain_assigned", "captain_assigned"].includes(n.type) ? <Button variant="secondary" onClick={() => navigate(`/teams/${n.payload!.teamId}`)}>Открыть команду</Button> : null}
+              {!isInviteActionable(n) && n.payload?.tournamentId && n.type !== "tournament_invitation" ? <Button variant="secondary" onClick={() => navigate(`/tournaments/${n.payload!.tournamentId}`)}>Открыть турнир</Button> : null}
               {(n.lifecycle ?? "new") === "new" &&
+              n.type !== "match_invitation" && n.type !== "judge_invitation" &&
               n.type !== "team_invitation" &&
               n.type !== "tournament_invitation" &&
               n.type !== "tournament_match_ready" ? (

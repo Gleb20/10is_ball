@@ -1,0 +1,74 @@
+{
+  "date": "2026-09-13",
+  "testedVersion": "2.1.0",
+  "proposedReleaseVersion": "3.0.0",
+  "baseSha": "615169c780a4522591d3359530177e7574923f14",
+  "command": "pnpm run verify:all",
+  "node": "24.20.0",
+  "pnpm": "9.15.0",
+  "postgres": "16.15",
+  "totals": {
+    "total": 1135,
+    "passed": 1135,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "lanes": [
+    {
+      "name": "cleanup-foundation",
+      "status": "passed",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "quality",
+      "status": "passed",
+      "total": 1034,
+      "passed": 1034,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "postgres",
+      "status": "passed",
+      "total": 56,
+      "passed": 56,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "browser-prodlike",
+      "status": "passed",
+      "total": 41,
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    }
+  ],
+  "review": "Independent bounded API/web reviews and parent final acceptance; separate Terra unavailable",
+  "browser": "32 compiled same-origin synthetic journeys at desktop and390px plus9 foundation checks; SE/DE3/5/8 full lifecycle, invalidation/regeneration/dissolve/cancel/reasoned stop, team invite/transfer/leave/archive; rendered desktop/390 finished and landscape bracket captures reviewed",
+  "originalSnapshotFilesUnchanged": 186,
+  "migration": "No Wave D migration required",
+  "residuals": [
+    "GAP-008..011 and full TECH-002 remain waves E-F",
+    "Known color-contrast exclusion and44px control audit remain GAP-011",
+    "No physical-device or WebKit acceptance claimed"
+  ],
+  "publicRelease": {
+    "status": "pending",
+    "reason": "Direct user confirmation of3.0.0 required after automatic approval rejection",
+    "mutationPolicy": "No public mutating E2E or reset"
+  }
+}

@@ -1,8 +1,44 @@
 # Tab-10 — статус проекта
 
-Обновлено: **2026-09-13**. Опубликована **2.0.0**; волна C принята локально.
+## Release 3.0.0 — pre-publication checkpoint, 2026-09-13
 
-## Текущий результат
+Пользователь подтвердил выпуск. Свежий полный `pnpm run verify:all` на версии
+**3.0.0: 1249/1249 PASS**, без failed/skipped/todo/interrupted; 449 файлов
+сохранили идентичность во время проверки. [Релизное evidence](audit/evidence/release-3.0.0-local.json).
+Следующий шаг этого checkpoint: commit/push main по D32, hosted CI и GET-only
+exact-SHA smoke web/API/proxy. Публикация пока не заявлена. Ниже — предыдущая
+приёмка и её сохраняющиеся WebKit/device/AT ограничения.
+
+
+Обновлено: **2026-09-13**. Текущий локальный кандидат D+E+F и BUG-017 принят
+основным gate **1249/1249**. Предыдущая версия под тестом2.1.0, base615169c; это dirty
+кандидат, не новый опубликованный release. Публичная2.1.0 известна из прежнего
+exact-SHA smoke и в этой приёмке заново не проверялась.
+
+## Текущая приёмка
+
+- `pnpm run verify:all`: quality1122, PostgreSQL66, browser57
+  (48 desktop/mobile journeys +9foundation), cleanup4; ноль ошибок/пропусков.
+- F16 файлов и отдельное исправление WaveB period fixture проверены независимым
+  review. Snapshot447 файлов не изменился во время полного gate.
+- BUG-017:409 вместо500 при судействе из второй сессии; verified_local.
+- Дополнительно Playwright Firefox155.0:7/7. WebKit26.6:7 падений native runtime
+  при создании страницы до проверок приложения. Общий compatibility lane failed,
+  исходники/сборка689 файлов сохранены, disposable resources удалены.
+- GAP-011/TECH-002 остаются in_progress для WebKit, последних двух версий
+  браузеров, реальных iOS/Android/safe-area/keyboard и screen-reader acceptance.
+  Axe22 Chromium +11 Firefox reports без violations; incomplete не объявлены PASS.
+
+[Полное локальное evidence](audit/evidence/wave-f-local.json),
+[ограничения совместимости](audit/evidence/wave-f-compatibility.json),
+[очередь и handoff](test-plans/OPS-004-coordinator-handoff-2026-09-13.md).
+Оригинальное dirty-дерево сохраняется отдельно. Пользователь явно подтвердил выпуск3.0.0; root version обновлена. Новый локальный gate, commit/push и exact-SHA public/CI проверка ещё предстоят. Прежнее ожидание approval снято этим подтверждением.
+
+Ниже сохранены исторические этапы; их прежние pending/counts не заменяют текущую
+приёмку выше. Q-OPS-003 и независимый negative probe SEC-001 остаются отдельными
+известными ограничениями, не скрываются общим зелёным gate.
+
+## История этапов и прежние снимки
 
 Выполняется принятый план завершения PRD v2 волнами A–F:
 [очередь и критерии приёмки](test-plans/OPS-004-completion-waves.md).
@@ -19,14 +55,40 @@ Desktop/390 profile, rankings и history return просмотрены.
 [Обезличенные доказательства](audit/evidence/wave-b-local.json).
 Исходные 186 файлов сохранены без изменений.
 
+## Волна D принята локально — кандидат 3.0.0
+
+GAP-006 `verified_local`: настройки и invalidation/regeneration сетки, seed/BYE
+swaps, organizer-owned start/stop/cancel/dissolve, V2 SE/DE 3/5/8, persisted
+summary с current/next, duration, results, top-3 и персональным highlight. Причина
+остановки вводится и сохраняется; stopped tournament не получает places/top-3,
+а D33 void исключается из статистики без разрушения bracket places.
+
+GAP-007 `verified_local`: team create/detail/edit, welcome, invite history и
+respond, captain transfer, member removal, leave, automatic archive и использование
+active own team в event picker. Privacy-safe DTO и transactional PostgreSQL tests
+проверяют current/former/pending access, captain invariants и atomic
+block→captain reassignment/archive.
+
+Первый полный aggregate прошёл **1133/1133**. Последующий rendered review обнаружил
+ложную подсказку о следующем auto-BYE матче в завершённом турнире; regression был
+Red, исправление прошло 17/17 focused tests и web typecheck. Финальный aggregate
+после исправления прошёл **1135/1135**: quality 1034, PostgreSQL 56, browser 41
+(32 journeys + 9 foundation), cleanup 4, без failed/skipped/todo/interrupted.
+Desktop и 390px исправленного terminal state, а также landscape bracket просмотрены.
+[Доказательства](audit/evidence/wave-d-local.json). Исходные 186 файлов сохранены
+без изменений. Публичного Wave D release нет; root остаётся на 2.1.0 до отдельно
+одобренного direct release 3.0.0.
+
 ## Волна C принята локально — кандидат 2.1.0
 
 GAP-005 verified_local: полный `verify:all` **1056/1056** (quality980,
 PostgreSQL47, browser25, cleanup4), ноль ошибок/пропусков. 16 compiled browser
 journeys включают создание 2×2, неявку/реванш, коррекцию/Undo/передачу судейства
 и отдельные сессии создателя и судьи. Desktop/390 captures просмотрены.
-[Доказательства](audit/evidence/wave-c-local.json). Публикация 2.1.0 пока ожидается.
-GAP-006..011 и полный TECH-002 остаются в очереди D–F.
+[Доказательства](audit/evidence/wave-c-local.json). Публикация подтверждена: main615169c, CI34730792219 all four jobs success, GET-only exact-SHA smoke web/API/proxy; Neon ledger5 и новые поля подтверждены read-only.
+Это утверждение описывало состояние после Wave C и теперь частично superseded:
+GAP-006/007 локально проверены в Wave D; GAP-008..011
+и полный TECH-002 остаются в очереди E–F.
 
 ## Исторический снимок 2026-09-09 (superseded текущей проверкой выше)
 
@@ -66,16 +128,13 @@ GAP-006..011 и полный TECH-002 остаются в очереди D–F.
 
 ## Следующий этап
 
-`OPS-004` достиг `verified_prod`: baseline применён к disposable public schema,
-CI и первый exact-SHA public release проверены. SEC-001/002/004 и TECH-001/004
-сверены с тем же опубликованным foundation SHA. Текущий P0 batch переносит только
-миграцию `0001`; P1 migrations `0002–0003` и GAP-002–005 исключены.
-
-Q-MATCH-003 закрыт решением D33. Следующий обязательный шаг этого batch — один
-push всей локальной серии в `origin/main`, hosted CI и read-only `smoke:public`.
+Следующий локальный шаг — завершить и проверить consent delta Wave E, затем
+последовательно выполнить aggregate/browser acceptance E и отдельную Wave F.
+Публикация требует отдельно одобренного изменения версии, hosted CI и exact-SHA
+public smoke. До подтверждения root-версия остаётся 2.1.0; последнее публичное
+evidence также относится к 2.1.0.
 Одноразовый reset по D31 не повторяется: применяются только immutable forward
-migrations. После подтверждения exact SHA можно перевести текущие P0 пункты из
-`verified_local` в `verified_prod` отдельной честной post-release фиксацией.
+migrations.
 Новые продуктовые решения принимаются только через
 [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) и [DECISIONS.md](DECISIONS.md).
 

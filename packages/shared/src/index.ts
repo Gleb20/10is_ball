@@ -29,15 +29,16 @@ export type Side = z.infer<typeof SideSchema>;
 export const FirstServerMethodSchema = z.enum(["random", "manual", "rally"]);
 export type FirstServerMethod = z.infer<typeof FirstServerMethodSchema>;
 
-export const MatchParticipantRequestSchema = z
+const MatchParticipantFieldsSchema = z
   .object({
     side: SideSchema,
     userId: z.string().uuid().optional(),
     guestFirstName: z.string().trim().min(1).max(100).optional(),
     guestLastName: z.string().trim().min(1).max(100).optional(),
   })
-  .strict()
-  .superRefine((participant, ctx) => {
+  .strict();
+
+const validateMatchParticipant = (participant: z.infer<typeof MatchParticipantFieldsSchema>, ctx: z.RefinementCtx) => {
     const isUser = participant.userId !== undefined;
     const isGuest =
       participant.guestFirstName !== undefined ||
@@ -54,9 +55,12 @@ export const MatchParticipantRequestSchema = z
         message: "guest first and last name are required",
       });
     }
-  });
+  };
 
-export const CreateMatchRequestSchema = z
+export const MatchParticipantRequestSchema = MatchParticipantFieldsSchema.superRefine(validateMatchParticipant);
+const UpdateMatchParticipantRequestSchema = MatchParticipantFieldsSchema.extend({ id: z.string().uuid().optional() }).superRefine(validateMatchParticipant);
+
+const CreateMatchFieldsSchema = z
   .object({
     title: z.string().trim().min(1).max(200),
     format: MatchFormatSchema,
@@ -66,9 +70,11 @@ export const CreateMatchRequestSchema = z
     firstServerMethod: FirstServerMethodSchema.optional(),
     source: z.enum(["manual", "challenge", "revenge", "tutorial"]).optional(),
     participants: z.array(MatchParticipantRequestSchema).max(4),
+    judgeUserId: z.string().uuid().optional(),
   })
-  .strict()
-  .superRefine((request, ctx) => {
+  .strict();
+
+export const CreateMatchRequestSchema = CreateMatchFieldsSchema.superRefine((request, ctx) => {
     if (request.mercyEnabled && request.mercyPoints == null) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -78,6 +84,17 @@ export const CreateMatchRequestSchema = z
     }
   });
 export type CreateMatchRequest = z.infer<typeof CreateMatchRequestSchema>;
+
+export const UpdateMatchRequestSchema = CreateMatchFieldsSchema
+  .omit({ source: true, judgeUserId: true })
+  .partial()
+  .extend({ participants: z.array(UpdateMatchParticipantRequestSchema).max(4).optional() })
+  .strict()
+  .refine((patch) => Object.keys(patch).length > 0, "At least one field is required");
+export type UpdateMatchRequest = z.infer<typeof UpdateMatchRequestSchema>;
+export const MatchInvitationRequestSchema = z.object({
+  userId: z.string().uuid(), kind: z.enum(["player", "judge"]),
+}).strict();
 
 export const StartMatchRequestSchema = z
   .object({ firstServerParticipantId: z.string().uuid().optional() })
@@ -120,6 +137,15 @@ export const ManualCorrectionRequestSchema = MatchVersionRequestSchema.extend({
   scoreB: z.number().int().min(0).max(999),
   currentServerParticipantId: z.string().uuid(),
 }).strict();
+
+export const TeamCreateRequestSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  slogan: z.string().trim().max(300).optional(),
+  welcomeText: z.string().trim().max(2000).optional(),
+}).strict();
+export const TeamUpdateRequestSchema = TeamCreateRequestSchema.partial().refine(
+  (value) => Object.keys(value).length > 0, { message: "At least one team field is required" },
+);
 
 export const StopMatchRequestSchema = z
   .object({

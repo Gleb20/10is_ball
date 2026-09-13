@@ -77,10 +77,10 @@ describe("versioned migration foundation on disposable PGlite", () => {
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
       ORDER BY table_name
     `);
-    expect(tables.rows.map((row) => row.table_name)).toHaveLength(18);
+    expect(tables.rows.map((row) => row.table_name)).toHaveLength(19);
   });
 
-  it.each([1, 2, 3])("upgrades a %i-migration released prefix without changing existing rows", async (prefixLength) => {
+  it.each([1, 2, 3, 4])("upgrades a %i-migration released prefix without changing existing rows", async (prefixLength) => {
     const context = await freshContext();
     const baselineOnlyDirectory = await mkdtemp(
       join(tmpdir(), "tab10-baseline-only-"),
@@ -270,8 +270,8 @@ describe("versioned migration foundation on disposable PGlite", () => {
     const after = await context.client.query<{ count: number }>(`
       SELECT count(*)::integer AS count FROM drizzle.__drizzle_migrations
     `);
-    expect(before.rows[0]?.count).toBe(5);
-    expect(after.rows[0]?.count).toBe(5);
+    expect(before.rows[0]?.count).toBe(6);
+    expect(after.rows[0]?.count).toBe(6);
   });
 
   it("does not let adoption stand in for ordinary fresh apply", async () => {
@@ -454,6 +454,6 @@ describe("versioned migration foundation on disposable PGlite", () => {
       FROM information_schema.tables
       WHERE table_schema = 'public'
     `);
-    expect(tables.rows[0]?.count).toBe(18);
+    expect(tables.rows[0]?.count).toBe(19);
   });
 });

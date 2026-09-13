@@ -66,7 +66,15 @@
     "Legacy finished matches without confirmation marker retain prior historical user/auth retry behavior"
   ],
   "publicRelease": {
-    "status": "pending",
+    "sha": "615169c780a4522591d3359530177e7574923f14",
+    "version": "2.1.0",
+    "readOnlySmoke": "passed",
+    "attempts": 5,
+    "elapsedMs": 82087,
+    "githubRun": "34730792219",
+    "githubConclusion": "success",
+    "migrationLedgerEntries": 5,
+    "newColumnsConfirmed": 3,
     "mutationPolicy": "No public mutating E2E or reset"
   }
 }

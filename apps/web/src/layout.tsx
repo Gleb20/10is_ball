@@ -13,6 +13,7 @@ const TABS = [
   { to: "/rankings", label: "Рейтинг", icon: "Games/Trophy" },
   { to: "/profile", label: "Профиль", icon: "People/User" },
 ] as const;
+export type BottomNavGuideTarget = (typeof TABS)[number]["to"];
 
 export function shouldShowBottomNav(pathname: string, opts: {
   authenticated: boolean;
@@ -24,22 +25,39 @@ export function shouldShowBottomNav(pathname: string, opts: {
   return true;
 }
 
-export function BottomNav() {
+export function BottomNav({
+  guideTarget,
+}: {
+  guideTarget?: BottomNavGuideTarget | null;
+}) {
+  const guideActive = guideTarget !== undefined;
   return (
     <nav className="bottom-nav" aria-label="Основная навигация">
-      {TABS.map((tab) => (
-        <NavLink
-          key={tab.to}
-          to={tab.to}
-          end={"end" in tab ? tab.end : false}
-          className={({ isActive }) =>
-            isActive ? "bottom-nav__item active" : "bottom-nav__item"
-          }
-        >
-          <Icon path={tab.icon} size={22} weight="regular" />
-          <span>{tab.label}</span>
-        </NavLink>
-      ))}
+      {TABS.map((tab) => {
+        const isGuideTarget = guideTarget === tab.to;
+        const content = <><Icon path={tab.icon} size={22} weight="regular" /><span>{tab.label}</span></>;
+        return guideActive ? (
+          <span
+            key={tab.to}
+            className={isGuideTarget ? "bottom-nav__item bottom-nav__item--guide" : "bottom-nav__item"}
+            data-onboarding-target={isGuideTarget ? "true" : undefined}
+            aria-current={isGuideTarget ? "step" : undefined}
+          >
+            {content}
+          </span>
+        ) : (
+          <NavLink
+            key={tab.to}
+            to={tab.to}
+            end={"end" in tab ? tab.end : false}
+            className={({ isActive }) =>
+              isActive ? "bottom-nav__item active" : "bottom-nav__item"
+            }
+          >
+            {content}
+          </NavLink>
+        );
+      })}
     </nav>
   );
 }
@@ -79,9 +97,11 @@ export function PageLayout({
 export function AppShell({
   children,
   showNav,
+  onboardingGuideTarget,
 }: {
   children: React.ReactNode;
   showNav: boolean;
+  onboardingGuideTarget?: BottomNavGuideTarget | null;
 }) {
   const location = useLocation();
   const immersive = /\/matches\/[^/]+\/judge$/.test(location.pathname);
@@ -121,7 +141,7 @@ export function AppShell({
         ) : null}
         {children}
       </main>
-      {showNav ? <BottomNav /> : null}
+      {showNav ? <BottomNav guideTarget={onboardingGuideTarget} /> : null}
     </div>
   );
 }

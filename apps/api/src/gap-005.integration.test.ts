@@ -81,12 +81,20 @@ describe("GAP-005 match and judge completion slice", () => {
   });
 
   async function createMatch(payload: Record<string, unknown>) {
-    return app.inject({
+    const response = await app.inject({
       method: "POST",
       url: "/api/v1/matches",
       cookies: { tab10_session: userA.cookie },
       payload,
     });
+    // Judge/rule fixtures begin with explicit consent from selected players.
+    if (response.statusCode === 200) {
+      const match = await services.matches.getMatch(response.json().match.id);
+      for (const invitation of match!.invitations.filter(row => row.kind === "player" && row.status === "pending")) {
+        await services.matches.respondInvitation(invitation.id, invitation.invitedUserId, true);
+      }
+    }
+    return response;
   }
 
   it("AT-MATCH-013: persists complete 2v2 custom rules and random first-server mode", async () => {

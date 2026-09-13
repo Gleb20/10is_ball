@@ -11,7 +11,6 @@ const API_BASE_URL = process.env.TAB10_E2E_BASE_URL ?? "http://localhost:4273";
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "delivery.admin@tab10.test";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ??
   "DeliveryVerify9!";
-const KNOWN_GAP_011_AXE_RULES = ["color-contrast"];
 
 async function csrfHeaders(context: APIRequestContext) {
   const state = await context.storageState();
@@ -67,7 +66,6 @@ async function loginBrowser(page: Page) {
 async function expectNoSeriousAxeViolations(page: Page) {
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-    .disableRules(KNOWN_GAP_011_AXE_RULES)
     .analyze();
   const violations = results.violations.filter(
     (violation) =>

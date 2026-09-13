@@ -180,7 +180,7 @@ describe("BUG-013 notification read and timestamp semantics", () => {
     expect(revoked).toMatchObject({
       lifecycle: "cancelled",
       actionable: false,
-      reasonCode: "invitation_revoked",
+      reasonCode: "event_cancelled",
       lifecycleAt: clock.now(),
       readAt: clock.now(),
     });

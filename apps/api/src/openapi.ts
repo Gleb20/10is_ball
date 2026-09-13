@@ -251,6 +251,38 @@ const schemas: Record<string, JsonSchema> = {
     },
     additionalProperties: true,
   },
+  AdminUser: {
+    type: "object",
+    required: ["id", "email", "role", "status", "firstName", "lastName", "mustChangePassword", "birthDate", "organizationText", "positionText", "createdAt", "lastLoginAt"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+      email: { type: "string", format: "email" },
+      role: { type: "string", enum: ["admin", "user"] },
+      status: { type: "string", enum: ["active", "blocked"] },
+      firstName: { type: "string" }, lastName: { type: "string" },
+      mustChangePassword: { type: "boolean" },
+      birthDate: { type: "string", format: "date", nullable: true },
+      organizationText: { type: "string", nullable: true },
+      positionText: { type: "string", nullable: true },
+      avatarKey: { type: "string", nullable: true },
+      onboardingStep: { type: "integer", minimum: 0, maximum: 6 },
+      onboardingCompletedAt: { type: "string", format: "date-time", nullable: true },
+      createdAt: { type: "string", format: "date-time" },
+      lastLoginAt: { type: "string", format: "date-time", nullable: true },
+    },
+    additionalProperties: false,
+  },
+  AdminUserUpdateRequest: {
+    type: "object", minProperties: 1, additionalProperties: false,
+    properties: {
+      firstName: { type: "string", minLength: 1, maxLength: 100 },
+      lastName: { type: "string", minLength: 1, maxLength: 100 },
+      birthDate: { type: "string", format: "date", nullable: true },
+      organizationText: { type: "string", maxLength: 200, nullable: true },
+      positionText: { type: "string", maxLength: 200, nullable: true },
+      role: { type: "string", enum: ["admin", "user"] },
+    },
+  },
   DirectoryUser: {
     type: "object",
     required: ["id", "firstName", "lastName"],
@@ -353,6 +385,7 @@ const schemas: Record<string, JsonSchema> = {
       version: { type: "integer", minimum: 0 },
       winnerSide: { type: "string", enum: ["A", "B"], nullable: true },
       participants: { type: "array", items: ref("Participant") },
+      invitations: { type: "array", items: ref("MatchInvitation") },
       activeJudge: { type: "object", nullable: true, additionalProperties: true },
       judgeReservation: { nullable: true, allOf: [ref("JudgeReservation")] },
       firstServerMethod: { type: "string", enum: ["random", "manual", "rally"] },
@@ -398,20 +431,34 @@ const schemas: Record<string, JsonSchema> = {
       createdByUserId: { type: "string" },
       participants: { type: "array", items: ref("Participant") },
       bracket: { type: "object", nullable: true, additionalProperties: true },
+      summary: {
+        type: "object", required: ["durationSeconds", "playedMatchCount", "results", "top3", "matchParticipants"],
+        properties: {
+          durationSeconds: { type: "integer", minimum: 0, nullable: true },
+          playedMatchCount: { type: "integer", minimum: 0 },
+          results: { type: "array", items: { type: "object", required: ["participantId", "points", "playedMatches", "place"], properties: {
+            participantId: { type: "string" }, points: { type: "integer", minimum: 0 }, playedMatches: { type: "integer", minimum: 0 }, place: { type: "integer", minimum: 1, nullable: true },
+          } } },
+          top3: { type: "array", items: { type: "string" }, description: "Participant IDs placed 1–3; empty for stopped tournaments" },
+          matchParticipants: { type: "array", items: { type: "object", required: ["matchId", "participantIds"], properties: { matchId: { type: "string" }, participantIds: { type: "array", items: { type: "string" } } } } },
+        },
+      },
     },
     additionalProperties: true,
   },
   Team: {
-    type: "object",
-    required: ["id", "name", "captainUserId"],
+    type: "object", required: ["id", "name", "captainUserId"], additionalProperties: true,
     properties: {
-      id: { type: "string" },
-      name: { type: "string" },
-      captainUserId: { type: "string" },
-      slogan: { type: "string", nullable: true },
-      welcomeText: { type: "string", nullable: true },
+      id: { type: "string", format: "uuid" }, name: { type: "string" },
+      captainUserId: { type: "string", format: "uuid" }, status: { type: "string", enum: ["active", "archived"] },
+      slogan: { type: "string", nullable: true }, welcomeText: { type: "string", nullable: true },
+      createdAt: { type: "string", format: "date-time" }, archivedAt: { type: "string", format: "date-time", nullable: true },
+      isMember: { type: "boolean" }, isCaptain: { type: "boolean" },
+      members: { type: "array", items: { type: "object", properties: {
+        id: { type: "string", format: "uuid" }, userId: { type: "string", format: "uuid" }, joinedAt: { type: "string", format: "date-time" }, displayName: { type: "string" }, avatarKey: { type: "string", nullable: true },
+      } } },
+      invitations: { type: "array", description: "Captain-only invitation metadata", items: ref("Invitation") },
     },
-    additionalProperties: true,
   },
   Invitation: {
     type: "object",
@@ -581,6 +628,18 @@ const schemas: Record<string, JsonSchema> = {
     },
     additionalProperties: false,
   },
+  UpdateMatchParticipantRequest: {
+    type: "object",
+    required: ["side"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+      side: { type: "string", enum: ["A", "B"] },
+      userId: { type: "string" },
+      guestFirstName: { type: "string", minLength: 1, maxLength: 100 },
+      guestLastName: { type: "string", minLength: 1, maxLength: 100 },
+    },
+    additionalProperties: false,
+  },
   CreateMatchRequest: {
     type: "object",
     required: ["title", "format", "participants"],
@@ -592,6 +651,7 @@ const schemas: Record<string, JsonSchema> = {
       mercyPoints: { type: "integer", minimum: 1, nullable: true },
       firstServerMethod: { type: "string", enum: ["random", "manual", "rally"] },
       source: { type: "string", enum: ["manual", "challenge", "revenge", "tutorial"] },
+      judgeUserId: { type: "string", format: "uuid" },
       participants: { type: "array", maxItems: 4, items: ref("MatchParticipantRequest") },
     },
     additionalProperties: false,
@@ -629,7 +689,38 @@ const schemas: Record<string, JsonSchema> = {
       recentOpponentIds: { type: "array", items: { type: "string", format: "uuid" } },
       frequentOpponentIds: { type: "array", items: { type: "string", format: "uuid" } },
     },
+  },  UpdateMatchRequest: {
+    type: "object",
+    minProperties: 1,
+    properties: {
+      title: { type: "string", minLength: 1, maxLength: 200 },
+      format: { type: "string", enum: ["1v1", "2v2"] },
+      pointsToWin: { type: "integer", minimum: 1 },
+      mercyEnabled: { type: "boolean" },
+      mercyPoints: { type: "integer", minimum: 1, nullable: true },
+      firstServerMethod: { type: "string", enum: ["random", "manual", "rally"] },
+      participants: { type: "array", maxItems: 4, items: ref("UpdateMatchParticipantRequest") },
+    },
+    additionalProperties: false,
   },
+  MatchInvitationRequest: {
+    type: "object", required: ["userId", "kind"], additionalProperties: false,
+    properties: { userId: { type: "string", format: "uuid" }, kind: { type: "string", enum: ["player", "judge"] } },
+  },
+  MatchInvitation: {
+    type: "object", additionalProperties: false,
+    required: ["id", "matchId", "matchParticipantId", "participantSide", "invitedUserId", "invitedByUserId", "kind", "status", "expiresAt", "respondedAt", "expiryReason", "createdAt"],
+    properties: {
+      id: { type: "string", format: "uuid" }, matchId: { type: "string", format: "uuid" },
+      matchParticipantId: { type: "string", format: "uuid", nullable: true }, participantSide: { type: "string", enum: ["A", "B"], nullable: true },
+      invitedUserId: { type: "string", format: "uuid" }, invitedByUserId: { type: "string", format: "uuid" },
+      kind: { type: "string", enum: ["player", "judge"] },
+      status: { type: "string", enum: ["pending", "accepted", "declined", "expired", "cancelled"] },
+      expiresAt: { type: "string", format: "date-time" }, respondedAt: { type: "string", format: "date-time", nullable: true },
+      expiryReason: { type: "string", nullable: true }, createdAt: { type: "string", format: "date-time" },
+    },
+  },
+
   StartMatchRequest: {
     type: "object",
     properties: { firstServerParticipantId: { type: "string" } },
@@ -682,7 +773,7 @@ const schemas: Record<string, JsonSchema> = {
     type: "object",
     required: ["title"],
     properties: {
-      title: { type: "string" },
+      title: { type: "string", minLength: 1, maxLength: 200 },
       format: { type: "string", enum: ["single_elimination", "double_elimination"] },
       organizerParticipates: { type: "boolean" },
       pointsToWin: { type: "integer", minimum: 1 },
@@ -692,9 +783,9 @@ const schemas: Record<string, JsonSchema> = {
     additionalProperties: false,
   },
   TournamentPatchRequest: {
-    type: "object",
+    type: "object", minProperties: 1,
     properties: {
-      title: { type: "string" },
+      title: { type: "string", minLength: 1, maxLength: 200 },
       format: { type: "string", enum: ["single_elimination", "double_elimination"] },
       organizerParticipates: { type: "boolean" },
       pointsToWin: { type: "integer", minimum: 1 },
@@ -746,11 +837,11 @@ const schemas: Record<string, JsonSchema> = {
     type: "object",
     properties: {
       swaps: {
-        type: "array",
+        type: "array", maxItems: 100,
         items: {
           type: "object",
           required: ["slotIdA", "slotIdB"],
-          properties: { slotIdA: { type: "string" }, slotIdB: { type: "string" } },
+          properties: { slotIdA: { type: "string", minLength: 1, maxLength: 100, description: "V2 seed:N (1-based) or legacy match/slot reference" }, slotIdB: { type: "string", minLength: 1, maxLength: 100 } },
           additionalProperties: false,
         },
       },
@@ -758,24 +849,27 @@ const schemas: Record<string, JsonSchema> = {
     additionalProperties: false,
   },
   TournamentStopRequest: {
-    type: "object",
-    properties: { code: { type: "string" }, text: { type: "string" } },
+    type: "object", required: ["code"],
+    description: "A reason code is required; other requires nonempty text",
+    properties: { code: { type: "string", minLength: 1, maxLength: 100 }, text: { type: "string", maxLength: 500 } },
     additionalProperties: false,
   },
   CreateTeamRequest: {
-    type: "object",
-    required: ["name"],
-    properties: {
-      name: { type: "string" },
-      slogan: { type: "string" },
-      welcomeText: { type: "string" },
-    },
-    additionalProperties: false,
+    type: "object", required: ["name"], additionalProperties: false,
+    properties: { name: { type: "string", minLength: 1, maxLength: 200 }, slogan: { type: "string", maxLength: 300 }, welcomeText: { type: "string", maxLength: 2000 } },
+  },
+  UpdateTeamRequest: {
+    type: "object", minProperties: 1, additionalProperties: false,
+    properties: { name: { type: "string", minLength: 1, maxLength: 200 }, slogan: { type: "string", maxLength: 300 }, welcomeText: { type: "string", maxLength: 2000 } },
+  },
+  TeamInvitationResponse: {
+    type: "object", required: ["status", "teamId"], additionalProperties: false,
+    properties: { status: { type: "string", enum: ["accepted", "declined"] }, teamId: { type: "string", format: "uuid" } },
   },
   FeedbackRequest: {
     type: "object",
     required: ["kind", "message"],
-    properties: { kind: { type: "string" }, message: { type: "string" } },
+    properties: { kind: { type: "string", enum: ["bug", "idea", "question", "other"] }, message: { type: "string", minLength: 1, maxLength: 4000 } },
     additionalProperties: false,
   },
 };
@@ -827,11 +921,11 @@ export function openApiSpec(releaseVersion = productVersion()) {
         delete: operation({ operationId: "revokeAuthSession", summary: "Revoke one own session", tag: "Auth", mutation: true, parameters: pathParameters("sessionId"), response: ref("Ok") }),
       },
       "/api/v1/admin/users": {
-        get: operation({ operationId: "adminListUsers", summary: "List users as admin", tag: "Admin", parameters: [queryParameter("q")], response: arrayRef("users", "User") }),
+        get: operation({ operationId: "adminListUsers", summary: "List users as admin", tag: "Admin", parameters: [queryParameter("q", { type: "string", maxLength: 100 }), queryParameter("status", { type: "string", enum: ["active", "blocked"] })], response: arrayRef("users", "AdminUser"), errors: [400, 401, 403, 500] }),
         post: operation({ operationId: "adminCreateUser", summary: "Create user and temporary password", tag: "Admin", mutation: true, request: "CreateAdminUserRequest", response: { type: "object", required: ["user", "temporaryPassword"], properties: { user: ref("User"), temporaryPassword: { type: "string" } } } }),
       },
       "/api/v1/admin/users/{userId}": {
-        patch: operation({ operationId: "adminUpdateUserRole", summary: "Update user role", tag: "Admin", mutation: true, parameters: pathParameters("userId"), request: "RoleUpdateRequest", response: objectRef("user", "User") }),
+        patch: operation({ operationId: "adminUpdateUserRole", summary: "Update user profile and role", tag: "Admin", mutation: true, parameters: pathParameters("userId"), request: "AdminUserUpdateRequest", response: objectRef("user", "AdminUser") }),
       },
       "/api/v1/admin/users/{userId}/block": {
         post: operation({ operationId: "adminBlockUser", summary: "Block user and revoke sessions", tag: "Admin", mutation: true, parameters: pathParameters("userId"), response: ref("Ok") }),
@@ -899,7 +993,17 @@ export function openApiSpec(releaseVersion = productVersion()) {
       "/api/v1/matches/tutorial": {
         post: operation({ operationId: "createTutorialMatch", summary: "Create or resume tutorial match", tag: "Matches", mutation: true, response: objectRef("match", "Match") }),
       },
+      "/api/v1/matches/{matchId}/invitations": {
+        post: operation({ operationId: "createMatchInvitation", summary: "Invite a selected player or optional judge", tag: "Matches", mutation: true, parameters: pathParameters("matchId"), request: "MatchInvitationRequest", response: objectRef("invitation", "MatchInvitation") }),
+      },
+      "/api/v1/match-invitations/{id}/accept": {
+        post: operation({ operationId: "acceptMatchInvitation", summary: "Accept own current invitation", tag: "Matches", mutation: true, parameters: pathParameters("id"), response: objectRef("invitation", "MatchInvitation") }),
+      },
+      "/api/v1/match-invitations/{id}/decline": {
+        post: operation({ operationId: "declineMatchInvitation", summary: "Decline own current invitation", tag: "Matches", mutation: true, parameters: pathParameters("id"), response: objectRef("invitation", "MatchInvitation") }),
+      },
       "/api/v1/matches/{matchId}": {
+        patch: operation({ operationId: "updateWaitingMatch", summary: "Edit an unstarted standalone match and reconcile player consent", tag: "Matches", mutation: true, parameters: pathParameters("matchId"), request: "UpdateMatchRequest", response: objectRef("match", "Match") }),
         get: operation({ operationId: "getMatch", summary: "Get visible match", tag: "Matches", parameters: pathParameters("matchId"), response: objectRef("match", "Match") }),
       },
       "/api/v1/matches/{matchId}/start": {
@@ -987,17 +1091,39 @@ export function openApiSpec(releaseVersion = productVersion()) {
         post: operation({ operationId: "startTournament", summary: "Start tournament", tag: "Tournaments", mutation: true, parameters: pathParameters("id"), response: objectRef("tournament", "Tournament") }),
       },
       "/api/v1/tournaments/{id}/stop": {
-        post: operation({ operationId: "stopTournament", summary: "Stop tournament", tag: "Tournaments", mutation: true, parameters: pathParameters("id"), request: "TournamentStopRequest", requestRequired: false, response: objectRef("tournament", "Tournament") }),
+        post: operation({ operationId: "stopTournament", summary: "Stop tournament", tag: "Tournaments", mutation: true, parameters: pathParameters("id"), request: "TournamentStopRequest", requestRequired: true, response: objectRef("tournament", "Tournament") }),
       },
       "/api/v1/teams": {
         get: operation({ operationId: "listTeams", summary: "List own teams", tag: "Teams", response: arrayRef("teams", "Team") }),
         post: operation({ operationId: "createTeam", summary: "Create team", tag: "Teams", mutation: true, request: "CreateTeamRequest", response: objectRef("team", "Team") }),
       },
+      "/api/v1/teams/{id}": {
+        get: operation({ operationId: "getTeam", summary: "Read current or historical team membership", tag: "Teams", parameters: pathParameters("id"), response: objectRef("team", "Team") }),
+        patch: operation({ operationId: "updateTeam", summary: "Captain updates team metadata", tag: "Teams", mutation: true, parameters: pathParameters("id"), request: "UpdateTeamRequest", response: objectRef("team", "Team") }),
+      },
+      "/api/v1/teams/{id}/invitations": {
+        post: operation({ operationId: "createTeamInvitation", summary: "Captain invites a club user", tag: "Teams", mutation: true, parameters: pathParameters("id"), request: "UserIdRequest", response: objectRef("invitation", "Invitation") }),
+      },
+      "/api/v1/team-invitations/{id}/accept": {
+        post: operation({ operationId: "acceptTeamInvitation", summary: "Accept own active invitation and return welcome target", tag: "Teams", mutation: true, parameters: pathParameters("id"), response: ref("TeamInvitationResponse") }),
+      },
+      "/api/v1/team-invitations/{id}/decline": {
+        post: operation({ operationId: "declineTeamInvitation", summary: "Decline own active invitation", tag: "Teams", mutation: true, parameters: pathParameters("id"), response: ref("TeamInvitationResponse") }),
+      },
+      "/api/v1/teams/{id}/leave": {
+        post: operation({ operationId: "leaveTeam", summary: "Noncaptain leaves current membership", tag: "Teams", mutation: true, parameters: pathParameters("id"), response: objectRef("team", "Team") }),
+      },
+      "/api/v1/teams/{id}/members/{userId}": {
+        delete: operation({ operationId: "removeTeamMember", summary: "Captain removes another member", tag: "Teams", mutation: true, parameters: pathParameters("id", "userId"), response: objectRef("team", "Team") }),
+      },
+      "/api/v1/teams/{id}/captain-transfer": {
+        post: operation({ operationId: "transferTeamCaptain", summary: "Transfer captaincy to a current active member", tag: "Teams", mutation: true, parameters: pathParameters("id"), request: "UserIdRequest", response: objectRef("team", "Team") }),
+      },
       "/api/v1/teams/{id}/invite": {
         post: operation({ operationId: "inviteTeamMember", summary: "Invite user to team", tag: "Teams", mutation: true, parameters: pathParameters("id"), request: "UserIdRequest", response: objectRef("invitation", "Invitation") }),
       },
       "/api/v1/team-invitations/{id}/respond": {
-        post: operation({ operationId: "respondTeamInvitation", summary: "Accept or decline team invitation", tag: "Teams", mutation: true, parameters: pathParameters("id"), request: "InvitationResponseRequest", response: ref("GenericObject") }),
+        post: operation({ operationId: "respondTeamInvitation", summary: "Accept or decline team invitation (compatibility)", tag: "Teams", mutation: true, parameters: pathParameters("id"), request: "InvitationResponseRequest", response: ref("TeamInvitationResponse") }),
       },
       "/api/v1/notifications": {
         get: operation({ operationId: "listNotifications", summary: "List own notifications", tag: "Notifications", response: arrayRef("notifications", "Notification") }),

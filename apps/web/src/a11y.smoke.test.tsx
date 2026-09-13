@@ -28,10 +28,10 @@ describe("REQ_ui__a11y_360_smoke", () => {
     setViewport(1024, 768);
   });
 
-  it("renders five bottom tabs at 360px without horizontal overflow", () => {
-    const { container } = render(
+  it("renders five semantic bottom tabs (geometry is verified by Wave F browser tests)", () => {
+    render(
       <MemoryRouter>
-        <div style={{ width: 360, overflow: "hidden" }}>
+        <div>
           <BottomNav />
         </div>
       </MemoryRouter>,
@@ -40,8 +40,6 @@ describe("REQ_ui__a11y_360_smoke", () => {
       name: /основная навигация/i,
     });
     expect(nav.children).toHaveLength(5);
-    const wrap = container.firstElementChild as HTMLElement;
-    expect(wrap.scrollWidth).toBeLessThanOrEqual(wrap.clientWidth + 1);
   });
 
   it("exposes skip link and main landmark in AppShell", () => {
@@ -90,9 +88,9 @@ describe("REQ_ui__a11y_360_smoke", () => {
     expect(screen.queryByText("hidden")).not.toBeInTheDocument();
   });
 
-  it("auth layout fits narrow viewport with brand", () => {
-    const { container } = render(
-      <div style={{ width: 360 }}>
+  it("auth layout exposes brand and heading", () => {
+    render(
+      <div>
         <AuthLayout title="Вход" subtitle="Тест">
           <p>form</p>
         </AuthLayout>
@@ -100,8 +98,7 @@ describe("REQ_ui__a11y_360_smoke", () => {
     );
     expect(screen.getByTestId("auth-layout")).toBeInTheDocument();
     expect(screen.getByLabelText("Tab-10")).toBeInTheDocument();
-    const card = container.querySelector(".auth-layout__card") as HTMLElement;
-    expect(card.getBoundingClientRect().width).toBeLessThanOrEqual(360);
+    expect(screen.getByRole("heading", { name: "Вход" })).toBeInTheDocument();
   });
 
   it("stylesheet declares focus, skip-link, and touch floors", () => {

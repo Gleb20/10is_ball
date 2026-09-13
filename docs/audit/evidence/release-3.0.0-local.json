@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "workItem": "OPS-004",
+  "version": "3.0.0",
+  "baseSha": "615169c780a4522591d3359530177e7574923f14",
+  "scope": "D+E+F and BUG-017",
+  "status": "verified_local",
+  "command": "pnpm run verify:all",
+  "sourceFilesUnchanged": 449,
+  "summary": {
+    "schemaVersion": 1,
+    "status": "passed",
+    "totals": {
+      "total": 1249,
+      "passed": 1249,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    "lanes": [
+      {
+        "name": "cleanup-foundation",
+        "status": "passed",
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "todo": 0,
+        "interrupted": 0
+      },
+      {
+        "name": "quality",
+        "status": "passed",
+        "total": 1122,
+        "passed": 1122,
+        "failed": 0,
+        "skipped": 0,
+        "todo": 0,
+        "interrupted": 0
+      },
+      {
+        "name": "postgres",
+        "status": "passed",
+        "total": 66,
+        "passed": 66,
+        "failed": 0,
+        "skipped": 0,
+        "todo": 0,
+        "interrupted": 0
+      },
+      {
+        "name": "browser-prodlike",
+        "status": "passed",
+        "total": 57,
+        "passed": 57,
+        "failed": 0,
+        "skipped": 0,
+        "todo": 0,
+        "interrupted": 0
+      }
+    ],
+    "disposableComposeProject": "tab10-verify-3699",
+    "disposablePostgresPort": 32995
+  },
+  "compatibilityEvidence": "wave-f-compatibility.json",
+  "residuals": [
+    "WebKit native runtime crash before app assertions; not re-run for metadata-only version change",
+    "Physical mobile, spoken assistive technology and latest-two browser versions remain unverified"
+  ],
+  "publication": "Not observed at this pre-commit checkpoint"
+}

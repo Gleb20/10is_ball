@@ -282,7 +282,7 @@ audit row. `bracket_json`, `bracket_state_version`, downstream rows/results/stat
 Два параллельных запроса на свободный матч дают ровно одну активную judge session.
 
 ### AT-JUDGE-002 One judge / one device
-Пользователь с активной judge session не может захватить судейство из другой auth session.
+Пользователь с активной judge session не может захватить судейство из другой auth session. API возвращает `409 JUDGE_OTHER_DEVICE` с понятным сообщением; первая judge session и её полномочия остаются неизменными, вторая активная строка не создаётся.
 
 ### AT-JUDGE-003 Release
 После release другой допустимый пользователь может захватить матч без потери счёта.
@@ -498,6 +498,12 @@ active membership. Wrong captain/invited user и injected downstream fault не
 
 ### AT-NOTIF-001 Active action
 Актуальная карточка позволяет принять/отклонить и синхронизирует invitation status.
+Новый standalone outsider player должен согласиться до старта; optional judge invitation
+не резервирует слот и не блокирует старт. Согласие привязано к текущему participant UUID
+и стороне; prestart replacement/swap не использует согласие старой стороны. Запрос,
+авторизованный до блокировки пользователя, повторно проверяет actor под row lock и не
+меняет invitation после блокировки. Старый ответ UI после смены аккаунта не раскрывает
+карточки и не перенаправляет новую сессию.
 
 ### AT-NOTIF-002 Expired reason
 Истёкшая/отозванная карточка не имеет action buttons и показывает причину и
@@ -515,7 +521,11 @@ server-side время terminal перехода.
 При достижении TTL или отмене source entity invitation и notification переходят
 в terminal lifecycle атомарно. Карточка остаётся в истории как
 `expired|cancelled`, но не считается `new`, не входит в unread/actionable выборку
-и не показывает actions/popup.
+и не показывает actions/popup. Удаление участника до старта помечает прежнее pending
+приглашение и его notification в той же transaction. Удаление допустимого standalone
+match сохраняет прочитанную notification history с source_unavailable. Admin purge,
+дождавшийся terminal sporting transition, повторно проверяет статус под match lock и
+не удаляет finished/stopped/voided результат.
 
 ## VISIBILITY / HISTORY
 

@@ -1,5 +1,5 @@
 import { hash, verify } from "@node-rs/argon2";
-import { and, count, eq, gt, isNull, ne } from "drizzle-orm";
+import { and, count, eq, gt, inArray, isNull, ne, or } from "drizzle-orm";
 import {
   generateTemporaryPassword,
   normalizeEmail,
@@ -12,6 +12,7 @@ import type { Db } from "../../db/client.js";
 import {
   authSessions,
   auditLogs,
+  notifications,
   temporaryPasswordIssues,
   users,
 } from "../../db/schema.js";
@@ -76,6 +77,11 @@ export type OwnProfileUser = AuthUser & {
   positionText: string | null;
 };
 
+export type AdminUser = OwnProfileUser & {
+  createdAt: Date;
+  lastLoginAt: Date | null;
+};
+
 type LoginAttemptReservation = {
   key: string;
   resetAt: number;
@@ -105,15 +111,28 @@ function toOwnProfileUser(row: typeof users.$inferSelect): OwnProfileUser {
   };
 }
 
+function toAdminUser(row: typeof users.$inferSelect): AdminUser {
+  return {
+    ...toOwnProfileUser(row),
+    createdAt: row.createdAt,
+    lastLoginAt: row.lastLoginAt ?? null,
+  };
+}
+
 export class AuthService {
   // Deliberately process-local. Horizontal replicas need an accepted shared-store
   // design before this can be treated as a fleet-wide security boundary.
   private loginAttempts = new Map<string, { count: number; resetAt: number }>();
+  private userBlockedHook?: (userId: string, db: Db) => Promise<void>;
 
   constructor(
     private readonly db: Db,
     private readonly clock: Clock,
   ) {}
+
+  setUserBlockedHook(hook: (userId: string, db: Db) => Promise<void>): void {
+    this.userBlockedHook = hook;
+  }
 
   private rateLimitKey(email: string, ip: string): string {
     return createHash("sha256")
@@ -445,38 +464,107 @@ export class AuthService {
       );
   }
 
-  async blockUser(adminId: string, userId: string): Promise<void> {
-    await this.ensureNotLastAdmin(userId);
-    if (adminId === userId) {
-      throw Object.assign(new Error("SELF_BLOCK_FORBIDDEN"), {
-        code: "SELF_BLOCK_FORBIDDEN",
+  private async lockAdminMutationUsers(
+    adminId: string,
+    userId: string,
+    db: Db,
+  ) {
+    const lockedUsers = await db
+      .select()
+      .from(users)
+      .where(
+        or(
+          and(eq(users.role, "admin"), eq(users.status, "active")),
+          inArray(users.id, [...new Set([adminId, userId])]),
+        ),
+      )
+      .orderBy(users.id)
+      .for("update");
+    const activeAdmins = lockedUsers.filter(
+      (candidate) =>
+        candidate.role === "admin" && candidate.status === "active",
+    );
+    const target = lockedUsers.find((candidate) => candidate.id === userId);
+    if (!target) {
+      throw Object.assign(new Error("USER_NOT_FOUND"), {
+        code: "USER_NOT_FOUND",
       });
     }
-    const now = this.clock.now();
-    await this.db
-      .update(users)
-      .set({ status: "blocked", blockedAt: now, updatedAt: now })
-      .where(eq(users.id, userId));
-    await this.revokeAllSessions(userId, "blocked");
-    await this.db.insert(auditLogs).values({
-      actorUserId: adminId,
-      action: "user.blocked",
-      entityType: "user",
-      entityId: userId,
+    return {
+      activeAdmins,
+      actorIsActiveAdmin: activeAdmins.some(
+        (candidate) => candidate.id === adminId,
+      ),
+      target,
+    };
+  }
+
+  async blockUser(adminId: string, userId: string): Promise<void> {
+    await this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      const { activeAdmins, actorIsActiveAdmin, target } =
+        await this.lockAdminMutationUsers(adminId, userId, db);
+      if (!actorIsActiveAdmin) {
+        throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+      }
+      if (target.status === "blocked") return;
+      if (target.role === "admin" && activeAdmins.length === 1) {
+        throw Object.assign(new Error("LAST_ADMIN"), { code: "LAST_ADMIN" });
+      }
+      if (adminId === userId) {
+        throw Object.assign(new Error("SELF_BLOCK_FORBIDDEN"), {
+          code: "SELF_BLOCK_FORBIDDEN",
+        });
+      }
+      const now = this.clock.now();
+      await db.update(users).set({ status: "blocked", blockedAt: now, updatedAt: now }).where(eq(users.id, userId));
+      await db.update(authSessions).set({ revokedAt: now, revokeReason: "blocked" }).where(
+        and(eq(authSessions.userId, userId), isNull(authSessions.revokedAt)),
+      );
+      await db.insert(auditLogs).values({
+        actorUserId: adminId,
+        action: "user.blocked",
+        entityType: "user",
+        entityId: userId,
+      });
+      await this.userBlockedHook?.(userId, db);
+      await db.insert(notifications).values({
+        userId,
+        type: "account_access_changed",
+        title: "Доступ к аккаунту изменён",
+        body: "Аккаунт заблокирован администратором",
+        payload: { change: "blocked" },
+      });
     });
   }
 
   async unblockUser(adminId: string, userId: string): Promise<void> {
-    const now = this.clock.now();
-    await this.db
-      .update(users)
-      .set({ status: "active", blockedAt: null, updatedAt: now })
-      .where(eq(users.id, userId));
-    await this.db.insert(auditLogs).values({
-      actorUserId: adminId,
-      action: "user.unblocked",
-      entityType: "user",
-      entityId: userId,
+    await this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      const { actorIsActiveAdmin, target } =
+        await this.lockAdminMutationUsers(adminId, userId, db);
+      if (!actorIsActiveAdmin) {
+        throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+      }
+      if (target.status === "active") return;
+      const now = this.clock.now();
+      await db
+        .update(users)
+        .set({ status: "active", blockedAt: null, updatedAt: now })
+        .where(eq(users.id, userId));
+      await db.insert(auditLogs).values({
+        actorUserId: adminId,
+        action: "user.unblocked",
+        entityType: "user",
+        entityId: userId,
+      });
+      await db.insert(notifications).values({
+        userId,
+        type: "account_access_changed",
+        title: "Доступ к аккаунту изменён",
+        body: "Аккаунт разблокирован администратором",
+        payload: { change: "unblocked" },
+      });
     });
   }
 
@@ -488,25 +576,46 @@ export class AuthService {
       randomBytes(1)[0]!,
     );
     const passwordHash = await hashPassword(temporaryPassword);
-    const now = this.clock.now();
-    await this.db
-      .update(users)
-      .set({
-        passwordHash,
-        mustChangePassword: true,
-        updatedAt: now,
-      })
-      .where(eq(users.id, userId));
-    await this.revokeAllSessions(userId, "password_reset");
-    await this.db.insert(temporaryPasswordIssues).values({
-      userId,
-      issuedByAdminId: adminId,
-    });
-    await this.db.insert(auditLogs).values({
-      actorUserId: adminId,
-      action: "user.password_reset",
-      entityType: "user",
-      entityId: userId,
+    await this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      const { actorIsActiveAdmin } = await this.lockAdminMutationUsers(
+        adminId,
+        userId,
+        db,
+      );
+      if (!actorIsActiveAdmin) {
+        throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+      }
+      const now = this.clock.now();
+      await db
+        .update(users)
+        .set({
+          passwordHash,
+          mustChangePassword: true,
+          updatedAt: now,
+        })
+        .where(eq(users.id, userId));
+      await db
+        .update(authSessions)
+        .set({ revokedAt: now, revokeReason: "password_reset" })
+        .where(and(eq(authSessions.userId, userId), isNull(authSessions.revokedAt)));
+      await db.insert(temporaryPasswordIssues).values({
+        userId,
+        issuedByAdminId: adminId,
+      });
+      await db.insert(auditLogs).values({
+        actorUserId: adminId,
+        action: "user.password_reset",
+        entityType: "user",
+        entityId: userId,
+      });
+      await db.insert(notifications).values({
+        userId,
+        type: "account_access_changed",
+        title: "Доступ к аккаунту изменён",
+        body: "Администратор сбросил пароль аккаунта",
+        payload: { change: "password_reset" },
+      });
     });
     return { temporaryPassword };
   }
@@ -516,39 +625,99 @@ export class AuthService {
     userId: string,
     role: "admin" | "user",
   ): Promise<AuthUser> {
+    return this.updateAdminUser(actorAdminId, userId, { role });
+  }
+
+  async updateAdminUser(
+    actorAdminId: string,
+    userId: string,
+    patch: Partial<{
+      firstName: string;
+      lastName: string;
+      birthDate: string | null;
+      organizationText: string | null;
+      positionText: string | null;
+      role: "admin" | "user";
+    }>,
+  ): Promise<AdminUser> {
     if (userId === actorAdminId) {
-      throw Object.assign(new Error("SELF_ROLE_CHANGE_FORBIDDEN"), {
-        code: "SELF_ROLE_CHANGE_FORBIDDEN",
+      if (patch.role !== undefined) {
+        throw Object.assign(new Error("SELF_ROLE_CHANGE_FORBIDDEN"), {
+          code: "SELF_ROLE_CHANGE_FORBIDDEN",
+        });
+      }
+    }
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      const { activeAdmins, actorIsActiveAdmin, target } =
+        await this.lockAdminMutationUsers(actorAdminId, userId, db);
+      const roleChanged = patch.role !== undefined && target.role !== patch.role;
+      if (
+        roleChanged &&
+        target.role === "admin" &&
+        target.status === "active" &&
+        patch.role === "user" &&
+        activeAdmins.length === 1
+      ) {
+        throw Object.assign(new Error("LAST_ADMIN"), { code: "LAST_ADMIN" });
+      }
+      if (!actorIsActiveAdmin) {
+        throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+      }
+      const changedFields = Object.keys(patch).filter((field) => {
+        if (field === "role") return roleChanged;
+        return target[field as keyof typeof target] !== patch[field as keyof typeof patch];
       });
-    }
-    const target = await this.db.query.users.findFirst({
-      where: eq(users.id, userId),
-    });
-    if (!target) {
-      throw Object.assign(new Error("USER_NOT_FOUND"), {
-        code: "USER_NOT_FOUND",
+      if (changedFields.length === 0) {
+        return toAdminUser(target);
+      }
+      const now = this.clock.now();
+      const [row] = await db
+        .update(users)
+        .set({
+          ...(patch.firstName !== undefined ? { firstName: patch.firstName } : {}),
+          ...(patch.lastName !== undefined ? { lastName: patch.lastName } : {}),
+          ...(patch.birthDate !== undefined ? { birthDate: patch.birthDate } : {}),
+          ...(patch.organizationText !== undefined
+            ? { organizationText: patch.organizationText }
+            : {}),
+          ...(patch.positionText !== undefined
+            ? { positionText: patch.positionText }
+            : {}),
+          ...(patch.role !== undefined ? { role: patch.role } : {}),
+          updatedAt: now,
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      if (roleChanged) {
+        await db
+          .update(authSessions)
+          .set({ revokedAt: now, revokeReason: "role_changed" })
+          .where(
+            and(
+              eq(authSessions.userId, userId),
+              isNull(authSessions.revokedAt),
+            ),
+          );
+      }
+      await db.insert(auditLogs).values({
+        actorUserId: actorAdminId,
+        action: roleChanged ? "user.role_changed" : "user.updated",
+        entityType: "user",
+        entityId: userId,
+        meta: { changedFields },
       });
-    }
-    if (target.role === role) {
-      return toAuthUser(target);
-    }
-    if (target.role === "admin" && role === "user") {
-      await this.ensureNotLastAdmin(userId);
-    }
-    const now = this.clock.now();
-    const [row] = await this.db
-      .update(users)
-      .set({ role, updatedAt: now })
-      .where(eq(users.id, userId))
-      .returning();
-    await this.revokeAllSessions(userId, "role_changed");
-    await this.db.insert(auditLogs).values({
-      actorUserId: actorAdminId,
-      action: "user.role_changed",
-      entityType: "user",
-      entityId: userId,
+      if (roleChanged) {
+        await db.insert(notifications).values({
+          userId,
+          type: "account_access_changed",
+          title: "Доступ к аккаунту изменён",
+          body: "Администратор изменил роль аккаунта",
+          payload: { change: "role_changed", role: patch.role },
+        });
+      }
+      return toAdminUser(row!);
     });
-    return toAuthUser(row!);
   }
 
   async ensureNotLastAdmin(userId: string): Promise<void> {
@@ -581,6 +750,27 @@ export class AuthService {
         u.firstName.toLowerCase().includes(needle) ||
         u.lastName.toLowerCase().includes(needle),
     );
+  }
+
+  async listAdminUsers(opts: {
+    q?: string;
+    status?: "active" | "blocked";
+  } = {}): Promise<AdminUser[]> {
+    const all = await this.db
+      .select()
+      .from(users)
+      .orderBy(users.lastName, users.firstName);
+    const needle = opts.q?.toLowerCase();
+    return all
+      .filter(
+        (user) =>
+          (!opts.status || user.status === opts.status) &&
+          (!needle ||
+            user.email.toLowerCase().includes(needle) ||
+            user.firstName.toLowerCase().includes(needle) ||
+            user.lastName.toLowerCase().includes(needle)),
+      )
+      .map(toAdminUser);
   }
 
   /** Public directory for opponent/participant pickers (no email/admin fields). */

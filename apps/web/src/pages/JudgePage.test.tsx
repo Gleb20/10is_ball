@@ -154,6 +154,20 @@ describe("REQ_ui__judge_immersive", () => {
     });
   });
 
+  it("GAP-011 announces score once and exposes ordinary keyboard judge actions", async () => {
+    renderJudge();
+    const more = await screen.findByRole("button", { name: "Ещё" });
+    expect(screen.getByTestId("judge-score-announcement")).toHaveAttribute("aria-live", "polite");
+    expect(screen.getByTestId("judge-score-announcement")).toHaveTextContent("Анна А: 3");
+    expect(screen.getByTestId("judge-score-announcement")).toHaveTextContent("Борис Б: 2");
+    fireEvent.click(more);
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    const actions = screen.getByRole("group", { name: "Действия судьи" });
+    const action = within(actions).getByRole("button", { name: "Поменять местами на экране" });
+    action.focus(); fireEvent.keyDown(action, { key: "Escape" });
+    expect(more).toHaveFocus(); expect(more).toHaveAttribute("aria-expanded", "false");
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -167,6 +181,9 @@ describe("REQ_ui__judge_immersive", () => {
     expect(screen.getByText("Борис Б")).toBeInTheDocument();
     expect(screen.getByText("Подача")).toBeInTheDocument();
     expect(screen.getByTestId("serve-racket")).toBeInTheDocument();
+    expect(screen.getByRole("note", { name: "Подсказка судье" })).toHaveTextContent(
+      /активный судья.*undo.*последнее действующее очко/i,
+    );
     expect(screen.getByText(/0:00|:\d{2}/)).toBeInTheDocument();
     const sideA = screen.getByTestId("judge-side-A");
     expect(sideA).toContainElement(

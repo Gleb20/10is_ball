@@ -30,6 +30,8 @@ import {
   matches,
   matchParticipants,
   notifications,
+  teamMemberships,
+  teams,
   tournamentInvitations,
   tournamentParticipants,
   tournaments,
@@ -39,6 +41,8 @@ import {
 import type { MatchService } from "../matches/match-service.js";
 import { markInvitationNotificationsRead } from "../notifications/notification-service.js";
 import { loadTournamentBracket, swapSeedOrderByMatchIds } from "./bracket-load.js";
+
+import { tournamentSummary } from "./tournament-summary.js";
 
 type ActiveParticipant = typeof tournamentParticipants.$inferSelect;
 const COMPLETED_TOURNAMENT_STATUSES = new Set([
@@ -70,6 +74,42 @@ export class TournamentService {
     private readonly clock: Clock,
     private readonly matchService: MatchService,
   ) {}
+
+  private async closeInvitationNotifications(
+    invitations: Array<{ id: string; invitedUserId: string }>,
+    reasonCode: "event_cancelled" | "roster_closed",
+    readAt: Date,
+    db: Db,
+  ) {
+    for (const invitedUserId of new Set(
+      invitations.map((invitation) => invitation.invitedUserId),
+    )) {
+      const invitationIds = invitations
+        .filter((invitation) => invitation.invitedUserId === invitedUserId)
+        .map((invitation) => invitation.id);
+      await markInvitationNotificationsRead(db, {
+        userId: invitedUserId,
+        type: "tournament_invitation",
+        invitationIds,
+        readAt,
+      });
+      const idSet = new Set(invitationIds);
+      const rows = await db.query.notifications.findMany({
+        where: and(
+          eq(notifications.userId, invitedUserId),
+          eq(notifications.type, "tournament_invitation"),
+        ),
+      });
+      for (const row of rows) {
+        const payload = (row.payload ?? {}) as { invitationId?: string };
+        if (!payload.invitationId || !idSet.has(payload.invitationId)) continue;
+        await db
+          .update(notifications)
+          .set({ payload: { ...payload, reasonCode } })
+          .where(eq(notifications.id, row.id));
+      }
+    }
+  }
 
   async create(input: {
     title: string;
@@ -138,7 +178,10 @@ export class TournamentService {
       mercyPoints?: number | null;
     },
   ) {
-    const t = await this.get(tournamentId);
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await db.select({ id: tournaments.id }).from(tournaments).where(eq(tournaments.id, tournamentId)).for("update");
+    const t = await this.get(tournamentId, db);
     if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
     if (t.createdByUserId !== actorUserId) {
       throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
@@ -153,11 +196,13 @@ export class TournamentService {
         code: "TOURNAMENT_ALREADY_STARTED",
       });
     }
-    await this.db
+    const invalidates = Boolean(t.bracketJson) && ((patch.format !== undefined && patch.format !== t.format) || (patch.organizerParticipates !== undefined && patch.organizerParticipates !== t.organizerParticipates));
+    await db
       .update(tournaments)
       .set({
         ...(patch.title !== undefined ? { title: patch.title } : {}),
-        ...(patch.format !== undefined ? { format: patch.format } : {}),
+        ...(patch.format !== undefined ? { format: patch.format, thirdPlaceEnabled: patch.format === "single_elimination" } : {}),
+        ...(invalidates ? { status: "needs_regeneration" as const, bracketStateVersion: sql`${tournaments.bracketStateVersion} + 1` } : {}),
         ...(patch.organizerParticipates !== undefined
           ? { organizerParticipates: patch.organizerParticipates }
           : {}),
@@ -180,19 +225,19 @@ export class TournamentService {
         (p) => p.userId === actorUserId && isActiveParticipant(p),
       );
       if (!onRoster) {
-        const stats = await this.db.query.userStats.findFirst({
+        const stats = await db.query.userStats.findFirst({
           where: eq(userStats.userId, actorUserId),
         });
         const withdrawn = t.participants.find(
           (p) => p.userId === actorUserId && p.status === "withdrawn",
         );
         if (withdrawn) {
-          await this.db
+          await db
             .update(tournamentParticipants)
             .set({ status: "active" })
             .where(eq(tournamentParticipants.id, withdrawn.id));
         } else {
-          await this.db.insert(tournamentParticipants).values({
+          await db.insert(tournamentParticipants).values({
             tournamentId,
             userId: actorUserId,
             winsSnapshot: stats?.winsAllTime ?? 0,
@@ -205,14 +250,15 @@ export class TournamentService {
         (p) => p.userId === actorUserId && isActiveParticipant(p),
       );
       if (part) {
-        await this.db
+        await db
           .update(tournamentParticipants)
           .set({ status: "withdrawn" })
           .where(eq(tournamentParticipants.id, part.id));
       }
     }
 
-    return this.get(tournamentId);
+    return this.get(tournamentId, db);
+    });
   }
 
   playingParticipants(t: {
@@ -254,7 +300,40 @@ export class TournamentService {
       if (t.createdByUserId !== input.actorUserId) {
         throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
       }
-      return this.insertParticipant(t, input, db);
+      const participant = await this.insertParticipant(t, input, db);
+      if (participant?.userId && participant.userId !== t.createdByUserId) {
+        const organizerTeams = await db
+          .select({ teamId: teamMemberships.teamId })
+          .from(teamMemberships)
+          .innerJoin(teams, eq(teams.id, teamMemberships.teamId))
+          .where(and(
+            eq(teamMemberships.userId, t.createdByUserId),
+            isNull(teamMemberships.leftAt),
+            eq(teams.status, "active"),
+          ));
+        if (organizerTeams.length > 0) {
+          const teammate = await db.query.teamMemberships.findFirst({
+            where: and(
+              eq(teamMemberships.userId, participant.userId),
+              inArray(
+                teamMemberships.teamId,
+                organizerTeams.map((team) => team.teamId),
+              ),
+              isNull(teamMemberships.leftAt),
+            ),
+          });
+          if (teammate) {
+            await db.insert(notifications).values({
+              userId: participant.userId,
+              type: "tournament_team_added",
+              title: "Вы добавлены в турнир",
+              body: `Участник вашей команды добавил вас в «${t.title}»`,
+              payload: { tournamentId: t.id },
+            });
+          }
+        }
+      }
+      return participant;
     });
   }
 
@@ -316,81 +395,105 @@ export class TournamentService {
     participantId: string;
     actorUserId: string;
   }) {
-    const t = await this.get(input.tournamentId);
-    if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
-    if (t.createdByUserId !== input.actorUserId) {
-      throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
-    }
-    if (
-      t.status !== "collecting" &&
-      t.status !== "needs_regeneration" &&
-      t.status !== "bracket_generated"
-    ) {
-      throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
-    }
-    const participant = t.participants.find(
-      (entry) => entry.id === input.participantId,
-    );
-    if (!participant) {
-      throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
-    }
-    await this.db
-      .update(tournamentParticipants)
-      .set({ status: "withdrawn" })
-      .where(
-        and(
-          eq(tournamentParticipants.id, input.participantId),
-          eq(tournamentParticipants.tournamentId, input.tournamentId),
-        ),
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await db
+        .select({ id: tournaments.id })
+        .from(tournaments)
+        .where(eq(tournaments.id, input.tournamentId))
+        .for("update");
+      const t = await this.get(input.tournamentId, db);
+      if (!t) {
+        throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+      }
+      if (t.createdByUserId !== input.actorUserId) {
+        throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+      }
+      if (
+        t.status !== "collecting" &&
+        t.status !== "needs_regeneration" &&
+        t.status !== "bracket_generated"
+      ) {
+        throw Object.assign(new Error("INVALID_STATUS"), {
+          code: "INVALID_STATUS",
+        });
+      }
+      const participant = t.participants.find(
+        (entry) => entry.id === input.participantId,
       );
-    if (t.status === "bracket_generated") {
-      await this.db
-        .update(tournaments)
-        .set({
-          status: "needs_regeneration",
-          updatedAt: this.clock.now(),
-        })
-        .where(eq(tournaments.id, input.tournamentId));
-    }
-    return { ok: true };
+      if (!participant) {
+        throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+      }
+      await db
+        .update(tournamentParticipants)
+        .set({ status: "withdrawn" })
+        .where(
+          and(
+            eq(tournamentParticipants.id, input.participantId),
+            eq(tournamentParticipants.tournamentId, input.tournamentId),
+          ),
+        );
+      if (t.status === "bracket_generated") {
+        await db
+          .update(tournaments)
+          .set({
+            status: "needs_regeneration",
+            updatedAt: this.clock.now(),
+          })
+          .where(eq(tournaments.id, input.tournamentId));
+      }
+      return { ok: true };
+    });
   }
 
   async withdraw(input: {
     tournamentId: string;
     userId: string;
   }) {
-    const t = await this.get(input.tournamentId);
-    if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
-    const part = t.participants.find(
-      (p) => p.userId === input.userId && isActiveParticipant(p),
-    );
-    if (!part) {
-      throw Object.assign(new Error("NOT_A_PARTICIPANT"), {
-        code: "NOT_A_PARTICIPANT",
-      });
-    }
-    if (
-      t.status === "in_progress" ||
-      t.status === "finished" ||
-      t.status === "stopped" ||
-      t.status === "cancelled"
-    ) {
-      throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
-    }
-    await this.db
-      .update(tournamentParticipants)
-      .set({ status: "withdrawn" })
-      .where(eq(tournamentParticipants.id, part.id));
-    if (t.status === "bracket_generated") {
-      await this.db
-        .update(tournaments)
-        .set({
-          status: "needs_regeneration",
-          updatedAt: this.clock.now(),
-        })
-        .where(eq(tournaments.id, input.tournamentId));
-    }
-    return this.get(input.tournamentId);
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await db
+        .select({ id: tournaments.id })
+        .from(tournaments)
+        .where(eq(tournaments.id, input.tournamentId))
+        .for("update");
+      const t = await this.get(input.tournamentId, db);
+      if (!t) {
+        throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+      }
+      const part = t.participants.find(
+        (p) => p.userId === input.userId && isActiveParticipant(p),
+      );
+      if (!part) {
+        throw Object.assign(new Error("NOT_A_PARTICIPANT"), {
+          code: "NOT_A_PARTICIPANT",
+        });
+      }
+      if (
+        t.status === "in_progress" ||
+        t.status === "finished" ||
+        t.status === "stopped" ||
+        t.status === "cancelled"
+      ) {
+        throw Object.assign(new Error("INVALID_STATUS"), {
+          code: "INVALID_STATUS",
+        });
+      }
+      await db
+        .update(tournamentParticipants)
+        .set({ status: "withdrawn" })
+        .where(eq(tournamentParticipants.id, part.id));
+      if (t.status === "bracket_generated") {
+        await db
+          .update(tournaments)
+          .set({
+            status: "needs_regeneration",
+            updatedAt: this.clock.now(),
+          })
+          .where(eq(tournaments.id, input.tournamentId));
+      }
+      return this.get(input.tournamentId, db);
+    });
   }
 
   /** Organizer cancels a tournament that has not started yet. */
@@ -431,18 +534,12 @@ export class TournamentService {
           id: tournamentInvitations.id,
           invitedUserId: tournamentInvitations.invitedUserId,
         });
-      for (const invitedUserId of new Set(
-        cancelledInvites.map((invite) => invite.invitedUserId),
-      )) {
-        await markInvitationNotificationsRead(db, {
-          userId: invitedUserId,
-          type: "tournament_invitation",
-          invitationIds: cancelledInvites
-            .filter((invite) => invite.invitedUserId === invitedUserId)
-            .map((invite) => invite.id),
-          readAt: now,
-        });
-      }
+      await this.closeInvitationNotifications(
+        cancelledInvites,
+        "event_cancelled",
+        now,
+        db,
+      );
       await db
         .update(tournaments)
         .set({
@@ -518,6 +615,7 @@ export class TournamentService {
 
     return {
       ...t,
+      summary: tournamentSummary(t, participants.map((p) => p.id), tournamentMatches, this.clock.now()),
       participants: participants.map((p) => ({
         ...p,
         displayName: participantDisplayName(p, usersById),
@@ -991,18 +1089,12 @@ export class TournamentService {
         id: tournamentInvitations.id,
         invitedUserId: tournamentInvitations.invitedUserId,
       });
-    for (const invitedUserId of new Set(
-      expiredInvites.map((invite) => invite.invitedUserId),
-    )) {
-      await markInvitationNotificationsRead(db, {
-        userId: invitedUserId,
-        type: "tournament_invitation",
-        invitationIds: expiredInvites
-          .filter((invite) => invite.invitedUserId === invitedUserId)
-          .map((invite) => invite.id),
-        readAt: now,
-      });
-    }
+    await this.closeInvitationNotifications(
+      expiredInvites,
+      "roster_closed",
+      now,
+      db,
+    );
 
     const [row] = await db
       .update(tournaments)
@@ -1025,7 +1117,14 @@ export class TournamentService {
   }
 
   async dissolveBracket(tournamentId: string, actorUserId: string) {
-    const t = await this.get(tournamentId);
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await db
+        .select({ id: tournaments.id })
+        .from(tournaments)
+        .where(eq(tournaments.id, tournamentId))
+        .for("update");
+      const t = await this.get(tournamentId, db);
     if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
     if (t.createdByUserId !== actorUserId) {
       throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
@@ -1039,7 +1138,7 @@ export class TournamentService {
     if (t.bracketJson) {
       loadTournamentBracket(t.bracketJson);
     }
-    const [row] = await this.db
+    const [row] = await db
       .update(tournaments)
       .set({
         status: "collecting",
@@ -1049,7 +1148,8 @@ export class TournamentService {
       })
       .where(eq(tournaments.id, tournamentId))
       .returning();
-    return row;
+      return row;
+    });
   }
 
   async patchBracket(
@@ -1057,7 +1157,10 @@ export class TournamentService {
     actorUserId: string,
     swaps: Array<{ slotIdA: string; slotIdB: string }>,
   ) {
-    const t = await this.get(tournamentId);
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await db.select({ id: tournaments.id }).from(tournaments).where(eq(tournaments.id, tournamentId)).for("update");
+    const t = await this.get(tournamentId, db);
     if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
     if (t.createdByUserId !== actorUserId) {
       throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
@@ -1086,7 +1189,7 @@ export class TournamentService {
         b.isBye = byeA;
       }
       const next = { ...bracket, slots };
-      const [row] = await this.db
+      const [row] = await db
         .update(tournaments)
         .set({
           bracketJson: next,
@@ -1113,13 +1216,13 @@ export class TournamentService {
     });
 
     for (let i = 0; i < seedOrder.length; i += 1) {
-      await this.db
+      await db
         .update(tournamentParticipants)
         .set({ seed: i + 1 })
         .where(eq(tournamentParticipants.id, seedOrder[i]!));
     }
 
-    const [row] = await this.db
+    const [row] = await db
       .update(tournaments)
       .set({
         bracketJson: next,
@@ -1130,6 +1233,7 @@ export class TournamentService {
       .where(eq(tournaments.id, tournamentId))
       .returning();
     return { ...row, bracket: next };
+    });
   }
 
   /** Column vs JSON must agree for an unstarted live bracket. */
@@ -1155,7 +1259,14 @@ export class TournamentService {
   }
 
   async start(tournamentId: string, actorUserId: string) {
-    const t = await this.get(tournamentId);
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await db
+        .select({ id: tournaments.id })
+        .from(tournaments)
+        .where(eq(tournaments.id, tournamentId))
+        .for("update");
+      const t = await this.get(tournamentId, db);
     if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
     if (t.createdByUserId !== actorUserId) {
       throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
@@ -1171,9 +1282,19 @@ export class TournamentService {
 
     this.assertBracketAlgorithmIntegrity(t);
     const loaded = loadTournamentBracket(t.bracketJson);
-    await this.assertPlayersFree(
-      this.playingParticipants(t).map((participant) => participant.id),
-    );
+    const playing = this.playingParticipants(t);
+    const userIds = [
+      ...new Set([
+        t.createdByUserId,
+        ...playing.flatMap((participant) =>
+          participant.userId ? [participant.userId] : [],
+        ),
+      ]),
+    ].sort();
+    for (const userId of userIds) {
+      await db.execute(sql`select ${users.id} from ${users} where ${users.id} = ${userId} for update`);
+    }
+    await this.assertPlayersFree(playing.map((participant) => participant.id), db);
     const pendingNotifs: Array<{
       userId: string;
       matchId: string;
@@ -1181,9 +1302,10 @@ export class TournamentService {
 
     if (loaded.kind === "v1") {
       const bracket = await this.materializeReadyMatchesV1(t, loaded.bracket, {
+        db,
         collectNotifs: pendingNotifs,
       });
-      await this.db
+      await db
         .update(tournaments)
         .set({
           status: "in_progress",
@@ -1197,11 +1319,11 @@ export class TournamentService {
       const graph = await this.materializeReadyMatchesV2(
         t,
         loaded.graph,
-        this.db,
+        db,
         pendingNotifs,
       );
       const version = t.bracketStateVersion ?? 0;
-      const updated = await this.db
+      const updated = await db
         .update(tournaments)
         .set({
           status: "in_progress",
@@ -1225,7 +1347,7 @@ export class TournamentService {
     }
 
     for (const n of pendingNotifs) {
-      await this.db.insert(notifications).values({
+      await db.insert(notifications).values({
         userId: n.userId,
         type: "tournament_match_ready",
         title: "Матч турнира готов",
@@ -1234,7 +1356,8 @@ export class TournamentService {
       });
     }
 
-    return this.get(tournamentId);
+      return this.get(tournamentId, db);
+    });
   }
 
   private async materializeReadyMatchesV1(
@@ -1640,7 +1763,14 @@ export class TournamentService {
     actorUserId: string,
     reason?: { code?: string; text?: string },
   ) {
-    const t = await this.get(tournamentId);
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await db
+        .select({ id: tournaments.id })
+        .from(tournaments)
+        .where(eq(tournaments.id, tournamentId))
+        .for("update");
+      const t = await this.get(tournamentId, db);
     if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
     if (t.createdByUserId !== actorUserId) {
       throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
@@ -1650,12 +1780,20 @@ export class TournamentService {
     }
 
     // Cancel unplayed tournament matches
-    await this.db
+    const now = this.clock.now();
+      const activeMatches = await db
+      .select({ id: matches.id })
+      .from(matches)
+      .where(and(eq(matches.tournamentId, tournamentId), or(eq(matches.status, "waiting"), eq(matches.status, "in_progress"), eq(matches.status, "pending_confirmation"))))
+      .orderBy(matches.id)
+      .for("update");
+      const activeMatchIds = activeMatches.map((match) => match.id);
+      await db
       .update(matches)
       .set({
         status: "cancelled",
-        updatedAt: this.clock.now(),
-        finishedAt: this.clock.now(),
+        updatedAt: now,
+        finishedAt: now,
       })
       .where(
         and(
@@ -1667,43 +1805,55 @@ export class TournamentService {
           ),
         ),
       );
+      if (activeMatchIds.length > 0) {
+        await db
+          .update(judgeSessions)
+          .set({ releasedAt: now })
+          .where(
+            and(
+              inArray(judgeSessions.matchId, activeMatchIds),
+              isNull(judgeSessions.releasedAt),
+            ),
+          );
+      }
 
-    const [row] = await this.db
+    await db
       .update(tournaments)
       .set({
         status: "stopped",
         stopReasonCode: reason?.code ?? "other",
         stopReasonText: reason?.text ?? null,
-        finishedAt: this.clock.now(),
-        updatedAt: this.clock.now(),
+        finishedAt: now,
+        updatedAt: now,
       })
       .where(eq(tournaments.id, tournamentId))
       .returning();
-    return row;
+      const recipients = [...new Set(
+        t.participants.flatMap((participant) =>
+          participant.userId &&
+          participant.userId !== actorUserId &&
+          isActiveParticipant(participant)
+            ? [participant.userId]
+            : [],
+        ),
+      )];
+      if (recipients.length > 0) {
+        await db.insert(notifications).values(recipients.map((userId) => ({
+          userId,
+          type: "tournament_stopped",
+          title: "Турнир остановлен",
+          body: `Турнир «${t.title}» остановлен организатором`,
+          payload: { tournamentId: t.id },
+        })));
+      }
+      return this.get(tournamentId, db);
+    });
   }
 
   /** Sum of game points scored by a tournament participant across finished matches (AT-TRN-013). */
   async participantPoints(tournamentId: string, tournamentParticipantId: string) {
     const t = await this.get(tournamentId);
     if (!t) return 0;
-    const part = t.participants.find((p) => p.id === tournamentParticipantId);
-    if (!part) return 0;
-    let total = 0;
-    for (const m of t.matches ?? []) {
-      if (m.status !== "finished" && m.status !== "stopped") continue;
-      const detail = await this.matchService.getMatch(m.id);
-      if (!detail) continue;
-      for (const mp of detail.participants) {
-        const sameUser = part.userId && mp.userId === part.userId;
-        const sameGuest =
-          !part.userId &&
-          mp.guestFirstName === part.guestFirstName &&
-          mp.guestLastName === part.guestLastName;
-        if (sameUser || sameGuest) {
-          total += mp.side === "A" ? detail.scoreA : detail.scoreB;
-        }
-      }
-    }
-    return total;
+    return t.summary.results.find((row) => row.participantId === tournamentParticipantId)?.points ?? 0;
   }
 }

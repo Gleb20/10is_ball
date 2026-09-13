@@ -79,6 +79,15 @@ describe("DATA-002 atomic match completion", () => {
     };
   }
 
+  async function acceptRequiredPlayerInvitations(matchId: string) {
+    const match = await services.matches.getMatch(matchId);
+    for (const invitation of match?.invitations ?? []) {
+      if (invitation.kind === "player" && invitation.status === "pending") {
+        await services.matches.respondInvitation(invitation.id, invitation.invitedUserId, true);
+      }
+    }
+  }
+
   it("rolls back finish and stats when tournament advancement fails", async () => {
     const tournamentResponse = await app.inject({
       method: "POST",
@@ -120,6 +129,7 @@ describe("DATA-002 atomic match completion", () => {
     });
     expect(startedTournament.statusCode).toBe(200);
     const matchId = startedTournament.json().tournament.matches[0].id as string;
+    await acceptRequiredPlayerInvitations(matchId);
 
     expect(
       (
@@ -214,6 +224,7 @@ describe("DATA-002 atomic match completion", () => {
     });
     expect(created.statusCode).toBe(200);
     const matchId = created.json().match.id as string;
+    await acceptRequiredPlayerInvitations(matchId);
 
     expect(
       (

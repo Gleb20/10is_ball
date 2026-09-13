@@ -85,6 +85,9 @@ test("Wave C AT-JUDGE-004_010 correction, undo and two-client handover preserve 
   try {
     const before = (await (await admin.get("/api/v1/profile/me")).json()).profile.stats.judgedMatches;
     const { match } = await mutate(admin, "POST", "/api/v1/matches", { title: `C handover ${info.project.name}`, format: "1v1", firstServerMethod: "manual", pointsToWin: 11, mercyEnabled: false, participants: [{ side: "A", userId: actor.id }, { side: "B", userId: user.id }] });
+    for (const invitation of match.invitations.filter((row: { kind: string; status: string }) => row.kind === "player" && row.status === "pending")) {
+      await mutate(target, "POST", `/api/v1/match-invitations/${invitation.id}/accept`, {});
+    }
     await login(page); await page.goto(`/matches/${match.id}/judge`);
     await expect(page.getByTestId("judge-setup")).toBeVisible();
     await expect(page.getByRole("button", { name: "Начать матч", exact: true })).toBeDisabled();

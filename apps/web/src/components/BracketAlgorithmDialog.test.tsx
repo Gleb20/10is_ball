@@ -122,3 +122,9 @@ describe("BracketAlgorithmDialog", () => {
     expect(within(body).getAllByRole("radio")).toHaveLength(2);
   });
 });
+
+it("GAP-011 pending bracket generation disables choice and submit controls", () => {
+  renderDialog({ busy: true });
+  expect(screen.getByRole("button", { name: "…" })).toBeDisabled();
+  for (const radio of screen.getAllByRole("radio")) expect(radio).toBeDisabled();
+});

@@ -131,3 +131,31 @@ ProfileService owns own/public DTO and aggregate statistics. HistoryService owns
 a parameterized union/keyset feed across visible matches/tournaments; PostgreSQL
 is a required acceptance lane. RankingService narrows MatchService ranking data
 to active team membership. Existing auth, migration and D33 boundaries remain.
+
+### Wave E candidate boundaries
+
+MatchService owns historical consent and prestart roster reconciliation; NotificationService
+synchronizes expiration and enriches history. Domain event producers write notifications
+inside their existing action transactions. The web notice polls the owner-scoped center,
+suppresses immersive judge/tutorial routes and persists dismiss/read without accepting an
+invitation. Center and notice state are isolated by actor; stale responses cannot navigate
+the next actor. Admin mutations share one globally UUID-sorted user-row lock query for
+current active admins, actor and target, compatible with match participant locking.
+Wave E functional acceptance and the subsequent D+E+F full local1249/1249 gate passed. The candidate remains unpublished; see wave-f-local evidence.
+
+### Wave F application UI boundary
+
+The vendored ic-kit is unchanged. `apps/web/src/ui.tsx` retains its Dialog portal
+and presentation while stabilizing onClose and computing current focus controls.
+It filters CSS-hidden ancestors and recovers disabled/removed/hidden active focus
+through a panel-scoped MutationObserver, disconnecting on close and deferring to
+a later mounted modal. Existing busy close guards and connected-opener restore
+remain. Nested-modal lifecycle is source-reviewed, not a dedicated runtime test.
+
+Application CSS owns44px floors, selected/dark contrast and one auth/judge inset
+owner. Judge changes add a single authoritative polite summary and ordinary
+disclosure controls, leaving mutation serialization unchanged. Each bracket band
+exposes keyboard/scroll controls and100–150% enlargement with fixed round labels;
+model/topology remains unchanged. Ranking-row avatars adjacent to named links
+are decorative. These boundaries pass the current local gate and scoped Firefox
+checks; full device/AT/WebKit compatibility remains incomplete.

@@ -1,0 +1,47 @@
+{
+  "date": "2026-09-13",
+  "status": "focused_verified_pending_aggregate",
+  "candidate": "wave-e-work",
+  "baseSha": "615169c780a4522591d3359530177e7574923f14",
+  "requirements": [
+    "MATCH-003",
+    "MATCH-008",
+    "NOTIF-001..006",
+    "AT-NOTIF-001",
+    "AT-NOTIF-002",
+    "AT-NOTIF-005"
+  ],
+  "backlog": [
+    "GAP-008",
+    "DATA-002",
+    "GAP-006"
+  ],
+  "red": {
+    "legacySidePending": "SQL23505",
+    "crossMatchLockCycles": {
+      "failed": 3,
+      "error": "40P01",
+      "unchangedCasesPassed": 5
+    }
+  },
+  "green": {
+    "consentPgliteBeforeParentTournamentAddition": 42,
+    "finalConsentPostgres": 8,
+    "relatedTournamentPostgres": 2,
+    "relatedTournamentPglite": 5,
+    "standaloneValidation": 7,
+    "apiTypecheck": "passed",
+    "diffCheck": "passed"
+  },
+  "review": "PASS: independent four-file re-review; final manifests, three40P01 Red and8/8 Green verified",
+  "sourcePreservation": {
+    "originalFiles": 186,
+    "changed": 0
+  },
+  "publicRelease": "not_attempted",
+  "notes": [
+    "Same final PostgreSQL test file used for three deadlock Red and eight-case Green.",
+    "Notification failure regression precedes participant-side writes.",
+    "Full E aggregate is running sequentially; no acceptance claimed."
+  ]
+}

@@ -1,7 +1,9 @@
 import { Activity, useRef } from "react";
+import { InvitationNotice } from "./InvitationNotice";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth";
 import { AppShell, shouldShowBottomNav } from "./layout";
+import type { BottomNavGuideTarget } from "./layout";
 import { Alert, Button, Skeleton } from "./ui";
 import { LoginPage } from "./pages/LoginPage";
 import { FirstPasswordPage } from "./pages/FirstPasswordPage";
@@ -15,6 +17,7 @@ import { RankingsPage } from "./pages/RankingsPage";
 import { TournamentsPage } from "./pages/TournamentsPage";
 import { TournamentDetailPage } from "./pages/TournamentDetailPage";
 import { TeamsPage } from "./pages/TeamsPage";
+import { TeamDetailPage } from "./pages/TeamDetailPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { HelpPage } from "./pages/HelpPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
@@ -67,10 +70,23 @@ function AppRoutes() {
     startupPhase,
     startupError,
     retryStartup,
+    reauthRequired,
   } = useAuth();
   const location = useLocation();
   const onboardingActive = user?.onboardingCompletedAt === null;
-  const showNav = !onboardingActive && shouldShowBottomNav(location.pathname, {
+  const onboardingNavTargets: ReadonlyArray<BottomNavGuideTarget | null> = [
+    "/",
+    "/rankings",
+    "/history",
+    null,
+    "/profile",
+    "/start",
+    null,
+  ];
+  const onboardingGuideTarget = onboardingActive && location.pathname === "/onboarding"
+    ? onboardingNavTargets[user?.onboardingStep ?? 0] ?? null
+    : undefined;
+  const showNav = (!onboardingActive || location.pathname === "/onboarding") && shouldShowBottomNav(location.pathname, {
     authenticated: Boolean(user),
     mustChangePassword: Boolean(user?.mustChangePassword),
   });
@@ -113,7 +129,8 @@ function AppRoutes() {
   }
 
   return (
-    <AppShell showNav={showNav}>
+    <AppShell showNav={showNav} onboardingGuideTarget={onboardingGuideTarget}>
+      {user ? <InvitationNotice userId={user.id} enabled={!user.mustChangePassword && !onboardingActive && !reauthRequired} /> : null}
       <Routes>
         <Route
           path="/login"
@@ -219,6 +236,14 @@ function AppRoutes() {
           element={
             <Protected>
               <TeamsPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/teams/:id"
+          element={
+            <Protected>
+              <TeamDetailPage />
             </Protected>
           }
         />
