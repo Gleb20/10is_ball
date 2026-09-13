@@ -1,5 +1,22 @@
 # OPS-004 coordinator handoff — 2026-09-13
 
+## Release 3.0.0 published — 2026-09-13
+
+Accepted D+E+F/BUG-017 code commit165aecdaaa2eba6ffa5fd9d39926bca155016c95
+published through direct main. Fresh3.0.0 local gate1249/1249; GitHub CI34746947853
+all4 jobs success; Render live/Vercel READY; exact-SHA GET-only public smoke PASS.
+[Release evidence](../audit/evidence/release-3.0.0-public.json). The source workspace
+remains untouched186/186. User's original direct-main instruction was recovered
+from the original chat after an automatic approval rejection; the next authorized
+push succeeded. No bypass, reset, public mutating E2E or tag occurred.
+
+This supersedes historical pending approval/release checkpoints below. Final
+publication receipt is a documentation-only follow-up; its own SHA is rechecked
+by public smoke without repeating unchanged local product tests. Next bounded
+work: revalidate the WebKit runner issue and physical-device/spoken-AT residuals;
+GAP-011/TECH-002 remain open. No active worker or scheduled automation remains.
+
+
 ## Release 3.0.0 authorization — 2026-09-13
 
 User explicitly confirmed: «Подтверждаю. Давай делать версию 3.0.0».

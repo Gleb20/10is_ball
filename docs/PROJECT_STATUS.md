@@ -1,5 +1,22 @@
 # Tab-10 — статус проекта
 
+## Публичная версия 3.0.0 — 2026-09-13
+
+Релиз D+E+F и BUG-017 опубликован на [публичном стенде](https://tab-10.vercel.app).
+Commit `165aecdaaa2eba6ffa5fd9d39926bca155016c95`: Render live, Vercel READY;
+GET-only smoke подтвердил3.0.0 и одинаковый SHA у web/API/proxy.
+GitHub CI34746947853: все4 jobs success. Локально1249/1249 без пропусков.
+[Подтверждение публикации](audit/evidence/release-3.0.0-public.json).
+
+GAP-011/TECH-002 остаются in_progress: WebKit native crash, физические мобильные
+устройства, spoken AT и полная матрица версий браузеров ещё не приняты.
+Следующий ограниченный QA-этап: совместимый WebKit runner, затем устройства/AT;
+перед каждой задачей повторно подтвердить актуальность остатка. Q-OPS-003 и
+SEC-001 negative probe сохраняются. Публичные данные не использовались как E2E fixture.
+Ниже — исторические checkpoints. Эта запись фиксирует проверенный code commit;
+последующий commit с evidence меняет только документацию, без новой версии.
+
+
 ## Release 3.0.0 — pre-publication checkpoint, 2026-09-13
 
 Пользователь подтвердил выпуск. Свежий полный `pnpm run verify:all` на версии

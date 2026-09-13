@@ -1,3 +1,13 @@
+## 2026-09-13 — Release 3.0.0 public and hosted-CI acceptance (OPS-004)
+
+Code commit165aecdaaa2eba6ffa5fd9d39926bca155016c95 released via D32 main.
+Local1249/1249; GitHub CI34746947853 all4 jobs success; Render live/Vercel READY.
+`pnpm run smoke:public` PASS after5 attempts/74439ms, exact version3.0.0 and SHA
+on web/API/proxy. [Evidence](audit/evidence/release-3.0.0-public.json). Original
+186 hashes preserved. CLI watch hit anonymous GitHub rate limiting; authenticated
+read confirmed CI success. No CI rerun was requested. Documentation-only receipt
+requires docs audit/diff check and public SHA verification, no new local product run.
+
 ## 2026-09-13 — Release 3.0.0 local gate passed (OPS-004)
 
 Fresh `pnpm run verify:all`:1249/1249, quality1122/PostgreSQL66/browser57/cleanup4,

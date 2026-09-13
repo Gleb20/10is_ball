@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "workItem": "OPS-004",
+  "capturedAt": "2026-09-13T08:15:31.074835+00:00",
+  "environment": "disposable-public-stand",
+  "release": {
+    "sha": "165aecdaaa2eba6ffa5fd9d39926bca155016c95",
+    "version": "3.0.0",
+    "dirty": false
+  },
+  "localEvidence": "release-3.0.0-local.json",
+  "publicSmoke": {
+    "command": "pnpm run smoke:public",
+    "mutating": false,
+    "ok": true,
+    "sha": "165aecdaaa2eba6ffa5fd9d39926bca155016c95",
+    "version": "3.0.0",
+    "attempts": 5,
+    "elapsedMs": 74439
+  },
+  "render": {
+    "serviceId": "srv-d9f3odn41pts73fvpktg",
+    "deployId": "dep-daj5k0ijnfac73enlod0",
+    "status": "live",
+    "sha": "165aecdaaa2eba6ffa5fd9d39926bca155016c95",
+    "trigger": "new_commit"
+  },
+  "vercel": {
+    "projectId": "prj_fan8hVMOCdbpJ2uiiwfPmdJkEDcZ",
+    "deploymentId": "dpl_Hq3u1Do5RurMD1epjibpEkZjJNQU",
+    "state": "READY",
+    "target": "production",
+    "sha": "165aecdaaa2eba6ffa5fd9d39926bca155016c95"
+  },
+  "github": {
+    "runId": 34746947853,
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": {
+      "Quality": "success",
+      "PostgreSQL integration": "success",
+      "Compiled browser production-like": "success",
+      "Release gate": "success"
+    }
+  },
+  "scopeLimit": "Read-only public identity/readiness checks; no mutating public journeys or independent schema-ledger query",
+  "compatibilityEvidence": "wave-f-compatibility.json"
+}

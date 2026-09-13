@@ -855,6 +855,8 @@ focused Wave A 59/59 и полный web suite 125/125.
 
 ### OPS-004 — Release/version drift
 
+- **3.0.0 published (2026-09-13):** code commit165aecdaaa2eba6ffa5fd9d39926bca155016c95, local1249/1249, CI34746947853 all4 jobs success, Render live/Vercel READY and exact-SHA GET-only smoke PASS. [Evidence](audit/evidence/release-3.0.0-public.json). Prior pre-publication checkpoint below is historical.
+
 - **3.0.0 pre-publication checkpoint (2026-09-13):** user-approved D+E+F/BUG-017 release; fresh1249/1249 local gate,449 source identities unchanged. [Evidence](audit/evidence/release-3.0.0-local.json). Hosted/public verification follows the main push.
 
 - **Type:** release-management

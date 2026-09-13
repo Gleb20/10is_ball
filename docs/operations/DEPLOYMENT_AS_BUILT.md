@@ -1,5 +1,17 @@
 # Deployment as-built
 
+## Release 3.0.0 observed — 2026-09-13
+
+Direct-main code commit165aecdaaa2eba6ffa5fd9d39926bca155016c95 was published by
+native Git integrations: Render dep-daj5k0ijnfac73enlod0 live and Vercel
+dpl_Hq3u1Do5RurMD1epjibpEkZjJNQU READY. GitHub CI34746947853 all4 jobs success;
+`pnpm run smoke:public` confirmed3.0.0 and the exact commit on web/API/proxy.
+[Redacted evidence](../audit/evidence/release-3.0.0-public.json). Startup remains
+forward apply-only, with migration0005 included; no reset/manual migration or
+independent public schema-ledger query was performed. Public testing was GET-only.
+Later evidence commits change documentation only and retain3.0.0.
+
+
 Исторический снимок репозитория и провайдеров на **2026-09-08**. Каноническая
 штатная процедура — в [`../DELIVERY.md`](../DELIVERY.md); исторический ручной
 runbook в [`../DEPLOY.md`](../DEPLOY.md) помечен superseded.

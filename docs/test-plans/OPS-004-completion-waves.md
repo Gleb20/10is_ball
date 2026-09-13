@@ -1,5 +1,15 @@
 # OPS-004 — Completion waves
 
+## D+E+F release 3.0.0 published — 2026-09-13
+
+Code commit165aecdaaa2eba6ffa5fd9d39926bca155016c95 is public3.0.0.
+Local1249/1249, GitHub CI34746947853 all4 jobs success, Render live, Vercel READY,
+exact-SHA web/API/proxy GET-only smoke PASS. [Evidence](../audit/evidence/release-3.0.0-public.json).
+This supersedes historical pending release/approval checkpoints below. Functional
+acceptance stays verified_local; public smoke proves identity/readiness only.
+GAP-011/TECH-002 full WebKit/device/AT breadth remains in_progress, not waived.
+
+
 ## Release 3.0.0 authorization — 2026-09-13
 
 User explicitly confirmed: «Подтверждаю. Давай делать версию 3.0.0».
