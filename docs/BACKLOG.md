@@ -633,7 +633,7 @@ focused Wave A 59/59 и полный web suite 125/125.
 
 - **Type:** product-gap
 - **Priority:** P2
-- **Status:** confirmed
+- **Status:** verified_local
 - **Evidence:** страницы [`MatchCreatePage.tsx`](../apps/web/src/pages/MatchCreatePage.tsx), [`MatchDetailPage.tsx`](../apps/web/src/pages/MatchDetailPage.tsx), [`JudgePage.tsx`](../apps/web/src/pages/JudgePage.tsx) не имеют полного 2v2/rules/first-server/groups/revenge/log/no-show/handover/correction набора. Current form implementation начинается в `apps/web/src/pages/MatchCreatePage.tsx:26`; requirement gap сводится в `docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md:17`.
 - **Expected:** MATCH-001..017 и JUDGE-001..012 по принятым D23/D24, включая cancel/void safeguards.
 - **Actual:** рабочий 1v1 happy path и часть judge действий.
@@ -644,6 +644,10 @@ focused Wave A 59/59 и полный web suite 125/125.
 - **Execution slices (wave C):** 1) Перенести из 82fe создание 2v2/guests/rules/first-server и реванш. 2) Перенести журнал/no-show/handover/manual correction с version/idempotency/audit. 3) Проверить два клиента, утрату роли/сессии, intentional rapid taps, повторы и D33. Общие API/DTO фиксировать до UI.
 - **Acceptance mapping:** MATCH-001..017; JUDGE-001..012; verification evidence фиксируется по каждой slice, полный ID закрывается после всех slices и release gate.
 
+
+- **Wave C review scope:** retain D33 and A/B recovery; close MATCH-004 groups, reservation exclusivity, handover vs old-judge writes, no-show replay. Parent requires real PostgreSQL ordered race/rollback and two-client browser acceptance.
+
+- **Accepted Wave C 2026-09-13:** full `verify:all` 1056/1056 (quality980, PostgreSQL47, browser25, cleanup4), zero failures/skips/todo/interrupted; 16 compiled desktop/390 journeys and rendered review. Independent review repairs and authoritative persisted-state assertions passed. [Evidence](audit/evidence/wave-c-local.json). Candidate2.1.0 awaits exact-SHA public release.
 
 ### GAP-006 — Турнирный флоу и управление сеткой неполны
 
@@ -674,6 +678,9 @@ focused Wave A 59/59 и полный web suite 125/125.
 - **Verification:** AT-TEAM-001..006 + component/E2E.
 - **Dependencies:** DATA-004; полный PRD v2 закреплён D26.
 - **Execution slices (wave D, до GAP-006):** 1) Captain/invite/respond/detail с active-membership invariants. 2) Leave/transfer/archive и недопустимые переходы. 3) Подключение состава к event picker и браузерный lifecycle нескольких пользователей; конкурентные изменения на PostgreSQL.
+- **Recheck 2026-09-13:** current service has create/get/list/invite/respond and block-triggered captain selection; no update/remove/leave/manual-transfer/archive API or team-detail UI. `matchCreateOptions` already includes own active teams and was verified in Wave C. Reuse it instead of duplicating a picker service.
+- **Bounded orders:** domain transaction/DTO and captain invariants → canonical route/OpenAPI contracts with legacy invite/respond compatibility → team detail/welcome/controls → multi-user browser and real PostgreSQL captain/leave/accept races. Inspect blockUser→transferCaptainOnBlock atomicity before changing lifecycle; preserve historical memberships and current team ranking semantics.
+
 - **Acceptance mapping:** TEAM-001..009; AT-TEAM-001..006; verification evidence фиксируется по каждой slice, полный ID закрывается после всех slices и release gate.
 
 

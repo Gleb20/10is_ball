@@ -130,6 +130,7 @@ test("E2E_auth_match_judge__AT-MATCH-001_005_008_AT-JUDGE-001_003_006_007__finis
   await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+\/judge$/);
   await expect(page.getByTestId("judge-setup")).toBeVisible();
   await expectNoHorizontalOverflow(page);
+  await page.getByRole("radio", { name: /Tab10 Admin/ }).check();
   await page.getByRole("button", { name: "Начать матч" }).click();
   await expect(page.getByRole("group", { name: "Счёт матча" })).toBeVisible();
 

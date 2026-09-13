@@ -27,6 +27,9 @@ const awardPoint = vi.fn();
 const undoPoint = vi.fn();
 const confirmFinish = vi.fn();
 const revertFinish = vi.fn();
+const directory = vi.fn();
+const handoverJudge = vi.fn();
+const manualCorrection = vi.fn();
 
 vi.mock("../api", () => ({
   api: {
@@ -40,6 +43,9 @@ vi.mock("../api", () => ({
     undoPoint: (...a: unknown[]) => undoPoint(...a),
     confirmFinish: (...a: unknown[]) => confirmFinish(...a),
     revertFinish: (...a: unknown[]) => revertFinish(...a),
+    directory: (...a: unknown[]) => directory(...a),
+    handoverJudge: (...a: unknown[]) => handoverJudge(...a),
+    manualCorrection: (...a: unknown[]) => manualCorrection(...a),
   },
 }));
 
@@ -136,6 +142,7 @@ describe("REQ_ui__judge_immersive", () => {
     acquireJudge.mockResolvedValue({ ok: true });
     heartbeatJudge.mockResolvedValue({ ok: true });
     releaseJudge.mockResolvedValue({ ok: true });
+    directory.mockResolvedValue({ users: [] });
     setDocumentVisibility("visible");
     Object.defineProperty(window, "innerWidth", {
       configurable: true,
@@ -192,6 +199,37 @@ describe("REQ_ui__judge_immersive", () => {
     renderJudge();
     expect(await screen.findByTestId("judge-blocked")).toBeInTheDocument();
     expect(screen.getByText(/уже судит/i)).toBeInTheDocument();
+  });
+
+  it("AT-JUDGE-002 lets a nonparticipant acquire from a known writable judge URL", async () => {
+    getMatch
+      .mockRejectedValueOnce(
+        Object.assign(new Error("Нет доступа к активному матчу"), {
+          code: "FORBIDDEN",
+          status: 403,
+        }),
+      )
+      .mockResolvedValue({ match: matchBody });
+
+    renderJudge();
+
+    expect(await screen.findByTestId("judge-screen")).toBeInTheDocument();
+    expect(acquireJudge).toHaveBeenCalledTimes(1);
+    expect(getMatch.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("AT-JUDGE-002 does not acquire after a 403 on a readonly judge URL", async () => {
+    getMatch.mockRejectedValue(
+      Object.assign(new Error("Нет доступа к активному матчу"), {
+        code: "FORBIDDEN",
+        status: 403,
+      }),
+    );
+
+    renderJudge("/matches/m1/judge?mode=readonly");
+
+    expect(await screen.findByTestId("judge-blocked")).toBeInTheDocument();
+    expect(acquireJudge).not.toHaveBeenCalled();
   });
 
   it("awards point only via +1 button", async () => {
@@ -346,12 +384,14 @@ describe("REQ_ui__judge_immersive", () => {
     expect(
       within(board).getByRole("button", { name: /поменять стороны/i }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("serve-racket")).toBeInTheDocument();
+    expect(screen.queryByTestId("serve-racket")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /\+1 очко/i }),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /начать матч/i })).toBeDisabled();
 
     await user.click(screen.getByTestId("judge-side-B"));
+    expect(screen.getByTestId("serve-racket")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /начать матч/i }));
     expect(judgeSetup).toHaveBeenCalled();
   });
@@ -385,6 +425,33 @@ describe("REQ_ui__judge_immersive", () => {
 
     expect(await screen.findByText("match-detail")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(/слот судьи освобождён/i);
+  });
+
+  it("GAP-005 blocks setup cancellation while start is pending", async () => {
+    const user = userEvent.setup();
+    const start = deferred<{ match: typeof matchBody }>();
+    getMatch.mockResolvedValue({
+      match: {
+        ...matchBody,
+        scoreA: 0,
+        scoreB: 0,
+        version: 0,
+        status: "waiting",
+        startedAt: null,
+      },
+    });
+    startMatch.mockReturnValueOnce(start.promise);
+    renderJudge();
+
+    await screen.findByTestId("judge-setup");
+    await user.click(screen.getByTestId("judge-side-B"));
+    await user.click(screen.getByRole("button", { name: /начать матч/i }));
+
+    const cancel = screen.getByRole("button", { name: "Отмена" });
+    expect(cancel).toBeDisabled();
+    await user.click(cancel);
+    expect(releaseJudge).not.toHaveBeenCalled();
+    expect(screen.getByTestId("judge-setup")).toBeInTheDocument();
   });
 
   it("BUG-004 Back releases the lock before leaving scoring", async () => {
@@ -422,6 +489,51 @@ describe("REQ_ui__judge_immersive", () => {
       /не удалось подтвердить освобождение/i,
     );
   });
+
+  it.each([
+    [401, "UNAUTHORIZED"],
+    [403, "FORBIDDEN"],
+    [409, "JUDGE_NOT_ACTIVE"],
+  ])(
+    "BUG-005 heartbeat %s/%s shows lost-lock state, blocks mutations, and syncs authoritative match",
+    async (status, code) => {
+      const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
+      vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
+        timers.push({ callback, delay });
+        return timers.length as never;
+      });
+      vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
+      renderJudge();
+      await screen.findByTestId("judge-screen");
+
+      heartbeatJudge.mockRejectedValue(
+        Object.assign(new Error("lock lost"), { status, code }),
+      );
+      getMatch.mockResolvedValue({
+        match: { ...matchBody, scoreA: 8, scoreB: 7, version: 12 },
+      });
+      await waitFor(() =>
+        expect(timers.some(({ delay }) => delay === 30_000)).toBe(true),
+      );
+      const liveTimer = timers.find(({ delay }) => delay === 30_000);
+      expect(liveTimer).toBeDefined();
+      await act(async () => {
+        await (liveTimer!.callback as () => Promise<void>)();
+      });
+
+      expect(await screen.findByTestId("judge-lost-lock")).toBeInTheDocument();
+      expect(screen.getByRole("alert")).toHaveTextContent(/слот судьи потерян/i);
+      expect(
+        within(screen.getByTestId("judge-side-A")).getByText("8"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /\+1 очко/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /отменить последнее очко/i }),
+      ).not.toBeInTheDocument();
+    },
+  );
 
   it("keeps every exit path closed until rapid score intents drain", async () => {
     const user = userEvent.setup();
@@ -470,85 +582,6 @@ describe("REQ_ui__judge_immersive", () => {
     expect(releaseJudge).not.toHaveBeenCalled();
   });
 
-  it.each([
-    [401, "UNAUTHORIZED"],
-    [403, "FORBIDDEN"],
-    [409, "JUDGE_NOT_ACTIVE"],
-  ])(
-    "BUG-005 heartbeat %s/%s shows lost-lock state, blocks mutations, and syncs authoritative match",
-    async (status, code) => {
-      const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
-      vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
-        timers.push({ callback, delay });
-        return timers.length as never;
-      });
-      vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
-      renderJudge();
-      await screen.findByTestId("judge-screen");
-
-      heartbeatJudge.mockRejectedValue(
-        Object.assign(new Error("lock lost"), { status, code }),
-      );
-      getMatch.mockResolvedValue({
-        match: { ...matchBody, scoreA: 8, scoreB: 7, version: 12 },
-      });
-      await waitFor(() =>
-        expect(timers.some(({ delay }) => delay === 30_000)).toBe(true),
-      );
-      const liveTimer = timers.find(({ delay }) => delay === 30_000);
-      expect(liveTimer).toBeDefined();
-      await act(async () => {
-        await (liveTimer!.callback as () => Promise<void>)();
-      });
-
-      expect(await screen.findByTestId("judge-lost-lock")).toBeInTheDocument();
-      expect(screen.getByRole("alert")).toHaveTextContent(/слот судьи потерян/i);
-      expect(
-        within(screen.getByTestId("judge-side-A")).getByText("8"),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByRole("button", { name: /\+1 очко/i }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole("button", { name: /отменить последнее очко/i }),
-      ).not.toBeInTheDocument();
-    },
-  );
-
-  it("BUG-005 external terminal change switches the scoring screen to readonly", async () => {
-    const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
-    vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
-      timers.push({ callback, delay });
-      return timers.length as never;
-    });
-    vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
-    renderJudge();
-    await screen.findByTestId("judge-screen");
-    getMatch.mockResolvedValue({
-      match: {
-        ...matchBody,
-        status: "finished",
-        scoreA: 11,
-        scoreB: 7,
-        version: 15,
-      },
-    });
-
-    await act(async () => {
-      for (const timer of timers.filter(({ delay }) => (delay ?? 0) >= 30_000)) {
-        await (timer.callback as () => Promise<void>)();
-      }
-    });
-
-    expect(await screen.findByText("Только просмотр")).toBeInTheDocument();
-    expect(
-      within(screen.getByTestId("judge-side-A")).getByText("11"),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /\+1 очко/i }),
-    ).not.toBeInTheDocument();
-  });
-
   it("uses authoritative terminal refresh after heartbeat 409 instead of staying lost-lock", async () => {
     const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
     vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
@@ -587,6 +620,41 @@ describe("REQ_ui__judge_immersive", () => {
     expect(
       within(screen.getByTestId("judge-side-A")).getByText("11"),
     ).toBeInTheDocument();
+  });
+
+
+  it("BUG-005 external terminal change switches the scoring screen to readonly", async () => {
+    const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
+    vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
+      timers.push({ callback, delay });
+      return timers.length as never;
+    });
+    vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+    getMatch.mockResolvedValue({
+      match: {
+        ...matchBody,
+        status: "finished",
+        scoreA: 11,
+        scoreB: 7,
+        version: 15,
+      },
+    });
+
+    await act(async () => {
+      for (const timer of timers.filter(({ delay }) => (delay ?? 0) >= 30_000)) {
+        await (timer.callback as () => Promise<void>)();
+      }
+    });
+
+    expect(await screen.findByText("Только просмотр")).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId("judge-side-A")).getByText("11"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /\+1 очко/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("BUG-005 pauses live timers while hidden, resumes immediately once, and cleans up without release", async () => {
@@ -642,6 +710,22 @@ describe("REQ_ui__judge_immersive", () => {
     expect(await screen.findByText("match-detail")).toBeInTheDocument();
   });
 
+  it("GAP-005 visibly blocks navigation and More while confirmation is pending", async () => {
+    const user = userEvent.setup();
+    const confirmation = deferred<{ match: typeof matchBody }>();
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, status: "pending_confirmation" },
+    });
+    confirmFinish.mockReturnValueOnce(confirmation.promise);
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+
+    await user.click(screen.getByRole("button", { name: /подтвердить результат/i }));
+
+    expect(screen.getByRole("button", { name: "Назад" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Ещё" })).toBeDisabled();
+  });
+
   it("BUG-012 returns a finished tutorial to the persisted onboarding step", async () => {
     const user = userEvent.setup();
     getMatch.mockResolvedValue({
@@ -693,5 +777,136 @@ describe("REQ_ui__judge_immersive", () => {
       screen.getByRole("button", { name: /подтвердить результат/i }),
     );
     expect(await screen.findByText("tournament-detail")).toBeInTheDocument();
+  });
+
+  it("GAP-005 lets the active judge make an auditable score and server correction", async () => {
+    const user = userEvent.setup();
+    manualCorrection.mockResolvedValue({
+      match: { ...matchBody, scoreA: 4, scoreB: 4, version: 6 },
+    });
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
+    await user.clear(screen.getByLabelText("Счёт стороны A"));
+    await user.type(screen.getByLabelText("Счёт стороны A"), "4");
+    await user.clear(screen.getByLabelText("Счёт стороны B"));
+    await user.type(screen.getByLabelText("Счёт стороны B"), "4");
+    await user.click(screen.getByRole("button", { name: /сохранить коррекцию/i }));
+
+    expect(manualCorrection).toHaveBeenCalledWith("m1", {
+      scoreA: 4,
+      scoreB: 4,
+      currentServerParticipantId: "p-a",
+      expectedVersion: 5,
+    }, expect.any(String));
+  });
+
+  it("GAP-005 blocks scoring and every exit while a correction is open or pending", async () => {
+    const user = userEvent.setup();
+    const pendingCorrection = deferred<{ match: typeof matchBody }>();
+    manualCorrection.mockReturnValueOnce(pendingCorrection.promise);
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
+
+    expect(screen.getByRole("button", { name: /\+1 очко: анна/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Назад" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: /сохранить коррекцию/i }));
+    expect(screen.getByRole("button", { name: /сохраняем/i })).toBeDisabled();
+    expect(awardPoint).not.toHaveBeenCalled();
+    expect(releaseJudge).not.toHaveBeenCalled();
+
+    pendingCorrection.resolve({ match: { ...matchBody, version: 6 } });
+    await waitFor(() => expect(screen.queryByRole("region", { name: /ручная коррекция/i })).not.toBeInTheDocument());
+  });
+
+  it("GAP-005 visibly blocks navigation and More while undo is pending", async () => {
+    const user = userEvent.setup();
+    const pendingUndo = deferred<{ match: typeof matchBody }>();
+    undoPoint.mockReturnValueOnce(pendingUndo.promise);
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+
+    await user.click(screen.getByRole("button", { name: /отменить последнее очко/i }));
+
+    expect(screen.getByRole("button", { name: "Назад" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Ещё" })).toBeDisabled();
+  });
+
+  it("GAP-005 reserves handover for a selected active user before leaving", async () => {
+    const user = userEvent.setup();
+    directory.mockResolvedValue({ users: [{ id: "u2", displayName: "Новый Судья" }] });
+    handoverJudge.mockResolvedValue({ reservation: { userId: "u2", displayName: "Новый Судья" } });
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    await user.selectOptions(await screen.findByLabelText("Передать судейство"), "u2");
+    await user.click(screen.getByRole("button", { name: /передать слот/i }));
+
+    expect(handoverJudge).toHaveBeenCalledWith("m1", "u2");
+    expect(await screen.findByText("match-detail")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/судейство передано/i);
+  });
+
+  it("MATCH-008: a noncreator judge saves setup and waits for creator start", async () => {
+    const waiting = {
+      ...matchBody,
+      status: "waiting",
+      startedAt: null,
+      scoreA: 0,
+      scoreB: 0,
+      version: 0,
+      firstServerMethod: "manual",
+      currentServerParticipantId: null,
+      createdByUserId: "creator",
+      activeJudge: { userId: "judge", displayName: "Judge User" },
+    };
+    getMatch.mockResolvedValue({ match: waiting });
+    judgeSetup.mockResolvedValue({
+      match: { ...waiting, currentServerParticipantId: "p-b" },
+    });
+    const user = userEvent.setup();
+    renderJudge();
+    await screen.findByTestId("judge-setup");
+    await user.click(screen.getByRole("radio", { name: /борис/i }));
+    await user.click(screen.getByRole("button", { name: /сохранить подготовку/i }));
+
+    expect(judgeSetup).toHaveBeenCalledWith("m1", {
+      firstServerParticipantId: "p-b",
+      swapSides: false,
+    });
+    expect(startMatch).not.toHaveBeenCalled();
+    expect(await screen.findByRole("status", { name: /ожидаем запуска/i })).toBeInTheDocument();
+  });
+
+  it("blocks confirm, revert, undo and exit while handover is pending", async () => {
+    const user = userEvent.setup();
+    const pending = deferred<{ reservation: { userId: string; displayName: string } }>();
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, status: "pending_confirmation" },
+    });
+    directory.mockResolvedValue({ users: [{ id: "u2", displayName: "Новый Судья" }] });
+    handoverJudge.mockReturnValueOnce(pending.promise);
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    await user.selectOptions(await screen.findByLabelText("Передать судейство"), "u2");
+    await user.click(screen.getByRole("button", { name: /передать слот/i }));
+
+    for (const button of screen.getAllByRole("button", { name: /подтвердить результат/i })) {
+      expect(button).toBeDisabled();
+    }
+    expect(screen.getByRole("button", { name: /продолжить игру/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /отменить последнее очко/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Назад" })).toBeDisabled();
+    expect(confirmFinish).not.toHaveBeenCalled();
+    expect(revertFinish).not.toHaveBeenCalled();
+    expect(undoPoint).not.toHaveBeenCalled();
+    expect(releaseJudge).not.toHaveBeenCalled();
+
+    pending.resolve({ reservation: { userId: "u2", displayName: "Новый Судья" } });
+    expect(await screen.findByText("match-detail")).toBeInTheDocument();
   });
 });

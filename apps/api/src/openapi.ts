@@ -354,6 +354,9 @@ const schemas: Record<string, JsonSchema> = {
       winnerSide: { type: "string", enum: ["A", "B"], nullable: true },
       participants: { type: "array", items: ref("Participant") },
       activeJudge: { type: "object", nullable: true, additionalProperties: true },
+      judgeReservation: { nullable: true, allOf: [ref("JudgeReservation")] },
+      firstServerMethod: { type: "string", enum: ["random", "manual", "rally"] },
+      source: { type: "string", enum: ["manual", "challenge", "revenge", "tutorial"] },
     },
     additionalProperties: true,
   },
@@ -587,10 +590,45 @@ const schemas: Record<string, JsonSchema> = {
       pointsToWin: { type: "integer", minimum: 1 },
       mercyEnabled: { type: "boolean" },
       mercyPoints: { type: "integer", minimum: 1, nullable: true },
+      firstServerMethod: { type: "string", enum: ["random", "manual", "rally"] },
       source: { type: "string", enum: ["manual", "challenge", "revenge", "tutorial"] },
       participants: { type: "array", maxItems: 4, items: ref("MatchParticipantRequest") },
     },
     additionalProperties: false,
+  },
+  JudgeHandoverRequest: {
+    type: "object", required: ["toUserId"], additionalProperties: false,
+    properties: { toUserId: { type: "string", format: "uuid" } },
+  },
+  ManualCorrectionRequest: {
+    type: "object", required: ["scoreA", "scoreB", "currentServerParticipantId", "expectedVersion"], additionalProperties: false,
+    properties: {
+      scoreA: { type: "integer", minimum: 0, maximum: 999 },
+      scoreB: { type: "integer", minimum: 0, maximum: 999 },
+      currentServerParticipantId: { type: "string", format: "uuid" },
+      expectedVersion: { type: "integer", minimum: 0 },
+    },
+  },
+  NoShowRequest: {
+    type: "object", required: ["absentSide", "expectedVersion"], additionalProperties: false,
+    properties: {
+      absentSide: { type: "string", enum: ["A", "B"] },
+      expectedVersion: { type: "integer", minimum: 0 },
+      reasonText: { type: "string", maxLength: 500 },
+    },
+  },
+  JudgeReservation: {
+    type: "object", required: ["userId", "displayName", "expiresAt"], additionalProperties: false,
+    properties: { userId: { type: "string", format: "uuid" }, displayName: { type: "string" }, expiresAt: { type: "string", format: "date-time" } },
+  },
+  MatchCreateOptions: {
+    type: "object", required: ["users", "teams", "recentOpponentIds", "frequentOpponentIds"], additionalProperties: false,
+    properties: {
+      users: { type: "array", items: ref("DirectoryUser") },
+      teams: { type: "array", items: { type: "object", required: ["id", "name", "userIds"], additionalProperties: false, properties: { id: { type: "string", format: "uuid" }, name: { type: "string" }, userIds: { type: "array", items: { type: "string", format: "uuid" } } } } },
+      recentOpponentIds: { type: "array", items: { type: "string", format: "uuid" } },
+      frequentOpponentIds: { type: "array", items: { type: "string", format: "uuid" } },
+    },
   },
   StartMatchRequest: {
     type: "object",
@@ -845,6 +883,18 @@ export function openApiSpec(releaseVersion = productVersion()) {
       "/api/v1/matches": {
         get: operation({ operationId: "listMatches", summary: "List visible matches", tag: "Matches", response: arrayRef("matches", "Match") }),
         post: operation({ operationId: "createMatch", summary: "Create standalone match", tag: "Matches", mutation: true, request: "CreateMatchRequest", response: objectRef("match", "Match") }),
+      },
+      "/api/v1/matches/create-options": {
+        get: operation({ operationId: "matchCreateOptions", summary: "Own team and opponent selection groups", tag: "Matches", response: ref("MatchCreateOptions") }),
+      },
+      "/api/v1/matches/{matchId}/judge/handover": {
+        post: operation({ operationId: "handoverJudge", summary: "Atomically reserve judge slot for an active user", tag: "Judge", mutation: true, parameters: pathParameters("matchId"), request: "JudgeHandoverRequest", response: objectRef("reservation", "JudgeReservation") }),
+      },
+      "/api/v1/matches/{matchId}/manual-correction": {
+        post: operation({ operationId: "manualCorrection", summary: "Correct unconfirmed score with technical audit", tag: "Judge", mutation: true, parameters: pathParameters("matchId"), request: "ManualCorrectionRequest", response: objectRef("match", "Match"), idempotency: true }),
+      },
+      "/api/v1/matches/{matchId}/no-show": {
+        post: operation({ operationId: "noShowMatch", summary: "Record opposing winner after no-show", tag: "Matches", mutation: true, parameters: pathParameters("matchId"), request: "NoShowRequest", response: objectRef("match", "Match"), idempotency: true }),
       },
       "/api/v1/matches/tutorial": {
         post: operation({ operationId: "createTutorialMatch", summary: "Create or resume tutorial match", tag: "Matches", mutation: true, response: objectRef("match", "Match") }),

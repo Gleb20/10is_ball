@@ -215,7 +215,9 @@ Participant, который не creator/organizer и не current active judge,
 на stop; winner, score, status, version и event log не меняются.
 
 ### AT-MATCH-010 No-show
-Ручная неявка создаёт победу с причиной, без выдуманного игрового счёта.
+Ручная неявка создаёт победу с причиной, без выдуманного игрового счёта;
+повтор того же idempotency key возвращает тот же результат, а injected failure
+откатывает terminal state, stats и judge release целиком.
 
 ### AT-MATCH-011 Concurrency
 Игрок с активным матчем не может стартовать второй активный матч.
@@ -242,6 +244,14 @@ Injected failure после terminal match write, stats или judge release о�
 `Матч {дата и время}` в `Europe/Moscow` при timezone клиента `UTC`,
 `America/Los_Angeles` и `Asia/Tokyo`. Редактируемый title payload не меняет
 контракт абсолютных UTC timestamps.
+
+### AT-MATCH-016 Create options and grouped roster
+`GET /api/v1/matches/create-options` возвращает доступных пользователей, активные
+команды с `id`, `name` и `userIds`, а также `recentOpponentIds` и
+`frequentOpponentIds`. Командный состав разворачивается только из разрешённых
+active members; неизвестная команда или участник отклоняются без записи. `manual`
+и `rally` first-server требуют явного participant id на start; `random` выбирает
+server по зафиксированному режиму и отклоняет подменённый manual id.
 
 ### AT-MATCH-VOID-001 No hard delete
 После void finished standalone match исходный результат и event/audit facts остаются,
@@ -278,7 +288,11 @@ audit row. `bracket_json`, `bracket_state_version`, downstream rows/results/stat
 После release другой допустимый пользователь может захватить матч без потери счёта.
 
 ### AT-JUDGE-004 Handover
-Передача атомарно закрывает старую сессию и резервирует/создаёт новую для выбранного пользователя.
+Любой active user может быть выбран допустимым target (D7). Передача атомарно
+закрывает старую сессию и резервирует target; пока reservation активна, другой
+пользователь не получает слот. Target acquire после handover закрывает reservation
+ровно один раз, а ordered handover → release/score/undo/correction mutations не
+дублируют active judge session или теряют score.
 
 ### AT-JUDGE-005 Expiry
 После TTL без heartbeat слот освобождается; счёт не меняется.
@@ -307,6 +321,13 @@ Visible setup/scoring выполняет heartbeat + authoritative refresh од�
 Heartbeat `401/403/409` или lost-session code немедленно очищает point queue,
 скрывает score/Undo/confirm/stop, показывает lost-lock и синхронизирует матч.
 Внешний terminal status становится read-only без reload.
+
+### AT-JUDGE-010 Technical correction baseline
+Active judge может выполнить versioned manual correction с idempotency key и
+явным текущим server participant. Correction сохраняет технический baseline в
+event log; последующий Undo не удаляет correction и возвращает состояние к
+предыдущей point event boundary. Повтор correction с тем же key идемпотентен,
+stale/unauthorized actor не меняет match, audit, score или version.
 
 ## TOURNAMENT
 

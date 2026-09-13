@@ -1,34 +1,32 @@
 # Tab-10 — статус проекта
 
-Обновлено: **2026-09-13**. Опубликована **1.11.0**; выполняется волна B.
+Обновлено: **2026-09-13**. Опубликована **2.0.0**; волна C принята локально.
 
-## Current accepted candidate 2.0.0 (supersedes local evidence below)
-
-Wave B GAP-002/003/004 is verified_local: `pnpm run verify:all` passed 1010/1010
-with zero failures/skips/todo/interrupted (quality 945, PostgreSQL 42, browser 19,
-cleanup 4). Strengthened loaded-card browser check rerun passed 19/19.
-Desktop/390 profile, rankings and history return reviewed.
-[Evidence](audit/evidence/wave-b-local.json). Public release pending.
-Original 186 files unchanged. GAP-005..011 remain open; Wave C is next.
-
-## Итог
+## Текущий результат
 
 Выполняется принятый план завершения PRD v2 волнами A–F:
 [очередь и критерии приёмки](test-plans/OPS-004-completion-waves.md).
-Read-only public smoke подтвердил `b193e9de7f6448a722ae061cb106825fe273d352`,
-version `1.11.0` у web/API/proxy. GitHub CI run `34726774716` завершился success
-во всех четырёх jobs. Волна A опубликована, волна B (GAP-002/003/004) выполняется.
-Полная готовность PRD v2 не заявляется: GAP-002..011 остаются открыты.
+Волны A и B опубликованы. Для B GET-only smoke подтвердил
+`8f36941b283a678105558656b1fb3b343546d999`, version `2.0.0` у web/API/proxy;
+GitHub CI `34728440590` завершился success во всех четырёх jobs.
+Функциональные сценарии проверены на локальных синтетических данных;
+public smoke подтверждает идентичность релиза и доступность, без мутаций.
 
-## Текущая проверка кандидата
+Wave B GAP-002/003/004: `verified_local`, полный `verify:all` — 1010/1010
+(quality 945, PostgreSQL 42, browser 19, cleanup 4), без failed/skipped/todo/interrupted.
+Повторный browser gate с проверкой загруженной карточки — 19/19.
+Desktop/390 profile, rankings и history return просмотрены.
+[Обезличенные доказательства](audit/evidence/wave-b-local.json).
+Исходные 186 файлов сохранены без изменений.
 
-- Финальный `pnpm run verify:all`: **965 passed**, 0 failed/skipped/todo/interrupted;
-  quality 906, PostgreSQL 40, compiled browser 15 (6 journeys + 9 foundation), cleanup 4.
-- Исправления гонок и устаревшей ошибки после reauth прошли независимое ревью;
-  desktop/390 browser проверяет сохранённый результат и восстановленный черновик.
-- [Обезличенный отчёт](audit/evidence/wave-a-local.json). Scope волны A переведён
-  в `verified_local`; public release подтверждён exact-SHA smoke и CI. GAP-002..011 остаются открыты.
-- Backlog содержит 51 canonical ID. Исходные 186 файлов совпадают со снимком.
+## Волна C принята локально — кандидат 2.1.0
+
+GAP-005 verified_local: полный `verify:all` **1056/1056** (quality980,
+PostgreSQL47, browser25, cleanup4), ноль ошибок/пропусков. 16 compiled browser
+journeys включают создание 2×2, неявку/реванш, коррекцию/Undo/передачу судейства
+и отдельные сессии создателя и судьи. Desktop/390 captures просмотрены.
+[Доказательства](audit/evidence/wave-c-local.json). Публикация 2.1.0 пока ожидается.
+GAP-006..011 и полный TECH-002 остаются в очереди D–F.
 
 ## Исторический снимок 2026-09-09 (superseded текущей проверкой выше)
 

@@ -3,6 +3,7 @@ import {
   boolean,
   check,
   integer,
+  foreignKey,
   jsonb,
   pgEnum,
   pgTable,
@@ -121,6 +122,8 @@ export const matches = pgTable(
     pointsToWin: integer("points_to_win").notNull().default(11),
     mercyEnabled: boolean("mercy_enabled").notNull().default(false),
     mercyPoints: integer("mercy_points"),
+    firstServerMethod: text("first_server_method").notNull().default("manual"),
+    source: text("source").notNull().default("manual"),
     createdByUserId: uuid("created_by_user_id")
       .notNull()
       .references(() => users.id),
@@ -226,9 +229,17 @@ export const judgeSessions = pgTable(
       .notNull()
       .defaultNow(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    reservedForUserId: uuid("reserved_for_user_id"),
     releasedAt: timestamp("released_at", { withTimezone: true }),
   },
   (t) => [
+    foreignKey({ name: "judge_sessions_reserved_for_user_id_fkey", columns: [t.reservedForUserId], foreignColumns: [users.id] }),
+    uniqueIndex("judge_sessions_active_user")
+      .on(t.userId)
+      .where(sql`${t.releasedAt} IS NULL AND ${t.reservedForUserId} IS NULL`),
+    uniqueIndex("judge_sessions_reserved_user")
+      .on(t.reservedForUserId)
+      .where(sql`${t.releasedAt} IS NULL AND ${t.reservedForUserId} IS NOT NULL`),
     uniqueIndex("judge_sessions_active_match")
       .on(t.matchId)
       .where(sql`${t.releasedAt} IS NULL`),

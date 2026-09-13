@@ -11,8 +11,8 @@ Remote main and public web/API readiness were observed at `ecf7605fe8d0e5857fb9b
 | Wave | Canonical IDs | Acceptance and dependencies | State |
 |---|---|---|---|
 | A | Remaining SEC/DATA-001..006, BUG-001..016, GAP-001, OPS-001..005, TECH-001..004 | Preserve released fixes; integrate root-source delta, immutable migrations 0002/0003, exact-SHA quality/PostgreSQL/browser/public gates | released 1.11.0 |
-| B | GAP-002, GAP-003, GAP-004 | Profile/privacy/sessions, dedicated filtered cursor history, team ranking/challenge. Reuse bc9c/e263/76bc worktrees selectively; profile service owns shared public-card DTO | in_progress |
-| C | GAP-005, DATA-007 | 1v1/2v2/rules/serve/revenge/log/no-show/handover/correction; reuse 82fe. Preserve D33; two-client acceptance | pending B |
+| B | GAP-002, GAP-003, GAP-004 | Profile/privacy/sessions, dedicated filtered cursor history, team ranking/challenge. Reuse bc9c/e263/76bc worktrees selectively; profile service owns shared public-card DTO | released 2.0.0 |
+| C | GAP-005, DATA-007 | 1v1/2v2/rules/serve/revenge/log/no-show/handover/correction; reuse 82fe. Preserve D33; two-client acceptance | verified_local 2.1.0 |
 | D | GAP-007 then GAP-006 | Team captain/invite/leave/transfer/archive, then complete SE/DE 3/5/8-player lifecycle and placements with PostgreSQL races | pending C |
 | E | GAP-008, GAP-009, GAP-010 | Notification event matrix/popups, explicit onboarding/help/feedback, full admin role/state/audit matrix | pending D |
 | F | GAP-011, TECH-002 | Full REQ/AT reconciliation, desktop/390/360/landscape, keyboard/axe/focus, empty/loading/error/readonly/stale-session, compiled browser critical journeys | pending E |
@@ -123,3 +123,42 @@ public-card check to wait for actual stats/challenge before privacy assertions;
 that browser lane was rerun and passed 19/19. Desktop and 390px profile, ranking,
 public card and history return screenshots reviewed. Original 186 files unchanged.
 GAP-002/003/004 are verified_local. Public release remains pending.
+
+### Wave B released / Wave C started
+
+Main 8f36941b283a678105558656b1fb3b343546d999 published 2.0.0.
+GitHub CI 34728440590: all four jobs success. Read-only web/API/proxy smoke
+matched exact SHA/version after 8 attempts (80103ms). No public mutation tests.
+
+Wave C baseline is that commit. API service worker owns match-service and GAP-005
+tests; web worker owns api.ts, match create/detail/judge pages and their tests;
+parent owns shared contracts/reducer, migrations, app routes/OpenAPI and docs.
+Source Red: four API scenarios fail before implementation; manual-correction
+reducer Red then 11/11 Green. MATCH-004 groups and OpenAPI Red then 6/6 Green.
+D33 and Wave B DTO/auth behavior remain authoritative. Source review requires
+exclusive reservations, atomic handover/mutations and no-show replay corrections.
+These remain in progress until real PostgreSQL and browser acceptance pass.
+
+### Wave C independent review corrections
+
+- Start now locks registered participant rows in stable order and timestamps the
+  transition. Real-PG concurrent shared-player starts have exactly one winner.
+- Handover keeps historical judge identities, releases former authority, and
+  reserves the slot exclusively. Terminal replay must identify the confirming session.
+- Serve rotation retains its anchor; setup cannot bypass correction after points.
+  Undo keeps technical history while the UI displays only effective awards.
+- UI start/setup, cancellation, undo and terminal actions are mutually guarded.
+  Global 401 recovery must retain drafts without stale errors. Full web passed
+  164/164 before the additional D7 nonparticipant-entry regression.
+- Aggregate attempt stopped on the preserved-draft 401 regression (159/160 web),
+  subsequently fixed and focused recovery/create 9/9 green. Browser acceptance
+  adds 2×2/no-show/revenge, two-client correction/handover and separate creator/judge start.
+
+### Wave C accepted locally
+
+Final `verify:all` 1056/1056: quality980, PostgreSQL47, browser25 (16 journeys +9
+foundation), cleanup4. Zero failed/skipped/todo/interrupted. Rendered desktop/390
+creation, detail and judge captures reviewed. Waiting timer regression fixed;
+final browser fixture uses the real «Старт» label and awaits the documented
+30-second judge refresh. Original186 files unchanged. Candidate2.1.0 public release pending.
+[Redacted evidence](../audit/evidence/wave-c-local.json).

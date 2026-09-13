@@ -130,7 +130,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
 
     const acquire = await app.inject({
@@ -208,6 +208,7 @@ describe("match and judge integration", () => {
     await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
+          payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
       cookies: { tab10_session: userACookie },
     });
 
@@ -246,7 +247,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
 
     const acquireA = await app.inject({
@@ -298,7 +299,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     await app.inject({
       method: "POST",
@@ -400,7 +401,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
 
     const acquireC = await app.inject({
@@ -439,7 +440,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     await app.inject({
       method: "POST",
@@ -492,7 +493,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     await app.inject({
       method: "POST",
@@ -555,7 +556,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     await app.inject({
       method: "POST",
@@ -634,14 +635,14 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     const afterStart = await app.inject({
       method: "GET",
       url: `/api/v1/matches/${matchId}`,
       cookies: { tab10_session: userACookie },
     });
-    expect(afterStart.json().match.startedAt).toBeNull();
+    expect(afterStart.json().match.startedAt).toBeTruthy();
 
     await app.inject({
       method: "POST",
@@ -668,7 +669,7 @@ describe("match and judge integration", () => {
     expect(swapped.find((p) => p.userId === userBId)?.side).toBe("A");
     expect(setup.json().match.currentServerParticipantId).toBe(bParticipant.id);
     expect(setup.json().match.judgeDisplayFlipped).toBe(true);
-    expect(setup.json().match.startedAt).toBeTruthy();
+    expect(setup.json().match.startedAt).toBe(afterStart.json().match.startedAt);
   });
 
   it("INT_trn__bracket_from_collecting", async () => {
@@ -971,7 +972,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     await app.inject({
       method: "POST",
@@ -1397,7 +1398,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${stuckId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(stuckId))!.participants[0]!.id },
     });
 
     const next = await app.inject({
@@ -1419,7 +1420,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${nextId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(nextId))!.participants[0]!.id },
     });
     expect(busy.statusCode).toBe(400);
     expect(busy.json().code).toBe("PLAYER_BUSY");
@@ -1444,7 +1445,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${nextId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(nextId))!.participants[0]!.id },
     });
     expect(started.statusCode).toBe(200);
     expect(started.json().match.status).toBe("in_progress");
@@ -1622,7 +1623,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     await app.inject({
       method: "POST",
@@ -1704,7 +1705,7 @@ describe("match and judge integration", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     await app.inject({
       method: "POST",

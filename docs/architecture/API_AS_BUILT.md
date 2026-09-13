@@ -47,14 +47,18 @@ Profile mutation теперь возвращает отдельный `OwnProfil
 | Method | Path |
 |---|---|
 | GET, POST | `/api/v1/matches` |
+| GET | `/api/v1/matches/create-options` |
 | GET | `/api/v1/matches/:matchId` |
 | POST | `/api/v1/matches/:matchId/start` |
 | POST | `/api/v1/matches/:matchId/judge/acquire` |
 | POST | `/api/v1/matches/:matchId/judge/heartbeat` |
 | POST | `/api/v1/matches/:matchId/judge/release` |
+| POST | `/api/v1/matches/:matchId/judge/handover` |
 | POST | `/api/v1/matches/:matchId/judge/setup` |
 | POST | `/api/v1/matches/:matchId/points` |
 | POST | `/api/v1/matches/:matchId/undo` |
+| POST | `/api/v1/matches/:matchId/manual-correction` |
+| POST | `/api/v1/matches/:matchId/no-show` |
 | POST | `/api/v1/matches/:matchId/confirm-finish` |
 | POST | `/api/v1/matches/:matchId/revert-finish` |
 | POST | `/api/v1/matches/:matchId/stop` |
@@ -102,8 +106,8 @@ matched router path.
 | GET | `/api/v1/faq` |
 | POST | `/api/v1/feedback` |
 
-Итого: **68 registered operations / 61 unique paths**. Встроенный OpenAPI описывает
-**68 operations / 61 paths** (100%). Машинный снимок обновляет родитель интеграции:
+Итого: **72 registered operations / 65 unique paths**. Встроенный OpenAPI описывает
+**72 operations / 65 paths** (100%). Машинный снимок обновляет родитель интеграции:
 [`../audit/evidence/route-openapi-inventory.json`](../audit/evidence/route-openapi-inventory.json).
 
 ## Contract drift
@@ -112,7 +116,7 @@ matched router path.
   `/ready`; public1.11.0 уже подтверждён exact-SHA smoke b193e9d.
 - [`../requirements/08_API_SPEC.md`](../requirements/08_API_SPEC.md) — целевой,
   частично устаревший контракт.
-- Route/OpenAPI inventory 2026-09-13 совпадает 68/68 operations и 61/61 paths;
+- Route/OpenAPI inventory 2026-09-13 совпадает 72/72 operations и 65/65 paths;
   runtime schema/actor coverage по отдельным историческим routes остаётся
   самостоятельным acceptance вопросом.
 
@@ -165,3 +169,32 @@ Finished tournament result вычисляется по сохранённому 
 response.scope остаётся all_time/week/month. teamId доступен только текущему
 участнику активной команды; строки исключают left/blocked, командный winsAllTime
 следует D3/Q2. Публичная карточка принадлежит ProfileService, второго flat DTO нет.
+
+## Wave C match/judge contracts
+
+`GET /api/v1/matches/create-options` returns `{ users, teams, recentOpponentIds,
+frequentOpponentIds }`; team entries contain `id`, `name` and `userIds`. Match
+creation accepts grouped 1v1/2v2 registered/guest roster, rules, `firstServerMethod`
+and `source`. `manual`/`rally` start requires an explicit participant id;
+`random` chooses under the runtime selector and rejects an incompatible manual id.
+
+`POST /matches/{id}/judge/handover` accepts `{toUserId}` and returns
+`{reservation}`. `manual-correction` and `no-show` require `Idempotency-Key` and
+expected version; correction retains a technical baseline in the event log and
+Undo does not erase it. Handover reservation and active judge exclusivity are
+enforced in the service/DB boundary. Browser completion remains a separate gate.
+
+### Wave C review: judge and start authority
+
+Start is creator-owned and transactional, locking registered participants in
+stable order before the busy-player check and waiting-state CAS. `startedAt`
+is set at start; pre-start judge setup does not start the timer and later setup
+cannot reset it. After any points, changing first server requires audited manual correction.
+Handover preserves released historical rows and creates a separate reservation;
+only its target may claim. Former judges lose active visibility and mutation rights.
+New confirmations persist a hashed exact judge-row marker in `idempotencyKeys`;
+terminal retry must match that row and auth session. Multiple historical rows for
+one auth session are checked so release/reacquire still permits the true confirmer.
+Legacy finished matches without a marker retain the historical user/auth fallback.
+The UI may acquire a free slot after a contextual detail 403 on a writable judge
+route (D7); read-only routes never acquire or weaken detail visibility.

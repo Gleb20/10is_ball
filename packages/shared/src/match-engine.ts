@@ -29,6 +29,7 @@ export type PointAwarded = {
 export type PointUndone = {
   type: "point_undone";
   idempotencyKey: string;
+  undonePoint?: PointAwarded;
 };
 
 export type FinishProposed = {
@@ -44,9 +45,17 @@ export type FinishConfirmed = {
   type: "finish_confirmed";
 };
 
+export type ManualCorrection = {
+  type: "manual_correction";
+  idempotencyKey: string;
+  from: { scoreA: number; scoreB: number; currentServerId: string | null };
+  to: { scoreA: number; scoreB: number; currentServerId: string };
+};
+
 export type MatchEvent =
   | PointAwarded
   | PointUndone
+  | ManualCorrection
   | FinishProposed
   | FinishReverted
   | FinishConfirmed;
@@ -185,7 +194,18 @@ export function reduceMatchEvent(
       version: state.version + 1,
     };
     next.deuceMode = isDeuce(next.scoreA, next.scoreB, rules.pointsToWin);
-    const serve = nextServerAfterPoint(next, serveConfig, rules);
+    // A correction chooses the current server without rewriting original rules.
+    const correction = [...history].reverse().find((entry) => entry.type === "manual_correction");
+    let rotation = serveConfig;
+    if (correction?.type === "manual_correction") {
+      const order = serveConfig.participantOrder;
+      const interval = isDeuce(correction.to.scoreA, correction.to.scoreB, rules.pointsToWin) ? 1 : 2;
+      const steps = Math.floor((correction.to.scoreA + correction.to.scoreB) / interval);
+      const selected = order.indexOf(correction.to.currentServerId);
+      const anchor = ((selected - steps) % order.length + order.length) % order.length;
+      rotation = { ...serveConfig, firstServerId: order[anchor]! };
+    }
+    const serve = nextServerAfterPoint(next, rotation, rules);
     next.currentServerId = serve.serverId;
     next.serveSequenceIndex = serve.serveSequenceIndex;
 
@@ -206,7 +226,19 @@ export function reduceMatchEvent(
     if (seenIdempotencyKeys.has(event.idempotencyKey)) {
       return { ok: true, state, applied: false };
     }
-    // Find last point_awarded and rebuild
+    const lastScoringEvent = [...history]
+      .reverse()
+      .find((candidate) =>
+        candidate.type === "point_awarded" || candidate.type === "manual_correction",
+      );
+    if (lastScoringEvent?.type === "manual_correction") {
+      return {
+        ok: false,
+        code: "NOTHING_TO_UNDO",
+        message: "No point has been awarded since the correction",
+      };
+    }
+    // Find last point_awarded and rebuild from effective awards/corrections.
     let lastIdx = -1;
     for (let i = history.length - 1; i >= 0; i -= 1) {
       if (history[i]!.type === "point_awarded") {
@@ -221,7 +253,10 @@ export function reduceMatchEvent(
     // and drop an extra point (award→award→undo→award→undo → 0 instead of 1).
     const priorEvents = history
       .slice(0, lastIdx)
-      .filter((e) => e.type === "point_awarded");
+      .filter(
+        (e): e is PointAwarded | ManualCorrection =>
+          e.type === "point_awarded" || e.type === "manual_correction",
+      );
     let rebuilt = createInitialScoreState(serveConfig.firstServerId);
     const keys = new Set<string>();
     const tempHistory: MatchEvent[] = [];
@@ -230,10 +265,39 @@ export function reduceMatchEvent(
       if (r.ok) rebuilt = r.state;
     }
     seenIdempotencyKeys.add(event.idempotencyKey);
-    history.length = 0;
-    history.push(...tempHistory, event);
+    const undonePoint = history[lastIdx] as PointAwarded;
+    history.splice(lastIdx, 1);
+    history.push({ ...event, undonePoint });
     rebuilt.version = state.version + 1;
     return { ok: true, state: rebuilt, applied: true };
+  }
+
+  if (event.type === "manual_correction") {
+    if (seenIdempotencyKeys.has(event.idempotencyKey)) {
+      return { ok: true, state, applied: false };
+    }
+    if (!configIncludesServer(serveConfig, event.to.currentServerId)) {
+      return { ok: false, code: "VALIDATION", message: "Invalid server" };
+    }
+    const corrected: MatchScoreState = {
+      ...state,
+      scoreA: event.to.scoreA,
+      scoreB: event.to.scoreB,
+      currentServerId: event.to.currentServerId,
+      deuceMode: isDeuce(event.to.scoreA, event.to.scoreB, rules.pointsToWin),
+      serveSequenceIndex: 0,
+      status: "in_progress",
+      proposedWinner: null,
+      version: state.version + 1,
+    };
+    const winner = checkVictory(corrected.scoreA, corrected.scoreB, rules);
+    if (winner) {
+      corrected.status = "pending_confirmation";
+      corrected.proposedWinner = winner;
+    }
+    seenIdempotencyKeys.add(event.idempotencyKey);
+    history.push(event);
+    return { ok: true, state: corrected, applied: true };
   }
 
   if (event.type === "finish_proposed") {
@@ -284,4 +348,11 @@ export function reduceMatchEvent(
   }
 
   return { ok: false, code: "UNKNOWN_EVENT", message: "Unknown event" };
+}
+
+function configIncludesServer(
+  config: ServeRotationConfig,
+  participantId: string,
+): boolean {
+  return config.participantOrder.includes(participantId);
 }

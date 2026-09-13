@@ -60,5 +60,14 @@
   "browser": "10 compiled same-origin journeys at 1280x800 and 390x844; strengthened loaded-public-card assertion rerun passed 19/19 including 9 foundation checks; contrast exclusion remains GAP-011",
   "buildMode": "Explicit production React build; development React and jsxDEV absent",
   "originalSnapshotFilesUnchanged": 186,
-  "publicRelease": "pending"
+  "publicRelease": {
+    "sha": "8f36941b283a678105558656b1fb3b343546d999",
+    "version": "2.0.0",
+    "readOnlySmoke": "passed",
+    "attempts": 8,
+    "elapsedMs": 80103,
+    "githubRun": "34728440590",
+    "githubConclusion": "success",
+    "mutationPolicy": "No public mutating E2E or reset"
+  }
 }

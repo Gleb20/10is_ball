@@ -220,3 +220,15 @@ Web обязан показывать явное состояние «серви
 Public web/API readiness по read-only metadata остаются на ecf7605 / 1.10.1 до публикации. Кандидат 1.11.0 сохраняет D32/native delivery и добавляет immutable 0002/0003. Local PostgreSQL16 gate40 passed; public migration не выполнялась. Миграция0002 fail-closed при дублях участника в турнирной сетке; read-only preflight выявил0 таких пар на текущем стенде.
 
 OPS-002 readiness/logging интегрированы с release metadata и request IDs. OPS-003 local rehearsal создаёт только новую disposable restore DB, передаёт quoted identifier через psql stdin и не удаляет pre-existing target. Boundary tests7 passed; реальные backup/RPO/RTO публичного стенда этим не подтверждены.
+
+## Wave B release / Wave C forward migration — 2026-09-13
+
+This supersedes the Wave A candidate deployment snapshot above. Public main is
+8f36941b283a678105558656b1fb3b343546d999 / 2.0.0; CI34728440590 all four jobs
+passed and GET-only web/API/proxy smoke matched exactly. Wave C candidate 2.1.0
+adds immutable migration 0004 for match-source/first-server metadata and exclusive
+judge reservations. Read-only preflight of the configured Neon target found zero
+duplicate unreleased judge users, zero unreleased sessions and four applied migrations.
+The local PostgreSQL gate applies all five entries and verifies repeat/adoption,
+rollback and concurrent migrators. Public 0004 applies only through native release;
+no reset, seed fixture or mutating public E2E is part of this wave.

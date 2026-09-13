@@ -126,6 +126,7 @@ describe("DATA-002 atomic match completion", () => {
         await app.inject({
           method: "POST",
           url: `/api/v1/matches/${matchId}/start`,
+          payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
           cookies: { tab10_session: organizerCookie },
         })
       ).statusCode,
@@ -219,6 +220,7 @@ describe("DATA-002 atomic match completion", () => {
         await app.inject({
           method: "POST",
           url: `/api/v1/matches/${matchId}/start`,
+          payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
           cookies: { tab10_session: organizerCookie },
         })
       ).statusCode,

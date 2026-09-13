@@ -26,6 +26,9 @@ export type MatchKind = z.infer<typeof MatchKindSchema>;
 export const SideSchema = z.enum(["A", "B"]);
 export type Side = z.infer<typeof SideSchema>;
 
+export const FirstServerMethodSchema = z.enum(["random", "manual", "rally"]);
+export type FirstServerMethod = z.infer<typeof FirstServerMethodSchema>;
+
 export const MatchParticipantRequestSchema = z
   .object({
     side: SideSchema,
@@ -60,6 +63,7 @@ export const CreateMatchRequestSchema = z
     pointsToWin: z.number().int().min(1).optional(),
     mercyEnabled: z.boolean().optional(),
     mercyPoints: z.number().int().min(1).nullable().optional(),
+    firstServerMethod: FirstServerMethodSchema.optional(),
     source: z.enum(["manual", "challenge", "revenge", "tutorial"]).optional(),
     participants: z.array(MatchParticipantRequestSchema).max(4),
   })
@@ -100,6 +104,21 @@ export type CancelMatchRequest = z.infer<typeof CancelMatchRequestSchema>;
 
 export const AwardPointRequestSchema = MatchVersionRequestSchema.extend({
   side: SideSchema,
+}).strict();
+
+export const NoShowRequestSchema = MatchVersionRequestSchema.extend({
+  absentSide: SideSchema,
+  reasonText: z.string().trim().max(500).optional(),
+}).strict();
+
+export const JudgeHandoverRequestSchema = z
+  .object({ toUserId: z.string().uuid() })
+  .strict();
+
+export const ManualCorrectionRequestSchema = MatchVersionRequestSchema.extend({
+  scoreA: z.number().int().min(0).max(999),
+  scoreB: z.number().int().min(0).max(999),
+  currentServerParticipantId: z.string().uuid(),
 }).strict();
 
 export const StopMatchRequestSchema = z

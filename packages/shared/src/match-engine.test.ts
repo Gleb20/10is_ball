@@ -101,6 +101,40 @@ describe("REQ_MATCH__winner_rules", () => {
 });
 
 describe("REQ_MATCH__undo_and_idempotency", () => {
+  it("GAP-005: manual correction is a technical baseline and undo cannot erase it", () => {
+    const state = { ...createInitialScoreState("pA"), scoreA: 2, scoreB: 1, version: 3 };
+    const history: Parameters<typeof reduceMatchEvent>[4] = [];
+    const keys = new Set<string>();
+    const corrected = reduceMatchEvent(
+      state,
+      {
+        type: "manual_correction",
+        idempotencyKey: "correction-1",
+        from: { scoreA: 2, scoreB: 1, currentServerId: "pA" },
+        to: { scoreA: 4, scoreB: 4, currentServerId: "pB" },
+      },
+      rules11,
+      serve,
+      history,
+      keys,
+    );
+    expect(corrected).toMatchObject({
+      ok: true,
+      state: { scoreA: 4, scoreB: 4, currentServerId: "pB", version: 4 },
+    });
+    expect(history).toHaveLength(1);
+
+    const undo = reduceMatchEvent(
+      corrected.ok ? corrected.state : state,
+      { type: "point_undone", idempotencyKey: "undo-correction" },
+      rules11,
+      serve,
+      history,
+      keys,
+    );
+    expect(undo).toMatchObject({ ok: false, code: "NOTHING_TO_UNDO" });
+  });
+
   it("AT-MATCH-005: undo restores previous score", () => {
     let state = createInitialScoreState("pA");
     const history: Parameters<typeof reduceMatchEvent>[4] = [];
@@ -269,5 +303,44 @@ describe("REQ_MATCH__invalid_events_do_not_mutate_state", () => {
     expect(state).toEqual(createInitialScoreState("a"));
     expect(history).toEqual([]);
     expect(keys.size).toBe(0);
+  });
+});
+
+describe("JUDGE-012 technical undo retention", () => {
+  it("retains every removed award in its undo record across consecutive undos", () => {
+    let state = createInitialScoreState("pA");
+    const history: Parameters<typeof reduceMatchEvent>[4] = [];
+    const keys = new Set<string>();
+    for (const event of [
+      { type: "point_awarded" as const, side: "A" as const, idempotencyKey: "audit-award-1" },
+      { type: "point_awarded" as const, side: "B" as const, idempotencyKey: "audit-award-2" },
+      { type: "point_undone" as const, idempotencyKey: "audit-undo-1" },
+      { type: "point_undone" as const, idempotencyKey: "audit-undo-2" },
+    ]) {
+      const result = reduceMatchEvent(state, event, rules11, serve, history, keys);
+      expect(result.ok).toBe(true);
+      if (result.ok) state = result.state;
+    }
+    expect(state).toMatchObject({ scoreA: 0, scoreB: 0, version: 4 });
+    expect(history.filter((event) => event.type === "point_awarded")).toEqual([]);
+    expect(history.filter((event) => event.type === "point_undone")).toEqual([
+      { type: "point_undone", idempotencyKey: "audit-undo-1", undonePoint: { type: "point_awarded", side: "B", idempotencyKey: "audit-award-2" } },
+      { type: "point_undone", idempotencyKey: "audit-undo-2", undonePoint: { type: "point_awarded", side: "A", idempotencyKey: "audit-award-1" } },
+    ]);
+  });
+});
+
+describe("JUDGE-011 corrected serve baseline", () => {
+  it("keeps the selected server until the next rotation and restores it on undo", () => {
+    const history: Parameters<typeof reduceMatchEvent>[4] = [];
+    const keys = new Set<string>();
+    const initial = createInitialScoreState("pA");
+    const correction = reduceMatchEvent(initial, { type: "manual_correction", idempotencyKey: "serve-correction", from: { scoreA: 0, scoreB: 0, currentServerId: "pA" }, to: { scoreA: 4, scoreB: 4, currentServerId: "pB" } }, rules11, serve, history, keys);
+    expect(correction.ok).toBe(true); if (!correction.ok) return;
+    const point = reduceMatchEvent(correction.state, { type: "point_awarded", idempotencyKey: "serve-point", side: "A" }, rules11, serve, history, keys);
+    expect(point).toMatchObject({ ok: true, state: { scoreA: 5, scoreB: 4, currentServerId: "pB" } });
+    if (!point.ok) return;
+    const undone = reduceMatchEvent(point.state, { type: "point_undone", idempotencyKey: "serve-undo" }, rules11, serve, history, keys);
+    expect(undone).toMatchObject({ ok: true, state: { scoreA: 4, scoreB: 4, currentServerId: "pB" } });
   });
 });

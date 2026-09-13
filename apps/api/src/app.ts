@@ -1,3 +1,4 @@
+import { matchCreateOptions } from "./modules/matches/match-options.js";
 import { RankingService } from "./modules/rankings/ranking-service.js";
 import { HistoryService } from "./modules/history/history-service.js";
 import { ProfileService } from "./modules/profile/profile-service.js";
@@ -13,6 +14,9 @@ import {
   AwardPointRequestSchema,
   CancelMatchRequestSchema,
   CreateMatchRequestSchema,
+  JudgeHandoverRequestSchema,
+  ManualCorrectionRequestSchema,
+  NoShowRequestSchema,
   JudgeSetupRequestSchema,
   MatchVersionRequestSchema,
   StartMatchRequestSchema,
@@ -162,6 +166,7 @@ declare module "fastify" {
 export async function buildApp(opts: {
   db: Db;
   clock?: Clock;
+  randomIndex?: (length: number) => number;
   releaseMetadata?: ReleaseMetadata;
   readinessProbe?: () => Promise<void>;
   requestIdFactory?: () => string;
@@ -174,7 +179,7 @@ export async function buildApp(opts: {
     (async () => {
       await opts.db.execute(sql`select 1`);
     });
-  const matches = new MatchService(opts.db, clock);
+  const matches = new MatchService(opts.db, clock, opts.randomIndex);
   const tournaments = new TournamentService(opts.db, clock, matches);
   matches.setTournamentMatchFinishedHook((matchId, db) =>
     tournaments.onMatchFinished(matchId, db),
@@ -931,6 +936,26 @@ export async function buildApp(opts: {
   );
 
   app.post(
+    "/api/v1/matches/:matchId/judge/handover",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { matchId } = parseBody(z.object({ matchId: z.string().uuid() }), req.params);
+        const body = parseBody(JudgeHandoverRequestSchema, req.body);
+        const reservation = await services.matches.handoverJudge({
+          matchId,
+          fromUserId: req.authUser!.id,
+          fromAuthSessionId: req.authSessionId!,
+          toUserId: body.toUserId,
+        });
+        return { reservation };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
     "/api/v1/matches/:matchId/judge/setup",
     { preHandler: requireAuth },
     async (req, reply) => {
@@ -1010,6 +1035,30 @@ export async function buildApp(opts: {
   );
 
   app.post(
+    "/api/v1/matches/:matchId/manual-correction",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { matchId } = parseBody(z.object({ matchId: z.string().uuid() }), req.params);
+        const body = parseBody(ManualCorrectionRequestSchema, req.body);
+        const idempotencyKey = parseIdempotencyKey(
+          req.headers["idempotency-key"],
+        );
+        const match = await services.matches.manualCorrection({
+          matchId,
+          ...body,
+          idempotencyKey,
+          judgeUserId: req.authUser!.id,
+          authSessionId: req.authSessionId!,
+        });
+        return { match };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
     "/api/v1/matches/:matchId/confirm-finish",
     { preHandler: requireAuth },
     async (req, reply) => {
@@ -1058,6 +1107,30 @@ export async function buildApp(opts: {
           reasonCode: body.reasonCode,
           reasonText: body.reasonText,
           actorUserId: req.authUser!.id,
+        });
+        return { match };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
+    "/api/v1/matches/:matchId/no-show",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { matchId } = parseBody(z.object({ matchId: z.string().uuid() }), req.params);
+        const body = parseBody(NoShowRequestSchema, req.body);
+        const idempotencyKey = parseIdempotencyKey(
+          req.headers["idempotency-key"],
+        );
+        const match = await services.matches.noShowMatch({
+          matchId,
+          ...body,
+          actorUserId: req.authUser!.id,
+          authSessionId: req.authSessionId!,
+          idempotencyKey,
         });
         return { match };
       } catch (e) {
@@ -1136,6 +1209,15 @@ export async function buildApp(opts: {
         excludeUserId: req.authUser!.id,
       });
       return { users };
+    },
+  );
+
+  app.get(
+    "/api/v1/matches/create-options",
+    { preHandler: requireAuth },
+    async (req) => {
+      const users = await services.auth.listDirectory({ excludeUserId: req.authUser!.id });
+      return matchCreateOptions(opts.db, req.authUser!.id, users);
     },
   );
 
@@ -1632,6 +1714,7 @@ function messageFor(code: string): string {
     NOT_FOUND: "Не найдено",
     FORBIDDEN: "Недостаточно прав",
     JUDGE_TAKEN: "Судейская сессия занята",
+    JUDGE_RESERVED: "Слот судьи зарезервирован для другого пользователя",
     JUDGE_BUSY: "Вы уже судите другой матч",
     JUDGE_NOT_ACTIVE: "Слот судьи больше не активен",
     JUDGE_REQUIRED: "Требуется судейская сессия",
@@ -1799,6 +1882,7 @@ function sendError(reply: FastifyReply, e: unknown) {
           ? 500
           : code === "VERSION_CONFLICT" ||
               code === "JUDGE_TAKEN" ||
+              code === "JUDGE_RESERVED" ||
               code === "JUDGE_NOT_ACTIVE" ||
               code === "BRACKET_VERSION_CONFLICT" ||
               code === "CURRENT_SESSION_FORBIDDEN"

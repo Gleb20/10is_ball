@@ -124,7 +124,7 @@ describe("DATA-005/007 result void", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: creatorCookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     await app.inject({
       method: "POST",
@@ -384,7 +384,7 @@ describe("DATA-005/007 result void", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: creatorCookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     const stopped = await app.inject({
       method: "POST",
@@ -479,7 +479,7 @@ describe("DATA-005/007 result void", () => {
       method: "POST",
       url: `/api/v1/matches/${targetId}/start`,
       cookies: { tab10_session: creatorCookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(targetId))!.participants[0]!.id },
     });
     expect(startMatch.statusCode).toBe(200);
     expect(

@@ -121,7 +121,7 @@ describe("Phase 9 load — 10 parallel matches", () => {
         method: "POST",
         url: `/api/v1/matches/${matchId}/start`,
         cookies: { tab10_session: pA.cookie },
-        payload: {},
+        payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
       });
       expect(started.statusCode).toBe(200);
 

@@ -147,7 +147,7 @@ describe("API ownership boundaries", () => {
     const unauthenticated = await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     expect(unauthenticated.statusCode).toBe(401);
 
@@ -162,7 +162,7 @@ describe("API ownership boundaries", () => {
         method: "POST",
         url: `/api/v1/matches/${matchId}/start`,
         cookies: { tab10_session: cookie },
-        payload: {},
+        payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
       });
       expect(response.statusCode, role).toBe(403);
       expect(response.json().code, role).toBe("FORBIDDEN");
@@ -179,7 +179,7 @@ describe("API ownership boundaries", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: organizer.cookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     expect(started.statusCode).toBe(200);
     expect(started.json().match.status).toBe("in_progress");

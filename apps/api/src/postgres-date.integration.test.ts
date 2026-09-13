@@ -155,6 +155,7 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
     const started = await app.inject({
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
+          payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
       cookies: { tab10_session: userACookie },
     });
     expect(started.statusCode).toBe(200);
@@ -277,6 +278,7 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
       const matchStarted = await app.inject({
         method: "POST",
         url: `/api/v1/matches/${match.id}/start`,
+          payload: { firstServerParticipantId: (await services.matches.getMatch(match.id))!.participants[0]!.id },
         cookies: { tab10_session: userACookie },
       });
       expect(matchStarted.statusCode).toBe(200);
@@ -358,6 +360,7 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
         await app.inject({
           method: "POST",
           url: `/api/v1/matches/${matchId}/start`,
+          payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
           cookies: { tab10_session: userACookie },
         })
       ).statusCode,

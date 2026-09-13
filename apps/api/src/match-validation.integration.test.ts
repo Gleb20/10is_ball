@@ -251,7 +251,7 @@ describe("DATA-001 match validation and invariants", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     expect(started.statusCode).toBe(200);
     const acquired = await app.inject({
@@ -334,7 +334,7 @@ describe("DATA-001 match validation and invariants", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: userACookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     expect(blockedRoster.statusCode).toBe(400);
     expect(blockedRoster.json().code).toBe("VALIDATION");

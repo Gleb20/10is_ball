@@ -3,6 +3,34 @@
 Обратная хронология: новые подтверждённые изменения добавляются сверху; старые
 записи сохраняются как история и могут быть помечены `superseded` новой записью.
 
+## 2026-09-13 — Wave C local acceptance (2.1.0)
+
+GAP-005 passed complete `verify:all`:1056/1056 (quality980, PostgreSQL47,
+browser25, cleanup4), zero failed/skipped/todo/interrupted. Full API234/234,
+web166/166; 16 compiled browser journeys with rendered desktop/390 review.
+Preceding failed attempts are retained: 401 recovery, waiting timer and stale
+migration-ledger count were corrected; browser selector aligned to «Старт» and
+30-second refresh. Independent API/web review repairs accepted by parent.
+Source186 files unchanged; public release pending. [Evidence](audit/evidence/wave-c-local.json).
+
+## 2026-09-13 — Wave C implementation and review
+
+- GAP-005: manual/rally/random first server, custom 2×2/guest/revenge creation,
+  club/team/recent/frequent options, no-show replay, manual correction and judge handover.
+- Migration 0004 adds selection/source metadata and exclusive judge reservations.
+  Historical judge rows survive handover; old judge loses write authority.
+- Review repairs: transactional start with sorted participant locks, stable serve
+  rotation, immutable start timestamp, first-server setup blocked after points,
+  technical undo history and synchronous UI action guards. D33 preserved.
+- Focused Green: GAP-005 PGlite 10/10, PostgreSQL 5/5, shared reducer 13/13,
+  repaired detail/judge components 42/42; each repair has deterministic Red.
+  Full aggregate and compiled browser acceptance are pending.
+- Drizzle generator config now imports the actual `.ts` env loader. Original
+  generator failed module resolution; actual config subsequently reported no
+  schema changes. New snapshot passed PGlite attestation. No public data changed.
+- Wave B release confirmed: main 8f36941, version 2.0.0, CI34728440590 all four
+  jobs green; GET-only web/API/proxy exact-SHA smoke passed after eight attempts.
+
 ## 2026-09-13 Wave B local acceptance
 
 - GAP-002/003/004: full profiles and private fields, other-session revoke,

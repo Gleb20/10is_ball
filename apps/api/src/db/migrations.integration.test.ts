@@ -270,8 +270,8 @@ describe("versioned migration foundation on disposable PGlite", () => {
     const after = await context.client.query<{ count: number }>(`
       SELECT count(*)::integer AS count FROM drizzle.__drizzle_migrations
     `);
-    expect(before.rows[0]?.count).toBe(4);
-    expect(after.rows[0]?.count).toBe(4);
+    expect(before.rows[0]?.count).toBe(5);
+    expect(after.rows[0]?.count).toBe(5);
   });
 
   it("does not let adoption stand in for ordinary fresh apply", async () => {

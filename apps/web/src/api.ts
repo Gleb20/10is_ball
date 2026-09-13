@@ -111,6 +111,20 @@ export type RankingResponse = {
   rankings: RankingRow[];
 };
 
+export type DirectoryUser = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarKey?: string | null;
+};
+
+export type MatchCreateOptions = {
+  users: DirectoryUser[];
+  teams: Array<{ id: string; name: string; userIds: string[] }>;
+  recentOpponentIds: string[];
+  frequentOpponentIds: string[];
+};
+
 export type HomeRanking = {
   userId: string;
   displayName: string;
@@ -289,6 +303,8 @@ export const api = {
         avatarKey?: string | null;
       }>;
     }>(`/api/v1/users/directory${q ? `?q=${encodeURIComponent(q)}` : ""}`),
+  matchCreateOptions: () =>
+    request<MatchCreateOptions>("/api/v1/matches/create-options"),
   listUsers: (q?: string) =>
     request<{ users: User[] }>(
       `/api/v1/admin/users${q ? `?q=${encodeURIComponent(q)}` : ""}`,
@@ -373,6 +389,11 @@ export const api = {
     request<{ ok: boolean }>(`/api/v1/matches/${id}/judge/release`, {
       method: "POST",
     }),
+  handoverJudge: (id: string, toUserId: string) =>
+    request<{ reservation: Record<string, unknown> }>(
+      `/api/v1/matches/${id}/judge/handover`,
+      { method: "POST", body: JSON.stringify({ toUserId }) },
+    ),
   awardPoint: (
     id: string,
     side: "A" | "B",
@@ -394,6 +415,41 @@ export const api = {
         method: "POST",
         headers: { "Idempotency-Key": key },
         body: JSON.stringify({ expectedVersion }),
+      },
+    ),
+  manualCorrection: (
+    id: string,
+    payload: {
+      expectedVersion: number;
+      scoreA: number;
+      scoreB: number;
+      currentServerParticipantId: string;
+    },
+    key: string,
+  ) =>
+    request<{ match: Record<string, unknown> }>(
+      `/api/v1/matches/${id}/manual-correction`,
+      {
+        method: "POST",
+        headers: { "Idempotency-Key": key },
+        body: JSON.stringify(payload),
+      },
+    ),
+  noShowMatch: (
+    id: string,
+    payload: {
+      expectedVersion: number;
+      absentSide: "A" | "B";
+      reasonText?: string;
+    },
+    key: string,
+  ) =>
+    request<{ match: Record<string, unknown> }>(
+      `/api/v1/matches/${id}/no-show`,
+      {
+        method: "POST",
+        headers: { "Idempotency-Key": key },
+        body: JSON.stringify(payload),
       },
     ),
   confirmFinish: (id: string) =>

@@ -1,0 +1,72 @@
+{
+  "date": "2026-09-13",
+  "candidateVersion": "2.1.0",
+  "baseSha": "8f36941b283a678105558656b1fb3b343546d999",
+  "command": "pnpm run verify:all",
+  "node": "24.20.0",
+  "pnpm": "9.15.0",
+  "postgres": "16.15",
+  "totals": {
+    "total": 1056,
+    "passed": 1056,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "lanes": [
+    {
+      "name": "cleanup-foundation",
+      "status": "passed",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "quality",
+      "status": "passed",
+      "total": 980,
+      "passed": 980,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "postgres",
+      "status": "passed",
+      "total": 47,
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "browser-prodlike",
+      "status": "passed",
+      "total": 25,
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    }
+  ],
+  "review": "Independent bounded API/web cross-reviews with repairs; parent final acceptance; separate Terra unavailable",
+  "browser": "16 compiled same-origin journeys at desktop and 390px, including 2v2/no-show/revenge, correction/undo/handover and nonparticipant judge plus creator start; 9 foundation checks; rendered captures reviewed locally",
+  "originalSnapshotFilesUnchanged": 186,
+  "migration": "0004 forward-only; read-only public preflight zero duplicate active judge users; local fresh/adopted/repeated/concurrent/rollback paths passed",
+  "residuals": [
+    "GAP-006..011 and full TECH-002 matrix remain waves D-F",
+    "Known color-contrast exclusion remains GAP-011",
+    "Legacy finished matches without confirmation marker retain prior historical user/auth retry behavior"
+  ],
+  "publicRelease": {
+    "status": "pending",
+    "mutationPolicy": "No public mutating E2E or reset"
+  }
+}

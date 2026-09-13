@@ -7,7 +7,7 @@ import {
   type MouseEvent,
 } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Button, Avatar } from "../ui";
+import { Button, Avatar, TextField } from "../ui";
 import { api } from "../api";
 import { TableTennisRacketIcon } from "../icons/TableTennisRacketIcon";
 import {
@@ -16,6 +16,7 @@ import {
   formatMatchDuration,
   judgeAcquireErrorMessage,
   needsJudgeSetup,
+  participantDisplayName,
   servingSide,
   shouldShowLandscapeHint,
   sideAvatarKey,
@@ -33,6 +34,7 @@ type Phase =
   | "loading"
   | "blocked"
   | "setup"
+  | "waiting_start"
   | "scoring"
   | "lost_lock"
   | "readonly";
@@ -80,8 +82,18 @@ function lostJudgeMessage(error: ApiError): string {
 }
 
 function isTerminalMatchStatus(status: unknown): boolean {
-  return ["finished", "stopped", "cancelled", "voided"].includes(
-    String(status ?? ""),
+  return ["finished", "stopped", "cancelled", "voided"].includes(String(status));
+}
+
+function activeJudgeCanStart(match: MatchState): boolean {
+  const activeJudgeUserId = String(
+    (match.activeJudge as { userId?: unknown } | null)?.userId ?? "",
+  );
+  const creatorUserId = String(match.createdByUserId ?? "");
+  return (
+    !activeJudgeUserId ||
+    !creatorUserId ||
+    activeJudgeUserId === creatorUserId
   );
 }
 
@@ -116,6 +128,7 @@ export function JudgePage() {
   const judgeLockOwnedRef = useRef(false);
   const liveSyncRunningRef = useRef(false);
   const exitPendingRef = useRef(false);
+  const exclusiveMutationRef = useRef(false);
   const flashTimeoutRef = useRef<number | null>(null);
   const [exitPending, setExitPending] = useState(false);
   const [documentVisible, setDocumentVisible] = useState(
@@ -130,6 +143,16 @@ export function JudgePage() {
   const [firstServerId, setFirstServerId] = useState("");
   const [swapSides, setSwapSides] = useState(false);
   const [setupPending, setSetupPending] = useState(false);
+  const setupPendingRef = useRef(false);
+  const [directoryUsers, setDirectoryUsers] = useState<Array<{ id: string; displayName: string }>>([]);
+  const [handoverUserId, setHandoverUserId] = useState("");
+  const [handoverPending, setHandoverPending] = useState(false);
+  const [correctionOpen, setCorrectionOpen] = useState(false);
+  const [correctionScoreA, setCorrectionScoreA] = useState(0);
+  const [correctionScoreB, setCorrectionScoreB] = useState(0);
+  const [correctionServerId, setCorrectionServerId] = useState("");
+  const [correctionPending, setCorrectionPending] = useState(false);
+  const [terminalPending, setTerminalPending] = useState(false);
 
   const updateMatch = useCallback((nextMatch: MatchState) => {
     matchRef.current = nextMatch;
@@ -188,7 +211,18 @@ export function JudgePage() {
       try {
         if (ownsLock) await api.heartbeatJudge(id);
         const fresh = await load();
-        if (isTerminalMatchStatus(fresh.status)) {
+        const status = String(fresh.status ?? "");
+        if (ownsLock && status === "in_progress") {
+          setPhase((current) =>
+            current === "waiting_start" ? "scoring" : current,
+          );
+        }
+        if (
+          status === "finished" ||
+          status === "stopped" ||
+          status === "cancelled" ||
+          status === "voided"
+        ) {
           judgeLockOwnedRef.current = false;
           pointQueueRef.current = [];
           setPointPendingCount(0);
@@ -216,26 +250,41 @@ export function JudgePage() {
     setPhase("loading");
     setError(null);
     try {
-      const detail = await load();
+      let acquiredDuringFallback = false;
+      let detail: MatchState;
+      try {
+        detail = await load();
+      } catch (loadError) {
+        if (readonlyMode || (loadError as ApiError).status !== 403) {
+          throw loadError;
+        }
+        await api.acquireJudge(id);
+        acquiredDuringFallback = true;
+        judgeLockOwnedRef.current = true;
+        detail = await load();
+      }
+      const status = String(detail.status ?? "");
       if (
         readonlyMode ||
-        isTerminalMatchStatus(detail.status)
+        isTerminalMatchStatus(status)
       ) {
         judgeLockOwnedRef.current = false;
         setPhase("readonly");
         return;
       }
-      await api.acquireJudge(id);
-      judgeLockOwnedRef.current = true;
-      const refreshed = await load();
+      if (!acquiredDuringFallback) {
+        await api.acquireJudge(id);
+        judgeLockOwnedRef.current = true;
+      }
+      const refreshed = acquiredDuringFallback ? detail : await load();
       if (needsJudgeSetup(refreshed)) {
-        const participants = (refreshed.participants ?? []) as JudgeParticipant[];
+        const firstServerMethod = String(refreshed.firstServerMethod ?? "manual");
         setFirstServerId(
-          String(
-            refreshed.currentServerParticipantId ??
-              participants[0]?.id ??
-              "",
-          ),
+          firstServerMethod === "random"
+            ? String(refreshed.currentServerParticipantId ?? "")
+            : refreshed.status === "waiting"
+              ? ""
+              : String(refreshed.currentServerParticipantId ?? ""),
         );
         setSwapSides(false);
         setPhase("setup");
@@ -255,6 +304,18 @@ export function JudgePage() {
   useEffect(() => {
     void initJudge();
   }, [initJudge]);
+
+  useEffect(() => {
+    if (!menuOpen || readonlyMode || directoryUsers.length > 0) return;
+    void api.directory().then((result) => {
+      setDirectoryUsers(
+        (result.users as Array<{ id: string; displayName?: string; firstName?: string; lastName?: string }>).map((candidate) => ({
+          id: candidate.id,
+          displayName: candidate.displayName ?? `${candidate.lastName ?? ""} ${candidate.firstName ?? ""}`.trim(),
+        })),
+      );
+    }).catch((reason) => setError(`Не удалось загрузить пользователей: ${(reason as Error).message}`));
+  }, [directoryUsers.length, menuOpen, readonlyMode]);
 
   useEffect(() => {
     const onVisibilityChange = () =>
@@ -291,7 +352,8 @@ export function JudgePage() {
   }, [phase]);
 
   useEffect(() => {
-    const ownsLock = phase === "setup" || phase === "scoring";
+    const ownsLock =
+      phase === "setup" || phase === "waiting_start" || phase === "scoring";
     const watchesMatch = ownsLock || phase === "readonly";
     if (!id || !documentVisible || !watchesMatch) return;
 
@@ -325,15 +387,38 @@ export function JudgePage() {
   }
 
   async function confirmSetup() {
-    if (!id || !firstServerId) return;
+    if (!id || !match || setupPendingRef.current) return;
+    const method = String(match.firstServerMethod ?? "manual");
+    if (method !== "random" && !firstServerId) return;
+    setupPendingRef.current = true;
     setSetupPending(true);
     setError(null);
     try {
-      if (match?.status === "waiting") {
-        await api.startMatch(id, { firstServerParticipantId: firstServerId });
+      if (match.status === "waiting" && !activeJudgeCanStart(match)) {
+        if (method !== "random") {
+          const result = await api.judgeSetup(id, {
+            firstServerParticipantId: firstServerId,
+            swapSides,
+          });
+          updateMatch(result.match as MatchState);
+        }
+        setPhase("waiting_start");
+        return;
       }
+      let started = match;
+      if (match?.status === "waiting") {
+        const startResult = await api.startMatch(
+          id,
+          method === "random" ? {} : { firstServerParticipantId: firstServerId },
+        );
+        started = startResult.match as MatchState;
+      }
+      const selectedServer = method === "random"
+        ? String(started.currentServerParticipantId ?? "")
+        : firstServerId;
+      if (!selectedServer) throw new Error("Не удалось определить первую подачу");
       const res = await api.judgeSetup(id, {
-        firstServerParticipantId: firstServerId,
+        firstServerParticipantId: selectedServer,
         swapSides,
       });
       updateMatch(res.match as MatchState);
@@ -345,6 +430,7 @@ export function JudgePage() {
         setError((e as Error).message);
       }
     } finally {
+      setupPendingRef.current = false;
       setSetupPending(false);
     }
   }
@@ -428,21 +514,29 @@ export function JudgePage() {
       !id ||
       !match ||
       phase !== "scoring" ||
-      !judgeLockOwnedRef.current
+      !judgeLockOwnedRef.current ||
+      exclusiveMutationRef.current
     ) {
       return;
     }
+    setMenuOpen(false);
     pointQueueRef.current.push({
       side,
       idempotencyKey: crypto.randomUUID(),
     });
-    setMenuOpen(false);
     setPointPendingCount(pointQueueRef.current.length);
     void drainPointQueue(matchRef.current ?? match);
   }
 
   async function undo() {
-    if (!match || undoPending) return;
+    if (
+      !match ||
+      undoPending ||
+      exclusiveMutationRef.current ||
+      pointQueueRunningRef.current ||
+      pointQueueRef.current.length > 0
+    ) return;
+    exclusiveMutationRef.current = true;
     setUndoPending(true);
     try {
       const res = await api.undoPoint(
@@ -460,6 +554,7 @@ export function JudgePage() {
         await load();
       }
     } finally {
+      exclusiveMutationRef.current = false;
       setUndoPending(false);
     }
   }
@@ -468,11 +563,11 @@ export function JudgePage() {
     if (
       !id ||
       exitPendingRef.current ||
+      setupPendingRef.current ||
+      exclusiveMutationRef.current ||
       pointQueueRunningRef.current ||
       pointQueueRef.current.length > 0
-    ) {
-      return;
-    }
+    ) return;
     exitPendingRef.current = true;
     setExitPending(true);
     let notice: JudgeExitNotice;
@@ -503,8 +598,17 @@ export function JudgePage() {
   }
 
   async function onConfirmFinish() {
+    if (
+      !id ||
+      terminalPending ||
+      exclusiveMutationRef.current ||
+      pointQueueRunningRef.current ||
+      pointQueueRef.current.length > 0
+    ) return;
+    exclusiveMutationRef.current = true;
+    setTerminalPending(true);
     try {
-      const res = await api.confirmFinish(id!);
+      const res = await api.confirmFinish(id);
       const finished = (res.match ?? match) as MatchState;
       judgeLockOwnedRef.current = false;
       updateMatch(finished);
@@ -515,11 +619,38 @@ export function JudgePage() {
       } else {
         setError((e as Error).message);
       }
+    } finally {
+      exclusiveMutationRef.current = false;
+      setTerminalPending(false);
+    }
+  }
+
+  async function onRevertFinish() {
+    if (
+      !id ||
+      terminalPending ||
+      exclusiveMutationRef.current ||
+      pointQueueRunningRef.current ||
+      pointQueueRef.current.length > 0
+    ) return;
+    exclusiveMutationRef.current = true;
+    setTerminalPending(true);
+    try {
+      const result = await api.revertFinish(id);
+      updateMatch(result.match as MatchState);
+      setMenuOpen(false);
+      setError(null);
+    } catch (error) {
+      if (isLostJudgeError(error)) await loseJudgeLock(error);
+      else setError((error as Error).message);
+    } finally {
+      exclusiveMutationRef.current = false;
+      setTerminalPending(false);
     }
   }
 
   async function toggleDisplayFlip() {
-    if (!id || !match) return;
+    if (!id || !match || exclusiveMutationRef.current) return;
     const next = !match.judgeDisplayFlipped;
     try {
       const res = await api.judgeSetup(id, { displayFlipped: next });
@@ -530,6 +661,72 @@ export function JudgePage() {
       } else {
         setError((e as Error).message);
       }
+    }
+  }
+
+  function openCorrection() {
+    if (exclusiveMutationRef.current || pointQueueRef.current.length > 0) return;
+    setCorrectionScoreA(Number(match?.scoreA ?? 0));
+    setCorrectionScoreB(Number(match?.scoreB ?? 0));
+    setCorrectionServerId(String(match?.currentServerParticipantId ?? ""));
+    setCorrectionOpen(true);
+    setMenuOpen(false);
+  }
+
+  async function submitCorrection() {
+    if (!id || !match || !correctionServerId || correctionPending || exclusiveMutationRef.current) return;
+    exclusiveMutationRef.current = true;
+    setCorrectionPending(true);
+    setError(null);
+    try {
+      const result = await api.manualCorrection(
+        id,
+        {
+          scoreA: correctionScoreA,
+          scoreB: correctionScoreB,
+          currentServerParticipantId: correctionServerId,
+          expectedVersion: Number(match.version),
+        },
+        crypto.randomUUID(),
+      );
+      updateMatch(result.match as MatchState);
+      setCorrectionOpen(false);
+      setMenuOpen(false);
+    } catch (reason) {
+      if (isLostJudgeError(reason)) await loseJudgeLock(reason);
+      else {
+        const stale = ["VERSION_CONFLICT", "MATCH_VERSION_CONFLICT"].includes(String((reason as ApiError).code));
+        if (stale) await load().catch(() => undefined);
+        setError(stale ? "Матч изменился на другом устройстве. Данные обновлены; повторите коррекцию при необходимости." : (reason as Error).message);
+      }
+    } finally {
+      exclusiveMutationRef.current = false;
+      setCorrectionPending(false);
+    }
+  }
+
+  async function submitHandover() {
+    if (!id || !handoverUserId || handoverPending || exclusiveMutationRef.current) return;
+    exclusiveMutationRef.current = true;
+    setHandoverPending(true);
+    setError(null);
+    try {
+      const result = await api.handoverJudge(id, handoverUserId);
+      judgeLockOwnedRef.current = false;
+      exitAfterJudge(matchRef.current ?? match, {
+        kind: "success",
+        message: `Судейство передано: ${String(result.reservation.displayName ?? "назначенный пользователь")} может занять слот.`,
+      });
+    } catch (reason) {
+      if (isLostJudgeError(reason)) await loseJudgeLock(reason);
+      else {
+        const stale = ["VERSION_CONFLICT", "MATCH_VERSION_CONFLICT"].includes(String((reason as ApiError).code));
+        if (stale) await load().catch(() => undefined);
+        setError(stale ? "Матч изменился на другом устройстве. Данные обновлены; повторите передачу при необходимости." : (reason as Error).message);
+      }
+    } finally {
+      exclusiveMutationRef.current = false;
+      setHandoverPending(false);
     }
   }
 
@@ -595,12 +792,17 @@ export function JudgePage() {
     );
   }
 
-  const isSetup = phase === "setup";
+  const isSetup = phase === "setup" || phase === "waiting_start";
+  const awaitingCreator = phase === "waiting_start";
   const lostLock = phase === "lost_lock";
   const locked =
     lostLock ||
     match.status === "pending_confirmation" ||
-    match.status === "finished";
+    match.status === "finished" ||
+    correctionOpen ||
+    correctionPending ||
+    handoverPending ||
+    terminalPending;
   const readonly = phase === "readonly";
   const boardMatch = isSetup ? previewMatchFrom(match) : match;
   const serve = isSetup
@@ -644,15 +846,15 @@ export function JudgePage() {
           .filter(Boolean)
           .join(" ")}
         data-testid={`judge-side-${side}`}
-        role={isSetup ? "button" : undefined}
-        tabIndex={isSetup ? 0 : undefined}
+        role={isSetup && !awaitingCreator ? "button" : undefined}
+        tabIndex={isSetup && !awaitingCreator ? 0 : undefined}
         onClick={
-          isSetup
+          isSetup && !awaitingCreator
             ? () => pickServerForSide(side, boardMatch)
             : undefined
         }
         onKeyDown={
-          isSetup
+          isSetup && !awaitingCreator
             ? (e: KeyboardEvent) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
@@ -662,7 +864,7 @@ export function JudgePage() {
             : undefined
         }
         aria-label={
-          isSetup
+          isSetup && !awaitingCreator
             ? `Сторона ${label}${serving ? ", подаёт" : ""}. Нажмите, чтобы выбрать подающего`
             : undefined
         }
@@ -751,7 +953,7 @@ export function JudgePage() {
               variant="secondary"
               className="judge-touch"
               onClick={() => void releaseAndExit()}
-              disabled={exitPending}
+              disabled={exitPending || setupPending}
             >
               {exitPending ? "Выходим…" : "Отмена"}
             </Button>
@@ -769,7 +971,7 @@ export function JudgePage() {
                 variant="secondary"
                 className="judge-touch"
                 onClick={() => void releaseAndExit()}
-                disabled={exitPending || pointPendingCount > 0}
+                disabled={exitPending || undoPending || terminalPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
               >
                 {exitPending ? "Выходим…" : "Назад"}
               </Button>
@@ -786,7 +988,7 @@ export function JudgePage() {
                 variant="secondary"
                 className="judge-touch"
                 onClick={() => setMenuOpen((v) => !v)}
-                disabled={pointPendingCount > 0}
+                disabled={undoPending || terminalPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
                 aria-expanded={menuOpen}
                 aria-controls="judge-more-menu"
               >
@@ -806,10 +1008,35 @@ export function JudgePage() {
       </header>
 
       {isSetup ? (
-        <p className="judge-screen__hint">
-          Нажмите на сторону, чтобы выбрать, кто подаёт первым. ↔ меняет стороны
-          стола.
-        </p>
+        <div className="judge-screen__hint stack">
+          {awaitingCreator ? (
+            <p role="status" aria-label="Ожидаем запуска">
+              Подготовка сохранена. Ожидаем запуска создателем матча…
+            </p>
+          ) : <p>
+            {match.firstServerMethod === "random"
+              ? "Первая подача будет выбрана случайно при старте. ↔ меняет стороны стола."
+              : match.firstServerMethod === "rally"
+                ? "Выберите победителя розыгрыша за первую подачу. ↔ меняет стороны стола."
+                : "Выберите, кто подаёт первым. ↔ меняет стороны стола."}
+          </p>}
+          {!awaitingCreator && match.firstServerMethod !== "random" ? (
+            <fieldset className="judge-server-picker">
+              <legend>Первая подача</legend>
+              {((boardMatch.participants ?? []) as JudgeParticipant[]).map((participant) => (
+                <label key={participant.id}>
+                  <input
+                    type="radio"
+                    name="first-server"
+                    checked={firstServerId === participant.id}
+                    onChange={() => setFirstServerId(participant.id)}
+                  />
+                  {participantDisplayName(participant)} · сторона {participant.side}
+                </label>
+              ))}
+            </fieldset>
+          ) : null}
+        </div>
       ) : null}
 
       {menuOpen && !readonly && !lostLock && !isSetup ? (
@@ -829,10 +1056,45 @@ export function JudgePage() {
               ? "Вернуть порядок на экране"
               : "Поменять местами на экране"}
           </Button>
+          <Button
+            variant="secondary"
+            className="judge-touch"
+            onClick={openCorrection}
+            disabled={locked || handoverPending}
+          >
+            Исправить счёт и подачу
+          </Button>
+          <div className="judge-handover stack">
+            <label htmlFor="judge-handover-user">Передать судейство</label>
+            <select
+              id="judge-handover-user"
+              value={handoverUserId}
+              onChange={(event) => setHandoverUserId(event.target.value)}
+            >
+              <option value="">Выберите пользователя</option>
+              {directoryUsers.map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>{candidate.displayName}</option>
+              ))}
+            </select>
+            <Button
+              variant="secondary"
+              className="judge-touch"
+              disabled={!handoverUserId || handoverPending || correctionOpen || correctionPending}
+              onClick={() => void submitHandover()}
+            >
+              {handoverPending ? "Передаём…" : "Передать слот"}
+            </Button>
+          </div>
           {match.status === "pending_confirmation" ? (
             <>
               <Button
                 className="judge-touch"
+                disabled={
+                  handoverPending ||
+                  correctionPending ||
+                  terminalPending ||
+                  pointPendingCount > 0
+                }
                 onClick={() => {
                   setMenuOpen(false);
                   void onConfirmFinish();
@@ -843,21 +1105,13 @@ export function JudgePage() {
               <Button
                 variant="secondary"
                 className="judge-touch"
-                onClick={() =>
-                  void api
-                    .revertFinish(id!)
-                    .then((r) => {
-                      updateMatch(r.match as MatchState);
-                      setMenuOpen(false);
-                    })
-                    .catch(async (e) => {
-                      if (isLostJudgeError(e)) {
-                        await loseJudgeLock(e);
-                      } else {
-                        setError(e.message);
-                      }
-                    })
+                disabled={
+                  handoverPending ||
+                  correctionPending ||
+                  terminalPending ||
+                  pointPendingCount > 0
                 }
+                onClick={() => void onRevertFinish()}
               >
                 Продолжить игру
               </Button>
@@ -867,11 +1121,48 @@ export function JudgePage() {
             variant="secondary"
             className="judge-touch"
             onClick={() => void releaseAndExit()}
-            disabled={exitPending || pointPendingCount > 0}
+            disabled={exitPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
           >
             {exitPending ? "Освобождаем…" : "Освободить слот и выйти"}
           </Button>
         </div>
+      ) : null}
+
+      {correctionOpen && !readonly && !lostLock ? (
+        <section className="judge-correction stack" aria-label="Ручная коррекция">
+          <h2>Ручная коррекция</h2>
+          <p>Изменение фиксируется как техническое событие и не становится игровым очком.</p>
+          <TextField
+            label="Счёт стороны A"
+            type="number"
+            min={0}
+            value={String(correctionScoreA)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCorrectionScoreA(Number(event.target.value))}
+          />
+          <TextField
+            label="Счёт стороны B"
+            type="number"
+            min={0}
+            value={String(correctionScoreB)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCorrectionScoreB(Number(event.target.value))}
+          />
+          <label htmlFor="correction-server">Текущий подающий</label>
+          <select
+            id="correction-server"
+            value={correctionServerId}
+            onChange={(event) => setCorrectionServerId(event.target.value)}
+          >
+            {((match.participants ?? []) as JudgeParticipant[]).map((participant) => (
+              <option key={participant.id} value={participant.id}>{participantDisplayName(participant)}</option>
+            ))}
+          </select>
+          <div className="row">
+            <Button disabled={correctionPending || !correctionServerId} onClick={() => void submitCorrection()}>
+              {correctionPending ? "Сохраняем…" : "Сохранить коррекцию"}
+            </Button>
+            <Button variant="secondary" disabled={correctionPending} onClick={() => setCorrectionOpen(false)}>Отмена</Button>
+          </div>
+        </section>
       ) : null}
 
       {error ? (
@@ -888,7 +1179,7 @@ export function JudgePage() {
         aria-label={isSetup ? "Расположение и подача" : "Счёт матча"}
       >
         {renderSide(left, match)}
-        {isSetup ? (
+        {isSetup && !awaitingCreator ? (
           <Button
             variant="secondary"
             className="judge-touch judge-setup__swap-btn"
@@ -905,10 +1196,20 @@ export function JudgePage() {
         <div className="judge-confirm-bar">
           <Button
             className="judge-touch"
-            disabled={setupPending || !firstServerId}
+            disabled={
+              setupPending ||
+              awaitingCreator ||
+              (match.firstServerMethod !== "random" && !firstServerId)
+            }
             onClick={() => void confirmSetup()}
           >
-            {setupPending ? "Сохранение…" : "Начать матч"}
+            {setupPending
+              ? "Сохранение…"
+              : awaitingCreator
+                ? "Ожидаем запуска"
+                : activeJudgeCanStart(match)
+                  ? "Начать матч"
+                  : "Сохранить подготовку"}
           </Button>
         </div>
       ) : null}
@@ -918,18 +1219,28 @@ export function JudgePage() {
       !readonly &&
       !isSetup ? (
         <div className="judge-confirm-bar">
-          <Button className="judge-touch" onClick={() => void onConfirmFinish()}>
+          <Button
+            className="judge-touch"
+            disabled={
+              handoverPending ||
+              correctionPending ||
+              terminalPending ||
+              pointPendingCount > 0
+            }
+            onClick={() => void onConfirmFinish()}
+          >
             Подтвердить результат
           </Button>
           <Button
             variant="secondary"
             className="judge-touch"
-            onClick={() =>
-              void api
-                .revertFinish(id!)
-                .then((r) => updateMatch(r.match as MatchState))
-                .catch((e) => setError(e.message))
+            disabled={
+              handoverPending ||
+              correctionPending ||
+              terminalPending ||
+              pointPendingCount > 0
             }
+            onClick={() => void onRevertFinish()}
           >
             Продолжить
           </Button>

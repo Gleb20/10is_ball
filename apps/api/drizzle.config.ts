@@ -1,5 +1,5 @@
 import { defineConfig } from "drizzle-kit";
-import { loadLocalEnv } from "./src/load-local-env.js";
+import { loadLocalEnv } from "./src/load-local-env.ts";
 
 loadLocalEnv();
 

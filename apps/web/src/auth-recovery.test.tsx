@@ -52,6 +52,9 @@ describe("AT-AUTH-009 runtime session recovery", () => {
               message: "Session expired",
             });
       }
+      if (path === "/api/v1/matches/create-options") {
+        return jsonResponse(200, { users: [], teams: [], recentOpponentIds: [], frequentOpponentIds: [] });
+      }
       if (path === "/api/v1/users/directory") {
         return jsonResponse(200, { users: [] });
       }
@@ -122,6 +125,9 @@ describe("AT-AUTH-009 runtime session recovery", () => {
         return sessionValid
           ? jsonResponse(200, { user: currentUser })
           : jsonResponse(401, { code: "UNAUTHORIZED", message: "Session expired" });
+      }
+      if (path === "/api/v1/matches/create-options") {
+        return jsonResponse(200, { users: [], teams: [], recentOpponentIds: [], frequentOpponentIds: [] });
       }
       if (path === "/api/v1/users/directory") {
         return jsonResponse(200, { users: [] });

@@ -21,6 +21,16 @@ import { useVisibleRefresh } from "../useVisibleRefresh";
 import { useSingleFlight } from "../useSingleFlight";
 
 type AdminConfirm = "force-close" | "delete" | null;
+type MatchEvent = { type: string; side?: "A" | "B" };
+
+function cleanPointLog(events: MatchEvent[]): Array<"A" | "B"> {
+  const points: Array<"A" | "B"> = [];
+  for (const event of events) {
+    if (event.type === "manual_correction") points.length = 0;
+    else if (event.type === "point_awarded" && event.side) points.push(event.side);
+  }
+  return points;
+}
 
 export function MatchDetailPage() {
   const { id } = useParams();
@@ -30,9 +40,14 @@ export function MatchDetailPage() {
   const { user } = useAuth();
   const [match, setMatch] = useState<Record<string, unknown> | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [startOpen, setStartOpen] = useState(false);
+  const [startServerId, setStartServerId] = useState("");
   const [stopOpen, setStopOpen] = useState(false);
   const [stopSide, setStopSide] = useState<"A" | "B">("A");
   const [stopReason, setStopReason] = useState("injury");
+  const [noShowOpen, setNoShowOpen] = useState(false);
+  const [absentSide, setAbsentSide] = useState<"A" | "B">("B");
+  const [noShowReason, setNoShowReason] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
   const [voidReason, setVoidReason] = useState("");
@@ -66,6 +81,7 @@ export function MatchDetailPage() {
 
   const participants =
     (match?.participants as Array<{
+      id?: string;
       side: string;
       userId?: string | null;
       displayName?: string;
@@ -89,6 +105,19 @@ export function MatchDetailPage() {
     (match?.status === "in_progress" ||
       match?.status === "pending_confirmation") &&
     (isCreator || isCurrentJudge);
+  const canNoShow = isActiveStatus && (isCreator || isCurrentJudge);
+  const currentUserParticipates = participants.some((p) => p.userId === user?.id);
+  const canCreateRevenge =
+    match?.kind === "standalone" &&
+    ["finished", "stopped"].includes(String(match?.status)) &&
+    currentUserParticipates;
+
+  const sideName = (side: "A" | "B") =>
+    participants
+      .filter((participant) => participant.side === side)
+      .map((participant) => participant.displayName ?? `Сторона ${side}`)
+      .join(" + ") || `Сторона ${side}`;
+  const pointLog = cleanPointLog((match?.eventLog as MatchEvent[] | undefined) ?? []);
 
   const canCancel =
     match?.kind === "standalone" &&
@@ -120,6 +149,27 @@ export function MatchDetailPage() {
         )
       : null;
 
+  async function onStart() {
+    if (!id || !match) return;
+    const method = String(match.firstServerMethod ?? "manual");
+    if (method !== "random" && !startServerId) return;
+    await action.run(async () => {
+      setActionError(null);
+      try {
+        const result = await api.startMatch(
+          id,
+          method === "random"
+            ? {}
+            : { firstServerParticipantId: startServerId },
+        );
+        setMatch(result.match);
+        setStartOpen(false);
+      } catch (error) {
+        setActionError((error as Error).message);
+      }
+    });
+  }
+
   async function onStop() {
     await action.run(async () => {
       setActionError(null);
@@ -136,12 +186,22 @@ export function MatchDetailPage() {
     });
   }
 
-  async function onStart() {
+  async function onNoShow() {
+    if (!id) return;
     await action.run(async () => {
       setActionError(null);
       try {
-        const result = await api.startMatch(id!);
+        const result = await api.noShowMatch(
+          id,
+          {
+            expectedVersion: Number(match?.version),
+            absentSide,
+            reasonText: noShowReason.trim() || undefined,
+          },
+          crypto.randomUUID(),
+        );
         setMatch(result.match);
+        setNoShowOpen(false);
       } catch (error) {
         setActionError((error as Error).message);
       }
@@ -241,11 +301,27 @@ export function MatchDetailPage() {
               <p className="score-display">
                 {String(match.scoreA)} : {String(match.scoreB)}
               </p>
+              <div className="match-rules" aria-label="Правила матча">
+                <strong>{match.format === "2v2" ? "2 × 2" : "1 × 1"}</strong>
+                <span>до {String(match.pointsToWin)} очков</span>
+                <span>
+                  {match.mercyEnabled
+                    ? `сухая победа при ${String(match.mercyPoints)}:0`
+                    : "без правила сухой победы"}
+                </span>
+                <span>
+                  первая подача: {match.firstServerMethod === "random" ? "случайно" : match.firstServerMethod === "rally" ? "розыгрыш" : "вручную"}
+                </span>
+              </div>
               {durationLabel ? (
                 <p className="muted">Длительность: {durationLabel}</p>
               ) : null}
               {activeJudge ? (
                 <p className="muted">Судит: {activeJudge.displayName}</p>
+              ) : match.judgeReservation ? (
+                <p className="muted">
+                  Судейство передаётся: {String((match.judgeReservation as { displayName?: string }).displayName ?? "назначенному пользователю")}
+                </p>
               ) : (
                 <p className="muted">Судья не назначен</p>
               )}
@@ -270,14 +346,40 @@ export function MatchDetailPage() {
                   ))}
                 </div>
               ) : null}
+              {match.finishReason === "no_show" ? (
+                <Alert
+                  type="warning"
+                  variant="tonal"
+                  title="Матч завершён из-за неявки"
+                  description={`Не явилась сторона ${match.winnerSide === "A" ? "B" : "A"}. Победитель: ${sideName(String(match.winnerSide) as "A" | "B")}. Причина: ${String(match.stopReasonText ?? "Неявка")}. Счёт сохранён без вымышленных очков.`}
+                />
+              ) : null}
+            </div>
+            <div className="card stack" aria-label="Журнал очков">
+              <h2>Журнал очков</h2>
+              {pointLog.length > 0 ? (
+                <ol className="match-point-log">
+                  {pointLog.map((side, index) => (
+                    <li key={`${index}-${side}`}>{sideName(side)} — очко</li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="muted">Подтверждённых очков после последней коррекции нет.</p>
+              )}
+              {(match.eventLog as MatchEvent[] | undefined)?.some((event) => event.type === "manual_correction") ? (
+                <p className="muted">Техническая коррекция учтена в текущем счёте и не показана как игровое очко.</p>
+              ) : null}
             </div>
             <div className="stack stack--actions">
               {canStart && (
                 <Button
                   disabled={action.pending}
-                  onClick={() => void onStart()}
+                  onClick={() => {
+                    setStartServerId("");
+                    setStartOpen(true);
+                  }}
                 >
-                  {action.pending ? "Запуск…" : "Старт"}
+                  Старт
                 </Button>
               )}
               {(match.status === "in_progress" ||
@@ -313,6 +415,20 @@ export function MatchDetailPage() {
                   {stopOpen ? "Скрыть остановку" : "Остановить матч"}
                 </Button>
               )}
+              {canNoShow ? (
+                <Button
+                  variant="secondary"
+                  disabled={action.pending}
+                  onClick={() => setNoShowOpen(true)}
+                >
+                  Зафиксировать неявку
+                </Button>
+              ) : null}
+              {canCreateRevenge ? (
+                <Button onClick={() => navigate(`/matches/new?revengeOf=${id}`)}>
+                  Создать реванш
+                </Button>
+              ) : null}
               {canCancel ? (
                 <Button
                   variant="secondary"
@@ -363,6 +479,48 @@ export function MatchDetailPage() {
                 Назад
               </Button>
             </div>
+            <Dialog
+              open={startOpen}
+              onClose={() => (!action.pending ? setStartOpen(false) : undefined)}
+              title="Начать матч?"
+              width="sm"
+              secondaryButtonLabel="Отмена"
+              onSecondaryButton={() => {
+                if (!action.pending) setStartOpen(false);
+              }}
+              mainButtonLabel={action.pending ? "Запускаем…" : "Начать матч"}
+              onMainButton={() => void onStart()}
+            >
+              {match.firstServerMethod === "random" ? (
+                <p>Первый подающий будет выбран случайно.</p>
+              ) : (
+                <fieldset className="judge-server-picker">
+                  <legend>
+                    {match.firstServerMethod === "rally"
+                      ? "Победитель розыгрыша за подачу"
+                      : "Первый подающий"}
+                  </legend>
+                  {participants.map((participant) => (
+                    <label key={String(participant.id)}>
+                      <input
+                        type="radio"
+                        name="match-start-server"
+                        checked={
+                          startServerId ===
+                          String(participant.id ?? "")
+                        }
+                        onChange={() =>
+                          setStartServerId(
+                            String(participant.id ?? ""),
+                          )
+                        }
+                      />
+                      {participant.displayName ?? `Сторона ${participant.side}`}
+                    </label>
+                  ))}
+                </fieldset>
+              )}
+            </Dialog>
             {actionError ? (
               <Alert
                 type="error"
@@ -411,6 +569,34 @@ export function MatchDetailPage() {
               </div>
             ) : null}
             <Dialog
+              open={noShowOpen}
+              onClose={() => (!action.pending ? setNoShowOpen(false) : undefined)}
+              title="Зафиксировать неявку?"
+              width="sm"
+              secondaryButtonLabel="Отмена"
+              onSecondaryButton={() => setNoShowOpen(false)}
+              mainButtonLabel={action.pending ? "…" : "Завершить по неявке"}
+              onMainButton={() => void onNoShow()}
+            >
+              <div className="stack">
+                <p>Победителем будет признана противоположная сторона. Текущий счёт сохранится без добавления очков.</p>
+                <FilterBar
+                  label="Не явилась"
+                  value={absentSide}
+                  onChange={(value) => setAbsentSide(value as "A" | "B")}
+                  options={[
+                    { value: "A", label: sideName("A") },
+                    { value: "B", label: sideName("B") },
+                  ]}
+                />
+                <TextField
+                  label="Комментарий (необязательно)"
+                  value={noShowReason}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNoShowReason(event.target.value)}
+                />
+              </div>
+            </Dialog>
+            <Dialog
               open={cancelOpen}
               onClose={() => (!action.pending ? setCancelOpen(false) : undefined)}
               title="Отменить матч?"
@@ -451,8 +637,8 @@ export function MatchDetailPage() {
                 {match.kind === "tournament" ? (
                   <p>
                     Остальная турнирная сетка сохранится без изменений: уже
-                    продвинутые участники, следующие матчи и уведомления не будут
-                    пересчитаны.
+                    продвинутые участники, следующие матчи и уведомления не
+                    будут пересчитаны.
                   </p>
                 ) : null}
                 <TextField

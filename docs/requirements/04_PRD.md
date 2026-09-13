@@ -362,9 +362,9 @@ actor, состояние, версию и идемпотентность (ADR D
 У матча может быть только одна активная judge session.
 
 ### JUDGE-002 Допустимые судьи
-- участник обычного матча;
-- участник турнира;
-- зарегистрированный пользователь, приглашённый судить турнир/матч.
+Any active registered club user may acquire a free judge slot or accept a handover.
+Match/tournament participation is not required (accepted D7). Blocked users cannot
+acquire or accept. JUDGE-004 device and simultaneous-judge limits still apply.
 
 ### JUDGE-003 Захват
 Первый допустимый пользователь, успешно захвативший свободный слот, становится судьёй.

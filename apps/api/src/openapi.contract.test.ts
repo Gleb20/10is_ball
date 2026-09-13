@@ -47,6 +47,9 @@ const BODY_OPERATIONS = new Set([
   "PATCH /api/v1/me/onboarding",
   "POST /api/v1/matches",
   "POST /api/v1/matches/{matchId}/start",
+  "POST /api/v1/matches/{matchId}/judge/handover",
+  "POST /api/v1/matches/{matchId}/manual-correction",
+  "POST /api/v1/matches/{matchId}/no-show",
   "POST /api/v1/matches/{matchId}/judge/setup",
   "POST /api/v1/matches/{matchId}/points",
   "POST /api/v1/matches/{matchId}/undo",
@@ -231,5 +234,19 @@ describe("AT-OPS-API-001 runtime OpenAPI contract", () => {
         "application/json"
       ]?.schema,
     ).toEqual({ $ref: "#/components/schemas/ProfileUpdateRequest" });
+  });
+});
+
+describe("GAP-005 match/judge extension contracts", () => {
+  it("documents options, reservation and versioned correction/no-show", () => {
+    const document = openApiSpec() as OpenApiDocument;
+    expect(document.paths["/api/v1/matches/create-options"]?.get).toBeDefined();
+    expect(document.paths["/api/v1/matches/{matchId}/judge/handover"]?.post?.requestBody).toBeDefined();
+    for (const action of ["manual-correction", "no-show"]) {
+      const operation = document.paths[`/api/v1/matches/{matchId}/${action}`]?.post;
+      expect(operation?.parameters).toEqual(expect.arrayContaining([expect.objectContaining({ in: "header", name: "Idempotency-Key", required: true })]));
+    }
+    expect(document.components?.schemas?.CreateMatchRequest).toMatchObject({ properties: { firstServerMethod: { enum: ["random", "manual", "rally"] } } });
+    expect(document.components?.schemas?.Match).toMatchObject({ properties: { judgeReservation: { nullable: true } } });
   });
 });

@@ -1,9 +1,11 @@
-import { and, desc, eq, gt, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 import {
   buildRanking,
   calendarMonthStartMoscow,
   calendarWeekStartMoscow,
+  checkVictory,
   createInitialScoreState,
+  isDeuce,
   randomAvatarKey,
   reduceMatchEvent,
   toRankingEntry,
@@ -13,7 +15,7 @@ import {
   type ServeRotationConfig,
   type Side,
 } from "@tab10/shared";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import type { Clock } from "@tab10/test-utils";
 import type { Db } from "../../db/client.js";
 import {
@@ -26,6 +28,7 @@ import {
 } from "../../db/schema.js";
 
 const JUDGE_TTL_MS = 120_000;
+const FINISH_CONFIRMATION_KEY_PREFIX = "finish-confirmed:";
 const STOP_REASON_CODES = ["injury", "time", "other"] as const;
 const COMPLETED_MATCH_STATUSES = new Set([
   "finished",
@@ -33,6 +36,11 @@ const COMPLETED_MATCH_STATUSES = new Set([
   "cancelled",
   "voided",
 ]);
+
+function finishConfirmationKey(judgeSessionId: string): string {
+  const digest = createHash("sha256").update(judgeSessionId).digest("hex");
+  return `${FINISH_CONFIRMATION_KEY_PREFIX}${digest}`;
+}
 
 type MatchParticipantInput = {
   side: Side;
@@ -50,6 +58,7 @@ type CreateMatchInput = {
   pointsToWin?: number;
   mercyEnabled?: boolean;
   mercyPoints?: number | null;
+  firstServerMethod?: "random" | "manual" | "rally";
   source?: "manual" | "challenge" | "revenge" | "tutorial";
   kind?: "standalone" | "tournament" | "tutorial";
   tournamentId?: string;
@@ -70,12 +79,26 @@ export class MatchService {
   constructor(
     private readonly db: Db,
     private readonly clock: Clock,
+    private readonly randomIndex: (length: number) => number = (length) =>
+      randomBytes(4).readUInt32BE(0) % length,
   ) {}
 
   setTournamentMatchFinishedHook(
     hook: (matchId: string, db: Db) => Promise<void>,
   ) {
     this.onTournamentMatchFinished = hook;
+  }
+
+  private async lockMatch(matchId: string, db: Db) {
+    await db.execute(
+      sql`select ${matches.id} from ${matches} where ${matches.id} = ${matchId} for update`,
+    );
+  }
+
+  private async lockUser(userId: string, db: Db) {
+    await db.execute(
+      sql`select ${users.id} from ${users} where ${users.id} = ${userId} for update`,
+    );
   }
 
   /**
@@ -98,6 +121,8 @@ export class MatchService {
           pointsToWin: input.pointsToWin ?? 11,
           mercyEnabled: input.mercyEnabled ?? false,
           mercyPoints: input.mercyPoints ?? null,
+          firstServerMethod: input.firstServerMethod ?? "manual",
+          source: input.source ?? "manual",
           kind: input.kind ?? "standalone",
           createdByUserId: input.createdByUserId,
           tournamentId: input.tournamentId,
@@ -157,6 +182,12 @@ export class MatchService {
     }
     if (kind !== "standalone" && input.format !== "1v1") {
       throw validationError("tournament and tutorial matches must use 1v1");
+    }
+    if (
+      input.firstServerMethod !== undefined &&
+      !["random", "manual", "rally"].includes(input.firstServerMethod)
+    ) {
+      throw validationError("firstServerMethod must be random, manual or rally");
     }
 
     const expectedPerSide = input.format === "1v1" ? 1 : 2;
@@ -245,6 +276,7 @@ export class MatchService {
         : [];
     const usersById = new Map(userRows.map((u) => [u.id, u]));
     const activeJudge = await this.getActiveJudge(matchId, db);
+    const judgeReservation = await this.getJudgeReservation(matchId, db);
     return {
       ...match,
       participants: participants.map((p) => ({
@@ -255,6 +287,7 @@ export class MatchService {
           : (p.guestAvatarKey ?? null),
       })),
       activeJudge,
+      judgeReservation,
     };
   }
 
@@ -274,13 +307,15 @@ export class MatchService {
       createdByUserId: string;
       participants: Array<{ userId: string | null }>;
       activeJudge: { userId: string } | null;
+      judgeReservation: { userId: string } | null;
     },
     actorUserId: string,
   ) {
     const hasContextualAccess =
       match.createdByUserId === actorUserId ||
       match.participants.some((participant) => participant.userId === actorUserId) ||
-      match.activeJudge?.userId === actorUserId;
+      match.activeJudge?.userId === actorUserId ||
+      match.judgeReservation?.userId === actorUserId;
     if (match.kind === "tutorial") return hasContextualAccess;
     return COMPLETED_MATCH_STATUSES.has(match.status) || hasContextualAccess;
   }
@@ -294,6 +329,7 @@ export class MatchService {
       where: and(
         eq(judgeSessions.matchId, matchId),
         isNull(judgeSessions.releasedAt),
+        isNull(judgeSessions.reservedForUserId),
         gt(judgeSessions.expiresAt, now),
       ),
     });
@@ -305,6 +341,27 @@ export class MatchService {
     return {
       userId: user.id,
       displayName: `${user.lastName} ${user.firstName}`.trim(),
+    };
+  }
+
+  private async getJudgeReservation(matchId: string, db: Db = this.db) {
+    const now = this.clock.now();
+    const session = await db.query.judgeSessions.findFirst({
+      where: and(
+        eq(judgeSessions.matchId, matchId),
+        isNull(judgeSessions.releasedAt),
+        gt(judgeSessions.expiresAt, now),
+      ),
+    });
+    if (!session?.reservedForUserId) return null;
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, session.reservedForUserId),
+    });
+    if (!user) return null;
+    return {
+      userId: user.id,
+      displayName: `${user.lastName} ${user.firstName}`.trim(),
+      expiresAt: session.expiresAt,
     };
   }
 
@@ -326,7 +383,7 @@ export class MatchService {
   }
 
   async listMatches(actorUserId: string, limit = 50) {
-    const [rows, participantRows, judgeRows] = await Promise.all([
+    const [rows, participantRows, judgeRows, reservedJudgeRows] = await Promise.all([
       this.db.query.matches.findMany({
         where: ne(matches.kind, "tutorial"),
         orderBy: [desc(matches.createdAt)],
@@ -338,6 +395,14 @@ export class MatchService {
         where: and(
           eq(judgeSessions.userId, actorUserId),
           isNull(judgeSessions.releasedAt),
+          isNull(judgeSessions.reservedForUserId),
+          gt(judgeSessions.expiresAt, this.clock.now()),
+        ),
+      }),
+      this.db.query.judgeSessions.findMany({
+        where: and(
+          eq(judgeSessions.reservedForUserId, actorUserId),
+          isNull(judgeSessions.releasedAt),
           gt(judgeSessions.expiresAt, this.clock.now()),
         ),
       }),
@@ -346,6 +411,7 @@ export class MatchService {
       participantRows.map((participant) => participant.matchId),
     );
     const judgedMatchIds = new Set(judgeRows.map((session) => session.matchId));
+    for (const session of reservedJudgeRows) judgedMatchIds.add(session.matchId);
     return rows.filter((match) =>
       COMPLETED_MATCH_STATUSES.has(match.status) ||
       match.createdByUserId === actorUserId ||
@@ -358,8 +424,31 @@ export class MatchService {
     matchId: string,
     actorUserId: string,
     firstServerParticipantId?: string,
-  ) {
-    const detail = await this.getMatch(matchId);
+    db: Db = this.db,
+  ): Promise<Awaited<ReturnType<MatchService["getMatch"]>>> {
+    if (db === this.db) {
+      return this.db.transaction(async (transaction) => {
+        const lockedDb = transaction as unknown as Db;
+        await this.lockMatch(matchId, lockedDb);
+        const lockedMatch = await this.getMatch(matchId, lockedDb);
+        if (!lockedMatch) {
+          throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+        }
+        const registeredUserIds = lockedMatch.participants
+          .flatMap((participant) => participant.userId ? [participant.userId] : [])
+          .sort();
+        for (const userId of registeredUserIds) {
+          await this.lockUser(userId, lockedDb);
+        }
+        return this.startMatch(
+          matchId,
+          actorUserId,
+          firstServerParticipantId,
+          lockedDb,
+        );
+      });
+    }
+    const detail = await this.getMatch(matchId, db);
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
     if (detail.createdByUserId !== actorUserId) {
       throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
@@ -385,6 +474,7 @@ export class MatchService {
       pointsToWin: detail.pointsToWin,
       mercyEnabled: detail.mercyEnabled,
       mercyPoints: detail.mercyPoints,
+      firstServerMethod: detail.firstServerMethod as "random" | "manual" | "rally",
       kind: detail.kind,
       tournamentId: detail.tournamentId ?? undefined,
       tournamentSlotId: detail.tournamentSlotId ?? undefined,
@@ -392,7 +482,7 @@ export class MatchService {
         detail.tournamentBracketMatchId ?? undefined,
       participants: participantInputs,
     });
-    await this.assertActiveRegisteredParticipants(participantInputs, this.db);
+    await this.assertActiveRegisteredParticipants(participantInputs, db);
     if (
       firstServerParticipantId &&
       !detail.participants.some(
@@ -401,11 +491,17 @@ export class MatchService {
     ) {
       throw validationError("first server must be a match participant");
     }
+    if (detail.firstServerMethod === "random" && firstServerParticipantId) {
+      throw validationError("random first-server selection does not accept a participant");
+    }
+    if (detail.firstServerMethod !== "random" && !firstServerParticipantId) {
+      throw validationError("manual and rally first-server selection require a participant");
+    }
 
     // AT-MATCH-011: player cannot start second active match
     for (const p of detail.participants) {
       if (!p.userId) continue;
-      const active = await this.db
+      const active = await db
         .select({ id: matches.id })
         .from(matches)
         .innerJoin(
@@ -428,18 +524,26 @@ export class MatchService {
       }
     }
 
-    const serverId =
-      firstServerParticipantId ?? detail.participants[0]?.id ?? null;
+    const serverId = detail.firstServerMethod === "random" && detail.participants.length > 0
+        ? detail.participants[
+            Math.max(0, Math.min(this.randomIndex(detail.participants.length), detail.participants.length - 1))
+          ]!.id
+        : firstServerParticipantId!;
     const now = this.clock.now();
-    await this.db
+    const updated = await db
       .update(matches)
       .set({
         status: "in_progress",
         currentServerParticipantId: serverId,
+        startedAt: now,
         updatedAt: now,
       })
-      .where(eq(matches.id, matchId));
-    return this.getMatch(matchId);
+      .where(and(eq(matches.id, matchId), eq(matches.status, "waiting")))
+      .returning({ id: matches.id });
+    if (updated.length === 0) {
+      throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
+    }
+    return this.getMatch(matchId, db);
   }
 
   private rulesFrom(match: typeof matches.$inferSelect): MatchRules {
@@ -467,10 +571,17 @@ export class MatchService {
       if (sideA[i]) order.push(sideA[i]!.id);
       if (sideB[i]) order.push(sideB[i]!.id);
     }
+    const currentServerIndex = match.currentServerParticipantId
+      ? order.indexOf(match.currentServerParticipantId)
+      : -1;
+    const sequenceIndex = match.serveSequenceIndex ?? 0;
+    const anchorIndex = currentServerIndex >= 0 && order.length > 0
+      ? ((currentServerIndex - sequenceIndex) % order.length + order.length) % order.length
+      : 0;
     return {
       format: match.format,
       participantOrder: order.length > 0 ? order : participants.map((p) => p.id),
-      firstServerId: match.currentServerParticipantId ?? order[0]!,
+      firstServerId: order[anchorIndex] ?? match.currentServerParticipantId ?? participants[0]!.id,
     };
   }
 
@@ -481,7 +592,14 @@ export class MatchService {
     expectedVersion: number;
     judgeUserId: string;
     authSessionId: string;
-  }) {
+  }, db: Db = this.db): Promise<Awaited<ReturnType<MatchService["getMatch"]>>> {
+    if (db === this.db) {
+      return this.db.transaction(async (transaction) => {
+        const lockedDb = transaction as unknown as Db;
+        await this.lockMatch(input.matchId, lockedDb);
+        return this.awardPoint(input, lockedDb);
+      });
+    }
     if (input.side !== "A" && input.side !== "B") {
       throw validationError("side must be A or B");
     }
@@ -492,8 +610,9 @@ export class MatchService {
       input.matchId,
       input.judgeUserId,
       input.authSessionId,
+      db,
     );
-    const detail = await this.getMatch(input.matchId);
+    const detail = await this.getMatch(input.matchId, db);
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
     if (
       detail.status !== "in_progress" &&
@@ -554,7 +673,7 @@ export class MatchService {
     }
 
     const now = this.clock.now();
-    const updated = await this.db
+    const updated = await db
       .update(matches)
       .set({
         scoreA: result.state.scoreA,
@@ -577,13 +696,13 @@ export class MatchService {
       )
       .returning();
     if (updated.length === 0) {
-      const current = await this.getMatch(input.matchId);
+      const current = await this.getMatch(input.matchId, db);
       throw Object.assign(new Error("VERSION_CONFLICT"), {
         code: "VERSION_CONFLICT",
         state: current,
       });
     }
-    return this.getMatch(input.matchId);
+    return this.getMatch(input.matchId, db);
   }
 
   async undoPoint(input: {
@@ -592,7 +711,14 @@ export class MatchService {
     expectedVersion: number;
     judgeUserId: string;
     authSessionId: string;
-  }) {
+  }, db: Db = this.db): Promise<Awaited<ReturnType<MatchService["getMatch"]>>> {
+    if (db === this.db) {
+      return this.db.transaction(async (transaction) => {
+        const lockedDb = transaction as unknown as Db;
+        await this.lockMatch(input.matchId, lockedDb);
+        return this.undoPoint(input, lockedDb);
+      });
+    }
     if (!Number.isInteger(input.expectedVersion) || input.expectedVersion < 0) {
       throw validationError("expectedVersion must be a non-negative integer");
     }
@@ -600,8 +726,9 @@ export class MatchService {
       input.matchId,
       input.judgeUserId,
       input.authSessionId,
+      db,
     );
-    const detail = await this.getMatch(input.matchId);
+    const detail = await this.getMatch(input.matchId, db);
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
 
     const keys = new Set<string>((detail.idempotencyKeys as string[]) ?? []);
@@ -644,7 +771,7 @@ export class MatchService {
       return detail;
     }
     const now = this.clock.now();
-    const updated = await this.db
+    const updated = await db
       .update(matches)
       .set({
         scoreA: result.state.scoreA,
@@ -667,13 +794,124 @@ export class MatchService {
       )
       .returning();
     if (updated.length === 0) {
-      const current = await this.getMatch(input.matchId);
+      const current = await this.getMatch(input.matchId, db);
       throw Object.assign(new Error("VERSION_CONFLICT"), {
         code: "VERSION_CONFLICT",
         state: current,
       });
     }
-    return this.getMatch(input.matchId);
+    return this.getMatch(input.matchId, db);
+  }
+
+  async manualCorrection(input: {
+    matchId: string;
+    scoreA: number;
+    scoreB: number;
+    currentServerParticipantId: string;
+    expectedVersion: number;
+    idempotencyKey: string;
+    judgeUserId: string;
+    authSessionId: string;
+  }, db: Db = this.db): Promise<Awaited<ReturnType<MatchService["getMatch"]>>> {
+    if (db === this.db) {
+      return this.db.transaction(async (transaction) => {
+        const lockedDb = transaction as unknown as Db;
+        await this.lockMatch(input.matchId, lockedDb);
+        return this.manualCorrection(input, lockedDb);
+      });
+    }
+    await this.assertActiveJudge(
+      input.matchId,
+      input.judgeUserId,
+      input.authSessionId,
+      db,
+    );
+    const detail = await this.getMatch(input.matchId, db);
+    if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    if (
+      detail.status !== "in_progress" &&
+      detail.status !== "pending_confirmation"
+    ) {
+      throw Object.assign(new Error("MATCH_IMMUTABLE"), {
+        code: "MATCH_IMMUTABLE",
+      });
+    }
+    const keys = new Set<string>((detail.idempotencyKeys as string[]) ?? []);
+    const storedKey = `manual-correction:${input.idempotencyKey}`;
+    if (keys.has(storedKey)) return detail;
+    if (detail.version !== input.expectedVersion) {
+      throw Object.assign(new Error("VERSION_CONFLICT"), {
+        code: "VERSION_CONFLICT",
+        state: detail,
+      });
+    }
+    const history = (detail.eventLog as MatchEvent[]) ?? [];
+    const reducerKeys = new Set<string>();
+    const result = reduceMatchEvent(
+      {
+        scoreA: detail.scoreA,
+        scoreB: detail.scoreB,
+        deuceMode: detail.deuceMode,
+        currentServerId: detail.currentServerParticipantId,
+        serveSequenceIndex: detail.serveSequenceIndex,
+        status: detail.status,
+        proposedWinner: detail.winnerSide as Side | null,
+        version: detail.version,
+      },
+      {
+        type: "manual_correction",
+        idempotencyKey: storedKey,
+        from: {
+          scoreA: detail.scoreA,
+          scoreB: detail.scoreB,
+          currentServerId: detail.currentServerParticipantId,
+        },
+        to: {
+          scoreA: input.scoreA,
+          scoreB: input.scoreB,
+          currentServerId: input.currentServerParticipantId,
+        },
+      },
+      this.rulesFrom(detail),
+      this.serveConfig(detail, detail.participants),
+      history,
+      reducerKeys,
+    );
+    if (!result.ok) {
+      throw Object.assign(new Error(result.code), { code: result.code });
+    }
+    keys.add(storedKey);
+    const rows = await db
+      .update(matches)
+      .set({
+        scoreA: result.state.scoreA,
+        scoreB: result.state.scoreB,
+        deuceMode: result.state.deuceMode,
+        currentServerParticipantId: result.state.currentServerId,
+        serveSequenceIndex: result.state.serveSequenceIndex,
+        status: result.state.status,
+        winnerSide: result.state.proposedWinner,
+        version: result.state.version,
+        eventLog: history,
+        idempotencyKeys: [...keys],
+        updatedAt: this.clock.now(),
+      })
+      .where(
+        and(
+          eq(matches.id, input.matchId),
+          eq(matches.version, input.expectedVersion),
+          inArray(matches.status, ["in_progress", "pending_confirmation"]),
+        ),
+      )
+      .returning({ id: matches.id });
+    if (rows.length === 0) {
+      const current = await this.getMatch(input.matchId, db);
+      throw Object.assign(new Error("VERSION_CONFLICT"), {
+        code: "VERSION_CONFLICT",
+        state: current,
+      });
+    }
+    return this.getMatch(input.matchId, db);
   }
 
   async confirmFinish(input: {
@@ -683,20 +921,31 @@ export class MatchService {
   }) {
     return this.db.transaction(async (transaction) => {
       const db = transaction as unknown as Db;
+      await this.lockMatch(input.matchId, db);
       const detail = await this.getMatch(input.matchId, db);
       if (!detail) {
         throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
       }
 
       if (detail.status === "finished") {
-        const replayJudge = await db.query.judgeSessions.findFirst({
+        const keys = new Set<string>((detail.idempotencyKeys as string[]) ?? []);
+        const replayJudges = await db.query.judgeSessions.findMany({
           where: and(
             eq(judgeSessions.matchId, input.matchId),
             eq(judgeSessions.userId, input.judgeUserId),
             eq(judgeSessions.authSessionId, input.authSessionId),
           ),
         });
-        if (!replayJudge) {
+        const hasConfirmationProvenance = [...keys].some((key) =>
+          key.startsWith(FINISH_CONFIRMATION_KEY_PREFIX),
+        );
+        if (
+          replayJudges.length === 0 ||
+          (hasConfirmationProvenance &&
+            !replayJudges.some((judge) =>
+              keys.has(finishConfirmationKey(judge.id)),
+            ))
+        ) {
           throw Object.assign(new Error("JUDGE_REQUIRED"), {
             code: "JUDGE_REQUIRED",
           });
@@ -704,7 +953,7 @@ export class MatchService {
         return detail;
       }
 
-      await this.assertActiveJudge(
+      const confirmingJudgeSession = await this.assertActiveJudge(
         input.matchId,
         input.judgeUserId,
         input.authSessionId,
@@ -736,6 +985,7 @@ export class MatchService {
       if (!result.ok) {
         throw Object.assign(new Error(result.code), { code: result.code });
       }
+      keys.add(finishConfirmationKey(confirmingJudgeSession.id));
       const now = this.clock.now();
       const updated = await db
         .update(matches)
@@ -745,6 +995,7 @@ export class MatchService {
           finishReason: detail.kind === "tutorial" ? "tutorial" : "normal",
           version: result.state.version,
           eventLog: history,
+          idempotencyKeys: [...keys],
           updatedAt: now,
         })
         .where(
@@ -780,13 +1031,21 @@ export class MatchService {
     matchId: string;
     judgeUserId: string;
     authSessionId: string;
-  }) {
+  }, db: Db = this.db): Promise<Awaited<ReturnType<MatchService["getMatch"]>>> {
+    if (db === this.db) {
+      return this.db.transaction(async (transaction) => {
+        const lockedDb = transaction as unknown as Db;
+        await this.lockMatch(input.matchId, lockedDb);
+        return this.revertFinish(input, lockedDb);
+      });
+    }
     await this.assertActiveJudge(
       input.matchId,
       input.judgeUserId,
       input.authSessionId,
+      db,
     );
-    const detail = await this.getMatch(input.matchId);
+    const detail = await this.getMatch(input.matchId, db);
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
     const history = (detail.eventLog as MatchEvent[]) ?? [];
     const keys = new Set<string>((detail.idempotencyKeys as string[]) ?? []);
@@ -814,7 +1073,7 @@ export class MatchService {
     if (!result.ok) {
       throw Object.assign(new Error(result.code), { code: result.code });
     }
-    await this.db
+    await db
       .update(matches)
       .set({
         status: "in_progress",
@@ -823,7 +1082,7 @@ export class MatchService {
         updatedAt: this.clock.now(),
       })
       .where(eq(matches.id, input.matchId));
-    return this.getMatch(input.matchId);
+    return this.getMatch(input.matchId, db);
   }
 
   async stopMatch(input: {
@@ -848,6 +1107,7 @@ export class MatchService {
     }
     return this.db.transaction(async (transaction) => {
       const db = transaction as unknown as Db;
+      await this.lockMatch(input.matchId, db);
       const detail = await this.getMatch(input.matchId, db);
       if (!detail) {
         throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
@@ -913,12 +1173,123 @@ export class MatchService {
     });
   }
 
+  async noShowMatch(input: {
+    matchId: string;
+    absentSide: Side;
+    actorUserId: string;
+    authSessionId: string;
+    expectedVersion: number;
+    idempotencyKey: string;
+    reasonText?: string;
+  }) {
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await this.lockMatch(input.matchId, db);
+      const detail = await this.getMatch(input.matchId, db);
+      if (!detail) {
+        throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+      }
+      const storedKey = `no-show:${input.actorUserId}:${input.idempotencyKey}`;
+      const keys = new Set<string>((detail.idempotencyKeys as string[]) ?? []);
+      if (keys.has(storedKey)) {
+        if (detail.createdByUserId !== input.actorUserId) {
+          const replayJudge = await db.query.judgeSessions.findFirst({
+            where: and(
+              eq(judgeSessions.matchId, input.matchId),
+              eq(judgeSessions.userId, input.actorUserId),
+              eq(judgeSessions.authSessionId, input.authSessionId),
+            ),
+          });
+          if (!replayJudge) {
+            throw Object.assign(new Error("JUDGE_REQUIRED"), {
+              code: "JUDGE_REQUIRED",
+            });
+          }
+        }
+        return detail;
+      }
+      if (
+        detail.status !== "waiting" &&
+        detail.status !== "in_progress" &&
+        detail.status !== "pending_confirmation"
+      ) {
+        throw Object.assign(new Error("MATCH_NOT_ACTIVE"), {
+          code: "MATCH_NOT_ACTIVE",
+        });
+      }
+      if (detail.createdByUserId !== input.actorUserId) {
+        await this.assertActiveJudge(
+          input.matchId,
+          input.actorUserId,
+          input.authSessionId,
+          db,
+        );
+      }
+      if (detail.version !== input.expectedVersion) {
+        throw Object.assign(new Error("VERSION_CONFLICT"), {
+          code: "VERSION_CONFLICT",
+          state: detail,
+        });
+      }
+      keys.add(storedKey);
+      const now = this.clock.now();
+      const winnerSide: Side = input.absentSide === "A" ? "B" : "A";
+      const updatedRows = await db
+        .update(matches)
+        .set({
+          status: "stopped",
+          winnerSide,
+          finishReason: "no_show",
+          stopReasonCode: "no_show",
+          stopReasonText: input.reasonText?.trim() || "Неявка",
+          finishedAt: now,
+          updatedAt: now,
+          version: detail.version + 1,
+          idempotencyKeys: [...keys],
+        })
+        .where(
+          and(
+            eq(matches.id, input.matchId),
+            eq(matches.version, input.expectedVersion),
+            inArray(matches.status, [
+              "waiting",
+              "in_progress",
+              "pending_confirmation",
+            ]),
+          ),
+        )
+        .returning({ id: matches.id });
+      if (updatedRows.length === 0) {
+        const current = await this.getMatch(input.matchId, db);
+        throw Object.assign(new Error("VERSION_CONFLICT"), {
+          code: "VERSION_CONFLICT",
+          state: current,
+        });
+      }
+      const updated = await this.getMatch(input.matchId, db);
+      if (updated && updated.kind !== "tutorial") await this.applyStats(updated, db);
+      await this.releaseJudge(input.matchId, undefined, undefined, true, db);
+      if (updated?.kind === "tournament" && this.onTournamentMatchFinished) {
+        await this.onTournamentMatchFinished(input.matchId, db);
+      }
+      return this.getMatch(input.matchId, db);
+    });
+  }
+
   async acquireJudge(input: {
     matchId: string;
     userId: string;
     authSessionId: string;
-  }) {
-    const detail = await this.getMatch(input.matchId);
+  }, db: Db = this.db): Promise<typeof judgeSessions.$inferSelect | undefined> {
+    if (db === this.db) {
+      return this.db.transaction(async (transaction) => {
+        const lockedDb = transaction as unknown as Db;
+        await this.lockMatch(input.matchId, lockedDb);
+        await this.lockUser(input.userId, lockedDb);
+        return this.acquireJudge(input, lockedDb);
+      });
+    }
+    const detail = await this.getMatch(input.matchId, db);
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
     if (
       detail.status !== "waiting" &&
@@ -927,7 +1298,7 @@ export class MatchService {
     ) {
       throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
     }
-    const actor = await this.db.query.users.findFirst({
+    const actor = await db.query.users.findFirst({
       where: eq(users.id, input.userId),
     });
     if (!actor || actor.status !== "active") {
@@ -935,10 +1306,24 @@ export class MatchService {
     }
 
     const now = this.clock.now();
-    // Expire stale
-    await this.db
+    // Release stale rows before exclusivity checks. The user row lock serializes
+    // active ownership and reservations for this actor across matches.
+    await db
       .update(judgeSessions)
-      .set({ releasedAt: now })
+      .set({ releasedAt: now, reservedForUserId: null })
+      .where(
+        and(
+          isNull(judgeSessions.releasedAt),
+          lte(judgeSessions.expiresAt, now),
+          or(
+            eq(judgeSessions.userId, input.userId),
+            eq(judgeSessions.reservedForUserId, input.userId),
+          ),
+        ),
+      );
+    await db
+      .update(judgeSessions)
+      .set({ releasedAt: now, reservedForUserId: null })
       .where(
         and(
           eq(judgeSessions.matchId, input.matchId),
@@ -947,11 +1332,77 @@ export class MatchService {
         ),
       );
 
+    const reservation = await db.query.judgeSessions.findFirst({
+      where: and(
+        eq(judgeSessions.matchId, input.matchId),
+        isNull(judgeSessions.releasedAt),
+        gt(judgeSessions.expiresAt, now),
+      ),
+    });
+    if (reservation?.reservedForUserId) {
+      if (reservation.reservedForUserId !== input.userId) {
+        const target = await db.query.users.findFirst({
+          where: eq(users.id, reservation.reservedForUserId),
+        });
+        throw Object.assign(new Error("JUDGE_RESERVED"), {
+          code: "JUDGE_RESERVED",
+          details: {
+            reservedFor: target
+              ? {
+                  userId: target.id,
+                  displayName: `${target.lastName} ${target.firstName}`.trim(),
+                }
+              : { userId: reservation.reservedForUserId },
+          },
+        });
+      }
+      const targetBusy = await db.query.judgeSessions.findFirst({
+        where: and(
+          isNull(judgeSessions.releasedAt),
+          ne(judgeSessions.matchId, input.matchId),
+          gt(judgeSessions.expiresAt, now),
+          or(
+            and(
+              eq(judgeSessions.userId, input.userId),
+              isNull(judgeSessions.reservedForUserId),
+            ),
+            eq(judgeSessions.reservedForUserId, input.userId),
+          ),
+        ),
+      });
+      if (targetBusy) {
+        throw Object.assign(new Error("JUDGE_BUSY"), { code: "JUDGE_BUSY" });
+      }
+      const [claimed] = await db
+        .update(judgeSessions)
+        .set({
+          userId: input.userId,
+          authSessionId: input.authSessionId,
+          reservedForUserId: null,
+          acquiredAt: now,
+          lastHeartbeatAt: now,
+          expiresAt: new Date(now.getTime() + JUDGE_TTL_MS),
+        })
+        .where(
+          and(
+            eq(judgeSessions.id, reservation.id),
+            eq(judgeSessions.reservedForUserId, input.userId),
+            isNull(judgeSessions.releasedAt),
+          ),
+        )
+        .returning();
+      if (!claimed) {
+        throw Object.assign(new Error("JUDGE_TAKEN"), { code: "JUDGE_TAKEN" });
+      }
+      return claimed;
+    }
+
     // User cannot hold judge from another auth session
-    const otherDevice = await this.db.query.judgeSessions.findFirst({
+    const otherDevice = await db.query.judgeSessions.findFirst({
       where: and(
         eq(judgeSessions.userId, input.userId),
         isNull(judgeSessions.releasedAt),
+        isNull(judgeSessions.reservedForUserId),
         ne(judgeSessions.authSessionId, input.authSessionId),
       ),
     });
@@ -962,30 +1413,37 @@ export class MatchService {
     }
 
     // One active judge session per user across matches
-    const otherMatch = await this.db.query.judgeSessions.findFirst({
+    const otherMatch = await db.query.judgeSessions.findFirst({
       where: and(
-        eq(judgeSessions.userId, input.userId),
         isNull(judgeSessions.releasedAt),
         ne(judgeSessions.matchId, input.matchId),
         gt(judgeSessions.expiresAt, now),
+        or(
+          and(
+            eq(judgeSessions.userId, input.userId),
+            isNull(judgeSessions.reservedForUserId),
+          ),
+          eq(judgeSessions.reservedForUserId, input.userId),
+        ),
       ),
     });
     if (otherMatch) {
       throw Object.assign(new Error("JUDGE_BUSY"), { code: "JUDGE_BUSY" });
     }
 
-    const existing = await this.db.query.judgeSessions.findFirst({
+    const existing = await db.query.judgeSessions.findFirst({
       where: and(
         eq(judgeSessions.matchId, input.matchId),
         eq(judgeSessions.userId, input.userId),
         eq(judgeSessions.authSessionId, input.authSessionId),
         isNull(judgeSessions.releasedAt),
+        isNull(judgeSessions.reservedForUserId),
         gt(judgeSessions.expiresAt, now),
       ),
     });
     if (existing) return existing;
 
-    const taken = await this.db.query.judgeSessions.findFirst({
+    const taken = await db.query.judgeSessions.findFirst({
       where: and(
         eq(judgeSessions.matchId, input.matchId),
         isNull(judgeSessions.releasedAt),
@@ -993,7 +1451,7 @@ export class MatchService {
       ),
     });
     if (taken) {
-      const currentJudge = await this.getActiveJudge(input.matchId);
+      const currentJudge = await this.getActiveJudge(input.matchId, db);
       throw Object.assign(new Error("JUDGE_TAKEN"), {
         code: "JUDGE_TAKEN",
         currentJudge: currentJudge ?? undefined,
@@ -1001,7 +1459,7 @@ export class MatchService {
     }
 
     try {
-      const [row] = await this.db
+      const [row] = await db
         .insert(judgeSessions)
         .values({
           matchId: input.matchId,
@@ -1014,7 +1472,7 @@ export class MatchService {
         .returning();
       return row;
     } catch {
-      const currentJudge = await this.getActiveJudge(input.matchId);
+      const currentJudge = await this.getActiveJudge(input.matchId, db);
       throw Object.assign(new Error("JUDGE_TAKEN"), {
         code: "JUDGE_TAKEN",
         currentJudge: currentJudge ?? undefined,
@@ -1026,9 +1484,16 @@ export class MatchService {
     matchId: string;
     userId: string;
     authSessionId: string;
-  }) {
+  }, db: Db = this.db): Promise<typeof judgeSessions.$inferSelect | undefined> {
+    if (db === this.db) {
+      return this.db.transaction(async (transaction) => {
+        const lockedDb = transaction as unknown as Db;
+        await this.lockMatch(input.matchId, lockedDb);
+        return this.heartbeatJudge(input, lockedDb);
+      });
+    }
     const now = this.clock.now();
-    const result = await this.db
+    const result = await db
       .update(judgeSessions)
       .set({
         lastHeartbeatAt: now,
@@ -1040,6 +1505,7 @@ export class MatchService {
           eq(judgeSessions.userId, input.userId),
           eq(judgeSessions.authSessionId, input.authSessionId),
           isNull(judgeSessions.releasedAt),
+          isNull(judgeSessions.reservedForUserId),
           gt(judgeSessions.expiresAt, now),
         ),
       )
@@ -1058,7 +1524,14 @@ export class MatchService {
     authSessionId?: string,
     force = false,
     db: Db = this.db,
-  ) {
+  ): Promise<void> {
+    if (db === this.db) {
+      return this.db.transaction(async (transaction) => {
+        const lockedDb = transaction as unknown as Db;
+        await this.lockMatch(matchId, lockedDb);
+        return this.releaseJudge(matchId, userId, authSessionId, force, lockedDb);
+      });
+    }
     if (!force && userId && authSessionId) {
       await this.assertActiveJudge(matchId, userId, authSessionId, db);
     } else if (!force && userId) {
@@ -1070,7 +1543,7 @@ export class MatchService {
     const now = this.clock.now();
     await db
       .update(judgeSessions)
-      .set({ releasedAt: now })
+      .set({ releasedAt: now, reservedForUserId: null })
       .where(
         and(eq(judgeSessions.matchId, matchId), isNull(judgeSessions.releasedAt)),
       );
@@ -1082,14 +1555,105 @@ export class MatchService {
     fromAuthSessionId: string;
     toUserId: string;
   }) {
-    await this.assertActiveJudge(
-      input.matchId,
-      input.fromUserId,
-      input.fromAuthSessionId,
-    );
-    await this.releaseJudge(input.matchId);
-    // Reserve for target — they must acquire with their session; create notification path
-    return { reservedForUserId: input.toUserId };
+    if (input.fromUserId === input.toUserId) {
+      throw validationError("handover target must be another user");
+    }
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      await this.lockMatch(input.matchId, db);
+      await this.lockUser(input.toUserId, db);
+      const target = await db.query.users.findFirst({
+        where: eq(users.id, input.toUserId),
+      });
+      if (!target || target.status !== "active") {
+        throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+      }
+      const now = this.clock.now();
+      await db
+        .update(judgeSessions)
+        .set({ releasedAt: now, reservedForUserId: null })
+        .where(
+          and(
+            isNull(judgeSessions.releasedAt),
+            lte(judgeSessions.expiresAt, now),
+            or(
+              eq(judgeSessions.userId, input.toUserId),
+              eq(judgeSessions.reservedForUserId, input.toUserId),
+            ),
+          ),
+        );
+      const session = await db.query.judgeSessions.findFirst({
+        where: and(
+          eq(judgeSessions.matchId, input.matchId),
+          eq(judgeSessions.userId, input.fromUserId),
+          eq(judgeSessions.authSessionId, input.fromAuthSessionId),
+          isNull(judgeSessions.releasedAt),
+          gt(judgeSessions.expiresAt, now),
+        ),
+      });
+      if (!session) {
+        throw Object.assign(new Error("JUDGE_REQUIRED"), {
+          code: "JUDGE_REQUIRED",
+        });
+      }
+      if (session.reservedForUserId) {
+        if (session.reservedForUserId !== input.toUserId) {
+          throw Object.assign(new Error("JUDGE_RESERVED"), {
+            code: "JUDGE_RESERVED",
+          });
+        }
+        return {
+          userId: target.id,
+          displayName: `${target.lastName} ${target.firstName}`.trim(),
+          expiresAt: session.expiresAt,
+        };
+      }
+      const targetBusy = await db.query.judgeSessions.findFirst({
+        where: and(
+          isNull(judgeSessions.releasedAt),
+          gt(judgeSessions.expiresAt, now),
+          or(
+            and(
+              eq(judgeSessions.userId, input.toUserId),
+              isNull(judgeSessions.reservedForUserId),
+            ),
+            eq(judgeSessions.reservedForUserId, input.toUserId),
+          ),
+        ),
+      });
+      if (targetBusy) {
+        throw Object.assign(new Error("JUDGE_BUSY"), { code: "JUDGE_BUSY" });
+      }
+      const expiresAt = new Date(now.getTime() + JUDGE_TTL_MS);
+      const [released] = await db
+        .update(judgeSessions)
+        .set({ releasedAt: now })
+        .where(
+          and(
+            eq(judgeSessions.id, session.id),
+            isNull(judgeSessions.releasedAt),
+            isNull(judgeSessions.reservedForUserId),
+          ),
+        )
+        .returning();
+      if (!released) {
+        throw Object.assign(new Error("JUDGE_TAKEN"), { code: "JUDGE_TAKEN" });
+      }
+      await db.insert(judgeSessions).values({
+        matchId: input.matchId,
+        userId: input.fromUserId,
+        authSessionId: input.fromAuthSessionId,
+        acquiredAt: now,
+        lastHeartbeatAt: now,
+        expiresAt,
+        reservedForUserId: input.toUserId,
+      });
+      return {
+        userId: target.id,
+        displayName: `${target.lastName} ${target.firstName}`.trim(),
+        expiresAt,
+      };
+    });
   }
 
   async judgeSetup(input: {
@@ -1099,13 +1663,21 @@ export class MatchService {
     firstServerParticipantId?: string;
     swapSides?: boolean;
     displayFlipped?: boolean;
-  }) {
+  }, db: Db = this.db): Promise<Awaited<ReturnType<MatchService["getMatch"]>>> {
+    if (db === this.db) {
+      return this.db.transaction(async (transaction) => {
+        const lockedDb = transaction as unknown as Db;
+        await this.lockMatch(input.matchId, lockedDb);
+        return this.judgeSetup(input, lockedDb);
+      });
+    }
     await this.assertActiveJudge(
       input.matchId,
       input.userId,
       input.authSessionId,
+      db,
     );
-    const detail = await this.getMatch(input.matchId);
+    const detail = await this.getMatch(input.matchId, db);
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
 
     const totalPoints = detail.scoreA + detail.scoreB;
@@ -1115,13 +1687,19 @@ export class MatchService {
         message: "Cannot swap sides after points scored",
       });
     }
+    if (totalPoints > 0 && input.firstServerParticipantId) {
+      throw Object.assign(new Error("INVALID_STATUS"), {
+        code: "INVALID_STATUS",
+        message: "Use manual correction to change server after scoring",
+      });
+    }
 
     const now = this.clock.now();
 
     if (input.swapSides && totalPoints === 0) {
       for (const p of detail.participants) {
         const nextSide = p.side === "A" ? "B" : "A";
-        await this.db
+        await db
           .update(matchParticipants)
           .set({ side: nextSide })
           .where(eq(matchParticipants.id, p.id));
@@ -1129,7 +1707,7 @@ export class MatchService {
     }
 
     const patch: Partial<typeof matches.$inferInsert> = { updatedAt: now };
-    if (!detail.startedAt && totalPoints === 0) {
+    if (detail.status === "in_progress" && !detail.startedAt && totalPoints === 0) {
       patch.startedAt = now;
     }
     if (input.firstServerParticipantId) {
@@ -1148,13 +1726,13 @@ export class MatchService {
       patch.judgeDisplayFlipped = input.displayFlipped;
     }
     if (Object.keys(patch).length > 1) {
-      await this.db
+      await db
         .update(matches)
         .set(patch)
         .where(eq(matches.id, input.matchId));
     }
 
-    return this.getMatch(input.matchId);
+    return this.getMatch(input.matchId, db);
   }
 
   private isMatchParticipant(
@@ -1179,6 +1757,7 @@ export class MatchService {
         eq(judgeSessions.matchId, detail.id),
         eq(judgeSessions.userId, userId),
         isNull(judgeSessions.releasedAt),
+        isNull(judgeSessions.reservedForUserId),
         gt(judgeSessions.expiresAt, now),
       ),
     });
@@ -1231,6 +1810,7 @@ export class MatchService {
         eq(judgeSessions.userId, userId),
         eq(judgeSessions.authSessionId, authSessionId),
         isNull(judgeSessions.releasedAt),
+        isNull(judgeSessions.reservedForUserId),
       ),
     });
     if (!session || session.expiresAt.getTime() <= now.getTime()) {
@@ -1238,6 +1818,7 @@ export class MatchService {
         code: "JUDGE_REQUIRED",
       });
     }
+    return session;
   }
 
   private async applyStats(

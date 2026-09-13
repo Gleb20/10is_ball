@@ -19,7 +19,7 @@ const BASELINE_SNAPSHOT_PATH = fileURLToPath(
   new URL("../../drizzle/meta/0000_snapshot.json", import.meta.url),
 );
 const CURRENT_SNAPSHOT_PATH = fileURLToPath(
-  new URL("../../drizzle/meta/0003_snapshot.json", import.meta.url),
+  new URL("../../drizzle/meta/0004_snapshot.json", import.meta.url),
 );
 
 const MIGRATION_ADVISORY_LOCK = "7247010010001";
@@ -143,7 +143,7 @@ const currentSnapshot = JSON.parse(
   readFileSync(CURRENT_SNAPSHOT_PATH, "utf8"),
 ) as BaselineSnapshot;
 
-const intermediateSnapshots = ["0001", "0002"].map((prefix) =>
+const intermediateSnapshots = ["0001", "0002", "0003"].map((prefix) =>
   JSON.parse(readFileSync(fileURLToPath(new URL(`../../drizzle/meta/${prefix}_snapshot.json`, import.meta.url)), "utf8")) as BaselineSnapshot,
 );
 const snapshotsByAppliedCount = [baselineSnapshot, ...intermediateSnapshots, currentSnapshot];

@@ -153,7 +153,7 @@ describe("BUG-002 match action authorization", () => {
         method: "POST",
         url: `/api/v1/matches/${String(match.id)}/start`,
         cookies: { tab10_session: participantCookie },
-        payload: {},
+        payload: { firstServerParticipantId: (await services.matches.getMatch(String(match.id)))!.participants[0]!.id },
       });
       const after = snapshot(await getMatch(String(match.id)));
 
@@ -170,7 +170,7 @@ describe("BUG-002 match action authorization", () => {
       method: "POST",
       url: `/api/v1/matches/${participantMatchId}/start`,
       cookies: { tab10_session: creatorCookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(participantMatchId))!.participants[0]!.id },
     });
     const before = snapshot(await getMatch(participantMatchId));
     const denied = await app.inject({
@@ -200,7 +200,7 @@ describe("BUG-002 match action authorization", () => {
       method: "POST",
       url: `/api/v1/matches/${judgedMatchId}/start`,
       cookies: { tab10_session: creatorCookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(judgedMatchId))!.participants[0]!.id },
     });
     await app.inject({
       method: "POST",
@@ -258,7 +258,7 @@ describe("BUG-002 match action authorization", () => {
       method: "POST",
       url: `/api/v1/matches/${judgedMatchId}/start`,
       cookies: { tab10_session: creatorCookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(judgedMatchId))!.participants[0]!.id },
     });
     await app.inject({
       method: "POST",
@@ -398,7 +398,7 @@ describe("BUG-002 match action authorization", () => {
       method: "POST",
       url: `/api/v1/matches/${matchId}/start`,
       cookies: { tab10_session: creatorCookie },
-      payload: {},
+      payload: { firstServerParticipantId: (await services.matches.getMatch(matchId))!.participants[0]!.id },
     });
     await app.inject({
       method: "POST",
