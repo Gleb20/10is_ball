@@ -309,6 +309,9 @@ export const tournaments = pgTable("tournaments", {
   status: text("status").notNull().default("collecting"),
   format: text("format").notNull().default("single_elimination"),
   organizerParticipates: boolean("organizer_participates").notNull().default(true),
+  requireParticipantConsent: boolean("require_participant_consent")
+    .notNull()
+    .default(false),
   pointsToWin: integer("points_to_win").notNull().default(11),
   mercyEnabled: boolean("mercy_enabled").notNull().default(true),
   mercyPoints: integer("mercy_points").default(5),
@@ -355,11 +358,27 @@ export const tournamentParticipants = pgTable(
     seed: integer("seed"),
     winsSnapshot: integer("wins_snapshot").notNull().default(0),
     status: text("status").notNull().default("active"),
+    addedByUserId: uuid("added_by_user_id"),
+    additionSource: text("addition_source").notNull().default("legacy"),
+    additionIdempotencyKey: uuid("addition_idempotency_key"),
+    additionRequestFingerprint: text("addition_request_fingerprint"),
   },
   (t) => [
     uniqueIndex("tournament_participants_active_user_uid")
       .on(t.tournamentId, t.userId)
       .where(sql`${t.userId} IS NOT NULL AND ${t.status} = 'active'`),
+    uniqueIndex("tournament_participants_add_idempotency_uid")
+      .on(t.tournamentId, t.additionIdempotencyKey)
+      .where(sql`${t.additionIdempotencyKey} IS NOT NULL`),
+    check(
+      "tournament_participants_addition_source_check",
+      sql`${t.additionSource} = ANY (ARRAY['legacy'::text, 'organizer_default'::text, 'manual_direct'::text, 'manual_override'::text, 'invitation_accept'::text, 'guest_manual'::text])`,
+    ),
+    foreignKey({
+      name: "tournament_participants_added_by_user_id_fkey",
+      columns: [t.addedByUserId],
+      foreignColumns: [users.id],
+    }),
   ],
 );
 
@@ -379,6 +398,7 @@ export const tournamentInvitations = pgTable(
     status: text("status").notNull().default("pending"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     respondedAt: timestamp("responded_at", { withTimezone: true }),
+    terminalReason: text("terminal_reason"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

@@ -1,0 +1,10 @@
+{
+  "capturedAt": "2026-09-14T08:45:57.564Z",
+  "scannedWorktreeFiles": 1031,
+  "candidateCount": 0,
+  "skippedCount": 0,
+  "reviewedBenignCount": 12,
+  "allowlist": "temporary review-only extension from scan-receipt-07; project policy unchanged",
+  "sourcePathsChecked": 323,
+  "sourceMismatches": 0
+}

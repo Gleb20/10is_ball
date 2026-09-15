@@ -1,0 +1,15 @@
+{
+  "scope": "Preparation diagnostic, not UX pilot",
+  "baseline": "GAP012 r3 app bytes",
+  "route": "http://localhost:4617/tournaments/cd994b4a-bf06-4067-a495-6612ea2e495f",
+  "tournamentId": "cd994b4a-bf06-4067-a495-6612ea2e495f",
+  "userId": "fe3471ef-3a1c-4e60-9604-6ebdd516bec7",
+  "partialQuery": "Поздний",
+  "partialOptions": [
+    "Синтетический Поздний"
+  ],
+  "fullQuery": "Поздний Синтетический",
+  "fullOptions": [],
+  "body": "К содержимому\nДиагностика имени — синтетический турнир\nОбновить\nСбор\nSingle elim.\nНастройки и правила\nИзменить\n\nДо 11 очков · преимущество 5 · организатор не играет\n\nДля приглашённых участников требуется согласие. Ручное добавление — отдельное подтверждаемое исключение.\n\nОтменить турнир\nУчастники (0)\n\nПока никого нет\n\nДобавить игрока\nДобавить в состав\nПригласить игрока\nОтправить приглашение\nДобавить гостя (Имя Фамилия)\nДобавить гостя\nИтоги\n\nДлительность не определена · сыграно матчей: 0\n\nИтогов пока нет\n\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+  "classification": "Name-order mismatch confirmed in UserPicker; MatchCreate FirstLast query returns same person. No participant added."
+}

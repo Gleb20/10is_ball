@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "reviewer": "Terra High research_protocol_review",
+  "snapshot": "/private/tmp/tab10-ux-correction-review-01",
+  "exportSha256": "f7e686d5aee324c237f839cefc7115487f791b98c7466f0c7d64c49651f18675",
+  "verifiedPaths": 738,
+  "probeManifest": "daa24762d74ada24bf4a24cdb5b38b0e87183eaaedfdcb04afdd829bce5d8fcc",
+  "probePayloads": 9,
+  "readyTask": "BUG-039",
+  "adminScenarioRemapping": "PASS;72rows; originalAD01/02/03 retained",
+  "acceptedByCoordinator": true,
+  "implementation": "not performed"
+}

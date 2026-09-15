@@ -22,10 +22,11 @@ import {
   type BracketConstructionAlgorithm,
   type BracketGraphV2,
 } from "@tab10/shared";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import type { Clock } from "@tab10/test-utils";
 import type { Db } from "../../db/client.js";
 import {
+  auditLogs,
   judgeSessions,
   matches,
   matchParticipants,
@@ -45,6 +46,16 @@ import { loadTournamentBracket, swapSeedOrderByMatchIds } from "./bracket-load.j
 import { tournamentSummary } from "./tournament-summary.js";
 
 type ActiveParticipant = typeof tournamentParticipants.$inferSelect;
+type AddParticipantInput = {
+  tournamentId: string;
+  actorUserId: string;
+  userId?: string;
+  guestFirstName?: string;
+  guestLastName?: string;
+  confirmManualOverride?: boolean;
+  confirmBracketRegeneration?: boolean;
+  idempotencyKey?: string;
+};
 const COMPLETED_TOURNAMENT_STATUSES = new Set([
   "finished",
   "stopped",
@@ -77,7 +88,7 @@ export class TournamentService {
 
   private async closeInvitationNotifications(
     invitations: Array<{ id: string; invitedUserId: string }>,
-    reasonCode: "event_cancelled" | "roster_closed",
+    reasonCode: "event_cancelled" | "roster_closed" | "manual_override",
     readAt: Date,
     db: Db,
   ) {
@@ -120,6 +131,7 @@ export class TournamentService {
     pointsToWin?: number;
     mercyEnabled?: boolean;
     mercyPoints?: number | null;
+    requireParticipantConsent?: boolean;
   }) {
     const organizerParticipates = input.organizerParticipates ?? true;
     const thirdPlaceEnabled =
@@ -132,6 +144,7 @@ export class TournamentService {
         createdByUserId: input.createdByUserId,
         defaultJudgeUserId: input.defaultJudgeUserId ?? input.createdByUserId,
         organizerParticipates,
+        requireParticipantConsent: input.requireParticipantConsent ?? false,
         thirdPlaceEnabled,
         pointsToWin: input.pointsToWin ?? 11,
         mercyEnabled: input.mercyEnabled ?? true,
@@ -155,6 +168,8 @@ export class TournamentService {
           userId: input.createdByUserId,
           winsSnapshot: stats?.winsAllTime ?? 0,
           status: "active",
+          addedByUserId: input.createdByUserId,
+          additionSource: "organizer_default",
         });
       } catch (e) {
         // Avoid orphan collecting tournaments when roster insert fails
@@ -234,7 +249,11 @@ export class TournamentService {
         if (withdrawn) {
           await db
             .update(tournamentParticipants)
-            .set({ status: "active" })
+            .set({
+              status: "active",
+              addedByUserId: actorUserId,
+              additionSource: "organizer_default",
+            })
             .where(eq(tournamentParticipants.id, withdrawn.id));
         } else {
           await db.insert(tournamentParticipants).values({
@@ -242,6 +261,8 @@ export class TournamentService {
             userId: actorUserId,
             winsSnapshot: stats?.winsAllTime ?? 0,
             status: "active",
+            addedByUserId: actorUserId,
+            additionSource: "organizer_default",
           });
         }
       }
@@ -279,13 +300,7 @@ export class TournamentService {
     });
   }
 
-  async addParticipant(input: {
-    tournamentId: string;
-    actorUserId: string;
-    userId?: string;
-    guestFirstName?: string;
-    guestLastName?: string;
-  }) {
+  async addParticipant(input: AddParticipantInput) {
     return this.db.transaction(async (transaction) => {
       const db = transaction as unknown as Db;
       await db
@@ -297,10 +312,127 @@ export class TournamentService {
       if (!t) {
         throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
       }
-      if (t.createdByUserId !== input.actorUserId) {
+      const actor = await db.query.users.findFirst({
+        where: eq(users.id, input.actorUserId),
+      });
+      const isOrganizer = t.createdByUserId === input.actorUserId;
+      const isActiveAdmin = actor?.role === "admin" && actor.status === "active";
+      if (!actor || actor.status !== "active" || (!isOrganizer && !isActiveAdmin)) {
         throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
       }
-      const participant = await this.insertParticipant(t, input, db);
+      if (!input.userId && !isOrganizer) {
+        throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+      }
+      if (input.userId) {
+        const target = await db.query.users.findFirst({
+          where: eq(users.id, input.userId),
+        });
+        if (!target || target.status !== "active") {
+          throw Object.assign(new Error("USER_NOT_ACTIVE"), {
+            code: "USER_NOT_ACTIVE",
+          });
+        }
+      }
+      const requiresOverride = Boolean(input.userId) &&
+        (t.requireParticipantConsent || !isOrganizer);
+      if (requiresOverride && input.confirmManualOverride !== true) {
+        throw Object.assign(new Error("MANUAL_OVERRIDE_CONFIRMATION_REQUIRED"), {
+          code: "MANUAL_OVERRIDE_CONFIRMATION_REQUIRED",
+        });
+      }
+      const additionSource = !input.userId
+        ? "guest_manual"
+        : requiresOverride
+          ? "manual_override"
+          : "manual_direct";
+      const fingerprint = createHash("sha256")
+        .update(JSON.stringify({
+          actorUserId: input.actorUserId,
+          userId: input.userId ?? null,
+          guestFirstName: input.guestFirstName?.trim() ?? null,
+          guestLastName: input.guestLastName?.trim() ?? null,
+          additionSource,
+          confirmBracketRegeneration: input.confirmBracketRegeneration === true,
+        }))
+        .digest("hex");
+      if (input.idempotencyKey) {
+        const replay = await db.query.tournamentParticipants.findFirst({
+          where: and(
+            eq(tournamentParticipants.tournamentId, input.tournamentId),
+            eq(tournamentParticipants.additionIdempotencyKey, input.idempotencyKey),
+          ),
+        });
+        if (replay) {
+          if (replay.additionRequestFingerprint !== fingerprint) {
+            throw Object.assign(new Error("IDEMPOTENCY_KEY_REUSED"), {
+              code: "IDEMPOTENCY_KEY_REUSED",
+            });
+          }
+          return replay;
+        }
+      }
+      if (
+        t.status !== "collecting" &&
+        t.status !== "needs_regeneration" &&
+        t.status !== "bracket_generated"
+      ) {
+        throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
+      }
+      const regeneratesBracket = t.status === "bracket_generated";
+      if (regeneratesBracket && input.confirmBracketRegeneration !== true) {
+        throw Object.assign(new Error("BRACKET_REGEN_CONFIRMATION_REQUIRED"), {
+          code: "BRACKET_REGEN_CONFIRMATION_REQUIRED",
+        });
+      }
+      const participant = await this.insertParticipant(
+        t,
+        {
+          ...input,
+          addedByUserId: input.actorUserId,
+          additionSource,
+          additionIdempotencyKey: input.idempotencyKey,
+          additionRequestFingerprint: input.idempotencyKey ? fingerprint : undefined,
+        },
+        db,
+      );
+      if (participant?.userId) {
+        const now = this.clock.now();
+        const cancelled = await db
+          .update(tournamentInvitations)
+          .set({
+            status: "cancelled",
+            respondedAt: now,
+            terminalReason: "manual_override",
+          })
+          .where(and(
+            eq(tournamentInvitations.tournamentId, input.tournamentId),
+            eq(tournamentInvitations.invitedUserId, participant.userId),
+            eq(tournamentInvitations.status, "pending"),
+          ))
+          .returning({
+            id: tournamentInvitations.id,
+            invitedUserId: tournamentInvitations.invitedUserId,
+          });
+        await this.closeInvitationNotifications(
+          cancelled,
+          "manual_override",
+          now,
+          db,
+        );
+      }
+      await db.insert(auditLogs).values({
+        actorUserId: input.actorUserId,
+        action: "tournament.participant_manually_added",
+        entityType: "tournament_participant",
+        entityId: participant!.id,
+        meta: {
+          source: additionSource,
+          tournamentId: input.tournamentId,
+          targetUserId: participant!.userId,
+          consentRequired: t.requireParticipantConsent,
+          bracketRegenerated: regeneratesBracket,
+        },
+      });
       if (participant?.userId && participant.userId !== t.createdByUserId) {
         const organizerTeams = await db
           .select({ teamId: teamMemberships.teamId })
@@ -333,6 +465,14 @@ export class TournamentService {
           }
         }
       }
+      if (regeneratesBracket) {
+        await this.generateBracketInTransaction(
+          input.tournamentId,
+          input.actorUserId,
+          { authorizationAlreadyChecked: true },
+          db,
+        );
+      }
       return participant;
     });
   }
@@ -344,10 +484,18 @@ export class TournamentService {
       userId?: string;
       guestFirstName?: string;
       guestLastName?: string;
+      addedByUserId?: string;
+      additionSource?: "legacy" | "organizer_default" | "manual_direct" | "manual_override" | "invitation_accept" | "guest_manual";
+      additionIdempotencyKey?: string;
+      additionRequestFingerprint?: string;
     },
     db: Db = this.db,
   ) {
-    if (t.status !== "collecting" && t.status !== "needs_regeneration") {
+    if (
+      t.status !== "collecting" &&
+      t.status !== "needs_regeneration" &&
+      t.status !== "bracket_generated"
+    ) {
       throw Object.assign(new Error("INVALID_STATUS"), {
         code: "INVALID_STATUS",
         message: "Roster closed after bracket generation",
@@ -385,6 +533,10 @@ export class TournamentService {
             : null,
         winsSnapshot,
         status: "active",
+        addedByUserId: input.addedByUserId,
+        additionSource: input.additionSource ?? "legacy",
+        additionIdempotencyKey: input.additionIdempotencyKey,
+        additionRequestFingerprint: input.additionRequestFingerprint,
       })
       .returning();
     return row;
@@ -492,7 +644,9 @@ export class TournamentService {
           })
           .where(eq(tournaments.id, input.tournamentId));
       }
-      return this.get(input.tournamentId, db);
+      return this.get(input.tournamentId, db, {
+        healOrganizerParticipation: false,
+      });
     });
   }
 
@@ -523,7 +677,11 @@ export class TournamentService {
       const now = this.clock.now();
       const cancelledInvites = await db
         .update(tournamentInvitations)
-        .set({ status: "cancelled", respondedAt: now })
+        .set({
+          status: "cancelled",
+          respondedAt: now,
+          terminalReason: "event_cancelled",
+        })
         .where(
           and(
             eq(tournamentInvitations.tournamentId, tournamentId),
@@ -553,7 +711,11 @@ export class TournamentService {
     });
   }
 
-  async get(id: string, db: Db = this.db) {
+  async get(
+    id: string,
+    db: Db = this.db,
+    options: { healOrganizerParticipation?: boolean } = {},
+  ) {
     const t = await db.query.tournaments.findFirst({
       where: eq(tournaments.id, id),
     });
@@ -564,6 +726,7 @@ export class TournamentService {
 
     // Heal older tournaments: organizerParticipates but missing from roster
     if (
+      options.healOrganizerParticipation !== false &&
       t.organizerParticipates &&
       (t.status === "collecting" || t.status === "needs_regeneration") &&
       !participants.some(
@@ -578,6 +741,8 @@ export class TournamentService {
         userId: t.createdByUserId,
         winsSnapshot: stats?.winsAllTime ?? 0,
         status: "active",
+        addedByUserId: t.createdByUserId,
+        additionSource: "organizer_default",
       });
       participants = await db.query.tournamentParticipants.findMany({
         where: eq(tournamentParticipants.tournamentId, id),
@@ -637,6 +802,7 @@ export class TournamentService {
             avatarKey: u?.generatedAvatarKey ?? null,
             expiresAt: i.expiresAt,
             respondedAt: i.respondedAt,
+            terminalReason: i.terminalReason,
           };
         }),
       matches: tournamentMatches,
@@ -649,10 +815,37 @@ export class TournamentService {
     });
     if (!tournament) return null;
     if (!COMPLETED_TOURNAMENT_STATUSES.has(tournament.status)) {
+      const actor = await this.db.query.users.findFirst({
+        where: eq(users.id, actorUserId),
+      });
       const scope = await this.visibleActiveTournamentIds(actorUserId);
+      const hasContext =
+        tournament.createdByUserId === actorUserId || scope.has(tournament.id);
+      if (actor?.role === "admin" && actor.status === "active" && !hasContext) {
+        const detail = await this.get(id, this.db, {
+          healOrganizerParticipation: false,
+        });
+        if (!detail) return null;
+        return {
+          id: detail.id,
+          title: detail.title,
+          format: detail.format,
+          status: detail.status,
+          createdByUserId: detail.createdByUserId,
+          requireParticipantConsent: detail.requireParticipantConsent,
+          participants: detail.participants
+            .filter((participant) => isActiveParticipant(participant))
+            .map((participant) => ({
+              id: participant.id,
+              userId: participant.userId,
+              displayName: participant.displayName,
+              avatarKey: participant.avatarKey,
+              status: participant.status,
+            })),
+        };
+      }
       if (
-        tournament.createdByUserId !== actorUserId &&
-        !scope.has(tournament.id)
+        !hasContext
       ) {
         throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
       }
@@ -701,7 +894,11 @@ export class TournamentService {
       const now = this.clock.now();
       await db
         .update(tournamentInvitations)
-        .set({ status: "cancelled", respondedAt: now })
+        .set({
+          status: "cancelled",
+          respondedAt: now,
+          terminalReason: "organizer_cancelled",
+        })
         .where(eq(tournamentInvitations.id, inv.id));
       await markInvitationNotificationsRead(db, {
         userId: inv.invitedUserId,
@@ -714,16 +911,31 @@ export class TournamentService {
   }
 
   async list(actorUserId: string) {
-    const [rows, scopedActiveIds] = await Promise.all([
+    const [rows, scopedActiveIds, actor] = await Promise.all([
       this.db.query.tournaments.findMany(),
       this.visibleActiveTournamentIds(actorUserId),
+      this.db.query.users.findFirst({ where: eq(users.id, actorUserId) }),
     ]);
+    if (actor?.role === "admin" && actor.status === "active") return rows;
     return rows.filter(
       (tournament) =>
         COMPLETED_TOURNAMENT_STATUSES.has(tournament.status) ||
         tournament.createdByUserId === actorUserId ||
         scopedActiveIds.has(tournament.id),
     );
+  }
+
+  async listCatalog(actorUserId: string) {
+    const [rows, actor] = await Promise.all([
+      this.list(actorUserId),
+      this.db.query.users.findFirst({ where: eq(users.id, actorUserId) }),
+    ]);
+    if (actor?.role !== "admin" || actor.status !== "active") return rows;
+    return rows.map((tournament) => ({
+      id: tournament.id,
+      title: tournament.title,
+      status: tournament.status,
+    }));
   }
 
   private async visibleActiveTournamentIds(actorUserId: string) {
@@ -796,7 +1008,7 @@ export class TournamentService {
       const now = this.clock.now();
       const expired = await db
         .update(tournamentInvitations)
-        .set({ status: "expired", respondedAt: now })
+        .set({ status: "expired", respondedAt: now, terminalReason: "expired" })
         .where(
           and(
             eq(tournamentInvitations.tournamentId, input.tournamentId),
@@ -881,7 +1093,7 @@ export class TournamentService {
         if (inv.status === "pending") {
           await db
             .update(tournamentInvitations)
-            .set({ status: "expired", respondedAt: now })
+            .set({ status: "expired", respondedAt: now, terminalReason: "expired" })
             .where(
               and(
                 eq(tournamentInvitations.id, inv.id),
@@ -913,7 +1125,11 @@ export class TournamentService {
       const status = input.accept ? "accepted" : "declined";
       await db
         .update(tournamentInvitations)
-        .set({ status, respondedAt: now })
+        .set({
+          status,
+          respondedAt: now,
+          terminalReason: input.accept ? null : "declined",
+        })
         .where(
           and(
             eq(tournamentInvitations.id, inv.id),
@@ -928,7 +1144,12 @@ export class TournamentService {
         if (!alreadyActive) {
           await this.insertParticipant(
             tournament,
-            { tournamentId: inv.tournamentId, userId: input.userId },
+            {
+              tournamentId: inv.tournamentId,
+              userId: input.userId,
+              addedByUserId: input.userId,
+              additionSource: "invitation_accept",
+            },
             db,
           );
         }
@@ -971,6 +1192,7 @@ export class TournamentService {
     opts: {
       constructionAlgorithm?: unknown;
       rng?: () => number;
+      authorizationAlreadyChecked?: boolean;
     },
     db: Db,
   ) {
@@ -982,15 +1204,15 @@ export class TournamentService {
       .for("update");
     const t = await this.get(tournamentId, db);
     if (!t) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
-    if (t.createdByUserId !== actorUserId) {
+    if (!opts.authorizationAlreadyChecked && t.createdByUserId !== actorUserId) {
       throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
     }
     if (t.status !== "collecting" && t.status !== "needs_regeneration" && t.status !== "bracket_generated") {
       throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
     }
-    if (t.bracketJson) {
-      loadTournamentBracket(t.bracketJson);
-    }
+    const loadedExistingBracket = t.bracketJson
+      ? loadTournamentBracket(t.bracketJson)
+      : null;
 
     const playing = this.playingParticipants(t);
     if (playing.length < 3) {
@@ -1046,9 +1268,63 @@ export class TournamentService {
     const existingSeeds = playing
       .filter((p) => p.seed != null)
       .sort((a, b) => (a.seed ?? 0) - (b.seed ?? 0));
-    const seeded =
-      hasExistingBracket && existingSeeds.length === playing.length
-        ? existingSeeds.map((p) => p.id)
+    const playingIds = new Set(playing.map((participant) => participant.id));
+    const legacyV1SeedOrder = loadedExistingBracket?.kind === "v1" &&
+      loadedExistingBracket.bracket.format === "single_elimination"
+      ? loadedExistingBracket.bracket.slots
+          // The legacy generator stores the original seeded seats in round 0.
+          // Later-round propagated winners and synthetic bye pads are not seeds.
+          .filter(
+            (slot) =>
+              slot.round === 0 &&
+              slot.side === "main" &&
+              !slot.isBye &&
+              slot.participantId !== null &&
+              playingIds.has(slot.participantId),
+          )
+          .sort((a, b) => a.position - b.position)
+          .map((slot) => slot.participantId!)
+          .filter((participantId, index, order) =>
+            order.indexOf(participantId) === index,
+          )
+      : [];
+    const preservedIds = new Set(legacyV1SeedOrder);
+    const remainingPlaying = playing.filter(
+      (participant) => !preservedIds.has(participant.id),
+    );
+    const remainingSeeded = remainingPlaying
+      .filter((participant) => participant.seed != null)
+      .sort((a, b) => (a.seed ?? 0) - (b.seed ?? 0));
+    const remainingSeededIds = new Set(
+      remainingSeeded.map((participant) => participant.id),
+    );
+    const seeded = legacyV1SeedOrder.length > 0
+      ? [
+          ...legacyV1SeedOrder,
+          ...remainingSeeded.map((participant) => participant.id),
+          ...seedParticipants(
+            remainingPlaying
+              .filter((participant) => !remainingSeededIds.has(participant.id))
+              .map((participant) => ({
+                id: participant.id,
+                wins: participant.winsSnapshot,
+              })),
+            rng,
+          ),
+        ]
+      : hasExistingBracket && existingSeeds.length > 0
+        ? [
+            ...existingSeeds.map((p) => p.id),
+            ...seedParticipants(
+              playing
+                .filter((participant) => participant.seed == null)
+                .map((participant) => ({
+                  id: participant.id,
+                  wins: participant.winsSnapshot,
+                })),
+              rng,
+            ),
+          ]
         : seedParticipants(
             playing.map((p) => ({ id: p.id, wins: p.winsSnapshot })),
             rng,
@@ -1078,7 +1354,7 @@ export class TournamentService {
     const now = this.clock.now();
     const expiredInvites = await db
       .update(tournamentInvitations)
-      .set({ status: "expired", respondedAt: now })
+      .set({ status: "expired", respondedAt: now, terminalReason: "roster_closed" })
       .where(
         and(
           eq(tournamentInvitations.tournamentId, tournamentId),
@@ -1189,6 +1465,22 @@ export class TournamentService {
         b.isBye = byeA;
       }
       const next = { ...bracket, slots };
+      const seedOrder = slots
+        .filter(
+          (slot) =>
+            slot.round === 0 &&
+            slot.side === "main" &&
+            !slot.isBye &&
+            slot.participantId !== null,
+        )
+        .sort((a, b) => a.position - b.position)
+        .map((slot) => slot.participantId!);
+      for (let i = 0; i < seedOrder.length; i += 1) {
+        await db
+          .update(tournamentParticipants)
+          .set({ seed: i + 1 })
+          .where(eq(tournamentParticipants.id, seedOrder[i]!));
+      }
       const [row] = await db
         .update(tournaments)
         .set({

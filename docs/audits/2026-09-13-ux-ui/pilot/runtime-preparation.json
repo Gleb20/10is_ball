@@ -1,0 +1,39 @@
+{
+  "status": "PREPARED_NOT_AUDIT_ACCEPTED",
+  "candidate": "GAP012r3",
+  "source_export_manifest": "c60920f545e007ec656ee88194430acd6999558e7a531edb4f1904a22ad91b5e",
+  "changed_application_paths_matched": 35,
+  "compiled_web_assets": {
+    "apps/web/dist/index.html": "ab1838030c7984930a614cc7717e97a8e37d1333a38e561c508b26df40563486",
+    "apps/web/dist/release.json": "f33c18fd22c11eaec0476137163ab50cad242338b60d542c3c1e3d27db1eb060",
+    "apps/web/dist/avatars/avatar_3.png": "222d7f7ccf1d9acbaddb9b71668ec527ac41302d324348da764dc9bfab4ca06e",
+    "apps/web/dist/avatars/avatar_2.png": "9ab6416d8b7b0be801960ac80e3a5af093197393b0cd4a03ae653c913d9b5df5",
+    "apps/web/dist/avatars/avatar_1.png": "38d956016472d2c11c9b2de1d1f97e49433002e4074c9863d5e843db2f0825f5",
+    "apps/web/dist/avatars/avatar_5.png": "bec0ccb5fcf5b2036fda42f16786bf4a6c43e127357513231766a3f7d1283d3e",
+    "apps/web/dist/avatars/avatar_4.png": "bbd57f0efebd3d88d55dac69452bd12c2863224471850a622b6599d94ec78107",
+    "apps/web/dist/avatars/avatar_6.png": "3a42bccb5ed01924f0103c9afdb505c6955412827d0e129a7a97aaf399466328",
+    "apps/web/dist/avatars/avatar_7.png": "d4cf6c7683014b433fea7eabc6cdcbf885efdd89d1e70de933e6f9c598687a73",
+    "apps/web/dist/avatars/avatar_9.png": "4d83399bbd2468c3a652a77acb87a7be43ea3bcc91ab49ab08339ecc433047ba",
+    "apps/web/dist/avatars/avatar_8.png": "86d6b456ab14c47e3f5a906e45a4fe4df8a466166c21ecb1d18c1a141b5eb813",
+    "apps/web/dist/avatars/avatar_10.png": "8761fbff958a2b2e5b9a548439255872c03d7f4bb2e714871b4ccf9139ed890d",
+    "apps/web/dist/assets/index-CIpMKdZa.js": "1ca32958b3ea8270594698a26325321339a7df0b29ca8c9971060d4dce6f4ef3",
+    "apps/web/dist/assets/index-Cd0yqaHs.css": "8724ec4809b039413061e64177d7fb1ebea8c1dec51607d069e510b3f01afec1"
+  },
+  "runtime": {
+    "web": "http://localhost:4617",
+    "api": "http://127.0.0.1:4618",
+    "postgres_project": "tab10-ux-pilot-4617",
+    "postgres_port": 33007,
+    "api_session": 35633,
+    "web_session": 11992
+  },
+  "checks": {
+    "production_build": "PASS",
+    "compiled_migration_foundation": "9/9 PASS",
+    "docs_audit": "88files/57items PASS"
+  },
+  "remaining_gate": "GAP012 finalfullci+runtimeacceptance before pilot audit",
+  "historical_receipt": true,
+  "superseded_by": "../gap012-acceptance-review.json and ../pilot-review.json",
+  "current_runtime_status": "cleaned up after accepted pilot; evidence/cleanup.json"
+}

@@ -1,0 +1,19 @@
+{
+  "url": "http://localhost:4617/matches/307bf34a-7dbb-4e22-ade1-c9f77650e820/judge",
+  "title": "Tab-10",
+  "body": "Подключение судьи…",
+  "focus": {
+    "tag": "BODY",
+    "role": null,
+    "label": null,
+    "text": "\n    Подключение судьи…\n  \n\n"
+  },
+  "controls": [],
+  "viewport": {
+    "w": 390,
+    "h": 844,
+    "scrollX": 0,
+    "scrollY": 0,
+    "scrollWidth": 390
+  }
+}

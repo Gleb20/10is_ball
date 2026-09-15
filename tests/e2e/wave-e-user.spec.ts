@@ -92,21 +92,15 @@ function collectPageErrors(...pages: Page[]) {
   return errors;
 }
 
-test("Wave E match consent, optional judge and prestart roster editing", async ({ page, browser }, info) => {
+test("GAP-012 operator creates A-vs-B, edits it and starts without player consent", async ({ page }, info) => {
   test.setTimeout(90_000);
   const fixture = await adminApi();
   const key = info.project.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
-  const outsider = await createUser(fixture.api, `e-outsider-${key}`, `Игрок ${key}`);
+  const playerA = await createUser(fixture.api, `gap012-a-${key}`, `Первый ${key}`);
+  const playerB = await createUser(fixture.api, `gap012-b-${key}`, `Второй ${key}`);
   const judge = await createUser(fixture.api, `e-judge-${key}`, `Судья ${key}`);
-  const replacement = await createUser(fixture.api, `e-replacement-${key}`, `Замена ${key}`);
-  const outsiderBrowser = await browser.newContext({
-    baseURL,
-    viewport: { width: 390, height: 844 },
-    storageState: await outsider.api.storageState(),
-  });
-  const outsiderPage = await outsiderBrowser.newPage();
-  const errors = collectPageErrors(page, outsiderPage);
-  const title = `E consent ${info.project.name}`;
+  const errors = collectPageErrors(page);
+  const title = `GAP-012 ${info.project.name}`;
   let createdMatchId: string | undefined;
 
   try {
@@ -114,8 +108,12 @@ test("Wave E match consent, optional judge and prestart roster editing", async (
     await expect(page).toHaveURL(/\/$/);
     await page.goto("/matches/new");
     await page.getByLabel("Название", { exact: true }).fill(title);
-    await page.getByRole("combobox", { name: "Соперник", exact: true }).fill(outsider.label);
-    await page.getByRole("option", { name: outsider.label, exact: true }).click();
+    await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
+    await expect(page.getByLabel("Пригласить выбранных игроков", { exact: true })).not.toBeChecked();
+    await page.getByRole("combobox", { name: "Игрок A", exact: true }).fill(playerA.label);
+    await page.getByRole("option", { name: playerA.label, exact: true }).click();
+    await page.getByRole("combobox", { name: "Соперник", exact: true }).fill(playerB.label);
+    await page.getByRole("option", { name: playerB.label, exact: true }).click();
     await page.getByRole("combobox", { name: "Судья (необязательно)", exact: true }).fill(judge.label);
     await page.getByRole("option", { name: judge.label, exact: true }).click();
     await page.getByRole("button", { name: "Создать матч", exact: true }).click();
@@ -124,62 +122,46 @@ test("Wave E match consent, optional judge and prestart roster editing", async (
     createdMatchId = matchId;
 
     let match = (await (await fixture.api.get(`/api/v1/matches/${matchId}`)).json()).match;
-    const initialOutsider = match.participants.find((row: { userId?: string }) => row.userId === outsider.user.id);
-    const playerInvitation = match.invitations.find((row: { kind: string }) => row.kind === "player");
+    expect(match.createdByUserId).toBe(fixture.user.id);
+    expect(match.participants.map((row: { userId?: string }) => row.userId).sort()).toEqual(
+      [playerA.user.id, playerB.user.id].sort(),
+    );
+    expect(match.participants.some((row: { userId?: string }) => row.userId === fixture.user.id)).toBe(false);
+    expect(match.invitations.filter((row: { kind: string }) => row.kind === "player")).toEqual([]);
     const judgeInvitation = match.invitations.find((row: { kind: string }) => row.kind === "judge");
-    expect(initialOutsider).toBeTruthy();
-    expect(playerInvitation).toMatchObject({ invitedUserId: outsider.user.id, status: "pending" });
     expect(judgeInvitation).toMatchObject({ invitedUserId: judge.user.id, status: "pending" });
-    await expect(page.getByRole("button", { name: "Старт", exact: true })).toBeDisabled();
-    await expect(page.getByRole("status")).toContainText(initialOutsider.displayName);
-    const blocked = await fixture.api.post(`/api/v1/matches/${matchId}/start`, {
-      data: { firstServerParticipantId: match.participants[0].id },
-      headers: await mutationHeaders(fixture.api),
-    });
-    expect(blocked.status()).toBe(409);
-    expect((await blocked.json()).code).toBe("PLAYER_CONSENT_REQUIRED");
-
-    await outsiderPage.goto("/notifications");
-    const playerNotice = outsiderPage.locator(".card").filter({ hasText: "Приглашение в матч" });
-    await expect(playerNotice).toHaveCount(1);
-    await playerNotice.getByRole("button", { name: "Принять", exact: true }).click();
-    await expect(outsiderPage).toHaveURL(new RegExp(`/matches/${matchId}$`));
-    await expect(outsiderPage.getByText("Принято", { exact: true })).toBeVisible();
-
-    await mutate(judge.api, `/api/v1/match-invitations/${judgeInvitation.id}/accept`, {});
-    match = (await (await fixture.api.get(`/api/v1/matches/${matchId}`)).json()).match;
-    expect(match.activeJudge).toBeNull();
-    expect(match.judgeReservation ?? null).toBeNull();
-    expect(match.invitations.find((row: { id: string }) => row.id === judgeInvitation.id).status).toBe("accepted");
-
-    await page.reload();
     await expect(page.getByRole("button", { name: "Старт", exact: true })).toBeEnabled();
     await page.getByRole("button", { name: "Изменить матч", exact: true }).click();
-    const stableEditor = page.getByRole("dialog", { name: "Изменить матч", exact: true });
-    await stableEditor.getByLabel("Название", { exact: true }).fill(`${title} stable`);
-    await stableEditor.getByRole("button", { name: "Сохранить изменения", exact: true }).click();
-    await expect(stableEditor).toHaveCount(0);
+    const editor = page.getByRole("dialog", { name: "Изменить матч", exact: true });
+    await expect(editor.getByText("Создатель управляет матчем, но не занимает игровое место.")).toBeVisible();
+    await expect(editor.getByRole("combobox", { name: "Игрок A", exact: true })).toHaveValue(playerA.label);
+    await editor.getByLabel("Название", { exact: true }).fill(`${title} edited`);
+    await editor.getByRole("button", { name: "Сохранить изменения", exact: true }).click();
+    await expect(editor).toHaveCount(0);
     match = (await (await fixture.api.get(`/api/v1/matches/${matchId}`)).json()).match;
-    expect(match.participants.find((row: { userId?: string }) => row.userId === outsider.user.id).id).toBe(initialOutsider.id);
-    expect(match.invitations.find((row: { id: string }) => row.id === playerInvitation.id).status).toBe("accepted");
+    expect(match.title).toBe(`${title} edited`);
+    expect(match.participants.map((row: { userId?: string }) => row.userId).sort()).toEqual(
+      [playerA.user.id, playerB.user.id].sort(),
+    );
 
-    await page.getByRole("button", { name: "Изменить матч", exact: true }).click();
-    const replacementEditor = page.getByRole("dialog", { name: "Изменить матч", exact: true });
-    const opponent = replacementEditor.getByRole("combobox", { name: "Соперник", exact: true });
-    await opponent.fill(replacement.label);
-    await page.getByRole("option", { name: replacement.label, exact: true }).click();
-    await replacementEditor.getByRole("button", { name: "Сохранить изменения", exact: true }).click();
-    await expect(replacementEditor).toHaveCount(0);
+    await page.getByRole("button", { name: "Старт", exact: true }).click();
+    const start = page.getByRole("dialog", { name: "Начать матч?", exact: true });
+    await expect(start.getByRole("checkbox")).toHaveCount(0);
+    await start.getByRole("radio").first().check();
+    await start.getByRole("button", { name: "Начать матч", exact: true }).click();
+    await expect(page.getByText("Идёт", { exact: true })).toBeVisible();
     match = (await (await fixture.api.get(`/api/v1/matches/${matchId}`)).json()).match;
-    const replacementParticipant = match.participants.find((row: { userId?: string }) => row.userId === replacement.user.id);
-    expect(replacementParticipant.id).not.toBe(initialOutsider.id);
-    expect(match.invitations.some((row: { matchParticipantId: string; status: string }) =>
-      row.matchParticipantId === replacementParticipant.id && row.status === "pending",
-    )).toBe(true);
-    await expect(page.getByRole("button", { name: "Старт", exact: true })).toBeDisabled();
-    await expect(page.getByRole("status")).toContainText(replacementParticipant.displayName);
+    expect(match.status).toBe("in_progress");
+    expect(match.invitations.find((row: { id: string }) => row.id === judgeInvitation.id)).toMatchObject({
+      status: "cancelled",
+      expiryReason: "match_started",
+    });
+    const judgeNotifications = (await (await judge.api.get("/api/v1/notifications")).json()).notifications;
+    expect(judgeNotifications).toEqual(expect.arrayContaining([
+      expect.objectContaining({ payload: expect.objectContaining({ invitationId: judgeInvitation.id }), readAt: expect.any(String) }),
+    ]));
     await expectNoOverflow(page);
-    await page.screenshot({ path: info.outputPath("match-consent-editor.png"), fullPage: true });
+    await page.screenshot({ path: info.outputPath("gap-012-operator-match.png"), fullPage: true });
     expect(errors).toEqual([]);
   } finally {
     if (createdMatchId) {
@@ -189,12 +171,11 @@ test("Wave E match consent, optional judge and prestart roster editing", async (
         expect(cancelled.status()).toBe(200);
       }
     }
-    await outsiderBrowser.close();
     await Promise.all([
       fixture.api.dispose(),
-      outsider.api.dispose(),
+      playerA.api.dispose(),
+      playerB.api.dispose(),
       judge.api.dispose(),
-      replacement.api.dispose(),
     ]);
   }
 });

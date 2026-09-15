@@ -1,0 +1,12 @@
+{
+  "observed_at": "2026-09-13T20:55:41.672784+00:00",
+  "method": "GET read-only; curl --fail; no credentials",
+  "url": "https://tab-10.vercel.app/release.json",
+  "response": {
+    "sha": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "version": "3.0.0",
+    "environment": "production",
+    "dirty": false
+  },
+  "scope": "Public web identity only; not functional/authenticated UI acceptance. GAP-012 remains local and unreleased."
+}

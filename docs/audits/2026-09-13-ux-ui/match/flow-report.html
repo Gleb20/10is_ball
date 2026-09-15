@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MATCH · отчёт по пользовательским потокам</title>
+  <style>
+    :root{font:15px/1.55 Inter,system-ui,sans-serif;color:#19202a;background:#eef1f5;--ok:#18794e;--warn:#946200;--fail:#b42318;--nt:#667085;--ink:#182230}
+    *{box-sizing:border-box}body{margin:0}.wrap{max-width:1180px;margin:auto;padding:32px 20px 64px}header,.panel{background:white;border:1px solid #d0d5dd;border-radius:16px;padding:22px;margin-bottom:18px}h1,h2,h3,p{margin-top:0}h1{margin-bottom:8px}.meta,.grid{display:grid;gap:12px}.meta{grid-template-columns:repeat(4,1fr);margin-top:18px}.grid{grid-template-columns:repeat(2,1fr)}.metric,.step,.screen{border:1px solid #d0d5dd;border-radius:12px;padding:14px;background:#fff}.flow{display:flex;gap:10px;align-items:stretch;overflow:auto;padding-bottom:6px}.step{min-width:190px;position:relative}.step:not(:last-child)::after{content:"→";position:absolute;right:-19px;top:42%;font-weight:800}.tag{display:inline-block;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:800}.pass{color:var(--ok);background:#e7f6ef}.warn{color:var(--warn);background:#fff4ce}.fail{color:var(--fail);background:#feeceb}.nt{color:var(--nt);background:#eef0f3}table{border-collapse:collapse;width:100%}th,td{text-align:left;vertical-align:top;border-bottom:1px solid #e4e7ec;padding:10px 8px}th{background:#f7f8fa}.evidence{font-family:ui-monospace,monospace;font-size:12px;word-break:break-word}.branch{border-left:4px solid #667085;padding-left:12px}.proposed{border-color:#344054}.callout{background:#f2f4f7;border-left:4px solid #344054;padding:12px}.small{font-size:13px;color:#667085}@media(max-width:800px){.meta,.grid{grid-template-columns:1fr}.flow{flex-direction:column}.step:not(:last-child)::after{content:"↓";right:12px;top:auto;bottom:-20px}}
+  </style>
+</head>
+<body><div class="wrap">
+  <header>
+    <h1>MATCH · flow-report</h1>
+    <p>Экспертный replay production-build на синтетических данных. Приложение не изменялось; предложения ниже меняют структуру и ясность, но не права или доменные правила.</p>
+    <div class="meta">
+      <div class="metric"><strong>Baseline</strong><br>HEAD 9f71b9f · GAP012r6</div>
+      <div class="metric"><strong>Runtime</strong><br>test · PostgreSQL · Chromium 153</div>
+      <div class="metric"><strong>Viewport</strong><br>360 / 390 / 1440</div>
+      <div class="metric"><strong>Результат</strong><br>4 новых finding · 8 dedupe-ссылок</div>
+    </div>
+  </header>
+
+  <section class="panel"><h2>As-is: ручное создание</h2><div class="flow">
+    <article class="step"><span class="tag warn">1 · ориентация</span><h3>Название и формат</h3><p>Creator-role понятна, manual default корректен.</p></article>
+    <article class="step"><span class="tag fail">2 · редкие правила</span><h3>Очки, сухая, подача</h3><p>Занимают первый viewport до выбора состава.</p></article>
+    <article class="step"><span class="tag warn">3 · shortcut</span><h3>Частые / недавние / команды</h3><p>Не обозначено, какой слот будет изменён.</p></article>
+    <article class="step"><span class="tag fail">4 · основная задача</span><h3>Состав</h3><p>Первый slot начинается ниже mobile viewport.</p></article>
+    <article class="step"><span class="tag pass">5 · отправка</span><h3>Создать</h3><p>Валидный 2v2 с гостем и приглашениями persisted.</p></article>
+  </div><p class="evidence">M01/M02 · evidence/m01-create-before-top-390.json · evidence/m02-quick-choices-390.png · evidence/m03-main-match-created.json</p></section>
+
+  <section class="panel proposed"><h2>Proposed: ручное создание</h2><div class="flow">
+    <article class="step"><span class="tag pass">1</span><h3>Контекст и формат</h3><p>Название, 1×1/2×2, играет ли creator.</p></article>
+    <article class="step"><span class="tag pass">2 · primary</span><h3>Сторона A / B</h3><p>Registered/guest slots видны сразу.</p></article>
+    <article class="step"><span class="tag pass">3</span><h3>Scoped shortcuts</h3><p>Активный slot и team preview названы до применения.</p></article>
+    <article class="step"><span class="tag pass">4</span><h3>Правила</h3><p>Краткое summary раскрывается по необходимости.</p></article>
+    <article class="step"><span class="tag pass">5</span><h3>Согласования</h3><p>Judge и явный voluntary invite; ответы не gate.</p></article>
+  </div><p class="evidence">Target: target-spec.md#t-match-create · wireframes.html#create-390 / #create-1440</p></section>
+
+  <section class="panel"><h2>As-is: waiting detail и lifecycle</h2><div class="flow">
+    <article class="step"><span class="tag pass">1</span><h3>Статус и счёт</h3><p>Матч, правила, judge и roster читаются.</p></article>
+    <article class="step"><span class="tag warn">2</span><h3>Согласования</h3><p>Могут занять экран до решения о старте.</p></article>
+    <article class="step"><span class="tag warn">3</span><h3>Пустой журнал</h3><p>Расположен до действий; F-PILOT-002.</p></article>
+    <article class="step"><span class="tag fail">4</span><h3>Действия</h3><p>Start/Judge конкурируют; новый participant после edit нельзя явно пригласить.</p></article>
+    <article class="step"><span class="tag fail">5</span><h3>Cancel</h3><p>Работает, но использует void-термин и не принимает optional reason.</p></article>
+  </div><p class="evidence">M03/M04 · evidence/m03-waiting-creator-390.png · evidence/m04-roster-invitation-lifecycle.json · evidence/m04-cancel-confirm-390.png</p></section>
+
+  <section class="panel proposed"><h2>Proposed: role-aware detail</h2><div class="flow">
+    <article class="step"><span class="tag pass">1</span><h3>Счёт и контекст</h3><p>Side A/B сгруппированы, rules сжаты.</p></article>
+    <article class="step"><span class="tag pass">2 · primary</span><h3>Одно главное действие</h3><p>Creator: Start; judge: Judge; participant: Open score.</p></article>
+    <article class="step"><span class="tag pass">3</span><h3>Согласования</h3><p>Row-scoped Respond / Reinvite / Invite, только по праву.</p></article>
+    <article class="step"><span class="tag pass">4</span><h3>Журнал</h3><p>После task actions; empty state компактный.</p></article>
+    <article class="step"><span class="tag pass">5</span><h3>Destructive</h3><p>Cancel отдельно; точный термин, reason, confirm, stale recovery.</p></article>
+  </div><p class="evidence">Target: target-spec.md#t-match-detail · #t-match-edit-invite · #t-match-cancel</p></section>
+
+  <section class="panel"><h2>Ветви и роли</h2><div class="grid">
+    <article class="screen"><h3>Challenge / revenge</h3><p><span class="tag pass">PASS</span> Creator входит в roster; purposeful invite включён; правила доступны для review.</p><p class="evidence">evidence/m05-challenge-persisted.json · evidence/m05-revenge-persisted.json</p></article>
+    <article class="screen"><h3>Roster edit</h3><p><span class="tag warn">WARN</span> Старый pending invite корректно cancel; replacement добавляется без автоинвайта. Нужен явный row action.</p><p class="evidence">evidence/m04-roster-invitation-lifecycle.json</p></article>
+    <article class="screen"><h3>Participant / judge</h3><p><span class="tag pass">PASS</span> Participant не получает stop/no-show/cancel; current judge получает judge/score/no-show и stop после старта.</p><p class="evidence">evidence/m06-role-action-matrix.json</p></article>
+    <article class="screen"><h3>Active admin</h3><p><span class="tag fail">FAIL + decision</span> Получает тот же 403, что outsider. D17 конфликтует с D23/MATCH-017; расширение visibility не предлагается.</p><p class="evidence">evidence/m06-waiting-active-admin-outside-context-1440.png</p></article>
+  </div></section>
+
+  <section class="panel"><h2>Screen inventory</h2><table><thead><tr><th>Surface/state</th><th>Primary user task</th><th>Runtime</th><th>Target / owner</th></tr></thead><tbody>
+    <tr><td>Create loading/error/ready</td><td>Собрать валидный матч</td><td>Проверено 390</td><td>T-MATCH-CREATE; BUG-025/018/023/026 dedupe</td></tr>
+    <tr><td>Create challenge/revenge</td><td>Подтвердить предзаполненный матч</td><td>Проверено 360/390</td><td>T-MATCH-CREATE</td></tr>
+    <tr><td>Waiting detail</td><td>Понять готовность и начать/судить</td><td>Проверено 390/1440</td><td>T-MATCH-DETAIL</td></tr>
+    <tr><td>Edit dialog</td><td>Изменить до старта</td><td>Проверено 1440</td><td>T-MATCH-EDIT-INVITE</td></tr>
+    <tr><td>Cancel dialog</td><td>Отменить без результата</td><td>Проверено 390 + persisted</td><td>T-MATCH-CANCEL</td></tr>
+    <tr><td>Finished detail</td><td>Реванш / новый матч / void</td><td>Pilot reuse</td><td>T-MATCH-DETAIL; RESULTS shared</td></tr>
+    <tr><td>Admin recovery</td><td>Отменить чужой active standalone</td><td>403 observed</td><td>blocked_decision; ADMIN shared</td></tr>
+  </tbody></table></section>
+
+  <section class="panel"><h2>Anti-pattern check</h2><table><thead><tr><th>Проверка</th><th>Статус</th><th>Вывод</th><th>Evidence</th></tr></thead><tbody>
+    <tr><td>Основная задача до редких настроек</td><td><span class="tag fail">FAIL</span></td><td>Roster ниже rules/help/shortcuts; существующий GAP-013.</td><td class="evidence">m01-create-before-top-390.json</td></tr>
+    <tr><td>Shortcut сообщает destination</td><td><span class="tag fail">FAIL</span></td><td>Кнопка человека/команды не называет изменяемый slot.</td><td class="evidence">m02-quick-choices-390.png</td></tr>
+    <tr><td>Явное действие, без auto-invite</td><td><span class="tag warn">WARN</span></td><td>Автоинвайта нет корректно; post-edit Invite UI отсутствует.</td><td class="evidence">m04-roster-invitation-lifecycle.json</td></tr>
+    <tr><td>Destructive copy соответствует lifecycle</td><td><span class="tag fail">FAIL</span></td><td>Cancel dialog говорит «аннулирован» и не даёт reason.</td><td class="evidence">m04-cancel-confirm-390.png</td></tr>
+    <tr><td>Одно первичное role-aware действие</td><td><span class="tag warn">WARN</span></td><td>Waiting creator видит равновесные Start/Judge/Open score; pilot overlap.</td><td class="evidence">m06-role-action-matrix.json</td></tr>
+    <tr><td>Pending freeze</td><td><span class="tag fail">FAIL</span></td><td>Проверено, но принадлежит BUG-026; нового finding нет.</td><td class="evidence">m05-create-pending-1440.json</td></tr>
+    <tr><td>Popup/focus ownership</td><td><span class="tag fail">FAIL</span></td><td>Принадлежит BUG-018; нового finding нет.</td><td class="evidence">m01-name-order-bug023-390.png; ../pilot/evidence/p29-a-boris-active-1440.png</td></tr>
+    <tr><td>Horizontal overflow</td><td><span class="tag pass">PASS</span></td><td>В захваченных 360/390 screenshots overflow не обнаружен.</td><td class="evidence">snapshot JSON</td></tr>
+    <tr><td>Physical device / WebKit / spoken AT / 200%</td><td><span class="tag nt">NOT TESTED</span></td><td>Недоступно в этом пакете; не заменено CSS-эмуляцией.</td><td class="evidence">runs.csv limits</td></tr>
+  </tbody></table></section>
+
+  <section class="panel"><h2>Открытый вопрос</h2><div class="callout"><strong>D17 ↔ D23/MATCH-017.</strong> Как active admin должен получить минимальный recovery-доступ к чужому active standalone, не превращая это в глобальную видимость live events? До решения `T-MATCH-ADMIN-RECOVERY` не является ready implementation task.</div></section>
+  <p class="small">Артефакты: report.md · runs.csv · findings.json · target-spec.md · requirement-coverage-delta.csv · evidence/ · handoff.md · manifest.sha256.</p>
+</div></body></html>

@@ -1,0 +1,25 @@
+{
+  "scope": "Visual evidence framing only; manual extra scroll is not automatic visibility PASS",
+  "input": {
+    "x": 498.5,
+    "y": 456.390625,
+    "width": 419,
+    "height": 44
+  },
+  "option": {
+    "x": 497.5,
+    "y": 525.390625,
+    "width": 445,
+    "height": 36
+  },
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "query": "Поздний Синтетический",
+  "optionText": "Поздний Синтетический",
+  "scroll": {
+    "x": 0,
+    "y": 586
+  }
+}

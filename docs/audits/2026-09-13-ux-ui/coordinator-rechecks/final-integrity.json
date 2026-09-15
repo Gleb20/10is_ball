@@ -1,0 +1,64 @@
+{
+  "sourceFiles": 323,
+  "packages": {
+    "admin": {
+      "payloads": 35,
+      "manifestSha256": "7accaa9091c822fc897ea0bffad19f4dca5749be27369a369c0bfceb8842cd67"
+    },
+    "admin-reset-spec": {
+      "payloads": 6,
+      "manifestSha256": "321992286d01ed9979cb3b172b2de4a81ba8aa6896b56739e1613fedc4dbbdb1"
+    },
+    "auth": {
+      "payloads": 45,
+      "manifestSha256": "f0b1eb402e85aa362367a7fb4d3f99c4dd7edd330ec50920d21751f7e1e16c39"
+    },
+    "components": {
+      "payloads": 39,
+      "manifestSha256": "3354f54230bb5ebb32c88874950a1051f2adc7162fccae7d6ae1cbe46b555cbf"
+    },
+    "components-recheck": {
+      "payloads": 24,
+      "manifestSha256": "51b1896d8f93a12bfe18309d311399639e812c4678b6f51ce0362d2526480dab"
+    },
+    "components-recheck-correction": {
+      "payloads": 3,
+      "manifestSha256": "5f3c6f5f37fb548811375a99323b958a8160606d8d60296a50af8b390c0cd9c6"
+    },
+    "components-supplement": {
+      "payloads": 14,
+      "manifestSha256": "6d727f3c2ba0ae6e90a7e28dcb38129c874e493d8f914b966af3a686bb297bb3"
+    },
+    "judge": {
+      "payloads": 67,
+      "manifestSha256": "2d52de7833695a17a4bef74229157ca85ea44845cdeec66377207e57f3f9a9dd"
+    },
+    "judge-correction-probe": {
+      "payloads": 9,
+      "manifestSha256": "daa24762d74ada24bf4a24cdb5b38b0e87183eaaedfdcb04afdd829bce5d8fcc"
+    },
+    "match": {
+      "payloads": 79,
+      "manifestSha256": "3d855c482a0227a85f16f9324e468f26acf6270dce16bddd982b1acf9366892d"
+    },
+    "results": {
+      "payloads": 40,
+      "manifestSha256": "b5633165133259c0e3810631c341121747cbf84a5c28b6fb41345f2a17167b15"
+    },
+    "team": {
+      "payloads": 39,
+      "manifestSha256": "db100cb0b383a79a5f365df0aefcb2db068a23ffb55396506917c43eca0150b4"
+    },
+    "tournament": {
+      "payloads": 51,
+      "manifestSha256": "8dd14d1974dc38f250e1ffcce9585d4266e24e283add0a68b7c0a586e96ee308"
+    }
+  },
+  "counts": {
+    "requirement-coverage.csv": 108,
+    "finding-map.csv": 57,
+    "coverage.csv": 72
+  },
+  "errors": [],
+  "scope": "Artifact integrity and cross-reference checks; not UI implementation acceptance"
+}

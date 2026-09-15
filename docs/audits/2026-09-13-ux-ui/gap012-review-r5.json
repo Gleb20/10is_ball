@@ -1,0 +1,15 @@
+{
+  "scope": "r4 to r5 one E2E fixture",
+  "status": "WITHDRAWN_ROOT_CAUSE_NOT_PROVEN",
+  "reviewer": "Terra High",
+  "manifest_sha256": "1cbc60895e9031519443fade7729526b3a86e9a1923d3f7ed8b5a47b0b7cae39",
+  "changed_paths": [
+    "tests/e2e/gap-012.spec.ts"
+  ],
+  "source_files_verified": 52,
+  "findings": "Active registered player fixture completes login/first password/onboarding, preserving unaccepted tournament consent and scoped-admin manual override assertions. Authenticated fixture disposed.",
+  "remaining_gate": "Focused compiled browser previously failing six scenarios desktop/390, then fresh full verify:all. App bytes unchanged from r3.",
+  "previous_status": "PASS_STATIC",
+  "correction": "Coordinator source and runtime probe shows a new never-logged account is active and present in directory. Complete-login fixture change does not address demonstrated name-order mismatch. No full gate authorized on this explanation.",
+  "correction_evidence": "preparation-evidence/new-account-directory.json"
+}

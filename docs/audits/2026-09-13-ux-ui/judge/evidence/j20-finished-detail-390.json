@@ -1,0 +1,51 @@
+{
+  "id": "j20-finished-detail-390",
+  "capturedAt": "2026-09-13T23:29:17.663Z",
+  "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "scroll": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 844
+  },
+  "activeElement": {
+    "tag": "BODY",
+    "id": null,
+    "text": "К содержимомуМатчОбновление…\n\n\nГлавная\n\n\nИстория\n\n\nНачать\n\n\nРейтинг\n\n\nПрофиль",
+    "ariaLabel": null
+  },
+  "buttons": [
+    {
+      "text": "Обновление…",
+      "disabled": true,
+      "rect": {
+        "x": 272.7,
+        "y": 18,
+        "width": 101.3,
+        "height": 44,
+        "top": 18,
+        "right": 374,
+        "bottom": 62,
+        "left": 272.7
+      }
+    }
+  ],
+  "alerts": [],
+  "statuses": [],
+  "scores": [],
+  "pointTargets": [],
+  "serve": null,
+  "errorStyle": null,
+  "horizontalOverflow": false,
+  "runId": "J-RUN-CONFIRM",
+  "persisted": {
+    "status": "finished",
+    "scoreA": 10,
+    "scoreB": 2,
+    "activeJudge": null
+  }
+}

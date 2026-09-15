@@ -1,0 +1,18 @@
+{
+  "browser": "Chromium 153.0.8010.12",
+  "baseURL": "http://localhost:4717",
+  "runtime": {
+    "sha": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "version": "3.0.0",
+    "environment": "test",
+    "dirty": false
+  },
+  "ports": {
+    "web": 4717,
+    "api": 4718,
+    "postgres": 33017
+  },
+  "databaseProject": "tab10-ux-auth-4717",
+  "sourceFingerprint": "8e8762575a07e71a17192da327cbe1b5906ca33c1c2ef762c0f9a37463b94cb3",
+  "consoleErrors": []
+}

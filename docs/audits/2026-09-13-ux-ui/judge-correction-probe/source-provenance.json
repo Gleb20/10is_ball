@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "head": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+  "candidate": "GAP012-r6",
+  "fileCount": 323,
+  "verifiedFiles": 323,
+  "sourceContentFingerprint": "8e8762575a07e71a17192da327cbe1b5906ca33c1c2ef762c0f9a37463b94cb3",
+  "sourceExportManifestSha256": "6dec4f2dcf87b82a75dce3e439ee24ec55cd1486411db681919df50414c39292",
+  "sourceRoot": "owned disposable copy of accepted frozen source",
+  "mismatches": []
+}

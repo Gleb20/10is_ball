@@ -1,0 +1,17 @@
+{
+  "name": "m03-judge-invite-accept-390",
+  "capturedAt": "2026-09-13T23:20:38.327Z",
+  "url": "http://localhost:4817/notifications",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "title": "Tab-10",
+  "visibleText": "К содержимому\nУведомления\nНазад\nАктуальные\nОбновить уведомления\nПриглашение судить\nВас пригласили судить матч\nПрочитано\nСоздано: 14 сентября 2026 г. в 02:20\nПринять\nОтклонить\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+  "horizontalOverflow": false,
+  "screenshot": "m03-judge-invite-accept-390.png",
+  "screenshotSha256": "1662055fd97e0d58674975d6eea4f2e0e4f859d338894c62500657f32287a714",
+  "scenario": "SC-M03",
+  "role": "judge",
+  "action": "Принять"
+}

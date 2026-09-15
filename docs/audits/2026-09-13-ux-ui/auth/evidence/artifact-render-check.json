@@ -1,0 +1,26 @@
+{
+  "browser": "Chromium 153.0.8010.12",
+  "viewport": "1440x1000",
+  "results": [
+    {
+      "source": "wireframes.html",
+      "image": "evidence/target-wireframes-1440.png",
+      "title": "Tab-10 AUTH structural wireframes",
+      "placeholders": [],
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 3316,
+      "noHorizontalOverflow": true
+    },
+    {
+      "source": "flow-report.html",
+      "image": "evidence/flow-report-1440.png",
+      "title": "Tab-10 AUTH — User Flow Report",
+      "placeholders": [],
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "scrollHeight": 4693,
+      "noHorizontalOverflow": true
+    }
+  ]
+}

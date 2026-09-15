@@ -1,0 +1,45 @@
+{
+  "runId": "AUTH-A02",
+  "scenario": "SC-A02",
+  "browser": "Chromium 153.0.8010.12",
+  "fixture": {
+    "returningId": "019f5698-ac35-4c0f-b496-33a2dd2e0506",
+    "alternateId": "af1a8a3e-1d83-4bfe-8c84-3b3d44abfce1",
+    "status": "active",
+    "onboarding": "complete"
+  },
+  "results": {
+    "sameActorRecovery": {
+      "result": "PASS",
+      "focus": {
+        "tag": "input",
+        "name": "email",
+        "id": "_r_e_"
+      },
+      "restored": {
+        "url": "/matches/new?source=manual#form",
+        "title": "Черновик после перерыва",
+        "guest": "Гость Возвратный",
+        "createRequests": 1
+      },
+      "rejectedMutationWasNotReplayed": true
+    },
+    "differentActorRecovery": {
+      "result": "PASS",
+      "clearedForOtherActor": {
+        "title": "Матч 14.09, 02:08",
+        "oldGuestVisible": 0
+      }
+    },
+    "activeSessions": {
+      "result": "PASS",
+      "rendered": true,
+      "sessionButtonsProbe": 1
+    }
+  },
+  "evidence": [
+    "a02-session-expired-login-390.png",
+    "a02-session-restored-draft-390.png",
+    "a02-active-sessions-390.png"
+  ]
+}

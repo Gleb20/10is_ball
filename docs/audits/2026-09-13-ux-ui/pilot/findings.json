@@ -1,0 +1,121 @@
+[
+  {
+    "id": "F-PILOT-001",
+    "title": "Основной состав расположен после редких настроек",
+    "kind": "expert_hypothesis",
+    "priority": "P2",
+    "confidence": "medium",
+    "frequency": "observed in pilot; population unknown",
+    "evidence": [
+      "evidence/p03-create-top-390.png",
+      "evidence/p04-create-players-390.json",
+      "evidence/p27-keyboard-create-1440.png"
+    ],
+    "canonical": "GAP-013",
+    "dependencies": "GAP-013; MATCH",
+    "detail": "report.md",
+    "target": "target-spec.md",
+    "review": "Terra PASS in claimed scope; see ../pilot-review.json"
+  },
+  {
+    "id": "F-PILOT-002",
+    "title": "Два равносильных действия старта и пустой журнал над ними",
+    "kind": "expert_hypothesis",
+    "priority": "P2",
+    "confidence": "medium",
+    "frequency": "observed in pilot; population unknown",
+    "evidence": [
+      "evidence/p07-match-waiting-390.png"
+    ],
+    "canonical": "TECH-006, triage pending",
+    "dependencies": "MATCH; JUDGE",
+    "detail": "report.md",
+    "target": "target-spec.md",
+    "review": "Terra PASS in claimed scope; see ../pilot-review.json"
+  },
+  {
+    "id": "F-PILOT-003",
+    "title": "Следующая игра уступает возврату и аннулированию",
+    "kind": "expert_hypothesis",
+    "priority": "P2",
+    "confidence": "medium",
+    "frequency": "observed in pilot; population unknown",
+    "evidence": [
+      "evidence/p24-finished-390.png",
+      "evidence/p32-result-1440.png"
+    ],
+    "canonical": "TECH-006, triage pending",
+    "dependencies": "MATCH; RESULTS",
+    "detail": "report.md",
+    "target": "target-spec.md",
+    "review": "Terra PASS in claimed scope; see ../pilot-review.json"
+  },
+  {
+    "id": "F-PILOT-004",
+    "title": "Фокус теряется, старые списки перекрывают следующий ввод",
+    "kind": "runtime_defect",
+    "priority": "P1",
+    "confidence": "high",
+    "frequency": "observed in pilot; population unknown",
+    "evidence": [
+      "evidence/p29-a-boris-active-1440.png",
+      "evidence/p29-a-boris-selected-1440.json"
+    ],
+    "canonical": "BUG-018/019",
+    "dependencies": "BUG-018; BUG-019",
+    "detail": "report.md",
+    "target": "target-spec.md",
+    "review": "Terra PASS in claimed scope; see ../pilot-review.json"
+  },
+  {
+    "id": "F-PILOT-005",
+    "title": "Имя прежнего судьи при передаче",
+    "kind": "runtime_observation",
+    "priority": "P2",
+    "confidence": "medium",
+    "frequency": "observed in pilot; population unknown",
+    "evidence": [
+      "evidence/p18-d-home-ready-390.json",
+      "evidence/p16-handover-observed-390.json"
+    ],
+    "canonical": "TECH-006, triage pending",
+    "dependencies": "Source review; RESULTS",
+    "detail": "report.md",
+    "target": "target-spec.md",
+    "review": "Terra PASS in claimed scope; see ../pilot-review.json"
+  },
+  {
+    "id": "F-PILOT-006",
+    "title": "Технические термины в ведении и передаче",
+    "kind": "expert_hypothesis",
+    "priority": "P2",
+    "confidence": "medium",
+    "frequency": "observed in pilot; population unknown",
+    "evidence": [
+      "evidence/p14-more-390.json",
+      "evidence/p22-d-handover-actual-390.png"
+    ],
+    "canonical": "TECH-006, triage pending",
+    "dependencies": "JUDGE",
+    "detail": "report.md",
+    "target": "target-spec.md",
+    "review": "Terra PASS in claimed scope; see ../pilot-review.json"
+  },
+  {
+    "id": "F-PILOT-007",
+    "title": "Личная статистика раньше действий у стола",
+    "kind": "expert_hypothesis",
+    "priority": "P2",
+    "confidence": "medium",
+    "frequency": "observed in pilot; population unknown",
+    "evidence": [
+      "evidence/p01-home-390.png",
+      "evidence/p27-home-1440.png"
+    ],
+    "canonical": "TECH-006, triage pending",
+    "dependencies": "AUTH",
+    "detail": "report.md",
+    "target": "target-spec.md",
+    "review": "Terra PASS in claimed scope; see ../pilot-review.json"
+  }
+]

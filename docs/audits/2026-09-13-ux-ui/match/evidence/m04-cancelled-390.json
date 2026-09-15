@@ -1,0 +1,16 @@
+{
+  "name": "m04-cancelled-390",
+  "capturedAt": "2026-09-13T23:20:39.276Z",
+  "url": "http://localhost:4817/matches/0a8003ef-be14-4d14-a8c2-105a57e28111",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "title": "Tab-10",
+  "visibleText": "К содержимому\nПарный матч после замены\nОбновить\nОтменён\n\n0 : 0\n\n2 × 2\nдо 15 очков\nсухая победа при 7:0\nпервая подача: случайно\n\nСудья не назначен\n\nA: Гамма Вера\nB: Бета Борис\nA: Мария Гость\nB: Дельта Глеб\nЖурнал очков\n\nПодтверждённых очков после последней коррекции нет.\n\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+  "horizontalOverflow": false,
+  "screenshot": "m04-cancelled-390.png",
+  "screenshotSha256": "2f668d26e8c187b7e5d3a83573da3d266a104df28ce2312ccc7bcf4ad761039f",
+  "scenario": "SC-M04",
+  "persistedStatus": "cancelled"
+}

@@ -1,0 +1,50 @@
+{
+  "runtime": {
+    "baseURL": "http://localhost:4917",
+    "environment": "test",
+    "version": "3.0.0",
+    "sha": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221"
+  },
+  "actors": [
+    {
+      "key": "creator",
+      "id": "b228b04a-a5dd-44e0-9fee-a30bb28bd0c2",
+      "label": "Синтетический Оператор",
+      "status": "active",
+      "role": "user",
+      "credentialStored": false
+    },
+    {
+      "key": "playerA",
+      "id": "f1960ec3-48c6-4951-83ed-72514b60d74c",
+      "label": "Синтетическая Анна",
+      "status": "active",
+      "role": "user",
+      "credentialStored": false
+    },
+    {
+      "key": "playerB",
+      "id": "1b2619ed-c851-4344-a908-19a301e9aa76",
+      "label": "Синтетический Борис",
+      "status": "active",
+      "role": "user",
+      "credentialStored": false
+    },
+    {
+      "key": "targetJudge",
+      "id": "295d6e3e-b4d4-41fe-affc-8f580f97a273",
+      "label": "Синтетическая Дарья",
+      "status": "active",
+      "role": "user",
+      "credentialStored": false
+    },
+    {
+      "key": "outsider",
+      "id": "2898fbf6-fb30-4314-87bd-305d21112a70",
+      "label": "Синтетический Наблюдатель",
+      "status": "active",
+      "role": "user",
+      "credentialStored": false
+    }
+  ]
+}

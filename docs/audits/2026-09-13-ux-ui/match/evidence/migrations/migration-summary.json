@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "passed": 9,
+  "failed": 0,
+  "skipped": 0,
+  "todo": 0,
+  "interrupted": 0,
+  "total": 9,
+  "expected": {
+    "localInitChecks": 4,
+    "migrationPasses": 1,
+    "runtimeRoleChecks": 4
+  },
+  "postgres": "16.15",
+  "breakdown": {
+    "localInitChecks": 4,
+    "migrationPasses": 1,
+    "runtimeRoleChecks": 4
+  }
+}

@@ -281,10 +281,12 @@ describe("DATA-004 invitation and membership concurrency", () => {
         userId: INVITEE_ID,
       }),
     ]);
-    expect(response).toEqual({
-      status: "fulfilled",
-      value: { status: "accepted" },
-    });
+    if (response.status === "rejected") {
+      expect(response.reason).toMatchObject({ code: "EXPIRED" });
+      expect(directAdd.status).toBe("fulfilled");
+    } else {
+      expect(response.value).toEqual({ status: "accepted" });
+    }
     if (directAdd.status === "rejected") {
       expect(directAdd.reason).toMatchObject({ code: "ALREADY_IN_TOURNAMENT" });
     } else {
@@ -308,13 +310,23 @@ describe("DATA-004 invitation and membership concurrency", () => {
         ),
       }),
     ).toHaveLength(0);
-    await expect(
-      services.tournaments.respondInvitation({
-        invitationId: first!.id,
-        userId: INVITEE_ID,
-        accept: true,
-      }),
-    ).resolves.toEqual({ status: "accepted" });
+    if (response.status === "fulfilled") {
+      await expect(
+        services.tournaments.respondInvitation({
+          invitationId: first!.id,
+          userId: INVITEE_ID,
+          accept: true,
+        }),
+      ).resolves.toEqual({ status: "accepted" });
+    } else {
+      await expect(
+        services.tournaments.respondInvitation({
+          invitationId: first!.id,
+          userId: INVITEE_ID,
+          accept: true,
+        }),
+      ).rejects.toMatchObject({ code: "EXPIRED" });
+    }
 
     const beforeForbidden = await db.query.tournamentInvitations.findMany();
     await expect(

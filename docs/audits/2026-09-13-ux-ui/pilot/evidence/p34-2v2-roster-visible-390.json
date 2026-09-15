@@ -1,0 +1,499 @@
+{
+  "url": "http://localhost:4617/matches/new",
+  "title": "Tab-10",
+  "body": "К содержимому\nНовый матч\nНазвание\n1 × 1\n2 × 2\nСоздатель играет\nОчков до победы\nСухая победа при счёте 5:0\nПорог сухой победы\nВручную\nСлучайно\nРозыгрыш\n\nДо победного порога подача меняется после двух подач. После достижения порога — после каждого очка, пока не появится отрыв в два.\n\nСудья (необязательно)\nПригласить выбранных игроков\nИгрок A\nИгрок\nГость\nИгрок A\nПартнёр\nИгрок\nГость\nПартнёр\nСоперник 1\nИгрок\nГость\nСоперник 1\nСоперник 2\nИгрок\nГость\nСоперник 2\nСоздать матч\nОтмена\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+  "focus": {
+    "tag": "BUTTON",
+    "role": null,
+    "label": null,
+    "text": "2 × 2"
+  },
+  "controls": [
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "К содержимому",
+      "rect": {
+        "x": 12,
+        "y": -792.7999877929688,
+        "w": 135.21875,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "",
+      "value": "Матч 14.09, 01:33",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 44,
+        "y": -624.5,
+        "w": 264,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "1 × 1",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 31,
+        "y": -559.5,
+        "w": 52.078125,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "2 × 2",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 82.078125,
+        "y": -559.5,
+        "w": 54.1875,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": "checkbox",
+      "label": null,
+      "text": "",
+      "value": "on",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 35,
+        "y": -488,
+        "w": 13,
+        "h": 13
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": "number",
+      "label": null,
+      "text": "",
+      "value": "11",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 44,
+        "y": -410.5,
+        "w": 264,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": "checkbox",
+      "label": null,
+      "text": "",
+      "value": "on",
+      "disabled": false,
+      "checked": true,
+      "rect": {
+        "x": 35,
+        "y": -330,
+        "w": 13,
+        "h": 13
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": "number",
+      "label": null,
+      "text": "",
+      "value": "5",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 44,
+        "y": -252.5,
+        "w": 264,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Вручную",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 31,
+        "y": -187.5,
+        "w": 83.9375,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Случайно",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 113.9375,
+        "y": -187.5,
+        "w": 88.953125,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Розыгрыш",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 201.890625,
+        "y": -187.5,
+        "w": 93.140625,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": "combobox",
+      "type": null,
+      "label": null,
+      "text": "",
+      "value": "",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 44,
+        "y": 83.5,
+        "w": 302,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": "checkbox",
+      "label": null,
+      "text": "",
+      "value": "on",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 35,
+        "y": 164,
+        "w": 13,
+        "h": 13
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Игрок",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 45.5,
+        "y": 227.390625,
+        "w": 66.03125,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Гость",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 110.53125,
+        "y": 227.390625,
+        "w": 58.296875,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": "combobox",
+      "type": null,
+      "label": null,
+      "text": "",
+      "value": "",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 58.5,
+        "y": 320.390625,
+        "w": 273,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Игрок",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 45.5,
+        "y": 419.03125,
+        "w": 66.03125,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Гость",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 110.53125,
+        "y": 419.03125,
+        "w": 58.296875,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": "combobox",
+      "type": null,
+      "label": null,
+      "text": "",
+      "value": "",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 58.5,
+        "y": 512.03125,
+        "w": 273,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Игрок",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 45.5,
+        "y": 610.671875,
+        "w": 66.03125,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Гость",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 110.53125,
+        "y": 610.671875,
+        "w": 58.296875,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": "combobox",
+      "type": null,
+      "label": null,
+      "text": "",
+      "value": "",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 58.5,
+        "y": 703.671875,
+        "w": 273,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Игрок",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 45.5,
+        "y": 802.3125,
+        "w": 66.03125,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Гость",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 110.53125,
+        "y": 802.3125,
+        "w": 58.296875,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": "combobox",
+      "type": null,
+      "label": null,
+      "text": "",
+      "value": "",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 58.5,
+        "y": 895.3125,
+        "w": 273,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "submit",
+      "label": null,
+      "text": "Создать матч",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 31,
+        "y": 971.0625,
+        "w": 328,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Отмена",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 31,
+        "y": 1027.0625,
+        "w": 328,
+        "h": 44
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Главная",
+      "rect": {
+        "x": 8,
+        "y": 788.8125,
+        "w": 73.1875,
+        "h": 49.1875
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "История",
+      "rect": {
+        "x": 83.1875,
+        "y": 788.8125,
+        "w": 73.203125,
+        "h": 49.1875
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Начать",
+      "rect": {
+        "x": 158.390625,
+        "y": 788.8125,
+        "w": 73.203125,
+        "h": 49.1875
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Рейтинг",
+      "rect": {
+        "x": 233.59375,
+        "y": 788.8125,
+        "w": 73.203125,
+        "h": 49.1875
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Профиль",
+      "rect": {
+        "x": 308.796875,
+        "y": 788.8125,
+        "w": 73.203125,
+        "h": 49.1875
+      }
+    }
+  ],
+  "viewport": {
+    "w": 390,
+    "h": 844,
+    "scrollX": 0,
+    "scrollY": 740,
+    "scrollWidth": 390
+  }
+}

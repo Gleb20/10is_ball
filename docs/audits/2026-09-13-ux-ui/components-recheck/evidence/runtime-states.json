@@ -1,0 +1,5921 @@
+{
+  "generatedAt": "2026-09-13T22:07:27.073Z",
+  "candidate": {
+    "baseSha": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "exportManifestSha256": "c60920f545e007ec656ee88194430acd6999558e7a531edb4f1904a22ad91b5e",
+    "trackedPatchSha256": "00d874967f236b3daacf157af10ab0fe14feea1c6cb7807d4917168e1b21ea82",
+    "status": "candidate-only; independent full browser gate was still ongoing at audit start"
+  },
+  "environment": {
+    "web": "http://127.0.0.1:4517",
+    "api": "http://127.0.0.1:4518",
+    "viewportSet": [
+      "1440x1000",
+      "390x844",
+      "360x800"
+    ],
+    "browserZoom200": "NOT_TESTED: Playwright's headless Chromium context does not expose a truthful browser UI zoom control; CSS zoom was intentionally not substituted.",
+    "touch390": "Chromium context with hasTouch=true and isMobile=true; taps were issued as touch pointer input."
+  },
+  "runs": [
+    {
+      "id": "MC-DEFAULT-1440",
+      "inputMethod": "keyboard/mouse",
+      "actions": [
+        "Open /matches/new"
+      ],
+      "expected": "Manual create defaults creator participation and player invitations off, and exposes Player A.",
+      "actual": {
+        "creatorParticipates": false,
+        "sendPlayerInvitations": false,
+        "playerAVisible": true
+      },
+      "screenshot": "screenshots/match-create-default-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/matches/new",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 1513,
+          "horizontalOverflow": false
+        },
+        "creator": {
+          "tag": "input",
+          "id": null,
+          "className": null,
+          "text": "",
+          "attributes": {
+            "type": "checkbox",
+            "style": ""
+          },
+          "value": "on",
+          "checked": false,
+          "disabled": false,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 475,
+            "y": 252,
+            "width": 13,
+            "height": 13,
+            "top": 252,
+            "right": 488,
+            "bottom": 265,
+            "left": 475
+          },
+          "computed": {
+            "color": "rgb(0, 0, 0)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(0, 0, 0)",
+            "outline": "rgb(0, 0, 0) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "default",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_0_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "label",
+              "id": null,
+              "className": "match-create__check",
+              "rect": {
+                "x": 471,
+                "y": 236.5,
+                "width": 498,
+                "height": 44,
+                "top": 236.5,
+                "right": 969,
+                "bottom": 280.5,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": 63.5,
+                "width": 528,
+                "height": 1361.28125,
+                "top": 63.5,
+                "right": 984,
+                "bottom": 1424.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 16,
+                "width": 528,
+                "height": 1408.78125,
+                "top": 16,
+                "right": 984,
+                "bottom": 1424.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1512.78125,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1512.78125,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1512.78125,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1512.78125,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "invites": {
+          "tag": "input",
+          "id": null,
+          "className": null,
+          "text": "",
+          "attributes": {
+            "type": "checkbox",
+            "style": ""
+          },
+          "value": "on",
+          "checked": false,
+          "disabled": false,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 475,
+            "y": 886,
+            "width": 13,
+            "height": 13,
+            "top": 886,
+            "right": 488,
+            "bottom": 899,
+            "left": 475
+          },
+          "computed": {
+            "color": "rgb(0, 0, 0)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(0, 0, 0)",
+            "outline": "rgb(0, 0, 0) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "default",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_0_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "label",
+              "id": null,
+              "className": "match-create__check",
+              "rect": {
+                "x": 471,
+                "y": 870.5,
+                "width": 498,
+                "height": 44,
+                "top": 870.5,
+                "right": 969,
+                "bottom": 914.5,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": 63.5,
+                "width": 528,
+                "height": 1361.28125,
+                "top": 63.5,
+                "right": 984,
+                "bottom": 1424.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 16,
+                "width": 528,
+                "height": 1408.78125,
+                "top": 16,
+                "right": 984,
+                "bottom": 1424.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1512.78125,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1512.78125,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1512.78125,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1512.78125,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "playerA": {
+          "tag": "input",
+          "id": "_r_8_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_8_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Начните вводить имя",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "false",
+            "aria-controls": "_r_8_-listbox",
+            "aria-labelledby": "_r_8_-label",
+            "value": "",
+            "style": ""
+          },
+          "value": "",
+          "checked": false,
+          "disabled": false,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 498.5,
+            "y": 1042.390625,
+            "width": 443,
+            "height": 44,
+            "top": 1042.390625,
+            "right": 941.5,
+            "bottom": 1086.390625,
+            "left": 498.5
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_0_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 485.5,
+                "y": 1033.390625,
+                "width": 469,
+                "height": 62,
+                "top": 1033.390625,
+                "right": 954.5,
+                "bottom": 1095.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 485.5,
+                "y": 1033.390625,
+                "width": 469,
+                "height": 62,
+                "top": 1033.390625,
+                "right": 954.5,
+                "bottom": 1095.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 485.5,
+                "y": 1005.390625,
+                "width": 469,
+                "height": 90,
+                "top": 1005.390625,
+                "right": 954.5,
+                "bottom": 1095.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "fieldset",
+              "id": null,
+              "className": "match-create__slot stack",
+              "rect": {
+                "x": 473,
+                "y": 926.5,
+                "width": 494,
+                "height": 179.640625,
+                "top": 926.5,
+                "right": 967,
+                "bottom": 1106.140625,
+                "left": 473
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": 63.5,
+                "width": 528,
+                "height": 1361.28125,
+                "top": 63.5,
+                "right": 984,
+                "bottom": 1424.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "MC-AUTOCOMPLETE-EMPTY",
+      "inputMethod": "keyboard",
+      "actions": [
+        "Focus Player A",
+        "Type a query with no matches"
+      ],
+      "expected": "The no-results state is understandable without leaving stale options.",
+      "actual": {
+        "optionCount": 0,
+        "checkboxKeyboardState": {
+          "focusedAfterRoundTrip": true,
+          "checkedAfterRoundTrip": false
+        }
+      },
+      "screenshot": "screenshots/match-create-empty-query-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/matches/new",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 1513,
+          "horizontalOverflow": false
+        },
+        "playerA": {
+          "tag": "input",
+          "id": "_r_c_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_c_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Начните вводить имя",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "true",
+            "aria-controls": "_r_c_-listbox",
+            "aria-labelledby": "_r_c_-label",
+            "value": "НетТакогоИгрока-UI-Recheck",
+            "style": ""
+          },
+          "value": "НетТакогоИгрока-UI-Recheck",
+          "checked": false,
+          "disabled": false,
+          "focused": true,
+          "focusVisible": true,
+          "rect": {
+            "x": 498.5,
+            "y": 970.390625,
+            "width": 419,
+            "height": 44,
+            "top": 970.390625,
+            "right": 917.5,
+            "bottom": 1014.390625,
+            "left": 498.5
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgb(101, 32, 165) solid 3px",
+            "outlineOffset": "2px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_c_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 485.5,
+                "y": 961.390625,
+                "width": 469,
+                "height": 62,
+                "top": 961.390625,
+                "right": 954.5,
+                "bottom": 1023.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 485.5,
+                "y": 961.390625,
+                "width": 469,
+                "height": 62,
+                "top": 961.390625,
+                "right": 954.5,
+                "bottom": 1023.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 485.5,
+                "y": 933.390625,
+                "width": 469,
+                "height": 90,
+                "top": 933.390625,
+                "right": 954.5,
+                "bottom": 1023.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "fieldset",
+              "id": null,
+              "className": "match-create__slot stack",
+              "rect": {
+                "x": 473,
+                "y": 854.5,
+                "width": 494,
+                "height": 179.640625,
+                "top": 854.5,
+                "right": 967,
+                "bottom": 1034.140625,
+                "left": 473
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": -8.5,
+                "width": 528,
+                "height": 1361.28125,
+                "top": -8.5,
+                "right": 984,
+                "bottom": 1352.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "F-CMP-001-002-RECHECK-DESKTOP",
+      "inputMethod": "keyboard",
+      "actions": [
+        "Type Player A query",
+        "ArrowDown once"
+      ],
+      "expected": "aria-activedescendant identifies the active option; popup is not occluded by navigation.",
+      "actual": {
+        "activeDescendant": "_r_c_-option-0",
+        "activeOptionId": null,
+        "optionExistsById": false,
+        "optionRect": {
+          "x": 497.5,
+          "y": 1039.390625,
+          "width": 445,
+          "height": 36
+        },
+        "navRect": {
+          "x": 440,
+          "y": 937.8125,
+          "width": 560,
+          "height": 62.1875
+        },
+        "belowViewport": true,
+        "occludedByNav": true
+      },
+      "screenshot": "screenshots/match-create-option-active-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/matches/new",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 1513,
+          "horizontalOverflow": false
+        },
+        "playerA": {
+          "tag": "input",
+          "id": "_r_c_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_c_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Начните вводить имя",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "true",
+            "aria-controls": "_r_c_-listbox",
+            "aria-labelledby": "_r_c_-label",
+            "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+            "style": "",
+            "aria-activedescendant": "_r_c_-option-0"
+          },
+          "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+          "checked": false,
+          "disabled": false,
+          "focused": true,
+          "focusVisible": true,
+          "rect": {
+            "x": 498.5,
+            "y": 970.390625,
+            "width": 419,
+            "height": 44,
+            "top": 970.390625,
+            "right": 917.5,
+            "bottom": 1014.390625,
+            "left": 498.5
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgb(101, 32, 165) solid 3px",
+            "outlineOffset": "2px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_c_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 485.5,
+                "y": 961.390625,
+                "width": 469,
+                "height": 62,
+                "top": 961.390625,
+                "right": 954.5,
+                "bottom": 1023.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 485.5,
+                "y": 961.390625,
+                "width": 469,
+                "height": 62,
+                "top": 961.390625,
+                "right": 954.5,
+                "bottom": 1023.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 485.5,
+                "y": 933.390625,
+                "width": 469,
+                "height": 90,
+                "top": 933.390625,
+                "right": 954.5,
+                "bottom": 1023.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "fieldset",
+              "id": null,
+              "className": "match-create__slot stack",
+              "rect": {
+                "x": 473,
+                "y": 854.5,
+                "width": 494,
+                "height": 179.640625,
+                "top": 854.5,
+                "right": 967,
+                "bottom": 1034.140625,
+                "left": 473
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": -8.5,
+                "width": 528,
+                "height": 1361.28125,
+                "top": -8.5,
+                "right": 984,
+                "bottom": 1352.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "activeOption": {
+          "tag": "li",
+          "id": null,
+          "className": "_menuItem_6cpf7_309",
+          "text": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+          "attributes": {
+            "role": "option",
+            "aria-selected": "false",
+            "class": "_menuItem_6cpf7_309",
+            "data-active": "true"
+          },
+          "value": 0,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 497.5,
+            "y": 1039.390625,
+            "width": 445,
+            "height": 36,
+            "top": 1039.390625,
+            "right": 942.5,
+            "bottom": 1075.390625,
+            "left": 497.5
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(7, 7, 7, 0.03)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "pointer",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_c_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "ul",
+              "id": "_r_c_-listbox",
+              "className": "_menuList_6cpf7_282",
+              "rect": {
+                "x": 497.5,
+                "y": 1039.390625,
+                "width": 445,
+                "height": 36,
+                "top": 1039.390625,
+                "right": 942.5,
+                "bottom": 1075.390625,
+                "left": 497.5
+              },
+              "overflow": "auto",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_menuBody_6cpf7_278",
+              "rect": {
+                "x": 485.5,
+                "y": 1027.390625,
+                "width": 469,
+                "height": 60,
+                "top": 1027.390625,
+                "right": 954.5,
+                "bottom": 1087.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_menu_6cpf7_263",
+              "rect": {
+                "x": 485.5,
+                "y": 1027.390625,
+                "width": 469,
+                "height": 60,
+                "top": 1027.390625,
+                "right": 954.5,
+                "bottom": 1087.390625,
+                "left": 485.5
+              },
+              "overflow": "hidden",
+              "position": "absolute",
+              "zIndex": "100"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 485.5,
+                "y": 961.390625,
+                "width": 469,
+                "height": 62,
+                "top": 961.390625,
+                "right": 954.5,
+                "bottom": 1023.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 485.5,
+                "y": 933.390625,
+                "width": 469,
+                "height": 90,
+                "top": 933.390625,
+                "right": 954.5,
+                "bottom": 1023.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "F-CMP-003-RECHECK-CREATE",
+      "inputMethod": "keyboard",
+      "actions": [
+        "Press Enter on active Player A option"
+      ],
+      "expected": "Selection preserves the combobox node and keyboard focus.",
+      "actual": {
+        "beforeEnterId": "_r_c_",
+        "afterEnterId": "_r_e_",
+        "sameId": false,
+        "focusedAfterEnter": false,
+        "selectedValue": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck"
+      },
+      "screenshot": "screenshots/match-create-after-enter-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/matches/new",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 1513,
+          "horizontalOverflow": false
+        },
+        "playerA": {
+          "tag": "input",
+          "id": "_r_e_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_e_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Начните вводить имя",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "false",
+            "aria-controls": "_r_e_-listbox",
+            "aria-labelledby": "_r_e_-label",
+            "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+            "style": ""
+          },
+          "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+          "checked": false,
+          "disabled": false,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 498.5,
+            "y": 970.390625,
+            "width": 419,
+            "height": 44,
+            "top": 970.390625,
+            "right": 917.5,
+            "bottom": 1014.390625,
+            "left": 498.5
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "body",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 485.5,
+                "y": 961.390625,
+                "width": 469,
+                "height": 62,
+                "top": 961.390625,
+                "right": 954.5,
+                "bottom": 1023.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 485.5,
+                "y": 961.390625,
+                "width": 469,
+                "height": 62,
+                "top": 961.390625,
+                "right": 954.5,
+                "bottom": 1023.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 485.5,
+                "y": 933.390625,
+                "width": 469,
+                "height": 90,
+                "top": 933.390625,
+                "right": 954.5,
+                "bottom": 1023.390625,
+                "left": 485.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "fieldset",
+              "id": null,
+              "className": "match-create__slot stack",
+              "rect": {
+                "x": 473,
+                "y": 854.5,
+                "width": 494,
+                "height": 179.640625,
+                "top": 854.5,
+                "right": 967,
+                "bottom": 1034.140625,
+                "left": 473
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": -8.5,
+                "width": 528,
+                "height": 1361.28125,
+                "top": -8.5,
+                "right": 984,
+                "bottom": 1352.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "MC-PENDING-1440",
+      "inputMethod": "mouse",
+      "actions": [
+        "Select both players",
+        "Submit",
+        "Hold network request"
+      ],
+      "expected": "Submit communicates pending and prevents duplicate submit; new policy controls retain an unambiguous state.",
+      "actual": {
+        "submitDisabled": true,
+        "creatorDisabled": false,
+        "invitationsDisabled": false,
+        "creatorChecked": false,
+        "invitationsChecked": false
+      },
+      "screenshot": "screenshots/match-create-pending-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/matches/new",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 1513,
+          "horizontalOverflow": false
+        },
+        "submit": {
+          "tag": "button",
+          "id": null,
+          "className": "_root_1mx9c_2 _containedPrimary_1mx9c_136 _sizeMd_1mx9c_81",
+          "text": "Создание…",
+          "attributes": {
+            "type": "submit",
+            "class": "_root_1mx9c_2 _containedPrimary_1mx9c_136 _sizeMd_1mx9c_81",
+            "disabled": "",
+            "aria-disabled": "true"
+          },
+          "value": "",
+          "checked": null,
+          "disabled": true,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 471,
+            "y": 796.78125,
+            "width": 498,
+            "height": 44,
+            "top": 796.78125,
+            "right": 969,
+            "bottom": 840.78125,
+            "left": 471
+          },
+          "computed": {
+            "color": "rgb(242, 232, 253)",
+            "backgroundColor": "rgb(124, 40, 227)",
+            "border": "2px solid rgba(0, 0, 0, 0)",
+            "outline": "rgb(242, 232, 253) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "0.45",
+            "cursor": "not-allowed",
+            "pointerEvents": "auto",
+            "position": "relative",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "body",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack stack--actions",
+              "rect": {
+                "x": 471,
+                "y": 796.78125,
+                "width": 498,
+                "height": 100,
+                "top": 796.78125,
+                "right": 969,
+                "bottom": 896.78125,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": -449.5,
+                "width": 528,
+                "height": 1361.28125,
+                "top": -449.5,
+                "right": 984,
+                "bottom": 911.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": -497,
+                "width": 528,
+                "height": 1408.78125,
+                "top": -497,
+                "right": 984,
+                "bottom": 911.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main",
+              "rect": {
+                "x": 440,
+                "y": -513,
+                "width": 560,
+                "height": 1512.78125,
+                "top": -513,
+                "right": 1000,
+                "bottom": 999.78125,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell",
+              "rect": {
+                "x": 440,
+                "y": -513,
+                "width": 560,
+                "height": 1512.78125,
+                "top": -513,
+                "right": 1000,
+                "bottom": 999.78125,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "creator": {
+          "tag": "input",
+          "id": null,
+          "className": null,
+          "text": "",
+          "attributes": {
+            "type": "checkbox",
+            "style": ""
+          },
+          "value": "on",
+          "checked": false,
+          "disabled": false,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 475,
+            "y": -261,
+            "width": 13,
+            "height": 13,
+            "top": -261,
+            "right": 488,
+            "bottom": -248,
+            "left": 475
+          },
+          "computed": {
+            "color": "rgb(0, 0, 0)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(0, 0, 0)",
+            "outline": "rgb(0, 0, 0) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "default",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "body",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "label",
+              "id": null,
+              "className": "match-create__check",
+              "rect": {
+                "x": 471,
+                "y": -276.5,
+                "width": 498,
+                "height": 44,
+                "top": -276.5,
+                "right": 969,
+                "bottom": -232.5,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": -449.5,
+                "width": 528,
+                "height": 1361.28125,
+                "top": -449.5,
+                "right": 984,
+                "bottom": 911.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": -497,
+                "width": 528,
+                "height": 1408.78125,
+                "top": -497,
+                "right": 984,
+                "bottom": 911.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main",
+              "rect": {
+                "x": 440,
+                "y": -513,
+                "width": 560,
+                "height": 1512.78125,
+                "top": -513,
+                "right": 1000,
+                "bottom": 999.78125,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell",
+              "rect": {
+                "x": 440,
+                "y": -513,
+                "width": 560,
+                "height": 1512.78125,
+                "top": -513,
+                "right": 1000,
+                "bottom": 999.78125,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "invites": {
+          "tag": "input",
+          "id": null,
+          "className": null,
+          "text": "",
+          "attributes": {
+            "type": "checkbox",
+            "style": ""
+          },
+          "value": "on",
+          "checked": false,
+          "disabled": false,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 475,
+            "y": 373,
+            "width": 13,
+            "height": 13,
+            "top": 373,
+            "right": 488,
+            "bottom": 386,
+            "left": 475
+          },
+          "computed": {
+            "color": "rgb(0, 0, 0)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(0, 0, 0)",
+            "outline": "rgb(0, 0, 0) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "default",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "body",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "label",
+              "id": null,
+              "className": "match-create__check",
+              "rect": {
+                "x": 471,
+                "y": 357.5,
+                "width": 498,
+                "height": 44,
+                "top": 357.5,
+                "right": 969,
+                "bottom": 401.5,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": -449.5,
+                "width": 528,
+                "height": 1361.28125,
+                "top": -449.5,
+                "right": 984,
+                "bottom": 911.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": -497,
+                "width": 528,
+                "height": 1408.78125,
+                "top": -497,
+                "right": 984,
+                "bottom": 911.78125,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main",
+              "rect": {
+                "x": 440,
+                "y": -513,
+                "width": 560,
+                "height": 1512.78125,
+                "top": -513,
+                "right": 1000,
+                "bottom": 999.78125,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell",
+              "rect": {
+                "x": 440,
+                "y": -513,
+                "width": 560,
+                "height": 1512.78125,
+                "top": -513,
+                "right": 1000,
+                "bottom": 999.78125,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "MC-PERSISTED-POLICY",
+      "inputMethod": "API verification after browser submit",
+      "actions": [
+        "Read created match from API"
+      ],
+      "expected": "Creator absent and invitation opt-in false persist.",
+      "actual": {
+        "requestSendPlayerInvitations": false,
+        "requestParticipantUserIds": [
+          "8d9e6cea-7bfc-4a5a-a714-3e260dd43b18",
+          "de4f4058-78e5-4e00-9105-4d420582b8b5"
+        ],
+        "persistedCreatedByUserId": "16ea4303-c5ee-4a1a-9d40-198f53437b45",
+        "persistedParticipantUserIds": [
+          "8d9e6cea-7bfc-4a5a-a714-3e260dd43b18",
+          "de4f4058-78e5-4e00-9105-4d420582b8b5"
+        ],
+        "creatorAbsent": true
+      }
+    },
+    {
+      "id": "MATCH-EDIT-PLAYER-A-1440",
+      "inputMethod": "keyboard",
+      "actions": [
+        "Open creator-owned unstarted match",
+        "Open edit dialog",
+        "Focus Player A"
+      ],
+      "expected": "Creator-absent match exposes editable Player A with its selected label without remounting or losing user focus when directory options resolve.",
+      "actual": {
+        "beforeDirectoryReady": {
+          "id": "_r_m_",
+          "value": ""
+        },
+        "afterDirectoryReady": {
+          "id": "_r_q_",
+          "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+          "focused": false
+        },
+        "remounted": true
+      },
+      "screenshot": "screenshots/match-edit-player-a-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/matches/c8afd925-1b8c-4d99-a320-941843341570",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 1000,
+          "horizontalOverflow": false
+        },
+        "editPlayerA": {
+          "tag": "input",
+          "id": "_r_q_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_q_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Placeholder",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "false",
+            "aria-controls": "_r_q_-listbox",
+            "aria-labelledby": "_r_q_-label",
+            "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+            "style": ""
+          },
+          "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+          "checked": false,
+          "disabled": false,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 524.5,
+            "y": 671.890625,
+            "width": 367,
+            "height": 44,
+            "top": 671.890625,
+            "right": 891.5,
+            "bottom": 715.890625,
+            "left": 524.5
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "button",
+            "id": null,
+            "className": "_root_1mx9c_2 _textNeutral_1mx9c_259 _iconSizeXlg_1mx9c_128"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 511.5,
+                "y": 662.890625,
+                "width": 417,
+                "height": 62,
+                "top": 662.890625,
+                "right": 928.5,
+                "bottom": 724.890625,
+                "left": 511.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 511.5,
+                "y": 662.890625,
+                "width": 417,
+                "height": 62,
+                "top": 662.890625,
+                "right": 928.5,
+                "bottom": 724.890625,
+                "left": 511.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 511.5,
+                "y": 634.890625,
+                "width": 417,
+                "height": 90,
+                "top": 634.890625,
+                "right": 928.5,
+                "bottom": 724.890625,
+                "left": 511.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "fieldset",
+              "id": null,
+              "className": "match-create__slot stack",
+              "rect": {
+                "x": 499,
+                "y": 556,
+                "width": 442,
+                "height": 179.640625,
+                "top": 556,
+                "right": 941,
+                "bottom": 735.640625,
+                "left": 499
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack",
+              "rect": {
+                "x": 497,
+                "y": 126,
+                "width": 446,
+                "height": 801.28125,
+                "top": 126,
+                "right": 943,
+                "bottom": 927.28125,
+                "left": 497
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "dialog": {
+          "tag": "div",
+          "id": null,
+          "className": "_panel_a6ohk_13 app-dialog",
+          "text": "Изменить матч\n\n\nНазвание1 × 12 × 2Очков до победыСухая победаВручнуюСлучайноРозыгрышСоздатель управляет матчем, но не занимает игровое место.Игрок AИгрокГостьИгрок A\n\n\nСоперникИгрокГостьСоперник\n\n\nОтмена\n\n\nСохранить изменения",
+          "attributes": {
+            "role": "dialog",
+            "aria-modal": "true",
+            "aria-labelledby": "_r_1_",
+            "tabindex": "-1",
+            "class": "_panel_a6ohk_13 app-dialog",
+            "data-width": "md",
+            "data-app-dialog-id": "_r_0_"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 480,
+            "y": 24,
+            "width": 480,
+            "height": 952,
+            "top": 24,
+            "right": 960,
+            "bottom": 976,
+            "left": 480
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgb(255, 255, 255)",
+            "border": "1px solid rgb(216, 214, 220)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "auto",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "button",
+            "id": null,
+            "className": "_root_1mx9c_2 _textNeutral_1mx9c_259 _iconSizeXlg_1mx9c_128"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_overlay_a6ohk_1",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "fixed",
+              "zIndex": "1300"
+            },
+            {
+              "tag": "body",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "hidden",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "html",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "clip visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "TOURNAMENT-CONSENT-1440",
+      "inputMethod": "keyboard",
+      "actions": [
+        "Open tournament create",
+        "Focus and toggle consent checkbox"
+      ],
+      "expected": "Consent is a keyboard-operable explicit policy control.",
+      "actual": {
+        "checked": true,
+        "focused": true
+      },
+      "screenshot": "screenshots/tournament-consent-checkbox-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/tournaments",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 1000,
+          "horizontalOverflow": false
+        },
+        "consent": {
+          "tag": "input",
+          "id": null,
+          "className": null,
+          "text": "",
+          "attributes": {
+            "type": "checkbox",
+            "style": ""
+          },
+          "value": "on",
+          "checked": true,
+          "disabled": false,
+          "focused": true,
+          "focusVisible": true,
+          "rect": {
+            "x": 475,
+            "y": 326.5,
+            "width": 13,
+            "height": 13,
+            "top": 326.5,
+            "right": 488,
+            "bottom": 339.5,
+            "left": 475
+          },
+          "computed": {
+            "color": "rgb(0, 0, 0)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(0, 0, 0)",
+            "outline": "rgb(101, 32, 165) solid 3px",
+            "outlineOffset": "2px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "default",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "label",
+              "id": null,
+              "className": "match-create__check",
+              "rect": {
+                "x": 471,
+                "y": 311,
+                "width": 498,
+                "height": 44,
+                "top": 311,
+                "right": 969,
+                "bottom": 355,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": 82,
+                "width": 528,
+                "height": 440,
+                "top": 82,
+                "right": 984,
+                "bottom": 522,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 16,
+                "width": 528,
+                "height": 592,
+                "top": 16,
+                "right": 984,
+                "bottom": 608,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1000,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1000,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1000,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1000,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ADMIN-PICKER-PENDING",
+      "inputMethod": "keyboard",
+      "actions": [
+        "Open scoped admin view",
+        "Hold directory request",
+        "Focus picker"
+      ],
+      "expected": "Pending directory state is communicated and does not resemble a ready empty result.",
+      "actual": {
+        "comboboxDisabled": false,
+        "statusTexts": [],
+        "optionCount": 0
+      },
+      "screenshot": "screenshots/admin-picker-pending-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/tournaments/56e75612-c18e-42e0-9367-1c4395b4bed9",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 1000,
+          "horizontalOverflow": false
+        },
+        "addPicker": {
+          "tag": "input",
+          "id": "_r_7_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_7_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Начните вводить имя",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "true",
+            "aria-controls": "_r_7_-listbox",
+            "aria-labelledby": "_r_7_-label",
+            "value": "",
+            "style": ""
+          },
+          "value": "",
+          "checked": false,
+          "disabled": false,
+          "focused": true,
+          "focusVisible": true,
+          "rect": {
+            "x": 484,
+            "y": 448,
+            "width": 472,
+            "height": 44,
+            "top": 448,
+            "right": 956,
+            "bottom": 492,
+            "left": 484
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgb(101, 32, 165) solid 3px",
+            "outlineOffset": "2px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_7_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 471,
+                "y": 439,
+                "width": 498,
+                "height": 62,
+                "top": 439,
+                "right": 969,
+                "bottom": 501,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 471,
+                "y": 439,
+                "width": 498,
+                "height": 62,
+                "top": 439,
+                "right": 969,
+                "bottom": 501,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 471,
+                "y": 411,
+                "width": 498,
+                "height": 90,
+                "top": 411,
+                "right": 969,
+                "bottom": 501,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack",
+              "rect": {
+                "x": 471,
+                "y": 411,
+                "width": 498,
+                "height": 90,
+                "top": 411,
+                "right": 969,
+                "bottom": 501,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": 238,
+                "width": 528,
+                "height": 334,
+                "top": 238,
+                "right": 984,
+                "bottom": 572,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ADMIN-PICKER-ERROR",
+      "inputMethod": "keyboard",
+      "actions": [
+        "Release held directory request as controlled 503"
+      ],
+      "expected": "Directory error is visible and control affordance reflects that data is unavailable.",
+      "actual": {
+        "errorText": "Не удалось загрузить список игроков",
+        "comboboxDisabled": false,
+        "focused": true
+      },
+      "screenshot": "screenshots/admin-picker-error-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/tournaments/56e75612-c18e-42e0-9367-1c4395b4bed9",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 1000,
+          "horizontalOverflow": false
+        },
+        "addPicker": {
+          "tag": "input",
+          "id": "_r_7_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_7_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Начните вводить имя",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "true",
+            "aria-controls": "_r_7_-listbox",
+            "aria-labelledby": "_r_7_-label",
+            "value": "",
+            "style": ""
+          },
+          "value": "",
+          "checked": false,
+          "disabled": false,
+          "focused": true,
+          "focusVisible": true,
+          "rect": {
+            "x": 484,
+            "y": 448,
+            "width": 472,
+            "height": 44,
+            "top": 448,
+            "right": 956,
+            "bottom": 492,
+            "left": 484
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgb(101, 32, 165) solid 3px",
+            "outlineOffset": "2px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_7_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 471,
+                "y": 439,
+                "width": 498,
+                "height": 62,
+                "top": 439,
+                "right": 969,
+                "bottom": 501,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 471,
+                "y": 439,
+                "width": 498,
+                "height": 62,
+                "top": 439,
+                "right": 969,
+                "bottom": 501,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 471,
+                "y": 411,
+                "width": 498,
+                "height": 90,
+                "top": 411,
+                "right": 969,
+                "bottom": 501,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack",
+              "rect": {
+                "x": 471,
+                "y": 411,
+                "width": 498,
+                "height": 148,
+                "top": 411,
+                "right": 969,
+                "bottom": 559,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": 238,
+                "width": 528,
+                "height": 392,
+                "top": 238,
+                "right": 984,
+                "bottom": 630,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "error": {
+          "tag": "p",
+          "id": null,
+          "className": "muted",
+          "text": "Не удалось загрузить список игроков",
+          "attributes": {
+            "class": "muted",
+            "role": "alert"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 471,
+            "y": 527,
+            "width": 498,
+            "height": 18,
+            "top": 527,
+            "right": 969,
+            "bottom": 545,
+            "left": 471
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.58)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.58)",
+            "outline": "rgba(7, 7, 7, 0.58) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "auto",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_7_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack",
+              "rect": {
+                "x": 471,
+                "y": 411,
+                "width": 498,
+                "height": 148,
+                "top": 411,
+                "right": 969,
+                "bottom": 559,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": 238,
+                "width": 528,
+                "height": 392,
+                "top": 238,
+                "right": 984,
+                "bottom": 630,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 82,
+                "width": 528,
+                "height": 548,
+                "top": 82,
+                "right": 984,
+                "bottom": 630,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 16,
+                "width": 528,
+                "height": 614,
+                "top": 16,
+                "right": 984,
+                "bottom": 630,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1000,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1000,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ADMIN-OVERRIDE-WARNING-DISMISS",
+      "inputMethod": "mouse/native dialog",
+      "actions": [
+        "Select active user",
+        "Click add",
+        "Dismiss native confirm"
+      ],
+      "expected": "Warning names person, tournament, consent override and bracket regeneration; dismissal sends no mutation.",
+      "actual": {
+        "dialog": {
+          "type": "confirm",
+          "message": "Добавить Recheck ПозднийИгрок053636 в турнир «Компонентный recheck — согласие»: добавить без ответа на приглашение и сразу перестроить уже созданную сетку?",
+          "action": "dismiss"
+        },
+        "participantPostCount": 0
+      }
+    },
+    {
+      "id": "ADMIN-OVERRIDE-PENDING",
+      "inputMethod": "mouse/native dialog",
+      "actions": [
+        "Accept warning",
+        "Hold participant POST"
+      ],
+      "expected": "Mutation pending prevents duplicate action and freezes dependent selection.",
+      "actual": {
+        "dialog": {
+          "type": "confirm",
+          "message": "Добавить Recheck ПозднийИгрок053636 в турнир «Компонентный recheck — согласие»: добавить без ответа на приглашение и сразу перестроить уже созданную сетку?",
+          "action": "accept"
+        },
+        "addButtonDisabled": true,
+        "pickerDisabled": false,
+        "selectedText": "Recheck ПозднийИгрок053636",
+        "participantPostCount": 1
+      },
+      "screenshot": "screenshots/admin-override-pending-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/tournaments/56e75612-c18e-42e0-9367-1c4395b4bed9",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 1000,
+          "horizontalOverflow": false
+        },
+        "addPicker": {
+          "tag": "input",
+          "id": "_r_7_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_7_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Начните вводить имя",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "false",
+            "aria-controls": "_r_7_-listbox",
+            "aria-labelledby": "_r_7_-label",
+            "value": "Recheck ПозднийИгрок053636",
+            "style": ""
+          },
+          "value": "Recheck ПозднийИгрок053636",
+          "checked": false,
+          "disabled": false,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 484,
+            "y": 448,
+            "width": 448,
+            "height": 44,
+            "top": 448,
+            "right": 932,
+            "bottom": 492,
+            "left": 484
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "body",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 471,
+                "y": 439,
+                "width": 498,
+                "height": 62,
+                "top": 439,
+                "right": 969,
+                "bottom": 501,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 471,
+                "y": 439,
+                "width": 498,
+                "height": 62,
+                "top": 439,
+                "right": 969,
+                "bottom": 501,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 471,
+                "y": 411,
+                "width": 498,
+                "height": 90,
+                "top": 411,
+                "right": 969,
+                "bottom": 501,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack",
+              "rect": {
+                "x": 471,
+                "y": 411,
+                "width": 498,
+                "height": 90,
+                "top": 411,
+                "right": 969,
+                "bottom": 501,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": 238,
+                "width": 528,
+                "height": 334,
+                "top": 238,
+                "right": 984,
+                "bottom": 572,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "addButton": {
+          "tag": "button",
+          "id": null,
+          "className": "_root_1mx9c_2 _containedPrimary_1mx9c_136 _sizeMd_1mx9c_81",
+          "text": "Добавить в состав",
+          "attributes": {
+            "type": "button",
+            "class": "_root_1mx9c_2 _containedPrimary_1mx9c_136 _sizeMd_1mx9c_81",
+            "disabled": "",
+            "aria-disabled": "true"
+          },
+          "value": "",
+          "checked": null,
+          "disabled": true,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 471,
+            "y": 513,
+            "width": 498,
+            "height": 44,
+            "top": 513,
+            "right": 969,
+            "bottom": 557,
+            "left": 471
+          },
+          "computed": {
+            "color": "rgb(242, 232, 253)",
+            "backgroundColor": "rgb(124, 40, 227)",
+            "border": "2px solid rgba(0, 0, 0, 0)",
+            "outline": "rgb(242, 232, 253) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "0.45",
+            "cursor": "not-allowed",
+            "pointerEvents": "auto",
+            "position": "relative",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "body",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": 238,
+                "width": 528,
+                "height": 334,
+                "top": 238,
+                "right": 984,
+                "bottom": 572,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 82,
+                "width": 528,
+                "height": 490,
+                "top": 82,
+                "right": 984,
+                "bottom": 572,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 16,
+                "width": 528,
+                "height": 556,
+                "top": 16,
+                "right": 984,
+                "bottom": 572,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1000,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1000,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1000,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1000,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ADMIN-OVERRIDE-ERROR",
+      "inputMethod": "mouse",
+      "actions": [
+        "Release held mutation as controlled 503"
+      ],
+      "expected": "Inline error is visible and attempted selection remains recoverable.",
+      "actual": {
+        "errorText": "\n\n\nНе удалось выполнитьСинтетическая ошибка ручного добавления",
+        "selectedText": "Recheck ПозднийИгрок053636",
+        "addButtonDisabled": false
+      },
+      "screenshot": "screenshots/admin-override-error-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/tournaments/56e75612-c18e-42e0-9367-1c4395b4bed9",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 1000,
+          "horizontalOverflow": false
+        },
+        "addPicker": {
+          "tag": "input",
+          "id": "_r_7_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_7_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Начните вводить имя",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "false",
+            "aria-controls": "_r_7_-listbox",
+            "aria-labelledby": "_r_7_-label",
+            "value": "Recheck ПозднийИгрок053636",
+            "style": ""
+          },
+          "value": "Recheck ПозднийИгрок053636",
+          "checked": false,
+          "disabled": false,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 484,
+            "y": 558,
+            "width": 448,
+            "height": 44,
+            "top": 558,
+            "right": 932,
+            "bottom": 602,
+            "left": 484
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "body",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 471,
+                "y": 549,
+                "width": 498,
+                "height": 62,
+                "top": 549,
+                "right": 969,
+                "bottom": 611,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 471,
+                "y": 549,
+                "width": 498,
+                "height": 62,
+                "top": 549,
+                "right": 969,
+                "bottom": 611,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 471,
+                "y": 521,
+                "width": 498,
+                "height": 90,
+                "top": 521,
+                "right": 969,
+                "bottom": 611,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack",
+              "rect": {
+                "x": 471,
+                "y": 521,
+                "width": 498,
+                "height": 90,
+                "top": 521,
+                "right": 969,
+                "bottom": 611,
+                "left": 471
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": 348,
+                "width": 528,
+                "height": 334,
+                "top": 348,
+                "right": 984,
+                "bottom": 682,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "addButton": {
+          "tag": "button",
+          "id": null,
+          "className": "_root_1mx9c_2 _containedPrimary_1mx9c_136 _sizeMd_1mx9c_81",
+          "text": "Добавить в состав",
+          "attributes": {
+            "type": "button",
+            "class": "_root_1mx9c_2 _containedPrimary_1mx9c_136 _sizeMd_1mx9c_81"
+          },
+          "value": "",
+          "checked": null,
+          "disabled": false,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 471,
+            "y": 623,
+            "width": 498,
+            "height": 44,
+            "top": 623,
+            "right": 969,
+            "bottom": 667,
+            "left": 471
+          },
+          "computed": {
+            "color": "rgb(242, 232, 253)",
+            "backgroundColor": "rgb(124, 40, 227)",
+            "border": "2px solid rgba(0, 0, 0, 0)",
+            "outline": "rgb(242, 232, 253) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "pointer",
+            "pointerEvents": "auto",
+            "position": "relative",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "body",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 456,
+                "y": 348,
+                "width": 528,
+                "height": 334,
+                "top": 348,
+                "right": 984,
+                "bottom": 682,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 82,
+                "width": 528,
+                "height": 600,
+                "top": 82,
+                "right": 984,
+                "bottom": 682,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 16,
+                "width": 528,
+                "height": 666,
+                "top": 16,
+                "right": 984,
+                "bottom": 682,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1000,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1000,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1000,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1000,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "error": {
+          "tag": "div",
+          "id": null,
+          "className": "_root_12lcn_1",
+          "text": "Не удалось выполнитьСинтетическая ошибка ручного добавления",
+          "attributes": {
+            "class": "_root_12lcn_1",
+            "data-type": "error",
+            "data-variant": "tonal",
+            "role": "alert"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 456,
+            "y": 222,
+            "width": 286,
+            "height": 94,
+            "top": 222,
+            "right": 742,
+            "bottom": 316,
+            "left": 456
+          },
+          "computed": {
+            "color": "rgb(170, 19, 19)",
+            "backgroundColor": "rgb(253, 232, 232)",
+            "border": "1px solid rgba(0, 0, 0, 0)",
+            "outline": "rgb(170, 19, 19) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "auto",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "body",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 82,
+                "width": 528,
+                "height": 600,
+                "top": 82,
+                "right": 984,
+                "bottom": 682,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 16,
+                "width": 528,
+                "height": 666,
+                "top": 16,
+                "right": 984,
+                "bottom": 682,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1000,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1000,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 1000,
+                "top": 0,
+                "right": 1000,
+                "bottom": 1000,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": "root",
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "F-CMP-004-005-RECHECK",
+      "inputMethod": "keyboard",
+      "actions": [
+        "Open algorithm dialog",
+        "Focus selected radio"
+      ],
+      "expected": "One coherent focus ring and one selected-card treatment, without raw-input or triple contour.",
+      "actual": {
+        "checked": true,
+        "radioCount": 2
+      },
+      "screenshot": "screenshots/bracket-selected-focused-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/tournaments/56e75612-c18e-42e0-9367-1c4395b4bed9",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 2076,
+          "horizontalOverflow": false
+        },
+        "radio": {
+          "tag": "input",
+          "id": null,
+          "className": null,
+          "text": "",
+          "attributes": {
+            "type": "radio",
+            "value": "compact",
+            "checked": "",
+            "name": "bracket-algo-_r_3_",
+            "style": ""
+          },
+          "value": "compact",
+          "checked": true,
+          "disabled": false,
+          "focused": true,
+          "focusVisible": true,
+          "rect": {
+            "x": 600,
+            "y": 432.390625,
+            "width": 13,
+            "height": 13,
+            "top": 432.390625,
+            "right": 613,
+            "bottom": 445.390625,
+            "left": 600
+          },
+          "computed": {
+            "color": "rgb(0, 0, 0)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(0, 0, 0)",
+            "outline": "rgb(101, 32, 165) solid 3px",
+            "outlineOffset": "2px",
+            "boxShadow": "none",
+            "opacity": "0",
+            "cursor": "default",
+            "pointerEvents": "none",
+            "position": "absolute",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "label",
+              "id": null,
+              "className": "bracket-algo-card bracket-algo-card--selected",
+              "rect": {
+                "x": 497,
+                "y": 411.390625,
+                "width": 217,
+                "height": 333.09375,
+                "top": 411.390625,
+                "right": 714,
+                "bottom": 744.484375,
+                "left": 497
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "bracket-algo-dialog__options",
+              "rect": {
+                "x": 497,
+                "y": 411.390625,
+                "width": 446,
+                "height": 333.09375,
+                "top": 411.390625,
+                "right": 943,
+                "bottom": 744.484375,
+                "left": 497
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 497,
+                "y": 272.515625,
+                "width": 446,
+                "height": 535.96875,
+                "top": 272.515625,
+                "right": 943,
+                "bottom": 808.484375,
+                "left": 497
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_body_a6ohk_104",
+              "rect": {
+                "x": 481,
+                "y": 252.515625,
+                "width": 478,
+                "height": 575.96875,
+                "top": 252.515625,
+                "right": 959,
+                "bottom": 828.484375,
+                "left": 481
+              },
+              "overflow": "auto",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_panel_a6ohk_13 app-dialog",
+              "rect": {
+                "x": 480,
+                "y": 170.515625,
+                "width": 480,
+                "height": 658.96875,
+                "top": 170.515625,
+                "right": 960,
+                "bottom": 829.484375,
+                "left": 480
+              },
+              "overflow": "hidden",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "card": {
+          "tag": "label",
+          "id": null,
+          "className": "bracket-algo-card bracket-algo-card--selected",
+          "text": "Компактная сеткаМатчи строятся по фактическому числу участников. Если в раунде остаётся нечётное количество игроков, один из них проходит дальше без матча. Сетка получается компактнее и не содержит дополнительных пустых стартовых мест.Подходит для небольших любительских турниров.",
+          "attributes": {
+            "class": "bracket-algo-card bracket-algo-card--selected",
+            "data-testid": "bracket-algo-card-compact"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 497,
+            "y": 411.390625,
+            "width": 217,
+            "height": 333.09375,
+            "top": 411.390625,
+            "right": 714,
+            "bottom": 744.484375,
+            "left": 497
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgb(255, 255, 255)",
+            "border": "2px solid rgb(37, 99, 235)",
+            "outline": "rgb(37, 99, 235) solid 2px",
+            "outlineOffset": "2px",
+            "boxShadow": "rgb(37, 99, 235) 0px 0px 0px 1px",
+            "opacity": "1",
+            "cursor": "pointer",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "bracket-algo-dialog__options",
+              "rect": {
+                "x": 497,
+                "y": 411.390625,
+                "width": 446,
+                "height": 333.09375,
+                "top": 411.390625,
+                "right": 943,
+                "bottom": 744.484375,
+                "left": 497
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 497,
+                "y": 272.515625,
+                "width": 446,
+                "height": 535.96875,
+                "top": 272.515625,
+                "right": 943,
+                "bottom": 808.484375,
+                "left": 497
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_body_a6ohk_104",
+              "rect": {
+                "x": 481,
+                "y": 252.515625,
+                "width": 478,
+                "height": 575.96875,
+                "top": 252.515625,
+                "right": 959,
+                "bottom": 828.484375,
+                "left": 481
+              },
+              "overflow": "auto",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_panel_a6ohk_13 app-dialog",
+              "rect": {
+                "x": 480,
+                "y": 170.515625,
+                "width": 480,
+                "height": 658.96875,
+                "top": 170.515625,
+                "right": 960,
+                "bottom": 829.484375,
+                "left": 480
+              },
+              "overflow": "hidden",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_overlay_a6ohk_1",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "fixed",
+              "zIndex": "1300"
+            }
+          ]
+        },
+        "dialog": {
+          "tag": "div",
+          "id": null,
+          "className": "_panel_a6ohk_13 app-dialog",
+          "text": "Как построить сетку?\n\n\nВыберите способ распределения участников и автоматических проходов.Текущая сетка будет построена заново. Результаты предварительного распределения будут сброшены.Способ построения сеткиКомпактная сеткаМатчи строятся по фактическому числу участников. Если в раунде остаётся нечё",
+          "attributes": {
+            "role": "dialog",
+            "aria-modal": "true",
+            "aria-labelledby": "_r_5_",
+            "tabindex": "-1",
+            "class": "_panel_a6ohk_13 app-dialog",
+            "data-width": "md",
+            "data-app-dialog-id": "_r_4_"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 480,
+            "y": 170.515625,
+            "width": 480,
+            "height": 658.96875,
+            "top": 170.515625,
+            "right": 960,
+            "bottom": 829.484375,
+            "left": 480
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgb(255, 255, 255)",
+            "border": "1px solid rgb(216, 214, 220)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "auto",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_overlay_a6ohk_1",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "fixed",
+              "zIndex": "1300"
+            },
+            {
+              "tag": "body",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 2076,
+                "top": 0,
+                "right": 1440,
+                "bottom": 2076,
+                "left": 0
+              },
+              "overflow": "hidden",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "html",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 2076,
+                "top": 0,
+                "right": 1440,
+                "bottom": 2076,
+                "left": 0
+              },
+              "overflow": "clip visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "F-CMP-SUP-002-RECHECK",
+      "inputMethod": "mouse+keyboard",
+      "actions": [
+        "Submit algorithm",
+        "Hold POST",
+        "Click Close",
+        "Press Escape"
+      ],
+      "expected": "Pending controls visually and semantically communicate inertness; initial focus is not misleading.",
+      "actual": {
+        "closeBefore": {
+          "disabledAttribute": false,
+          "text": "\n\n\n"
+        },
+        "openAfterCloseClick": true,
+        "openAfterEscape": true,
+        "focusedElement": {
+          "tag": "button",
+          "text": "",
+          "disabled": false
+        }
+      },
+      "screenshot": "screenshots/bracket-pending-dialog-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/tournaments/56e75612-c18e-42e0-9367-1c4395b4bed9",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 2076,
+          "horizontalOverflow": false
+        },
+        "dialog": {
+          "tag": "div",
+          "id": null,
+          "className": "_panel_a6ohk_13 app-dialog",
+          "text": "Как построить сетку?\n\n\nВыберите способ распределения участников и автоматических проходов.Текущая сетка будет построена заново. Результаты предварительного распределения будут сброшены.Способ построения сеткиКомпактная сеткаМатчи строятся по фактическому числу участников. Если в раунде остаётся нечё",
+          "attributes": {
+            "role": "dialog",
+            "aria-modal": "true",
+            "aria-labelledby": "_r_5_",
+            "tabindex": "-1",
+            "class": "_panel_a6ohk_13 app-dialog",
+            "data-width": "md",
+            "data-app-dialog-id": "_r_4_"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 480,
+            "y": 170.515625,
+            "width": 480,
+            "height": 658.96875,
+            "top": 170.515625,
+            "right": 960,
+            "bottom": 829.484375,
+            "left": 480
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgb(255, 255, 255)",
+            "border": "1px solid rgb(216, 214, 220)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "auto",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "button",
+            "id": null,
+            "className": "_root_1mx9c_2 _textNeutral_1mx9c_259 _iconSizeXlg_1mx9c_128"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_overlay_a6ohk_1",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "fixed",
+              "zIndex": "1300"
+            },
+            {
+              "tag": "body",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 2076,
+                "top": 0,
+                "right": 1440,
+                "bottom": 2076,
+                "left": 0
+              },
+              "overflow": "hidden",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "html",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 2076,
+                "top": 0,
+                "right": 1440,
+                "bottom": 2076,
+                "left": 0
+              },
+              "overflow": "clip visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "close": {
+          "tag": "button",
+          "id": null,
+          "className": "_root_1mx9c_2 _textNeutral_1mx9c_259 _iconSizeXlg_1mx9c_128",
+          "text": "",
+          "attributes": {
+            "type": "button",
+            "class": "_root_1mx9c_2 _textNeutral_1mx9c_259 _iconSizeXlg_1mx9c_128",
+            "aria-label": "Закрыть"
+          },
+          "value": "",
+          "checked": null,
+          "disabled": false,
+          "focused": true,
+          "focusVisible": true,
+          "rect": {
+            "x": 895,
+            "y": 187.515625,
+            "width": 48,
+            "height": 48,
+            "top": 187.515625,
+            "right": 943,
+            "bottom": 235.515625,
+            "left": 895
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "2px solid rgba(0, 0, 0, 0)",
+            "outline": "rgb(101, 32, 165) solid 3px",
+            "outlineOffset": "2px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "pointer",
+            "pointerEvents": "auto",
+            "position": "relative",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "button",
+            "id": null,
+            "className": "_root_1mx9c_2 _textNeutral_1mx9c_259 _iconSizeXlg_1mx9c_128"
+          },
+          "ancestors": [
+            {
+              "tag": "header",
+              "id": null,
+              "className": "_header_a6ohk_47",
+              "rect": {
+                "x": 481,
+                "y": 171.515625,
+                "width": 478,
+                "height": 81,
+                "top": 171.515625,
+                "right": 959,
+                "bottom": 252.515625,
+                "left": 481
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_panel_a6ohk_13 app-dialog",
+              "rect": {
+                "x": 480,
+                "y": 170.515625,
+                "width": 480,
+                "height": 658.96875,
+                "top": 170.515625,
+                "right": 960,
+                "bottom": 829.484375,
+                "left": 480
+              },
+              "overflow": "hidden",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_overlay_a6ohk_1",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "fixed",
+              "zIndex": "1300"
+            },
+            {
+              "tag": "body",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 2076,
+                "top": 0,
+                "right": 1440,
+                "bottom": 2076,
+                "left": 0
+              },
+              "overflow": "hidden",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "html",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 2076,
+                "top": 0,
+                "right": 1440,
+                "bottom": 2076,
+                "left": 0
+              },
+              "overflow": "clip visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "F-CMP-SUP-001-RECHECK",
+      "inputMethod": "mouse",
+      "actions": [
+        "Release held bracket POST as controlled 503"
+      ],
+      "expected": "Failure is perceivable inside the still-open modal context or the modal closes to expose it.",
+      "actual": {
+        "dialogStillOpen": true,
+        "errorVisibleAccordingToLocator": true,
+        "dialogRect": {
+          "x": 480,
+          "y": 170.515625,
+          "width": 480,
+          "height": 658.96875
+        },
+        "errorRect": {
+          "x": 456,
+          "y": 370,
+          "width": 286,
+          "height": 94
+        },
+        "geometricallyCoveredByDialog": true
+      },
+      "screenshot": "screenshots/bracket-error-occluded-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/tournaments/56e75612-c18e-42e0-9367-1c4395b4bed9",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 2186,
+          "horizontalOverflow": false
+        },
+        "dialog": {
+          "tag": "div",
+          "id": null,
+          "className": "_panel_a6ohk_13 app-dialog",
+          "text": "Как построить сетку?\n\n\nВыберите способ распределения участников и автоматических проходов.Текущая сетка будет построена заново. Результаты предварительного распределения будут сброшены.Способ построения сеткиКомпактная сеткаМатчи строятся по фактическому числу участников. Если в раунде остаётся нечё",
+          "attributes": {
+            "role": "dialog",
+            "aria-modal": "true",
+            "aria-labelledby": "_r_5_",
+            "tabindex": "-1",
+            "class": "_panel_a6ohk_13 app-dialog",
+            "data-width": "md",
+            "data-app-dialog-id": "_r_4_"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 480,
+            "y": 170.515625,
+            "width": 480,
+            "height": 658.96875,
+            "top": 170.515625,
+            "right": 960,
+            "bottom": 829.484375,
+            "left": 480
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgb(255, 255, 255)",
+            "border": "1px solid rgb(216, 214, 220)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "auto",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "button",
+            "id": null,
+            "className": "_root_1mx9c_2 _textNeutral_1mx9c_259 _iconSizeXlg_1mx9c_128"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_overlay_a6ohk_1",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "fixed",
+              "zIndex": "1300"
+            },
+            {
+              "tag": "body",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 2186,
+                "top": 0,
+                "right": 1440,
+                "bottom": 2186,
+                "left": 0
+              },
+              "overflow": "hidden",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "html",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 2186,
+                "top": 0,
+                "right": 1440,
+                "bottom": 2186,
+                "left": 0
+              },
+              "overflow": "clip visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "error": {
+          "tag": "div",
+          "id": null,
+          "className": "_root_12lcn_1",
+          "text": "Не удалось выполнитьСинтетическая ошибка перестроения сетки",
+          "attributes": {
+            "class": "_root_12lcn_1",
+            "data-type": "error",
+            "data-variant": "tonal",
+            "role": "alert"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 456,
+            "y": 370,
+            "width": 286,
+            "height": 94,
+            "top": 370,
+            "right": 742,
+            "bottom": 464,
+            "left": 456
+          },
+          "computed": {
+            "color": "rgb(170, 19, 19)",
+            "backgroundColor": "rgb(253, 232, 232)",
+            "border": "1px solid rgba(0, 0, 0, 0)",
+            "outline": "rgb(170, 19, 19) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "auto",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "button",
+            "id": null,
+            "className": "_root_1mx9c_2 _textNeutral_1mx9c_259 _iconSizeXlg_1mx9c_128"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 82,
+                "width": 528,
+                "height": 2016,
+                "top": 82,
+                "right": 984,
+                "bottom": 2098,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack page-layout",
+              "rect": {
+                "x": 456,
+                "y": 16,
+                "width": 528,
+                "height": 2082,
+                "top": 16,
+                "right": 984,
+                "bottom": 2098,
+                "left": 456
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 2186,
+                "top": 0,
+                "right": 1000,
+                "bottom": 2186,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell",
+              "rect": {
+                "x": 440,
+                "y": 0,
+                "width": 560,
+                "height": 2186,
+                "top": 0,
+                "right": 1000,
+                "bottom": 2186,
+                "left": 440
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": "root",
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 2186,
+                "top": 0,
+                "right": 1440,
+                "bottom": 2186,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "F-CMP-001-002-TOUCH390",
+      "inputMethod": "touch pointer then text injection",
+      "actions": [
+        "Tap Player A",
+        "Enter query",
+        "Observe first option before tap"
+      ],
+      "expected": "Touch option is fully visible above fixed navigation and remains connected to combobox semantics.",
+      "actual": {
+        "activeDescendant": null,
+        "optionId": null,
+        "optionRect": {
+          "x": 57.5,
+          "y": 469.390625,
+          "width": 275,
+          "height": 52
+        },
+        "navRect": {
+          "x": 0,
+          "y": 781.8125,
+          "width": 390,
+          "height": 62.1875
+        },
+        "occludedByNav": false
+      },
+      "screenshot": "screenshots/match-create-option-touch-390.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "urlPath": "/matches/new",
+      "geometry": {
+        "document": {
+          "innerWidth": 390,
+          "innerHeight": 844,
+          "scrollWidth": 390,
+          "scrollHeight": 1531,
+          "horizontalOverflow": false
+        },
+        "playerA": {
+          "tag": "input",
+          "id": "_r_8_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_8_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Начните вводить имя",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "true",
+            "aria-controls": "_r_8_-listbox",
+            "aria-labelledby": "_r_8_-label",
+            "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+            "style": ""
+          },
+          "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+          "checked": false,
+          "disabled": false,
+          "focused": true,
+          "focusVisible": true,
+          "rect": {
+            "x": 58.5,
+            "y": 400.390625,
+            "width": 249,
+            "height": 44,
+            "top": 400.390625,
+            "right": 307.5,
+            "bottom": 444.390625,
+            "left": 58.5
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgb(101, 32, 165) solid 3px",
+            "outlineOffset": "2px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_8_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 45.5,
+                "y": 391.390625,
+                "width": 299,
+                "height": 62,
+                "top": 391.390625,
+                "right": 344.5,
+                "bottom": 453.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 45.5,
+                "y": 391.390625,
+                "width": 299,
+                "height": 62,
+                "top": 391.390625,
+                "right": 344.5,
+                "bottom": 453.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 45.5,
+                "y": 363.390625,
+                "width": 299,
+                "height": 90,
+                "top": 363.390625,
+                "right": 344.5,
+                "bottom": 453.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "fieldset",
+              "id": null,
+              "className": "match-create__slot stack",
+              "rect": {
+                "x": 33,
+                "y": 284.5,
+                "width": 324,
+                "height": 179.640625,
+                "top": 284.5,
+                "right": 357,
+                "bottom": 464.140625,
+                "left": 33
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 16,
+                "y": -596.5,
+                "width": 358,
+                "height": 1379.28125,
+                "top": -596.5,
+                "right": 374,
+                "bottom": 782.78125,
+                "left": 16
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "option": {
+          "tag": "li",
+          "id": null,
+          "className": "_menuItem_6cpf7_309",
+          "text": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+          "attributes": {
+            "role": "option",
+            "aria-selected": "false",
+            "class": "_menuItem_6cpf7_309"
+          },
+          "value": 0,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 57.5,
+            "y": 469.390625,
+            "width": 275,
+            "height": 52,
+            "top": 469.390625,
+            "right": 332.5,
+            "bottom": 521.390625,
+            "left": 57.5
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "pointer",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_8_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "ul",
+              "id": "_r_8_-listbox",
+              "className": "_menuList_6cpf7_282",
+              "rect": {
+                "x": 57.5,
+                "y": 469.390625,
+                "width": 275,
+                "height": 52,
+                "top": 469.390625,
+                "right": 332.5,
+                "bottom": 521.390625,
+                "left": 57.5
+              },
+              "overflow": "auto",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_menuBody_6cpf7_278",
+              "rect": {
+                "x": 45.5,
+                "y": 457.390625,
+                "width": 299,
+                "height": 76,
+                "top": 457.390625,
+                "right": 344.5,
+                "bottom": 533.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_menu_6cpf7_263",
+              "rect": {
+                "x": 45.5,
+                "y": 457.390625,
+                "width": 299,
+                "height": 76,
+                "top": 457.390625,
+                "right": 344.5,
+                "bottom": 533.390625,
+                "left": 45.5
+              },
+              "overflow": "hidden",
+              "position": "absolute",
+              "zIndex": "100"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 45.5,
+                "y": 391.390625,
+                "width": 299,
+                "height": 62,
+                "top": 391.390625,
+                "right": 344.5,
+                "bottom": 453.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 45.5,
+                "y": 363.390625,
+                "width": 299,
+                "height": 90,
+                "top": 363.390625,
+                "right": 344.5,
+                "bottom": 453.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "nav": {
+          "tag": "nav",
+          "id": null,
+          "className": "bottom-nav",
+          "text": "Главная\n\n\nИстория\n\n\nНачать\n\n\nРейтинг\n\n\nПрофиль",
+          "attributes": {
+            "class": "bottom-nav",
+            "aria-label": "Основная навигация"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 0,
+            "y": 781.8125,
+            "width": 390,
+            "height": 62.1875,
+            "top": 781.8125,
+            "right": 390,
+            "bottom": 844,
+            "left": 0
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgb(255, 255, 255)",
+            "border": "",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "auto",
+            "pointerEvents": "auto",
+            "position": "fixed",
+            "zIndex": "20"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_8_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell",
+              "rect": {
+                "x": 0,
+                "y": -660,
+                "width": 390,
+                "height": 1530.78125,
+                "top": -660,
+                "right": 390,
+                "bottom": 870.78125,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": "root",
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": -660,
+                "width": 390,
+                "height": 1530.78125,
+                "top": -660,
+                "right": 390,
+                "bottom": 870.78125,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "body",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": -660,
+                "width": 390,
+                "height": 1530.78125,
+                "top": -660,
+                "right": 390,
+                "bottom": 870.78125,
+                "left": 0
+              },
+              "overflow": "clip visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "html",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": -660,
+                "width": 390,
+                "height": 1530.78125,
+                "top": -660,
+                "right": 390,
+                "bottom": 870.78125,
+                "left": 0
+              },
+              "overflow": "clip visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "MATCH-CREATE-TOUCH-SELECTION",
+      "inputMethod": "touch pointer",
+      "actions": [
+        "Tap first matching Player A option"
+      ],
+      "expected": "Tap selects the intended user and closes options.",
+      "actual": {
+        "selectedText": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+        "optionCountAfterTap": 0,
+        "focusedAfterTap": false
+      },
+      "screenshot": "screenshots/match-create-selected-touch-390.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "urlPath": "/matches/new",
+      "geometry": {
+        "document": {
+          "innerWidth": 390,
+          "innerHeight": 844,
+          "scrollWidth": 390,
+          "scrollHeight": 1531,
+          "horizontalOverflow": false
+        },
+        "playerA": {
+          "tag": "input",
+          "id": "_r_c_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_c_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Начните вводить имя",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "false",
+            "aria-controls": "_r_c_-listbox",
+            "aria-labelledby": "_r_c_-label",
+            "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+            "style": ""
+          },
+          "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+          "checked": false,
+          "disabled": false,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 58.5,
+            "y": 400.390625,
+            "width": 249,
+            "height": 44,
+            "top": 400.390625,
+            "right": 307.5,
+            "bottom": 444.390625,
+            "left": 58.5
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "body",
+            "id": null,
+            "className": null
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 45.5,
+                "y": 391.390625,
+                "width": 299,
+                "height": 62,
+                "top": 391.390625,
+                "right": 344.5,
+                "bottom": 453.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 45.5,
+                "y": 391.390625,
+                "width": 299,
+                "height": 62,
+                "top": 391.390625,
+                "right": 344.5,
+                "bottom": 453.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 45.5,
+                "y": 363.390625,
+                "width": 299,
+                "height": 90,
+                "top": 363.390625,
+                "right": 344.5,
+                "bottom": 453.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "fieldset",
+              "id": null,
+              "className": "match-create__slot stack",
+              "rect": {
+                "x": 33,
+                "y": 284.5,
+                "width": 324,
+                "height": 179.640625,
+                "top": 284.5,
+                "right": 357,
+                "bottom": 464.140625,
+                "left": 33
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 16,
+                "y": -596.5,
+                "width": 358,
+                "height": 1379.28125,
+                "top": -596.5,
+                "right": 374,
+                "bottom": 782.78125,
+                "left": 16
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "MATCH-EDIT-PLAYER-A-390",
+      "inputMethod": "touch pointer",
+      "actions": [
+        "Open edit dialog on 390 touch context"
+      ],
+      "expected": "New Player A consumer fits the viewport without horizontal overflow.",
+      "actual": {
+        "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck"
+      },
+      "screenshot": "screenshots/match-edit-player-a-390.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "urlPath": "/matches/c8afd925-1b8c-4d99-a320-941843341570",
+      "geometry": {
+        "document": {
+          "innerWidth": 390,
+          "innerHeight": 844,
+          "scrollWidth": 390,
+          "scrollHeight": 1062,
+          "horizontalOverflow": false
+        },
+        "editPlayerA": {
+          "tag": "input",
+          "id": "_r_q_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_q_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Placeholder",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "false",
+            "aria-controls": "_r_q_-listbox",
+            "aria-labelledby": "_r_q_-label",
+            "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+            "style": ""
+          },
+          "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+          "checked": false,
+          "disabled": false,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 68.5,
+            "y": 689.890625,
+            "width": 229,
+            "height": 44,
+            "top": 689.890625,
+            "right": 297.5,
+            "bottom": 733.890625,
+            "left": 68.5
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "button",
+            "id": null,
+            "className": "_root_1mx9c_2 _textNeutral_1mx9c_259 _iconSizeXlg_1mx9c_128"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 55.5,
+                "y": 680.890625,
+                "width": 279,
+                "height": 62,
+                "top": 680.890625,
+                "right": 334.5,
+                "bottom": 742.890625,
+                "left": 55.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 55.5,
+                "y": 680.890625,
+                "width": 279,
+                "height": 62,
+                "top": 680.890625,
+                "right": 334.5,
+                "bottom": 742.890625,
+                "left": 55.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 55.5,
+                "y": 652.890625,
+                "width": 279,
+                "height": 90,
+                "top": 652.890625,
+                "right": 334.5,
+                "bottom": 742.890625,
+                "left": 55.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "fieldset",
+              "id": null,
+              "className": "match-create__slot stack",
+              "rect": {
+                "x": 43,
+                "y": 574,
+                "width": 304,
+                "height": 179.640625,
+                "top": 574,
+                "right": 347,
+                "bottom": 753.640625,
+                "left": 43
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "stack",
+              "rect": {
+                "x": 41,
+                "y": 126,
+                "width": 308,
+                "height": 819.28125,
+                "top": 126,
+                "right": 349,
+                "bottom": 945.28125,
+                "left": 41
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "dialog": {
+          "tag": "div",
+          "id": null,
+          "className": "_panel_a6ohk_13 app-dialog",
+          "text": "Изменить матч\n\n\nНазвание1 × 12 × 2Очков до победыСухая победаВручнуюСлучайноРозыгрышСоздатель управляет матчем, но не занимает игровое место.Игрок AИгрокГостьИгрок A\n\n\nСоперникИгрокГостьСоперник\n\n\nОтмена\n\n\nСохранить изменения",
+          "attributes": {
+            "role": "dialog",
+            "aria-modal": "true",
+            "aria-labelledby": "_r_1_",
+            "tabindex": "-1",
+            "class": "_panel_a6ohk_13 app-dialog",
+            "data-width": "md",
+            "data-app-dialog-id": "_r_0_"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 24,
+            "y": 24,
+            "width": 342,
+            "height": 796,
+            "top": 24,
+            "right": 366,
+            "bottom": 820,
+            "left": 24
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgb(255, 255, 255)",
+            "border": "1px solid rgb(216, 214, 220)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "auto",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "button",
+            "id": null,
+            "className": "_root_1mx9c_2 _textNeutral_1mx9c_259 _iconSizeXlg_1mx9c_128"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_overlay_a6ohk_1",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 390,
+                "height": 844,
+                "top": 0,
+                "right": 390,
+                "bottom": 844,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "fixed",
+              "zIndex": "1300"
+            },
+            {
+              "tag": "body",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 390,
+                "height": 1061.84375,
+                "top": 0,
+                "right": 390,
+                "bottom": 1061.84375,
+                "left": 0
+              },
+              "overflow": "hidden",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "html",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 390,
+                "height": 1061.84375,
+                "top": 0,
+                "right": 390,
+                "bottom": 1061.84375,
+                "left": 0
+              },
+              "overflow": "clip visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "MATCH-CREATE-NARROW-360",
+      "inputMethod": "keyboard",
+      "actions": [
+        "Open 360px viewport",
+        "Open Player A options"
+      ],
+      "expected": "New policy controls and popup do not cause horizontal overflow.",
+      "actual": {
+        "activeDescendant": null
+      },
+      "screenshot": "screenshots/match-create-option-360.png",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "urlPath": "/matches/new",
+      "geometry": {
+        "document": {
+          "innerWidth": 360,
+          "innerHeight": 800,
+          "scrollWidth": 360,
+          "scrollHeight": 1531,
+          "horizontalOverflow": false
+        },
+        "playerA": {
+          "tag": "input",
+          "id": "_r_8_",
+          "className": "_input_6cpf7_135",
+          "text": "",
+          "attributes": {
+            "id": "_r_8_",
+            "class": "_input_6cpf7_135",
+            "placeholder": "Начните вводить имя",
+            "role": "combobox",
+            "aria-autocomplete": "list",
+            "aria-expanded": "true",
+            "aria-controls": "_r_8_-listbox",
+            "aria-labelledby": "_r_8_-label",
+            "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+            "style": ""
+          },
+          "value": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+          "checked": false,
+          "disabled": false,
+          "focused": true,
+          "focusVisible": true,
+          "rect": {
+            "x": 58.5,
+            "y": 758.390625,
+            "width": 219,
+            "height": 44,
+            "top": 758.390625,
+            "right": 277.5,
+            "bottom": 802.390625,
+            "left": 58.5
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgb(101, 32, 165) solid 3px",
+            "outlineOffset": "2px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "text",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_8_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+              "rect": {
+                "x": 45.5,
+                "y": 749.390625,
+                "width": 269,
+                "height": 62,
+                "top": 749.390625,
+                "right": 314.5,
+                "bottom": 811.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 45.5,
+                "y": 749.390625,
+                "width": 269,
+                "height": 62,
+                "top": 749.390625,
+                "right": 314.5,
+                "bottom": 811.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 45.5,
+                "y": 721.390625,
+                "width": 269,
+                "height": 90,
+                "top": 721.390625,
+                "right": 314.5,
+                "bottom": 811.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "fieldset",
+              "id": null,
+              "className": "match-create__slot stack",
+              "rect": {
+                "x": 33,
+                "y": 642.5,
+                "width": 294,
+                "height": 179.640625,
+                "top": 642.5,
+                "right": 327,
+                "bottom": 822.140625,
+                "left": 33
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "form",
+              "id": null,
+              "className": "card stack",
+              "rect": {
+                "x": 16,
+                "y": -238.5,
+                "width": 328,
+                "height": 1379.28125,
+                "top": -238.5,
+                "right": 344,
+                "bottom": 1140.78125,
+                "left": 16
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "option": {
+          "tag": "li",
+          "id": null,
+          "className": "_menuItem_6cpf7_309",
+          "text": "ОченьДлинноеИмяДляПроверкиАвтокомплита053636 Recheck",
+          "attributes": {
+            "role": "option",
+            "aria-selected": "false",
+            "class": "_menuItem_6cpf7_309"
+          },
+          "value": 0,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 57.5,
+            "y": 827.390625,
+            "width": 245,
+            "height": 52,
+            "top": 827.390625,
+            "right": 302.5,
+            "bottom": 879.390625,
+            "left": 57.5
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgba(7, 7, 7, 0.93)",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "pointer",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_8_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "ul",
+              "id": "_r_8_-listbox",
+              "className": "_menuList_6cpf7_282",
+              "rect": {
+                "x": 57.5,
+                "y": 827.390625,
+                "width": 245,
+                "height": 52,
+                "top": 827.390625,
+                "right": 302.5,
+                "bottom": 879.390625,
+                "left": 57.5
+              },
+              "overflow": "auto",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_menuBody_6cpf7_278",
+              "rect": {
+                "x": 45.5,
+                "y": 815.390625,
+                "width": 269,
+                "height": 76,
+                "top": 815.390625,
+                "right": 314.5,
+                "bottom": 891.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_menu_6cpf7_263",
+              "rect": {
+                "x": 45.5,
+                "y": 815.390625,
+                "width": 269,
+                "height": 76,
+                "top": 815.390625,
+                "right": 314.5,
+                "bottom": 891.390625,
+                "left": 45.5
+              },
+              "overflow": "hidden",
+              "position": "absolute",
+              "zIndex": "100"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 45.5,
+                "y": 749.390625,
+                "width": 269,
+                "height": 62,
+                "top": 749.390625,
+                "right": 314.5,
+                "bottom": 811.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "_root_6cpf7_1 _rootFullWidth_6cpf7_10",
+              "rect": {
+                "x": 45.5,
+                "y": 721.390625,
+                "width": 269,
+                "height": 90,
+                "top": 721.390625,
+                "right": 314.5,
+                "bottom": 811.390625,
+                "left": 45.5
+              },
+              "overflow": "visible",
+              "position": "relative",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "nav": {
+          "tag": "nav",
+          "id": null,
+          "className": "bottom-nav",
+          "text": "Главная\n\n\nИстория\n\n\nНачать\n\n\nРейтинг\n\n\nПрофиль",
+          "attributes": {
+            "class": "bottom-nav",
+            "aria-label": "Основная навигация"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 0,
+            "y": 737.8125,
+            "width": 360,
+            "height": 62.1875,
+            "top": 737.8125,
+            "right": 360,
+            "bottom": 800,
+            "left": 0
+          },
+          "computed": {
+            "color": "rgba(7, 7, 7, 0.93)",
+            "backgroundColor": "rgb(255, 255, 255)",
+            "border": "",
+            "outline": "rgba(7, 7, 7, 0.93) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "auto",
+            "pointerEvents": "auto",
+            "position": "fixed",
+            "zIndex": "20"
+          },
+          "activeElement": {
+            "tag": "input",
+            "id": "_r_8_",
+            "className": "_input_6cpf7_135"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell",
+              "rect": {
+                "x": 0,
+                "y": -302,
+                "width": 360,
+                "height": 1530.78125,
+                "top": -302,
+                "right": 360,
+                "bottom": 1228.78125,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": "root",
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": -302,
+                "width": 360,
+                "height": 1530.78125,
+                "top": -302,
+                "right": 360,
+                "bottom": 1228.78125,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "body",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": -302,
+                "width": 360,
+                "height": 1530.78125,
+                "top": -302,
+                "right": 360,
+                "bottom": 1228.78125,
+                "left": 0
+              },
+              "overflow": "clip visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "html",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": -302,
+                "width": 360,
+                "height": 1530.78125,
+                "top": -302,
+                "right": 360,
+                "bottom": 1228.78125,
+                "left": 0
+              },
+              "overflow": "clip visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "F-CMP-SUP-003-RECHECK",
+      "inputMethod": "mouse",
+      "actions": [
+        "Open a prepared active judge board",
+        "Intercept one point POST with controlled 503",
+        "Click +1"
+      ],
+      "expected": "Actual inline error in immersive dark runtime is legible; standard text target is at least 4.5:1.",
+      "actual": {
+        "errorText": "Очко не подтверждено: Синтетическая ошибка начисления очка. Очередь остановлена: проверьте счёт и повторите.",
+        "colors": {
+          "foreground": "rgb(176, 0, 32)",
+          "effectiveBackground": "rgb(15, 17, 21)",
+          "backgroundChain": [
+            {
+              "tag": "p",
+              "className": "error judge-error",
+              "backgroundColor": "rgba(0, 0, 0, 0)"
+            },
+            {
+              "tag": "div",
+              "className": "judge-screen",
+              "backgroundColor": "rgba(0, 0, 0, 0)"
+            },
+            {
+              "tag": "main",
+              "className": "app-main app-main--no-nav",
+              "backgroundColor": "rgba(0, 0, 0, 0)"
+            },
+            {
+              "tag": "div",
+              "className": "app-shell app-shell--immersive",
+              "backgroundColor": "rgb(15, 17, 21)"
+            }
+          ],
+          "contrastRatio": 2.58
+        },
+        "boundedScenario": "one controlled point-write failure only; no old match scenario replay"
+      },
+      "screenshot": "screenshots/judge-error-dark-1440.png",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "urlPath": "/matches/67e91b41-00a6-43c0-b6f2-951c21d32df0/judge",
+      "geometry": {
+        "document": {
+          "innerWidth": 1440,
+          "innerHeight": 1000,
+          "scrollWidth": 1440,
+          "scrollHeight": 1000,
+          "horizontalOverflow": false
+        },
+        "error": {
+          "tag": "p",
+          "id": null,
+          "className": "error judge-error",
+          "text": "Очко не подтверждено: Синтетическая ошибка начисления очка. Очередь остановлена: проверьте счёт и повторите.",
+          "attributes": {
+            "class": "error judge-error",
+            "role": "alert"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 12,
+            "y": 104.1875,
+            "width": 1416,
+            "height": 18,
+            "top": 104.1875,
+            "right": 1428,
+            "bottom": 122.1875,
+            "left": 12
+          },
+          "computed": {
+            "color": "rgb(176, 0, 32)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(176, 0, 32)",
+            "outline": "rgb(176, 0, 32) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "auto",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "button",
+            "id": null,
+            "className": "_root_1mx9c_2 _containedPrimary_1mx9c_136 _sizeMd_1mx9c_81 judge-point-btn judge-touch"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "judge-screen",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main app-main--no-nav",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell app-shell--immersive",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": "root",
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "body",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "clip visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        },
+        "board": {
+          "tag": "div",
+          "id": null,
+          "className": "judge-board",
+          "text": "Recheck ОченьДлинноеИмяДляПроверкиАвтокомплита2471390Подача+1Recheck ВторойИгрок2471390+1",
+          "attributes": {
+            "class": "judge-board",
+            "role": "group",
+            "aria-label": "Счёт матча"
+          },
+          "value": null,
+          "checked": null,
+          "disabled": null,
+          "focused": false,
+          "focusVisible": false,
+          "rect": {
+            "x": 12,
+            "y": 132.1875,
+            "width": 1416,
+            "height": 855.8125,
+            "top": 132.1875,
+            "right": 1428,
+            "bottom": 988,
+            "left": 12
+          },
+          "computed": {
+            "color": "rgb(245, 245, 245)",
+            "backgroundColor": "rgba(0, 0, 0, 0)",
+            "border": "0px none rgb(245, 245, 245)",
+            "outline": "rgb(245, 245, 245) none 3px",
+            "outlineOffset": "0px",
+            "boxShadow": "none",
+            "opacity": "1",
+            "cursor": "auto",
+            "pointerEvents": "auto",
+            "position": "static",
+            "zIndex": "auto"
+          },
+          "activeElement": {
+            "tag": "button",
+            "id": null,
+            "className": "_root_1mx9c_2 _containedPrimary_1mx9c_136 _sizeMd_1mx9c_81 judge-point-btn judge-touch"
+          },
+          "ancestors": [
+            {
+              "tag": "div",
+              "id": null,
+              "className": "judge-screen",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "main",
+              "id": "main-content",
+              "className": "app-main app-main--no-nav",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": null,
+              "className": "app-shell app-shell--immersive",
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "div",
+              "id": "root",
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "visible",
+              "position": "static",
+              "zIndex": "auto"
+            },
+            {
+              "tag": "body",
+              "id": null,
+              "className": null,
+              "rect": {
+                "x": 0,
+                "y": 0,
+                "width": 1440,
+                "height": 1000,
+                "top": 0,
+                "right": 1440,
+                "bottom": 1000,
+                "left": 0
+              },
+              "overflow": "clip visible",
+              "position": "static",
+              "zIndex": "auto"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "console": {
+    "expectedControlledFailures": [
+      {
+        "page": "admin-picker-pending-error",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      },
+      {
+        "page": "admin-override",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      },
+      {
+        "page": "organizer-bracket-dialog",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      },
+      {
+        "page": "judge-dark-error",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      }
+    ],
+    "unexpected": []
+  },
+  "fixtureSummary": {
+    "syntheticUsers": 4,
+    "creatorAbsentMatch": true,
+    "consentTournamentWithGeneratedBracket": true,
+    "noProductionData": true
+  },
+  "completed": true
+}

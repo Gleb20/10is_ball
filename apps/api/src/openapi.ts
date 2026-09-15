@@ -429,6 +429,7 @@ const schemas: Record<string, JsonSchema> = {
         enum: ["collecting", "bracket_generated", "needs_regeneration", "in_progress", "finished", "stopped", "cancelled"],
       },
       createdByUserId: { type: "string" },
+      requireParticipantConsent: { type: "boolean" },
       participants: { type: "array", items: ref("Participant") },
       bracket: { type: "object", nullable: true, additionalProperties: true },
       summary: {
@@ -443,6 +444,17 @@ const schemas: Record<string, JsonSchema> = {
           matchParticipants: { type: "array", items: { type: "object", required: ["matchId", "participantIds"], properties: { matchId: { type: "string" }, participantIds: { type: "array", items: { type: "string" } } } } },
         },
       },
+    },
+    additionalProperties: true,
+  },
+  TournamentListItem: {
+    type: "object",
+    required: ["id", "title", "status"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+      title: { type: "string" },
+      status: { type: "string" },
+      format: { type: "string", enum: ["single_elimination", "double_elimination"] },
     },
     additionalProperties: true,
   },
@@ -651,6 +663,7 @@ const schemas: Record<string, JsonSchema> = {
       mercyPoints: { type: "integer", minimum: 1, nullable: true },
       firstServerMethod: { type: "string", enum: ["random", "manual", "rally"] },
       source: { type: "string", enum: ["manual", "challenge", "revenge", "tutorial"] },
+      sendPlayerInvitations: { type: "boolean", default: false },
       judgeUserId: { type: "string", format: "uuid" },
       participants: { type: "array", maxItems: 4, items: ref("MatchParticipantRequest") },
     },
@@ -779,6 +792,7 @@ const schemas: Record<string, JsonSchema> = {
       pointsToWin: { type: "integer", minimum: 1 },
       mercyEnabled: { type: "boolean" },
       mercyPoints: { type: "integer", minimum: 1, nullable: true },
+      requireParticipantConsent: { type: "boolean", default: false },
     },
     additionalProperties: false,
   },
@@ -800,6 +814,8 @@ const schemas: Record<string, JsonSchema> = {
       userId: { type: "string" },
       guestFirstName: { type: "string" },
       guestLastName: { type: "string" },
+      confirmManualOverride: { type: "boolean" },
+      confirmBracketRegeneration: { type: "boolean" },
     },
     additionalProperties: false,
   },
@@ -1052,7 +1068,7 @@ export function openApiSpec(releaseVersion = productVersion()) {
         get: operation({ operationId: "getHome", summary: "Get home dashboard", tag: "Home", parameters: [queryParameter("period", { type: "string", enum: ["all_time", "month"] })], response: ref("HomeDashboard") }),
       },
       "/api/v1/tournaments": {
-        get: operation({ operationId: "listTournaments", summary: "List visible tournaments", tag: "Tournaments", response: arrayRef("tournaments", "Tournament") }),
+        get: operation({ operationId: "listTournaments", summary: "List visible tournaments; non-contextual admins receive the minimal id/title/status projection", tag: "Tournaments", response: arrayRef("tournaments", "TournamentListItem") }),
         post: operation({ operationId: "createTournament", summary: "Create tournament", tag: "Tournaments", mutation: true, request: "CreateTournamentRequest", response: objectRef("tournament", "Tournament") }),
       },
       "/api/v1/tournaments/{id}": {
@@ -1060,7 +1076,7 @@ export function openApiSpec(releaseVersion = productVersion()) {
         patch: operation({ operationId: "updateTournament", summary: "Update collecting tournament", tag: "Tournaments", mutation: true, parameters: pathParameters("id"), request: "TournamentPatchRequest", response: objectRef("tournament", "Tournament") }),
       },
       "/api/v1/tournaments/{id}/participants": {
-        post: operation({ operationId: "addTournamentParticipant", summary: "Add tournament participant", tag: "Tournaments", mutation: true, parameters: pathParameters("id"), request: "TournamentParticipantRequest", response: objectRef("participant", "Participant") }),
+        post: operation({ operationId: "addTournamentParticipant", summary: "Explicitly add participant and atomically regenerate an existing draft bracket", tag: "Tournaments", mutation: true, parameters: [...pathParameters("id"), { name: "Idempotency-Key", in: "header", required: false, schema: { type: "string", format: "uuid" } }], request: "TournamentParticipantRequest", response: { type: "object", required: ["participant", "tournament"], properties: { participant: ref("Participant"), tournament: ref("Tournament") } } }),
       },
       "/api/v1/tournaments/{id}/participants/{participantId}": {
         delete: operation({ operationId: "removeTournamentParticipant", summary: "Remove tournament participant", tag: "Tournaments", mutation: true, parameters: pathParameters("id", "participantId"), response: ref("Ok") }),

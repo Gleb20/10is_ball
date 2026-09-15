@@ -1,0 +1,17 @@
+{
+  "scope": "r3 to r4 five E2E files only",
+  "status": "PASS_STATIC",
+  "reviewer": "Terra High",
+  "baseline": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+  "manifest_sha256": "5f0d7853df348e981d8686e58b953e30b1902e7b7ebaf59c6eefb1d2eb2127d6",
+  "changed_paths": [
+    "tests/e2e/critical.spec.ts",
+    "tests/e2e/gap-012.spec.ts",
+    "tests/e2e/wave-c.spec.ts",
+    "tests/e2e/wave-e-user.spec.ts",
+    "tests/e2e/wave-f-a11y.spec.ts"
+  ],
+  "source_files_verified": 52,
+  "findings": "All 12 previous failures mapped to correct explicit creator participation, scoped opponent locators, no-consent start assertions and login readiness. No semantic weakening.",
+  "remaining_gate": "Fresh full verify:all; app bytes unchanged from r3."
+}

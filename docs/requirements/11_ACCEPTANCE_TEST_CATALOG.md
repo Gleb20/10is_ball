@@ -229,7 +229,7 @@ Participant, который не creator/organizer и не current active judge,
 Malformed/non-object payload, неизвестные поля, неверные side/winner/version/rules,
 пустой или не соответствующий формату roster, duplicate/self user и blocked/missing
 registered user отклоняются без изменения match, participants, score, event log или
-version. Creator входит в standalone roster. Ошибка записи любого participant
+version. Creator ownership не требует standalone participant row. Ошибка записи любого participant
 откатывает match и весь roster; start повторно проверяет состав и first server.
 
 ### AT-MATCH-014 Atomic completion and idempotent replay
@@ -252,6 +252,14 @@ Injected failure после terminal match write, stats или judge release о�
 active members; неизвестная команда или участник отклоняются без записи. `manual`
 и `rally` first-server требуют явного participant id на start; `random` выбирает
 server по зафиксированному режиму и отклоняет подменённый manual id.
+
+### AT-MATCH-017 Operator-first setup and voluntary invitations
+В ручном flow creator по умолчанию не играет: C выбирает registered A и B,
+создаёт валидный 1v1 и входит в scoring без ответов A/B. Выбор игроков сам по себе
+не создаёт invitations; отдельная unchecked опция создаёт их намеренно, но pending
+player/judge invitations не блокируют start. Start закрывает все pending rows как
+`cancelled/match_started` и читает notifications атомарно. Challenge/revenge по-
+прежнему включает creator как игрока и purposeful invitations.
 
 ### AT-MATCH-VOID-001 No hard delete
 После void finished standalone match исходный результат и event/audit facts остаются,
@@ -341,7 +349,9 @@ stale/unauthorized actor не меняет match, audit, score или version.
 Организатор с `participates=false` не попадает в сетку и не уменьшает минимум игроков.
 
 ### AT-TRN-004 Generate closes collection
-После генерации pending invitations expire и новые участники не добавляются.
+После генерации pending invitations expire и ordinary roster edit закрывается.
+Подтверждённый registered-user add до старта — отдельное исключение, которое в
+одной transaction добавляет участника и полностью перестраивает bracket.
 
 ### AT-TRN-005 Seeding
 Игроки с большим all-time wins разводятся согласно алгоритму; unranked распределяются детерминированным seeded RNG в тесте.
@@ -381,11 +391,12 @@ status, matches и notifications не меняются, migration/reset/recreate
 инициируется. V2 SE/DE lifecycle продолжает работать; V1 SE стартует по прежнему
 пути.
 
-### AT-TRN-016 Organizer-only roster and bracket
-Только organizer route-турнира напрямую добавляет/удаляет participant и
-генерирует/перегенерирует bracket. Participant, active judge другого события,
-outsider и admin без contextual ownership получают `403`; roster, bracket и
-status не меняются. Organizer happy paths сохраняются.
+### AT-TRN-016 Scoped roster and organizer-only bracket authority
+Organizer напрямую добавляет registered users/guests и удаляет participants.
+Active global admin может только подтвердительно добавить registered user через
+минимальный list/detail DTO; guest, invite, remove, settings, bracket и lifecycle
+actions остаются organizer-only. Participant, judge и outsider получают `403`
+без roster/bracket/status writes.
 
 ### AT-TRN-017 Cross-tournament participant mismatch
 Organizer турнира A передаёт в route турнира A `participantId` турнира B →
@@ -402,9 +413,12 @@ participant existence, mutation ограничена обоими IDs.
 
 ### AT-TRN-019 Invitation and roster concurrency
 Два параллельных invite одной пары возвращают один pending invitation и создают
-одну notification. Параллельные accept/direct add оставляют одного active
-registered participant; wrong organizer/user/entity и rollback fault не меняют
-invitation, roster или notification.
+одну notification. Accept-first/add-second оставляет accepted invitation и одну
+active row; add-first/accept-second закрывает invitation как
+`cancelled/manual_override`, читает notification и также оставляет одну active row.
+Два разных concurrent post-bracket add сохраняют обоих игроков, прежний seed prefix
+и bracket со всем active roster. Wrong actor/entity и rollback fault не оставляют
+частичных invitation/participant/audit/bracket writes.
 
 ### AT-TRN-020 Busy player with bye cannot start
 
@@ -422,24 +436,23 @@ match обычный non-bye start остаётся доступен.
 `America/Los_Angeles` и `Asia/Tokyo`. Существующий формат label и редактируемый
 title payload сохранены; контракт абсолютных UTC timestamps не меняется.
 
-### AT-TRN-016 Organizer-only roster and bracket
-Только organizer route-турнира напрямую добавляет/удаляет participant и
-генерирует/перегенерирует bracket. Participant, active judge другого события,
-outsider и admin без contextual ownership получают `403`; roster, bracket и
-status не меняются. Organizer happy paths сохраняются.
+### AT-TRN-022 Immutable consent policy and manual override
+Создание сохраняет `requireParticipantConsent=false|true`, PATCH этого поля
+отклоняется. Pending/declined invitation никогда не является participant. При
+required consent organizer, а non-organizer active admin при любой policy, видит named
+confirmation и отправляет `confirmManualOverride=true`; закрытие dialog или
+отсутствующий flag не создаёт participant/invite/audit/bracket writes. Успех
+сохраняет `addedByUserId`, `additionSource` и named audit. Guest остаётся
+organizer-only.
 
-### AT-TRN-017 Cross-tournament participant mismatch
-Organizer турнира A передаёт в route турнира A `participantId` турнира B →
-`404 NOT_FOUND`; participant турнира B остаётся active, а турнир A сохраняет
-исходные bracket/status. Authorization organizer турнира A проверяется до
-participant existence, mutation ограничена обоими IDs.
-
-### AT-TRN-018 Concurrent advancement
-Два полуфинала одного V2 single-elimination tournament подтверждаются параллельно
-разными активными судьями. Оба результата коммитятся, `bracket_state_version`
-переходит последовательно, final и third-place materialize ровно по одному разу,
-каждый node имеет один `actualMatchId`, а статистика всех четырёх игроков учтена
-ровно один раз. Retry одного confirmation не создаёт дополнительных matches.
+### AT-TRN-023 Atomic add, regeneration and idempotency
+Добавление в `bracket_generated` требует `confirmBracketRegeneration=true`.
+Participant, pending-invite closure/read, audit и regenerated bracket коммитятся
+вместе; injected failure откатывает всё. Existing seed order остаётся prefix,
+новые rows append. Exact UUID key replay не меняет audit/notification/bracket
+version; reuse с другим payload даёт `IDEMPOTENCY_KEY_REUSED`. После start add
+отклоняется с нулём записей; exact replay успешного prestart add возвращает прежний
+participant и также не меняет state.
 
 ## RANKING
 
@@ -498,9 +511,9 @@ active membership. Wrong captain/invited user и injected downstream fault не
 
 ### AT-NOTIF-001 Active action
 Актуальная карточка позволяет принять/отклонить и синхронизирует invitation status.
-Новый standalone outsider player должен согласиться до старта; optional judge invitation
-не резервирует слот и не блокирует старт. Согласие привязано к текущему participant UUID
-и стороне; prestart replacement/swap не использует согласие старой стороны. Запрос,
+Standalone player/judge invitation добровольно и не резервирует слот или старт.
+История привязана к participant UUID и стороне; prestart replacement/swap не
+переносит старую запись и не создаёт новую автоматически. Запрос,
 авторизованный до блокировки пользователя, повторно проверяет actor под row lock и не
 меняет invitation после блокировки. Старый ответ UI после смены аккаунта не раскрывает
 карточки и не перенаправляет новую сессию.
@@ -525,7 +538,9 @@ server-side время terminal перехода.
 приглашение и его notification в той же transaction. Удаление допустимого standalone
 match сохраняет прочитанную notification history с source_unavailable. Admin purge,
 дождавшийся terminal sporting transition, повторно проверяет статус под match lock и
-не удаляет finished/stopped/voided результат.
+не удаляет finished/stopped/voided результат. Start standalone match закрывает все
+pending player/judge invitations как `cancelled/match_started` и читает их
+notifications в той же transaction.
 
 ## VISIBILITY / HISTORY
 

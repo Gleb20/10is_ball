@@ -1,0 +1,18 @@
+requirement_id,package_status,run_or_source,evidence,delta_or_limit
+MATCH-001,COVERED,M01/M02,evidence/m01-create-before-top-390.json;evidence/m03-main-match-created.json,Manual creator defaults nonplaying and owner can create
+MATCH-002,COVERED,M02,evidence/m02-ready-submit-390.png;evidence/m03-main-match-created.json,2v2 standalone created with exact four places
+MATCH-003,COVERED,M02/M04,evidence/m03-main-match-created.json;evidence/m04-roster-invitation-lifecycle.json,Registered guest team and owner/player separation checked; invitation replacement gap F-MATCH-002
+MATCH-004,COVERED_WITH_FINDING,M02,evidence/m02-quick-choices-390.png;evidence/m02-ready-submit-390.json,All groups present; destination ambiguity F-MATCH-001
+MATCH-005,COVERED,M02/M04,evidence/m03-main-match-created.json;evidence/m04-after-roster-edit-1440.json,Custom rules persist before start and edit
+MATCH-006,NOT_TESTED,JUDGE owner,../pilot/report.md,Scoring was fixture setup only; no MATCH claim
+MATCH-007,NOT_TESTED,JUDGE owner,../pilot/report.md,Serve mechanics delegated; rule selection only observed
+MATCH-008,COVERED,M06 plus accepted pilot,evidence/m06-role-action-matrix.json;../pilot/report.md,Creator-only start action and occupied judge state observed; invitation start closure inherited from accepted gate
+MATCH-009,REFERENCE_ONLY,GAP012r6 accepted gate,../gap012-acceptance-review.json,No new concurrent player browser run
+MATCH-010,REFERENCE_ONLY,accepted pilot,../pilot/report.md,Finished flow reused; owned by JUDGE/RESULTS for deeper audit
+MATCH-011,REFERENCE_ONLY,accepted pilot and source,../pilot/report.md,Read-only terminal state not re-mutated in this package
+MATCH-012,NOT_TESTED,JUDGE owner,evidence/m06-role-action-matrix.json,Action visibility inventoried; stop dialog/persistence not exercised
+MATCH-013,NOT_TESTED,JUDGE owner,evidence/m06-role-action-matrix.json,Action visibility inventoried; no-show dialog/persistence not exercised
+MATCH-014,COVERED,M05,evidence/m05-challenge-persisted.json;evidence/m05-revenge-persisted.json,Creator roster and purposeful invitations persisted
+MATCH-015,COVERED_BY_SOURCE,M01/M05 plus source,../../../../apps/web/src/pages/MatchCreatePage.tsx,Create state is client-local; leave/reload persistence was not separately browser-tested
+MATCH-016,REFERENCE_ONLY,accepted pilot/RESULTS,../pilot/report.md,Void UI is shared RESULTS responsibility; no compensation mutation run
+MATCH-017,COVERED_WITH_FINDING,M04/M06,evidence/m04-cancel-persisted.json;evidence/m06-role-action-matrix.json,Creator cancel persists; admin surface conflict F-MATCH-004; reason/copy gap F-MATCH-003

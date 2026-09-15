@@ -1,0 +1,49 @@
+{
+  "kind": "structural proposal, not application runtime",
+  "checks": [
+    {
+      "width": 390,
+      "name": "create",
+      "box": {
+        "x": 12,
+        "y": -0.09375,
+        "width": 366,
+        "height": 950.34375
+      },
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "name": "detail",
+      "box": {
+        "x": 12,
+        "y": -135.75,
+        "width": 366,
+        "height": 1171.34375
+      },
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "name": "create",
+      "box": {
+        "x": 170,
+        "y": 36.8125,
+        "width": 560,
+        "height": 863.34375
+      },
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "name": "detail",
+      "box": {
+        "x": 170,
+        "y": -113.84375,
+        "width": 560,
+        "height": 1127.84375
+      },
+      "overflow": false
+    }
+  ]
+}

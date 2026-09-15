@@ -1,0 +1,23 @@
+{
+  "statusBeforeConfirm": "waiting",
+  "statusAfterConfirm": "cancelled",
+  "winnerSide": null,
+  "replacementInvitation": {
+    "id": "3d7f2fe5-0dfe-4c27-b830-a043b6309099",
+    "matchId": "0a8003ef-be14-4d14-a8c2-105a57e28111",
+    "matchParticipantId": "042f9e5a-4def-4343-9a17-8f641563778f",
+    "participantSide": "B",
+    "invitedUserId": "2da25043-5aed-44af-a8d5-68d5d66f84e9",
+    "invitedByUserId": "4074a0bf-2720-4fdf-b448-cc2d408862f5",
+    "kind": "player",
+    "status": "cancelled",
+    "expiresAt": "2026-09-13T23:30:38.852Z",
+    "respondedAt": "2026-09-13T23:20:39.138Z",
+    "expiryReason": "match_cancelled",
+    "createdAt": "2026-09-13T23:20:38.930Z"
+  },
+  "createInvitationAfterCancel": {
+    "status": 400,
+    "code": "MATCH_IMMUTABLE"
+  }
+}

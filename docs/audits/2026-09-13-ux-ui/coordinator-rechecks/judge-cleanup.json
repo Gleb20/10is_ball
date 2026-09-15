@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-09-14T08:01:52.662Z",
+  "kind": "read-only cleanup verification; original owner reported cleanup",
+  "project": "tab10-ux-judge-4917",
+  "containersAbsent": true,
+  "volumesAbsent": true,
+  "networksAbsent": true,
+  "ports": [
+    {
+      "port": 4917,
+      "free": true
+    },
+    {
+      "port": 4918,
+      "free": true
+    },
+    {
+      "port": 33019,
+      "free": true
+    }
+  ]
+}

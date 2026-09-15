@@ -1,0 +1,16 @@
+{
+  "id": "4ac65864-beca-4590-80b5-f0e1be6ba741",
+  "source": "revenge",
+  "title": "Реванш: Seed recent B",
+  "creatorInRoster": true,
+  "opponentIds": [
+    "2bcf6375-5839-476f-a235-6b3c36b911b8"
+  ],
+  "invitationTargets": [
+    {
+      "userId": "2bcf6375-5839-476f-a235-6b3c36b911b8",
+      "kind": "player",
+      "status": "pending"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "api": {
+    "status": "ok",
+    "time": "2026-09-13T23:20:33.002Z",
+    "release": {
+      "sha": "0123456789abcdef0123456789abcdef01234567",
+      "version": "3.0.0",
+      "environment": "test",
+      "dirty": false
+    }
+  },
+  "web": {
+    "status": "ok",
+    "time": "2026-09-13T23:20:33.028Z",
+    "release": {
+      "sha": "0123456789abcdef0123456789abcdef01234567",
+      "version": "3.0.0",
+      "environment": "test",
+      "dirty": false
+    }
+  },
+  "ports": {
+    "web": 4817,
+    "api": 4818,
+    "postgres": 33018
+  },
+  "databaseProject": "tab10-ux-match-4817",
+  "databaseRole": "tab10_runtime_test"
+}

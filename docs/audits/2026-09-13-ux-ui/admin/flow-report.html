@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ADMIN flow report</title>
+<style>
+:root{font-family:Inter,system-ui,sans-serif;color:#211d27;background:#f4f2f6;--v:#7928e8;--ok:#18772b;--warn:#9a6300;--bad:#b4232c;--line:#ddd7e2}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1180px;margin:auto;padding:32px}header,.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px}h1{margin:0 0 8px}h2{margin:0 0 14px;font-size:20px}p{line-height:1.5}.status{display:inline-block;border-radius:999px;padding:7px 11px;background:#fff1cd;color:#774d00;font-weight:800}.meta{color:#6f6873;font-size:13px}.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.step{border:1px solid var(--line);border-radius:12px;padding:14px;min-height:114px;position:relative}.step b{display:block;margin-bottom:8px}.step:after{content:'→';position:absolute;right:-15px;top:42px;color:var(--v);font-weight:900}.step:last-child:after{display:none}.pass{border-top:4px solid var(--ok)}.fail{border-top:4px solid var(--bad)}.decision{border-top:4px solid var(--warn)}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:10px;border-bottom:1px solid #eeeaf1;vertical-align:top}th{color:#635b67}.pill{font-weight:800}.p{color:var(--ok)}.f{color:var(--bad)}.d{color:var(--warn)}.findings{display:grid;grid-template-columns:1fr 1fr;gap:12px}.finding{border:1px solid var(--line);border-radius:12px;padding:14px}.finding h3{font-size:15px;margin:0 0 7px}.finding p{font-size:13px;margin:0}.images{display:grid;grid-template-columns:1fr 1fr;gap:12px}.images img{width:100%;border:1px solid var(--line);border-radius:12px}.small{font-size:12px;color:#6f6873}a{color:var(--v)}@media(max-width:800px){.wrap{padding:14px}.flow,.findings,.images{grid-template-columns:1fr}.step:after{display:none}}
+</style>
+</head>
+<body><main class="wrap">
+<header><span class="status">READY_FOR_REVIEW / PARTIAL</span><h1>ADMIN UX/UI flow report</h1><p>Изолированный аудит account lifecycle, role guards и recovery seams на accepted GAP012-r6. 8 сценариев, 13 визуально проверенных кадров; приложение и canonical docs не менялись.</p><div class="meta">HEAD 9f71b9f · Node 24.20.0 · Chromium · PostgreSQL 16.15 tmpfs · web5417/api5418/pg33030 · cleanup complete</div></header>
+
+<section class="card"><h2>Основной lifecycle</h2><div class="flow"><div class="step fail"><b>1 · Найти</b>Каталог находится после полной формы создания; строки перегружены действиями.</div><div class="step pass"><b>2 · Проверить</b>Поля, статус, роль, даты, search/filter и bounded states доступны.</div><div class="step pass"><b>3 · Изменить</b>Edit, block/unblock и role guards сохраняют серверные инварианты.</div><div class="step fail"><b>4 · Восстановить</b>Reset happy path проходит, но lost response не reconciles state.</div><div class="step fail"><b>5 · Объяснить</b>Audit persisted, но user timeline недоступна оператору.</div></div></section>
+
+<section class="card"><h2>Run matrix</h2><table><thead><tr><th>Run</th><th>Branch</th><th>Result</th><th>Authoritative observation</th></tr></thead><tbody>
+<tr><td>A-RUN-001</td><td>catalog/viewport/states</td><td class="pill f">FAIL_FINDINGS</td><td>create top 63.5; users top 583.5; 560 px desktop main; no 360 overflow</td></tr>
+<tr><td>A-RUN-002</td><td>create/edit</td><td class="pill d">PASS + finding</td><td>one-time 16-char secret, Copy, duplicate 409; no stable detail/audit</td></tr>
+<tr><td>A-RUN-003</td><td>reset success</td><td class="pill p">PASS</td><td>old session/password 401; new temporary login requires change</td></tr>
+<tr><td>A-RUN-004</td><td>reset lost response</td><td class="pill f">FAIL_FINDING</td><td>server applied; 1 POST, 0 GET-first, enabled dialog, no blind retry executed</td></tr>
+<tr><td>A-RUN-005</td><td>block/unblock</td><td class="pill d">PASS limited</td><td>session revoked, blocked login 403, directory false→true; old session stays 401</td></tr>
+<tr><td>A-RUN-006</td><td>role/self/last-admin</td><td class="pill p">PASS</td><td>target session 401; self role 403; last-admin block 409</td></tr>
+<tr><td>A-RUN-007</td><td>D17/D23 recovery</td><td class="pill d">BLOCKED_DECISION</td><td>D17 ordinary detail 403 correct; direct force-close cancelled; no product entry/read seam</td></tr>
+<tr><td>A-RUN-008</td><td>D35 scoped admin</td><td class="pill d">PASS limited</td><td>named manual override; bracket 1→2; settings/start 403</td></tr>
+</tbody></table><p class="small">Exact steps, evidence and exclusions: <a href="runs.csv">runs.csv</a>. Requirement branches: <a href="requirement-coverage-delta.csv">requirement-coverage-delta.csv</a>.</p></section>
+
+<section class="card"><h2>Findings</h2><div class="findings"><div class="finding"><h3>F-ADMIN-001 · P2</h3><p>Directory-first hierarchy and contextual actions are needed; preserve every current function.</p></div><div class="finding"><h3>F-ADMIN-002 · P2</h3><p>Persisted audit needs a safe stable per-user detail/timeline surface.</p></div><div class="finding"><h3>F-ADMIN-003 · P1</h3><p>Reset needs a non-secret marker and GET-first applied/rejected/unknown recovery.</p></div><div class="finding"><h3>F-ADMIN-004 · P1</h3><p>Exact-ID minimum recovery lookup needs product/security acceptance; D17 ordinary detail remains closed.</p></div></div></section>
+
+<section class="card"><h2>Annotated target</h2><div class="images"><a href="annotated-before-after-390.png"><img src="annotated-before-after-390.png" alt="ADMIN before/after 390"></a><a href="annotated-before-after-1440.png"><img src="annotated-before-after-1440.png" alt="ADMIN before/after 1440"></a></div><p class="small">Structural target only. Full behavior and acceptance: <a href="target-spec.md">target-spec.md</a>. Frozen evidence: <a href="evidence/runtime-observations.json">runtime-observations.json</a>.</p></section>
+
+<section class="card"><h2>What remains partial</h2><p>Finished-history retention, captain handover, the full non-admin admin-endpoint matrix, every force-close/void/purge actor/state branch, cold-start timing, physical mobile, Firefox/WebKit, 200% zoom and spoken AT were not covered. Shared Dialog/UserPicker/focus findings were deliberately not duplicated.</p></section>
+</main></body></html>

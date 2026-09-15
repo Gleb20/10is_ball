@@ -1,0 +1,29 @@
+{
+  "status": "PASS_WITH_MANDATORY_CORRECTIONS",
+  "reviewer": "Terra High research_protocol_review",
+  "snapshot": "/private/tmp/tab10-ux-social-review-01",
+  "exportSha256": "e4cabc73104e87646cb6efa17e84b122fb43d8b94d9018168009b488187378be",
+  "packageManifests": {
+    "tournament": "8dd14d1974dc38f250e1ffcce9585d4266e24e283add0a68b7c0a586e96ee308",
+    "team": "db100cb0b383a79a5f365df0aefcb2db068a23ffb55396506917c43eca0150b4"
+  },
+  "mandatoryOverlays": [
+    "tournament-correction.md",
+    "team-correction.md"
+  ],
+  "readyTasks": [
+    "BUG-032",
+    "BUG-033",
+    "GAP-019",
+    "GAP-020",
+    "GAP-021"
+  ],
+  "limits": [
+    "Original target specs cannot be dispatched without overlays/canonical backlog",
+    "TEAM avatar/revoke/history are blocked decisions; teammate consent exception withdrawn",
+    "No V1 browser/manual seed swap/injected tournament dialog failure/human physical-device study",
+    "Stopped tournament with played match remains required future BUG033 implementation fixture"
+  ],
+  "implementation": "not performed",
+  "acceptedByCoordinator": true
+}

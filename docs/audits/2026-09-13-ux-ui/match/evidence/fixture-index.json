@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "environment": "local-disposable-postgresql",
+  "actors": {
+    "operator": {
+      "id": "4074a0bf-2720-4fdf-b448-cc2d408862f5",
+      "label": "Матчев Оператор",
+      "role": "operator",
+      "accountStatus": "active",
+      "mustChangePassword": false,
+      "onboarding": "complete"
+    },
+    "playerA": {
+      "id": "44311fda-f8be-44cb-97b3-5e51f32d549e",
+      "label": "Альфа Анна",
+      "role": "playerA",
+      "accountStatus": "active",
+      "mustChangePassword": false,
+      "onboarding": "complete"
+    },
+    "playerB": {
+      "id": "2bcf6375-5839-476f-a235-6b3c36b911b8",
+      "label": "Бета Борис",
+      "role": "playerB",
+      "accountStatus": "active",
+      "mustChangePassword": false,
+      "onboarding": "complete"
+    },
+    "playerC": {
+      "id": "c58db21d-b0da-4532-970f-5815eeffd88a",
+      "label": "Гамма Вера",
+      "role": "playerC",
+      "accountStatus": "active",
+      "mustChangePassword": false,
+      "onboarding": "complete"
+    },
+    "playerD": {
+      "id": "2da25043-5aed-44af-a8d5-68d5d66f84e9",
+      "label": "Дельта Глеб",
+      "role": "playerD",
+      "accountStatus": "active",
+      "mustChangePassword": false,
+      "onboarding": "complete"
+    },
+    "judge": {
+      "id": "7539de2b-7ca2-4cdc-955e-b32d51c74caa",
+      "label": "Судья Жанна",
+      "role": "prospective/current judge",
+      "accountStatus": "active",
+      "mustChangePassword": false,
+      "onboarding": "complete"
+    },
+    "outsider": {
+      "id": "369c7e75-453d-41a5-9aa8-cb6eac81f487",
+      "label": "Внешний Олег",
+      "role": "outsider",
+      "accountStatus": "active",
+      "mustChangePassword": false,
+      "onboarding": "complete"
+    }
+  },
+  "team": {
+    "id": "a14affcd-7090-4332-b47c-0fa92814054e",
+    "name": "Парная аудит",
+    "members": [
+      "4074a0bf-2720-4fdf-b448-cc2d408862f5",
+      "44311fda-f8be-44cb-97b3-5e51f32d549e",
+      "2bcf6375-5839-476f-a235-6b3c36b911b8"
+    ]
+  },
+  "historySeedMatchIds": [
+    "91fea26d-95c9-47a2-bded-e48c9085afdf",
+    "a5b28d2f-41a9-4828-9bdd-d3e19905aff1",
+    "b6ff7418-0701-481e-8747-4ee137a31a42"
+  ],
+  "createOptions": {
+    "teams": [
+      {
+        "id": "a14affcd-7090-4332-b47c-0fa92814054e",
+        "name": "Парная аудит",
+        "userIds": [
+          "2bcf6375-5839-476f-a235-6b3c36b911b8",
+          "44311fda-f8be-44cb-97b3-5e51f32d549e"
+        ]
+      }
+    ],
+    "recentOpponentIds": [
+      "2bcf6375-5839-476f-a235-6b3c36b911b8",
+      "44311fda-f8be-44cb-97b3-5e51f32d549e"
+    ],
+    "frequentOpponentIds": [
+      "44311fda-f8be-44cb-97b3-5e51f32d549e",
+      "2bcf6375-5839-476f-a235-6b3c36b911b8"
+    ]
+  },
+  "credentialsPersisted": false
+}

@@ -69,6 +69,7 @@ const CreateMatchFieldsSchema = z
     mercyPoints: z.number().int().min(1).nullable().optional(),
     firstServerMethod: FirstServerMethodSchema.optional(),
     source: z.enum(["manual", "challenge", "revenge", "tutorial"]).optional(),
+    sendPlayerInvitations: z.boolean().optional(),
     participants: z.array(MatchParticipantRequestSchema).max(4),
     judgeUserId: z.string().uuid().optional(),
   })
@@ -86,7 +87,7 @@ export const CreateMatchRequestSchema = CreateMatchFieldsSchema.superRefine((req
 export type CreateMatchRequest = z.infer<typeof CreateMatchRequestSchema>;
 
 export const UpdateMatchRequestSchema = CreateMatchFieldsSchema
-  .omit({ source: true, judgeUserId: true })
+  .omit({ source: true, judgeUserId: true, sendPlayerInvitations: true })
   .partial()
   .extend({ participants: z.array(UpdateMatchParticipantRequestSchema).max(4).optional() })
   .strict()

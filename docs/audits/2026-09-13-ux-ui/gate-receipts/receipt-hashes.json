@@ -1,0 +1,7 @@
+{
+  "environment.json": "2939c6f0164618800547df44d426742704421d23c2e4ea1e1893d1a3cc26f67e",
+  "local-summary.json": "b687d2b6399896115577ad9a5bac492066fb8666fb50abf26a842fbad8391a35",
+  "quality/fast-summary.json": "d2e8a68f7a51970c109f00ead0dcc07dd285358447cd03c499ff2135756e154a",
+  "postgres/postgres-summary.json": "9401b7340de2305398fd20f02d9475588fafa01320468f2137a63ecb148b5d70",
+  "browser-prodlike/browser-summary.json": "75736bce4fff9af8ca2e31e32de8026c18ff2b2ee614216d6cdd8097192d7d60"
+}

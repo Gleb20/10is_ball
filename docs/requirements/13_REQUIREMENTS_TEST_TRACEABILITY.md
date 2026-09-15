@@ -1,6 +1,6 @@
 # Requirements ↔ Tests Traceability
 
-Обновлено **2026-09-13**. Таблица показывает существующий
+Обновлено **2026-09-15**. Таблица показывает существующий
 evidence и пробелы; перечисление слоя не означает, что слой уже реализован.
 Capability-level выводы находятся в [`../CAPABILITY_MATRIX.md`](../CAPABILITY_MATRIX.md),
 дефекты — в [`../BACKLOG.md`](../BACKLOG.md).
@@ -14,9 +14,9 @@ Capability-level выводы находятся в [`../CAPABILITY_MATRIX.md`](
 | PROFILE-001..006 | AT-PROFILE-001..005; own/public/privacy/edit/avatar/session contracts | Wave B API 220/220 and web 148/148 cover nested DTO/privacy/blocked/current-session/strict mutation; browser own/public/blocked/profile-session/challenge passed at desktop and 390px; aggregate gate pending | `partial` | GAP-002 (`in_progress`) |
 | RANK-001..005 | AT-RANK-001..006; timezone/team/card cases | Wave B team/period API and web contracts consume canonical public profile DTO; ranking → profile → challenge and Moscow-boundary browser checks passed at desktop and 390px; aggregate gate pending | `partial` | GAP-004 (`in_progress`) |
 | HISTORY-001..004 | AT-VIS-001..004; AT-VIS-003 filters/pagination | Existing visibility/void/tutorial coverage plus Wave B dedicated history API covers server filters, keyset and tournament results; PostgreSQL history 2/2 and browser journey recorded, selector issues/final aggregate gate pending | `partial` | GAP-003 (`in_progress`) |
-| MATCH-001..017 | AT-MATCH-001..016, START/STOP, CANCEL-001..004, VOID-001..004 | Wave C full gate1056/1056: quality980, PostgreSQL47, browser25 (16 compiled journeys +9 foundation). GAP-005 service12/12, real-PG concurrency5/5, options/OpenAPI6/6, shared13/13. `tests/e2e/wave-c.spec.ts` covers grouped 2v2/no-show/revenge, correction/undo/handover and separate creator/club-judge start at desktop/390; persisted state and rendered captures checked. | `verified` | GAP-005 (`verified_local`) |
+| MATCH-001..017 | AT-MATCH-001..017, START/STOP, CANCEL-001..004, VOID-001..004 | Wave C baseline remains. GAP-012 focused service/API/component tests cover C-owned A-vs-B, default no-invite, voluntary nonblocking invitations, start terminalization, challenge/revenge defaults and nonplaying-owner edit. Final local gate passed 1257/1257, including the desktop/390 browser journey; public verification and the user research session remain pending. | `partial` | GAP-005, GAP-012 (`verified_local`) |
 | JUDGE-001..012 | AT-JUDGE-001..010; two-client browser lifecycle | Wave C full gate1056/1056: quality980, PostgreSQL47, browser25 (16 compiled journeys +9 foundation). GAP-005 service12/12, real-PG concurrency5/5, options/OpenAPI6/6, shared13/13. `tests/e2e/wave-c.spec.ts` covers grouped 2v2/no-show/revenge, correction/undo/handover and separate creator/club-judge start at desktop/390; persisted state and rendered captures checked. | `verified` | GAP-005 (`verified_local`) |
-| TOURNAMENT-001..019 | AT-TRN-001..021 and AT-MATCH-VOID-004; deterministic V2 SE/DE E2E | Wave D final local gate 1135/1135 covers organizer settings/transitions, seed/BYE invalidation/regeneration, SE/DE 3/5/8, busy-player locks, persisted summary/stop reason, D33 preservation and terminal auto-BYE suppression. PostgreSQL 56/56 and browser 41/41 passed; desktop/390/landscape rendered states reviewed. | `verified` | GAP-006 (`verified_local`) |
+| TOURNAMENT-001..019 | AT-TRN-001..023 and AT-MATCH-VOID-004; deterministic V2 SE/DE E2E | Wave D baseline remains. GAP-012 focused API/PGlite plus PostgreSQL5/5 cover immutable policy, scoped admin, provenance/audit, rollback, idempotency, both invite/add orders, start/add and concurrent add/add with seed preservation. Final local gate passed 1257/1257, including the desktop/390 browser journey; public verification and the user research session remain pending. | `partial` | GAP-006, GAP-012 (`verified_local`) |
 | TEAM-001..009 | AT-TEAM-001..007; captain/invite/leave/archive E2E | Wave D final local gate 1135/1135 covers service/auth/real-PG serialization, team contracts, component recovery/guards, full lifecycle, privacy-safe DTO, atomic block reassignment/archive and multi-user browser journey. PostgreSQL 56/56 and browser 41/41 passed. | `verified` | DATA-004, GAP-007 (`verified_local`) |
 | NOTIF-001..006 | AT-NOTIF-001..005; expiry/read/popup lifecycle | Wave E successful lanes1229/1229: quality1112, PostgreSQL66, browser47 including38 desktop/390 journeys, cleanup4. Consent PostgreSQL8/8 includes three reproduced cross-match40P01 regressions; admin/catalog/audit, consent/history, onboarding/tutorial return/Help actions pass. See wave-e-local.json; GAP-011 quality remains | `verified` | BUG-013 (`in_progress`), GAP-008 |
 | ONB-001..005 | AT-ONB-001..003; first-login/resume/restart/tutorial-return E2E | Wave E successful lanes1229/1229: quality1112, PostgreSQL66, browser47 including38 desktop/390 journeys, cleanup4. Consent PostgreSQL8/8 includes three reproduced cross-match40P01 regressions; admin/catalog/audit, consent/history, onboarding/tutorial return/Help actions pass. See wave-e-local.json; GAP-011 quality remains | `verified` | BUG-012 (`in_progress`), GAP-009 |
@@ -111,7 +111,9 @@ The fixture-only reconciliation in `data-002.integration.test.ts`,
 `gap-005.postgres.integration.test.ts`, and `postgres-date.integration.test.ts`
 preserves earlier requirement mappings and explicitly accepts each required synthetic
 player invitation through the service with the invited user as actor before intended
-starts. Browser E coverage and the final aggregate gate remain pending.
+starts. This sentence records the historical Wave E fixture. D35/GAP-012 supersedes
+the start gate: current fixtures use direct selection by default and create/accept an
+invitation only when that invitation lifecycle is the subject under test.
 
 ### Wave E consent repair evidence checkpoint
 
@@ -136,6 +138,19 @@ on frozen pre-fix services and8/8 passes on the combined repair; related
 tournament PG2/2, PGlite5/5 and standalone validation7/7 also pass.
 [Focused evidence](../audit/evidence/wave-e-consent-focused.json). Full E
 aggregate is not established by these focused tests.
+
+### GAP-012 operator-first evidence checkpoint
+
+`gap-012.integration.test.ts` covers service and HTTP contracts, minimal admin DTO,
+409 confirmations, provenance/audit, exact replay/key reuse, new-post-start zero
+writes and PGlite fault rollback. `gap-012.postgres.integration.test.ts` contains5
+deterministic PostgreSQL cases for both invitation/manual-add orders, start/add,
+real regeneration/replay and concurrent add/add. Component coverage is in
+`MatchCreatePage.test.tsx`, `MatchDetailPage.gap008.test.tsx` and
+`TournamentSetup.gap012.test.tsx`; compiled desktop/390 journeys are in
+`gap-012.spec.ts` and the updated `wave-e-user.spec.ts`. Migration coverage includes
+fresh/current/pre-0006/adoption/idempotent apply and disposable rollback. Final
+coverage/status is updated only after the full gate.
 
 BUG-017 adds `apps/api/src/bug-017.integration.test.ts` under JUDGE-004 /
 AT-JUDGE-002: two real auth sessions, same/cross-match409 contract, exact

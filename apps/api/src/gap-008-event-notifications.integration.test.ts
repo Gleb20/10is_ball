@@ -52,6 +52,7 @@ describe("GAP-008 transactional event notifications", () => {
 
   it("notifies distinct registered participants once for match stop and cancel", async () => {
     const stopped = await services.matches.createMatch({
+      sendPlayerInvitations: true,
       createdByUserId: actor,
       title: "Stopped event",
       format: "1v1",
@@ -71,6 +72,7 @@ describe("GAP-008 transactional event notifications", () => {
     });
 
     const cancelled = await services.matches.createMatch({
+      sendPlayerInvitations: true,
       createdByUserId: actor,
       title: "Cancelled event",
       format: "1v1",

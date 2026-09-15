@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "completedAt": "2026-09-13T23:20:43.431Z",
+  "browser": {
+    "name": "Chromium",
+    "version": "153.0.8010.12"
+  },
+  "runtime": {
+    "sha": "0123456789abcdef0123456789abcdef01234567",
+    "version": "3.0.0",
+    "environment": "test",
+    "dirty": false
+  },
+  "runs": [
+    {
+      "run": "M01",
+      "scenarios": [
+        "SC-M01",
+        "SC-M02"
+      ],
+      "result": "FAIL",
+      "evidence": [
+        "m01-directory-loading-390",
+        "m01-directory-error-390",
+        "m01-create-before-top-390",
+        "m01-name-order-bug023-390"
+      ],
+      "note": "Main roster remains below rare settings; BUG-023 reproduced; async states are COMPONENTS references."
+    },
+    {
+      "run": "M02",
+      "scenarios": [
+        "SC-M02"
+      ],
+      "result": "PASS_WITH_FINDING",
+      "evidence": [
+        "m02-quick-choices-390",
+        "m02-ready-submit-390",
+        "m03-main-match-created.json"
+      ],
+      "note": "2v2 guest/registered/team/recent/frequent/custom rules created; quick choices mutate Side B context."
+    },
+    {
+      "run": "M03",
+      "scenarios": [
+        "SC-M03"
+      ],
+      "result": "PASS_WITH_FINDING",
+      "evidence": [
+        "m03-player-invite-accept-390",
+        "m03-player-invite-decline-390",
+        "m03-judge-invite-accept-390",
+        "m04-roster-invitation-lifecycle.json"
+      ],
+      "note": "Voluntary player/judge responses work; replacement invitation lacks a detail affordance."
+    },
+    {
+      "run": "M04",
+      "scenarios": [
+        "SC-M04"
+      ],
+      "result": "PASS_WITH_FINDING",
+      "evidence": [
+        "m04-edit-dialog-before-1440",
+        "m04-after-roster-edit-1440",
+        "m04-cancel-confirm-390",
+        "m04-cancel-persisted.json"
+      ],
+      "note": "Edit/cancel persist; cancel confirmation omits optional reason and uses void-like wording."
+    },
+    {
+      "run": "M05",
+      "scenarios": [
+        "SC-M03"
+      ],
+      "result": "PASS_WITH_REFERENCE",
+      "evidence": [
+        "m05-challenge-prefill-360",
+        "m05-create-pending-1440",
+        "m05-challenge-persisted.json",
+        "m05-revenge-prefill-390",
+        "m05-revenge-persisted.json"
+      ],
+      "note": "Challenge/revenge creator and purposeful invite persist; pending controls reference BUG-026/F-CMP-R-002."
+    },
+    {
+      "run": "M06",
+      "scenarios": [
+        "SC-M04"
+      ],
+      "result": "FAIL",
+      "evidence": [
+        "m06-role-action-matrix.json",
+        "m06-waiting-creator-1440",
+        "m06-waiting-participant-1440",
+        "m06-waiting-current-judge-1440",
+        "m06-waiting-active-admin-outside-context-1440"
+      ],
+      "note": "Role/state actions observed; active admin outside match context receives FORBIDDEN on detail."
+    }
+  ],
+  "limitations": [
+    "Expert browser automation, not a human usability session.",
+    "Touch is Chromium emulation; physical device, virtual keyboard, WebKit, spoken AT and 200% browser zoom were not tested.",
+    "Scoring mechanics were only used to seed finished history; JUDGE owns scoring UX."
+  ]
+}

@@ -27,8 +27,6 @@ import {
   userStats,
   users,
   tournaments,
-  teamMemberships,
-  teams,
   notifications,
 } from "../../db/schema.js";
 
@@ -72,6 +70,7 @@ export type CreateMatchInput = {
   tournamentSlotId?: string;
   tournamentBracketMatchId?: string;
   judgeUserId?: string;
+  sendPlayerInvitations?: boolean;
   participants: MatchParticipantInput[];
 };
 
@@ -143,37 +142,6 @@ export class MatchService {
     if (!actor || actor.status !== "active") {
       throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
     }
-  }
-
-  private async sameTeamUserIds(
-    creatorUserId: string,
-    candidateUserIds: string[],
-    db: Db,
-  ): Promise<Set<string>> {
-    if (candidateUserIds.length === 0) return new Set();
-    const creatorTeams = await db
-      .select({ teamId: teamMemberships.teamId })
-      .from(teamMemberships)
-      .innerJoin(teams, eq(teams.id, teamMemberships.teamId))
-      .where(
-        and(
-          eq(teamMemberships.userId, creatorUserId),
-          isNull(teamMemberships.leftAt),
-          eq(teams.status, "active"),
-        ),
-      );
-    if (creatorTeams.length === 0) return new Set();
-    const memberships = await db
-      .select({ userId: teamMemberships.userId })
-      .from(teamMemberships)
-      .where(
-        and(
-          inArray(teamMemberships.teamId, creatorTeams.map((row) => row.teamId)),
-          inArray(teamMemberships.userId, candidateUserIds),
-          isNull(teamMemberships.leftAt),
-        ),
-      );
-    return new Set(memberships.map((row) => row.userId));
   }
 
   private async insertMatchInvitation(
@@ -270,24 +238,14 @@ export class MatchService {
     match: typeof matches.$inferSelect,
     participants: Array<typeof matchParticipants.$inferSelect>,
     judgeUserId: string | undefined,
+    sendPlayerInvitations: boolean,
     db: Db,
   ) {
     if (match.kind !== "standalone") return;
-    const candidates = participants.flatMap((participant) =>
-      participant.userId && participant.userId !== match.createdByUserId
-        ? [participant.userId]
-        : [],
-    );
-    const sameTeam = await this.sameTeamUserIds(
-      match.createdByUserId,
-      candidates,
-      db,
-    );
-    for (const participant of participants) {
+    for (const participant of sendPlayerInvitations ? participants : []) {
       if (
         participant.userId &&
-        participant.userId !== match.createdByUserId &&
-        !sameTeam.has(participant.userId)
+        participant.userId !== match.createdByUserId
       ) {
         await this.insertMatchInvitation(
           {
@@ -369,25 +327,6 @@ export class MatchService {
           db,
         );
       }
-      if (
-        history.some((invitation) =>
-          invitation.participantSide === nextSide &&
-          (invitation.status === "accepted" || invitation.status === "pending"),
-        )
-      ) {
-        continue;
-      }
-      await this.insertMatchInvitation(
-        {
-          matchId: match.id,
-          matchParticipantId: participant.id,
-          participantSide: nextSide,
-          invitedUserId: participant.userId!,
-          invitedByUserId: match.createdByUserId,
-          kind: "player",
-        },
-        db,
-      );
     }
   }
 
@@ -451,6 +390,7 @@ export class MatchService {
         match!,
         insertedParticipants,
         input.judgeUserId,
+        input.sendPlayerInvitations ?? false,
         executor,
       );
       return match!.id;
@@ -530,14 +470,18 @@ export class MatchService {
       }
     }
 
-    if (kind === "standalone" && !registeredIds.has(input.createdByUserId)) {
-      throw validationError("standalone creator must be a participant");
-    }
     if (
       kind === "tutorial" &&
       (tutorialActors !== 1 || !registeredIds.has(input.createdByUserId))
     ) {
       throw validationError("tutorial requires creator and one tutorial actor");
+    }
+    if (
+      kind === "standalone" &&
+      (input.source === "challenge" || input.source === "revenge") &&
+      !registeredIds.has(input.createdByUserId)
+    ) {
+      throw validationError("challenge and revenge require the creator to play");
     }
   }
 
@@ -1024,7 +968,13 @@ export class MatchService {
             .returning();
           inserted.push(row!);
         }
-        await this.createInitialInvitations(current, inserted, undefined, db);
+        await this.createInitialInvitations(
+          current,
+          inserted,
+          undefined,
+          false,
+          db,
+        );
       }
 
       await db
@@ -1106,32 +1056,6 @@ export class MatchService {
       participants: participantInputs,
     });
     await this.assertActiveRegisteredParticipants(participantInputs, db);
-    const currentParticipantIds = detail.participants.map((row) => row.id);
-    const playerConsentHistory = currentParticipantIds.length === 0
-      ? []
-      : await db.query.matchInvitations.findMany({
-          where: and(
-            eq(matchInvitations.matchId, matchId),
-            eq(matchInvitations.kind, "player"),
-            inArray(matchInvitations.matchParticipantId, currentParticipantIds),
-          ),
-        });
-    for (const participant of detail.participants) {
-      const history = playerConsentHistory.filter(
-        (invitation) => invitation.matchParticipantId === participant.id,
-      );
-      if (
-        history.length > 0 &&
-        !history.some((invitation) =>
-          invitation.status === "accepted" &&
-          invitation.participantSide === participant.side,
-        )
-      ) {
-        throw Object.assign(new Error("PLAYER_CONSENT_REQUIRED"), {
-          code: "PLAYER_CONSENT_REQUIRED",
-        });
-      }
-    }
     if (
       firstServerParticipantId &&
       !detail.participants.some(
@@ -1192,19 +1116,18 @@ export class MatchService {
     if (updated.length === 0) {
       throw Object.assign(new Error("INVALID_STATUS"), { code: "INVALID_STATUS" });
     }
-    const pendingJudgeInvitations = await db.query.matchInvitations.findMany({
+    const pendingInvitations = await db.query.matchInvitations.findMany({
       where: and(
         eq(matchInvitations.matchId, matchId),
-        eq(matchInvitations.kind, "judge"),
         eq(matchInvitations.status, "pending"),
       ),
     });
-    if (pendingJudgeInvitations.length > 0) {
+    if (pendingInvitations.length > 0) {
       await db
         .update(matchInvitations)
         .set({ status: "cancelled", respondedAt: now, expiryReason: "match_started" })
-        .where(inArray(matchInvitations.id, pendingJudgeInvitations.map((row) => row.id)));
-      for (const invitation of pendingJudgeInvitations) {
+        .where(inArray(matchInvitations.id, pendingInvitations.map((row) => row.id)));
+      for (const invitation of pendingInvitations) {
         await this.markMatchInvitationNotificationsRead(
           [invitation.id],
           invitation.invitedUserId,

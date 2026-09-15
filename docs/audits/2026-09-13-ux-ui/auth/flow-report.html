@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tab-10 AUTH — отчёт по потокам</title>
+<style>:root{--ink:#111;--muted:#666;--line:#ddd;--accent:#6d28d9;--ok:#087443;--warn:#9a5608;--bad:#b42318;--bg:#f7f7f8;--card:#fff}*{box-sizing:border-box;margin:0}body{font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);padding:48px 24px;max-width:920px;margin:auto}h1{font-size:28px}h2{font-size:20px;margin:48px 0 8px;padding-top:24px;border-top:1px solid var(--line)}.meta{color:var(--muted);font-size:14px;margin:6px 0}.skills{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.chip{font-size:13px;padding:3px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card)}.callout{padding:12px 14px;border-left:4px solid var(--accent);background:#f1edff;margin:16px 0}.flow{list-style:none;padding:0;margin:16px 0}.flow>li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;position:relative}.flow>li+li{margin-top:34px}.flow>li+li:before{content:"";position:absolute;top:-27px;left:32px;width:2px;height:20px;background:var(--accent)}.step-n{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);border:1.5px solid var(--accent);border-radius:999px;padding:1px 9px;margin-right:8px}.step-t{font-weight:650}.step-d{color:var(--muted);font-size:14px;margin-top:6px}.cta,.branch{font-size:13px;margin-top:8px}.cta b{color:var(--ok)}.branch{padding:8px 12px;background:#f4f6ff;border-left:3px solid var(--accent)}table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card)}th,td{text-align:left;padding:9px 12px;border:1px solid var(--line);vertical-align:top}th{background:var(--bg);font-size:12px;color:var(--muted)}.pass{color:var(--ok);font-weight:650}.warn{color:var(--warn);font-weight:650}.fail{color:var(--bad);font-weight:650}.overflow{overflow-x:auto}ul{padding-left:22px}footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}</style></head>
+<body>
+<h1>Tab-10 AUTH — отчёт по пользовательским потокам</h1>
+<p class="meta">2026-09-13 · первый вход, восстановление сессии, Home/Profile/Help · замороженный кандидат 8e876257…</p>
+<div class="skills"><span class="chip">flow-auth</span><span class="chip">flow-onboarding</span><span class="chip">flow-navigation</span><span class="chip">flow-errors</span><span class="chip">interface-design</span><span class="chip">impeccable/review</span></div>
+<h2>Резюме</h2>
+<p>Экспертный прогон production build прошёл первый вход и повторную авторизацию того же и другого пользователя на одноразовых локальных данных. Целевое состояние сохраняет серверную авторитетность, D34, D5 и запрет постоянного черновика MATCH-015. Два фактических дефекта относятся к FirstPassword и ошибкам авторизации; выводы о Home, действиях онбординга и textarea Help остаются экспертными гипотезами.</p>
+<div class="callout"><strong>Уровень доказательства:</strong> автоматизация Chromium, снимки экрана, анализ исходников и требований. Нет реального пользователя, речевых вспомогательных технологий, WebKit, масштаба 200% и изменений production.</div>
+
+<h2>Текущий поток: первый вход</h2><p class="meta">Вход: защищённая глубокая ссылка или /login · AUTH-A01</p>
+<ol class="flow">
+<li><span class="step-n">1</span><span class="step-t">Вход</span><p class="step-d">Email, пароль, показ пароля и подсказка об администраторе. Неверные данные сохраняют Email, но activeElement становится body.</p><p class="cta">Основное действие: <b>Войти</b> → FirstPassword либо безопасная точка возврата/Home.</p><div class="branch">Неизвестный пользователь → общая ошибка; заблокированный → предусмотренное сообщение; повторные ошибки → 429.</div></li>
+<li><span class="step-n">2</span><span class="step-t">Обязательная смена пароля</span><p class="step-d">Несовпадение не связано с полями; ошибка политики показывает коды. Выход открывает вход, но сохраняет сессию.</p><p class="cta">Основное действие: <b>Сохранить</b> → незавершённый онбординг.</p><div class="branch">Выйти → /login; logout POST=0 и /auth/me=200 — FAIL.</div></li>
+<li><span class="step-n">3</span><span class="step-t">Онбординг, шаги 1–6</span><p class="step-d">Сфокусированный заголовок и сохранённый прогресс. «Далее» и «Пропустить шаг» вызывают один переход; закрытие завершает онбординг.</p><p class="cta">Основное действие: <b>Далее</b> → следующий сохранённый шаг.</p></li>
+<li><span class="step-n">4</span><span class="step-t">Необязательный учебный матч</span><p class="step-d">Учебный матч открывает изолированный маршрут судейства. Отмена возвращает на шаг 7 без завершения.</p><p class="cta">Основное действие: <b>Матч с Призрачным Олегом</b>.</p><div class="branch">Явное завершение остаётся обязательным по D34.</div></li>
+<li><span class="step-n">5</span><span class="step-t">Home нового пользователя</span><p class="step-d">Личные метрики занимают первые 300–386 px до действия «Начать»; остальные разделы HOME сохранены.</p><p class="cta">Основное действие: <b>Начать</b> → /start.</p></li>
+</ol>
+
+<h2>Целевой поток: первый вход</h2>
+<ol class="flow">
+<li><span class="step-n">1</span><span class="step-t">Устойчивая точка ошибки</span><p class="step-d">Те же поля и общий текст ошибки входа. Alert однократно получает фокус; неверные поля связаны с ошибкой.</p><p class="cta">Основное действие: <b>Войти</b> → прежний контракт точки возврата.</p></li>
+<li><span class="step-n">2</span><span class="step-t">Честный выход</span><p class="step-d">Причины политики понятны; несовпадение связано с обоими полями. Выход отправляет один logout и очищает авторизацию.</p><p class="cta">Основное действие: <b>Сохранить</b> → онбординг.</p><div class="branch">Ошибка logout сохраняет поля и даёт повтор; успех → неаутентифицированный /login.</div></li>
+<li><span class="step-n">3</span><span class="step-t">Однозначный проводник</span><p class="step-d">Шаги 1–6 явно необязательны и дают одно «Далее» плюс полное закрытие; шаг 7 сохраняет учебный матч и явное завершение.</p><p class="cta">Основное действие: <b>Далее</b>.</p></li>
+<li><span class="step-n">4</span><span class="step-t">Home с приоритетом задачи</span><p class="step-d">Разрешённое текущее событие или «Начать» расположено до компактной статистики. Все функции HOME сохраняются.</p><p class="cta">Основное действие: <b>Продолжить</b> при разрешённом действии; иначе <b>Начать игру</b>.</p></li>
+</ol>
+
+<h2>Восстановление сессии во время работы</h2><p class="meta">Смонтированная защищённая форма получает 401 · AUTH-A02</p>
+<ol class="flow">
+<li><span class="step-n">1</span><span class="step-t">Отклонённая мутация</span><p class="step-d">Глобальная авторизация скрывает защищённое дерево без размонтирования и фокусирует Email на том же безопасном path/query/hash.</p><p class="cta">Основное действие: <b>Войти</b>.</p></li>
+<li><span class="step-n">2A</span><span class="step-t">Тот же пользователь</span><p class="step-d">Возврат с прежними названием и гостем. Create POST остаётся один; повтора нет.</p></li>
+<li><span class="step-n">2B</span><span class="step-t">Другой пользователь</span><p class="step-d">Защищённое дерево перемонтируется; прежние поля и выборы исчезают.</p></li>
+</ol><p>MATCH-015 удаляет черновик при обычном выходе с маршрута или размонтировании. Исключение — только временное смонтированное состояние, не localStorage и не серверное хранение.</p>
+
+<h2>Инвентарь экранов</h2><div class="overflow"><table><tr><th>Экран</th><th>Назначение</th><th>Действие</th><th>Состояния</th></tr>
+<tr><td>Login</td><td>Закрытый доступ и повторная авторизация</td><td>Войти</td><td>успех, неверные данные, блокировка API, ограничение частоты, фокус после истечения</td></tr>
+<tr><td>FirstPassword</td><td>Заменить временный пароль</td><td>Сохранить</td><td>несовпадение, политика, успех; выход — FAIL</td></tr>
+<tr><td>Onboarding</td><td>Основные области и необязательный учебный матч</td><td>Далее / учебный матч</td><td>пропуск, перезагрузка, закрытие, отмена, завершение, повторный запуск из Profile</td></tr>
+<tr><td>Home</td><td>Текущее действие и обзор</td><td>Начать / целевое «Продолжить»</td><td>пустое состояние нового пользователя, 360/390/1440, контраст/Axe</td></tr>
+<tr><td>Profile</td><td>Сессии и повторный запуск</td><td>По контексту</td><td>сессии показаны; отзыв только через API-контроль</td></tr>
+<tr><td>Help</td><td>FAQ и обратная связь</td><td>Отправить</td><td>загрузка, 503, повтор, сохранение, успех</td></tr></table></div>
+
+<h2>Проверка антипаттернов</h2><div class="overflow"><table><tr><th>Проверка</th><th>Вердикт</th><th>Доказательство</th></tr>
+<tr><td>Неизвестный аккаунт не раскрывается текстом ошибки</td><td class="pass">PASS SAMPLED</td><td>Общий ответ 401.</td></tr>
+<tr><td>Logout соответствует обещанному результату</td><td class="fail">FAIL</td><td>AUTH-EXIT-MIN-01: POST=0, auth=200.</td></tr>
+<tr><td>Ошибки формы дают доступное восстановление</td><td class="fail">FAIL</td><td>Фокус на body/submit, нет помеченных неверных полей, видны сырые коды.</td></tr>
+<tr><td>Онбординг возобновляется, учебный матч необязателен</td><td class="pass">PASS</td><td>Сохранённый шаг, возврат после отмены, явное завершение.</td></tr>
+<tr><td>Подписи имеют разные результаты</td><td class="warn">WARN</td><td>«Далее» и «Пропустить шаг» вызывают один переход.</td></tr>
+<tr><td>После 401 мутация не повторяется</td><td class="pass">PASS</td><td>Один POST до повторной авторизации.</td></tr>
+<tr><td>Черновик не переходит другому пользователю</td><td class="pass">PASS</td><td>Другой пользователь получает чистую форму.</td></tr>
+<tr><td>Основная задача раньше аналитики</td><td class="warn">WARN</td><td>«Начать» y434 на 390, ниже y504 на 360; экспертная гипотеза.</td></tr>
+<tr><td>Обратная связь поддерживает несколько строк</td><td class="warn">WARN</td><td>input, maxlength=4000, multiline=false.</td></tr>
+<tr><td>Речевые вспомогательные технологии, WebKit, масштаб 200%, экранная клавиатура</td><td>NOT TESTED</td><td>Axe не заменяет эти проверки.</td></tr></table></div>
+
+<h2>Связи между пакетами</h2><ul><li>F-AUTH-004 объединяется с F-PILOT-007/TECH-006; точное действие «Продолжить» принадлежит MATCH/JUDGE.</li><li>BUG-018–023 здесь не дублируются.</li><li>ONB-004, изоляция завершённого учебного матча и наполненный Home остаются пробелами покрытия.</li></ul>
+<footer>Создано по локальному userflow/report-template.html. Целевые разделы не описывают текущее приложение как уже реализованное.</footer>
+</body></html>

@@ -1,0 +1,12 @@
+{
+  "scope": "r4 to r6 one E2E fixture; invalid r5 activation change removed",
+  "status": "PASS_STATIC",
+  "reviewer": "Terra High",
+  "manifest_sha256": "6dec4f2dcf87b82a75dce3e439ee24ec55cd1486411db681919df50414c39292",
+  "changed_paths": [
+    "tests/e2e/gap-012.spec.ts"
+  ],
+  "source_files_verified": 52,
+  "finding": "Fixture explicitly asserts active status and directory ID/label; query and exact label align with UserPicker client-side filter. Prior r5 cause withdrawn.",
+  "remaining_gate": "Focused compiled browser twelve runs, then fresh full verify:all. App bytes unchanged from r3."
+}

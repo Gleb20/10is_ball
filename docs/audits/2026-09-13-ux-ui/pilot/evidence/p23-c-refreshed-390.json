@@ -1,0 +1,203 @@
+{
+  "url": "http://localhost:4617/matches/307bf34a-7dbb-4e22-ade1-c9f77650e820",
+  "title": "Tab-10",
+  "body": "К содержимому\n\nСудейство завершено\n\nСудейство передано: Синтетический Дмитрий может занять слот.\n\nМатч 14.09, 01:16\nОбновление…\nИдёт\n\n3 : 0\n\n1 × 1\nдо 11 очков\nсухая победа при 5:0\nпервая подача: вручную\n\nДлительность: 11:32\n\nСудит: Синтетический Дмитрий\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\nСинтетическая Анна — очко\nСинтетическая Анна — очко\nСинтетическая Анна — очко\nСудить\n\nМатч уже судит Синтетический Дмитрий. Можно открыть счёт в режиме просмотра.\n\nОткрыть счёт\nОстановить матч\nЗафиксировать неявку\nОтменить матч\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+  "focus": {
+    "tag": "BUTTON",
+    "role": null,
+    "label": null,
+    "text": "Обновление…"
+  },
+  "controls": [
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "К содержимому",
+      "rect": {
+        "x": 12,
+        "y": -52.79999923706055,
+        "w": 135.21875,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Обновление…",
+      "value": "",
+      "disabled": true,
+      "rect": {
+        "x": 272.703125,
+        "y": 130,
+        "w": 101.296875,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Судить",
+      "value": "",
+      "disabled": true,
+      "rect": {
+        "x": 16,
+        "y": 700.84375,
+        "w": 358,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Открыть счёт",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 832.84375,
+        "w": 358,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Остановить матч",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 888.84375,
+        "w": 358,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Зафиксировать неявку",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 944.84375,
+        "w": 358,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Отменить матч",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 1000.84375,
+        "w": 358,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Назад",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 1056.84375,
+        "w": 358,
+        "h": 44
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Главная",
+      "rect": {
+        "x": 8,
+        "y": 788.8125,
+        "w": 73.1875,
+        "h": 49.1875
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "История",
+      "rect": {
+        "x": 83.1875,
+        "y": 788.8125,
+        "w": 73.203125,
+        "h": 49.1875
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Начать",
+      "rect": {
+        "x": 158.390625,
+        "y": 788.8125,
+        "w": 73.203125,
+        "h": 49.1875
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Рейтинг",
+      "rect": {
+        "x": 233.59375,
+        "y": 788.8125,
+        "w": 73.203125,
+        "h": 49.1875
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Профиль",
+      "rect": {
+        "x": 308.796875,
+        "y": 788.8125,
+        "w": 73.203125,
+        "h": 49.1875
+      }
+    }
+  ],
+  "viewport": {
+    "w": 390,
+    "h": 844,
+    "scrollX": 0,
+    "scrollY": 0,
+    "scrollWidth": 390
+  }
+}

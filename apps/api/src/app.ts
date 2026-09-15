@@ -69,8 +69,28 @@ const TournamentCreateSchema = z.object({
   pointsToWin: z.number().int().min(1).optional(),
   mercyEnabled: z.boolean().optional(),
   mercyPoints: z.number().int().min(1).nullable().optional(),
+  requireParticipantConsent: z.boolean().optional(),
 }).strict();
-const TournamentPatchSchema = TournamentCreateSchema.partial().refine((value) => Object.keys(value).length > 0, "At least one field is required");
+const TournamentPatchSchema = TournamentCreateSchema
+  .omit({ requireParticipantConsent: true })
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, "At least one field is required");
+const TournamentParticipantSchema = z.object({
+  userId: z.string().uuid().optional(),
+  guestFirstName: z.string().trim().min(1).max(100).optional(),
+  guestLastName: z.string().trim().min(1).max(100).optional(),
+  confirmManualOverride: z.boolean().optional(),
+  confirmBracketRegeneration: z.boolean().optional(),
+}).strict().superRefine((value, context) => {
+  const hasUser = Boolean(value.userId);
+  const hasGuest = Boolean(value.guestFirstName || value.guestLastName);
+  if (hasUser === hasGuest || (hasGuest && (!value.guestFirstName || !value.guestLastName))) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "participant must be exactly one active user or a guest with first and last name",
+    });
+  }
+});
 const TournamentStopSchema = z.object({
   code: z.string().trim().min(1).max(100),
   text: z.string().trim().max(500).optional(),
@@ -1322,7 +1342,7 @@ export async function buildApp(opts: {
 
   // --- Tournaments ---
   app.get("/api/v1/tournaments", { preHandler: requireAuth }, async (req) => {
-    const list = await services.tournaments.list(req.authUser!.id);
+    const list = await services.tournaments.listCatalog(req.authUser!.id);
     return { tournaments: list };
   });
 
@@ -1340,6 +1360,7 @@ export async function buildApp(opts: {
           pointsToWin: body.pointsToWin,
           mercyEnabled: body.mercyEnabled,
           mercyPoints: body.mercyPoints,
+          requireParticipantConsent: body.requireParticipantConsent,
         });
         return { tournament };
       } catch (e) {
@@ -1389,17 +1410,19 @@ export async function buildApp(opts: {
     async (req, reply) => {
       try {
         const { id } = req.params as { id: string };
-        const body = req.body as {
-          userId?: string;
-          guestFirstName?: string;
-          guestLastName?: string;
-        };
+        const body = parseBody(TournamentParticipantSchema, req.body);
+        const rawIdempotencyKey = req.headers["idempotency-key"];
+        const idempotencyKey = rawIdempotencyKey === undefined
+          ? undefined
+          : parseIdempotencyKey(rawIdempotencyKey);
         const participant = await services.tournaments.addParticipant({
           tournamentId: id,
           actorUserId: req.authUser!.id,
+          idempotencyKey,
           ...body,
         });
-        return { participant };
+        const tournament = await services.tournaments.getVisible(id, req.authUser!.id);
+        return { participant, tournament };
       } catch (e) {
         return sendError(reply, e);
       }
@@ -1778,6 +1801,8 @@ function messageFor(code: string): string {
     JUDGE_REQUIRED: "Требуется судейская сессия",
     CSRF_INVALID: "Недействительный CSRF-токен",
     IDEMPOTENCY_KEY_REQUIRED: "Нужен заголовок Idempotency-Key",
+    IDEMPOTENCY_KEY_REUSED:
+      "Этот Idempotency-Key уже использован для другого запроса",
     VERSION_CONFLICT: "Конфликт версии",
     PLAYER_BUSY: "Игрок уже в активном матче",
     INVALID_STATUS: "Действие недоступно в текущем статусе",
@@ -1785,6 +1810,8 @@ function messageFor(code: string): string {
     TOO_MANY: "Максимум 64 участника",
     BRACKET_NOT_EDITABLE: "Сетку нельзя менять",
     BRACKET_REGEN_REQUIRED: "Нужна перегенерация сетки",
+    BRACKET_REGEN_CONFIRMATION_REQUIRED:
+      "Подтвердите добавление участника и перестроение сетки",
     BRACKET_MISSING: "Сетка отсутствует",
     BRACKET_CORRUPT: "Сетка повреждена",
     UNSUPPORTED_BRACKET_VERSION: "Неподдерживаемая версия сетки",
@@ -1806,6 +1833,9 @@ function messageFor(code: string): string {
     EXPIRED: "Приглашение истекло",
     USE_MATCH: "Для двух игроков создайте обычный матч",
     ALREADY_IN_TOURNAMENT: "Игрок уже в составе турнира",
+    MANUAL_OVERRIDE_CONFIRMATION_REQUIRED:
+      "Подтвердите добавление участника без его согласия",
+    USER_NOT_ACTIVE: "Можно добавить только активного пользователя",
     NOT_A_PARTICIPANT: "Вы не в составе этого турнира",
     INTERNAL: "Внутренняя ошибка сервера",
   };
@@ -1931,6 +1961,7 @@ function sendError(reply: FastifyReply, e: unknown) {
     "USE_MATCH",
     "ALREADY_IN_TOURNAMENT",
     "NOT_A_PARTICIPANT",
+    "USER_NOT_ACTIVE",
   ]);
   const status =
     code === "NOT_FOUND"
@@ -1946,6 +1977,9 @@ function sendError(reply: FastifyReply, e: unknown) {
               code === "JUDGE_RESERVED" ||
               code === "JUDGE_NOT_ACTIVE" ||
               code === "BRACKET_VERSION_CONFLICT" ||
+              code === "BRACKET_REGEN_CONFIRMATION_REQUIRED" ||
+              code === "MANUAL_OVERRIDE_CONFIRMATION_REQUIRED" ||
+              code === "IDEMPOTENCY_KEY_REUSED" ||
               code === "CURRENT_SESSION_FORBIDDEN"
             ? 409
             : badRequestCodes.has(code)

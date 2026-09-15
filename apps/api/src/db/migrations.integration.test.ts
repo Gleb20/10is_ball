@@ -80,7 +80,7 @@ describe("versioned migration foundation on disposable PGlite", () => {
     expect(tables.rows.map((row) => row.table_name)).toHaveLength(19);
   });
 
-  it.each([1, 2, 3, 4])("upgrades a %i-migration released prefix without changing existing rows", async (prefixLength) => {
+  it.each([1, 2, 3, 4, 5, 6])("upgrades a %i-migration released prefix without changing existing rows", async (prefixLength) => {
     const context = await freshContext();
     const baselineOnlyDirectory = await mkdtemp(
       join(tmpdir(), "tab10-baseline-only-"),
@@ -104,6 +104,16 @@ describe("versioned migration foundation on disposable PGlite", () => {
         'upgrade@tab10.test', 'synthetic-hash', 'Upgrade', 'Owner'
       )
     `);
+    if (prefixLength === 6) {
+      await context.client.exec(`
+        INSERT INTO tournaments (id, title, created_by_user_id, status)
+        VALUES
+          ('00000000-0000-4000-8000-000000000092', 'Historical waiting', '00000000-0000-4000-8000-000000000091', 'collecting'),
+          ('00000000-0000-4000-8000-000000000093', 'Historical finished', '00000000-0000-4000-8000-000000000091', 'finished');
+        INSERT INTO tournament_participants (id, tournament_id, user_id)
+        VALUES ('00000000-0000-4000-8000-000000000094', '00000000-0000-4000-8000-000000000093', '00000000-0000-4000-8000-000000000091');
+      `);
+    }
 
     await runPgliteMigrations({
       db: context.db,
@@ -120,9 +130,64 @@ describe("versioned migration foundation on disposable PGlite", () => {
       SELECT to_regclass('public.match_void_audits')::text AS name
     `);
     expect(auditTable.rows).toEqual([{ name: "match_void_audits" }]);
+    if (prefixLength === 6) {
+      const tournaments = await context.client.query<{ title: string; consent: boolean }>(`
+        SELECT title, require_participant_consent AS consent
+        FROM tournaments
+        WHERE id IN ('00000000-0000-4000-8000-000000000092', '00000000-0000-4000-8000-000000000093')
+        ORDER BY id
+      `);
+      expect(tournaments.rows).toEqual([
+        { title: "Historical waiting", consent: false },
+        { title: "Historical finished", consent: false },
+      ]);
+      const participant = await context.client.query<{ source: string; actor: string | null }>(`
+        SELECT addition_source AS source, added_by_user_id::text AS actor
+        FROM tournament_participants
+        WHERE id = '00000000-0000-4000-8000-000000000094'
+      `);
+      expect(participant.rows).toEqual([{ source: "legacy", actor: null }]);
+    }
     await expect(
       assertMigrationsExactlyCurrent(context.queryMigrations),
     ).resolves.toBeUndefined();
+  });
+
+  it("rolls back the GAP-012 DDL and preserves pre-0006 rows in a disposable transaction", async () => {
+    const context = await freshContext();
+    const prefixDirectory = await mkdtemp(join(tmpdir(), "tab10-gap012-rollback-"));
+    temporaryDirectories.push(prefixDirectory);
+    const artifactDirectory = fileURLToPath(new URL("../../drizzle/", import.meta.url));
+    const journal = JSON.parse(await readFile(join(artifactDirectory, "meta/_journal.json"), "utf8"));
+    journal.entries = journal.entries.slice(0, 6);
+    for (const entry of journal.entries) {
+      await writeFile(join(prefixDirectory, `${entry.tag}.sql`), await readFile(join(artifactDirectory, `${entry.tag}.sql`)));
+    }
+    await mkdir(join(prefixDirectory, "meta"));
+    await writeFile(join(prefixDirectory, "meta/_journal.json"), JSON.stringify(journal));
+    await applyPgliteMigrationFiles(context.db, prefixDirectory);
+    await context.client.exec(`
+      INSERT INTO users (id, email, password_hash, first_name, last_name)
+      VALUES ('00000000-0000-4000-8000-000000000095', 'rollback@tab10.test', 'synthetic', 'Rollback', 'Owner');
+      INSERT INTO tournaments (id, title, created_by_user_id, status)
+      VALUES ('00000000-0000-4000-8000-000000000096', 'Rollback tournament', '00000000-0000-4000-8000-000000000095', 'collecting');
+    `);
+    const migrationSql = (await readFile(join(artifactDirectory, "0006_gap_012_game_setup.sql"), "utf8"))
+      .replaceAll("--> statement-breakpoint", "\n");
+    await context.client.exec(`BEGIN;\n${migrationSql}\nROLLBACK;`);
+    const absent = await context.client.query<{ exists: boolean }>(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'tournaments'
+          AND column_name = 'require_participant_consent'
+      ) AS exists
+    `);
+    expect(absent.rows).toEqual([{ exists: false }]);
+    const row = await context.client.query<{ title: string; status: string }>(`
+      SELECT title, status FROM tournaments
+      WHERE id = '00000000-0000-4000-8000-000000000096'
+    `);
+    expect(row.rows).toEqual([{ title: "Rollback tournament", status: "collecting" }]);
   });
 
   it("fails closed rather than withdrawing a participant already referenced by a bracket", async () => {
@@ -270,8 +335,8 @@ describe("versioned migration foundation on disposable PGlite", () => {
     const after = await context.client.query<{ count: number }>(`
       SELECT count(*)::integer AS count FROM drizzle.__drizzle_migrations
     `);
-    expect(before.rows[0]?.count).toBe(6);
-    expect(after.rows[0]?.count).toBe(6);
+    expect(before.rows[0]?.count).toBe(7);
+    expect(after.rows[0]?.count).toBe(7);
   });
 
   it("does not let adoption stand in for ordinary fresh apply", async () => {

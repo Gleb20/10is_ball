@@ -1,0 +1,199 @@
+{
+  "id": "j24-stop-form-390",
+  "capturedAt": "2026-09-13T23:29:23.163Z",
+  "url": "/matches/2e3606c1-7579-4285-80c9-2f3a535c77a5",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "scroll": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 1233
+  },
+  "activeElement": {
+    "tag": "BUTTON",
+    "id": null,
+    "text": "Скрыть остановку",
+    "ariaLabel": null
+  },
+  "buttons": [
+    {
+      "text": "Обновить",
+      "disabled": false,
+      "rect": {
+        "x": 298.19,
+        "y": 18,
+        "width": 75.81,
+        "height": 44,
+        "top": 18,
+        "right": 374,
+        "bottom": 62,
+        "left": 298.19
+      }
+    },
+    {
+      "text": "Судить",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 598.84,
+        "width": 358,
+        "height": 44,
+        "top": 598.84,
+        "right": 374,
+        "bottom": 642.84,
+        "left": 16
+      }
+    },
+    {
+      "text": "Открыть счёт",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 654.84,
+        "width": 358,
+        "height": 44,
+        "top": 654.84,
+        "right": 374,
+        "bottom": 698.84,
+        "left": 16
+      }
+    },
+    {
+      "text": "Скрыть остановку",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 710.84,
+        "width": 358,
+        "height": 44,
+        "top": 710.84,
+        "right": 374,
+        "bottom": 754.84,
+        "left": 16
+      }
+    },
+    {
+      "text": "Зафиксировать неявку",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 766.84,
+        "width": 358,
+        "height": 44,
+        "top": 766.84,
+        "right": 374,
+        "bottom": 810.84,
+        "left": 16
+      }
+    },
+    {
+      "text": "Назад",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 822.84,
+        "width": 358,
+        "height": 44,
+        "top": 822.84,
+        "right": 374,
+        "bottom": 866.84,
+        "left": 16
+      }
+    },
+    {
+      "text": "Синтетическая Анна",
+      "disabled": false,
+      "rect": {
+        "x": 31,
+        "y": 973.84,
+        "width": 159.08,
+        "height": 44,
+        "top": 973.84,
+        "right": 190.08,
+        "bottom": 1017.84,
+        "left": 31
+      }
+    },
+    {
+      "text": "Синтетический Борис",
+      "disabled": false,
+      "rect": {
+        "x": 189.08,
+        "y": 973.84,
+        "width": 167.91,
+        "height": 44,
+        "top": 973.84,
+        "right": 356.98,
+        "bottom": 1017.84,
+        "left": 189.08
+      }
+    },
+    {
+      "text": "Травма",
+      "disabled": false,
+      "rect": {
+        "x": 31,
+        "y": 1029.84,
+        "width": 74.38,
+        "height": 44,
+        "top": 1029.84,
+        "right": 105.38,
+        "bottom": 1073.84,
+        "left": 31
+      }
+    },
+    {
+      "text": "Нехватка времени",
+      "disabled": false,
+      "rect": {
+        "x": 104.38,
+        "y": 1029.84,
+        "width": 148.88,
+        "height": 44,
+        "top": 1029.84,
+        "right": 253.25,
+        "bottom": 1073.84,
+        "left": 104.38
+      }
+    },
+    {
+      "text": "Другое",
+      "disabled": false,
+      "rect": {
+        "x": 252.25,
+        "y": 1029.84,
+        "width": 71.7,
+        "height": 44,
+        "top": 1029.84,
+        "right": 323.95,
+        "bottom": 1073.84,
+        "left": 252.25
+      }
+    },
+    {
+      "text": "Подтвердить остановку",
+      "disabled": false,
+      "rect": {
+        "x": 31,
+        "y": 1085.84,
+        "width": 328,
+        "height": 44,
+        "top": 1085.84,
+        "right": 359,
+        "bottom": 1129.84,
+        "left": 31
+      }
+    }
+  ],
+  "alerts": [],
+  "statuses": [],
+  "scores": [],
+  "pointTargets": [],
+  "serve": null,
+  "errorStyle": null,
+  "horizontalOverflow": false,
+  "runId": "J-RUN-STOP"
+}

@@ -1,0 +1,28 @@
+requirement,title,scenario,mapping_status,runtime_verdict,run_evidence,target_entry_point,limitation
+JUDGE-001,Один судья,SC-J02,REFINED,PASS,J-RUN-HANDOVER;J-RUN-OWNERSHIP;authoritative-readbacks.json,T-JUDGE-ACTION-001,Одновременный atomic acquire не воспроизводился в этом UX-прогоне
+JUDGE-002,Допустимые судьи,SC-J02,REFINED,PASS,J-RUN-HANDOVER;fixture-index.json,T-JUDGE-ACTION-001,Обычный active outsider был допустимым получателем; blocked user не проверялся
+JUDGE-003,Захват,SC-J02,REFINED,PASS,J-RUN-HANDOVER;J-RUN-OWNERSHIP,T-JUDGE-ACTION-001,Параллельная гонка первого acquire покрыта существующим acceptance suite и не повторялась
+JUDGE-004,Устройство,SC-J02,REFINED,PASS,J-RUN-OWNERSHIP;j17-same-user-other-device-blocked-390.json,T-JUDGE-COPY-001,Две auth sessions имитированы в Chromium; двух физических устройств не было
+JUDGE-005,Занятый слот,SC-J02,REFINED,PASS,J-RUN-OWNERSHIP;j16-former-owner-blocked-390.json,T-JUDGE-COPY-001,Copy ownership conflict наблюдалась в runtime
+JUDGE-006,Release,SC-J02/SC-J04,REFINED,PASS,J-RUN-RELEASE;j25-release-failure-destination-warning-390.json,T-JUDGE-ERR-001,Успешный release/reacquire наследуется из принятых тестов; ветка отказа наблюдалась
+JUDGE-007,Handover,SC-J02,REFINED,PASS,J-RUN-HANDOVER;authoritative-readbacks.json,T-JUDGE-ACTION-001,Истечение TTL не ожидалось
+JUDGE-008,Heartbeat,SC-J04,REFINED,NOT_TESTED,,T-JUDGE-ERR-001,Интервалы 30 секунд hidden/visible и TTL 120 секунд не выдерживались по времени
+JUDGE-009,Начисление,SC-J01/SC-J04,REFINED,FAIL,J-RUN-RAPID;J-RUN-UNKNOWN-OUTCOME;J-RUN-VERSION-CONFLICT,T-JUDGE-ERR-001,BUG-029 подтверждён; recovery copy неизвестного исхода вызывает риск дубликата
+JUDGE-010,Undo,SC-J01,REFINED,PASS,J-RUN-RAPID;j06-after-undo-landscape.json,T-JUDGE-ACTION-001,Undo после границы коррекции покрыт существующими тестами и не повторялся end-to-end
+JUDGE-011,Аварийная коррекция,SC-J01,REFINED,FAIL,J-RUN-CORRECTION;j07-correction-open-focus-1440.json,T-JUDGE-FOCUS-001,Persistence проходит; keyboard focus contract нарушен
+JUDGE-012,Чистый пользовательский лог,SC-J01/SC-J03,REFINED,PASS,J-RUN-CORRECTION;matrix-finished records in runtime-states.json,T-JUDGE-ACTION-001,Наблюдались technical correction и effective point list
+AT-JUDGE-001,Atomic acquire,SC-J02,LINKED,NOT_TESTED,,T-JUDGE-ACTION-001,Конкурентная гонка acquire не выполнялась UX-драйвером
+AT-JUDGE-002,One judge one device,SC-J02,LINKED,PASS,J-RUN-OWNERSHIP;j17-same-user-other-device-blocked-390.json,T-JUDGE-COPY-001,Отдельная auth session имитирована
+AT-JUDGE-003,Release then acquire,SC-J02,LINKED,PARTIAL,J-RUN-RELEASE,T-JUDGE-ERR-001,Наблюдалась точка назначения после отказа; успешный release/reacquire не повторялся
+AT-JUDGE-004,Handover reservation and ordering,SC-J02,LINKED,PASS,J-RUN-HANDOVER;J-RUN-OWNERSHIP,T-JUDGE-ACTION-001,Ветка истечения reservation не выполнялась
+AT-JUDGE-005,Expiry,SC-J02/SC-J04,LINKED,NOT_TESTED,,T-JUDGE-ERR-001,Реальное ожидание TTL исключено
+AT-JUDGE-006,Unauthorized score,SC-J02,LINKED,PASS,J-RUN-OWNERSHIP;j16-former-owner-blocked-390.json,T-JUDGE-ACTION-001,Блокировка видна на route/mutation surface; отдельный прямой score API 403 не отправлялся
+AT-JUDGE-007,Rapid score intent queue,SC-J01/SC-J04,LINKED,FAIL,J-RUN-RAPID;J-RUN-VERSION-CONFLICT;J-RUN-UNKNOWN-OUTCOME,T-JUDGE-ERR-001,Rapid и conflict проходят; recovery после потери ответа подтверждён как BUG-029
+AT-JUDGE-008,Explicit exit release,SC-J02/SC-J04,LINKED,PASS,J-RUN-RELEASE;j25-release-failure-destination-warning-390.json,T-JUDGE-ERR-001,Наблюдалась только ветка setup Cancel; Back и explicit exit наследуются из тестов
+AT-JUDGE-009,Lost lock and visible live sync,SC-J02/SC-J04,LINKED,PARTIAL,J-RUN-OWNERSHIP;J-RUN-VERSION-CONFLICT,T-JUDGE-ERR-001,Ownership и conflict наблюдались; реальный heartbeat timer и hidden/resume не ожидались
+AT-JUDGE-010,Technical correction baseline,SC-J01,LINKED,FAIL,J-RUN-CORRECTION;authoritative-readbacks.json,T-JUDGE-FOCUS-001,Data baseline проходит; focus UX нарушен
+D7,Any active user may acquire,SC-J02,LINKED,PASS,J-RUN-HANDOVER;fixture-index.json,T-JUDGE-ACTION-001,Расширение прав не предлагается
+D18,Creator or current judge may early stop,SC-J05,LINKED,PASS,J-RUN-STOP;matrix-in-progress records,T-JUDGE-ACTION-001,Прямой API-отказ участнику не повторялся
+D23,Cancel authorization and safeguard,SC-J05,LINKED,PASS,J-RUN-ACTOR-MATRIX;matrix waiting/in-progress/pending records,T-JUDGE-ACTION-001,Mutation подтверждения не выполнялась во избежание дублирования пакета MATCH
+D24,Void authorization and safeguard,SC-J05,LINKED,PASS,J-RUN-ACTOR-MATRIX;matrix-finished records,T-JUDGE-ACTION-001,Void mutation не выполнялась
+D27,Visibility-aware refresh,SC-J04,LINKED,PARTIAL,J-RUN-VERSION-CONFLICT;J-RUN-OFFLINE,T-JUDGE-ERR-001,Ручной authoritative refresh наблюдался; cadence не измерялся

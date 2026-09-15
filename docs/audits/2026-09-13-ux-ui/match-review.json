@@ -1,0 +1,17 @@
+{
+  "reviewer": "Terra High research_protocol_review",
+  "status": "REWORK_TARGET",
+  "evidence": "PASS",
+  "snapshot": "/private/tmp/tab10-ux-wave1-review-01",
+  "export_manifest": "4e83f7785458f3486437dd7c78650c90a35ee58e6161b84da2c90222f5c0ae0b",
+  "package_manifest": "3d855c482a0227a85f16f9324e468f26acf6270dce16bddd982b1acf9366892d",
+  "verified_payloads": 79,
+  "findings": "F001 expert hypothesis; F002 explicit invite gap; F003 cancel UI; F004 blocked pending ADMIN/disclosure",
+  "target_corrections": [
+    "Preserve free-slot acquisition and deterministic overlapping role/auth-session precedence",
+    "Preserve AUTH006/AT-AUTH009 same-actor reauth draft; remove unaccepted discard-confirmation policy",
+    "Choose accepted pilot single-column/no-sticky layout instead of alternatives"
+  ],
+  "resolution": "Coordinator will provide superseding core target. Frozen package remains unchanged; no runtime replay required for these specification corrections.",
+  "common_task_review": "BUG024/025/026 precise; statuses still confirmed pending coordinator synthesis"
+}

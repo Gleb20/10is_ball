@@ -1,0 +1,13 @@
+{
+  "id": "5554d7c7-b749-4d53-a155-aaf6cff43a12",
+  "source": "challenge",
+  "creatorInRoster": true,
+  "opponentInRoster": true,
+  "invitationTargets": [
+    {
+      "userId": "2da25043-5aed-44af-a8d5-68d5d66f84e9",
+      "kind": "player",
+      "status": "pending"
+    }
+  ]
+}

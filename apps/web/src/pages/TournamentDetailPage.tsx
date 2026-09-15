@@ -201,8 +201,15 @@ export function TournamentDetailPage() {
   const isOrganizer = Boolean(
     user?.id && tournament?.createdByUserId === user.id,
   );
+  const isAdmin = user?.role === "admin";
+  const isScopedAdminView = Boolean(
+    isAdmin && !isOrganizer && tournament && !("organizerParticipates" in tournament),
+  );
   const canEditRoster =
     status === "collecting" || status === "needs_regeneration";
+  const canAddRegistered =
+    (isOrganizer || isAdmin) &&
+    (canEditRoster || status === "bracket_generated");
   const canGenerate =
     isOrganizer && canEditRoster && activeParticipants.length >= 3;
   const canStart = isOrganizer && status === "bracket_generated";
@@ -423,7 +430,7 @@ export function TournamentDetailPage() {
               </span>
             </div>
 
-            <div className="card stack">
+            {!isScopedAdminView ? <div className="card stack">
               <div className="row">
                 <h2 className="section-title">Настройки и правила</h2>
                 {canEditSettings && !editingSettings ? (
@@ -560,7 +567,13 @@ export function TournamentDetailPage() {
                   {` · ${tournament.organizerParticipates === false ? "организатор не играет" : "организатор играет"}`}
                 </p>
               )}
-            </div>
+            </div> : null}
+
+            <p className="context-tip" role="note">
+              {tournament.requireParticipantConsent
+                ? "Для приглашённых участников требуется согласие. Ручное добавление — отдельное подтверждаемое исключение."
+                : "Состав можно заполнить напрямую; приглашения остаются добровольными."}
+            </p>
 
             {actionError ? (
               <Alert
@@ -660,7 +673,7 @@ export function TournamentDetailPage() {
               ) : null}
             </div>
 
-            {canEditRoster && isOrganizer ? (
+            {canAddRegistered || (canEditRoster && isOrganizer) ? (
             <div className="card stack">
               <h2 className="section-title">
                 Участники ({activeParticipants.length})
@@ -679,7 +692,7 @@ export function TournamentDetailPage() {
                         <span className="muted"> · вы</span>
                       ) : null}
                     </span>
-                    <Button
+                    {isOrganizer && canEditRoster ? <Button
                       variant="secondary"
                       size="sm"
                       disabled={busy}
@@ -691,19 +704,19 @@ export function TournamentDetailPage() {
                       }
                     >
                       Удалить
-                    </Button>
+                    </Button> : null}
                   </div>
                 ))
               )}
-              {pendingInvites.map((inv) => (
+              {isOrganizer && canEditRoster ? pendingInvites.map((inv) => (
                 <div key={inv.id} className="row">
                   <span>
                     {inv.displayName ?? "Игрок"}
                     <span className="muted"> · ожидает ответ</span>
                   </span>
                 </div>
-              ))}
-              {declinedInvites.map((inv) => (
+              )) : null}
+              {isOrganizer && canEditRoster ? declinedInvites.map((inv) => (
                 <div key={inv.id} className="row">
                   <span>
                     {inv.displayName ?? "Игрок"}
@@ -723,8 +736,8 @@ export function TournamentDetailPage() {
                     Удалить
                   </Button>
                 </div>
-              ))}
-              <UserPicker
+              )) : null}
+              {canAddRegistered ? <UserPicker
                 label="Добавить игрока"
                 value={pickUserId}
                 onChange={setPickUserId}
@@ -732,23 +745,33 @@ export function TournamentDetailPage() {
                 onInputChange={setPickInput}
                 excludeUserIds={rosterUserIds}
                 excludeSelf={false}
-              />
-              <Button
+              /> : null}
+              {canAddRegistered ? <Button
                 disabled={busy || !pickUserId}
-                onClick={() =>
+                onClick={() => {
+                  const playerName = pickInput.trim() || "выбранного игрока";
+                  const requiresOverride = Boolean(tournament.requireParticipantConsent) || !isOrganizer;
+                  const regeneratesBracket = status === "bracket_generated";
+                  const consequence = [
+                    requiresOverride ? "добавить без ответа на приглашение" : "добавить напрямую в состав",
+                    regeneratesBracket ? "и сразу перестроить уже созданную сетку" : null,
+                  ].filter(Boolean).join(" ");
+                  if (!window.confirm(`Добавить ${playerName} в турнир «${String(tournament.title)}»: ${consequence}?`)) return;
                   void runAction(async () => {
-                    await api.addTournamentParticipant(id!, {
+                    const response = await api.addTournamentParticipant(id!, {
                       userId: pickUserId,
-                    });
+                      ...(requiresOverride ? { confirmManualOverride: true } : {}),
+                      ...(regeneratesBracket ? { confirmBracketRegeneration: true } : {}),
+                    }, crypto.randomUUID());
                     setPickUserId("");
                     setPickInput("");
-                    await load(true);
+                    replaceTournamentIfCurrent(response.tournament);
                   }, "Игрок добавлен")
-                }
+                }}
               >
                 Добавить в состав
-              </Button>
-              <UserPicker
+              </Button> : null}
+              {isOrganizer && canEditRoster ? <UserPicker
                 label="Пригласить игрока"
                 value={inviteUserId}
                 onChange={setInviteUserId}
@@ -756,8 +779,8 @@ export function TournamentDetailPage() {
                 onInputChange={setInviteInput}
                 excludeUserIds={excludeInviteIds}
                 excludeSelf
-              />
-              <Button
+              /> : null}
+              {isOrganizer && canEditRoster ? <Button
                 variant="secondary"
                 disabled={busy || !inviteUserId}
                 onClick={() =>
@@ -770,31 +793,31 @@ export function TournamentDetailPage() {
                 }
               >
                 Отправить приглашение
-              </Button>
-              <TextField
+              </Button> : null}
+              {isOrganizer && canEditRoster ? <TextField
                 label="Добавить гостя (Имя Фамилия)"
                 value={guest}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setGuest(e.target.value)
                 }
-              />
-              <Button
+              /> : null}
+              {isOrganizer && canEditRoster ? <Button
                 variant="secondary"
                 disabled={busy || !guest.trim()}
                 onClick={() => {
                   const [first, ...rest] = guest.trim().split(/\s+/);
                   void runAction(async () => {
-                    await api.addTournamentParticipant(id!, {
+                    const response = await api.addTournamentParticipant(id!, {
                       guestFirstName: first,
                       guestLastName: rest.join(" ") || "Гость",
-                    });
+                    }, crypto.randomUUID());
                     setGuest("");
-                    await load(true);
+                    replaceTournamentIfCurrent(response.tournament);
                   }, "Гость добавлен");
                 }}
               >
                 Добавить гостя
-              </Button>
+              </Button> : null}
             </div>
             ) : null}
 

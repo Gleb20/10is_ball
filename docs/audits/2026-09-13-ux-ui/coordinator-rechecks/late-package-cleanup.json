@@ -1,0 +1,20 @@
+{
+  "kind": "read-only root post-run Docker label check",
+  "projects": {
+    "tab10-ux-results-5317": {
+      "containers": 0,
+      "volumes": 0,
+      "networks": 0
+    },
+    "tab10-ux-admin-5417": {
+      "containers": 0,
+      "volumes": 0,
+      "networks": 0
+    },
+    "tab10-ux-correction-5517": {
+      "containers": 0,
+      "volumes": 0,
+      "networks": 0
+    }
+  }
+}

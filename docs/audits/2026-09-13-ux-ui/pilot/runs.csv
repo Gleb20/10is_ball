@@ -1,0 +1,9 @@
+run_id,scenario,viewport,actor,result,actual_steps,evidence,limits
+P-MOBILE-01,SC-M01/SC-J01/SC-J02/SC-J03,390x844,C → D,PASS,Home → Start → Match → A/B → Create → Judge → first serve → Start → +1/+1 → B+1 → Undo → A+1 → transfer → D notification → +1/+1 → confirm,p07-match-persisted.json;p23-score5-persisted.json;p24-finished-persisted.json;p26-player-stats.json,Expert; fixture and instrument delays excluded; physical handoff not tested
+P-NEXT-01,SC-M01,390x844,D,PASS,Result → global Start → Match → empty create form,p24-finished-390.json;p25-next-create-390.json,Access confirmed; no dedicated next-game action
+P-DESKTOP-01,SC-M01/SC-J01/SC-J03,1440x900,C,PASS,Keyboard Home/Start; mixed keyboard/programmatic focus for roster; Enter create/start; Space score; mouse correction/finish,p27-keyboard-create-1440.json;p29-a-boris-selected-1440.json;p32-desktop-persisted.json,Not a pure keyboard-only usability test; A=Boris/B=Anna
+P-FOCUS-01,SC-C02,1440x900,C,FAIL,Tab across judge/A/B; ArrowDown then Enter,p28-a-focused-natural-1440.json;p29-a-boris-active-1440.png;p29-a-boris-selected-1440.json,BUG018 absent option id / remount / stale popups; input occluded by prior popup
+P-ADVANCED-01,SC-M02,390x844,D,PASS,Switch 2x2 → inspect four places and rules,p33-2v2-top-390.json;p34-2v2-roster-visible-390.json,Discovery only; no full guest/team/custom mutation tested
+P-SIDE-INVITE,SC-M03,390x844,C,NOT_TESTED,Delegated to MATCH package,../gap012-acceptance-review.json,GAP012 functional gate exists; not own pilot UX run
+P-SIDE-NETWORK,SC-J04,390x844,C,NOT_TESTED,Delegated to JUDGE package,,No pilot injected score-response loss
+P-SIDE-DEVICES,SC-C04,360/landscape/zoom200,C,NOT_TESTED,Dedicated package coverage pending,,No CSS zoom substitution; real device and spoken AT unavailable

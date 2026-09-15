@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "reviewer": "Terra High research_protocol_review",
+  "frozen_export_manifest": "f9828e65d39daea7be635d699708766ad652401d07140c048b9f3e010e8596bb",
+  "hashes": "271/271PASS",
+  "initial_verdict": "REWORK documentation integrity only",
+  "correction": "TECH006 links mandatory component correction; withdrawal of invalidvisualcoverage/derivedoverlap explicit",
+  "runtime": "pilot evidence supports claimed runs; limitations honest; no repeat required",
+  "target": "preserves roles/D35/capabilities; GAP013confirmed notready",
+  "scope": "reusable audit standard, not fullprogramacceptance"
+}

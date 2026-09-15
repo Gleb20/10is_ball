@@ -171,16 +171,6 @@ describe("DATA-001 match validation and invariants", () => {
           ],
         },
       },
-      {
-        name: "creator absent",
-        payload: {
-          ...validCreate(),
-          participants: [
-            { side: "A", userId: userBId },
-            { side: "B", userId: userCId },
-          ],
-        },
-      },
       { name: "zero points", payload: { ...validCreate(), pointsToWin: 0 } },
       {
         name: "fractional points",

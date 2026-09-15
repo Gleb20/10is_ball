@@ -1,3 +1,91 @@
+## 2026-09-14 — Экспертный синтез всех пакетов
+
+- Готовы35 постановок:2 P1,30 P2,3 P3; ещё3 blocked product decisions. 22 capability groups,108 requirements,72 scenario/device rows и57 finding mappings. Все coverage ограничения сохраняются, пользовательских наблюдений0; полный аудит остаётся in_progress до пользовательского этапа.
+- Дополнительная ручная коррекция9payloads и source-only reset-контракт6payloads приняты Terra/root с обязательными overlays. Manual correction stale resend409 не дублирует событие; reset target исправляет ordering/privacy/self-display, runtime реализации ещё не выполнялся.
+- Исправлены номера ADMIN сценариев относительно исходного каталога; независимое review подтвердило remapping. Все13 package manifests и323 application-source hashes проверяются final integrity script; итоговые receipts сохранены в coordinator-rechecks. Документальный check157/92 прошёл перед финальной сборкой. Физические устройства/WebKit/spoken AT/настоящий zoom и user study остаются явными ограничениями.
+
+## 2026-09-14 — Приёмка RESULTS/ADMIN и сводный бэклог UX
+
+- RESULTS40 и ADMIN35 импортированы с проверкой каждого hash; независимые review приняли обязательные corrections. 33 готовые постановки, три продуктовых решения открыты; два bounded recovery уточнения ещё выполняются. UI-рекомендации не реализованы.
+- Root уточнил Home account/session wording, обе стороны History, Profile validation, notifications local state; ADMIN audit DTO ограничен, каталог имеет единый inline pattern. Reset marker retry отвергнут; минимальное D17 чтение остаётся вопросом.
+- Исправлен exporter: четыре игнорируемых git log payloads включаются только по просмотренным точным hashes; package manifests сохранены. Полнота экспорта проверена восстановлением и package manifests; старые неполные экспорты superseded следующей сборкой.
+- Добавлены схемы Home/History и производный обзор BACKLOG с фильтрами. Локальный Chromium подтвердил фильтрацию/раскрытие и отсутствие overflow390/1440; это проверка артефакта, не будущего UI. Документы147/91 canonical items проверены, ссылок/дубликатов/незаполненных обязательных полей нет. Последующие изменения требуют final check.
+
+## 2026-09-14 — Приёмка TOURNAMENT/TEAM и уточнение программы UX
+
+- Terra/root приняли frozen TOURNAMENT51/TEAM39 с обязательными corrections; пять tournament targets ready. Три bounded TEAM targets prepared, независимая проверка впереди. Q-UX-002 отделяет невыбранную модель аватара; revoke не включён как новая функция.
+- Текущие PROJECT_STATUS/README/coordination, capability targets и CJM согласованы с core/social acceptance. RESULTS/ADMIN активно проверяются, пользовательских наблюдений нет. Ни одно UI-исправление не объявлено реализованным.
+- Read-only root cleanup подтвердил отсутствие TEAM project containers/volumes/networks и listeners5217/5218/33028. Docs136 files/82 canonical items PASS, no broken links/duplicate IDs. Документальные изменения не требуют повторного полного1257 gate.
+
+## 2026-09-14 — TOURNAMENT/TEAM evidence и подготовка синтеза
+
+- Imported exact: TOURNAMENT51 manifest8dd14d19… и TEAM39 manifestdb100cb0…. Independent review впереди. Root выявил неверные REQ/AT сопоставления и отозвал заявленную V1 compatibility и teammate consent bypass; corrections обязательны, screenshots не переписаны.
+- Post-run TEAM source323 hashes совпали; неверный напечатанный dispatchSHA исправлен отдельным receipt, историческая подготовка не выдумана.
+- AT-TRN-022 уточнён как non-organizer active admin согласно D35/PRD005/test plan; код/данные не менялись. Созданы BUG-032/033 и GAP-019/020/021 как confirmed до review.
+- RESULTS и ADMIN активны; исходный checkout сохранён. Проверка docs135/79 и whitespace PASS до последней correction; финальный gate выполняется перед freeze.
+
+## 2026-09-14 — Согласование основного пути и mapping correction (TECH-006)
+
+- JUDGE67 imported exact; root подтвердил отсутствие прежнего стенда/PG. Core/recovery/новые GAP-017/018 и BUG-030 переданы Terra на frozen522-path snapshot; до review задачи confirmed.
+- Исправлено неверное отнесение session evidence AUTH к PROFILE-005; публичная карточка остаётся NOT_TESTED, AUTH-008 PARTIAL. Предыдущий пакет неизменен, correction обязательна.
+- AUTH/MATCH sampled coverage сведено в центральную матрицу без blanket acceptance. Обновлены entry points и dependency sprint grouping; добавлен нейтральный user-session протокол, наблюдений пока нет.
+- Docs120 files/73 items PASS, git diff --check PASS; local proposal renders390/1440 выполнены, mobile просмотрены. UI/application bytes неизменны.
+
+## 2026-09-14 — Приёмка AUTH и независимое воспроизведение score recovery (TECH-006)
+
+- AUTH frozen45 принят Terra/root; четыре ограниченные задачи ready, GAP-015 ожидает populated Home. MATCH frozen79 evidence PASS, противоречия целевого сценария сведены в отдельное предложение координатора. Старые пакеты неизменны.
+- BUG-029 P1: личный Chromium390 repro подтвердил сохранённый key после потери ответа и второе очко при следовании подсказке повторить. Это новый запрос человека, не автоматическое дублирование. Migration9/9;323 app hashes неизменны; собственные web/API/disposable PG очищены. Полный1257 gate не повторялся и не заявляется заново.
+- TOURNAMENT/TEAM запущены отдельными Sol High задачами; JUDGE завершает provenance/cleanup. Состояние аудита остаётся in_progress. Документальные проверки фиксируются в следующем checkpoint.
+
+## 2026-09-14 — GAP-012 принят как локальная база UX-аудита
+
+- Реализация и frozen r6 получили independent Terra PASS; fresh1257/1257, включаяPG71 и50 browser journeys desktop/390. Source52 paths совпал до/после; coordinator source manifest323 paths сохранён.
+- Канонические статус/backlog/test plan завершены координатором по проверенным receipts. Выпуска нет; критические UI-сценарии аудита начинаются на локальной базе. [Evidence](audit/evidence/gap012-local.json).
+
+## 2026-09-14 — Уточнение fixture-причины и поиск имени (TECH-006, BUG-023)
+
+- Координатор опроверг first-login activation hypothesis реальным API probe: never-logged account уже active и виден directory. r5 root-cause verdict отозван; r6 исправляет query/label и добавляет явные precondition assertions. Fresh acceptance pending.
+- Ограниченная браузерная диагностика подтвердила различие поиска полного имени в UserPicker и MatchCreate; BUG-023 confirmed, финальная база/mobile recheck ещё нужны. Это не выполнение основного пилота.
+- Добавлены правила fixtures и requirement coverage на108 строк, все пока NOT_TESTED. Исторические отрицательные receipts сохранены.
+
+## 2026-09-14 — Component supplement и подготовка пилота (TECH-006)
+
+- Terra приняла два runtime findings диалогов и ограниченное дополнительное покрытие; dark-error остаётся source hypothesis. BUG-021/022 и target прошли отдельное review, Q-UX-001 явно блокирует только pending policy.
+- GAP-012 r3 static PASS после двух адресных циклов коррекции; full runtime gate остаётся у исполнителя. В coordinator интегрированы проверенные app bytes, сохранены исследовательские записи.
+- Локальный production build и migration foundation 9/9 PASS, synthetic fixtures готовы. Chromium launch-only PASS после разрешённого запуска вне macOS sandbox; это не прохождение сценария. COMPONENTS candidate recheck запущен отдельно.
+- Документы: проверка links/anchors/backlog и diff whitespace выполняется в этом checkpoint; UI ещё не исправлялся.
+
+## 2026-09-13 — Component findings accepted; implementation pending (TECH-006)
+
+- Frozen COMPONENTS package: 5 findings, 33 screenshots, 27 state snapshots, explicit coverage limitations. Terra verified 39 payload hashes, raw evidence/source and rendered frames; PASS for findings, not full coverage.
+- One unsupported NavLink finding withdrawn before acceptance. Added canonical BUG-018/019/020 with target states, write scope, dependencies, Given/When/Then and verification; status confirmed until GAP-012 recheck.
+- Coordinator pilot run plan prepared; no pilot success or user session claimed. Application files unchanged in coordinator checkout.
+- Documentation audit84files/57items PASS; git diff --check PASS. Canonical task review PASS after correcting two unrelated AT references. Product tests remain owned by GAP-012 preparation.
+
+## 2026-09-13 — Запуск UX/UI исследования (TECH-006, GAP-012)
+
+- Создан исследовательский комплект: роли/контекст, протокол, шаблоны, сценарии, исходная CJM, очередь.
+- Запущены отдельные Sol High задачи подготовки правил и component-state аудита; source inventory поручен Luna.
+- Baseline: current remote main9f71b9f, локальный coordinator clone; старое dirty дерево сохранено.
+- Verification: ссылки и согласованность проверяются перед handoff; runtime UX и реализация GAP-012 пока не приняты.
+- Production/code application changes этой записью не заявлены.
+
+## 2026-09-13 — GAP-012 operator-first setup candidate
+
+D35 replaces mandatory player consent with direct selection plus an explicit
+voluntary invitation option. Manual match creation defaults to a nonplaying owner;
+waiting edit/start works with C-owned A-vs-B and closes pending player/judge
+invitations atomically at start. Challenge/revenge retain creator participation and
+purposeful invitations.
+
+Tournament create persists immutable consent policy. Organizer/active admin can use
+a named confirmed registered-user add; the non-contextual admin DTO and UI expose no
+other organizer capability. Migration0006 adds policy, participant provenance/
+fingerprinted idempotency and invitation terminal reason. Confirmed post-bracket add
+atomically closes stale invite state, audits and regenerates with preserved seed
+prefix. Focused OpenAPI/API/PGlite14/14, component17/17 and real PostgreSQL5/5 pass;
+desktop/390/full gate is pending. No version, commit, push, deploy or public mutation.
+
 ## 2026-09-13 — Release 3.0.0 public and hosted-CI acceptance (OPS-004)
 
 Code commit165aecdaaa2eba6ffa5fd9d39926bca155016c95 released via D32 main.
@@ -1384,3 +1472,13 @@ remain existing separate residuals. A bounded next QA slice should recheck WebKi
 runtime on a compatible pinned runner, then physical mobile and spoken AT.
 
 Final documentation audit:72 files/52 canonical IDs, zero broken links/anchors/status errors; git diff --check PASS. Only documentation changed after the accepted gate, and original186-file hashes remain unchanged.
+
+
+## 2026-09-14 — TECH-006 pilot на принятой новой базе
+
+Координатор прошёл synthetic mobile390 create-for-others → rapidscore/Undo → different-sessionhandover → confirmation → nextblankform; authoritative result/statistics подтверждены. Desktop1440 mixedkeyboard/mouse прошёл создание, Space+1, manualcorrection, finish. Отчёт явно отделяет ошибки драйвера, loading frames и ограничения от UX findings; добавлены Flow, structural wireframes, source reconciliation и эталон GAP013 confirmed, not ready (dependencies). Приложение не изменено; полныйGAP012gate1257 отдельное предыдущее свидетельство, не повторялся для документов. Independent pilot review и docs checks pending.
+
+Pilot Terra PASS, evidence correction linked canonically. COMPONENTS recheck+correction imported with exact payload hashes; new BUG024–026 record scoped dark contrast/directory async/pending payload findings. Source323hashes unchanged. HTML previews1440/390 render without horizontal overflow. Docs104files/61items PASS before these final task additions; next consistency gate pending. Wave1 AUTH/MATCH/JUDGE dispatched on frozen accepted baseline; parent pilot stand cleaned up.
+
+
+2026-09-14: wave1 synthesis in progress. Coordinator added provisional AUTH tasks BUG027/028, GAP014–016 and clarified existing reauth in-memory draft exception for GAP013 (AUTH006/AT-AUTH009/UX3.1 vs ordinary MATCH015 exit). Package evidence/independent review not yet accepted; all five remain confirmed. Docs106files/69items zero links/anchors/status/definition errors. No application change or new full-gate claim.

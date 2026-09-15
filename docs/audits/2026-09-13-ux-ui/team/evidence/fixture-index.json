@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "environment": "local-disposable-postgresql-only",
+  "source": {
+    "web": "http://localhost:5217",
+    "api": "http://127.0.0.1:5218",
+    "dbProject": "projecttab10-ux-team-5217",
+    "dbPort": 33028,
+    "sourceHead": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "candidate": "GAP012-r6",
+    "sourceFingerprint": "8e8762575a07e71a17192da327cbe1b5906ca33c1c2ef762c0f9a37463b94cb3"
+  },
+  "actors": {
+    "captain": {
+      "id": "dc5a915a-b0a8-423b-86a7-f1396400dec1",
+      "displayName": "Капитанова-ato4 Кира",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "member": {
+      "id": "9b620439-2027-4b11-81a2-8fe2ec7eece7",
+      "displayName": "Участников-ato4 Михаил",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "declinee": {
+      "id": "e8f2db55-5e9e-4cef-98a2-b92bcfb991b2",
+      "displayName": "Отказова-ato4 Диана",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "expiree": {
+      "id": "27ba4e38-3bfb-4d91-af9b-39873f37bf13",
+      "displayName": "Просрочкин-ato4 Егор",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "revoke": {
+      "id": "583a6559-0235-443b-8ee6-d6381c6e48a2",
+      "displayName": "Отзываемый-ato4 Роман",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "transfer": {
+      "id": "205dcaf6-b01a-4159-8a11-d13544a8f623",
+      "displayName": "Новаякапитанова-ato4 Тамара",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "outsider": {
+      "id": "2a01f7f9-1f27-4e25-802f-48809968c1fc",
+      "displayName": "Посторонний-ato4 Олег",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "team": {
+      "id": "351e60e4-59f6-4801-977c-1415be71df0a",
+      "name": "Команда длинного точного розыгрыша и спокойной передачи капитанства ato4"
+    }
+  },
+  "credentials": "not recorded; generated in private temporary state and removed during cleanup"
+}

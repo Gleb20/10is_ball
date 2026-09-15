@@ -43,6 +43,13 @@
       "when": 1789268518543,
       "tag": "0005_gap_008_match_consent",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789330448398,
+      "tag": "0006_gap_012_game_setup",
+      "breakpoints": true
     }
   ]
 }

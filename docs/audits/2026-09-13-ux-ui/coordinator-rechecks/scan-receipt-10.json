@@ -1,0 +1,13 @@
+{
+  "scannedWorktreeFiles": 1128,
+  "candidates": 0,
+  "skipped": 0,
+  "reviewedBenign": 13,
+  "scope": "Before JUDGE correction probe import; new extras require final scan",
+  "adminReplayReview": {
+    "sha256": "4479c30f9fa47e58239a5dd9e56759248d1121a01fd08473c4eea1169646841c",
+    "host": "127.0.0.1",
+    "passwordPresent": false,
+    "kind": "disposable fixture username-only URL"
+  }
+}

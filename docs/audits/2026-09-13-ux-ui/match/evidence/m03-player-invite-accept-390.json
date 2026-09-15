@@ -1,0 +1,17 @@
+{
+  "name": "m03-player-invite-accept-390",
+  "capturedAt": "2026-09-13T23:20:37.193Z",
+  "url": "http://localhost:4817/notifications",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "title": "Tab-10",
+  "visibleText": "К содержимому\nУведомления\nНазад\nАктуальные\nОбновить уведомления\nПриглашение в матч\nВас пригласили сыграть матч\nПрочитано\nСоздано: 14 сентября 2026 г. в 02:20\nПринять\nОтклонить\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+  "horizontalOverflow": false,
+  "screenshot": "m03-player-invite-accept-390.png",
+  "screenshotSha256": "cf02f2ea063df50e8e2b442ac8a5271160b0febeb2835af076027cc610aa525a",
+  "scenario": "SC-M03",
+  "role": "playerA",
+  "action": "Принять"
+}

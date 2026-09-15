@@ -1,0 +1,95 @@
+{
+  "url": "http://localhost:4617/matches/499418c3-428e-4120-90f4-f77b2c49915f/judge",
+  "title": "Tab-10",
+  "body": "Идёт\n0:37\nНазад\nUndo\nЕщё\n\nСинтетический Борис: 4. Синтетическая Анна: 0. Подаёт Синтетический Борис.\n\nТолько активный судья этой сессии меняет счёт. Undo отменяет последнее действующее очко.\n\nСинтетический Борис\n4\nПОДАЧА\n+1\nСинтетическая Анна\n0\n+1",
+  "focus": {
+    "tag": "BODY",
+    "role": null,
+    "label": null,
+    "text": "\n    Идёт0:37НазадUndoЕщёСинтетический Борис: 4. Синтетическая Анна: 0. Подаёт Синтетический Борис.Т"
+  },
+  "controls": [
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Назад",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 1224.28125,
+        "y": 12,
+        "w": 69.015625,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": "Отменить последнее очко",
+      "text": "Undo",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 1301.296875,
+        "y": 12,
+        "w": 63.140625,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Ещё",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 1372.4375,
+        "y": 12,
+        "w": 55.5625,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": "+1 очко: Синтетический Борис",
+      "text": "+1",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 26,
+        "y": 814,
+        "w": 674,
+        "h": 56
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": "+1 очко: Синтетическая Анна",
+      "text": "+1",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 740,
+        "y": 814,
+        "w": 674,
+        "h": 56
+      }
+    }
+  ],
+  "viewport": {
+    "w": 1440,
+    "h": 900,
+    "scrollX": 0,
+    "scrollY": 0,
+    "scrollWidth": 1440
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "kind": "read-only audit index, not application UI acceptance",
+  "checks": [
+    {
+      "width": 390,
+      "all": 38,
+      "found": 1,
+      "blocked": 3,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "all": 38,
+      "found": 1,
+      "blocked": 3,
+      "overflow": false
+    }
+  ]
+}

@@ -126,12 +126,12 @@ describe("GAP-008 match consent and prestart editing", () => {
 
   afterEach(cleanup);
 
-  it("blocks creator start only for a player whose linked consent is still missing", async () => {
+  it("keeps creator start available while a voluntary player invitation is pending", async () => {
     renderPage();
 
     expect(await screen.findByText("Rival Player")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^старт$/i })).toBeDisabled();
-    expect(screen.getByRole("status")).toHaveTextContent(/после согласия.*rival player/i);
+    expect(screen.getByRole("button", { name: /^старт$/i })).toBeEnabled();
+    expect(screen.getByRole("status")).toHaveTextContent(/приглашения добровольные.*не мешают старту/i);
 
     cleanup();
     getMatch.mockResolvedValue({
@@ -201,6 +201,35 @@ describe("GAP-008 match consent and prestart editing", () => {
       ],
     }));
     expect(await screen.findByText("Edited match")).toBeInTheDocument();
+  });
+
+  it("edits a nonplaying creator's roster without inserting the creator", async () => {
+    const operatorMatch = waitingMatch({
+      title: "Operator match",
+      participants: [
+        { id: "p2", side: "A", userId: "u2", displayName: "Rival Player", avatarKey: null },
+        { id: "p3", side: "B", userId: "u3", displayName: "Third Player", avatarKey: null },
+      ],
+      invitations: [],
+    });
+    getMatch.mockResolvedValue({ match: operatorMatch });
+    updateMatch.mockResolvedValue({ match: { ...operatorMatch, title: "Operator edited" } });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Изменить матч" }));
+    const dialog = screen.getByRole("dialog", { name: "Изменить матч" });
+    expect(within(dialog).getByText("Создатель управляет матчем, но не занимает игровое место.")).toBeInTheDocument();
+    expect(within(dialog).getByRole("combobox", { name: "Игрок A" })).toHaveValue("Rival Player");
+    fireEvent.change(within(dialog).getByLabelText("Название"), { target: { value: "Operator edited" } });
+    await user.click(within(dialog).getByRole("button", { name: "Сохранить изменения" }));
+
+    expect(updateMatch).toHaveBeenCalledWith("m1", expect.objectContaining({
+      participants: [
+        { id: "p2", side: "A", userId: "u2" },
+        { id: "p3", side: "B", userId: "u3" },
+      ],
+    }));
   });
 
   it("keeps the saved match when an older refresh resolves after the mutation", async () => {

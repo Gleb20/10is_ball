@@ -1,0 +1,10 @@
+{
+  "reviewer": "Terra High research_protocol_review",
+  "status": "PASS_WITH_EXPLICIT_COVERAGE_LIMITS",
+  "package_manifest": "51b1896d8f93a12bfe18309d311399639e812c4678b6f51ce0362d2526480dab",
+  "mandatory_correction_manifest": "5f3c6f5f37fb548811375a99323b958a8160606d8d60296a50af8b390c0cd9c6",
+  "accepted_findings": "7 rechecked prior runtime + dark contrast2.58 + directory async + pending payload controls",
+  "withdrawn": "1440/360 active-option PNG visual coverage; derived nav overlap boolean",
+  "limits": "Exact nav intersection and360 visual active option NOT_TESTED; rawDOM/1440 belowviewport confirmed; physical/zoom/spokenAT nottested",
+  "import": "both scopedpackages allpayloadhashesPASS"
+}

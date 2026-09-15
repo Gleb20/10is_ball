@@ -1,0 +1,97 @@
+{
+  "url": "http://localhost:4617/matches/307bf34a-7dbb-4e22-ade1-c9f77650e820/judge",
+  "title": "Tab-10",
+  "body": "Поверните устройство горизонтально для удобного судейства\n\nПеред стартом\nОтмена\n\nТолько активный судья этой сессии меняет счёт. Undo отменяет последнее действующее очко.\n\nВыберите, кто подаёт первым. ↔ меняет стороны стола.\n\nПервая подача\nСинтетическая Анна · сторона A\nСинтетический Борис · сторона B\nСинтетическая Анна\n0\nПОДАЧА\n↔\nСинтетический Борис\n0\nНачать матч",
+  "focus": {
+    "tag": "INPUT",
+    "role": null,
+    "label": null,
+    "text": ""
+  },
+  "controls": [
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Отмена",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 299.296875,
+        "y": 78,
+        "w": 78.703125,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": "radio",
+      "label": null,
+      "text": "",
+      "value": "on",
+      "disabled": false,
+      "checked": true,
+      "rect": {
+        "x": 30,
+        "y": 279.375,
+        "w": 13,
+        "h": 13
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": "radio",
+      "label": null,
+      "text": "",
+      "value": "on",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 30,
+        "y": 331.375,
+        "w": 13,
+        "h": 13
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": "Поменять стороны",
+      "text": "↔",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 167.109375,
+        "y": 556.6875,
+        "w": 55.78125,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Начать матч",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 139.875,
+        "y": 788,
+        "w": 110.234375,
+        "h": 44
+      }
+    }
+  ],
+  "viewport": {
+    "w": 390,
+    "h": 844,
+    "scrollX": 0,
+    "scrollY": 0,
+    "scrollWidth": 390
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "ok": true,
+  "postgresVersion": "16.15",
+  "serverVersionNumber": 160015,
+  "runtimeRoleRefSha256": "03a3e49a20c51cc775492e94e79fbe9bfd59ddf3d06ee947a6d37632148b1875",
+  "runtimeAuthenticated": true,
+  "publicTableCount": 20,
+  "publicSequenceCount": 1,
+  "privilegeEvidence": {
+    "runtimeDatabase": [
+      "CONNECT"
+    ],
+    "publicDatabase": [
+      "CONNECT"
+    ],
+    "runtimeSchemas": {
+      "public": [
+        "USAGE"
+      ],
+      "drizzle": [
+        "USAGE"
+      ]
+    },
+    "publicSchemas": {
+      "public": [],
+      "drizzle": []
+    },
+    "publicDefaultPrivilegeCount": 0,
+    "publicTableForbiddenPrivilegeCount": 0,
+    "publicSequenceUpdatePrivilegeCount": 0
+  },
+  "profileSha256": "08633c7960be11c4178f8fd48498989f491eb861872f9715608d7ca08307356c",
+  "checkedAt": "2026-09-13T23:20:23.486Z"
+}

@@ -1,0 +1,209 @@
+{
+  "id": "j08-handover-directory-pending-1440",
+  "capturedAt": "2026-09-13T23:29:12.356Z",
+  "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "scroll": {
+    "x": 0,
+    "y": 0,
+    "width": 1440,
+    "height": 900
+  },
+  "activeElement": {
+    "tag": "BUTTON",
+    "id": "judge-more-trigger",
+    "text": "Ещё",
+    "ariaLabel": null
+  },
+  "buttons": [
+    {
+      "text": "Назад",
+      "disabled": false,
+      "rect": {
+        "x": 1224.28,
+        "y": 12,
+        "width": 69.02,
+        "height": 44,
+        "top": 12,
+        "right": 1293.3,
+        "bottom": 56,
+        "left": 1224.28
+      }
+    },
+    {
+      "text": "Undo",
+      "disabled": false,
+      "rect": {
+        "x": 1301.3,
+        "y": 12,
+        "width": 63.14,
+        "height": 44,
+        "top": 12,
+        "right": 1364.44,
+        "bottom": 56,
+        "left": 1301.3
+      }
+    },
+    {
+      "text": "Ещё",
+      "disabled": false,
+      "rect": {
+        "x": 1372.44,
+        "y": 12,
+        "width": 55.56,
+        "height": 44,
+        "top": 12,
+        "right": 1428,
+        "bottom": 56,
+        "left": 1372.44
+      }
+    },
+    {
+      "text": "Поменять местами на экране",
+      "disabled": false,
+      "rect": {
+        "x": 20,
+        "y": 112.19,
+        "width": 223.73,
+        "height": 152,
+        "top": 112.19,
+        "right": 243.73,
+        "bottom": 264.19,
+        "left": 20
+      }
+    },
+    {
+      "text": "Исправить счёт и подачу",
+      "disabled": false,
+      "rect": {
+        "x": 251.73,
+        "y": 112.19,
+        "width": 192.31,
+        "height": 152,
+        "top": 112.19,
+        "right": 444.05,
+        "bottom": 264.19,
+        "left": 251.73
+      }
+    },
+    {
+      "text": "Передать слот",
+      "disabled": true,
+      "rect": {
+        "x": 463.05,
+        "y": 209.19,
+        "width": 298,
+        "height": 44,
+        "top": 209.19,
+        "right": 761.05,
+        "bottom": 253.19,
+        "left": 463.05
+      }
+    },
+    {
+      "text": "Освободить слот и выйти",
+      "disabled": false,
+      "rect": {
+        "x": 780.05,
+        "y": 112.19,
+        "width": 195.47,
+        "height": 152,
+        "top": 112.19,
+        "right": 975.52,
+        "bottom": 264.19,
+        "left": 780.05
+      }
+    },
+    {
+      "text": "+1",
+      "disabled": false,
+      "rect": {
+        "x": 26,
+        "y": 814,
+        "width": 674,
+        "height": 56,
+        "top": 814,
+        "right": 700,
+        "bottom": 870,
+        "left": 26
+      }
+    },
+    {
+      "text": "+1",
+      "disabled": false,
+      "rect": {
+        "x": 740,
+        "y": 814,
+        "width": 674,
+        "height": 56,
+        "top": 814,
+        "right": 1414,
+        "bottom": 870,
+        "left": 740
+      }
+    }
+  ],
+  "alerts": [],
+  "statuses": [],
+  "scores": [
+    "3",
+    "1"
+  ],
+  "pointTargets": [
+    {
+      "label": "+1 очко: Синтетическая Анна",
+      "disabled": false,
+      "rect": {
+        "x": 26,
+        "y": 814,
+        "width": 674,
+        "height": 56,
+        "top": 814,
+        "right": 700,
+        "bottom": 870,
+        "left": 26
+      }
+    },
+    {
+      "label": "+1 очко: Синтетический Борис",
+      "disabled": false,
+      "rect": {
+        "x": 740,
+        "y": 814,
+        "width": 674,
+        "height": 56,
+        "top": 814,
+        "right": 1414,
+        "bottom": 870,
+        "left": 740
+      }
+    }
+  ],
+  "serve": {
+    "text": "Подача",
+    "rect": {
+      "x": 1029.42,
+      "y": 436.19,
+      "width": 95.16,
+      "height": 28,
+      "top": 436.19,
+      "right": 1124.58,
+      "bottom": 464.19,
+      "left": 1029.42
+    },
+    "fg": "rgb(15, 17, 21)",
+    "bg": "rgb(91, 159, 255)"
+  },
+  "errorStyle": null,
+  "horizontalOverflow": false,
+  "runId": "J-RUN-HANDOVER-DIRECTORY",
+  "directoryPending": {
+    "selectDisabled": false,
+    "optionCount": 1,
+    "busyCount": 0,
+    "retryCount": 0
+  }
+}

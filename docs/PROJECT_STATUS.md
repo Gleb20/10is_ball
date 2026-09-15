@@ -1,5 +1,13 @@
 # Tab-10 — статус проекта
 
+## UX/UI исследование — 2026-09-14
+
+TECH-006 выполняется на проверенной локальной GAP012-r6 базе:1257/1257, independent Terra/root acceptance. Пилот и COMPONENTS/AUTH/MATCH/JUDGE/TOURNAMENT/TEAM/RESULTS/ADMIN приняты с обязательными corrections и явными ограничениями. Дополнительная ручная коррекция, reset-контракт и финальный экспертный синтез приняты. [Исследование и ограничения](audits/2026-09-13-ux-ui/README.md), [финальное review](audits/2026-09-13-ux-ui/final-review.json).
+
+35 постановок готовы к будущей реализации, включая проверенные target-контракты восстановления счёта и сброса пароля. BUG-022/GAP-025/GAP-028 зависят от Q-UX-001/002/003. Central coverage:108 требований,72 scenario/device rows; это учёт проверок и ограничений, не blanket PASS. Пользовательское прохождение ещё не проведено. [Обзор](audits/2026-09-13-ux-ui/review-index.html), [очередь инкрементов](audits/2026-09-13-ux-ui/delivery-map.md).
+
+Координатор лично воспроизвёл BUG-029(P1): после сохранения очка и потери ответа интерфейс предлагает повторить; новое нажатие создаёт второе очко. Это не автоматическое дублирование. Принят точный recovery target с проверкой ключа, версии и отдельной судьбой очереди. [Приёмка core](audits/2026-09-13-ux-ui/core-review.json), [турниры/команды](audits/2026-09-13-ux-ui/social-review.json). UI-рекомендации не реализованы, локальная GAP-012 база не опубликована; исходный dirty checkout сохранён.
+
 ## Публичная версия 3.0.0 — 2026-09-13
 
 Релиз D+E+F и BUG-017 опубликован на [публичном стенде](https://tab-10.vercel.app).
@@ -15,6 +23,18 @@ GAP-011/TECH-002 остаются in_progress: WebKit native crash, физиче
 SEC-001 negative probe сохраняются. Публичные данные не использовались как E2E fixture.
 Ниже — исторические checkpoints. Эта запись фиксирует проверенный code commit;
 последующий commit с evidence меняет только документацию, без новой версии.
+
+## Локальная работа после 3.0.0 — GAP-012
+
+GAP-012 выполняется только в локальном checkout и не опубликован. D35 отделяет
+владельца standalone match от игровых slots: manual setup по умолчанию создаёт
+A-vs-B оператором C без автоматических invitations и без consent gate на start.
+Tournament creation сохраняет immutable consent policy; organizer/active admin
+получает отдельно подтверждённый registered-user add, а post-bracket add до старта
+атомарно перестраивает сетку с сохранением seed prefix. Новый migration ledger —
+`0006_gap_012_game_setup.sql`. Focused API/OpenAPI/PGlite/component и real
+PostgreSQL concurrency и fresh full gate1257/1257 прошли;50 browser journeys подтверждены на desktop/390. Independent Terra review и приёмка координатора PASS. [Evidence](audit/evidence/gap012-local.json).
+Версия остаётся 3.0.0, commit/push/deploy не разрешены этой задачей.
 
 
 ## Release 3.0.0 — pre-publication checkpoint, 2026-09-13

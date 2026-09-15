@@ -1,0 +1,36 @@
+{
+  "kind": "synthetic disposable PostgreSQL fixtures; no credentials retained",
+  "baseURL": "http://localhost:4717",
+  "databaseProject": "tab10-ux-auth-4717",
+  "databasePort": 33017,
+  "actors": {
+    "first": {
+      "id": "459d1276-185e-4ec4-9cd0-2e888629364e",
+      "email": "ux-auth-first-9fd2e58704@tab10.test",
+      "status": "active",
+      "mustChangePasswordInitially": true,
+      "onboardingInitially": "incomplete"
+    },
+    "returning": {
+      "id": "019f5698-ac35-4c0f-b496-33a2dd2e0506",
+      "email": "ux-auth-returning-9fd2e58704@tab10.test",
+      "status": "active",
+      "mustChangePassword": false,
+      "onboarding": "complete"
+    },
+    "alternate": {
+      "id": "af1a8a3e-1d83-4bfe-8c84-3b3d44abfce1",
+      "email": "ux-auth-alternate-9fd2e58704@tab10.test",
+      "status": "active",
+      "mustChangePassword": false,
+      "onboarding": "complete"
+    },
+    "blocked": {
+      "id": "3ee1480a-1105-4ff0-b9f2-c4f0dce8c962",
+      "email": "ux-auth-blocked-9fd2e58704@tab10.test",
+      "status": "blocked",
+      "mustChangePassword": false,
+      "onboarding": "complete"
+    }
+  }
+}

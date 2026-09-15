@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { MatchCreatePage } from "./MatchCreatePage";
@@ -70,10 +70,11 @@ describe("REQ_ui__match_create_autocomplete", () => {
       await screen.findByRole("form", { name: /создание матча/i }),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /^гость$/i }));
+    const opponent = screen.getByRole("group", { name: "Соперник" });
+    await user.click(within(opponent).getByRole("button", { name: /^гость$/i }));
     expect(await screen.findByLabelText(/гость/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /^игрок$/i }));
+    await user.click(within(opponent).getByRole("button", { name: /^игрок$/i }));
     expect(
       await screen.findByRole("combobox", { name: "Соперник" }),
     ).toBeInTheDocument();
@@ -100,6 +101,51 @@ describe("REQ_ui__match_create_autocomplete", () => {
     expect(screen.getByText(/нельзя вызвать самого себя/i)).toBeInTheDocument();
   });
 
+  it("GAP-012: submits manual A-vs-B without the operator and without invitations by default", async () => {
+    matchCreateOptions.mockResolvedValue({
+      users: [
+        { id: "u2", firstName: "Alpha", lastName: "Player" },
+        { id: "u3", firstName: "Beta", lastName: "Player" },
+      ],
+      teams: [], recentOpponentIds: [], frequentOpponentIds: [],
+    });
+    const user = userEvent.setup();
+    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
+    await user.click(await screen.findByRole("combobox", { name: "Игрок A" }));
+    await user.click(await screen.findByText("Alpha Player"));
+    await user.click(screen.getByRole("combobox", { name: "Соперник" }));
+    await user.click(await screen.findByText("Beta Player"));
+    await user.click(screen.getByRole("button", { name: /создать матч/i }));
+    expect(createMatch).toHaveBeenCalledWith(expect.objectContaining({
+      source: "manual",
+      sendPlayerInvitations: false,
+      participants: [
+        { side: "A", userId: "u2" },
+        { side: "B", userId: "u3" },
+      ],
+    }));
+  });
+
+  it("GAP-012: keeps the creator and invitation intent for a challenge", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/matches/new?opponentId=u2&opponentName=B%20Rival"]}>
+        <AuthProvider><MatchCreatePage /></AuthProvider>
+      </MemoryRouter>,
+    );
+    await screen.findByText("В вызове или реванше создатель играет.");
+    expect(screen.getByLabelText("Пригласить выбранных игроков")).toBeChecked();
+    await user.click(screen.getByRole("button", { name: /создать матч/i }));
+    expect(createMatch).toHaveBeenCalledWith(expect.objectContaining({
+      source: "challenge",
+      sendPlayerInvitations: true,
+      participants: [
+        { side: "A", userId: "u1" },
+        { side: "B", userId: "u2" },
+      ],
+    }));
+  });
+
   it("GAP-005: submits a complete 2v2 roster with custom rules and first-server mode", async () => {
     matchCreateOptions.mockResolvedValue({
       users: [
@@ -121,6 +167,7 @@ describe("REQ_ui__match_create_autocomplete", () => {
     );
 
     await screen.findByRole("form", { name: /создание матча/i });
+    await user.click(screen.getByLabelText("Создатель играет"));
     await user.click(screen.getByRole("button", { name: "2 × 2" }));
     await user.clear(screen.getByLabelText("Очков до победы"));
     await user.type(screen.getByLabelText("Очков до победы"), "15");
@@ -142,6 +189,7 @@ describe("REQ_ui__match_create_autocomplete", () => {
       pointsToWin: 15,
       mercyPoints: 7,
       firstServerMethod: "random",
+      sendPlayerInvitations: false,
       judgeUserId: "u2",
       participants: [
         { side: "A", userId: "u1" },

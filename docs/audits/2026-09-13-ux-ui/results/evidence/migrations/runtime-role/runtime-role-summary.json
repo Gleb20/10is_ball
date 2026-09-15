@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "total": 4,
+  "passed": 4,
+  "failed": 0,
+  "skipped": 0,
+  "todo": 0,
+  "interrupted": 0,
+  "migrationOwner": "tab10_test",
+  "runtimeRole": "tab10_runtime_test",
+  "checks": [
+    "ledger-read",
+    "public-dml-and-sequence",
+    "public-ddl-denied",
+    "ledger-write-denied"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "scope": "GAP012 fixture diagnosis, not UX pilot",
+  "baseline": "GAP012 r3 application bytes",
+  "user": {
+    "id": "fe3471ef-3a1c-4e60-9604-6ebdd516bec7",
+    "status": "active",
+    "mustChangePassword": true,
+    "hasEverLoggedIn": false
+  },
+  "directoryEntry": {
+    "id": "fe3471ef-3a1c-4e60-9604-6ebdd516bec7",
+    "firstName": "Поздний",
+    "lastName": "Синтетический",
+    "displayName": "Синтетический Поздний",
+    "avatarKey": "avatar_3"
+  },
+  "queryComparison": {
+    "fixtureFirstLast": "Поздний Синтетический",
+    "actualDirectoryLabel": "Синтетический Поздний",
+    "fullFirstLastSubstring": false,
+    "partialFirstNameSubstring": true
+  },
+  "conclusion": "New account is already active and present before first login. Fixture label order mismatch is confirmed; actual browser filtering remains to check."
+}

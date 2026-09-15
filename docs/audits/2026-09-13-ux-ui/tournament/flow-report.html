@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tab-10 TOURNAMENT — User Flow Report</title>
+<style>
+  :root{--ink:#17131d;--muted:#6f6a73;--line:#ddd8e2;--accent:#7628e8;--ok:#137333;--warn:#a04c00;--bad:#b3261e;--bg:#f7f5f9;--card:#fff;--soft:#f0e9ff}
+  *{box-sizing:border-box;margin:0} body{font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);padding:48px 24px;max-width:920px;margin:0 auto}
+  h1{font-size:30px;letter-spacing:-.025em} h2{font-size:21px;margin:48px 0 10px;padding-top:24px;border-top:1px solid var(--line)} h3{font-size:14px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:28px 0 12px}
+  p+p{margin-top:10px}.meta{color:var(--muted);font-size:14px;margin:6px 0 4px}.skills{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0}.chip{font-size:13px;padding:3px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
+  .flow{list-style:none;padding:0;margin:16px 0}.flow>li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;position:relative}.flow>li+li{margin-top:34px}.flow>li+li::before{content:"";position:absolute;top:-27px;left:32px;width:2px;height:20px;background:var(--accent)}.flow>li+li::after{content:"";position:absolute;top:-12px;left:28px;border:5px solid transparent;border-top-color:var(--accent)}
+  .step-n{display:inline-block;font-size:12px;font-weight:750;color:var(--accent);border:1.5px solid var(--accent);border-radius:999px;padding:1px 9px;margin-right:8px;vertical-align:1px}.step-t{font-weight:700}.step-d{color:var(--muted);font-size:14px;margin-top:6px}.cta{font-size:13px;margin-top:8px}.cta b{color:var(--ok)}.branch{font-size:13px;margin-top:8px;padding:8px 12px;background:var(--soft);border-left:3px solid var(--accent);border-radius:0 6px 6px 0}
+  table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card)} th,td{text-align:left;padding:9px 12px;border:1px solid var(--line);vertical-align:top} th{background:var(--bg);font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}.pass{color:var(--ok);font-weight:700}.warn{color:var(--warn);font-weight:700}.fail{color:var(--bad);font-weight:700}.overflow{overflow-x:auto}
+  a{color:#5d12cc} ul{padding-left:22px} li+li{margin-top:6px} footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}@media print{body{background:#fff;padding:0}.flow>li{break-inside:avoid}}
+</style>
+</head>
+<body>
+<h1>Tab-10 TOURNAMENT — User Flow Report</h1>
+<p class="meta">2026-09-14 · Экспертный аудит создания, состава, сетки, ролей и завершения; без изменений приложения</p>
+<div class="skills"><span class="chip">userflow</span><span class="chip">flow-forms</span><span class="chip">flow-navigation</span><span class="chip">flow-errors</span><span class="chip">flow-sharing</span><span class="chip">interface-design</span></div>
+
+<h2>Summary</h2>
+<p>Семь собственных Chromium-runs подтвердили целостный основной flow и серверные границы ролей. Proposed flow не меняет продуктовую модель: он защищает три consequential actions, возвращает составу первичный приоритет, скрывает преждевременный результат и добавляет один уровень обзора сетки. Это экспертная спецификация; пользовательские метрики и ошибки реального человека не наблюдались.</p>
+
+<h2>As-is: создать комнату и подготовить сетку</h2>
+<p class="meta">Pattern source: flow-forms + flow-navigation · Entry: вкладка «Начать» → «Турнир»</p>
+<h3>Steps</h3>
+<ol class="flow">
+  <li><span class="step-n">1</span><span class="step-t">Создание</span><p class="step-d">Организатор задаёт название, формат, своё участие и consent policy. На 390 форма не имеет горизонтального overflow.</p><p class="cta">Primary action: <b>Создать</b> → detail в collecting</p><div class="branch">Если consent выключен → состав можно заполнять напрямую.</div></li>
+  <li><span class="step-n">2</span><span class="step-t">Настройки и lifecycle actions</span><p class="step-d">До состава показаны правила, policy note, «Построить сетку» и «Отменить турнир» равного визуального уровня.</p><p class="cta">Primary action: <b>неоднозначен до заполнения состава</b></p></li>
+  <li><span class="step-n">3</span><span class="step-t">Состав</span><p class="step-d">Active roster, invitations и add controls. В direct-mode registered add всё равно вызывает native confirm.</p><p class="cta">Primary action: <b>Добавить в состав</b> → confirm → roster refresh</p><div class="branch">Consent/admin/generated → confirm сообщает override/regeneration; это нужные ветви.</div></li>
+  <li><span class="step-n">4</span><span class="step-t">Построение</span><p class="step-d">Algorithm Dialog выбирает compact/power-of-two; V2 отображает BYE и сохраняет seed order.</p><p class="cta">Primary action: <b>Построить сетку</b> → bracket_generated</p></li>
+</ol>
+
+<h2>Proposed: состав ведёт к готовой сетке</h2>
+<p class="meta">Pattern source: flow-forms + flow-navigation · Entry unchanged</p>
+<h3>Steps</h3>
+<ol class="flow">
+  <li><span class="step-n">1</span><span class="step-t">Создание без новой сложности</span><p class="step-d">Текущая форма и defaults сохраняются.</p><p class="cta">Primary action: <b>Создать</b> → collecting room</p></li>
+  <li><span class="step-n">2</span><span class="step-t">Состав и приглашения</span><p class="step-d">После компактной сводки правил сразу находится roster. Direct organizer add в collecting не требует confirm.</p><p class="cta">Primary action: <b>Добавить игрока/гостя</b> → обновлённый roster</p><div class="branch">Consent/admin/generated → именованное подтверждение сохраняется.</div></li>
+  <li><span class="step-n">3</span><span class="step-t">Готовность и сетка</span><p class="step-d">После roster появляется основное действие построения; cancel уходит в отдельное «Управление турниром».</p><p class="cta">Primary action: <b>Построить сетку</b> → algorithm Dialog → bracket</p></li>
+  <li><span class="step-n">4</span><span class="step-t">Защищённые последствия</span><p class="step-d">Cancel/dissolve/generated-withdraw называют объект и эффект; Escape/secondary не меняют state.</p><p class="cta">Primary action: <b>Подтвердить точное действие</b> → persisted transition</p></li>
+</ol>
+
+<h2>As-is / proposed: играть и ориентироваться в сетке</h2>
+<p class="meta">Pattern source: flow-navigation · Entry: tournament detail для participant/organizer</p>
+<h3>Steps</h3>
+<ol class="flow">
+  <li><span class="step-n">1</span><span class="step-t">Найти задачу</span><p class="step-d">Participant видит «Ваши матчи»: следующий link, затем текущий link после старта. После победы label продвигается W0_0 → W1_0.</p><p class="cta">Primary action: <b>Текущий/Следующий матч</b> → match detail</p></li>
+  <li><span class="step-n">2</span><span class="step-t">Осмотреть bracket</span><p class="step-d">Стрелки и Home/End работают, region имеет focus outline. На 100% уменьшение недоступно; 125/150 только сокращают обзор.</p><p class="cta">Proposed action: <b>− до 75%</b> → обзор большего фрагмента при сохранении текста</p></li>
+  <li><span class="step-n">3</span><span class="step-t">Завершение</span><p class="step-d">Finished показывает чемпионат, сетку и корректный top3. Proposed: только terminal states показывают «Итоги».</p><p class="cta">Primary action: <b>Открыть</b> → сыгранный матч</p><div class="branch">Stopped → причина и незавершённые места `—`; никакой выдуманной расстановки.</div></li>
+</ol>
+
+<h2>Role sharing and recovery</h2>
+<p class="meta">Pattern source: flow-sharing + flow-errors · Entry: direct URL / invitation / notification</p>
+<h3>Steps</h3>
+<ol class="flow">
+  <li><span class="step-n">1</span><span class="step-t">Organizer</span><p class="step-d">Настройки, roster, bracket lifecycle, start/stop/cancel. Сервер остаётся источником прав.</p><p class="cta">Primary action: <b>следующее действие текущего статуса</b></p></li>
+  <li><span class="step-n">2</span><span class="step-t">Participant</span><p class="step-d">Readonly tournament context, own current/next match, допустимое судейство. Generated withdraw требует предупреждения.</p><p class="cta">Primary action: <b>Открыть свой матч</b></p></li>
+  <li><span class="step-n">3</span><span class="step-t">Scoped admin</span><p class="step-d">Только каталог registered users и подтверждённое ручное добавление; settings/start/guest скрыты.</p><p class="cta">Primary action: <b>Добавить в состав</b> → named override confirm</p></li>
+  <li><span class="step-n">4</span><span class="step-t">Outsider / failure</span><p class="step-d">Direct URL даёт «Ошибка — Недостаточно прав» и Refresh. Proposed mutation error остаётся рядом с исходным block/Dialog.</p><p class="cta">Recovery: <b>Обновить</b> → повторный authoritative GET</p></li>
+</ol>
+
+<h3>Screen inventory</h3>
+<div class="overflow"><table>
+  <tr><th>Screen</th><th>Purpose</th><th>Primary action</th><th>States verified / limited</th></tr>
+  <tr><td>/tournaments</td><td>Создать и найти турниры</td><td>Создать</td><td>Form/defaults/390 verified; directory error not injected</td></tr>
+  <tr><td>Detail collecting</td><td>Собрать roster</td><td>Добавить → построить</td><td>empty, consent states, direct, role 403; pending network limited</td></tr>
+  <tr><td>Detail generated</td><td>Проверить/изменить сетку</td><td>Старт</td><td>SE/DE/BYE/swap controls; manual swap not executed</td></tr>
+  <tr><td>Detail in progress</td><td>Найти current/next match</td><td>Открыть/судить</td><td>participant journey, post-start rejection</td></tr>
+  <tr><td>Terminal detail</td><td>Понять итог/причину</td><td>Открыть match</td><td>stopped/finished/cancelled verified</td></tr>
+</table></div>
+
+<h3>Anti-pattern audit</h3>
+<div class="overflow"><table>
+  <tr><th>Check</th><th>Verdict</th><th>Evidence</th></tr>
+  <tr><td>Dangerous action names consequence before mutation</td><td class="fail">FAIL</td><td>F-TOURNAMENT-001/002, T-RUN-007</td></tr>
+  <tr><td>Primary action follows prerequisite</td><td class="warn">WARN</td><td>Build/cancel precede roster; expert hierarchy finding</td></tr>
+  <tr><td>Confirmation reserved for meaningful risk</td><td class="warn">WARN</td><td>F-TOURNAMENT-005; needed confirmations pass in T-RUN-004/005</td></tr>
+  <tr><td>Role-specific controls do not imply authorization</td><td class="pass">PASS</td><td>UI visibility + 403/400 and unchanged state, T-RUN-005/007</td></tr>
+  <tr><td>Current task is distinguishable from historical result</td><td class="fail">FAIL</td><td>F-TOURNAMENT-003</td></tr>
+  <tr><td>Keyboard navigation has visible focus and bounded recovery</td><td class="pass">PASS</td><td>3px outline, Home/End exact bounds, T-RUN-003</td></tr>
+  <tr><td>Large structure has overview mode</td><td class="warn">WARN</td><td>Only 100–150%, F-TOURNAMENT-004</td></tr>
+  <tr><td>Human task completion and comprehension</td><td class="warn">NOT TESTED</td><td>No user session; do not infer completion time or sentiment</td></tr>
+</table></div>
+
+<h2>Open questions &amp; parked items</h2>
+<ul>
+  <li>No product decision blocks the proposed target. Independent reviewer acceptance is still required.</li>
+  <li>Physical mobile, WebKit, spoken AT, browser zoom 200%, max64, concurrency, no-show/manual-loss and legacy V1 remain parked as explicit limits.</li>
+  <li>BUG-018/019/020/021/022/023 remain canonical shared dependencies; this package does not duplicate or close them.</li>
+</ul>
+
+<footer>Собрано по локальному шаблону userflow; flow-forms, flow-navigation, flow-errors и flow-sharing применены как reference patterns. Evidence level и непроверенные состояния указаны для каждого вывода.</footer>
+</body>
+</html>

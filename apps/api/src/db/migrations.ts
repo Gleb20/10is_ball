@@ -19,7 +19,7 @@ const BASELINE_SNAPSHOT_PATH = fileURLToPath(
   new URL("../../drizzle/meta/0000_snapshot.json", import.meta.url),
 );
 const CURRENT_SNAPSHOT_PATH = fileURLToPath(
-  new URL("../../drizzle/meta/0005_snapshot.json", import.meta.url),
+  new URL("../../drizzle/meta/0006_snapshot.json", import.meta.url),
 );
 
 const MIGRATION_ADVISORY_LOCK = "7247010010001";
@@ -143,7 +143,7 @@ const currentSnapshot = JSON.parse(
   readFileSync(CURRENT_SNAPSHOT_PATH, "utf8"),
 ) as BaselineSnapshot;
 
-const intermediateSnapshots = ["0001", "0002", "0003", "0004"].map((prefix) =>
+const intermediateSnapshots = ["0001", "0002", "0003", "0004", "0005"].map((prefix) =>
   JSON.parse(readFileSync(fileURLToPath(new URL(`../../drizzle/meta/${prefix}_snapshot.json`, import.meta.url)), "utf8")) as BaselineSnapshot,
 );
 const snapshotsByAppliedCount = [baselineSnapshot, ...intermediateSnapshots, currentSnapshot];
@@ -752,7 +752,11 @@ async function readAdoptionBackfillRows(
     SELECT
       id::text AS id,
       bracket_json::text AS bracket_json,
-      (to_jsonb(tournaments) - 'bracket_construction_algorithm')::text
+      (
+        to_jsonb(tournaments)
+        - 'bracket_construction_algorithm'
+        - 'require_participant_consent'
+      )::text
         AS protected_payload,
       bracket_construction_algorithm AS current_value,
       CASE

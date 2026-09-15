@@ -1,0 +1,10 @@
+{
+  "container": "tab10-ux-match-4817",
+  "containerStatus": "stopped_and_removed",
+  "ports": {
+    "4817": "free",
+    "4818": "free",
+    "33018": "free"
+  },
+  "scope": "Только disposable runtime MATCH-аудита; пользовательские и публичные данные не затрагивались."
+}

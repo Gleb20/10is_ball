@@ -1,0 +1,17 @@
+{
+  "scope": "COMPONENTS supplement findings and scoped coverage",
+  "status": "PASS",
+  "reviewer": "Terra High",
+  "baseline": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+  "manifest_sha256": "6d727f3c2ba0ae6e90a7e28dcb38129c874e493d8f914b966af3a686bb297bb3",
+  "verified_payload_files": 14,
+  "inspected_screenshots": 10,
+  "runtime_findings": [
+    "F-CMP-SUP-001",
+    "F-CMP-SUP-002"
+  ],
+  "source_hypotheses": [
+    "F-CMP-SUP-003"
+  ],
+  "limitations": "Does not close original findings, post-candidate rechecks, physical devices or spoken AT. Pending dismissal policy unresolved; not ready for implementation."
+}

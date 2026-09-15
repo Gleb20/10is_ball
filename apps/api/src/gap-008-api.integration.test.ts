@@ -6,7 +6,7 @@ import { authSessions, users } from "./db/schema.js";
 import { hashToken } from "./modules/auth/auth-service.js";
 let close: (() => Promise<void>) | undefined;
 afterEach(async () => { await close?.(); });
-it("GAP-008 API enforces consent, actors, strict patches and persisted expiry", async () => {
+it("GAP-008 API keeps invitations voluntary while enforcing actors, strict patches, and expiry", async () => {
   const context = await createMigratedPgliteDb();
   const clock = new FakeClock(new Date("2026-09-13T10:00:00Z"));
   const { app, services } = await buildApp({ db: context.db, clock });
@@ -15,7 +15,7 @@ it("GAP-008 API enforces consent, actors, strict patches and persisted expiry", 
   const [creator, player] = people;
   for (const person of people) await context.db.insert(authSessions).values({userId:person.id,tokenHash:hashToken(person.firstName),expiresAt:new Date("2026-09-20T10:00:00Z")});
   const cookies = {tab10_session:"creator"};
-  const match = await services.matches.createMatch({createdByUserId:creator!.id,title:"API consent",format:"1v1",firstServerMethod:"random",participants:[{side:"A",userId:creator!.id},{side:"B",userId:player!.id}]});
+  const match = await services.matches.createMatch({createdByUserId:creator!.id,title:"API consent",format:"1v1",firstServerMethod:"random",sendPlayerInvitations:true,participants:[{side:"A",userId:creator!.id},{side:"B",userId:player!.id}]});
   const invite = match!.invitations[0]!;
   const url = `/api/v1/matches/${match!.id}`;
   expect((await app.inject({method:"PATCH",url,payload:{title:"No auth"}})).statusCode).toBe(401);
@@ -23,18 +23,21 @@ it("GAP-008 API enforces consent, actors, strict patches and persisted expiry", 
   expect((await app.inject({method:"PATCH",url,cookies:{tab10_session:"player"},payload:{title:"Not mine"}})).statusCode).toBe(403);
   const updated = await app.inject({method:"PATCH",url,cookies,payload:{title:"Updated title"}});
   expect(updated.statusCode).toBe(200); expect(updated.json().match.title).toBe("Updated title");
-  expect((await app.inject({method:"POST",url:`${url}/start`,cookies})).statusCode).toBe(409);
   const respond = `/api/v1/match-invitations/${invite.id}/accept`;
   expect((await app.inject({method:"POST",url:respond,cookies})).statusCode).toBe(404);
   const playerCookies = {tab10_session:"player"};
   expect((await app.inject({method:"POST",url:respond,cookies:playerCookies,payload:{accept:true}})).statusCode).toBe(400);
-  clock.advanceMs(600000);
-  const expired = await app.inject({method:"POST",url:respond,cookies:playerCookies});
+  expect((await app.inject({method:"POST",url:`${url}/start`,cookies})).statusCode).toBe(200);
+  await services.matches.stopMatch({matchId:match!.id,winnerSide:"A",reasonCode:"other",reasonText:"API lifecycle",actorUserId:creator!.id});
+  const second = await services.matches.createMatch({createdByUserId:creator!.id,title:"API expiry",format:"1v1",firstServerMethod:"random",sendPlayerInvitations:true,participants:[{side:"A",userId:creator!.id},{side:"B",userId:player!.id}]});
+  const expiringInvite = second!.invitations[0]!;
+  clock.advanceMs(600001);
+  const expired = await app.inject({method:"POST",url:`/api/v1/match-invitations/${expiringInvite.id}/accept`,cookies:playerCookies});
   expect(expired.statusCode).toBe(400); expect(expired.json().code).toBe("INVITATION_EXPIRED");
-  expect((await services.matches.getMatch(match!.id))!.invitations[0]!.status).toBe("expired");
-  const reinvited = await app.inject({method:"POST",url:`${url}/invitations`,cookies,payload:{userId:player!.id,kind:"player"}});
+  expect((await services.matches.getMatch(second!.id))!.invitations[0]!.status).toBe("expired");
+  const reinvited = await app.inject({method:"POST",url:`/api/v1/matches/${second!.id}/invitations`,cookies,payload:{userId:player!.id,kind:"player"}});
   expect(reinvited.statusCode).toBe(200);
   const accepted = await app.inject({method:"POST",url:`/api/v1/match-invitations/${reinvited.json().invitation.id}/accept`,cookies:playerCookies});
   expect(accepted.statusCode).toBe(200); expect(accepted.json().invitation.status).toBe("accepted");
-  expect((await app.inject({method:"POST",url:`${url}/start`,cookies})).statusCode).toBe(200);
+  expect((await app.inject({method:"POST",url:`/api/v1/matches/${second!.id}/start`,cookies})).statusCode).toBe(200);
 });

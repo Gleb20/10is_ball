@@ -1,0 +1,213 @@
+{
+  "id": "j22-no-show-confirm-390",
+  "capturedAt": "2026-09-13T23:29:21.076Z",
+  "url": "/matches/1df1e583-3a8c-46ad-8f0a-dfd4011a6db3",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "scroll": {
+    "x": 0,
+    "y": 165,
+    "width": 390,
+    "height": 1009
+  },
+  "activeElement": {
+    "tag": "BUTTON",
+    "id": null,
+    "text": null,
+    "ariaLabel": "Закрыть"
+  },
+  "buttons": [
+    {
+      "text": "Обновить",
+      "disabled": false,
+      "rect": {
+        "x": 298.19,
+        "y": -147,
+        "width": 75.81,
+        "height": 44,
+        "top": -147,
+        "right": 374,
+        "bottom": -103,
+        "left": 298.19
+      }
+    },
+    {
+      "text": "Изменить матч",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 375.84,
+        "width": 358,
+        "height": 44,
+        "top": 375.84,
+        "right": 374,
+        "bottom": 419.84,
+        "left": 16
+      }
+    },
+    {
+      "text": "Старт",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 431.84,
+        "width": 358,
+        "height": 44,
+        "top": 431.84,
+        "right": 374,
+        "bottom": 475.84,
+        "left": 16
+      }
+    },
+    {
+      "text": "Судить",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 487.84,
+        "width": 358,
+        "height": 44,
+        "top": 487.84,
+        "right": 374,
+        "bottom": 531.84,
+        "left": 16
+      }
+    },
+    {
+      "text": "Открыть счёт",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 543.84,
+        "width": 358,
+        "height": 44,
+        "top": 543.84,
+        "right": 374,
+        "bottom": 587.84,
+        "left": 16
+      }
+    },
+    {
+      "text": "Зафиксировать неявку",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 599.84,
+        "width": 358,
+        "height": 44,
+        "top": 599.84,
+        "right": 374,
+        "bottom": 643.84,
+        "left": 16
+      }
+    },
+    {
+      "text": "Отменить матч",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 655.84,
+        "width": 358,
+        "height": 44,
+        "top": 655.84,
+        "right": 374,
+        "bottom": 699.84,
+        "left": 16
+      }
+    },
+    {
+      "text": "Назад",
+      "disabled": false,
+      "rect": {
+        "x": 16,
+        "y": 711.84,
+        "width": 358,
+        "height": 44,
+        "top": 711.84,
+        "right": 374,
+        "bottom": 755.84,
+        "left": 16
+      }
+    },
+    {
+      "text": "",
+      "disabled": false,
+      "rect": {
+        "x": 302.81,
+        "y": 187,
+        "width": 46.19,
+        "height": 48,
+        "top": 187,
+        "right": 349,
+        "bottom": 235,
+        "left": 302.81
+      }
+    },
+    {
+      "text": "Синтетическая Анна",
+      "disabled": false,
+      "rect": {
+        "x": 41,
+        "y": 378,
+        "width": 150.41,
+        "height": 44,
+        "top": 378,
+        "right": 191.41,
+        "bottom": 422,
+        "left": 41
+      }
+    },
+    {
+      "text": "Синтетический Борис",
+      "disabled": false,
+      "rect": {
+        "x": 190.41,
+        "y": 378,
+        "width": 158.59,
+        "height": 44,
+        "top": 378,
+        "right": 349,
+        "bottom": 422,
+        "left": 190.41
+      }
+    },
+    {
+      "text": "Отмена",
+      "disabled": false,
+      "rect": {
+        "x": 41,
+        "y": 561,
+        "width": 308,
+        "height": 44,
+        "top": 561,
+        "right": 349,
+        "bottom": 605,
+        "left": 41
+      }
+    },
+    {
+      "text": "Завершить по неявке",
+      "disabled": false,
+      "rect": {
+        "x": 41,
+        "y": 613,
+        "width": 308,
+        "height": 44,
+        "top": 613,
+        "right": 349,
+        "bottom": 657,
+        "left": 41
+      }
+    }
+  ],
+  "alerts": [],
+  "statuses": [],
+  "scores": [],
+  "pointTargets": [],
+  "serve": null,
+  "errorStyle": null,
+  "horizontalOverflow": false,
+  "runId": "J-RUN-NO-SHOW"
+}

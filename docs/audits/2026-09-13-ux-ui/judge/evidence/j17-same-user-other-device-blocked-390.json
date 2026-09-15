@@ -1,0 +1,75 @@
+{
+  "id": "j17-same-user-other-device-blocked-390",
+  "capturedAt": "2026-09-13T23:29:15.398Z",
+  "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "scroll": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 844
+  },
+  "activeElement": {
+    "tag": "BODY",
+    "id": null,
+    "text": "Судейство уже открыто на другом устройстве.ПовторитьСмотреть счётНазад к матчу",
+    "ariaLabel": null
+  },
+  "buttons": [
+    {
+      "text": "Повторить",
+      "disabled": false,
+      "rect": {
+        "x": 14.59,
+        "y": 417,
+        "width": 99,
+        "height": 44,
+        "top": 417,
+        "right": 113.59,
+        "bottom": 461,
+        "left": 14.59
+      }
+    },
+    {
+      "text": "Смотреть счёт",
+      "disabled": false,
+      "rect": {
+        "x": 121.59,
+        "y": 417,
+        "width": 123.58,
+        "height": 44,
+        "top": 417,
+        "right": 245.17,
+        "bottom": 461,
+        "left": 121.59
+      }
+    },
+    {
+      "text": "Назад к матчу",
+      "disabled": false,
+      "rect": {
+        "x": 253.17,
+        "y": 417,
+        "width": 122.22,
+        "height": 44,
+        "top": 417,
+        "right": 375.39,
+        "bottom": 461,
+        "left": 253.17
+      }
+    }
+  ],
+  "alerts": [
+    "Судейство уже открыто на другом устройстве."
+  ],
+  "statuses": [],
+  "scores": [],
+  "pointTargets": [],
+  "serve": null,
+  "errorStyle": null,
+  "horizontalOverflow": false,
+  "runId": "J-RUN-OWNERSHIP"
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-14T08:13:04Z",
+  "apiProcess": "stopped_exit_0",
+  "webProcess": "stopped_exit_130_sigint",
+  "dockerProject": "tab10-ux-tournament-5117",
+  "dockerDown": "containers_network_removed",
+  "temporaryMigrationEvidence": "removed",
+  "listeners": {
+    "5117": false,
+    "5118": false,
+    "33027": false
+  },
+  "remainingProjectContainers": 0,
+  "credentialsPersisted": false,
+  "recoverability": "PostgreSQL used tmpfs and was intentionally destroyed; all records were synthetic."
+}

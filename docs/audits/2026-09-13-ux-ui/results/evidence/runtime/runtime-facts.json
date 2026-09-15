@@ -1,0 +1,123 @@
+{
+  "generatedAt": "2026-09-14T08:42:09.661Z",
+  "baseURL": "http://localhost:5317",
+  "release": {
+    "sha": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "version": "3.0.0",
+    "environment": "test",
+    "dirty": true
+  },
+  "fixtures": {
+    "actor": {
+      "id": "9253ba92-b80b-4464-b33a-b401f48beca6",
+      "label": "Роман Результатов"
+    },
+    "rival": {
+      "id": "f488b32c-7e0e-403b-b4c8-2624060fcb0c",
+      "label": "Рита Соперница"
+    },
+    "teammate": {
+      "id": "cb2163f5-6323-4838-b109-6826304c4faa",
+      "label": "Тарас Партнёр"
+    },
+    "blocked": {
+      "id": "5141aea9-950a-4565-bce3-3a2892fe2df9",
+      "label": "Борис Исторический"
+    },
+    "alternate": {
+      "id": "91434760-d027-4b87-bee3-b4a44b6ed81c",
+      "label": "Алина Другая"
+    }
+  },
+  "scenarios": {
+    "tutorialIsolation": {
+      "tutorialIdAbsentFromHistory": true,
+      "historyCountUnchanged": true,
+      "statsUnchanged": true,
+      "rankingUnchanged": true,
+      "rivalUnchanged": true,
+      "completionStillNullAfterTutorial": true,
+      "completionSetOnlyExplicitly": true
+    },
+    "historicalJudge": {
+      "matchId": "515118b0-2f17-442a-83ce-0e6a17f8fc01",
+      "activeJudgeIsNull": true,
+      "homeJudgeName": "Результатов Роман",
+      "homeUserRole": "judge",
+      "apiRightsInference": "not asserted; detail screen controls were inspected separately",
+      "detailText": "Свободный судейский слот\nОбновить\nИдёт\n\n0 : 0\n\n1 × 1\nдо 1 очков\nбез правила сухой победы\nпервая подача: случайно\n\nДлительность: 0:03\n\nСудья не назначен\n\nA: Соперница Рита\nB: Партнёр Тарас\nЖурнал очков\n\nПодтверждённых очков после последней коррекции нет.\n\nСудить\nОткрыть счёт\nОстановить матч\nЗафиксировать неявку\nОтменить матч\nНазад",
+      "detailScreenshot": "match-free-judge-detail-1440.png"
+    },
+    "history": {
+      "firstPageRows": 20,
+      "initialUrl": "http://localhost:5317/history",
+      "screenshots": [
+        "history-390.png",
+        "history-search-390.png",
+        "history-filters-360.png",
+        "history-pagination-error-360.png"
+      ],
+      "searchUrl": "http://localhost:5317/history",
+      "searchResultText": "Приглашение в матч\n\nВас пригласили сыграть матч\n\nОткрыть уведомления\nЗакрыть\nИстория\nФильтры\nПоиск\nНайти\nПоказаны результаты по выбранным условиям\nСбросить\nСвободный судейский слот\nМатч · 0:0\nИдёт\n›\nИстёкшее приглашение\nМатч · 0:0\nОжидание\n›\nОтклонённое приглашение\nМатч · 0:0\nОжидание\n›\nОжидающее приглашение\nМатч · 0:0\nОжидание\n›\nКлубная встреча 22\nМатч · 2:0 · Победа\nЗавершён\n›\nКлубная встреча 21\nМатч · 2:0 · Победа\nЗавершён\n›\nКлубная встреча 20\nМатч · 0:2 · Поражение\nЗавершён\n›\nКлубная встреча 19\nМатч · 2:0 · Победа\nЗавершён\n›\nКлубная встреча 18\nМатч · 2:0 · Победа\nЗавершён\n›\nКлубная встреча 17\nМатч · 2:0 · Победа\nЗавершён\n›\nКлубная встреча 16\nМатч · 2:0 · Победа\nЗавершён\n›\nКлубная встреча 15\nМатч · 0:2 · Поражение\nЗавершён\n›\nКлубная встреча 14\nМатч · 2:0 · Победа\nЗавершён\n›\nКлубная встреча 13\nМатч · 2:0 · Победа\nЗавершён\n›\nКлубная встреча 12\nМатч · 2:0 · Победа\nЗавершён\n›\nКлубная встреча 11\nМатч · 2:0 · Победа\nЗавершён\n›\nКлубная встреча 10\nМатч · 0:2 · Поражение\nЗавершён\n›\nКлубная встреча 09\nМатч · 2:0 · Победа\nЗавершён\n›\nКлубная встреча 08\nМатч · 2:0 · Победа\nЗавершён\n›\nКлубная встреча 07\nМатч · 2:0 · Победа\nЗавершён\n›\nПоказать ещё",
+      "paginationErrorPreservedRows": 16
+    },
+    "rankings": {
+      "allTimeText": "Рейтинг\nВсё время\nНеделя\nМесяц\n\n«Всё время» охватывает всю историю. Неделя и месяц считаются по московскому времени.\n\nОбщий\nRESULTS Команда\n#2\nСоперница Рита\n4 побед\nВызов\n#1\nРезультатов Роман\n18 побед\n#3\nПартнёр Тарас\n1 побед\nВызов\n#4\nДругая Алина\n0 побед · 0 матчей\nВызов\n#5\nTab10 Admin\n0 побед · 0 матчей\nВызов",
+      "screenshots": [
+        "rankings-all-1440.png",
+        "rankings-month-1440.png",
+        "rankings-team-1440.png"
+      ],
+      "monthUrl": "http://localhost:5317/rankings",
+      "teamText": "Приглашение в матч\n\nВас пригласили сыграть матч\n\nОткрыть уведомления\nЗакрыть\nРейтинг\nВсё время\nНеделя\nМесяц\n\n«Всё время» охватывает всю историю. Неделя и месяц считаются по московскому времени.\n\nОбщий\nRESULTS Команда\nКоманда\nRESULTS Команда\n22 побед за всё время\n2 активных участника\n#2\nСоперница Рита\n4 побед\nВызов\n#1\nРезультатов Роман\n18 побед"
+    },
+    "publicProfile": {
+      "text": "Приглашение в матч\n\nВас пригласили сыграть матч\n\nОткрыть уведомления\nЗакрыть\nКарточка игрока\nСоперница Рита\nMoscow transport\n#2 в рейтинге\nСтатистика\nМатчи\n22\nПобеды\n4\nПоражения\n18\nWin rate\n18%\nОчков за матч\n0.4\nТурниры\n0\nПобеды в турнирах\n0\nСоздано турниров\n0\nМатчи судьёй\n0\nМесто\n#2\nИнтересные факты\nСамая долгая игра\nКлубная встреча 22 · 0 мин\nЛучший победный счёт\nКлубная встреча 20 · 2:0\nЧастый соперник\nРезультатов Роман · 22 матчей\n›\nПринципиальный соперник\nРезультатов Роман · 22 матчей\n›\nКоманды\nRESULTS Команда · участник\nБросить вызов",
+      "emailVisible": false,
+      "birthDateVisible": false,
+      "challengeVisible": true,
+      "screenshot": "profile-public-1440.png"
+    },
+    "blockedHistoricalProfile": {
+      "readable": true,
+      "challengeVisible": false,
+      "screenshot": "profile-blocked-historical-1440.png"
+    },
+    "profileValidation": {
+      "draftLengthAfterError": 201,
+      "ariaInvalid": null,
+      "describedBy": null,
+      "activeElement": "body#.",
+      "alertText": "Действие не выполнено\n\nНекорректные данные запроса",
+      "screenshot": "profile-validation-error-390.png"
+    },
+    "sessionRevoke": {
+      "buttonsBefore": 1,
+      "pendingScreenshot": "profile-session-revoke-pending-390.png",
+      "buttonsAfter": 0
+    },
+    "notifications": {
+      "justReadNonActionableStillVisibleUnderActual": true,
+      "pendingInviteButtonsVisible": true,
+      "screenshotBeforeRefresh": "notifications-actual-after-read-390.png",
+      "noticeVisibleAfterRefresh": false,
+      "allText": "Уведомления\nНазад\nАктуальные\nОбновить уведомления\nПроверка прочтения\nНепригласительное уведомление для проверки фильтра\nПрочитано\nСоздано: 14 сентября 2026 г. в 11:42\nПриглашение в матч\nВас пригласили сыграть матч\nИстекло\nСоздано: 14 сентября 2026 г. в 11:42\n\nПричина: исходное приглашение больше недоступно\n\nПриглашение в матч\nВас пригласили сыграть матч\nИстекло\nСоздано: 14 сентября 2026 г. в 11:42\n\nПричина: срок приглашения истёк · 14 сентября 2026 г. в 11:42\n\nПриглашение в матч\nВас пригласили сыграть матч\nОтклонено\nСоздано: 14 сентября 2026 г. в 11:42\nПриглашение в матч\nВас пригласили сыграть матч\nПрочитано\nСоздано: 14 сентября 2026 г. в 11:42\nПринять\nОтклонить",
+      "screenshotHistory": "notifications-history-390.png"
+    },
+    "home": {
+      "text": "Привет, Роман\nОбновить\n\nВаша статистика\n\n#1 в рейтинге\nСыграно\n22\nПобеды\n18\nПоражения\n4\nWin rate\n82%\nОчков за матч\n1.6\nПринципиальный соперник\nСоперница Рита\n22 очных матча\nРеванш\nНачать\nАктивные события\nСвободный судейский слот\nСоперница Рита — Партнёр Тарас · 0:0 · 3 сек · 1v1 · Судья: Результатов Роман · Вы судили\nИдёт\n›\nУведомления\nНепрочитанных: 0\n›\nПрофиль\nТоп-3\nВсё время\nЗа месяц\n#1\nРезультатов Роман\n18 побед\n#2\nСоперница Рита\n4 побед\n#3\nПартнёр Тарас\n1 побед\nПоследние события\nКлубная встреча 22\nРезультатов Роман — Соперница Рита · 2:0 · Победитель: Результатов Роман · 0 сек · 1v1 · Судья: Результатов Роман · Вы играли\nЗавершён\n›\nКлубная встреча 21\nРезультатов Роман — Соперница Рита · 2:0 · Победитель: Результатов Роман · 0 сек · 1v1 · Судья: Результатов Роман · Вы играли\nЗавершён\n›\nКлубная встреча 20\nРезультатов Роман — Соперница Рита · 0:2 · Победитель: Соперница Рита · 0 сек · 1v1 · Судья: Результатов Роман · Вы играли\nЗавершён\n›\nКлубная встреча 19\nРезультатов Роман — Соперница Рита · 2:0 · Победитель: Результатов Роман · 0 сек · 1v1 · Судья: Результатов Роман · Вы играли\nЗавершён\n›\nКлубная встреча 18\nРезультатов Роман — Соперница Рита · 2:0 · Победитель: Результатов Роман · 0 сек · 1v1 · Судья: Результатов Роман · Вы играли\nЗавершён\n›\nВся история",
+      "screenshot390": "home-results-390.png",
+      "screenshot1440": "home-results-1440.png"
+    },
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+      "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    ]
+  },
+  "limitations": [
+    "physical_mobile: NOT_TESTED",
+    "webkit: NOT_TESTED",
+    "spoken_screen_reader: NOT_TESTED",
+    "browser_zoom: NOT_TESTED (CSS zoom was not substituted)"
+  ]
+}

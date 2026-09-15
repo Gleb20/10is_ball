@@ -1,0 +1,765 @@
+{
+  "source_sha256": "201c88541c7272c5e940b1897acfbd0f0d38d489abaeeabf5e92be0cfd66a868",
+  "source_path": "/private/var/folders/9c/gv6xyvzs3nn2yb2pnl0j00zr0000gn/T/tab10-evidence/local-all-5882/browser-prodlike/playwright-results.json",
+  "stats": {
+    "startTime": "2026-09-13T22:05:53.758Z",
+    "duration": 204212.435,
+    "expected": 50,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "tests": [
+    {
+      "title": "E2E_auth_match_judge__AT-MATCH-001_005_008_AT-JUDGE-001_003_006_007__finishes_disposable_match",
+      "file": "critical.spec.ts",
+      "line": 109,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2870,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "E2E_runtime_session_recovery__AT-AUTH-009__preserves_route_and_draft_without_replaying_mutation",
+      "file": "critical.spec.ts",
+      "line": 157,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 1750,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "E2E_auth_match_judge__AT-MATCH-001_005_008_AT-JUDGE-001_003_006_007__finishes_disposable_match",
+      "file": "critical.spec.ts",
+      "line": 109,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2716,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "E2E_runtime_session_recovery__AT-AUTH-009__preserves_route_and_draft_without_replaying_mutation",
+      "file": "critical.spec.ts",
+      "line": 157,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 1654,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "GAP-012 immutable consent policy and scoped admin post-bracket add",
+      "file": "gap-012.spec.ts",
+      "line": 53,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2009,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "GAP-012 immutable consent policy and scoped admin post-bracket add",
+      "file": "gap-012.spec.ts",
+      "line": 53,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 1934,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "compiled web and API work through the same-origin production-like proxy",
+      "file": "production-smoke.spec.ts",
+      "line": 13,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 648,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "compiled web and API work through the same-origin production-like proxy",
+      "file": "production-smoke.spec.ts",
+      "line": 13,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 651,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave B AT-PROFILE-001..005 AT-RANK-005..006 own edit, revoke, team and private public card",
+      "file": "wave-b.spec.ts",
+      "line": 44,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 1978,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave B AT-VIS-003 history pagination and detail return keep context",
+      "file": "wave-b.spec.ts",
+      "line": 122,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2152,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave B AT-PROFILE-001..005 AT-RANK-005..006 own edit, revoke, team and private public card",
+      "file": "wave-b.spec.ts",
+      "line": 44,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2058,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave B AT-VIS-003 history pagination and detail return keep context",
+      "file": "wave-b.spec.ts",
+      "line": 122,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2024,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave C AT-MATCH-013_016 2v2 team selection, rules, no-show and revenge",
+      "file": "wave-c.spec.ts",
+      "line": 38,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 1961,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave C AT-JUDGE-004_010 correction, undo and two-client handover preserve authority",
+      "file": "wave-c.spec.ts",
+      "line": 82,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2899,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave C AT-JUDGE-001 creator starts while another club judge retains the slot",
+      "file": "wave-c.spec.ts",
+      "line": 138,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 31974,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave C AT-MATCH-013_016 2v2 team selection, rules, no-show and revenge",
+      "file": "wave-c.spec.ts",
+      "line": 38,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 1897,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave C AT-JUDGE-004_010 correction, undo and two-client handover preserve authority",
+      "file": "wave-c.spec.ts",
+      "line": 82,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2867,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave C AT-JUDGE-001 creator starts while another club judge retains the slot",
+      "file": "wave-c.spec.ts",
+      "line": 138,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 31996,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D AT-TEAM-001..007 create, accept welcome, transfer, leave and automatic archive",
+      "file": "wave-d-teams.spec.ts",
+      "line": 23,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2529,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D AT-TEAM-001..007 create, accept welcome, transfer, leave and automatic archive",
+      "file": "wave-d-teams.spec.ts",
+      "line": 23,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2399,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament single_elimination/3 roster, seed edit, complete and results",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 19,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2425,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament single_elimination/5 roster, seed edit, complete and results",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 19,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2812,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament single_elimination/8 roster, seed edit, complete and results",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 19,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 8540,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament double_elimination/3 roster, seed edit, complete and results",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 19,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 3349,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament double_elimination/5 roster, seed edit, complete and results",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 19,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 3891,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament double_elimination/8 roster, seed edit, complete and results",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 19,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 4312,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament invalidation, dissolve, cancel and reasoned stop",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 89,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2233,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament single_elimination/3 roster, seed edit, complete and results",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 19,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2625,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament single_elimination/5 roster, seed edit, complete and results",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 19,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2940,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament single_elimination/8 roster, seed edit, complete and results",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 19,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 8920,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament double_elimination/3 roster, seed edit, complete and results",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 19,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2854,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament double_elimination/5 roster, seed edit, complete and results",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 19,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 3249,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament double_elimination/8 roster, seed edit, complete and results",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 19,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 4583,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave D tournament invalidation, dissolve, cancel and reasoned stop",
+      "file": "wave-d-tournaments.spec.ts",
+      "line": 89,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2126,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave E ADM catalog, first login, profile, role and block lifecycle",
+      "file": "wave-e-admin.spec.ts",
+      "line": 10,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 7587,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave E ADM catalog, first login, profile, role and block lifecycle",
+      "file": "wave-e-admin.spec.ts",
+      "line": 10,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2640,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "GAP-012 operator creates A-vs-B, edits it and starts without player consent",
+      "file": "wave-e-user.spec.ts",
+      "line": 95,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2024,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave E onboarding resume, tutorial return, restart and Help feedback",
+      "file": "wave-e-user.spec.ts",
+      "line": 183,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2135,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "GAP-012 operator creates A-vs-B, edits it and starts without player consent",
+      "file": "wave-e-user.spec.ts",
+      "line": 95,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 1929,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave E onboarding resume, tutorial return, restart and Help feedback",
+      "file": "wave-e-user.spec.ts",
+      "line": 183,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2206,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave F auth geometry contrast and admin readable rows",
+      "file": "wave-f-a11y.spec.ts",
+      "line": 55,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 4223,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave F algorithm focus and bracket keyboard geometry",
+      "file": "wave-f-a11y.spec.ts",
+      "line": 113,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2795,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave F judge disclosure score and landscape",
+      "file": "wave-f-a11y.spec.ts",
+      "line": 149,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2083,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave F onboarding heading and recovery states keep keyboard context",
+      "file": "wave-f-a11y.spec.ts",
+      "line": 165,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 6519,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave F dialog review recovers hidden removed and busy focus",
+      "file": "wave-f-a11y.spec.ts",
+      "line": 186,
+      "project": "chromium-desktop",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 1051,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave F auth geometry contrast and admin readable rows",
+      "file": "wave-f-a11y.spec.ts",
+      "line": 55,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 4340,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave F algorithm focus and bracket keyboard geometry",
+      "file": "wave-f-a11y.spec.ts",
+      "line": 113,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2812,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave F judge disclosure score and landscape",
+      "file": "wave-f-a11y.spec.ts",
+      "line": 149,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 2075,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave F onboarding heading and recovery states keep keyboard context",
+      "file": "wave-f-a11y.spec.ts",
+      "line": 165,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 1476,
+          "retry": 0
+        }
+      ]
+    },
+    {
+      "title": "Wave F dialog review recovers hidden removed and busy focus",
+      "file": "wave-f-a11y.spec.ts",
+      "line": 186,
+      "project": "chromium-mobile-390",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "runs": [
+        {
+          "status": "passed",
+          "duration": 1116,
+          "retry": 0
+        }
+      ]
+    }
+  ],
+  "projection": "Only test identity, verdict, duration and retry; no credentials, config env or raw trace."
+}

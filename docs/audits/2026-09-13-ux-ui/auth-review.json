@@ -1,0 +1,27 @@
+{
+  "reviewer": "Terra High research_protocol_review",
+  "status": "PASS_WITH_EXPLICIT_LIMITS",
+  "snapshot": "/private/tmp/tab10-ux-auth-review-01",
+  "export_manifest": "281fb264f3700a4b7420de8133a40e8e12f62ae639af20904cb81a0931cfde67",
+  "package_manifest": "f0b1eb402e85aa362367a7fb4d3f99c4dd7edd330ec50920d21751f7e1e16c39",
+  "verified_payloads": 45,
+  "evidence": "PASS; no credentials; F001/002 runtime P2, F003/005 expert P3, F004 expert P2",
+  "accepted_tasks": [
+    "BUG-027",
+    "BUG-028",
+    "GAP-014",
+    "GAP-016"
+  ],
+  "deferred_task": "GAP-015 remains confirmed pending core action matrix and RESULTS populated Home",
+  "limits": [
+    "tutorial completion/isolation",
+    "populated Home combinations",
+    "Profile UI revoke",
+    "WebKit",
+    "physical mobile",
+    "spoken AT",
+    "true browser zoom"
+  ],
+  "coordinator": "Accepted evidence and four ready task targets; no UI fixes implemented",
+  "mandatory_coverage_correction": "auth-coverage-correction.md; PROFILE-005 public card not covered by session observations"
+}

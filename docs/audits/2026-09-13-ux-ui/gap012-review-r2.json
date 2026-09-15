@@ -1,0 +1,26 @@
+{
+  "scope": "GAP012 r1-r2 delta static review",
+  "cycle": 2,
+  "status": "REWORK",
+  "reviewer": "Terra High",
+  "snapshot": "/private/tmp/tab10-gap012-review-r2",
+  "export_manifest_sha256": "4a2f8f9f4fc0094cc92513d933ab2711eef296a8bd856e350198e0ee7df2ff7c",
+  "resolved": [
+    "R1-1 purposeful-source creator guard",
+    "R1-2 scoped admin get suppression",
+    "R1-4 stale API specification"
+  ],
+  "accepted_mechanical_changes": [
+    "PostgreSQL migration ledger count",
+    "fast suite excludes PostgreSQL tests while PostgreSQL lane retains them"
+  ],
+  "remaining": [
+    {
+      "priority": "P1",
+      "id": "R1-3",
+      "problem": "New patchBracket persists seeds only for future swaps; historical pre-swapped V1 JSON with stale participant seed columns still reverts.",
+      "required": "Derive legacy arrangement from locked existing bracket during regeneration; direct historical JSON fixture with intentionally stale seeds, not new patchBracket call."
+    }
+  ],
+  "next_scope": "Only legacy compatibility correction; all other application files frozen. Focused Red/Green then targeted review before final aggregate."
+}

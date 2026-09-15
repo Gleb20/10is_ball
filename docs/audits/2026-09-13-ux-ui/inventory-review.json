@@ -1,0 +1,15 @@
+{
+  "status": "PASS_STATIC",
+  "reviewer": "Terra High",
+  "scope": "Source inventory and package assignment after correction",
+  "files": {
+    "capabilities.md": "7be4d9d8da9ea9f7dc482cc33798435bf639da0401ec247d1573c248722a1b4e",
+    "capabilities.json": "2f59e97a6461a6a195c24c64d8bb9cf1a8d2dd28bdc3a0fe49978b6529113416",
+    "requirement-coverage.csv": "532c8fbd53b88ef853d1c40527592478069f1abd423f6ce39918831ef5e07800",
+    "work-orders.md": "64980892cbfed2e4715e07b73f6e3ec5dd5ac3e1f7751fcdee1aa3087e5e3f9e"
+  },
+  "capabilities": 22,
+  "prd_requirements": 108,
+  "runtime_verdict": "NOT_TESTED",
+  "limitations": "Source only; coarse scenario assignment requires package refinement; no target entrypoints accepted yet."
+}

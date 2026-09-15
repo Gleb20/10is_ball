@@ -1,0 +1,70 @@
+{
+  "status": 200,
+  "body": {
+    "match": {
+      "id": "307bf34a-7dbb-4e22-ade1-c9f77650e820",
+      "title": "Матч 14.09, 01:16",
+      "kind": "standalone",
+      "status": "in_progress",
+      "format": "1v1",
+      "pointsToWin": 11,
+      "mercyEnabled": true,
+      "mercyPoints": 5,
+      "firstServerMethod": "manual",
+      "source": "manual",
+      "createdByUserId": "078c49d0-8093-42b8-977d-fafdc633cce2",
+      "tournamentId": null,
+      "tournamentSlotId": null,
+      "tournamentBracketMatchId": null,
+      "scoreA": 0,
+      "scoreB": 0,
+      "currentServerParticipantId": "9618160d-d787-44ea-8ae8-febadb375941",
+      "serveSequenceIndex": 0,
+      "deuceMode": false,
+      "version": 0,
+      "startedAt": "2026-09-13T22:21:17.558Z",
+      "finishedAt": null,
+      "winnerSide": null,
+      "finishReason": null,
+      "stopReasonCode": null,
+      "stopReasonText": null,
+      "eventLog": [],
+      "idempotencyKeys": [],
+      "judgeDisplayFlipped": false,
+      "createdAt": "2026-09-13T22:19:42.636Z",
+      "updatedAt": "2026-09-13T22:21:17.558Z",
+      "participants": [
+        {
+          "id": "9618160d-d787-44ea-8ae8-febadb375941",
+          "matchId": "307bf34a-7dbb-4e22-ade1-c9f77650e820",
+          "side": "A",
+          "userId": "66ef42df-ed67-4516-b1d7-0201436318a3",
+          "guestFirstName": null,
+          "guestLastName": null,
+          "guestAvatarKey": null,
+          "isTutorialActor": false,
+          "displayName": "Синтетическая Анна",
+          "avatarKey": "avatar_2"
+        },
+        {
+          "id": "69c6e412-ab2d-4543-b71c-3ed7c4c9fee2",
+          "matchId": "307bf34a-7dbb-4e22-ade1-c9f77650e820",
+          "side": "B",
+          "userId": "0b794fcf-f874-4e75-b7b2-2d8aa7e0d11b",
+          "guestFirstName": null,
+          "guestLastName": null,
+          "guestAvatarKey": null,
+          "isTutorialActor": false,
+          "displayName": "Синтетический Борис",
+          "avatarKey": "avatar_9"
+        }
+      ],
+      "activeJudge": {
+        "userId": "078c49d0-8093-42b8-977d-fafdc633cce2",
+        "displayName": "Синтетический Оператор"
+      },
+      "judgeReservation": null,
+      "invitations": []
+    }
+  }
+}

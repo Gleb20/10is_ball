@@ -1,0 +1,2929 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "version": "3.0.0",
+    "sha": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "origin": "http://localhost:4517",
+    "browser": "153.0.8010.12"
+  },
+  "environment": {
+    "engine": "Chromium",
+    "deviceEvidence": "desktop browser with Playwright viewport/touch emulation; not a physical device",
+    "nativePopupCapture": "not available in headless Chromium screenshots"
+  },
+  "captures": [
+    {
+      "name": "auth-1440-default",
+      "path": "screenshots/auth-1440-default.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 900
+      },
+      "focused": {
+        "tag": "body",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "auth-1440-pointer-focus",
+      "path": "screenshots/auth-1440-pointer-focus.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 900
+      },
+      "focused": {
+        "tag": "input",
+        "role": null,
+        "ariaLabel": null,
+        "type": "email"
+      }
+    },
+    {
+      "name": "auth-input-pointer-focus-closeup",
+      "path": "screenshots/auth-input-pointer-focus-closeup.png",
+      "viewport": null,
+      "elementRect": {
+        "x": 542,
+        "y": 337.1875,
+        "width": 290,
+        "height": 62
+      }
+    },
+    {
+      "name": "auth-1440-text-selection",
+      "path": "screenshots/auth-1440-text-selection.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 900
+      },
+      "focused": {
+        "tag": "input",
+        "role": null,
+        "ariaLabel": null,
+        "type": "email"
+      }
+    },
+    {
+      "name": "auth-1440-error-focus",
+      "path": "screenshots/auth-1440-error-focus.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 900
+      },
+      "focused": {
+        "tag": "input",
+        "role": null,
+        "ariaLabel": null,
+        "type": "email"
+      }
+    },
+    {
+      "name": "auth-1440-pending-disabled",
+      "path": "screenshots/auth-1440-pending-disabled.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 900
+      },
+      "focused": {
+        "tag": "body",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "auth-390-pointer-focus",
+      "path": "screenshots/auth-390-pointer-focus.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "clientWidth": 390,
+        "scrollWidth": 390,
+        "scrollHeight": 844
+      },
+      "focused": {
+        "tag": "input",
+        "role": null,
+        "ariaLabel": null,
+        "type": "email"
+      }
+    },
+    {
+      "name": "auth-360-css-zoom-200",
+      "path": "screenshots/auth-360-css-zoom-200.png",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "document": {
+        "clientWidth": 360,
+        "scrollWidth": 360,
+        "scrollHeight": 1470
+      },
+      "focused": {
+        "tag": "body",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "auth-390-filled-during-pending",
+      "path": "screenshots/auth-390-filled-during-pending.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "clientWidth": 390,
+        "scrollWidth": 390,
+        "scrollHeight": 844
+      },
+      "focused": {
+        "tag": "body",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "light-1440-segment-selected-focus",
+      "path": "screenshots/light-1440-segment-selected-focus.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 1209
+      },
+      "focused": {
+        "tag": "button",
+        "role": null,
+        "ariaLabel": null,
+        "type": "button"
+      }
+    },
+    {
+      "name": "light-segment-selected-focus-closeup",
+      "path": "screenshots/light-segment-selected-focus-closeup.png",
+      "viewport": null,
+      "elementRect": {
+        "x": 471,
+        "y": 180.5,
+        "width": 105.265625,
+        "height": 44
+      }
+    },
+    {
+      "name": "light-1440-autocomplete-keyboard-option",
+      "path": "screenshots/light-1440-autocomplete-keyboard-option.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 1251
+      },
+      "focused": {
+        "tag": "input",
+        "role": "combobox",
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "light-autocomplete-keyboard-option-occluded-closeup",
+      "path": "screenshots/light-autocomplete-keyboard-option-occluded-closeup.png",
+      "viewport": null,
+      "elementRect": {
+        "x": 485.5,
+        "y": 838.390625,
+        "width": 469,
+        "height": 62
+      }
+    },
+    {
+      "name": "light-1440-autocomplete-chosen-focus-lost",
+      "path": "screenshots/light-1440-autocomplete-chosen-focus-lost.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 1209
+      },
+      "focused": {
+        "tag": "body",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "light-autocomplete-chosen-focus-lost-occluded-by-nav-closeup",
+      "path": "screenshots/light-autocomplete-chosen-focus-lost-occluded-by-nav-closeup.png",
+      "viewport": null,
+      "elementRect": {
+        "x": 485.5,
+        "y": 838.390625,
+        "width": 469,
+        "height": 62
+      }
+    },
+    {
+      "name": "light-1440-card-nav-focus",
+      "path": "screenshots/light-1440-card-nav-focus.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 1302
+      },
+      "focused": {
+        "tag": "a",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "light-1440-dialog-select-focus",
+      "path": "screenshots/light-1440-dialog-select-focus.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 900
+      },
+      "focused": {
+        "tag": "select",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "light-native-select-focus-closeup",
+      "path": "screenshots/light-native-select-focus-closeup.png",
+      "viewport": null,
+      "elementRect": {
+        "x": 557,
+        "y": 258,
+        "width": 326,
+        "height": 68
+      }
+    },
+    {
+      "name": "light-390-dialog-select-focus",
+      "path": "screenshots/light-390-dialog-select-focus.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "clientWidth": 390,
+        "scrollWidth": 390,
+        "scrollHeight": 844
+      },
+      "focused": {
+        "tag": "select",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "light-768-dialog-select-focus",
+      "path": "screenshots/light-768-dialog-select-focus.png",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "document": {
+        "clientWidth": 768,
+        "scrollWidth": 768,
+        "scrollHeight": 1024
+      },
+      "focused": {
+        "tag": "select",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "light-390-filled-disabled-pending",
+      "path": "screenshots/light-390-filled-disabled-pending.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "clientWidth": 390,
+        "scrollWidth": 390,
+        "scrollHeight": 1778
+      },
+      "focused": {
+        "tag": "body",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "light-filled-disabled-pending-closeup",
+      "path": "screenshots/light-filled-disabled-pending-closeup.png",
+      "viewport": null,
+      "elementRect": {
+        "x": 31,
+        "y": 622.5,
+        "width": 290,
+        "height": 62
+      }
+    },
+    {
+      "name": "admin-1440-readonly-focus",
+      "path": "screenshots/admin-1440-readonly-focus.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 6704
+      },
+      "focused": {
+        "tag": "input",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "admin-readonly-focus-closeup",
+      "path": "screenshots/admin-readonly-focus-closeup.png",
+      "viewport": null,
+      "elementRect": {
+        "x": 557,
+        "y": 180,
+        "width": 290,
+        "height": 62
+      }
+    },
+    {
+      "name": "light-1440-radio-card-selected-focus",
+      "path": "screenshots/light-1440-radio-card-selected-focus.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 1426
+      },
+      "focused": {
+        "tag": "input",
+        "role": null,
+        "ariaLabel": null,
+        "type": "radio"
+      }
+    },
+    {
+      "name": "light-radio-card-selected-focus-closeup",
+      "path": "screenshots/light-radio-card-selected-focus-closeup.png",
+      "viewport": null,
+      "elementRect": {
+        "x": 497,
+        "y": 321.234375,
+        "width": 217,
+        "height": 333.09375
+      }
+    },
+    {
+      "name": "light-390-radio-card-selected-focus",
+      "path": "screenshots/light-390-radio-card-selected-focus.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "clientWidth": 390,
+        "scrollWidth": 390,
+        "scrollHeight": 1453
+      },
+      "focused": {
+        "tag": "input",
+        "role": null,
+        "ariaLabel": null,
+        "type": "radio"
+      }
+    },
+    {
+      "name": "dark-390-radio-selected-focus",
+      "path": "screenshots/dark-390-radio-selected-focus.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "clientWidth": 390,
+        "scrollWidth": 390,
+        "scrollHeight": 844
+      },
+      "focused": {
+        "tag": "input",
+        "role": null,
+        "ariaLabel": null,
+        "type": "radio"
+      }
+    },
+    {
+      "name": "dark-390-button-active",
+      "path": "screenshots/dark-390-button-active.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "clientWidth": 390,
+        "scrollWidth": 390,
+        "scrollHeight": 844
+      },
+      "focused": {
+        "tag": "button",
+        "role": null,
+        "ariaLabel": "+1 очко: Игрок Обычный",
+        "type": "button"
+      }
+    },
+    {
+      "name": "dark-390-actions-open-select-focus",
+      "path": "screenshots/dark-390-actions-open-select-focus.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "clientWidth": 390,
+        "scrollWidth": 390,
+        "scrollHeight": 844
+      },
+      "focused": {
+        "tag": "select",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "dark-768-actions-open",
+      "path": "screenshots/dark-768-actions-open.png",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "document": {
+        "clientWidth": 768,
+        "scrollWidth": 768,
+        "scrollHeight": 1024
+      },
+      "focused": {
+        "tag": "select",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "dark-1440-actions-open",
+      "path": "screenshots/dark-1440-actions-open.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "clientWidth": 1440,
+        "scrollWidth": 1440,
+        "scrollHeight": 900
+      },
+      "focused": {
+        "tag": "select",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    },
+    {
+      "name": "dark-390-readonly",
+      "path": "screenshots/dark-390-readonly.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "clientWidth": 390,
+        "scrollWidth": 390,
+        "scrollHeight": 844
+      },
+      "focused": {
+        "tag": "body",
+        "role": null,
+        "ariaLabel": null,
+        "type": null
+      }
+    }
+  ],
+  "states": [
+    {
+      "label": "auth/input/default-placeholder",
+      "tag": "input",
+      "className": "_input_6cpf7_135",
+      "rect": {
+        "x": 555,
+        "y": 346.1875,
+        "width": 264,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "0px",
+      "outline": "rgba(7, 7, 7, 0.93) none 3px",
+      "outlineOffset": "0px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "text",
+      "transform": "none",
+      "role": null,
+      "id": "_r_0_",
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": false,
+      "focusVisible": false,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": false,
+      "valueLength": 0,
+      "selection": {
+        "start": null,
+        "end": null
+      },
+      "parent": {
+        "tag": "div",
+        "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+        "rect": {
+          "x": 542,
+          "y": 337.1875,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(216, 214, 220)",
+        "borderColor": "rgb(216, 214, 220)",
+        "borderRadius": "10px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "",
+        "rect": {
+          "x": 542,
+          "y": 337.1875,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "borderRadius": "0px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "auth/input/pointer-focus",
+      "tag": "input",
+      "className": "_input_6cpf7_135",
+      "rect": {
+        "x": 555,
+        "y": 346.1875,
+        "width": 264,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "0px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "text",
+      "transform": "none",
+      "role": null,
+      "id": "_r_0_",
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": true,
+      "active": false,
+      "disabled": false,
+      "readOnly": false,
+      "valueLength": 0,
+      "selection": {
+        "start": null,
+        "end": null
+      },
+      "parent": {
+        "tag": "div",
+        "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+        "rect": {
+          "x": 542,
+          "y": 337.1875,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "2px solid rgb(216, 214, 220)",
+        "borderColor": "rgb(216, 214, 220)",
+        "borderRadius": "10px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "",
+        "rect": {
+          "x": 542,
+          "y": 337.1875,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "borderRadius": "0px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "auth/input/text-selected-and-focus",
+      "tag": "input",
+      "className": "_input_6cpf7_135",
+      "rect": {
+        "x": 555,
+        "y": 346.1875,
+        "width": 264,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "0px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "text",
+      "transform": "none",
+      "role": null,
+      "id": "_r_0_",
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": true,
+      "active": false,
+      "disabled": false,
+      "readOnly": false,
+      "valueLength": 22,
+      "selection": {
+        "start": null,
+        "end": null
+      },
+      "parent": {
+        "tag": "div",
+        "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+        "rect": {
+          "x": 542,
+          "y": 337.1875,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgba(7, 7, 7, 0.03)",
+        "border": "2px solid rgb(124, 40, 227)",
+        "borderColor": "rgb(124, 40, 227)",
+        "borderRadius": "10px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "",
+        "rect": {
+          "x": 542,
+          "y": 337.1875,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "borderRadius": "0px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "auth/input/focus-with-form-error",
+      "tag": "input",
+      "className": "_input_6cpf7_135",
+      "rect": {
+        "x": 555,
+        "y": 317.1875,
+        "width": 264,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "0px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "text",
+      "transform": "none",
+      "role": null,
+      "id": "_r_0_",
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": false,
+      "valueLength": 22,
+      "selection": {
+        "start": null,
+        "end": null
+      },
+      "parent": {
+        "tag": "div",
+        "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+        "rect": {
+          "x": 542,
+          "y": 308.1875,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgba(206, 206, 206, 0.14)",
+        "border": "2px solid rgb(129, 54, 221)",
+        "borderColor": "rgb(129, 54, 221)",
+        "borderRadius": "10px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "",
+        "rect": {
+          "x": 542,
+          "y": 308.1875,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "borderRadius": "0px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "auth/button/pending-disabled",
+      "tag": "button",
+      "className": "_root_1mx9c_2 _containedPrimary_1mx9c_136 _sizeMd_1mx9c_81",
+      "rect": {
+        "x": 542,
+        "y": 645.1875,
+        "width": 356,
+        "height": 44
+      },
+      "color": "rgb(242, 232, 253)",
+      "backgroundColor": "rgb(124, 40, 227)",
+      "border": "2px solid rgba(0, 0, 0, 0)",
+      "borderColor": "rgba(0, 0, 0, 0)",
+      "borderRadius": "8px",
+      "outline": "rgb(242, 232, 253) none 3px",
+      "outlineOffset": "0px",
+      "boxShadow": "none",
+      "opacity": "0.45",
+      "cursor": "not-allowed",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": false,
+      "hover": true,
+      "active": false,
+      "disabled": true,
+      "readOnly": true,
+      "valueLength": null,
+      "selection": null,
+      "parent": {
+        "tag": "form",
+        "className": "stack",
+        "rect": {
+          "x": 542,
+          "y": 309.1875,
+          "width": 356,
+          "height": 380
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "borderRadius": "0px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "auth-layout__card",
+        "rect": {
+          "x": 520,
+          "y": 182.796875,
+          "width": 400,
+          "height": 534.390625
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "0px none rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "borderRadius": "16px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "rgba(0, 0, 0, 0.04) 0px 1px 2px 0px, rgba(0, 0, 0, 0.06) 0px 8px 24px 0px",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "auth/input/mobile-pointer-focus",
+      "tag": "input",
+      "className": "_input_6cpf7_135",
+      "rect": {
+        "x": 51,
+        "y": 318.984375,
+        "width": 264,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "0px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "text",
+      "transform": "none",
+      "role": null,
+      "id": "_r_0_",
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": true,
+      "active": false,
+      "disabled": false,
+      "readOnly": false,
+      "valueLength": 0,
+      "selection": {
+        "start": null,
+        "end": null
+      },
+      "parent": {
+        "tag": "div",
+        "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+        "rect": {
+          "x": 38,
+          "y": 309.984375,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "2px solid rgb(216, 214, 220)",
+        "borderColor": "rgb(216, 214, 220)",
+        "borderRadius": "10px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "",
+        "rect": {
+          "x": 38,
+          "y": 309.984375,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "borderRadius": "0px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "auth/input/filled-during-pending-not-disabled",
+      "tag": "input",
+      "className": "_input_6cpf7_135",
+      "rect": {
+        "x": 51,
+        "y": 290.1875,
+        "width": 264,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "0px",
+      "outline": "rgba(7, 7, 7, 0.93) none 3px",
+      "outlineOffset": "0px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "text",
+      "transform": "none",
+      "role": null,
+      "id": "_r_4_",
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": false,
+      "focusVisible": false,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": false,
+      "valueLength": 18,
+      "selection": {
+        "start": 18,
+        "end": 18
+      },
+      "parent": {
+        "tag": "div",
+        "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+        "rect": {
+          "x": 38,
+          "y": 281.1875,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(216, 214, 220)",
+        "borderColor": "rgb(216, 214, 220)",
+        "borderRadius": "10px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "",
+        "rect": {
+          "x": 38,
+          "y": 281.1875,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgb(17, 17, 17)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(17, 17, 17)",
+        "borderColor": "rgb(17, 17, 17)",
+        "borderRadius": "0px",
+        "outline": "rgb(17, 17, 17) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/input/filled-keyboard-focus",
+      "tag": "input",
+      "className": "_input_6cpf7_135",
+      "rect": {
+        "x": 484,
+        "y": 115.5,
+        "width": 264,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "0px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "text",
+      "transform": "none",
+      "role": null,
+      "id": "_r_0_",
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": false,
+      "valueLength": 80,
+      "selection": {
+        "start": 80,
+        "end": 80
+      },
+      "parent": {
+        "tag": "div",
+        "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+        "rect": {
+          "x": 471,
+          "y": 106.5,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "2px solid rgb(216, 214, 220)",
+        "borderColor": "rgb(216, 214, 220)",
+        "borderRadius": "10px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "",
+        "rect": {
+          "x": 471,
+          "y": 106.5,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/segment/selected-focus",
+      "tag": "button",
+      "className": "_groupSegment_1mx9c_392 _groupSegmentSelected_1mx9c_428 _groupSegmentFirst_1mx9c_440",
+      "rect": {
+        "x": 471,
+        "y": 180.5,
+        "width": 52.078125,
+        "height": 44
+      },
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(88, 20, 171)",
+      "border": "",
+      "borderColor": "rgb(255, 255, 255) rgba(7, 7, 7, 0.1) rgb(255, 255, 255) rgb(255, 255, 255)",
+      "borderRadius": "8px 0px 0px 8px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "pointer",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": "true",
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": null,
+      "selection": null,
+      "parent": {
+        "tag": "div",
+        "className": "_group_1mx9c_386 _groupSizeMd_1mx9c_448",
+        "rect": {
+          "x": 471,
+          "y": 180.5,
+          "width": 105.265625,
+          "height": 44
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "filter-bar",
+        "rect": {
+          "x": 471,
+          "y": 180.5,
+          "width": 498,
+          "height": 44
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/segment/selected-hover-active",
+      "tag": "button",
+      "className": "_groupSegment_1mx9c_392 _groupSegmentSelected_1mx9c_428 _groupSegmentFirst_1mx9c_440",
+      "rect": {
+        "x": 471,
+        "y": 180.5,
+        "width": 52.078125,
+        "height": 44
+      },
+      "color": "rgb(255, 255, 255)",
+      "backgroundColor": "rgb(156, 87, 241)",
+      "border": "",
+      "borderColor": "rgb(255, 255, 255) rgba(7, 7, 7, 0.1) rgb(255, 255, 255) rgb(255, 255, 255)",
+      "borderRadius": "8px 0px 0px 8px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "pointer",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": "true",
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": true,
+      "active": true,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": null,
+      "selection": null,
+      "parent": {
+        "tag": "div",
+        "className": "_group_1mx9c_386 _groupSizeMd_1mx9c_448",
+        "rect": {
+          "x": 471,
+          "y": 180.5,
+          "width": 105.265625,
+          "height": 44
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "filter-bar",
+        "rect": {
+          "x": 471,
+          "y": 180.5,
+          "width": 498,
+          "height": 44
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/checkbox/checked-focus",
+      "tag": "input",
+      "className": "",
+      "rect": {
+        "x": 475,
+        "y": 354,
+        "width": 13,
+        "height": 13
+      },
+      "color": "rgb(0, 0, 0)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgb(0, 0, 0)",
+      "borderColor": "rgb(0, 0, 0)",
+      "borderRadius": "0px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "default",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": 2,
+      "selection": {
+        "start": null,
+        "end": null
+      },
+      "parent": {
+        "tag": "label",
+        "className": "match-create__check",
+        "rect": {
+          "x": 471,
+          "y": 338.5,
+          "width": 498,
+          "height": 44
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "default",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "form",
+        "className": "card stack",
+        "rect": {
+          "x": 456,
+          "y": 63.5,
+          "width": 528,
+          "height": 1057.640625
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(229, 229, 229)",
+        "borderColor": "rgb(229, 229, 229)",
+        "borderRadius": "12px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/autocomplete/open-keyboard-focus",
+      "tag": "input",
+      "className": "_input_6cpf7_135",
+      "rect": {
+        "x": 498.5,
+        "y": 870.390625,
+        "width": 419,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "0px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "text",
+      "transform": "none",
+      "role": "combobox",
+      "id": "_r_8_",
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": "true",
+      "ariaActiveDescendant": "_r_8_-option-0",
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": false,
+      "valueLength": 12,
+      "selection": {
+        "start": 12,
+        "end": 12
+      },
+      "parent": {
+        "tag": "div",
+        "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+        "rect": {
+          "x": 485.5,
+          "y": 861.390625,
+          "width": 469,
+          "height": 62
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "2px solid rgb(184, 154, 222)",
+        "borderColor": "rgb(184, 154, 222)",
+        "borderRadius": "10px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "",
+        "rect": {
+          "x": 485.5,
+          "y": 861.390625,
+          "width": 469,
+          "height": 62
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/autocomplete/keyboard-active-option",
+      "tag": "li",
+      "className": "_menuItem_6cpf7_309",
+      "rect": {
+        "x": 497.5,
+        "y": 939.390625,
+        "width": 445,
+        "height": 36
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgba(7, 7, 7, 0.03)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "6px",
+      "outline": "rgba(7, 7, 7, 0.93) none 3px",
+      "outlineOffset": "0px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "pointer",
+      "transform": "none",
+      "role": "option",
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": "false",
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": "true",
+      "focus": false,
+      "focusVisible": false,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": null,
+      "selection": null,
+      "parent": {
+        "tag": "ul",
+        "className": "_menuList_6cpf7_282",
+        "rect": {
+          "x": 497.5,
+          "y": 939.390625,
+          "width": 445,
+          "height": 240
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "_menuBody_6cpf7_278",
+        "rect": {
+          "x": 485.5,
+          "y": 927.390625,
+          "width": 469,
+          "height": 264
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/autocomplete/chosen-option-focus-lost-to-body",
+      "tag": "input",
+      "className": "_input_6cpf7_135",
+      "rect": {
+        "x": 498.5,
+        "y": 847.390625,
+        "width": 419,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "0px",
+      "outline": "rgba(7, 7, 7, 0.93) none 3px",
+      "outlineOffset": "0px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "text",
+      "transform": "none",
+      "role": "combobox",
+      "id": "_r_a_",
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": "false",
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": false,
+      "focusVisible": false,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": false,
+      "valueLength": 62,
+      "selection": {
+        "start": 62,
+        "end": 62
+      },
+      "parent": {
+        "tag": "div",
+        "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+        "rect": {
+          "x": 485.5,
+          "y": 838.390625,
+          "width": 469,
+          "height": 62
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(216, 214, 220)",
+        "borderColor": "rgb(216, 214, 220)",
+        "borderRadius": "10px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "",
+        "rect": {
+          "x": 485.5,
+          "y": 838.390625,
+          "width": 469,
+          "height": 62
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/card-link/keyboard-focus",
+      "tag": "a",
+      "className": "list-row",
+      "rect": {
+        "x": 456,
+        "y": 496,
+        "width": 528,
+        "height": 88
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "border": "1px solid rgb(229, 229, 229)",
+      "borderColor": "rgb(229, 229, 229)",
+      "borderRadius": "12px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "pointer",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": null,
+      "selection": null,
+      "parent": {
+        "tag": "section",
+        "className": "stack",
+        "rect": {
+          "x": 456,
+          "y": 458,
+          "width": 528,
+          "height": 126
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "stack page-layout",
+        "rect": {
+          "x": 456,
+          "y": 82,
+          "width": 528,
+          "height": 1132
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/navigation/active-not-focused",
+      "tag": "a",
+      "className": "bottom-nav__item active",
+      "rect": {
+        "x": 448,
+        "y": 844.8125,
+        "width": 107.1875,
+        "height": 49.1875
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgb(245, 245, 245)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "8px",
+      "outline": "rgba(7, 7, 7, 0.93) none 3px",
+      "outlineOffset": "0px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "pointer",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": false,
+      "focusVisible": false,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": null,
+      "selection": null,
+      "parent": {
+        "tag": "nav",
+        "className": "bottom-nav",
+        "rect": {
+          "x": 440,
+          "y": 837.8125,
+          "width": 560,
+          "height": 62.1875
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "",
+        "borderColor": "rgb(229, 229, 229) rgba(7, 7, 7, 0.93) rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "matrix(1, 0, 0, 1, -280, 0)"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "app-shell",
+        "rect": {
+          "x": 440,
+          "y": 0,
+          "width": 560,
+          "height": 1302
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/navigation/active-focus",
+      "tag": "a",
+      "className": "bottom-nav__item active",
+      "rect": {
+        "x": 448,
+        "y": 844.8125,
+        "width": 107.1875,
+        "height": 49.1875
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgb(245, 245, 245)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "8px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "pointer",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": null,
+      "selection": null,
+      "parent": {
+        "tag": "nav",
+        "className": "bottom-nav",
+        "rect": {
+          "x": 440,
+          "y": 837.8125,
+          "width": 560,
+          "height": 62.1875
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "",
+        "borderColor": "rgb(229, 229, 229) rgba(7, 7, 7, 0.93) rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "matrix(1, 0, 0, 1, -280, 0)"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "app-shell",
+        "rect": {
+          "x": 440,
+          "y": 0,
+          "width": 560,
+          "height": 1302
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/native-select/default-focus",
+      "tag": "select",
+      "className": "",
+      "rect": {
+        "x": 557,
+        "y": 282,
+        "width": 326,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "border": "1px solid rgb(213, 213, 213)",
+      "borderColor": "rgb(213, 213, 213)",
+      "borderRadius": "8px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "default",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": 0,
+      "selection": null,
+      "parent": {
+        "tag": "label",
+        "className": "",
+        "rect": {
+          "x": 557,
+          "y": 258,
+          "width": 326,
+          "height": 68
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "default",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "stack history-filters",
+        "rect": {
+          "x": 557,
+          "y": 258,
+          "width": 326,
+          "height": 388
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/native-select/chosen-focus",
+      "tag": "select",
+      "className": "",
+      "rect": {
+        "x": 557,
+        "y": 282,
+        "width": 326,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "border": "1px solid rgb(213, 213, 213)",
+      "borderColor": "rgb(213, 213, 213)",
+      "borderRadius": "8px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "default",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": 6,
+      "selection": null,
+      "parent": {
+        "tag": "label",
+        "className": "",
+        "rect": {
+          "x": 557,
+          "y": 258,
+          "width": 326,
+          "height": 68
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "default",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "stack history-filters",
+        "rect": {
+          "x": 557,
+          "y": 258,
+          "width": 326,
+          "height": 388
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/input/filled-disabled-pending",
+      "tag": "input",
+      "className": "_input_6cpf7_135",
+      "rect": {
+        "x": 44,
+        "y": 631.5,
+        "width": 264,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.33)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgba(7, 7, 7, 0.33)",
+      "borderColor": "rgba(7, 7, 7, 0.33)",
+      "borderRadius": "0px",
+      "outline": "rgba(7, 7, 7, 0.33) none 3px",
+      "outlineOffset": "0px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "default",
+      "transform": "none",
+      "role": null,
+      "id": "_r_0_",
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": false,
+      "focusVisible": false,
+      "hover": false,
+      "active": false,
+      "disabled": true,
+      "readOnly": true,
+      "valueLength": 67,
+      "selection": {
+        "start": 67,
+        "end": 67
+      },
+      "parent": {
+        "tag": "div",
+        "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+        "rect": {
+          "x": 31,
+          "y": 622.5,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(131, 53, 226)",
+        "borderColor": "rgb(131, 53, 226)",
+        "borderRadius": "10px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "0.48",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "",
+        "rect": {
+          "x": 31,
+          "y": 622.5,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/input/filled-readonly-pointer-focus",
+      "tag": "input",
+      "className": "_input_6cpf7_135",
+      "rect": {
+        "x": 570,
+        "y": 189,
+        "width": 264,
+        "height": 44
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgba(7, 7, 7, 0.93)",
+      "borderColor": "rgba(7, 7, 7, 0.93)",
+      "borderRadius": "0px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "default",
+      "transform": "none",
+      "role": null,
+      "id": "_r_h_",
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": true,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": 31,
+      "selection": {
+        "start": 18,
+        "end": 18
+      },
+      "parent": {
+        "tag": "div",
+        "className": "_control_6cpf7_46 _sizeLg_6cpf7_104 _variantOutlined_6cpf7_109 _colorPrimary_6cpf7_127",
+        "rect": {
+          "x": 557,
+          "y": 180,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgb(240, 238, 241)",
+        "border": "1px solid rgb(216, 214, 220)",
+        "borderColor": "rgb(216, 214, 220)",
+        "borderRadius": "10px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "",
+        "rect": {
+          "x": 557,
+          "y": 180,
+          "width": 290,
+          "height": 62
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/radio-card/selected-radio-focus",
+      "tag": "input",
+      "className": "",
+      "rect": {
+        "x": 600,
+        "y": 342.234375,
+        "width": 13,
+        "height": 13
+      },
+      "color": "rgb(0, 0, 0)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgb(0, 0, 0)",
+      "borderColor": "rgb(0, 0, 0)",
+      "borderRadius": "0px",
+      "outline": "rgb(101, 32, 165) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "0",
+      "cursor": "default",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": 7,
+      "selection": {
+        "start": null,
+        "end": null
+      },
+      "parent": {
+        "tag": "label",
+        "className": "bracket-algo-card bracket-algo-card--selected",
+        "rect": {
+          "x": 497,
+          "y": 321.234375,
+          "width": 217,
+          "height": 333.09375
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "2px solid rgb(37, 99, 235)",
+        "borderColor": "rgb(37, 99, 235)",
+        "borderRadius": "12px",
+        "outline": "rgb(37, 99, 235) solid 2px",
+        "outlineOffset": "2px",
+        "boxShadow": "rgb(37, 99, 235) 0px 0px 0px 1px",
+        "opacity": "1",
+        "cursor": "pointer",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "bracket-algo-dialog__options",
+        "rect": {
+          "x": 497,
+          "y": 321.234375,
+          "width": 446,
+          "height": 333.09375
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "light/radio-card/selected-card-has-focus",
+      "tag": "label",
+      "className": "bracket-algo-card bracket-algo-card--selected",
+      "rect": {
+        "x": 497,
+        "y": 321.234375,
+        "width": 217,
+        "height": 333.09375
+      },
+      "color": "rgba(7, 7, 7, 0.93)",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "border": "2px solid rgb(37, 99, 235)",
+      "borderColor": "rgb(37, 99, 235)",
+      "borderRadius": "12px",
+      "outline": "rgb(37, 99, 235) solid 2px",
+      "outlineOffset": "2px",
+      "boxShadow": "rgb(37, 99, 235) 0px 0px 0px 1px",
+      "opacity": "1",
+      "cursor": "pointer",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": false,
+      "focusVisible": false,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": null,
+      "selection": null,
+      "parent": {
+        "tag": "div",
+        "className": "bracket-algo-dialog__options",
+        "rect": {
+          "x": 497,
+          "y": 321.234375,
+          "width": 446,
+          "height": 333.09375
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "",
+        "rect": {
+          "x": 497,
+          "y": 262.671875,
+          "width": 446,
+          "height": 455.65625
+        },
+        "color": "rgba(7, 7, 7, 0.93)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(7, 7, 7, 0.93)",
+        "borderColor": "rgba(7, 7, 7, 0.93)",
+        "borderRadius": "0px",
+        "outline": "rgba(7, 7, 7, 0.93) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "dark/radio/selected-focus",
+      "tag": "input",
+      "className": "",
+      "rect": {
+        "x": 30,
+        "y": 279.375,
+        "width": 13,
+        "height": 13
+      },
+      "color": "rgb(0, 0, 0)",
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgb(0, 0, 0)",
+      "borderColor": "rgb(0, 0, 0)",
+      "borderRadius": "0px",
+      "outline": "rgb(203, 165, 248) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "default",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": 2,
+      "selection": {
+        "start": null,
+        "end": null
+      },
+      "parent": {
+        "tag": "label",
+        "className": "",
+        "rect": {
+          "x": 25,
+          "y": 262.375,
+          "width": 208.890625,
+          "height": 44
+        },
+        "color": "rgba(245, 245, 245, 0.75)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgba(245, 245, 245, 0.75)",
+        "borderColor": "rgba(245, 245, 245, 0.75)",
+        "borderRadius": "0px",
+        "outline": "rgba(245, 245, 245, 0.75) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "default",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "fieldset",
+        "className": "judge-server-picker",
+        "rect": {
+          "x": 14,
+          "y": 234.375,
+          "width": 362,
+          "height": 135
+        },
+        "color": "rgba(245, 245, 245, 0.75)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "1px solid rgba(255, 255, 255, 0.2)",
+        "borderColor": "rgba(255, 255, 255, 0.2)",
+        "borderRadius": "12px",
+        "outline": "rgba(245, 245, 245, 0.75) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "dark/button/hover",
+      "tag": "button",
+      "className": "_root_1mx9c_2 _containedPrimary_1mx9c_136 _sizeMd_1mx9c_81 judge-point-btn judge-touch",
+      "rect": {
+        "x": 26,
+        "y": 758,
+        "width": 149,
+        "height": 56
+      },
+      "color": "rgb(36, 16, 57)",
+      "backgroundColor": "rgb(203, 165, 248)",
+      "border": "2px solid rgba(0, 0, 0, 0)",
+      "borderColor": "rgba(0, 0, 0, 0)",
+      "borderRadius": "8px",
+      "outline": "rgb(36, 16, 57) none 3px",
+      "outlineOffset": "0px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "pointer",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": false,
+      "focusVisible": false,
+      "hover": true,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": null,
+      "selection": null,
+      "parent": {
+        "tag": "div",
+        "className": "judge-side judge-side--serving",
+        "rect": {
+          "x": 12,
+          "y": 186.375,
+          "width": 177,
+          "height": 645.625
+        },
+        "color": "rgb(245, 245, 245)",
+        "backgroundColor": "rgb(26, 29, 36)",
+        "border": "2px solid rgb(91, 159, 255)",
+        "borderColor": "rgb(91, 159, 255)",
+        "borderRadius": "16px",
+        "outline": "rgb(245, 245, 245) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "rgba(91, 159, 255, 0.4) 0px 0px 0px 1px inset",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "judge-board",
+        "rect": {
+          "x": 12,
+          "y": 186.375,
+          "width": 366,
+          "height": 645.625
+        },
+        "color": "rgb(245, 245, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(245, 245, 245)",
+        "borderColor": "rgb(245, 245, 245)",
+        "borderRadius": "0px",
+        "outline": "rgb(245, 245, 245) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "dark/button/active",
+      "tag": "button",
+      "className": "_root_1mx9c_2 _containedPrimary_1mx9c_136 _sizeMd_1mx9c_81 judge-point-btn judge-touch",
+      "rect": {
+        "x": 26,
+        "y": 758,
+        "width": 149,
+        "height": 56
+      },
+      "color": "rgb(36, 16, 57)",
+      "backgroundColor": "rgb(203, 165, 248)",
+      "border": "2px solid rgba(0, 0, 0, 0)",
+      "borderColor": "rgba(0, 0, 0, 0)",
+      "borderRadius": "8px",
+      "outline": "rgb(36, 16, 57) none 3px",
+      "outlineOffset": "0px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "pointer",
+      "transform": "none",
+      "role": null,
+      "id": null,
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": false,
+      "hover": true,
+      "active": true,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": null,
+      "selection": null,
+      "parent": {
+        "tag": "div",
+        "className": "judge-side judge-side--serving",
+        "rect": {
+          "x": 12,
+          "y": 186.375,
+          "width": 177,
+          "height": 645.625
+        },
+        "color": "rgb(245, 245, 245)",
+        "backgroundColor": "rgb(26, 29, 36)",
+        "border": "2px solid rgb(91, 159, 255)",
+        "borderColor": "rgb(91, 159, 255)",
+        "borderRadius": "16px",
+        "outline": "rgb(245, 245, 245) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "rgba(91, 159, 255, 0.4) 0px 0px 0px 1px inset",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "judge-board",
+        "rect": {
+          "x": 12,
+          "y": 186.375,
+          "width": 366,
+          "height": 645.625
+        },
+        "color": "rgb(245, 245, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(245, 245, 245)",
+        "borderColor": "rgb(245, 245, 245)",
+        "borderRadius": "0px",
+        "outline": "rgb(245, 245, 245) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    },
+    {
+      "label": "dark/native-select/focus",
+      "tag": "select",
+      "className": "",
+      "rect": {
+        "x": 31,
+        "y": 339.375,
+        "width": 298,
+        "height": 44
+      },
+      "color": "rgb(0, 0, 0)",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "border": "1px solid rgb(118, 118, 118)",
+      "borderColor": "rgb(118, 118, 118)",
+      "borderRadius": "8px",
+      "outline": "rgb(203, 165, 248) solid 3px",
+      "outlineOffset": "2px",
+      "boxShadow": "none",
+      "opacity": "1",
+      "cursor": "default",
+      "transform": "none",
+      "role": null,
+      "id": "judge-handover-user",
+      "ariaPressed": null,
+      "ariaSelected": null,
+      "ariaExpanded": null,
+      "ariaActiveDescendant": null,
+      "ariaInvalid": null,
+      "dataSelected": null,
+      "dataActive": null,
+      "focus": true,
+      "focusVisible": true,
+      "hover": false,
+      "active": false,
+      "disabled": false,
+      "readOnly": true,
+      "valueLength": 0,
+      "selection": null,
+      "parent": {
+        "tag": "div",
+        "className": "judge-handover stack",
+        "rect": {
+          "x": 20,
+          "y": 298.375,
+          "width": 320,
+          "height": 152
+        },
+        "color": "rgb(245, 245, 245)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "1px solid rgba(255, 255, 255, 0.2)",
+        "borderColor": "rgba(255, 255, 255, 0.2)",
+        "borderRadius": "12px",
+        "outline": "rgb(245, 245, 245) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      },
+      "grandparent": {
+        "tag": "div",
+        "className": "judge-more",
+        "rect": {
+          "x": 12,
+          "y": 186.375,
+          "width": 366,
+          "height": 324
+        },
+        "color": "rgb(245, 245, 245)",
+        "backgroundColor": "rgba(255, 255, 255, 0.06)",
+        "border": "0px none rgb(245, 245, 245)",
+        "borderColor": "rgb(245, 245, 245)",
+        "borderRadius": "12px",
+        "outline": "rgb(245, 245, 245) none 3px",
+        "outlineOffset": "0px",
+        "boxShadow": "none",
+        "opacity": "1",
+        "cursor": "auto",
+        "transform": "none"
+      }
+    }
+  ],
+  "browserErrors": [],
+  "consoleErrors": [],
+  "expectedConsoleDiagnostics": [
+    {
+      "page": "auth",
+      "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "page": "auth",
+      "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "page": "auth",
+      "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "page": "auth",
+      "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "page": "auth",
+      "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "page": "first-password",
+      "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "page": "first-password",
+      "message": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "page": "regular-light",
+      "message": "Failed to load resource: net::ERR_FAILED"
+    }
+  ],
+  "checks": [
+    {
+      "check": "horizontal-overflow",
+      "label": "auth-390",
+      "passed": true,
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "check": "horizontal-overflow",
+      "label": "auth-360-css-zoom-200",
+      "passed": true,
+      "width": 360,
+      "scrollWidth": 360
+    },
+    {
+      "check": "horizontal-overflow",
+      "label": "light-dialog-1440",
+      "passed": true,
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "check": "horizontal-overflow",
+      "label": "light-dialog-390",
+      "passed": true,
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "check": "horizontal-overflow",
+      "label": "light-dialog-768",
+      "passed": true,
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "check": "horizontal-overflow",
+      "label": "light-radio-dialog-390",
+      "passed": true,
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "check": "horizontal-overflow",
+      "label": "dark-judge-390",
+      "passed": true,
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "check": "horizontal-overflow",
+      "label": "dark-judge-768",
+      "passed": true,
+      "width": 768,
+      "scrollWidth": 768
+    },
+    {
+      "check": "horizontal-overflow",
+      "label": "dark-judge-1440",
+      "passed": true,
+      "width": 1440,
+      "scrollWidth": 1440
+    },
+    {
+      "check": "horizontal-overflow",
+      "label": "dark-judge-readonly-390",
+      "passed": true,
+      "width": 390,
+      "scrollWidth": 390
+    }
+  ],
+  "summary": {
+    "screenshots": 33,
+    "stateSnapshots": 27,
+    "failedOverflowChecks": [],
+    "browserErrorCount": 0,
+    "consoleErrorCount": 0,
+    "expectedConsoleDiagnosticCount": 8,
+    "fixtureUsers": 3,
+    "fixtureMatch": true,
+    "fixtureTournament": true
+  }
+}

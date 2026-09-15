@@ -1,0 +1,9 @@
+{
+  "source": "../../candidate-source.json",
+  "declaredFingerprint": "8e8762575a07e71a17192da327cbe1b5906ca33c1c2ef762c0f9a37463b94cb3",
+  "fileCount": 323,
+  "hashMismatchCount": 0,
+  "baseHead": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+  "candidate": "GAP012-r6",
+  "verification": "Каждый текущий файл из candidate-source.json повторно прочитан и сопоставлен с declared SHA-256 перед freeze MATCH-пакета."
+}

@@ -1,0 +1,41 @@
+{
+  "status": "verified_local",
+  "reviewer": "Terra High",
+  "coordinator_accepted": true,
+  "base_head": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+  "candidate": "GAP012-r6",
+  "version": "3.0.0",
+  "published": false,
+  "source_export_manifest_sha256": "6dec4f2dcf87b82a75dce3e439ee24ec55cd1486411db681919df50414c39292",
+  "worker_line_manifest_sha256": "5cded0707f15afb884241b845d20e66ea0fe58fbbee23e950c8cd400090b6838",
+  "export_before_after_identical": true,
+  "source_paths": 52,
+  "totals": {
+    "passed": 1257,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "lanes": {
+    "cleanup": 4,
+    "quality": 1123,
+    "postgres": 71,
+    "browser_foundation": 9,
+    "browser_cases": 50
+  },
+  "browser_projects": {
+    "desktop": 25,
+    "mobile390": 25
+  },
+  "postgres": "16.15 disposable",
+  "focused_browser": "12/12 PASS before fresh full run",
+  "receipt": "../../audits/2026-09-13-ux-ui/gate-receipts/local-summary.json",
+  "remaining_limits": [
+    "WebKit",
+    "physical devices",
+    "spoken AT",
+    "production verification"
+  ],
+  "scope": "Functional preparation accepted; UX pilot and broader audit not yet completed."
+}

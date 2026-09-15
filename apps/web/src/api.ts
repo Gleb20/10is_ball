@@ -230,6 +230,12 @@ export type TournamentSummary = {
 };
 
 export type Tournament = Record<string, unknown> & {
+  id: string;
+  title: string;
+  status: string;
+  format?: "single_elimination" | "double_elimination";
+  createdByUserId?: string;
+  requireParticipantConsent?: boolean;
   summary?: TournamentSummary;
 };
 
@@ -476,11 +482,12 @@ export const api = {
   createMatch: (payload: {
     title: string;
     format: "1v1" | "2v2";
-    pointsToWin: number;
-    mercyEnabled: boolean;
-    mercyPoints: number | null;
+    pointsToWin?: number;
+    mercyEnabled?: boolean;
+    mercyPoints?: number | null;
     firstServerMethod: "random" | "manual" | "rally";
     source: "manual" | "challenge" | "revenge";
+    sendPlayerInvitations: boolean;
     judgeUserId?: string;
     participants: MatchParticipantInput[];
   }) =>
@@ -648,8 +655,16 @@ export const api = {
     request<{ tournaments: Array<Record<string, unknown>> }>(
       "/api/v1/tournaments",
     ),
-  createTournament: (payload: unknown) =>
-    request<{ tournament: Record<string, unknown> }>("/api/v1/tournaments", {
+  createTournament: (payload: {
+    title: string;
+    format?: "single_elimination" | "double_elimination";
+    organizerParticipates?: boolean;
+    pointsToWin?: number;
+    mercyEnabled?: boolean;
+    mercyPoints?: number | null;
+    requireParticipantConsent?: boolean;
+  }) =>
+    request<{ tournament: Tournament }>("/api/v1/tournaments", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
@@ -657,9 +672,20 @@ export const api = {
     request<{ tournament: Tournament }>(
       `/api/v1/tournaments/${id}`,
     ),
-  addTournamentParticipant: (id: string, payload: unknown) =>
-    request(`/api/v1/tournaments/${id}/participants`, {
+  addTournamentParticipant: (
+    id: string,
+    payload: {
+      userId?: string;
+      guestFirstName?: string;
+      guestLastName?: string;
+      confirmManualOverride?: boolean;
+      confirmBracketRegeneration?: boolean;
+    },
+    idempotencyKey: string,
+  ) =>
+    request<{ participant: Record<string, unknown>; tournament: Tournament }>(`/api/v1/tournaments/${id}/participants`, {
       method: "POST",
+      headers: { "Idempotency-Key": idempotencyKey },
       body: JSON.stringify(payload),
     }),
   generateBracket: (
@@ -716,17 +742,17 @@ export const api = {
       body: JSON.stringify({ swaps }),
     }),
   startTournament: (id: string) =>
-    request<{ tournament: Record<string, unknown> }>(
+    request<{ tournament: Tournament }>(
       `/api/v1/tournaments/${id}/start`,
       { method: "POST" },
     ),
   stopTournament: (id: string, payload?: { code?: string; text?: string }) =>
-    request<{ tournament: Record<string, unknown> }>(
+    request<{ tournament: Tournament }>(
       `/api/v1/tournaments/${id}/stop`,
       { method: "POST", body: JSON.stringify(payload ?? {}) },
     ),
   cancelTournament: (id: string) =>
-    request<{ tournament: Record<string, unknown> }>(
+    request<{ tournament: Tournament }>(
       `/api/v1/tournaments/${id}/cancel`,
       { method: "POST" },
     ),

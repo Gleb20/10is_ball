@@ -1,0 +1,68 @@
+{
+  "id": "0a8003ef-be14-4d14-a8c2-105a57e28111",
+  "title": "Матч 14.09, 02:20",
+  "format": "2v2",
+  "status": "waiting",
+  "source": "manual",
+  "pointsToWin": 15,
+  "mercyEnabled": true,
+  "mercyPoints": 7,
+  "firstServerMethod": "random",
+  "createdByUserId": "4074a0bf-2720-4fdf-b448-cc2d408862f5",
+  "participants": [
+    {
+      "id": "aa90f833-725d-420c-8fa9-19df7f383146",
+      "side": "A",
+      "userId": null,
+      "displayName": "Мария Гость"
+    },
+    {
+      "id": "6573064a-1112-4dcf-8bce-6901ae7f76ab",
+      "side": "A",
+      "userId": "c58db21d-b0da-4532-970f-5815eeffd88a",
+      "displayName": "Гамма Вера"
+    },
+    {
+      "id": "3ab16c39-a7f2-4f2e-bdc8-ab98dc12a36a",
+      "side": "B",
+      "userId": "2bcf6375-5839-476f-a235-6b3c36b911b8",
+      "displayName": "Бета Борис"
+    },
+    {
+      "id": "d3ba6a31-f266-4ae5-aaec-a4752b004b7d",
+      "side": "B",
+      "userId": "44311fda-f8be-44cb-97b3-5e51f32d549e",
+      "displayName": "Альфа Анна"
+    }
+  ],
+  "invitations": [
+    {
+      "id": "d99f7ccb-f8f5-48fe-a461-9b65ab773800",
+      "kind": "player",
+      "invitedUserId": "2bcf6375-5839-476f-a235-6b3c36b911b8",
+      "matchParticipantId": "3ab16c39-a7f2-4f2e-bdc8-ab98dc12a36a",
+      "status": "pending"
+    },
+    {
+      "id": "853423bd-c1bf-4408-9a38-a24434c7cf62",
+      "kind": "player",
+      "invitedUserId": "c58db21d-b0da-4532-970f-5815eeffd88a",
+      "matchParticipantId": "6573064a-1112-4dcf-8bce-6901ae7f76ab",
+      "status": "pending"
+    },
+    {
+      "id": "5e575fac-da54-4166-a04a-25c5618e5b6b",
+      "kind": "player",
+      "invitedUserId": "44311fda-f8be-44cb-97b3-5e51f32d549e",
+      "matchParticipantId": "d3ba6a31-f266-4ae5-aaec-a4752b004b7d",
+      "status": "pending"
+    },
+    {
+      "id": "1cca2eaf-b289-4496-9b0d-fed15a341e21",
+      "kind": "judge",
+      "invitedUserId": "7539de2b-7ca2-4cdc-955e-b32d51c74caa",
+      "matchParticipantId": null,
+      "status": "pending"
+    }
+  ]
+}

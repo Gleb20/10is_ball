@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "reviewer": "Terra High research_protocol_review",
+  "snapshot": "/private/tmp/tab10-ux-final-review-01",
+  "exportSha256": "70c48a0e297f096a820fad43d30ab03a99ffe07de7577f993f60837745310569",
+  "verifiedPaths": 754,
+  "sourceFiles": 323,
+  "packageManifests": 13,
+  "capabilityGroups": 22,
+  "requirements": 108,
+  "scenarioDeviceRows": 72,
+  "findingMappings": 57,
+  "readyTasks": 35,
+  "blockedTasks": [
+    "BUG-022",
+    "GAP-025",
+    "GAP-028"
+  ],
+  "lastBoundedAddition": "BUG-024 two native associated dark-card labels; numeric contrast proof deferred to implementation",
+  "scope": "Expert stage and target readiness; user study not conducted; UI recommendations not implemented or released",
+  "acceptedByCoordinator": true
+}

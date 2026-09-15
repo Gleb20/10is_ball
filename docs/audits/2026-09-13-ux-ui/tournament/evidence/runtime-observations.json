@@ -1,0 +1,392 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-14T08:00:32.879Z",
+  "baseline": {
+    "baseHead": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "candidate": "GAP012-r6",
+    "sourceFingerprint": "8e8762575a07e71a17192da327cbe1b5906ca33c1c2ef762c0f9a37463b94cb3",
+    "version": "3.0.0",
+    "published": false
+  },
+  "runs": {
+    "T-RUN-001": {
+      "scenarios": [
+        "SC-T01"
+      ],
+      "result": "PASS_WITH_FINDING",
+      "tournamentId": "a669666e-b10c-4841-aa13-6e9a6d0eabd9",
+      "createGeometry": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "documentWidth": 390,
+        "documentHeight": 960,
+        "submit": {
+          "x": 31,
+          "y": 481,
+          "width": 328,
+          "height": 44,
+          "top": 481,
+          "right": 359,
+          "bottom": 525,
+          "left": 31
+        }
+      },
+      "directAddDialog": "Добавить UXT Принявший ydu9b в турнир «UXT Direct 3 SE»: добавить напрямую в состав?",
+      "persisted": {
+        "status": "bracket_generated",
+        "requireParticipantConsent": false,
+        "organizerParticipates": false,
+        "activeParticipants": 3,
+        "organizerInRoster": false,
+        "bracketSchemaVersion": 2
+      }
+    },
+    "T-RUN-002": {
+      "scenarios": [
+        "SC-T01",
+        "SC-T04"
+      ],
+      "result": "PASS",
+      "topology": [
+        {
+          "tournamentId": "eaf9a679-4218-4f15-91cf-b8d7a513e1b6",
+          "format": "single_elimination",
+          "size": 3,
+          "status": "bracket_generated",
+          "schemaVersion": 2,
+          "constructionAlgorithm": "power_of_two",
+          "seedSlots": 3,
+          "byeSlots": 0,
+          "matchNodes": 4,
+          "renderedBands": 2,
+          "documentOverflow": false
+        },
+        {
+          "tournamentId": "f7c2c316-83bc-4c3a-839d-d544cece0cf3",
+          "format": "single_elimination",
+          "size": 5,
+          "status": "bracket_generated",
+          "schemaVersion": 2,
+          "constructionAlgorithm": "power_of_two",
+          "seedSlots": 5,
+          "byeSlots": 0,
+          "matchNodes": 8,
+          "renderedBands": 2,
+          "documentOverflow": false
+        },
+        {
+          "tournamentId": "a4770ea4-370e-4c40-aa27-707ad933597b",
+          "format": "single_elimination",
+          "size": 8,
+          "status": "bracket_generated",
+          "schemaVersion": 2,
+          "constructionAlgorithm": "power_of_two",
+          "seedSlots": 8,
+          "byeSlots": 0,
+          "matchNodes": 8,
+          "renderedBands": 2,
+          "documentOverflow": false
+        },
+        {
+          "tournamentId": "e059ca4c-473b-455c-b332-3ff611dced6e",
+          "format": "double_elimination",
+          "size": 3,
+          "status": "bracket_generated",
+          "schemaVersion": 2,
+          "constructionAlgorithm": "power_of_two",
+          "seedSlots": 3,
+          "byeSlots": 0,
+          "matchNodes": 7,
+          "renderedBands": 3,
+          "documentOverflow": false
+        },
+        {
+          "tournamentId": "3e8e57ce-e721-4b73-941b-4d0c750a3358",
+          "format": "double_elimination",
+          "size": 5,
+          "status": "bracket_generated",
+          "schemaVersion": 2,
+          "constructionAlgorithm": "power_of_two",
+          "seedSlots": 5,
+          "byeSlots": 0,
+          "matchNodes": 15,
+          "renderedBands": 3,
+          "documentOverflow": false
+        },
+        {
+          "tournamentId": "e411517d-bea9-4de7-ae30-a8539bd8b06c",
+          "format": "double_elimination",
+          "size": 8,
+          "status": "bracket_generated",
+          "schemaVersion": 2,
+          "constructionAlgorithm": "power_of_two",
+          "seedSlots": 8,
+          "byeSlots": 0,
+          "matchNodes": 15,
+          "renderedBands": 3,
+          "documentOverflow": false
+        }
+      ]
+    },
+    "T-RUN-003": {
+      "scenarios": [
+        "SC-T04"
+      ],
+      "result": "PASS_WITH_FINDING",
+      "focusStyle": {
+        "outlineStyle": "solid",
+        "outlineWidth": "3px",
+        "outlineColor": "rgb(101, 32, 165)"
+      },
+      "beforeEnd": {
+        "left": 0,
+        "max": 428
+      },
+      "afterEnd": {
+        "left": 428,
+        "max": 428
+      },
+      "zoom125": "125%",
+      "narrow": {
+        "viewport": 360,
+        "documentWidth": 360
+      },
+      "landscape": {
+        "clientWidth": 498,
+        "scrollWidth": 921,
+        "scrollable": true
+      }
+    },
+    "T-RUN-004": {
+      "scenarios": [
+        "SC-T02"
+      ],
+      "result": "PASS_WITH_FINDING",
+      "tournamentId": "ef718079-4ada-456b-b638-49250db6a0de",
+      "teammateDialog": "Добавить UXT Командный ydu9b в турнир «UXT Consent states»: добавить без ответа на приглашение?",
+      "persisted": {
+        "policy": true,
+        "participants": [
+          {
+            "id": "4375697c-3e9d-4b71-8b12-26c88582ab60",
+            "userId": null,
+            "status": "active",
+            "additionSource": "guest_manual"
+          },
+          {
+            "id": "9663759d-b5f6-4658-afb9-7d09748d5b35",
+            "userId": "60a23a34-69e9-46ed-bea4-92ef5264f10a",
+            "status": "active",
+            "additionSource": "invitation_accept"
+          },
+          {
+            "id": "972dad83-83dd-462d-adbb-4a0ef37a82d7",
+            "userId": "5bba88c4-066e-45cd-a040-8f23012b37aa",
+            "status": "withdrawn",
+            "additionSource": "invitation_accept"
+          },
+          {
+            "id": "7a55eebd-4ce6-46e1-b82e-6130a68fb29e",
+            "userId": "684a23df-2357-4288-b10a-5585c68d09d1",
+            "status": "active",
+            "additionSource": "manual_override"
+          }
+        ],
+        "invitations": [
+          {
+            "id": "4414570b-aeda-477f-8f48-c99ae23d65fb",
+            "invitedUserId": "7c76922f-6ab2-4fcb-a097-c5bb3e41d179",
+            "status": "pending",
+            "terminalReason": null
+          },
+          {
+            "id": "0bbe1670-959b-45f6-8521-884a2a1817f6",
+            "invitedUserId": "de04c4c3-f507-45da-b517-8f003a06e4f6",
+            "status": "declined",
+            "terminalReason": "declined"
+          }
+        ],
+        "teamNotification": true
+      },
+      "visible": {
+        "pending": 1,
+        "declined": 1,
+        "expiredLabel": 0,
+        "withdrawnLabel": 1
+      }
+    },
+    "T-RUN-005": {
+      "scenarios": [
+        "SC-T03"
+      ],
+      "result": "PASS_WITH_FINDING",
+      "tournamentId": "ef718079-4ada-456b-b638-49250db6a0de",
+      "dialogs": {
+        "organizerLateDialog": "Добавить UXT Опоздавший ydu9b в турнир «UXT Consent states»: добавить без ответа на приглашение и сразу перестроить уже созданную сетку?",
+        "adminLateDialog": "Добавить UXT Админский ydu9b в турнир «UXT Consent states»: добавить без ответа на приглашение и сразу перестроить уже созданную сетку?"
+      },
+      "scopedAdminControls": {
+        "settings": 0,
+        "start": 0,
+        "guest": 0,
+        "addRegistered": 1
+      },
+      "participantControls": {
+        "start": 0,
+        "bracketEdit": 0,
+        "add": 0
+      },
+      "forbiddenPatch": {
+        "status": 403,
+        "body": {
+          "code": "FORBIDDEN",
+          "message": "Недостаточно прав",
+          "requestId": "94a749c5-3e90-49e2-a99f-cdf3c5239a13"
+        }
+      },
+      "outsiderGet": {
+        "status": 403,
+        "body": {
+          "code": "FORBIDDEN",
+          "message": "Недостаточно прав",
+          "requestId": "1f9871df-1e18-401e-b637-fd1b9f6afce2"
+        },
+        "visibleText": "Ошибка\n\nНедостаточно прав"
+      },
+      "postStart": {
+        "addVisible": 0,
+        "rejectedStatus": 400,
+        "rejectedBody": {
+          "code": "INVALID_STATUS",
+          "message": "Действие недоступно в текущем статусе",
+          "requestId": "1d41d664-b65e-4062-b47a-ffad3a974b5a"
+        },
+        "participantCountBefore": 6,
+        "participantCountAfter": 6,
+        "bracketVersionBefore": 4,
+        "bracketVersionAfter": 4
+      },
+      "persisted": {
+        "prefixRetainedAfterOrganizerAdd": true,
+        "organizerAdditionSource": "manual_override",
+        "adminAdditionSource": "manual_override",
+        "statusBeforeStart": "bracket_generated",
+        "statusAfterStart": "in_progress"
+      }
+    },
+    "T-RUN-006": {
+      "scenarios": [
+        "SC-T04"
+      ],
+      "result": "PASS",
+      "tournamentId": "dfabcf83-a121-4e58-8cad-4d4a418b907e",
+      "nextText": "Следующий матч: UXT Current next · winners W0_0",
+      "currentText": "Текущий матч: UXT Current next · winners W0_0",
+      "afterAdvanceTask": "Следующий матч: UXT Current next · winners W1_0",
+      "matchId": "dad526c1-dc43-4967-ab2f-bdd65cc957dd"
+    },
+    "T-RUN-007": {
+      "scenarios": [
+        "SC-T05"
+      ],
+      "result": "FAIL_FINDINGS",
+      "dissolve": {
+        "dialogSeen": false,
+        "status": "collecting",
+        "participants": 3
+      },
+      "cancel": {
+        "dialogSeen": false,
+        "status": "cancelled"
+      },
+      "withdrawAfterGeneration": {
+        "dialogSeen": false,
+        "status": "needs_regeneration",
+        "activeParticipants": 2
+      },
+      "stop": {
+        "status": "stopped",
+        "reason": "Завершено окно проверки",
+        "top3": [],
+        "resultPlaces": [
+          null,
+          null,
+          null
+        ]
+      },
+      "finish": {
+        "status": "finished",
+        "completedMatchIds": [
+          "6b9001c9-49e7-4324-a137-a629867f6d5c",
+          "5863d019-d85c-47b2-a78d-caaf13fdadc0"
+        ],
+        "top3": [
+          "31b50708-64e9-449a-bda1-4c424fade555",
+          "a2e85fa2-a08d-450d-bd0b-2137558bd91c",
+          "a99b5bc9-db08-4026-b14d-3a3f268495c1"
+        ],
+        "playedMatchCount": 2
+      },
+      "roleError": {
+        "status": 403,
+        "body": {
+          "code": "FORBIDDEN",
+          "message": "Недостаточно прав",
+          "requestId": "5b2f9475-c12b-4150-9f9b-8321362b2221"
+        },
+        "journeyStatusAfter": "in_progress"
+      }
+    }
+  },
+  "dialogs": [
+    {
+      "runId": "T-RUN-001",
+      "type": "confirm",
+      "message": "Добавить UXT Принявший ydu9b в турнир «UXT Direct 3 SE»: добавить напрямую в состав?"
+    },
+    {
+      "runId": "T-RUN-004",
+      "type": "confirm",
+      "message": "Добавить UXT Командный ydu9b в турнир «UXT Consent states»: добавить без ответа на приглашение?"
+    },
+    {
+      "runId": "T-RUN-005",
+      "type": "confirm",
+      "message": "Добавить UXT Опоздавший ydu9b в турнир «UXT Consent states»: добавить без ответа на приглашение и сразу перестроить уже созданную сетку?"
+    },
+    {
+      "runId": "T-RUN-005",
+      "type": "confirm",
+      "message": "Добавить UXT Админский ydu9b в турнир «UXT Consent states»: добавить без ответа на приглашение и сразу перестроить уже созданную сетку?"
+    }
+  ],
+  "console": [
+    {
+      "actor": "organizer",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "actor": "accepted",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "actor": "outsider",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "actor": "outsider",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "actor": "player-c",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    }
+  ]
+}

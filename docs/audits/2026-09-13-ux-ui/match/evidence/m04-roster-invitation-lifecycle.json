@@ -1,0 +1,65 @@
+{
+  "status": "waiting",
+  "participants": [
+    {
+      "id": "6573064a-1112-4dcf-8bce-6901ae7f76ab",
+      "side": "A",
+      "userId": "c58db21d-b0da-4532-970f-5815eeffd88a",
+      "displayName": "Гамма Вера"
+    },
+    {
+      "id": "3ab16c39-a7f2-4f2e-bdc8-ab98dc12a36a",
+      "side": "B",
+      "userId": "2bcf6375-5839-476f-a235-6b3c36b911b8",
+      "displayName": "Бета Борис"
+    },
+    {
+      "id": "aa90f833-725d-420c-8fa9-19df7f383146",
+      "side": "A",
+      "userId": null,
+      "displayName": "Мария Гость"
+    },
+    {
+      "id": "042f9e5a-4def-4343-9a17-8f641563778f",
+      "side": "B",
+      "userId": "2da25043-5aed-44af-a8d5-68d5d66f84e9",
+      "displayName": "Дельта Глеб"
+    }
+  ],
+  "invitations": [
+    {
+      "id": "d99f7ccb-f8f5-48fe-a461-9b65ab773800",
+      "kind": "player",
+      "invitedUserId": "2bcf6375-5839-476f-a235-6b3c36b911b8",
+      "matchParticipantId": "3ab16c39-a7f2-4f2e-bdc8-ab98dc12a36a",
+      "status": "pending",
+      "expiryReason": null
+    },
+    {
+      "id": "853423bd-c1bf-4408-9a38-a24434c7cf62",
+      "kind": "player",
+      "invitedUserId": "c58db21d-b0da-4532-970f-5815eeffd88a",
+      "matchParticipantId": "6573064a-1112-4dcf-8bce-6901ae7f76ab",
+      "status": "declined",
+      "expiryReason": null
+    },
+    {
+      "id": "5e575fac-da54-4166-a04a-25c5618e5b6b",
+      "kind": "player",
+      "invitedUserId": "44311fda-f8be-44cb-97b3-5e51f32d549e",
+      "matchParticipantId": "d3ba6a31-f266-4ae5-aaec-a4752b004b7d",
+      "status": "accepted",
+      "expiryReason": null
+    },
+    {
+      "id": "1cca2eaf-b289-4496-9b0d-fed15a341e21",
+      "kind": "judge",
+      "invitedUserId": "7539de2b-7ca2-4cdc-955e-b32d51c74caa",
+      "matchParticipantId": null,
+      "status": "accepted",
+      "expiryReason": null
+    }
+  ],
+  "replacementPlayerId": "2da25043-5aed-44af-a8d5-68d5d66f84e9",
+  "replacementHasInvitation": false
+}

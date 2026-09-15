@@ -1,0 +1,12 @@
+RESULTS cleanup — 2026-09-14
+
+- Stopped local API and Vite preview processes.
+- docker compose project tab10-ux-results-5317: down --volumes --remove-orphans completed.
+- Ports 5317, 5318 and 33029: closed.
+- Containers with prefix tab10-ux-results-5317: absent.
+- Network with prefix tab10-ux-results-5317: absent.
+- Deleted exact temporary files:
+  - /private/tmp/tab10-ux-results-5317-private.env
+  - /private/tmp/tab10-ux-results-5317-compose.yml
+
+The disposable database and temporary credentials are not recoverable. Audit evidence contains synthetic labels/IDs only, not credentials or cookies.

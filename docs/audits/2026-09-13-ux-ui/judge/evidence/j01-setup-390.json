@@ -1,0 +1,78 @@
+{
+  "id": "j01-setup-390",
+  "capturedAt": "2026-09-13T23:29:11.025Z",
+  "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "scroll": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 844
+  },
+  "activeElement": {
+    "tag": "BODY",
+    "id": null,
+    "text": "Поверните устройство горизонтально для удобного судействаПеред стартомОтменаТолько активный судья этой сессии меняет счё",
+    "ariaLabel": null
+  },
+  "buttons": [
+    {
+      "text": "Отмена",
+      "disabled": false,
+      "rect": {
+        "x": 299.3,
+        "y": 78,
+        "width": 78.7,
+        "height": 44,
+        "top": 78,
+        "right": 378,
+        "bottom": 122,
+        "left": 299.3
+      }
+    },
+    {
+      "text": "↔",
+      "disabled": false,
+      "rect": {
+        "x": 167.11,
+        "y": 556.69,
+        "width": 55.78,
+        "height": 44,
+        "top": 556.69,
+        "right": 222.89,
+        "bottom": 600.69,
+        "left": 167.11
+      }
+    },
+    {
+      "text": "Начать матч",
+      "disabled": true,
+      "rect": {
+        "x": 139.88,
+        "y": 788,
+        "width": 110.23,
+        "height": 44,
+        "top": 788,
+        "right": 250.11,
+        "bottom": 832,
+        "left": 139.88
+      }
+    }
+  ],
+  "alerts": [],
+  "statuses": [
+    "Поверните устройство горизонтально для удобного судейства"
+  ],
+  "scores": [
+    "0",
+    "0"
+  ],
+  "pointTargets": [],
+  "serve": null,
+  "errorStyle": null,
+  "horizontalOverflow": false,
+  "runId": "J-RUN-SETUP"
+}

@@ -14,12 +14,12 @@ forward migrations на **2026-09-13**. Целевая модель в
 | `temporary_password_issues` | выдача/потребление временного пароля | user + issuing admin |
 | `matches` | правила, score snapshot, lifecycle | creator; optional tournament; JSON event log/idempotency keys; `first_server_method`, `source` |
 | `match_participants` | стороны A/B, user или guest | guest хранится в строке; constraints «ровно один тип» недостаточны |
-| `match_invitations` | historical player/judge consent | match/user/inviter FKs; historical participant UUID without FK, saved side, pending uniqueness and 10-minute TTL |
+| `match_invitations` | voluntary player/judge invitation history | match/user/inviter FKs; historical participant UUID without FK, saved side, pending uniqueness and 10-minute TTL; start closes pending rows |
 | `match_void_audits` | append-only ledger коррекции результата | unique match/key; actor, prior result/events/version, reason и compensation; trigger запрещает update/delete |
 | `judge_sessions` | judge lock/heartbeat/expiry | match, user, auth session, optional `reserved_for_user_id`; active match/user/reservation exclusivity app/SQL |
-| `tournaments` | config/lifecycle/bracket | bracket JSON, DB-only bracket version, construction algorithm |
-| `tournament_participants` | user/guest roster, seed, wins snapshot | status text; partial unique active registered user per tournament |
-| `tournament_invitations` | invite lifecycle | invited/inviter users, expiry/status; partial unique pending invite per tournament/user |
+| `tournaments` | config/lifecycle/bracket | bracket JSON, DB-only bracket version, construction algorithm, immutable consent policy |
+| `tournament_participants` | user/guest roster, seed, wins snapshot | status; actor/source and optional fingerprinted idempotency provenance; partial unique active user/key |
+| `tournament_invitations` | invite lifecycle | invited/inviter users, expiry/status/terminal reason; partial unique pending invite per tournament/user |
 | `teams` | team/captain/status | unique slug |
 | `team_memberships` | membership history | leftAt/leaveReason вместо hard delete; partial unique active membership per team/user |
 | `team_invitations` | team invite lifecycle | expiry/status; partial unique pending invite per team/user |
@@ -120,3 +120,21 @@ cancelled. Accepted consent is usable only by the unchanged current row. Match,
 invitation and user locks serialize responses, retries and starts; tested concurrent
 accept/start and reinvite produce one persisted outcome and one pending notification.
 PGlite migration21/21 and focused PostgreSQL2/2 passed; full PostgreSQL gate pending.
+
+### GAP-012 persistence
+
+Migration `0006_gap_012_game_setup.sql` adds
+`tournaments.require_participant_consent boolean not null default false`,
+participant actor/source/idempotency provenance and tournament-invitation terminal
+reason. Historical tournaments remain direct-roster policy and historical
+participants use source `legacy` without an invented actor. A partial unique index
+owns each successful `(tournament_id, addition_idempotency_key)`. The application
+writes the request fingerprint with every keyed addition and rejects a replay whose
+fingerprint differs; the database has no separate key/fingerprint pairing check.
+
+Tournament add, invitation response, bracket generation and start lock the parent
+tournament row. Post-bracket add inserts the participant, cancels/reads a matching
+pending invitation, writes the audit and regenerates the bracket inside one
+transaction. Existing `seedOrder` is retained as a prefix and new participant IDs
+append. Real PostgreSQL ordered races cover both invite/add orders, start/add and
+two concurrent post-bracket adds; PGlite fault injection proves full rollback.

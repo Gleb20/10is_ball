@@ -102,7 +102,7 @@ function EditSlotField({
       />
       {slot.mode === "user" ? (
         <Autocomplete
-          key={`${label}-${slot.userId}`}
+          key={`${label}-${slot.userId}-${options.find((option) => option.value === slot.userId)?.label ?? "loading"}`}
           label={label}
           options={options}
           value={slot.userId}
@@ -169,8 +169,8 @@ export function MatchDetailPage() {
   const [editMercyEnabled, setEditMercyEnabled] = useState(true);
   const [editMercyPoints, setEditMercyPoints] = useState("5");
   const [editFirstServer, setEditFirstServer] = useState<FirstServerMethod>("manual");
-  const [editSlots, setEditSlots] = useState<{ partner: EditorSlot; opponent1: EditorSlot; opponent2: EditorSlot }>({
-    partner: emptyEditorSlot(), opponent1: emptyEditorSlot(), opponent2: emptyEditorSlot(),
+  const [editSlots, setEditSlots] = useState<{ playerA: EditorSlot; partner: EditorSlot; opponent1: EditorSlot; opponent2: EditorSlot }>({
+    playerA: emptyEditorSlot(), partner: emptyEditorSlot(), opponent1: emptyEditorSlot(), opponent2: emptyEditorSlot(),
   });
   const [directoryOptions, setDirectoryOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [editError, setEditError] = useState<string | null>(null);
@@ -224,17 +224,15 @@ export function MatchDetailPage() {
     match?.status === "pending_confirmation";
 
   const isCreator = Boolean(user?.id) && match?.createdByUserId === user?.id;
+  const creatorIsParticipant = participants.some(
+    (participant) => participant.userId === match?.createdByUserId,
+  );
   const isCurrentJudge =
     Boolean(user?.id) && activeJudge?.userId === user?.id;
   const canStart = match?.status === "waiting" && isCreator;
-  const consentBlockedParticipants = participants.filter((participant) => {
-    if (!participant.id || !participant.userId || participant.userId === match?.createdByUserId) return false;
-    const linked = invitations.filter(
-      (invitation) => invitation.kind === "player" && invitation.matchParticipantId === participant.id,
-    );
-    return linked.length > 0 && !linked.some((invitation) => invitation.status === "accepted");
-  });
-  const consentBlocksStart = consentBlockedParticipants.length > 0;
+  const pendingPlayerInvitations = invitations.filter(
+    (invitation) => invitation.kind === "player" && invitation.status === "pending",
+  );
   const canStop =
     (match?.status === "in_progress" ||
       match?.status === "pending_confirmation") &&
@@ -317,6 +315,8 @@ export function MatchDetailPage() {
     if (!match) return;
     const creator = participants.find((participant) => participant.userId === match.createdByUserId);
     const creatorSide = creator?.side ?? "A";
+    const sideA = participants.filter((participant) => participant.side === "A");
+    const sideB = participants.filter((participant) => participant.side === "B");
     const sameSide = participants.filter((participant) => participant.side === creatorSide && participant !== creator);
     const otherSide = participants.filter((participant) => participant.side !== creatorSide);
     setEditTitle(String(match.title ?? ""));
@@ -326,9 +326,10 @@ export function MatchDetailPage() {
     setEditMercyPoints(String(match.mercyPoints ?? 5));
     setEditFirstServer(["random", "manual", "rally"].includes(String(match.firstServerMethod)) ? match.firstServerMethod as FirstServerMethod : "manual");
     setEditSlots({
-      partner: editorSlotFrom(sameSide[0]),
-      opponent1: editorSlotFrom(otherSide[0]),
-      opponent2: editorSlotFrom(otherSide[1]),
+      playerA: editorSlotFrom(creator ?? sideA[0]),
+      partner: editorSlotFrom(creator ? sameSide[0] : sideA[1]),
+      opponent1: editorSlotFrom(creator ? otherSide[0] : sideB[0]),
+      opponent2: editorSlotFrom(creator ? otherSide[1] : sideB[1]),
     });
     setEditError(null);
     setEditOpen(true);
@@ -343,15 +344,19 @@ export function MatchDetailPage() {
     if (editMercyEnabled && (!Number.isInteger(mercyPoints) || mercyPoints < 1)) return setEditError("Порог сухой победы должен быть положительным целым числом");
     try {
       const creator = participants.find((participant) => participant.userId === match.createdByUserId);
-      if (!creator?.id || !creator.userId) throw new Error("Создатель должен оставаться участником матча");
-      const ownSide = creator.side;
-      const otherSide = ownSide === "A" ? "B" : "A";
-      const nextParticipants: MatchParticipantInput[] = [
-        { id: creator.id, side: ownSide, userId: creator.userId },
-        ...(editFormat === "2v2" ? [editorSlotPayload(editSlots.partner, ownSide)] : []),
-        editorSlotPayload(editSlots.opponent1, otherSide),
-        ...(editFormat === "2v2" ? [editorSlotPayload(editSlots.opponent2, otherSide)] : []),
-      ];
+      const nextParticipants: MatchParticipantInput[] = creator?.id && creator.userId
+        ? [
+            { id: creator.id, side: creator.side, userId: creator.userId },
+            ...(editFormat === "2v2" ? [editorSlotPayload(editSlots.partner, creator.side)] : []),
+            editorSlotPayload(editSlots.opponent1, creator.side === "A" ? "B" : "A"),
+            ...(editFormat === "2v2" ? [editorSlotPayload(editSlots.opponent2, creator.side === "A" ? "B" : "A")] : []),
+          ]
+        : [
+            editorSlotPayload(editSlots.playerA, "A"),
+            ...(editFormat === "2v2" ? [editorSlotPayload(editSlots.partner, "A")] : []),
+            editorSlotPayload(editSlots.opponent1, "B"),
+            ...(editFormat === "2v2" ? [editorSlotPayload(editSlots.opponent2, "B")] : []),
+          ];
       const registeredIds = nextParticipants.flatMap((participant) => participant.userId ? [participant.userId] : []);
       if (new Set(registeredIds).size !== registeredIds.length) throw new Error("Один игрок не может занимать несколько мест");
       await runMutation(async (sequence, requestedId) => {
@@ -678,7 +683,7 @@ export function MatchDetailPage() {
               ) : null}
               {canStart && (
                 <Button
-                  disabled={action.pending || consentBlocksStart}
+                  disabled={action.pending}
                   onClick={() => {
                     setStartServerId("");
                     setStartOpen(true);
@@ -687,9 +692,9 @@ export function MatchDetailPage() {
                   Старт
                 </Button>
               )}
-              {canStart && consentBlocksStart ? (
+              {canStart && pendingPlayerInvitations.length > 0 ? (
                 <p className="muted" role="status">
-                  Старт станет доступен после согласия приглашённых игроков: {consentBlockedParticipants.map((participant) => participant.displayName ?? "участник").join(", ")}.
+                  Приглашения добровольные и не мешают старту. После старта ожидающие приглашения закроются.
                 </p>
               ) : null}
               {(match.status === "in_progress" ||
@@ -819,7 +824,12 @@ export function MatchDetailPage() {
                   onChange={(value) => setEditFirstServer(value as FirstServerMethod)}
                   options={[{ value: "manual", label: "Вручную" }, { value: "random", label: "Случайно" }, { value: "rally", label: "Розыгрыш" }]}
                 />
-                <p className="muted">Создатель матча остаётся в составе.</p>
+                <p className="muted">
+                  {creatorIsParticipant
+                    ? "Создатель матча остаётся в составе."
+                    : "Создатель управляет матчем, но не занимает игровое место."}
+                </p>
+                {!creatorIsParticipant ? <EditSlotField label="Игрок A" slot={editSlots.playerA} options={directoryOptions} onChange={(slot) => setEditSlots((current) => ({ ...current, playerA: slot }))} /> : null}
                 {editFormat === "2v2" ? <EditSlotField label="Партнёр" slot={editSlots.partner} options={directoryOptions} onChange={(slot) => setEditSlots((current) => ({ ...current, partner: slot }))} /> : null}
                 <EditSlotField label={editFormat === "2v2" ? "Соперник 1" : "Соперник"} slot={editSlots.opponent1} options={directoryOptions} onChange={(slot) => setEditSlots((current) => ({ ...current, opponent1: slot }))} />
                 {editFormat === "2v2" ? <EditSlotField label="Соперник 2" slot={editSlots.opponent2} options={directoryOptions} onChange={(slot) => setEditSlots((current) => ({ ...current, opponent2: slot }))} /> : null}

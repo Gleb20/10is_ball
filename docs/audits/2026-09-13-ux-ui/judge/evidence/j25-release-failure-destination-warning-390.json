@@ -1,0 +1,47 @@
+{
+  "id": "j25-release-failure-destination-warning-390",
+  "capturedAt": "2026-09-13T23:29:23.820Z",
+  "url": "/matches/6c729e7c-787f-4925-b0c4-b035dcdae14c",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "scroll": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 844
+  },
+  "activeElement": {
+    "tag": "BODY",
+    "id": null,
+    "text": "К содержимому\n\n\nПроверьте слот судьиНе удалось подтвердить освобождение слота: Синтетическая ошибка освобождения. Он осв",
+    "ariaLabel": null
+  },
+  "buttons": [
+    {
+      "text": "Обновить",
+      "disabled": false,
+      "rect": {
+        "x": 298.19,
+        "y": 166,
+        "width": 75.81,
+        "height": 44,
+        "top": 166,
+        "right": 374,
+        "bottom": 210,
+        "left": 298.19
+      }
+    }
+  ],
+  "alerts": [
+    "Проверьте слот судьиНе удалось подтвердить освобождение слота: Синтетическая ошибка освобождения. Он освободится по TTL, если запрос не дошёл."
+  ],
+  "statuses": [],
+  "scores": [],
+  "pointTargets": [],
+  "serve": null,
+  "errorStyle": null,
+  "horizontalOverflow": false,
+  "runId": "J-RUN-RELEASE"
+}

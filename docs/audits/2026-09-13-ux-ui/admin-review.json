@@ -1,0 +1,30 @@
+{
+  "status": "PASS_WITH_MANDATORY_CORRECTION",
+  "reviewer": "Terra High research_protocol_review",
+  "snapshot": "/private/tmp/tab10-ux-admin-review-01",
+  "exportSha256": "e4e849d1206bd1882eb43f1871224892ca5d1d4bc819a0ee57f341b875be6396",
+  "verifiedPaths": 725,
+  "packageManifest": "7accaa9091c822fc897ea0bffad19f4dca5749be27369a369c0bfceb8842cd67",
+  "packagePayloads": 35,
+  "mandatoryOverlay": "admin-correction.md",
+  "readyTasks": [
+    "GAP-026",
+    "GAP-027"
+  ],
+  "notReady": [
+    "BUG-038 technical protocol",
+    "GAP-028 Q-UX-003",
+    "GAP-025 Q-UX-002"
+  ],
+  "coverage": {
+    "requirements": 108,
+    "scenarioRows": 68,
+    "findings": 56
+  },
+  "rootVisualReview": [
+    "a01-admin-landing-390.png",
+    "a04-reset-lost-response-390.png"
+  ],
+  "acceptedByCoordinator": true,
+  "implementation": "not performed"
+}

@@ -1,0 +1,20 @@
+{
+  "status": "PASS_WITH_MANDATORY_CORRECTION",
+  "reviewer": "Terra High research_protocol_review",
+  "snapshot": "/private/tmp/tab10-ux-results-review-05",
+  "exportSha256": "8a8965472f0e91ab3ef8e7bb3d341193dda1dba008c8cebea2f439fde80cb075",
+  "packageManifest": "b5633165133259c0e3810631c341121747cbf84a5c28b6fb41345f2a17167b15",
+  "packagePayloadsVerified": 40,
+  "mandatoryOverlay": "results-correction.md",
+  "readyTasks": [
+    "GAP-015",
+    "GAP-024",
+    "BUG-036",
+    "BUG-037"
+  ],
+  "integrityCorrection": "Coordinator exporter gitignored logs restored exact via hash-pinned reviewed extras; RESULTS40 and MATCH79 checked in review03",
+  "coverage": "RANK004/005 corrected; no006; ONB003 API-only/004APIisolation; PROFILE006 NOT_TESTED;61scenario rows108requirements",
+  "limits": "Physical/WebKit/spokenAT/truezoom/user study not performed; full-page screenshots are contextual; all exact residuals in matrices",
+  "acceptedByCoordinator": true,
+  "implementation": "not performed"
+}

@@ -1,0 +1,188 @@
+{
+  "A": {
+    "status": 200,
+    "body": {
+      "profile": {
+        "isOwn": false,
+        "canChallenge": true,
+        "identity": {
+          "id": "66ef42df-ed67-4516-b1d7-0201436318a3",
+          "firstName": "Анна",
+          "lastName": "Синтетическая",
+          "displayName": "Синтетическая Анна",
+          "avatarKey": "avatar_2",
+          "organizationText": "Moscow transport",
+          "positionText": null
+        },
+        "avatar": {
+          "key": "avatar_2",
+          "editable": false
+        },
+        "stats": {
+          "matchesPlayed": 1,
+          "wins": 1,
+          "losses": 0,
+          "winRate": 1,
+          "averagePoints": 5,
+          "tournamentsPlayed": 0,
+          "tournamentWins": 0,
+          "tournamentsCreated": 0,
+          "judgedMatches": 0,
+          "rank": 1
+        },
+        "facts": {
+          "longestMatch": {
+            "matchId": "307bf34a-7dbb-4e22-ade1-c9f77650e820",
+            "title": "Матч 14.09, 01:16",
+            "durationSeconds": 710
+          },
+          "bestWinningScore": {
+            "matchId": "307bf34a-7dbb-4e22-ade1-c9f77650e820",
+            "title": "Матч 14.09, 01:16",
+            "score": "5:0"
+          },
+          "frequentOpponent": {
+            "userId": "0b794fcf-f874-4e75-b7b2-2d8aa7e0d11b",
+            "displayName": "Синтетический Борис",
+            "matchCount": 1
+          },
+          "rival": null
+        },
+        "teams": []
+      }
+    }
+  },
+  "B": {
+    "status": 200,
+    "body": {
+      "profile": {
+        "isOwn": false,
+        "canChallenge": true,
+        "identity": {
+          "id": "0b794fcf-f874-4e75-b7b2-2d8aa7e0d11b",
+          "firstName": "Борис",
+          "lastName": "Синтетический",
+          "displayName": "Синтетический Борис",
+          "avatarKey": "avatar_9",
+          "organizationText": "Moscow transport",
+          "positionText": null
+        },
+        "avatar": {
+          "key": "avatar_9",
+          "editable": false
+        },
+        "stats": {
+          "matchesPlayed": 1,
+          "wins": 0,
+          "losses": 1,
+          "winRate": 0,
+          "averagePoints": 0,
+          "tournamentsPlayed": 0,
+          "tournamentWins": 0,
+          "tournamentsCreated": 0,
+          "judgedMatches": 0,
+          "rank": 2
+        },
+        "facts": {
+          "longestMatch": {
+            "matchId": "307bf34a-7dbb-4e22-ade1-c9f77650e820",
+            "title": "Матч 14.09, 01:16",
+            "durationSeconds": 710
+          },
+          "bestWinningScore": null,
+          "frequentOpponent": {
+            "userId": "66ef42df-ed67-4516-b1d7-0201436318a3",
+            "displayName": "Синтетическая Анна",
+            "matchCount": 1
+          },
+          "rival": null
+        },
+        "teams": []
+      }
+    }
+  },
+  "C": {
+    "status": 200,
+    "body": {
+      "profile": {
+        "isOwn": true,
+        "canChallenge": false,
+        "identity": {
+          "id": "078c49d0-8093-42b8-977d-fafdc633cce2",
+          "firstName": "Оператор",
+          "lastName": "Синтетический",
+          "displayName": "Синтетический Оператор",
+          "avatarKey": "avatar_8",
+          "organizationText": "Moscow transport",
+          "positionText": null,
+          "email": "ux-pilot-c-20260914@tab10.test",
+          "birthDate": null
+        },
+        "avatar": {
+          "key": "avatar_8",
+          "editable": false
+        },
+        "stats": {
+          "matchesPlayed": 0,
+          "wins": 0,
+          "losses": 0,
+          "winRate": 0,
+          "averagePoints": 0,
+          "tournamentsPlayed": 0,
+          "tournamentWins": 0,
+          "tournamentsCreated": 1,
+          "judgedMatches": 1,
+          "rank": 6
+        },
+        "facts": {
+          "longestMatch": null,
+          "bestWinningScore": null,
+          "frequentOpponent": null,
+          "rival": null
+        },
+        "teams": []
+      }
+    }
+  },
+  "D": {
+    "status": 200,
+    "body": {
+      "profile": {
+        "isOwn": false,
+        "canChallenge": true,
+        "identity": {
+          "id": "06e87b4c-da07-4836-b7e4-5e3e60e18eea",
+          "firstName": "Дмитрий",
+          "lastName": "Синтетический",
+          "displayName": "Синтетический Дмитрий",
+          "avatarKey": "avatar_2",
+          "organizationText": "Moscow transport",
+          "positionText": null
+        },
+        "avatar": {
+          "key": "avatar_2",
+          "editable": false
+        },
+        "stats": {
+          "matchesPlayed": 0,
+          "wins": 0,
+          "losses": 0,
+          "winRate": 0,
+          "averagePoints": 0,
+          "tournamentsPlayed": 0,
+          "tournamentWins": 0,
+          "tournamentsCreated": 0,
+          "judgedMatches": 1,
+          "rank": 5
+        },
+        "facts": {
+          "longestMatch": null,
+          "bestWinningScore": null,
+          "frequentOpponent": null,
+          "rival": null
+        },
+        "teams": []
+      }
+    }
+  }
+}

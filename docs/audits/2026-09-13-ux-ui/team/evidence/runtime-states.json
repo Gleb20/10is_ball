@@ -1,0 +1,677 @@
+{
+  "schemaVersion": 1,
+  "runtime": {
+    "web": "http://localhost:5217",
+    "api": "http://127.0.0.1:5218",
+    "dbProject": "projecttab10-ux-team-5217",
+    "dbPort": 33028,
+    "sourceHead": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "candidate": "GAP012-r6",
+    "sourceFingerprint": "8e8762575a07e71a17192da327cbe1b5906ca33c1c2ef762c0f9a37463b94cb3"
+  },
+  "browser": {
+    "name": "Chromium",
+    "version": "153.0.8010.12",
+    "playwright": "1.63.0"
+  },
+  "fixtures": {
+    "captain": {
+      "id": "dc5a915a-b0a8-423b-86a7-f1396400dec1",
+      "displayName": "Капитанова-ato4 Кира",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "member": {
+      "id": "9b620439-2027-4b11-81a2-8fe2ec7eece7",
+      "displayName": "Участников-ato4 Михаил",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "declinee": {
+      "id": "e8f2db55-5e9e-4cef-98a2-b92bcfb991b2",
+      "displayName": "Отказова-ato4 Диана",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "expiree": {
+      "id": "27ba4e38-3bfb-4d91-af9b-39873f37bf13",
+      "displayName": "Просрочкин-ato4 Егор",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "revoke": {
+      "id": "583a6559-0235-443b-8ee6-d6381c6e48a2",
+      "displayName": "Отзываемый-ato4 Роман",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "transfer": {
+      "id": "205dcaf6-b01a-4159-8a11-d13544a8f623",
+      "displayName": "Новаякапитанова-ato4 Тамара",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "outsider": {
+      "id": "2a01f7f9-1f27-4e25-802f-48809968c1fc",
+      "displayName": "Посторонний-ato4 Олег",
+      "status": "active",
+      "mustChangePassword": false
+    },
+    "team": {
+      "id": "351e60e4-59f6-4801-977c-1415be71df0a",
+      "name": "Команда длинного точного розыгрыша и спокойной передачи капитанства ato4"
+    }
+  },
+  "checks": {
+    "createPending": {
+      "submitDisabled": true,
+      "nameDisabled": false,
+      "sloganDisabled": false,
+      "welcomeDisabled": false
+    },
+    "createPersisted": {
+      "name": "Команда длинного точного розыгрыша и спокойной передачи капитанства ato4",
+      "slogan": "Играем вместе и заранее понимаем, кто отвечает за состав",
+      "welcomeText": "Добро пожаловать. Здесь сохраняются состав, история приглашений и понятный следующий шаг к совместной игре.",
+      "captainUserIdMatches": true,
+      "memberIds": [
+        "dc5a915a-b0a8-423b-86a7-f1396400dec1"
+      ],
+      "avatarFieldPresent": false
+    },
+    "longText360": {
+      "viewportWidth": 360,
+      "documentWidth": 360,
+      "horizontalOverflow": false
+    },
+    "editError": {
+      "alertTop": 863.53125,
+      "alertBottom": 967.53125,
+      "inViewport": false,
+      "scrollY": 567,
+      "draftValue": null
+    },
+    "editPersisted": {
+      "slogan": "Изменение, которое должно пережить ошибку сохранения"
+    },
+    "invitePickerKeyboard": {
+      "activeDescendantBeforeEnter": "_r_f_-option-0",
+      "referencedOptionExistsBeforeEnter": false,
+      "activeElementAfterEnter": {
+        "tag": "INPUT",
+        "ariaLabel": null
+      }
+    },
+    "invitePending": {
+      "pickerDisabled": true,
+      "inviteDisabled": true,
+      "editNameDisabled": true
+    },
+    "invitePersisted": {
+      "id": "b989884c-3e2d-43fa-9010-381ebebff55f",
+      "status": "pending",
+      "invitedUserIdMatches": true
+    },
+    "axeCaptainDetail": [],
+    "revokeUi": {
+      "pendingRowVisible": true,
+      "revokeButtons": 0
+    },
+    "outsider": {
+      "status": 403,
+      "alert": "Ошибка\n\nНедостаточно прав"
+    },
+    "acceptPending": {
+      "acceptDisabled": true,
+      "declineDisabled": true
+    },
+    "acceptPersisted": {
+      "invitationStatus": "accepted",
+      "activeMemberPresent": true
+    },
+    "matchTeamShortcut": {
+      "creatorParticipates": false,
+      "playerAValue": "",
+      "opponentValue": "Кира Капитанова-ato4",
+      "note": "single team button writes available teammate into opponent side in manual creator=false flow"
+    },
+    "tournamentTeamDiscovery": {
+      "teamNamedControls": 0,
+      "addPlayerVisible": true,
+      "teamContextCopy": [
+        "Турнир для проверки обнаружимости команды"
+      ],
+      "note": "roster uses undifferentiated UserPicker; teammate auto-add authority is server-side only"
+    },
+    "declinePersisted": {
+      "status": "declined"
+    },
+    "expiredPersisted": {
+      "status": "expired",
+      "actionButtons": 0
+    },
+    "revokeContract": {
+      "attemptedMethod": "DELETE",
+      "attemptedPathShape": "/api/v1/teams/{teamId}/invitations/{invitationId}",
+      "responseStatus": 404,
+      "persistedStatusAfterProbe": "pending"
+    },
+    "removeMember": {
+      "nativeDialogs": 0,
+      "activeMemberAbsent": true,
+      "historyAccessStatus": 200
+    },
+    "transferCaptain": {
+      "nativeDialogs": 0,
+      "captainUserIdMatches": true,
+      "oldCaptainStillMember": true
+    },
+    "leavePersisted": {
+      "oldCaptainActiveMemberAbsent": true,
+      "oldCaptainHistoricalDetailStatus": 200,
+      "listedInActiveTeams": false
+    },
+    "archivePersisted": {
+      "status": "archived",
+      "archivedAtPresent": true,
+      "activeMemberCount": 0,
+      "pendingInvitationsCancelled": true
+    },
+    "archivedReadOnly": {
+      "editForms": 0,
+      "inviteControls": 0,
+      "rosterMutationButtons": 0
+    },
+    "archiveDiscovery": {
+      "activeListContainsArchivedTeam": false,
+      "historicalDetailStillAvailable": 200
+    }
+  },
+  "screenshots": [
+    {
+      "file": "screenshots/te01-profile-entry-390.png",
+      "url": "http://localhost:5217/profile",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 1958
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуПрофильКапитанова-ato4 КираMoscow transportaudit.team.captain.mu0yato4@tab10.local\n\n\n#7 в рейтинге\n\n\nИгрокЛ"
+      },
+      "run": "TE01-ENTRY",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-empty-390.png",
+      "url": "http://localhost:5217/teams",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКомандыНазвание командыСлоганТекст приветствияСоздать\n\n\nНет командСоздайте команду формой выше.\n\n\nГлавная\n\n"
+      },
+      "run": "TE01-EMPTY",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-create-pending-390.png",
+      "url": "http://localhost:5217/teams",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКомандыНазвание командыСлоганТекст приветствияСоздание…\n\n\nНет командСоздайте команду формой выше.\n\n\nГлавная"
+      },
+      "run": "TE01-CREATE-PENDING",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-created-list-390.png",
+      "url": "http://localhost:5217/teams",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКомандыНазвание командыСлоганТекст приветствияСоздатьКоманда длинного точного розыгрыша и спокойной передач"
+      },
+      "run": "TE01-CREATE",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-captain-detail-long-360.png",
+      "url": "http://localhost:5217/teams/351e60e4-59f6-4801-977c-1415be71df0a",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 360,
+        "documentHeight": 1563
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКоманда длинного точного розыгрыша и спокойной передачи капитанства ato4Обновить\n\n\nАктивна\n\n\nВы капитанИгра"
+      },
+      "run": "TE01-LONG-360",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-edit-error-origin-360.png",
+      "url": "http://localhost:5217/teams/351e60e4-59f6-4801-977c-1415be71df0a",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "scroll": {
+        "x": 0,
+        "y": 567,
+        "documentWidth": 360,
+        "documentHeight": 1679
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКоманда длинного точного розыгрыша и спокойной передачи капитанства ato4Обновить\n\n\nАктивна\n\n\nВы капитанИгра"
+      },
+      "run": "TE01-EDIT-ERROR",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-edit-error-location-360.png",
+      "url": "http://localhost:5217/teams/351e60e4-59f6-4801-977c-1415be71df0a",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "scroll": {
+        "x": 0,
+        "y": 879,
+        "documentWidth": 360,
+        "documentHeight": 1679
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКоманда длинного точного розыгрыша и спокойной передачи капитанства ato4Обновить\n\n\nАктивна\n\n\nВы капитанИгра"
+      },
+      "run": "TE01-EDIT-ERROR",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-invite-pending-390.png",
+      "url": "http://localhost:5217/teams/351e60e4-59f6-4801-977c-1415be71df0a",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 719,
+        "documentWidth": 390,
+        "documentHeight": 1563
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКоманда длинного точного розыгрыша и спокойной передачи капитанства ato4Обновить\n\n\nАктивна\n\n\nВы капитанИзме"
+      },
+      "run": "TE01-INVITE-PENDING",
+      "input": "keyboard"
+    },
+    {
+      "file": "screenshots/te01-captain-invite-history-1440.png",
+      "url": "http://localhost:5217/teams/351e60e4-59f6-4801-977c-1415be71df0a",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": {
+        "x": 0,
+        "y": 706,
+        "documentWidth": 1440,
+        "documentHeight": 1606
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКоманда длинного точного розыгрыша и спокойной передачи капитанства ato4Обновить\n\n\nАктивна\n\n\nВы капитанИзме"
+      },
+      "run": "TE01-INVITE-HISTORY",
+      "input": "mouse"
+    },
+    {
+      "file": "screenshots/te01-outsider-forbidden-390.png",
+      "url": "http://localhost:5217/teams/351e60e4-59f6-4801-977c-1415be71df0a",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКомандаПовторить\n\n\nОшибкаНедостаточно прав\n\n\nГлавная\n\n\nИстория\n\n\nНачать\n\n\nРейтинг\n\n\nПрофиль"
+      },
+      "run": "TE01-OUTSIDER",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-invitee-team-preview-390.png",
+      "url": "http://localhost:5217/teams/351e60e4-59f6-4801-977c-1415be71df0a",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 895
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуПриглашение в командуВас пригласили в команду «Команда длинного точного розыгрыша и спокойной передачи капи"
+      },
+      "run": "TE01-INVITEE-PREVIEW",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-accept-pending-390.png",
+      "url": "http://localhost:5217/notifications",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуУведомленияНазадАктуальныеОбновить уведомленияПриглашение в командуВас пригласили в команду «Команда длинно"
+      },
+      "run": "TE01-ACCEPT-PENDING",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-member-welcome-390.png",
+      "url": "http://localhost:5217/teams/351e60e4-59f6-4801-977c-1415be71df0a?welcome=1",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 1141
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКоманда длинного точного розыгрыша и спокойной передачи капитанства ato4Обновить\n\n\nДобро пожаловать в коман"
+      },
+      "run": "TE01-ACCEPT-WELCOME",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-match-team-shortcut-390.png",
+      "url": "http://localhost:5217/matches/new",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 1615
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуНовый матчНазвание1 × 12 × 2Создатель играетОчков до победыСухая победа при счёте 5:0Порог сухой победыВруч"
+      },
+      "run": "TE01-MATCH-CROSS",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-match-team-shortcut-selected-390.png",
+      "url": "http://localhost:5217/matches/new",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 391,
+        "documentWidth": 390,
+        "documentHeight": 1615
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "label": null,
+        "text": "Команда длинного точного розыгрыша и спокойной передачи капитанства ato4"
+      },
+      "run": "TE01-MATCH-CROSS",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-tournament-roster-picker-390.png",
+      "url": "http://localhost:5217/tournaments/f6691846-6f76-4130-8ae6-ecc1aba9a9ad",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 1321
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуТурнир для проверки обнаружимости командыОбновить\n\n\nСборSingle elim.Настройки и правилаИзменитьДо 11 очков "
+      },
+      "run": "TE01-TOURNAMENT-CROSS",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-declined-history-390.png",
+      "url": "http://localhost:5217/notifications",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 844
+      },
+      "activeElement": {
+        "tag": "INPUT",
+        "label": null,
+        "text": ""
+      },
+      "run": "TE01-DECLINE",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te01-expired-history-390.png",
+      "url": "http://localhost:5217/notifications",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 844
+      },
+      "activeElement": {
+        "tag": "INPUT",
+        "label": null,
+        "text": ""
+      },
+      "run": "TE01-EXPIRED",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te02-remove-immediate-1440.png",
+      "url": "http://localhost:5217/teams/351e60e4-59f6-4801-977c-1415be71df0a",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 1440,
+        "documentHeight": 1838
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКоманда длинного точного розыгрыша и спокойной передачи капитанства ato4Обновить\n\n\nАктивна\n\n\nВы капитанИзме"
+      },
+      "run": "TE02-REMOVE",
+      "input": "mouse"
+    },
+    {
+      "file": "screenshots/te02-transfer-immediate-1440.png",
+      "url": "http://localhost:5217/teams/351e60e4-59f6-4801-977c-1415be71df0a",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 1440,
+        "documentHeight": 900
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКоманда длинного точного розыгрыша и спокойной передачи капитанства ato4Обновить\n\n\nАктивнаИзменение, которо"
+      },
+      "run": "TE02-TRANSFER",
+      "input": "mouse"
+    },
+    {
+      "file": "screenshots/te02-leave-confirm-390.png",
+      "url": "http://localhost:5217/teams/351e60e4-59f6-4801-977c-1415be71df0a",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 390,
+        "documentHeight": 859
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "label": "Закрыть",
+        "text": ""
+      },
+      "run": "TE02-LEAVE",
+      "input": "touch-emulation"
+    },
+    {
+      "file": "screenshots/te02-archived-readonly-1440.png",
+      "url": "http://localhost:5217/teams/351e60e4-59f6-4801-977c-1415be71df0a",
+      "title": "Tab-10",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "documentWidth": 1440,
+        "documentHeight": 900
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "label": null,
+        "text": "К содержимомуКоманда длинного точного розыгрыша и спокойной передачи капитанства ato4Обновить\n\n\nКоманда в архивеСостав и"
+      },
+      "run": "TE02-ARCHIVE",
+      "input": "mouse"
+    }
+  ],
+  "pageErrors": []
+}

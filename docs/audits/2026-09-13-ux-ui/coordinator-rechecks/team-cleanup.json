@@ -1,0 +1,15 @@
+{
+  "project": "projecttab10-ux-team-5217",
+  "containers": 0,
+  "volumes": 0,
+  "networks": 0,
+  "listeningPorts": [],
+  "checkedPorts": [
+    5217,
+    5218,
+    33028
+  ],
+  "method": "read-only Docker compose project label inventories and lsof LISTEN",
+  "checkedBy": "coordinator",
+  "timestampScope": "post-run current state; not historical proof"
+}

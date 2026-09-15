@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-14T09:17:35.945Z",
+  "toolchain": {
+    "node": "v24.20.0",
+    "pnpm": "9.15.0",
+    "browser": "bundled Chromium",
+    "postgres": "16.15-alpine pinned by digest"
+  },
+  "runtime": {
+    "web": "http://localhost:5417",
+    "api": "http://127.0.0.1:5418",
+    "databasePort": 33030,
+    "dockerProject": "tab10-ux-admin-5417",
+    "disposable": true,
+    "storage": "tmpfs"
+  },
+  "release": {
+    "sha": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "version": "3.0.0",
+    "environment": "test",
+    "dirty": true
+  },
+  "health": {
+    "status": "ok",
+    "release": {
+      "sha": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+      "version": "3.0.0",
+      "environment": "test",
+      "dirty": true
+    }
+  },
+  "secretsPersisted": false
+}

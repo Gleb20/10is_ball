@@ -1,0 +1,33 @@
+{
+  "run": "ROOT-JUDGE-OUTCOME-01",
+  "verdict": "REPRODUCED",
+  "environment": "disposable_local",
+  "sourceFingerprint": "8e8762575a07e71a17192da327cbe1b5906ca33c1c2ef762c0f9a37463b94cb3",
+  "matchId": "1aa30f54-d7de-4a05-9468-9d4381a0deba",
+  "viewport": "390x844",
+  "browser": "153.0.8010.12",
+  "checks": {
+    "beforeZero": true,
+    "firstCommitted": true,
+    "afterLossOne": true,
+    "exactFirstIntentPresent": true,
+    "instructionSaysRepeat": true,
+    "afterRepeatTwo": true,
+    "newIntent": true,
+    "secondIntentPresent": true
+  },
+  "scoreBefore": [
+    0,
+    0
+  ],
+  "scoreAfterLoss": [
+    1,
+    0
+  ],
+  "scoreAfterFollowingInstruction": [
+    2,
+    0
+  ],
+  "alert": "Очко не подтверждено: Failed to fetch. Очередь остановлена: проверьте счёт и повторите.",
+  "limitation": "Controlled response loss and automated action; no human frequency observation; no production mutation"
+}

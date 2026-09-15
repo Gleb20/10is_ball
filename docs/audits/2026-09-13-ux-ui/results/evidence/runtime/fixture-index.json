@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-09-14T08:42:09.661Z",
+  "release": {
+    "sha": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "version": "3.0.0",
+    "environment": "test",
+    "dirty": true
+  },
+  "fixtures": {
+    "actor": {
+      "id": "9253ba92-b80b-4464-b33a-b401f48beca6",
+      "label": "Роман Результатов"
+    },
+    "rival": {
+      "id": "f488b32c-7e0e-403b-b4c8-2624060fcb0c",
+      "label": "Рита Соперница"
+    },
+    "teammate": {
+      "id": "cb2163f5-6323-4838-b109-6826304c4faa",
+      "label": "Тарас Партнёр"
+    },
+    "blocked": {
+      "id": "5141aea9-950a-4565-bce3-3a2892fe2df9",
+      "label": "Борис Исторический"
+    },
+    "alternate": {
+      "id": "91434760-d027-4b87-bee3-b4a44b6ed81c",
+      "label": "Алина Другая"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "kind": "synthetic returning-user fixtures; setup only, no pilot execution",
+  "baseURL": "http://localhost:4617",
+  "actors": {
+    "C": {
+      "id": "078c49d0-8093-42b8-977d-fafdc633cce2",
+      "email": "ux-pilot-c-20260914@tab10.test",
+      "label": "Оператор Синтетический",
+      "role": "user"
+    },
+    "A": {
+      "id": "66ef42df-ed67-4516-b1d7-0201436318a3",
+      "email": "ux-pilot-a-20260914@tab10.test",
+      "label": "Анна Синтетическая",
+      "role": "user"
+    },
+    "B": {
+      "id": "0b794fcf-f874-4e75-b7b2-2d8aa7e0d11b",
+      "email": "ux-pilot-b-20260914@tab10.test",
+      "label": "Борис Синтетический",
+      "role": "user"
+    },
+    "D": {
+      "id": "06e87b4c-da07-4836-b7e4-5e3e60e18eea",
+      "email": "ux-pilot-d-20260914@tab10.test",
+      "label": "Дмитрий Синтетический",
+      "role": "user"
+    },
+    "E": {
+      "id": "d482309f-c416-4663-885d-850e5ceece85",
+      "email": "ux-pilot-e-20260914@tab10.test",
+      "label": "Елена Синтетическая",
+      "role": "user"
+    }
+  },
+  "createdBy": "local synthetic bootstrap admin"
+}

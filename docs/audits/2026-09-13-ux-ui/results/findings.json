@@ -1,0 +1,182 @@
+{
+  "package": "RESULTS",
+  "baseline": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221 + GAP012r6",
+  "status": "READY_FOR_REVIEW",
+  "findings": [
+    {
+      "id": "F-RESULTS-001",
+      "canonicalBacklogId": null,
+      "title": "Результат поиска истории не показывает, почему матч найден",
+      "kind": "expert_hypothesis",
+      "where": "История; участник; populated/search; 390px и 1440px",
+      "actual": "Поиск по «Соперница» возвращает матчи, но строка содержит только название, счёт, победу/поражение и статус. Имя соперника, дата, роль и формат отсутствуют.",
+      "expected": "Строка результата сама различает событие: соперник/состав, дата по Москве, роль, формат, счёт/результат и статус; совпавший контекст виден без открытия деталей.",
+      "reproduction": [
+        "Создать 22 завершённых матча с одним зарегистрированным соперником.",
+        "Открыть /history на 390px и найти по фамилии соперника.",
+        "Сопоставить видимый текст строки с запросом."
+      ],
+      "evidence": [
+        "R-RUN-HISTORY-SEARCH",
+        "evidence/runtime/history-search-390.png",
+        "evidence/runtime/runtime-facts.json#scenarios.history.searchResultText",
+        "evidence/source-map.md"
+      ],
+      "impact": "Связь результата с запросом приходится проверять в деталях; величина потерь времени и частота в реальной аудитории неизвестны.",
+      "priority": "P2",
+      "priorityRationale": "Основной результат доступен и данные не теряются, но повторяющееся различение результатов затруднено на основной странице истории.",
+      "confidence": "high in UI fact; medium in user impact",
+      "frequency": "Observed in 1 synthetic populated search across 22 finished matches; real-user frequency unknown.",
+      "overlap": ["HISTORY-001", "HISTORY-002", "AT-VIS-003"],
+      "deduplication": "BUG-023 относится к порядку токенов в селекторах игроков и не покрывает презентацию результата истории.",
+      "smallestRemedy": "Расширить канонический history item кратким counterpartyLabel и отрисовать существующие occurredAt/roles/format; не менять видимость и права.",
+      "preservedFunctions": ["поиск", "фильтры", "пагинация", "детали", "возврат", "admin purge guard"],
+      "affectedScreens": ["/history"],
+      "sharedRootCause": "History row contract/presentation does not carry the context used by search.",
+      "dependencies": ["API contract test for the new display field"],
+      "targetSpec": "target-spec.md#t-results-history-001",
+      "validationNeeded": "Independent review, then Chromium 390/1440 with long names, 2v2 and tournament rows.",
+      "reviewerVerdict": null
+    },
+    {
+      "id": "F-RESULTS-002",
+      "canonicalBacklogId": null,
+      "title": "Поиск и фильтры истории нельзя воспроизвести по URL",
+      "kind": "expert_hypothesis",
+      "where": "История; participant; search/filter/pagination; all viewports",
+      "actual": "После применения поиска адрес остаётся /history. Возврат из открытой строки восстанавливается через одноразовый sessionStorage и проходит текущий AT, но refresh/direct link не сохраняют условия.",
+      "expected": "q/role/result/eventType/from/to отражаются в query string; refresh/direct link воспроизводят первый экран того же набора, а Back из деталей дополнительно возвращает загруженные страницы.",
+      "reproduction": [
+        "Открыть /history.",
+        "Применить поиск «Соперница».",
+        "Наблюдать неизменный URL /history; выполнить refresh/direct link."
+      ],
+      "evidence": [
+        "R-RUN-HISTORY-SEARCH",
+        "evidence/runtime/runtime-facts.json#scenarios.history.searchUrl",
+        "apps/web/src/pages/HistoryPage.tsx:66-94,132-160"
+      ],
+      "impact": "Состояние нельзя закладкой, ссылкой или refresh восстановить вне специального перехода detail→Back; пользовательская потребность не исследована.",
+      "priority": "P3",
+      "priorityRationale": "AT-VIS-003 Back уже выполняется; это ограничение восстановления и совместного использования, а не потеря данных.",
+      "confidence": "high in implementation/runtime fact; low in demand",
+      "frequency": "Observed once for search; real refresh/share frequency unknown.",
+      "overlap": ["HISTORY-002", "AT-VIS-003"],
+      "deduplication": "No overlap with BUG-018/019/023/025/026/024/029.",
+      "smallestRemedy": "Синхронизировать только канонические условия с URLSearchParams; opaque cursor не публиковать, загруженные страницы оставить в actor-scoped return state.",
+      "preservedFunctions": ["одноразовое actor-scoped Back restoration", "cursor pagination", "Moscow date boundaries"],
+      "affectedScreens": ["/history", "match/tournament detail Back"],
+      "sharedRootCause": "Filter state is local-only.",
+      "dependencies": [],
+      "targetSpec": "target-spec.md#t-results-history-001",
+      "validationNeeded": "Product review of share/refresh value; if accepted, browser Back/Forward and actor-switch tests.",
+      "reviewerVerdict": null
+    },
+    {
+      "id": "F-RESULTS-003",
+      "canonicalBacklogId": null,
+      "title": "Ошибка профиля не связывается с неверным полем и уводит фокус в body",
+      "kind": "runtime_defect",
+      "where": "Свой профиль; edit validation error; 390px",
+      "actual": "201 символ в «Организация» принимаются полем, PATCH получает 400, наверху показывается «Некорректные данные запроса»; draft сохранён, но aria-invalid/aria-describedby отсутствуют, document.activeElement — body.",
+      "expected": "Клиент соблюдает серверный лимит 200 либо до отправки показывает связанную с полем ошибку; фокус переводится к первому неверному полю, черновик сохраняется.",
+      "reproduction": [
+        "Открыть /profile → Редактировать профиль на 390px.",
+        "Ввести 201 символ в «Организация» и сохранить.",
+        "Проверить alert, значение поля, ARIA-связь и activeElement."
+      ],
+      "evidence": [
+        "R-RUN-PROFILE-VALIDATION",
+        "evidence/runtime/profile-validation-error-390.png",
+        "evidence/runtime/runtime-facts.json#scenarios.profileValidation",
+        "apps/web/src/pages/ProfilePage.tsx:262-292"
+      ],
+      "impact": "Черновик не теряется, но после ошибки на длинной странице пользователю нужно заново найти причину; keyboard/screen-reader recovery не локализован.",
+      "priority": "P2",
+      "priorityRationale": "Сохранение заблокировано до исправления значения, recovery не указывает место; обход — ручной поиск поля.",
+      "confidence": "high",
+      "frequency": "Observed 1/1 injected over-limit submission; production frequency unknown.",
+      "overlap": ["PROFILE-003", "AT-PROFILE-004"],
+      "deduplication": "BUG-024 покрывает контраст judge error, BUG-021 — modal error placement; этот page-form field association не покрыт.",
+      "smallestRemedy": "Добавить maxLength из API-контракта и field error state с aria-invalid/aria-describedby; focus first invalid only after failed submit.",
+      "preservedFunctions": ["explicit Save", "Cancel", "draft retention", "email/avatar read-only D10", "same-actor reauth recovery"],
+      "affectedScreens": ["/profile"],
+      "sharedRootCause": "Client validation metadata is absent from profile fields.",
+      "dependencies": [],
+      "targetSpec": "target-spec.md#t-results-profile-001",
+      "validationNeeded": "Chromium keyboard 390/1440 plus focused DOM assertions; spoken AT remains separate.",
+      "reviewerVerdict": null
+    },
+    {
+      "id": "F-RESULTS-004",
+      "canonicalBacklogId": null,
+      "title": "Прочитанное неактуальное уведомление остаётся под фильтром «Актуальные» до refresh",
+      "kind": "runtime_defect",
+      "where": "Уведомления; non-invitation unread→read; 390px",
+      "actual": "Batch read меняет readAt и подпись на «Прочитано», но локальный lifecycle остаётся new; карточка остаётся под checked «Актуальные». После «Обновить уведомления» исчезает. Прочитанное pending приглашение корректно остаётся actionable.",
+      "expected": "Под «Актуальные» остаются actionable карточки и действительно непрочитанные new; неactionable карточка исчезает сразу после подтверждённого batch read без ручного refresh.",
+      "reproduction": [
+        "Создать unread non-invitation notification и pending match invitation.",
+        "Открыть /notifications с checked «Актуальные».",
+        "Дождаться owner-scoped read-visible; сравнить до и после ручного refresh."
+      ],
+      "evidence": [
+        "R-RUN-NOTIF-READ",
+        "evidence/runtime/notifications-actual-after-read-390.png",
+        "evidence/runtime/runtime-facts.json#scenarios.notifications",
+        "apps/web/src/pages/NotificationsPage.tsx:95-145,255-291"
+      ],
+      "impact": "Фильтр и подпись противоречат друг другу до обновления; действий и данных пользователь не теряет.",
+      "priority": "P3",
+      "priorityRationale": "Кратковременная рассинхронизация с очевидным recovery, без неверной mutation.",
+      "confidence": "high",
+      "frequency": "Observed 1/1 synthetic non-invitation batch read; production frequency unknown.",
+      "overlap": ["NOTIF-005", "AT-NOTIF-004"],
+      "deduplication": "Not covered by known BUG-018/019/023/025/026/024/029.",
+      "smallestRemedy": "После read-visible вывести локальный effective lifecycle из readAt или обновить new→read только для non-actionable rows; pending invitation actions сохранить.",
+      "preservedFunctions": ["batch read", "pending actionable after read", "badge clearing", "terminal history", "actor isolation"],
+      "affectedScreens": ["/notifications"],
+      "sharedRootCause": "Visibility derives from stale lifecycle while label derives from readAt.",
+      "dependencies": [],
+      "targetSpec": "target-spec.md#t-results-notif-001",
+      "validationNeeded": "Focused component test and Chromium read-visible state without manual refresh.",
+      "reviewerVerdict": null
+    },
+    {
+      "id": "F-RESULTS-005",
+      "canonicalBacklogId": "GAP-015",
+      "title": "Home называет освобождённого судью текущим судьёй активного матча",
+      "kind": "expert_hypothesis",
+      "where": "Home active match; former judge after release; 390px/1440px",
+      "actual": "После release authoritative match.activeJudge=null. Home показывает «Судья: Результатов Роман · Вы судили»; detail показывает «Судья не назначен» и предлагает «Судить». Mutation rights не были ошибочно выданы.",
+      "expected": "Home различает текущего судью и историческую связь: «Слот судьи свободен · Ранее судили»; переход ведёт в detail, где сначала требуется acquire. Никаких score/finish прав из userId или истории.",
+      "reproduction": [
+        "Создатель создаёт матч для двух других участников, получает judge slot, стартует матч и освобождает слот.",
+        "Проверить match.activeJudge=null и Home active card.",
+        "Открыть detail и проверить «Судить», а не продолжение score ownership."
+      ],
+      "evidence": [
+        "R-RUN-HOME-JUDGE-RELEASE",
+        "evidence/runtime/home-results-1440.png",
+        "evidence/runtime/match-free-judge-detail-1440.png",
+        "evidence/runtime/runtime-facts.json#scenarios.historicalJudge",
+        "apps/api/src/modules/home/home-service.ts:203-218"
+      ],
+      "impact": "Статус судейского слота читается двусмысленно перед переходом; право не расширено, фактическая ошибка действия не наблюдалась.",
+      "priority": "P2",
+      "priorityRationale": "Это активное событие у стола и роль с mutation-правами, но guard в detail сохранил безопасность.",
+      "confidence": "high in state mismatch; medium in user harm",
+      "frequency": "Observed 1/1 release transition; real occurrence unknown.",
+      "overlap": ["F-PILOT-005", "GAP-015", "D18", "core-target SC-R01"],
+      "deduplication": "Refines F-PILOT-005/GAP-015; coordinator should not create a second canonical item.",
+      "smallestRemedy": "Expose current judge-slot status separately from historical role in Home DTO and label it without granting actions.",
+      "preservedFunctions": ["active event visibility", "creator-only start", "free-slot acquire", "auth-session judge ownership", "all Home metrics/rival/ranking/recent/profile/notifications"],
+      "affectedScreens": ["/", "/matches/:id"],
+      "sharedRootCause": "Home DTO collapses latest judge history and current active judge.",
+      "dependencies": ["GAP-015 integration", "accepted core-target"],
+      "targetSpec": "target-spec.md#t-results-home-001",
+      "validationNeeded": "API contract and browser transition tests for current/foreign/released judge auth sessions.",
+      "reviewerVerdict": null
+    }
+  ]
+}

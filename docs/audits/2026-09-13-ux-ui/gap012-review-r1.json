@@ -1,0 +1,40 @@
+{
+  "scope": "GAP-012 frozen code/contract review",
+  "cycle": 1,
+  "status": "REWORK",
+  "reviewer": "Terra High /root/research_protocol_review",
+  "snapshot": "/private/tmp/tab10-gap012-review-r1",
+  "export_manifest_sha256": "6808f96cfa1c13fd9ad18a8c1a027350a9799fc358139a67c08c48df955ab815",
+  "findings": [
+    {
+      "id": "R1-1",
+      "priority": "P1",
+      "path": "apps/api/src/modules/matches/match-service.ts:410",
+      "problem": "Challenge/revenge service permits nonplaying creator after universal membership guard removal.",
+      "required": "Scoped source validation and negative service/API regression."
+    },
+    {
+      "id": "R1-2",
+      "priority": "P1",
+      "path": "apps/api/src/modules/tournaments/tournament-service.ts:721",
+      "problem": "New outsider-admin getVisible calls side-effecting get, reinserting withdrawn organizer without explicit override/audit.",
+      "required": "Read-only scoped read and persisted zero-write regression."
+    },
+    {
+      "id": "R1-3",
+      "priority": "P1",
+      "path": "apps/api/src/modules/tournaments/tournament-service.ts:1399",
+      "problem": "Legacy V1 manual swaps only update bracketJSON; add regeneration reads stale seed columns and loses swaps.",
+      "required": "Preserve V1 manual arrangement and regression swap-add-regenerate."
+    },
+    {
+      "id": "R1-4",
+      "priority": "P2",
+      "path": "docs/requirements/08_API_SPEC.md:199",
+      "problem": "Stale mandatory creator membership contradicts operator-first contract.",
+      "required": "Reconcile assertion with D35 and new source-specific constraints."
+    }
+  ],
+  "retained_regressions": "GAP008 cancel/purge/history/notification and explicit-invitation rollback confirmed present",
+  "runtime_acceptance": "PENDING; reviewer did not run suites; worker fullgate is not final acceptance for rejected bytes"
+}

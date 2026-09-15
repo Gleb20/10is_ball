@@ -1,0 +1,158 @@
+[
+  {
+    "id": "PREP-DIAG-01",
+    "time": "2026-09-13T21:59:53.839Z",
+    "action": "Preparation diagnosis only: synthetic C login and create-form controls",
+    "status": "PASS"
+  },
+  {
+    "id": "PREP-DIAG-02",
+    "time": "2026-09-13T22:00:14.371Z",
+    "action": "Compare full first-last query with first-name query; preparation diagnosis, not pilot",
+    "status": "PASS"
+  },
+  {
+    "id": "DRIVER-RAW",
+    "time": "2026-09-13T22:02:06.939Z",
+    "action": "Enable bounded driver input",
+    "status": "PASS"
+  },
+  {
+    "id": "PREP-DIAG-03",
+    "time": "2026-09-13T22:02:29.494Z",
+    "action": "Prepare diagnostic tournament and reproduce UserPicker name filtering; not pilot",
+    "status": "PASS"
+  },
+  {
+    "id": "PREP-DIAG-04",
+    "time": "2026-09-13T22:05:18.907Z",
+    "action": "Save MatchCreate control comparison for the same synthetic target",
+    "status": "PASS"
+  },
+  {
+    "id": "PREP-DIAG-05",
+    "time": "2026-09-13T22:07:45.604Z",
+    "action": "Read current geometry of diagnostic MatchCreate field",
+    "status": "PASS"
+  },
+  {
+    "id": "PREP-DIAG-06",
+    "time": "2026-09-13T22:08:26.358Z",
+    "action": "Capture the comparison field and option after explicit page scrolling",
+    "status": "PASS"
+  },
+  {
+    "id": "PREP-DIAG-CLEANUP",
+    "time": "2026-09-13T22:09:04.316Z",
+    "action": "Cancel owned diagnostic tournament and close its synthetic user session",
+    "status": "PASS"
+  },
+  {
+    "id": "P01-HOME",
+    "time": "2026-09-13T22:16:00.339Z",
+    "action": "Observe actual Home content without assuming its heading",
+    "status": "PASS"
+  },
+  {
+    "id": "P02-START",
+    "time": "2026-09-13T22:16:30.994Z",
+    "action": "Tap primary Home Start button and inspect choices",
+    "status": "PASS"
+  },
+  {
+    "id": "P03-CREATE",
+    "time": "2026-09-13T22:16:59.480Z",
+    "action": "Choose Match and inspect default operator-first setup",
+    "status": "PASS"
+  },
+  {
+    "id": "P04-SCROLL",
+    "time": "2026-09-13T22:18:10.600Z",
+    "action": "Swipe mobile form to locate player selection",
+    "status": "PASS"
+  },
+  {
+    "id": "P05-PLAYER-A",
+    "time": "2026-09-13T22:18:45.244Z",
+    "action": "Choose Anna as player A without including the operator",
+    "status": "PASS"
+  },
+  {
+    "id": "P06-PLAYER-B",
+    "time": "2026-09-13T22:19:04.049Z",
+    "action": "Choose Boris, retain the displayed default rules, and verify invitations remain optional",
+    "status": "PASS"
+  },
+  {
+    "id": "P07-CREATE-MATCH",
+    "time": "2026-09-13T22:19:42.672Z",
+    "action": "Create A-vs-B as nonplaying C, verify persisted participants and no invitations",
+    "status": "PASS"
+  },
+  {
+    "id": "P08-JUDGE-ENTRY",
+    "time": "2026-09-13T22:20:24.568Z",
+    "action": "Choose Judge to begin keeping score for the two players",
+    "status": "PASS"
+  },
+  {
+    "id": "P09-JUDGE-SETUP",
+    "time": "2026-09-13T22:20:40.257Z",
+    "action": "Inspect start controls after judge session acquisition",
+    "status": "PASS"
+  },
+  {
+    "id": "P10-START-MATCH",
+    "time": "2026-09-13T22:21:17.621Z",
+    "action": "Choose Anna to serve first and start without any player confirmation",
+    "status": "PASS"
+  },
+  {
+    "id": "P11-LIVE-READY",
+    "time": "2026-09-13T22:21:43.094Z",
+    "action": "Observe ready scoring screen after start is reflected in UI",
+    "status": "PASS"
+  },
+  {
+    "id": "P12-RAPID-SCORE",
+    "time": "2026-09-13T22:22:24.085Z",
+    "action": "Add two intentional rapid touch points to Anna without waiting for each request",
+    "status": "PASS"
+  },
+  {
+    "id": "P13-UNDO",
+    "time": "2026-09-13T22:22:58.794Z",
+    "action": "Add an erroneous point to Boris, then undo exactly that point",
+    "status": "PASS"
+  },
+  {
+    "id": "P14-SAME-PHONE",
+    "time": "2026-09-13T22:23:16.068Z",
+    "action": "Continue on the same authenticated phone; confirm attribution remains with C",
+    "status": "PASS"
+  },
+  {
+    "id": "P15-HANDOVER-OPTIONS",
+    "time": "2026-09-13T22:24:08.155Z",
+    "action": "Inspect the available users for a transfer to another device",
+    "status": "PASS"
+  },
+  {
+    "id": "P16-STATE",
+    "time": "2026-09-13T22:28:35.413Z",
+    "action": "Проверить состояние после передачи ведения",
+    "status": "PASS"
+  },
+  {
+    "id": "P17-D-LOGIN",
+    "time": "2026-09-13T22:28:49.505Z",
+    "action": "Открыть приложение на втором устройстве",
+    "status": "PASS"
+  },
+  {
+    "id": "P18-D-READY",
+    "time": "2026-09-13T22:28:58.500Z",
+    "action": "Найти вход в переданное судейство",
+    "status": "PASS"
+  }
+]

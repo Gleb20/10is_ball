@@ -1,0 +1,17 @@
+{
+  "name": "m06-waiting-current-judge-1440",
+  "capturedAt": "2026-09-13T23:20:41.164Z",
+  "url": "http://localhost:4817/matches/c89c564a-8273-4de1-b894-cb8d4e320f1a",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "title": "Tab-10",
+  "visibleText": "К содержимому\nRole matrix match\nОбновить\nОжидание\n\n0 : 0\n\n1 × 1\nдо 11 очков\nсухая победа при 5:0\nпервая подача: случайно\n\nСудит: Судья Жанна\n\nA: Альфа Анна\nB: Бета Борис\nЖурнал очков\n\nПодтверждённых очков после последней коррекции нет.\n\nСудить\nОткрыть счёт\nЗафиксировать неявку\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+  "horizontalOverflow": false,
+  "screenshot": "m06-waiting-current-judge-1440.png",
+  "screenshotSha256": "fb6afd7e9778b3a0e591f01f1f4a23c6bed76799a91879ac41fe78218c97d39c",
+  "scenario": "SC-M04",
+  "role": "current-judge",
+  "forbidden": false
+}

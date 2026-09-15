@@ -1,0 +1,216 @@
+{
+  "before": {
+    "status": 200,
+    "body": {
+      "match": {
+        "id": "307bf34a-7dbb-4e22-ade1-c9f77650e820",
+        "title": "Матч 14.09, 01:16",
+        "kind": "standalone",
+        "status": "in_progress",
+        "format": "1v1",
+        "pointsToWin": 11,
+        "mercyEnabled": true,
+        "mercyPoints": 5,
+        "firstServerMethod": "manual",
+        "source": "manual",
+        "createdByUserId": "078c49d0-8093-42b8-977d-fafdc633cce2",
+        "tournamentId": null,
+        "tournamentSlotId": null,
+        "tournamentBracketMatchId": null,
+        "scoreA": 3,
+        "scoreB": 0,
+        "currentServerParticipantId": "69c6e412-ab2d-4543-b71c-3ed7c4c9fee2",
+        "serveSequenceIndex": 1,
+        "deuceMode": false,
+        "version": 5,
+        "startedAt": "2026-09-13T22:21:17.558Z",
+        "finishedAt": null,
+        "winnerSide": null,
+        "finishReason": null,
+        "stopReasonCode": null,
+        "stopReasonText": null,
+        "eventLog": [
+          {
+            "side": "A",
+            "type": "point_awarded",
+            "idempotencyKey": "42dc544a-404b-4b05-8246-440726daf0b2"
+          },
+          {
+            "side": "A",
+            "type": "point_awarded",
+            "idempotencyKey": "bbcb104d-5580-4a6e-a6cc-136d4bc06d02"
+          },
+          {
+            "type": "point_undone",
+            "undonePoint": {
+              "side": "B",
+              "type": "point_awarded",
+              "idempotencyKey": "83249fef-d956-44e0-91e5-2380200e3f36"
+            },
+            "idempotencyKey": "65312749-b420-4db2-bad7-17aef100e286"
+          },
+          {
+            "side": "A",
+            "type": "point_awarded",
+            "idempotencyKey": "af32f245-1092-4a4a-a97f-1ed5bf445d72"
+          }
+        ],
+        "idempotencyKeys": [
+          "42dc544a-404b-4b05-8246-440726daf0b2",
+          "bbcb104d-5580-4a6e-a6cc-136d4bc06d02",
+          "83249fef-d956-44e0-91e5-2380200e3f36",
+          "65312749-b420-4db2-bad7-17aef100e286",
+          "af32f245-1092-4a4a-a97f-1ed5bf445d72"
+        ],
+        "judgeDisplayFlipped": false,
+        "createdAt": "2026-09-13T22:19:42.636Z",
+        "updatedAt": "2026-09-13T22:23:15.755Z",
+        "participants": [
+          {
+            "id": "9618160d-d787-44ea-8ae8-febadb375941",
+            "matchId": "307bf34a-7dbb-4e22-ade1-c9f77650e820",
+            "side": "A",
+            "userId": "66ef42df-ed67-4516-b1d7-0201436318a3",
+            "guestFirstName": null,
+            "guestLastName": null,
+            "guestAvatarKey": null,
+            "isTutorialActor": false,
+            "displayName": "Синтетическая Анна",
+            "avatarKey": "avatar_2"
+          },
+          {
+            "id": "69c6e412-ab2d-4543-b71c-3ed7c4c9fee2",
+            "matchId": "307bf34a-7dbb-4e22-ade1-c9f77650e820",
+            "side": "B",
+            "userId": "0b794fcf-f874-4e75-b7b2-2d8aa7e0d11b",
+            "guestFirstName": null,
+            "guestLastName": null,
+            "guestAvatarKey": null,
+            "isTutorialActor": false,
+            "displayName": "Синтетический Борис",
+            "avatarKey": "avatar_9"
+          }
+        ],
+        "activeJudge": {
+          "userId": "06e87b4c-da07-4836-b7e4-5e3e60e18eea",
+          "displayName": "Синтетический Дмитрий"
+        },
+        "judgeReservation": null,
+        "invitations": []
+      }
+    }
+  },
+  "after": {
+    "status": 200,
+    "body": {
+      "match": {
+        "id": "307bf34a-7dbb-4e22-ade1-c9f77650e820",
+        "title": "Матч 14.09, 01:16",
+        "kind": "standalone",
+        "status": "pending_confirmation",
+        "format": "1v1",
+        "pointsToWin": 11,
+        "mercyEnabled": true,
+        "mercyPoints": 5,
+        "firstServerMethod": "manual",
+        "source": "manual",
+        "createdByUserId": "078c49d0-8093-42b8-977d-fafdc633cce2",
+        "tournamentId": null,
+        "tournamentSlotId": null,
+        "tournamentBracketMatchId": null,
+        "scoreA": 5,
+        "scoreB": 0,
+        "currentServerParticipantId": "9618160d-d787-44ea-8ae8-febadb375941",
+        "serveSequenceIndex": 2,
+        "deuceMode": false,
+        "version": 7,
+        "startedAt": "2026-09-13T22:21:17.558Z",
+        "finishedAt": null,
+        "winnerSide": "A",
+        "finishReason": null,
+        "stopReasonCode": null,
+        "stopReasonText": null,
+        "eventLog": [
+          {
+            "side": "A",
+            "type": "point_awarded",
+            "idempotencyKey": "42dc544a-404b-4b05-8246-440726daf0b2"
+          },
+          {
+            "side": "A",
+            "type": "point_awarded",
+            "idempotencyKey": "bbcb104d-5580-4a6e-a6cc-136d4bc06d02"
+          },
+          {
+            "type": "point_undone",
+            "undonePoint": {
+              "side": "B",
+              "type": "point_awarded",
+              "idempotencyKey": "83249fef-d956-44e0-91e5-2380200e3f36"
+            },
+            "idempotencyKey": "65312749-b420-4db2-bad7-17aef100e286"
+          },
+          {
+            "side": "A",
+            "type": "point_awarded",
+            "idempotencyKey": "af32f245-1092-4a4a-a97f-1ed5bf445d72"
+          },
+          {
+            "side": "A",
+            "type": "point_awarded",
+            "idempotencyKey": "01b313cc-1c9d-45d3-930c-36c664de01e9"
+          },
+          {
+            "side": "A",
+            "type": "point_awarded",
+            "idempotencyKey": "4571ee91-9fe8-475e-8514-2098d7c7df02"
+          }
+        ],
+        "idempotencyKeys": [
+          "42dc544a-404b-4b05-8246-440726daf0b2",
+          "bbcb104d-5580-4a6e-a6cc-136d4bc06d02",
+          "83249fef-d956-44e0-91e5-2380200e3f36",
+          "65312749-b420-4db2-bad7-17aef100e286",
+          "af32f245-1092-4a4a-a97f-1ed5bf445d72",
+          "01b313cc-1c9d-45d3-930c-36c664de01e9",
+          "4571ee91-9fe8-475e-8514-2098d7c7df02"
+        ],
+        "judgeDisplayFlipped": false,
+        "createdAt": "2026-09-13T22:19:42.636Z",
+        "updatedAt": "2026-09-13T22:32:50.711Z",
+        "participants": [
+          {
+            "id": "9618160d-d787-44ea-8ae8-febadb375941",
+            "matchId": "307bf34a-7dbb-4e22-ade1-c9f77650e820",
+            "side": "A",
+            "userId": "66ef42df-ed67-4516-b1d7-0201436318a3",
+            "guestFirstName": null,
+            "guestLastName": null,
+            "guestAvatarKey": null,
+            "isTutorialActor": false,
+            "displayName": "Синтетическая Анна",
+            "avatarKey": "avatar_2"
+          },
+          {
+            "id": "69c6e412-ab2d-4543-b71c-3ed7c4c9fee2",
+            "matchId": "307bf34a-7dbb-4e22-ade1-c9f77650e820",
+            "side": "B",
+            "userId": "0b794fcf-f874-4e75-b7b2-2d8aa7e0d11b",
+            "guestFirstName": null,
+            "guestLastName": null,
+            "guestAvatarKey": null,
+            "isTutorialActor": false,
+            "displayName": "Синтетический Борис",
+            "avatarKey": "avatar_9"
+          }
+        ],
+        "activeJudge": {
+          "userId": "06e87b4c-da07-4836-b7e4-5e3e60e18eea",
+          "displayName": "Синтетический Дмитрий"
+        },
+        "judgeReservation": null,
+        "invitations": []
+      }
+    }
+  }
+}

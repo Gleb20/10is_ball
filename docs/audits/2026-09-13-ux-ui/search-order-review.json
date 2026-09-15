@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "reviewer": "Terra High",
+  "scope": "F-PREP-001 and BUG-023 specification; preparation diagnostic only",
+  "files": {
+    "preparation-evidence/search-order-finding.md": "48bd084d1fc49b33781473ad120076e1446024a07faf13657f7b93fa3b81137b",
+    "preparation-evidence/name-order-browser.json": "1a0fc855941e303bfcb49ad4deceea35cab0c7a6e13d6347047ccf2ec937a98a",
+    "preparation-evidence/name-order-browser.png": "29ebcec988fd638842063c34e1e2ed10e2501eb2aec60db36e76fabda0a25c14",
+    "preparation-evidence/name-order-match.json": "b6d371e508b1bc83df784a4e871da4a7b39a8d456b4720efde385894f4a8c462",
+    "preparation-evidence/name-order-match-visible.json": "6e3d0b719a962e3a5be4d7acedb6d9cb2a962592eeefb11d0d9fb2af8b425156",
+    "preparation-evidence/name-order-match-visible.png": "f0fe808218fcf63b38382d3d56609f9769b5817b7fb631887aca50b5c8161aa6",
+    "fixtures.md": "be2456f32198fc9fcba90cd14d1a11a733079e99d18406607548b0eb2ea7df01"
+  },
+  "limitations": "Final GAP012 baseline, mobile recheck, broader package audit and user interview remain pending. Manually scrolled screenshot does not pass BUG019."
+}

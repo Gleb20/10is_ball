@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-14T08:00:32.879Z",
+  "fixtures": [
+    {
+      "key": "organizer",
+      "id": "39da1d25-b608-4ebf-ab18-3f6c4ec4d7da",
+      "label": "UXT Организатор ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "accepted",
+      "id": "60a23a34-69e9-46ed-bea4-92ef5264f10a",
+      "label": "UXT Принявший ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "pending",
+      "id": "7c76922f-6ab2-4fcb-a097-c5bb3e41d179",
+      "label": "UXT Ожидающий ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "declined",
+      "id": "de04c4c3-f507-45da-b517-8f003a06e4f6",
+      "label": "UXT Отказавшийся ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "expired",
+      "id": "26bc26c2-8626-47f5-8952-1841ee3c4c55",
+      "label": "UXT Просроченный ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "left",
+      "id": "5bba88c4-066e-45cd-a040-8f23012b37aa",
+      "label": "UXT Вышедший ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "teammate",
+      "id": "684a23df-2357-4288-b10a-5585c68d09d1",
+      "label": "UXT Командный ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "late-organizer",
+      "id": "c4321753-ba45-49a1-aeb6-eb81c87daa7a",
+      "label": "UXT Опоздавший ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "late-admin",
+      "id": "12045222-59bd-4bb5-acbb-f65077487aa3",
+      "label": "UXT Админский ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "outsider",
+      "id": "35217f6e-625f-4bf0-8d95-807573814a26",
+      "label": "UXT Посторонний ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "player-a",
+      "id": "0840e2a2-4139-4c07-8166-09af70660ac8",
+      "label": "UXT Игрок Альфа ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "player-b",
+      "id": "b3638881-381d-4675-aff3-30989cf65f7f",
+      "label": "UXT Игрок Бета ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "player-c",
+      "id": "754b93ee-6465-40cb-a1fd-7a03a6b74357",
+      "label": "UXT Игрок Гамма ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "player-d",
+      "id": "30f70af9-15e4-4a03-9a30-ab18bdb9c131",
+      "label": "UXT Игрок Дельта ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "player-e",
+      "id": "277f3903-9a6b-4e2f-be04-78c3c60fee67",
+      "label": "UXT Игрок Эпсилон ydu9b",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "topology-single_elimination-3",
+      "id": "eaf9a679-4218-4f15-91cf-b8d7a513e1b6",
+      "kind": "tournament",
+      "title": "UXT SE 3"
+    },
+    {
+      "key": "topology-single_elimination-5",
+      "id": "f7c2c316-83bc-4c3a-839d-d544cece0cf3",
+      "kind": "tournament",
+      "title": "UXT SE 5"
+    },
+    {
+      "key": "topology-single_elimination-8",
+      "id": "a4770ea4-370e-4c40-aa27-707ad933597b",
+      "kind": "tournament",
+      "title": "UXT SE 8"
+    },
+    {
+      "key": "topology-double_elimination-3",
+      "id": "e059ca4c-473b-455c-b332-3ff611dced6e",
+      "kind": "tournament",
+      "title": "UXT DE 3"
+    },
+    {
+      "key": "topology-double_elimination-5",
+      "id": "3e8e57ce-e721-4b73-941b-4d0c750a3358",
+      "kind": "tournament",
+      "title": "UXT DE 5"
+    },
+    {
+      "key": "topology-double_elimination-8",
+      "id": "e411517d-bea9-4de7-ae30-a8539bd8b06c",
+      "kind": "tournament",
+      "title": "UXT DE 8"
+    },
+    {
+      "key": "consent-states",
+      "id": "ef718079-4ada-456b-b638-49250db6a0de",
+      "kind": "tournament",
+      "title": "UXT Consent states"
+    },
+    {
+      "key": "current-next",
+      "id": "dfabcf83-a121-4e58-8cad-4d4a418b907e",
+      "kind": "tournament",
+      "title": "UXT Current next"
+    },
+    {
+      "key": "dissolve",
+      "id": "9b4d4183-79b0-48db-bc5b-ec0100285dc3",
+      "kind": "tournament",
+      "title": "UXT Dissolve"
+    },
+    {
+      "key": "cancel",
+      "id": "840b7d75-1817-4ad1-bac4-9e533168040b",
+      "kind": "tournament",
+      "title": "UXT Cancel"
+    },
+    {
+      "key": "withdraw-warning",
+      "id": "aa443227-c4fc-4abe-8c51-a8581b954fc0",
+      "kind": "tournament",
+      "title": "UXT Withdraw warning"
+    },
+    {
+      "key": "stop",
+      "id": "b3945c3a-238c-4170-a621-00d69e8da3cc",
+      "kind": "tournament",
+      "title": "UXT Stop"
+    },
+    {
+      "key": "finished",
+      "id": "7ff5f8a3-431f-408f-b1e6-f970ec266c72",
+      "kind": "tournament",
+      "title": "UXT Finished"
+    }
+  ]
+}

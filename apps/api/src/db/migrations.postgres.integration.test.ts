@@ -244,7 +244,7 @@ describePostgres.sequential(
         `;
         expect(tables).toHaveLength(19);
       });
-      await expectLedgerCount(6);
+      await expectLedgerCount(7);
     });
 
     it("produces the same exact catalog and database-generated UUIDs for fresh and adopted baselines", async () => {
@@ -344,7 +344,7 @@ describePostgres.sequential(
         `;
         expect(user).toEqual([{ email: "historical@tab10.test" }]);
       });
-      await expectLedgerCount(6);
+      await expectLedgerCount(7);
     });
 
     it("rejects duplicate active participants in a bracket without mutating rows or recording migrations", async () => {
@@ -600,7 +600,7 @@ describePostgres.sequential(
       expect(retryEvidence.adoption?.actualAfterDigest).toBe(
         retryEvidence.adoption?.expectedAfterDigest,
       );
-      await expectLedgerCount(6);
+      await expectLedgerCount(7);
     });
 
     it("serializes concurrent migrators into one baseline and repeatable no-ops", async () => {
@@ -613,7 +613,7 @@ describePostgres.sequential(
       ]);
 
       expect(results.every((result) => result.status === "fulfilled")).toBe(true);
-      await expectLedgerCount(6);
+      await expectLedgerCount(7);
       await withClient(async (client) => {
         await expect(
           assertMigrationsExactlyCurrent(queryMigrations(client)),
@@ -628,7 +628,7 @@ describePostgres.sequential(
       await runPostgresMigrations(databaseUrl!, "apply", { environment });
       await runPostgresMigrations(databaseUrl!, "apply", { environment });
 
-      await expectLedgerCount(6);
+      await expectLedgerCount(7);
       await withClient(async (client) => {
         await expect(
           assertMigrationsExactlyCurrent(queryMigrations(client)),

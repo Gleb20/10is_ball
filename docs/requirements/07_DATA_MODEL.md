@@ -178,8 +178,9 @@ Check exactly one participant reference.
 
 Создание `match` и полного набора `match_participant` атомарно: invalid roster,
 blocked/missing registered user или ошибка любой participant write не оставляет
-частичный match. Exact 1v1/2v2 cardinality, distinct user и creator membership
-проверяются также application service; DB-level дублирующие constraints вводятся
+частичный match. Exact 1v1/2v2 cardinality и distinct user проверяются также
+application service; `created_by_user_id` остаётся владельцем и не требует
+participant row. DB-level дублирующие constraints вводятся
 только через согласованный versioned migration (DATA-003).
 
 Переход `pending_confirmation → finished` и допустимый `→ stopped` используют
@@ -204,13 +205,14 @@ actual match на V2 node независимо от application retry (`DATA-002
 - `expiry_reason` nullable
 - `created_at`
 
-Player consent attaches to a particular roster identity and side. A prestart edit that
-keeps the participant ID/user/side retains accepted consent; replacement creates a
-new participant and cancels prior pending consent while retaining its history. New
-standalone registered outsiders require consent; creator, same active team and guests
-do not. Legacy matches without invitation history retain compatibility. Optional judge
-consent never reserves a judge session or gates start. Pending invitation uniqueness
-is enforced per match/target/kind and per historical participant.
+Player invitation attaches to a particular roster identity and side, but remains
+voluntary metadata rather than permission to play. A prestart edit that keeps the
+participant ID/user/side retains accepted history; replacement cancels obsolete
+pending history. Selection sends nothing unless `sendPlayerInvitations=true`.
+Neither player nor judge invitation gates start or reserves a judge session. Start
+closes every pending row with `expiry_reason=match_started` and reads the linked
+notification. Pending uniqueness remains per match/target/kind and historical
+participant.
 
 ### `judge_session`
 - `id`
@@ -277,14 +279,25 @@ production reset/recreate из этой схемы не следует и без
 - `participant_type` enum `user|guest`
 - `user_id` nullable
 - `guest_participant_id` nullable
-- `source` enum `organizer|invitation|team_auto_add|manual_guest`
+- `added_by_user_id` nullable FK to user; historical migration leaves it null
+- `addition_source` text check: `legacy|organizer_default|manual_direct|manual_override|invitation_accept|guest_manual`
+- `addition_idempotency_key` nullable UUID and `addition_request_fingerprint` nullable hash
 - `status` enum `active|withdrawn|forfeited`
 - `seed_rank` nullable
 - `joined_at`
 - `withdrawn_at` nullable
 
 ### `tournament_invitation`
-- аналог match invitation, `kind=player|judge`, TTL 10 минут.
+- адресное добровольное приглашение с TTL 10 минут; `terminal_reason` сохраняет
+  `expired|declined|manual_override|organizer_cancelled|roster_closed|event_cancelled`.
+
+`tournaments.require_participant_consent boolean not null default false` хранит
+immutable creation-time policy. Existing tournaments migrate to `false`, а existing
+participants receive `addition_source=legacy` without an invented actor. Partial
+unique indexes enforce one active registered participant and one successful
+idempotency key per tournament. Add/invite response/generate/start serialize on the
+tournament row; participant, invitation notification, audit and optional bracket
+regeneration commit or roll back together.
 
 ### `tournament_bracket_slot`
 - `id`

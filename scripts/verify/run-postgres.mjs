@@ -68,6 +68,7 @@ try {
         "src/gap-006.postgres.integration.test.ts",
         "src/gap-008.postgres.integration.test.ts",
         "src/gap-010.postgres.integration.test.ts",
+        "src/gap-012.postgres.integration.test.ts",
         "--reporter=json",
         `--outputFile=${report}`,
       ],
@@ -118,7 +119,8 @@ await writeJson(path.join(evidenceDir, "postgres-summary.json"), {
     "apps/api/src/gap-007.postgres.integration.test.ts",
     "apps/api/src/gap-006.postgres.integration.test.ts",
     "apps/api/src/gap-008.postgres.integration.test.ts",
-      "apps/api/src/gap-010.postgres.integration.test.ts",
+    "apps/api/src/gap-010.postgres.integration.test.ts",
+    "apps/api/src/gap-012.postgres.integration.test.ts",
   ],
   migrations:
     "fresh and adopted baselines, exact local role initializer, migration rollback/concurrency, idempotent compiled entrypoint, and runtime-role probes",

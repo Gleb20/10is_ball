@@ -787,6 +787,23 @@ focused Wave A 59/59 и полный web suite 125/125.
 - **Execution slices (wave F и в каждой UI-задаче):** 1) Закрывать geometry/44px/contrast/keyboard/focus/safe-area по мере интеграции страниц. 2) Убрать временное исключение color-contrast из critical E2E после исправления. 3) Полный desktop/390/360/judge-landscape и доступный WebKit проход; неподтверждённые physical-device проверки явно оставить residual, не объявлять выполненными.
 - **Acceptance mapping:** A11Y checklist; UX state matrix; verification evidence фиксируется по каждой slice, полный ID закрывается после всех slices и release gate.
 
+### GAP-012 — Setup матча и турнира требует обязательного player consent
+
+- **Type:** product-gap
+- **Priority:** P1
+- **Status:** verified_local
+- **Requirements / acceptance:** MATCH-001/003/008/014; TOURNAMENT-001/005/007/012; AT-MATCH-013/017; AT-TRN-004/016/019/022/023; D35.
+- **Evidence:** pre-change contracts required creator membership and blocked start on pending outsider consent; tournament policy/admin add/provenance and transactional post-bracket add were absent. Focused current evidence is recorded below and in the linked plan.
+- **Expected:** table-side operator создаёт A-vs-B, не занимая слот; selection не означает invite, а voluntary invitations не блокируют start. Tournament consent policy выбирается при создании; organizer/active admin имеет отдельный подтверждённый registered-user add, включая атомарную post-bracket regeneration до старта.
+- **Actual:** local candidate реализует direct default, explicit invitation flag, nonplaying creator edit/start, immutable tournament policy, scoped minimal admin DTO, provenance/audit/fingerprinted idempotency и serialized add/invite/start/regeneration.
+- **Repro:** создать manual A-vs-B от C и проверить creator membership/invite/start; затем создать required-consent tournament, попытаться organizer/admin add без confirmation, add к generated bracket и concurrent invite/add/start.
+- **User-visible outcome:** один телефон у стола может сразу открыть scoring для реально выбранных игроков; более строгий consent и приглашения остаются сознательными опциями, а опасный override всегда называет игрока, турнир и последствия.
+- **Non-goals:** изменение judge acquisition/scoring/stats, новые admin powers, typed-name confirmation, invitation-history UI для admin, release/version/deploy/production mutation.
+- **Risk:** потеря roster identity/history, неатомарная сетка, race с invite/start или расширение admin authority.
+- **Verification:** [`test-plans/GAP-012-game-setup.md`](test-plans/GAP-012-game-setup.md); focused PGlite/API/component/OpenAPI and PostgreSQL serialization gates green. Fresh full `verify:all`1257/1257 PASS: quality1123, PostgreSQL71, cleanup4, browser9 foundation+50 journeys (25desktop/25mobile390), zero failed/skipped/todo/interrupted. Final r6 source52 paths byte-identical before/after; Terra runtime review PASS. [Acceptance evidence](audit/evidence/gap012-local.json).
+- **Dependencies:** D18, D35, DATA-004, GAP-008; forward migration `0006_gap_012_game_setup.sql`.
+- **Open questions:** нет; exact replay уже успешного add после start возвращает прежний outcome без mutation, новый post-start add запрещён.
+
 
 
 - **Wave F start:** exclusive web/test task dispatched after E functional acceptance and443-file frozen snapshot. Work order covers44px/contrast/keyboard/safe-area/judge/bracket and browser matrix; no F acceptance yet. Parent retains canonical docs, independent acceptance and release.
@@ -1085,3 +1102,871 @@ then actual mobile safe-area/keyboard and VoiceOver/TalkBack acceptance. Reconfi
 the failure before changing anything; do not change app assertions to hide it.
 Existing Q-OPS-003 and SEC-001 negative credential probe remain separate. No new
 backlog ID, version, commit, push or public deployment was created.
+
+
+## UX/UI программа — 2026-09-13
+
+### TECH-006 — UX/UI аудит и готовый бэклог улучшений
+
+- **Type:** research-and-delivery-specification
+- **Priority:** P2
+- **Status:** in_progress
+- **Evidence:** принятый план пользователя; [паспорт и процесс](audits/2026-09-13-ux-ui/README.md), [шаблоны](audits/2026-09-13-ux-ui/templates.md), [сценарии](audits/2026-09-13-ux-ui/scenarios.md).
+- **Expected:** evidence-based Flow/CJM, полный capability/state coverage, схемы, deduplicated canonical backlog, эпики/истории/задачи/подзадачи и ready sprint queue без потери функций.
+- **Actual:** GAP-012 принят locally1257/1257. Основной pilot390 и desktop mixed-input завершены в указанном объёме; [находки F-PILOT-001–007](audits/2026-09-13-ux-ui/pilot/report.md) входят в этот work item до синтеза, GAP-013 — эталон постановки. COMPONENTS recheck подтвердил старые7 и новые3 findings в уточнённых границах; [принятая коррекция](audits/2026-09-13-ux-ui/components-recheck-correction/report.md) обязательна при чтении исходного пакета. Visual coverage active-option1440/360 и точное пересечение fixed-nav NOT_TESTED; ошибочный derived occludedByNav boolean отозван. Raw IDREF и положение option ниже1440 viewport сохраняют силу. Интервью и полный backlog ещё не завершены.
+- **Текущий синтез:** AUTH/core/TOURNAMENT/TEAM/RESULTS/ADMIN и component targets приняты:35 ready задач; coverage108 требований/72 scenario rows принят с ограничениями. BUG-029 P1 независимо воспроизведён координатором, recovery target принят. Ручная коррекция и reset-контракт приняты, BUG-038/039 ready; пользовательское прохождение ещё не проведено. Q-UX-001/002/003 открыты; гипотезы не получают ready автоматически.
+- **Открытое техническое наблюдение:** [manual correction lost response](audits/2026-09-13-ux-ui/judge-additional-observations.md), source-only, runtime NOT_TESTED. Не переносить proof +1 на prefixed correction key; BUG-031 не исправляет этот recovery.
+- **Repro:** последовательность и gates в [координации](audits/2026-09-13-ux-ui/coordination.md).
+- **Risk:** смешение старой/новой базы, стилистические мнения вместо проблем, потеря второстепенных функций, неподтверждённые user insights.
+- **Verification:** fresh source/runtime manifest, browser applicable states/roles/devices, evidence review, user tasks, task readiness, docs links and consistency. Research completion не равен UI implementation.
+- **Dependencies:** GAP-012 acceptance для изменённых flow; COMPONENTS можно параллельно с адресным recheck. Остатки GAP-011/TECH-002 не объявлять закрытыми этим аудитом. Production scope отсутствует.
+
+### BUG-018 — Выбор игрока с клавиатуры сохраняет доступную активную опцию и фокус
+
+- **Type:** accessibility-interaction
+- **Priority:** P1
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-C02, SC-M01/M02 → EP-UX-CORE «Управление игрой без лишних препятствий» → US-UX-SELECT «Оператор выбирает любого допустимого игрока с клавиатуры» → S1 candidate; готовность проверяется по принятому recheck ниже.
+- **Requirements:** MATCH-001/003; AT-MATCH-013/016; [NFR §9–10](requirements/06_NFR_CONSTRAINTS.md#9-accessibility-и-ux). Новый продуктовый ADR не требуется: исправление существующего keyboard contract. GAP-012 определяет состав и приглашения, это изменение их не переопределяет.
+- **Evidence:** F-CMP-001 и F-CMP-003 в [отчёте](audits/2026-09-13-ux-ui/components/report.md), raw states `light/autocomplete/open-keyboard-focus`, `light/autocomplete/keyboard-active-option`, `light/autocomplete/chosen-option-focus-lost-to-body`; baseline 9f71b9f, manifest3354f542; [Terra PASS](audits/2026-09-13-ux-ui/components-review.json). Confidence high; глобальная частота неизвестна.
+- **User-visible outcome:** оператор слышит/видит текущий вариант и после Enter продолжает ввод с ожидаемой позиции.
+- **Pilot recheck:** F-PILOT-004 на accepted r6 подтвердил IDREF/focus и новый Tab-related вариант: старые listbox остаются открыты и перекрывают следующий input. В этой же задаче закрывать popup при уходе фокуса вне owned composite (включая portal) без commit/clear; при Tab к другому combobox прежний popup закрыт. Сохранить click/touch selection до blur и клавиатурную доступность. [Source/evidence](audits/2026-09-13-ux-ui/pilot/source-review.md).
+- **Expected:** каждый непустой aria-activedescendant указывает на существующую option внутри принадлежащего combobox listbox; Enter принимает вариант, закрывает список, сохраняет DOM focus в поле. Escape закрывает список без неожиданной замены выбранного значения. ArrowUp/Down синхронно обновляют активную опцию и ссылку.
+- **Actual:** option id отсутствует; value-dependent key перемонтирует поле после Enter и отправляет focus в body. Технически подтверждено на исходной версии; фактическая spoken-фраза не проверена.
+- **Repro:** `/matches/new` → ввести часть имени → ArrowDown → проверить IDREF → Enter → сопоставить выбранное значение, identity поля и activeElement.
+- **Target:** [T-CMP-AUTO-001](audits/2026-09-13-ux-ui/components/target-spec.md#t-cmp-auto-001--autocomplete-клавиатура-и-видимость). В этой задаче DOM/фокус; геометрия списка — BUG-019. Selected, keyboard-active и focus различаются; внешняя рамка — BUG-020.
+- **Roles / permissions:** все существующие consumers; выбор не расширяет доступный roster, не обходит busy/distinct/active-user guards. API/types/data: none.
+- **Write scope / owner:** один frontend writer: vendored `packages/ic-kit/dist/ic-kit.js` и минимальные consumer seams `MatchCreatePage`, `MatchDetailPage`, judge selector; соответствующие тесты. Перед изменением vendored bundle проверить наличие исходного upstream и установленный порядок обновления; не делать массовую перегенерацию библиотеки.
+- **Subtasks:** (1) на GAP-012 подтвердить три consumer seams и создать failing keyboard regression; (2) связать уникальные option IDs с combobox и индексом, очистить IDREF при закрытии/пустом списке; (3) заменить value-dependent keys стабильной identity слота, сохранив controlled label/value/clear; (4) пройти несколько combobox одновременно, фильтрацию активной опции, Enter/click/Escape/clear и disabled/read-only; (5) обновить evidence и traceability.
+- **Acceptance:** Given два combobox на странице, When пользователь меняет активную опцию, Then ссылка разрешается только внутри своего listbox, дубли ID отсутствуют. Given выбранный игрок, When Enter завершает выбор, Then значение верно и focus остаётся в том же поле. Given очистка или фильтр без результатов, Then устаревший IDREF не остаётся. Given disabled/read-only, Then список не допускает запрещённого изменения.
+- **Verification:** component regression IDREF/focus + web/package typecheck/tests; real browser desktop keyboard и mobile touch emulation, light/dark где компонент используется; accessibility tree и отдельный spoken-AT spot-check с явной отметкой ограничения при недоступности. Общий компонент требует проверки его consumers, build alone недостаточен.
+- **Constraints / non-goals:** не выключать aria-activedescendant/focus ради зелёного теста; не менять разрешённые варианты, формат user/guest, серверные правила, навигацию или оформление всех экранов.
+- **Risk:** исправление remount может выявить старую зависимость default label от key; контролируемое значение обязано обновляться при prefill/revenge/reset. Нужна адресная проверка этих ветвей.
+- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. P1 также воспроизведён координатором в пилоте; блокирующих продуктовых решений нет. Постановка принята independent Terra review; runtime будущего исправления ещё не выполнен.
+- **Documentation / rollback:** BACKLOG, CHANGELOG_DEV, test traceability и component recheck evidence. Rollback только собственного bounded diff; сохранённая failing regression показывает возвращённое ограничение.
+
+### BUG-019 — Поле выбора игрока и активный вариант остаются видимыми над навигацией
+
+- **Type:** layout-interaction
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-C02, SC-M01/M02 → EP-UX-CORE → US-UX-SELECT → S1 candidate после новой базы.
+- **Requirements:** MATCH-001/003, AT-MATCH-013/016; [NFR §9–10](requirements/06_NFR_CONSTRAINTS.md#9-accessibility-и-ux); нового ADR/API/data change нет.
+- **Evidence:** F-CMP-002, [runtime rects и screenshots](audits/2026-09-13-ux-ui/components/report.md#f-cmp-002--клавиатурная-active-option-скрывается-fixed-navigation), [Terra PASS](audits/2026-09-13-ux-ui/components-review.json), baseline9f71b9f. Наблюдение 1/1 при данной позиции, распространённость по всем экранам не измерена.
+- **User-visible outcome:** можно найти и выбрать человека у нижнего края экрана, постоянно видя поле и текущую опцию.
+- **Expected:** список выбирает доступную область выше/ниже поля, ограничивается её высотой и прокручивается внутри; активная option попадает в видимую часть. Focus target имеет scroll reserve под fixed nav и safe-area. Открытый список не перекрывается навигацией.
+- **Actual:** input y870…914 перекрыт нижней nav при viewport900, active option начинается y939 за viewport.
+- **Repro:** открыть длинную форму создания, сфокусировать selector у нижнего края, ввести запрос и ArrowDown; фиксировать viewport screenshot и getBoundingClientRect, не только full-page capture.
+- **Target:** [T-CMP-AUTO-001](audits/2026-09-13-ux-ui/components/target-spec.md#t-cmp-auto-001--autocomplete-клавиатура-и-видимость). Если ниже не помещается минимальная строка — открыть вверх; иначе clamp по доступной области; длинный список скроллится. При resize/scroll geometry пересчитывается. Выбранное значение не меняется от автопрокрутки.
+- **Write scope / owner:** один frontend writer: Autocomplete popup geometry, application layout scroll reserve, локальные styles/tests. Сохранить существующий fixed BottomNav, порядок разделов, safe-area и judge route без nav.
+- **Subtasks:** (1) воспроизвести на GAP-012 при Tab-navigation без искусственного viewport-position override; (2) вычислить доступную область и реализовать flip/clamp/scroll-active; (3) добавить reserve у контейнера/targets с существующими tokens; (4) проверить длинные имена, 0/1/много результатов, последний option, увеличение масштаба, resize и virtual-keyboard уменьшение visualViewport; (5) сохранить before/after evidence.
+- **Acceptance:** Given selector у нижнего края, When открыт список и меняется active option, Then поле и активная строка видимы и не пересекают nav. Given мало места с обеих сторон, Then есть прокрутка к активной строке без page overflow и потери focus. Given меню закрыто, Then основной layout не получает скачка размера. Given judge shell без nav, Then лишний нижний резерв не появляется.
+- **Verification:** browser 360/390/768/1440, keyboard Tab/Arrows/Enter/Escape, pointer/touch emulation, длинный список и масштаб; viewport rects + screenshots. Physical virtual keyboard/safe-area проверять отдельно, не подменять CSS proxy фактом устройства.
+- **Constraints / non-goals:** не прятать nav/варианты, не уменьшать hit targets ниже44px, не заставлять пользователя вручную искать список прокруткой; без серверных изменений и общего restyling.
+- **Risk:** overflow ancestor, stacking context и virtual keyboard меняют доступную область; screenshot fullPage может скрыть перекрытие.
+- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. BUG-018 keyboard semantics. Exact nav intersection на1440/360 и визуальный active option там NOT_TESTED; подтверждён raw ниже viewport и390 tap. Эти ограничения не выдавать за полный geometry pass. Постановка принята independent Terra review; runtime будущего исправления ещё не выполнен.
+- **Documentation / rollback:** BACKLOG/CHANGELOG_DEV, traceability новых tests и recheck matrix; rollback scoped styles/component delta.
+
+### BUG-020 — Фокус и выбранное состояние имеют согласованные границы
+
+- **Type:** component-state-consistency
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-C01/C03/C04 → EP-UX-SYSTEM «Предсказуемые общие компоненты» → US-UX-STATE «Пользователь различает ввод, выбор и ошибку» → S1/S2 candidate; P3 radio-card refinement внутри общего исправления, не отдельный спринт.
+- **Requirements:** [NFR §9–10](requirements/06_NFR_CONSTRAINTS.md#9-accessibility-и-ux), существующие AUTH/MATCH/JUDGE acceptance сохраняются; AT сценарии состояний конкретизированы ниже. Product/API/data ADR не требуется.
+- **Evidence:** F-CMP-004/005 в [отчёте](audits/2026-09-13-ux-ui/components/report.md), [Terra PASS](audits/2026-09-13-ux-ui/components-review.json), user observation focus/selected, baseline9f71b9f. Отделено от native select, где одна округлая рамка уже корректна.
+- **User-visible outcome:** видно, какой компонент принимает ввод и что выбрано; рамка совпадает с геометрией поля и не выглядит вложенным случайным элементом.
+- **Expected:** один внешний focus indicator на визуальной границе TextField/Autocomplete; selected cue radio-card сохраняется отдельно от focus. Ошибка остаётся видна вместе с focus, readonly допускает копирование/выделение, disabled сохраняет значение и не фокусируется.
+- **Actual:** глобальный :focus-visible возвращает квадратную3px рамку внутреннему input поверх округлой wrapper-border; круглый radio получает квадратный ring. Selected radio-card дополнительно имеет same-color shadow и outer outline.
+- **Repro:** login input pointer/keyboard focus; admin readonly field; judge selected radio; выбранная radio-card алгоритма сетки + Tab. Сравнить light/dark и native select контроль.
+- **Target:** [T-CMP-FOCUS-001](audits/2026-09-13-ux-ui/components/target-spec.md#t-cmp-focus-001--единая-геометрия-focusselected). Ring3px/offset2px по существующей цветовой системе и radius wrapper; raw outline снимается только при равнозначном wrapper ring. Radio focus на44px label/control shape; selected border/tonal fill и один отдельный outer ring, без дублирующего selected shadow.
+- **Write scope / owner:** один frontend writer: `apps/web/src/styles.css`, `ui` component adapters при необходимости и `BracketAlgorithmDialog.css`; source seam библиотеки предварительно сверить, глобально отключать outlines нельзя. Полномочия и видимость полей не меняются.
+- **Subtasks:** (1) повторить focus/selected на новой базе и зафиксировать tokens/overrides; (2) исправить composite field indicator без изменения размеров; (3) согласовать native radio/selected-card, сохранить корректный native select; (4) проверить комбинации focus+error, selected+focus, readonly+selection, filled+disabled, open+keyboard; (5) записать state matrix и before/after.
+- **Acceptance:** Given focused composite input, Then виден один ring по округлой внешней границе и отсутствует внутренний квадратный дубль. Given selected radio и keyboard focus, Then выбор и фокус различимы, размер не прыгает. Given error+focus, Then сохраняются error text и отдельный focus indicator. Given disabled, Then значение читаемо, control не фокусируется; readonly остаётся доступным для копирования.
+- **Verification:** real browser light/dark, 390/1440 +360/zoom, pointer/keyboard, applicable state combinations, clipping/contrast/hit targets. Component/DOM tests только для изменённых semantics; визуальный результат подтверждают кадры и измерения, а не тест на CSS class name.
+- **Constraints / non-goals:** не скрывать focus, не убирать keyboard access, не менять фирменную палитру/типографику, не навязывать новый компонент корректным native controls. Text selection не приравнивать к выбранной option.
+- **Risk:** :has/focus-visible и specificity пересекаются с vendored component CSS; проверить поддерживаемые движки, не обещать Safari без прогона.
+- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. Сохранить state catalog и независимые GAP-011/TECH-002 device/AT остатки; продуктовых развилок нет. Постановка принята independent Terra review; runtime будущего исправления ещё не выполнен.
+- **Documentation / rollback:** BACKLOG/CHANGELOG_DEV, state matrix, test traceability при добавлении регрессий; rollback своего scoped style delta.
+
+### BUG-021 — Ошибка построения сетки видна в открытом диалоге
+
+- **Type:** error-recovery
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-C04/SC-T05 → EP-UX-SYSTEM → US-UX-DIALOG «Пользователь понимает результат действия в окне» → S2 candidate; accepted GAP012-r6.
+- **Requirements:** AT-TRN-001/004/005 сохраняют состав/генерацию/посев; NFR §9–10. Отдельная UI-приёмка ниже дополняет эти функциональные сценарии, не объявляется уже существующим AT.
+- **Evidence:** F-CMP-SUP-001, [report](audits/2026-09-13-ux-ui/components-supplement/report.md), [Terra PASS](audits/2026-09-13-ux-ui/components-supplement-review.json). Controlled503,1440/390; alertInsideModal=false, activeInsideModal=true. High confidence, observed1/1; частота в эксплуатации неизвестна.
+- **User-visible outcome:** после неудачного построения сетки пользователь видит причину и восстановление там, где сейчас работает.
+- **Expected:** Dialog остаётся открыт с выбранным алгоритмом; error Alert внутри перед footer, видимый/объявляемый и достижимый. Для известного исправимого отказа доступен явный повтор; при неизвестном исходе сначала GET сверяет текущую сетку. Ошибка прав/изменившегося статуса предлагает выход/обновление, а не бесполезный повтор.
+- **Actual:** runAction рендерит ошибку на странице за portal; Dialog остаётся поверх неё, особенно скрывая сообщение на390.
+- **Repro:** открыть алгоритм на турнире с4 synthetic guests → confirm → controlled503 → проверить положение и доступность ошибки в открытом Dialog.
+- **Inputs / target:** [T-DIALOG-ERROR-001](audits/2026-09-13-ux-ui/dialog-target.md#t-dialog-error-001--ошибка-в-активном-контексте), frozen baseline9f71b9f, source `TournamentDetailPage` runAction/page Alert, `BracketAlgorithmDialog`. После GAP-012 обновить строки и повторить repro.
+- **Roles / API / data:** прежние organizer permissions; никаких новых endpoint, write retries, optimistic bracket или roster изменений. Использовать существующие GET/POST и ошибки.
+- **Write scope:** один frontend writer, TournamentDetailPage + BracketAlgorithmDialog и их tests; общий Dialog adapter только если необходим для фокуса сообщения. BUG-022 пишет те же файлы позже/тем же writer.
+- **Subtasks:** (1) fresh failing browser/component case503; (2) scope action error to modal, убрать только дублирующее объявление той же ошибки с подложки; (3) сохранить выбор и дать корректный recovery по типу ошибки; (4) проверить lost response через authoritative GET без автоматического POST; (5) narrow/mobile/keyboard evidence и docs.
+- **Acceptance:** Given открытый Dialog, When действие отклонено, Then видны сообщение и следующий шаг внутри него, выбор сохранён. Given потерян ответ, When пользователь проверяет состояние, Then GET определяет актуальную сетку и повторная генерация не отправляется автоматически. Given турнир уже стартовал, Then UI объясняет невозможность действия и не предлагает бесполезный повтор. Given длинная ошибка на390/zoom, Then сообщение и footer достижимы без выхода из Dialog.
+- **Verification:** controlled pending/failure/unknown outcome,390/1440, Tab/focus/announcement, network POST count и persisted bracket/version; web tests/typecheck, screenshots и no-horizontal-overflow. API/DB policy остаётся без изменений.
+- **Constraints / non-goals:** не закрывать окно молча только чтобы сделать page Alert видимым; не обещать «ничего не изменилось» при неизвестном исходе; не добавлять автоматический повтор мутаций или менять алгоритмы.
+- **Risk:** double live announcements, потеря выбора, повторная mutation при уже завершившейся первой операции.
+- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. BUG-022 отдельно решает pending dismissal. Known/unknown error target принят; failure placement не зависит от Q-UX-001. Постановка принята independent Terra review; runtime будущего исправления ещё не выполнен.
+- **Documentation / rollback:** BACKLOG/CHANGELOG_DEV, traceability добавленных tests и новый evidence; rollback только task delta.
+
+### BUG-022 — Действия диалога честно показывают доступность во время запроса
+
+- **Type:** pending-interaction
+- **Priority:** P2
+- **Status:** blocked_decision
+- **Scenario / Epic / Story / Sprint:** SC-C03/C04,SC-T05 → EP-UX-SYSTEM → US-UX-DIALOG → не включать в ready sprint до Q-UX-001.
+- **Requirements:** AT-TRN-004/005; NFR §9–10. Серверная отмена построения не входит в scope.
+- **Evidence:** F-CMP-SUP-002, [report](audits/2026-09-13-ux-ui/components-supplement/report.md), [Terra PASS](audits/2026-09-13-ux-ui/components-supplement-review.json): Close48px, disabled=false, tabIndex0, pointer/focus ring, guarded no-op; disabled radio-label class отсутствует.
+- **Expected:** Close либо выполняет явно описанное закрытие с сохранённым фоновым процессом, либо честно недоступен с понятным ожиданием/выходом. Disabled radio-cards визуально различимы, selected сохраняется; фокус не попадает на доступное на вид, но бесполезное действие.
+- **Actual:** в pending footer/radios native-disabled, Close выглядит активным, click/Escape молча игнорируются; cards не показывают disabled-оформление.
+- **Repro:** keyboard confirm при heldPOST → focus на Close → click/Escape → реакции/объяснения нет.
+- **Inputs / target:** [T-DIALOG-PENDING-001](audits/2026-09-13-ux-ui/dialog-target.md#t-dialog-pending-001--решение-пока-открыто), baseline9f71b9f; [Q-UX-001](OPEN_QUESTIONS.md#q-ux-001--закрытие-окна-во-время-построения-сетки). Предложен closable Dialog с process state на странице; решение не принято.
+- **User-visible outcome:** пользователь понимает, что происходит и что сейчас действительно можно сделать.
+- **Roles / contracts / scope:** прежние права и single-flight; TournamentDetailPage/BracketAlgorithmDialog/native disabled styles, один frontend writer. Другие Dialog не менять автоматически; API/data none.
+- **Subtasks после решения:** (1) зафиксировать одну dismissal policy и убрать альтернативу из ready-постановки; (2) Red для этой политики, focus и disabled cards; (3) синхронизировать callback/native semantics/видимый state и progress; (4) pending→success/error/закрытие/возврат на390/1440; (5) обновить evidence/docs.
+- **Acceptance, общая часть:** Given pending, Then selected algorithm неизменен и повторная mutation невозможна. Given visually operable Close, Then он выполняет заявленное действие. Given disabled card, Then native и визуальные состояния совпадают. Given completion/error, Then показан актуальный результат в текущем контексте; окно не открывается неожиданно повторно. Окончательный GWT для закрытия добавляется после Q-UX-001.
+- **Verification:** heldPOST, click/Escape/Tab, state/focus последовательность, lost response,390 touch emulation/1440 keyboard, authoritative bracket и число POST. Full product correctness не заменять appearance test.
+- **Constraints / non-goals:** не скрывать focus ради вида, не называть закрытие отменой серверной операции, не возвращать optimistic success и не менять все модальные окна одним глобальным правилом.
+- **Risk:** ложное ощущение отмены, зависшее модальное окно, повторная запись или потерянное сообщение после закрытия.
+- **Dependencies:** Q-UX-001 + GAP-012 recheck; общий error contract BUG-021; UI writer общий/последовательный.
+- **Documentation / rollback:** Q-UX-001/DECISIONS при принятии политики, BACKLOG/CHANGELOG_DEV, traceability и target spec; rollback task delta. Нельзя начинать реализацию по этой записи со статусом blocked_decision.
+
+### BUG-023 — Поиск игрока принимает имя и фамилию в любом порядке
+
+- **Type:** search-consistency
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-C02, SC-T01/T03, SC-M01 → EP-UX-CORE → US-UX-SELECT → S1 candidate, после финальной GAP-012 базы и mobile recheck.
+- **Requirements:** TOURNAMENT-003/004, MATCH-001/002; NFR §9–10. Существующие права и AT турнирного roster/матча сохраняются; отдельная приёмка поиска задана ниже.
+- **Evidence:** [F-PREP-001](audits/2026-09-13-ux-ui/preparation-evidence/search-order-finding.md), source и runtime r3, Chromium1440×900, обычный organizer. Новые аккаунты уже active: отсутствие первого входа не объясняет результат поиска.
+- **Expected:** одного и того же допустимого игрока можно найти по имени, фамилии, обоим словам в любом порядке и частичным фрагментам, без знания порядка label конкретного экрана. Нулевой результат понятен.
+- **Actual:** в UserPicker «Поздний» находит «Синтетический Поздний», «Поздний Синтетический» не находит; MatchCreate по последнему запросу находит того же человека. Options0 не сопровождаются объяснением.
+- **Repro:** открыть collecting-турнир как organizer; в «Добавить игрока» последовательно ввести одно имя и полное имя; сравнить те же запросы в MatchCreate. Fixture и точный DOM результат указаны в F-PREP-001.
+- **Target:** нормализовать query и видимый label в Unicode NFC, lower-case; убрать крайние пробелы, разделить query по последовательностям whitespace. Для непустого query сохранить option, только если каждый непустой token входит подстрокой в нормализованный label. Порядок token не влияет. Пустой/пробельный запрос сохраняет текущий допустимый набор и его порядок. Fuzzy-поиск, транслитерация и новая серверная фильтрация не требуются. `ё` и `е` пока не приравниваются: это отдельная возможность, не скрытое обязательство задачи.
+- **States:** при непустом query и0 options показывать в popup «Игроки не найдены» и «Проверьте написание имени». Сообщение — отдельный элемент `role=status`, `aria-live=polite`, `aria-atomic=true` в popup рядом с listbox, вне option. Оно не является selectable option; aria-activedescendant у combobox отсутствует, фокус остаётся в поле. Loading и ошибка загрузки не выдаются за0 результатов. При восстановлении списка введённый query сохраняется. Пустой допустимый directory показывает «Нет доступных игроков», не предлагает обойти права.
+- **Write scope / owner:** один frontend writer для общего Autocomplete filter/empty-state seam и его adapters/consumers; перед изменением проверить актуальное расположение библиотеки. API/data/authorization changes: none. Связать с BUG-018/019, чтобы не было конкурирующих writers одного popup.
+- **Subtasks:** (1) повторить на новой базе и записать query→IDs для обоих consumers; (2) реализовать общий token predicate без изменения labels/IDs/исходного порядка; (3) добавить empty-state с корректной status-семантикой, сохранив error/loading; (4) проверить полный/частичный/переставленный/разнорегистровый/пробельный запрос и несколько совпадений; (5) проверить keyboard/touch и обновить evidence/документы.
+- **Acceptance:** Given active допустимый игрок с именем/фамилией, When запрос содержит оба фрагмента в любом порядке, Then возвращается тот же stable ID во всех применимых селекторах. Given два человека с одинаковыми именами, Then фильтр не объединяет их IDs и не выбирает первого автоматически. Given один token не совпадает, Then виден non-option `role=status` с polite/atomic announcement, aria-activedescendant отсутствует, фокус остаётся в combobox. Given excluded/blocked/roster member, Then улучшенный поиск не возвращает исключённого игрока. Given выбранная option и Enter, Then состав получает нужныйID один раз и фокус не теряется по BUG-018.
+- **Verification:** focused predicate/компонентные проверки для независимых краёв; browser390/1440, оба порядка полного имени, partial/Cyrillic/case/whitespace, empty/loading/error, клавиатура/касание. Не считать исправление search выполненным по тому, что fixture использовал обходной запрос из одного слова.
+- **Constraints / non-goals:** не менять публичные labels, палитру, форму имён во всём продукте, backend search, permissions/exclusions, правила согласий или auto-selection. Не искать по скрытым email/ID/служебным полям.
+- **Risk:** общая библиотека может использовать predicate в других селекторах; проверить всех consumers и сохранить disabled/группы/стабильный порядок. Частота проблемы в аудитории unknown.
+- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. BUG-018/019 shared seams; имя/family order воспроизведено в preparation, app source bytes неизменны между r3/r6. Mobile order search остаётся будущей приёмкой, не подтверждённым run. Постановка принята independent Terra review; runtime будущего исправления ещё не выполнен.
+- **Documentation / rollback:** BACKLOG/CHANGELOG_DEV, state/requirement coverage и traceability добавленных tests; rollback только своего scoped delta.
+
+
+### GAP-013 — Состав матча предшествует редким настройкам
+
+- **Type:** ux-layout
+- **Priority:** P2
+- **Status:** ready
+- **Evidence:** F-PILOT-001, [пилот](audits/2026-09-13-ux-ui/pilot/report.md), [target T-PILOT-CREATE](audits/2026-09-13-ux-ui/pilot/target-spec.md#t-pilot-create--сначала-состав-затем-проверка-правил), [схемы390/1440](audits/2026-09-13-ux-ui/pilot/wireframes.html). Измерение390: первое игровое место y≈1060; частота проблем реальных пользователей неизвестна. Экспертная рекомендация, не доказанная потеря конверсии.
+- **Expected:** человек выбирает стороны раньше дополнительных настроек, всегда видит применяемые правила и состояние приглашений; все прежние возможности находятся через подписанные раскрываемые блоки.
+- **Actual:** название, правила, длинная справка, необязательный судья и приглашения предшествуют составу; пустой suggestions section сохраняет рамку при отсутствии вариантов.
+- **Repro:** активный returning user, manual `/matches/new`, creator=false, без recent/frequent/team options; viewport390×844 → положение первого игрового места; сопоставить с p03/p04 pilot.
+- **Risk:** потерять prefill, selected roster, ошибку в закрытом блоке или неверно превратить optional invite в gate. Общие формы используются и challenge/revenge.
+- **Verification:** acceptance-level DOM tests на порядок/сводки/disclosure/error focus; browser390/1440 и360 narrow, keyboard/touch, empty/nonempty suggestions, custom rules/2×2/guests/prefill. Полный повтор score engine не требуется для чистой перестановки формы; если изменятся shared contracts/critical mutation — repository-wide gate по AGENTS.
+- **Dependencies:** GAP-012 verified_local; BUG-018/019/023 — согласованные контракты выбора. Pilotreview PASS. Общие pending/directory задачи BUG025/026 сформулированы; core target принят Terra; consumer025/026 уточнены после review.
+- **Scenario / Epic / Story / Sprint:** SC-M01/M02 → EP-UX-CORE «Управление игрой без лишних препятствий» → US-UX-SETUP «Ведущий задаёт состав и понимает правила» → S3 candidate.
+- **Inputs / REQ / AT / ADR:** accepted local GAP012r6 application manifest; MATCH-001–005, MATCH-008/014/015; AT-MATCH-013/015/016/017; D35; target T-PILOT-CREATE. Новый продуктовый режим не вводится. Конкретные JSX seams: MatchCreatePage.tsx slots63–100, form331+, rules382, suggestions389–422, judge423; стили match-create__suggestions в styles.css774+.
+- **User outcome / non-goals:** выбор A/B первым; сохранение всех функций. Не менять бренд, правила, API, приглашения, доступность пользователей, право старта, не добавлять постоянные черновики/автостарт/clone. Сохранить существующее исключение AUTH-006 / AT-AUTH-009: при runtime401 безопасный in-memory draft остаётся hidden/inert; повторный вход тем же actor восстанавливает его без replay mutation, другой actor получает чистую форму. Обычный уход со страницы по MATCH-015 по-прежнему уничтожает draft.
+- **Write scope / owner:** один frontend writer: `apps/web/src/pages/MatchCreatePage.tsx`, scoped existing styles и focused tests; общий Autocomplete исправляется в BUG-018/019, не форкать его ради этой формы. API/types/data: none.
+- **Exact behavior:** порядок: heading/format/creator → side A/B slots и непустые quick choices → rules summary/disclosure → title/judge/invite summary/disclosure → Create/Cancel. Сводки из текущего form state, не второй копии. Ошибки раскрывают нужную секцию. Inline buttons aria-expanded/controls, focus сохраняется на trigger; сворачивание активного region возвращает focus. Подробности — [core-target](audits/2026-09-13-ux-ui/core-target.md) и [схема](audits/2026-09-13-ux-ui/core-wireframes.html), которые заменяют противоречивый T-MATCH-CREATE. Shortcuts остаются у стороны B; заполненное B1 заменяется только после локального preview, команда всегда показывает preview B1/B2. Не вводить произвольное назначение shortcuts активному месту.
+- **Roles / states / edges:** manual creator=false; challenge/revenge creator/invite=true по исходным правилам; 1×1/2×2, registered/guest/team/recent/frequent; пустые группы без blank panel; выбранный недоступный user показывает исходную validation и не теряет остальные данные; длинные имена/названия переносятся; collapsed error открывается; directory loading/empty/error — единый контракт. Submit payload фиксируется на отправке, неизвестный результат не повторять автоматически.
+- **Subtasks:** 1) Зафиксировать meaningful Red по порядку и доступности всех возможностей, используя реальный form state; результат — failing acceptance. 2) Переставить существующие slots/controls без изменения handlers/payload, устранить пустую suggestions рамку; результат — UI order и прежний create DTO. 3) Добавить сводки/disclosures с error-focus и prefill, явное назначение B1 и preview команды/замены; результат — видимое состояние даже при закрытом блоке. 4) Проверить desktop/mobile и крайние состояния, обновить docs и приложить viewport evidence; результат — ready review delta с измерениями, не только build.
+- **Given / When / Then:** Given manual1×1 empty roster, When open390×844, Then первый slot виден до редких параметров, creator/invite выключены. Given2×2, When switchformat, Then по2 места в каждой стороне и все прежние guest/user controls доступны. Givencustomrules и invite=true, When close regions, Then сводки показывают фактические значения и inviteon. Giveninvalidfield в закрытом блоке, When submit, Then region раскрыт, ошибка доступна, focus на нужном поле, mutation не отправлен. Givenchallenge/revenge prefill, When submit valid form, Then source/participants/invites соответствуют D35, скрытых подтверждений нет. Givenpendingmutation, When пытаться менять payload-controls, Then применён единый принятый pending contract, дубляPOST нет.
+- **Documentation / rollback:** UX_FLOWS/AT уточнить структуру без изменения domain правил, traceability для новых тестов, BACKLOG/CHANGELOG_DEV и source evidence; rollback только scoped UI/test diff, без DB rollback. Не редактировать историческую r6 acceptance.
+- **Readiness:** контракты BUG025/026 и MATCH синтез приняты; открытых продуктовых развилок нет. Исследование частоты/скорости с человеком ещё впереди; не обещать улучшение времени в процентах.
+
+
+- **Readiness evidence:** [core-review](audits/2026-09-13-ux-ui/core-review.json); target принят, implementation и его обязательные проверки ещё не выполнены.
+
+### BUG-024 — Ошибка и подписи полей счёта читаются в тёмном режиме
+
+- **Type:** accessibility-contrast
+- **Priority:** P2
+- **Status:** ready
+- **Evidence:** F-CMP-SUP-003 теперь runtime-confirmed: controlled point-write503, computed rgb(176,0,32) на rgb(15,17,21),14px,2.58:1. [Recheck](audits/2026-09-13-ux-ui/components-recheck/report.md), [Terra PASS и limits](audits/2026-09-13-ux-ui/components-recheck-review.json). Confidence high для пары; частота ошибок неизвестна.
+- **Expected:** Текст `.judge-error` сохраняет минимум4.5:1 на фактическом тёмном фоне; сообщение и восстановление не скрываются и не меняют семантику ошибки.
+- **Actual:** Общий `.error` задаёт тёмно-красный текст, не учитывающий immersive фон; runtime пара не достигает4.5:1.
+- **Repro:** Открыть активное судейство в disposable fixture, контролируемо вернуть503 до обработки pointPOST, начислить очко, измерить computed `.judge-error` color/font/background и снять viewport.
+- **Risk:** Случайно переопределить все светлые ошибки либо повысить контраст подложкой, закрывающей score/actions. Не подменять ошибку успехом и не replay POST.
+- **Verification:** Browser реальные error states390/1440, computed contrast без округления до порога; visual проверка фокуса/счёта рядом. Узкий CSS consumer test только если уже есть meaningful contract, тест строкового совпадения цвета не нужен. Для CSS-only изменения не повторять все1257.
+- **Dependencies:** COMPONENTS recheck accepted; постановка принята Terra, core-review.json.
+- **Scenario / Epic / Story / Sprint:** SC-J03/SC-C03 → EP-UX-SYSTEM → US-UX-STATE «Состояния понятны в каждом shell» → S2 candidate.
+- **Inputs / REQ / AT / ADR:** JUDGE-009; AT-MATCH-007 (ошибка конфликта), NFR§9–10; [W3C criteria](audits/2026-09-13-ux-ui/standards.md). New ADR не требуется. Target T-CMP-R-DARK-001.
+- **Exact behavior / write scope:** Один frontend writer, scoped `.judge-error` в apps/web/src/styles.css. В `.app-shell--immersive:not(:has(.auth-layout))` задать локальный `--judge-error-text: #f58181` (значение существующей dark palette ic-kit) и использовать его только у `.judge-error`; итоговый computed contrast обязан пройти на всех фактических backgrounds этой ошибки. Не ссылаться вслепую на `--error-main`: immersive shell не включает весь library dark theme и может унаследовать светлое значение. Сохранить role=alert и текст. API/types/data: none. Не менять светлый `.error`.
+- **Subtasks:** 1) Зафиксировать baseline computed pair и viewport. 2) Scoped token override. 3) Реальная ошибка в judge, повтор измерения/визуальная проверка и docs. Каждый шаг использует предыдущий artifact, не новый дизайн.
+- **Acceptance:** Given dark judge with a real error, When render14px text, Then computed ratio≥4.5:1 и полный текст доступен. Given light form error, When revisit, Then её существующий стиль/роль сохранены. Given pending/readonly score, Then никакая CSS правка не меняет enabled state или повтор запросов.
+- **Documentation / rollback:** BACKLOG/CHANGELOG_DEV, evidence; scoped CSS rollback, noDB. Решений продукта нет; runtime remedy ещё не реализован.
+
+
+- **Readiness evidence:** [core-review](audits/2026-09-13-ux-ui/core-review.json); target принят, implementation и его обязательные проверки ещё не выполнены.
+
+- **Дополнение финального visual review:** на [c01 ручной коррекции](audits/2026-09-13-ux-ui/judge-correction-probe/screenshots/c01-commit-then-lost-response.png) подписи «Счёт стороны A/B» тёмные на dark card, тогда как native «Текущий подающий» светлый. Это наблюдение rendered screenshot, не новое computed измерение ratio. Source: TextField=ic-kit Input, library labelText использует --color-text-secondary; color секции этого не переопределяет. Scope этой задачи дополняется двумя подписями в JudgePage, без расширения темы на весь Input.
+- **Точный label target:** перед каждым из двух TextField вывести собственный native label с htmlFor на стабильный уникальный id соответствующего input; library label prop убрать, чтобы не было дубликата accessible name. Класс `.judge-correction__label` наследует #f5f5f5 секции. Не менять цвет значения/placeholder/границу белого input или переопределять глобальные library tokens. Current server label остаётся прежним. Это два текстовых label, не новая UI primitive.
+- **Дополнительные subtasks/GWT:** до правки снять computed color/background/font подписи в действующей correction форме; после проверить label↔input association, click-label focus, Tab порядок BUG-031, minimum4.5:1 и отсутствие изменения белого input. Проверить normal/filled/focused/error/pending360/390/1440. При disabled поле остаётся явно подписанным. Один writer JudgePage+локальный styles, без API/data; будущий computed result не заявлять по PNG.
+
+### BUG-025 — Селектор игроков различает загрузку, пустой результат и ошибку
+
+- **Type:** async-feedback
+- **Priority:** P2
+- **Status:** ready
+- **Evidence:** F-CMP-R-001, ADMIN-PICKER-PENDING/ERROR в [runtime recheck](audits/2026-09-13-ux-ui/components-recheck/report.md), controlled pending и503 по одному прогону; TerraPASS. UserPicker.tsx fetch effect и loadError. Confidence high по состоянию.
+- **Expected:** До готовности каталога статус понятен; ошибка предлагает явный повтор GET; готовый пустой каталог/нулевой поиск не похож на незагруженный список.
+- **Actual:** Pending picker enabled, options0 и нет role=status. После503 control остаётся enabled, retry отсутствует. Отдельный BUG023 покрывает порядок поиска и zero-query feedback.
+- **Repro:** Scoped admin до старта турнира открывает ручное добавление registered user; удержать directoryGET, затем503; сопоставить control/status/error/retry. Повторить родственный UserPicker consumer.
+- **Risk:** Потерять selected value/query, показать устаревший ответ после смены excludes или дать выбрать недоступного игрока. Не считать mustChangePassword признаком inactive.
+- **Verification:** Meaningful component tests deferred GET/success/error/retry/out-of-order/excludes, keyboard/focus/aria; browser1440/390 on tournament and team consumers. Поскольку sharedUI меняется — web typecheck/relevant suite; backend/DB protocol неизменен.
+- **Dependencies:** BUG018 keyboard identity; BUG023 shared empty/search wording, не второй status для той же причины. Frozen app current; consumer contract принят Terra, core-review.json.
+- **Scenario / Epic / Story / Sprint:** SC-C02/SC-T02/SC-TE01 → EP-UX-SYSTEM → US-UX-SELECT-STATE «Понятно, готов ли выбор» → S1 candidate.
+- **Inputs / REQ / AT / ADR:** MATCH-003/004, TOURNAMENT-005/007, TEAM-003/004; AT-TRN-004, AT-TEAM-001/002; NFR§9–10; D35. Current UserPicker.tsx, tournament/team consumer tests. API/types/data: none; только существующий directoryGET. JUDGE handover native select использует тот же контракт, evidence j08/j09 в принятом с correction пакете JUDGE.
+- **Exact behavior / write scope:** Один frontend writer: UserPicker.tsx и native handover select в JudgePage.tsx + focused tests, минимальные consumer props. Ввести явные loading/ready/error. Loading: combobox и clear недоступны, рядом role=status «Загружаем игроков…», region aria-busy=true. Ready: существующие фильтры; при0available «Нет доступных игроков», при0querymatch BUG023. Error: связанный через describedby alert «Не удалось загрузить игроков» и enabled button «Повторить загрузку»; combobox disabled. Retry запускает один GET, disabled до ответа; ошибка не повторяется автоматически. Selected ID/label/query сохраняются, пока свежие данные не подтвердят необходимость обычной validation; никаких автоматических roster mutations.
+- **Edge cases:** Последний актуальный request отвечает за UI; старые responses после unmount/exclude-change не возвращают запрещённые варианты. Exclude/self/source active сохраняются. Parent disabled сильнее ready. Успешныйretry стирает прежнюю error; focus от retry после завершения переводится на доступный combobox (или остаётся на error retry при неудаче), через явный запрос retry, не при каждой background hydration. Смена props не стирает ввод без необходимости.
+- **Subtasks:** 1) Deferred Red для loading/error/retry и сохраненияquery. 2) State machine и один локальный retry. 3) Согласовать empty с BUG023, stale response guard и disabled clear. 4) Browser consumers/states и docs.
+- **Acceptance:** Given held initialGET, When open picker, Then загрузка отличима и выбрать нельзя. Given503, Then alert+retry, entered state сохранён. Given retry success, Then свежие permitted options, olderror исчезла и focus возвращён к picker. Given obsolete response after changed excludes, Then excluded ID не появляется. Given ready empty/queryzero, Then соответствующий status из BUG023, без fictitious option/activeDesc.
+- **JUDGE consumer:** loading/error отключают select и transfer; ready без preselection; empty «Некому передать»; retry только directory GET, сохраняет выбранный ID до authoritative validation. D7 eligibility и transfer protocol не меняются. После явного успешного retry focus возвращается в доступный select, при повторной ошибке остаётся у retry. Не менять score controls ради фоновой загрузки людей.
+- **Documentation / rollback:** UX_FLOWS states, AT focused mapping/traceability если добавлены tests, BACKLOG/CHANGELOG_DEV. Scoped UI rollback; noDB. Нет новой продуктовой политики.
+
+
+- **Readiness evidence:** [core-review](audits/2026-09-13-ux-ui/core-review.json); target принят, implementation и его обязательные проверки ещё не выполнены.
+
+### BUG-026 — Отправленная конфигурация не расходится с редактируемой формой
+
+- **Type:** async-interaction
+- **Priority:** P2
+- **Status:** ready
+- **Evidence:** F-CMP-R-002 MC-PENDING-1440 и ADMIN-OVERRIDE-PENDING: action disabled, creator/invite checkbox или targetpicker enabled после отправки payload. [Recheck](audits/2026-09-13-ux-ui/components-recheck/report.md), TerraPASS. High confidence для state mismatch; не заявляется duplicate-write bug.
+- **Expected:** Пока запрос создания/ручного включения выполняется, все controls, определяющие уже отправленный payload, недоступны для изменения и показывают отправленные значения.
+- **Actual:** Пользователь может поменять видимые creator/invite или selected person, хотя выполняется запрос с прежним значением; UI не показывает этот разрыв.
+- **Repro:** Controlled hold POST при manual create или tournament override после подтверждения; попытаться изменить зависимости submit, затем разрешить ответ и сверить UI/persisted actor/participants/policy.
+- **Risk:** Отключить unrelated navigation либо решить pendingDialog QUX001 без решения; потерять formstate при ошибке; обойти существующую idempotency защиту.
+- **Verification:** Deferred mutation tests и browser390/1440 на двух consumers; захват отправленного payload и authoritative readback success, explicit knownerror preservingvalues; проверка disabled через мышь/keyboard/clear. Shared domain/API не меняются; scoped web checks, а при изменении critical mutation contract — fullgate/PG по AGENTS.
+- **Dependencies:** GAP012 accepted; BUG025 directory-state и BUG018 disabled/focus semantics. QUX001 close-policy остаётся отдельным BUG022: эта задача её не выбирает. Постановка принята после адресной correction, см. core-review.json.
+- **Scenario / Epic / Story / Sprint:** SC-M01/SC-T02/SC-AD03/SC-C03 → EP-UX-SYSTEM → US-UX-SUBMIT «Вижу именно отправленные данные» → S2 candidate.
+- **Inputs / REQ / AT / ADR:** MATCH-001/003/008, AT-MATCH-017; TOURNAMENT-005/007 и AT-TRN-004; D35 manual include acceptance; current MatchCreatePage and TournamentDetailPage. T-CMP-R-ASYNC-001/OVERRIDE-001 из recheck. API/types/data: none.
+- **Exact behavior / write scope:** Один frontend writer: form mutation boundary MatchCreatePage + scoped manual-add controls TournamentDetailPage + pending start/setup controls JudgePage и tests. Выбрать конкретный вариант: disable всех payload-controls (format/creator/slots/guests/title/rules/judge/invites; manual-add targetpicker/clear/confirm; judge setup first-server/swapSides/Start/Cancel), а не второй editable snapshot UI. Сохранять значения в прежнем state. Не менять закрытиеDialog/route/cancel policy, не объявлять отменой уже отправленныйPOST. Existing saving indicator становится доступным status; дополнительный modal/spinner fullscreen не вводить.
+- **Edge cases:** Success только после authoritative response, прежний navigation/clearing. Known failure разблокирует поля с теми же attemptedvalues; retry только явный. Unknown outcome не autoPOST, existing recovery/BUG021 contract. Быстрая последовательность до отправки фиксируется обычным обработчиком; после отправки событие не меняет отображаемый payload. Parent directory loading/error также блокирует выбор. JUDGE j02 воспроизвёл только удержанный первый шаг Start: radios и swapSides остаются enabled. Их участие во втором setup payload установлено по source, а не отдельным runtime hold второго шага. Target требует disabled до завершения обоих шагов; held/failure второго шага остаётся обязательной приёмкой реализации, не выполненным evidence.
+- **Subtasks:** 1) Red: heldPOST, зависимое поле изменяемо. 2) Полный перечень payloadcontrols из сериализатора и единый pending disabled boundary. 3) Error/success recovery без сброса попытки. 4) Browser input methods, capturedpayload/readback, docs.
+- **Acceptance:** Given submitted create with creator=false/invite=false, When try toggle/type whilePOSTheld, Then значения/roles не меняются и лишнегоPOSTнет. Given selected manual-addX, WhenPOSTheld and attemptY/clear, Then виденX, изменение невозможно. Given knownfailedrequest, When retryafterfix, Then прежниеданные доступны и отправка явная. Given success, Then UI/persisted совпадают; эта задача не расширяет admin/organizer rights.
+- **JUDGE acceptance:** Given held first step start/setup, Then first-server и swapSides недоступны; captured start и следующий setup payload отражают исходные значения. При известном отказе сохраняются попытка и сообщение; повтор не выполняется автоматически. Проверить также второй шаг held/failure без повторного старта и смены владения.
+- **Documentation / rollback:** UX_FLOWS pending/error, AT/traceability focusedregressions, BACKLOG/CHANGELOG_DEV. Только scoped UI rollback. Общий backend/release не затрагивается.
+
+
+- **Readiness evidence:** [core-review](audits/2026-09-13-ux-ui/core-review.json); target принят, implementation и его обязательные проверки ещё не выполнены.
+
+### BUG-027 — Выход при первом пароле завершает текущую сессию
+
+- **Type:** bugfix
+- **Priority:** P2
+- **Status:** ready
+- **Evidence:** F-AUTH-001; [Отчёт AUTH](audits/2026-09-13-ux-ui/auth/report.md), [находки](audits/2026-09-13-ux-ui/auth/findings.json), [точная спецификация](audits/2026-09-13-ux-ui/auth/target-spec.md), [схемы](audits/2026-09-13-ux-ui/auth/wireframes.html). Frozen45payloads проверены и приняты; [независимое review](audits/2026-09-13-ux-ui/auth-review.json). Частота в аудитории неизвестна.
+- **Expected:** Кнопка «Выйти» завершает текущую ограниченную сессию, после чего вход действительно требуется заново.
+- **Actual:** Кнопка выполняет только navigate: logout POST отсутствует, тот же browser context получает auth/me200; свежий context401. Ограничение mustChangePassword продолжает защищать продуктовые данные.
+- **Repro:** Пакет AUTH, finding F-AUTH-001, runs/evidence; повторять на accepted local GAP012r6, synthetic users, desktop1440/mobile390 и narrow360 по применимости.
+- **Scenario / Epic / Story / Sprint:** SC-A01 → EP-UX-ACCESS → US-UX-ENTRY → S2 candidate.
+- **Inputs / REQ / AT / ADR:** AUTH-003/006; AT-AUTH-001/009; accepted323-path candidate-source; target T-AUTH-SESSION-EXIT из AUTH. Доказательства package scope, не production claim.
+- **Write scope / contracts:** FirstPasswordPage.tsx, существующий auth context/API logout и focused tests. API/types/data: без изменений; ограничения текущих handlers и авторизации сохраняются.
+- **Exact behavior:** Один POST logout; на время запроса обе операции формы заблокированы, подпись «Выход…». Успех или401 очищает auth state и поля, replace на /login; back не восстанавливает сессию. При ином отказе оставаться на форме, сохранить поля, показать доступную ошибку и разрешить явный повтор. Не отзывать другие сессии.
+- **Given / When / Then:** Given first-password session, When «Выйти», Then ровно один POST, auth/me401 и login. Given другой действующий session, Then он сохраняется. Given503, Then форма и значения сохранены, сообщение сфокусировано, повтор только по действию.
+- **Subtasks:** 1) Прочитать source/target и зафиксировать failing observable acceptance на изменяемое поведение. 2) Внести ограниченный delta в указанный consumer с existing primitives. 3) Пройти описанные state/edge cases, keyboard и viewport checks; сохранить before/after evidence. 4) Передать независимому reviewer точный diff и evidence, обновить связанную документацию.
+- **Risk:** Регрессия restricted logout/guards; не расширять allowlist, не менять password policy и успешную смену пароля. Brand/navigation redesign вне задачи.
+- **Verification:** Focused meaningful component tests и web typecheck; реальный Chromium1440/390,360 по layout, keyboard focus/long text/pending/known error/reauth где применимо. Для logout проверить response и server auth state, не только URL. Прочие задачи не требуют повторять1257tests без новых contract/critical-journey изменений; AGENTS risk gate остаётся обязательным.
+- **Dependencies:** Независимое AUTH review PASS; продуктовых развилок нет.
+- **Documentation / rollback:** BACKLOG/CHANGELOG_DEV, UX_FLOWS/AT уточнение наблюдаемого поведения и test traceability; сохранить исторические evidence. Rollback только своего UI/test/docs delta, без данных/деплоя.
+
+
+### BUG-028 — Ошибки авторизации дают понятное исправление и сохраняют фокус
+
+- **Type:** accessibility-ux
+- **Priority:** P2
+- **Status:** ready
+- **Evidence:** F-AUTH-002; [Отчёт AUTH](audits/2026-09-13-ux-ui/auth/report.md), [находки](audits/2026-09-13-ux-ui/auth/findings.json), [точная спецификация](audits/2026-09-13-ux-ui/auth/target-spec.md), [схемы](audits/2026-09-13-ux-ui/auth/wireframes.html). Frozen45payloads проверены и приняты; [независимое review](audits/2026-09-13-ux-ui/auth-review.json). Частота в аудитории неизвестна.
+- **Expected:** Человек понимает отказ формы и может исправить его с клавиатуры, не разбирая коды API.
+- **Actual:** После отказа фокус BODY/submit; mismatch не связан с полями через invalid/description; политика пароля показывается TOO_SHORT/MISSING_* .
+- **Repro:** Пакет AUTH, finding F-AUTH-002, runs/evidence; повторять на accepted local GAP012r6, synthetic users, desktop1440/mobile390 и narrow360 по применимости.
+- **Scenario / Epic / Story / Sprint:** SC-A01/A02 → EP-UX-ACCESS → US-UX-RECOVERY → S2 candidate.
+- **Inputs / REQ / AT / ADR:** AUTH-004/005; AT-AUTH-003/009; accepted323-path candidate-source; target T-AUTH-ERRORS из AUTH. Доказательства package scope, не production claim.
+- **Write scope / contracts:** LoginPage.tsx, FirstPasswordPage.tsx, existing Alert/TextField и focused tests. API/types/data: без изменений; ограничения текущих handlers и авторизации сохраняются.
+- **Exact behavior:** После submit error один раз фокусировать именованный Alert с tabIndex=-1; не перехватывать фокус при каждом вводе. Mismatch связывает оба поля с сообщением aria-describedby/invalid; изменение убирает устаревшую ошибку. Известные policy reasons переводятся в конкретные требования на русском, неизвестные — общий безопасный текст. Неверная пара email/пароль остаётся общим сообщением; blocked/rate-limit как в текущем контракте.
+- **Given / When / Then:** Given mismatch, When submit, Then оба поля связаны с ошибкой и данные сохранены. Given policy refusal, Then нет внутренних кодов и видны необходимые действия. Given wrong credentials, Then ответ не раскрывает существование аккаунта. Given edit, Then нет повторного focus stealing.
+- **Subtasks:** 1) Прочитать source/target и зафиксировать failing observable acceptance на изменяемое поведение. 2) Внести ограниченный delta в указанный consumer с existing primitives. 3) Пройти описанные state/edge cases, keyboard и viewport checks; сохранить before/after evidence. 4) Передать независимому reviewer точный diff и evidence, обновить связанную документацию.
+- **Risk:** Не усилить account enumeration; не менять API errors/password policy и reauth isolation. Brand/navigation redesign вне задачи.
+- **Verification:** Focused meaningful component tests и web typecheck; реальный Chromium1440/390,360 по layout, keyboard focus/long text/pending/known error/reauth где применимо. Для logout проверить response и server auth state, не только URL. Прочие задачи не требуют повторять1257tests без новых contract/critical-journey изменений; AGENTS risk gate остаётся обязательным.
+- **Dependencies:** Согласовать визуальное кольцо с BUG-020; логика независима. AUTH evidence и постановка приняты независимым reviewer.
+- **Documentation / rollback:** BACKLOG/CHANGELOG_DEV, UX_FLOWS/AT уточнение наблюдаемого поведения и test traceability; сохранить исторические evidence. Rollback только своего UI/test/docs delta, без данных/деплоя.
+
+
+### GAP-014 — В обучении каждое действие имеет отдельный смысл
+
+- **Type:** ux-copy
+- **Priority:** P3
+- **Status:** ready
+- **Evidence:** F-AUTH-003; [Отчёт AUTH](audits/2026-09-13-ux-ui/auth/report.md), [находки](audits/2026-09-13-ux-ui/auth/findings.json), [точная спецификация](audits/2026-09-13-ux-ui/auth/target-spec.md), [схемы](audits/2026-09-13-ux-ui/auth/wireframes.html). Frozen45payloads проверены и приняты; [независимое review](audits/2026-09-13-ux-ui/auth-review.json). Частота в аудитории неизвестна.
+- **Expected:** На информационном шаге нет двух разных кнопок с одинаковым результатом; обучение можно закрыть и повторить.
+- **Actual:** На шагах1–6 «Далее» и «Пропустить шаг» вызывают одинаковый переход. Последствие для понимания — экспертная гипотеза, частота неизвестна.
+- **Repro:** Пакет AUTH, finding F-AUTH-003, runs/evidence; повторять на accepted local GAP012r6, synthetic users, desktop1440/mobile390 и narrow360 по применимости.
+- **Scenario / Epic / Story / Sprint:** SC-A01/A03 → EP-UX-ACCESS → US-UX-LEARN → S5 candidate.
+- **Inputs / REQ / AT / ADR:** ONB-001/002/003/005; AT-ONB-003; D34; accepted323-path candidate-source; target T-AUTH-ONBOARDING из AUTH. Доказательства package scope, не production claim.
+- **Write scope / contracts:** OnboardingPage.tsx и focused tests. API/types/data: без изменений; ограничения текущих handlers и авторизации сохраняются.
+- **Exact behavior:** Шаги1–6: одно primary «Далее», вторичное «Закрыть онбординг», пояснение «Шаг ознакомительный: можно сразу перейти дальше». Шаг7 сохраняет tutorial и завершение без него. Close сначала сохраняет completion; ошибка остаётся на текущем шаге. Reload продолжает сохранённый шаг; restart из профиля сбрасывает его. Tutorial cancel/finish возвращает на7 без auto-complete D34.
+- **Given / When / Then:** Given informational step, Then один advance и отдельный close; никакое упражнение не обязательно. Given tutorial return, Then шаг7 и отдельное завершение. Given pending/error, Then нет двух transitions/потери текущего шага.
+- **Subtasks:** 1) Прочитать source/target и зафиксировать failing observable acceptance на изменяемое поведение. 2) Внести ограниченный delta в указанный consumer с existing primitives. 3) Пройти описанные state/edge cases, keyboard и viewport checks; сохранить before/after evidence. 4) Передать независимому reviewer точный diff и evidence, обновить связанную документацию.
+- **Risk:** Не удалить observable skip optionality и не объявлять tutorial completion onboarding completion. Brand/navigation redesign вне задачи.
+- **Verification:** Focused meaningful component tests и web typecheck; реальный Chromium1440/390,360 по layout, keyboard focus/long text/pending/known error/reauth где применимо. Для logout проверить response и server auth state, не только URL. Прочие задачи не требуют повторять1257tests без новых contract/critical-journey изменений; AGENTS risk gate остаётся обязательным.
+- **Dependencies:** Независимое review подтвердило эквивалентность ONB-002/AT-ONB-003 и сохранение D34.
+- **Documentation / rollback:** BACKLOG/CHANGELOG_DEV, UX_FLOWS/AT уточнение наблюдаемого поведения и test traceability; сохранить исторические evidence. Rollback только своего UI/test/docs delta, без данных/деплоя.
+
+
+### GAP-015 — Главная сначала показывает действие у стола и текущий статус ведения
+
+- **Type:** ux-hierarchy-and-state-presentation
+- **Priority:** P2
+- **Status:** ready
+- **Evidence:** F-AUTH-004/F-PILOT-007 и F-PILOT-005/F-RESULTS-005; [AUTH](audits/2026-09-13-ux-ui/auth-review.json), [RESULTS](audits/2026-09-13-ux-ui/results/report.md), [populated Home](audits/2026-09-13-ux-ui/results/evidence/runtime/home-results-390.png). Layout benefit remains expert hypothesis; released judge mismatch observed, score permissions unchanged. RESULTS independent evidence/target review PASS.
+- **Expected:** оператор видит текущую игру/вход к созданию раньше статистики, понимает актуальность ведения; все данные и входы сохранены.
+- **Actual:** statistics/rival block предшествует игре; active card после release использует последнее historical judge session и «Вы судили», хотя activeJudge=null.
+- **Repro:** пустой и populated Home, active standalone/tournament/both; acquire→release→Home/detail compare; контроль active reservation, same-user another auth session и terminal card.
+- **Scenario / Epic / Story / Sprint:** SC-A03/M01/J02/R01 → EP-UX-CORE → US-UX-ORIENT → S3 candidate.
+- **Inputs / REQ / AT / ADR:** HOME-001–006, AT-HOME-001/002, AT-EMPTY-001, AT-VIS-001/002/004; D5/D17; accepted GAP012r6, core-target.md, [обязательный RESULTS target](audits/2026-09-13-ux-ui/results-correction.md). Исходная proposed DTO expansion заменена следующим минимальным контрактом.
+- **Exact layout:** greeting/refresh → доступные active standalone/tournament cards либо «Начать» → уведомления/профиль → avatar/statistics со всеми5метриками и rival/revenge → ranking/top3 с выбранным периодом → последние5 и вся история. При active event cards основной переход ведёт в существующий detail; «Новая игра» отдельная secondary /start. При отсутствии active один primary «Начать». Сохранить max-width/5tabs, один порядок на390/360/1440, перенос длинных строк и controls≥44px. Metrics 2-column на узком экране, 5 values без скрытия; «Win rate» можно подписать «Доля побед» без изменения значения/формата процента. Не гарантировать все карточки above fold при произвольных длинных именах; первый игровой блок предшествует метрикам.
+- **Exact active semantics / contracts:** existing Home matchCard для nonterminal использует judgeName=match.activeJudge?.displayName ?? null и userRole participant→activeJudge.userId account relation→organizer→viewer. Последняя historical session не подменяет active judge/role. При null текст «Сейчас счёт не ведут», не «слот свободен»: reservation может блокировать acquire. Terminal cards сохраняют historical attribution и HOME-003 metadata. Active роли показываются в настоящем времени, terminal в прошедшем. DTO shape не расширяется; semantics активной карточки документируется. Query visibility/list filters/API score guards остаются неизменными.
+- **Два устройства / точная подпись:** Home userRole обозначает аккаунт, не auth-session. При active userRole=judge отдельную self-role подпись не показывать: уже есть «Судья: {judgeName}». Home не говорит «Вы ведёте матч» на любом устройстве и не требует передачи authSessionId. Given один аккаунт в двух сессиях, Then обе карточки нейтральны, а JudgePage разрешает изменение только фактической owning session.
+- **Write scope / owner:** один bounded writer HomePage.tsx/styles, home-service.ts matchCard presentation, API contract/as-built descriptions и tests. Права, статистика, ranking/rival алгоритмы, данные и migrations не меняются.
+- **Constraints / edges:** current judge displayName/userId не доказывает auth-session ownership; Home никогда не даёт score/autoacquire из роли. Reservation/refused/expired/free различаются в detail. Current+historical users, participant+judge actor priority, nojudge terminal, guest/blocked names, zero/one/both active, empty/skeleton/background error/period race. Фоновый refresh не крадёт focus. Непоказываемые поля terminal не исчезают из истории.
+- **Subtasks:** 1) Red для порядка/полного набора функций и active/released/reserved/historical card semantics. 2) Минимально разделить active/terminal presentation и сохранить DTO shape. 3) Переставить blocks/labels без новых навигационных обработчиков. 4) Browser/contracts/PG visibility gate, before/after и docs.
+- **Given / When / Then:** Given newcomer, Then игра до метрик и один primary. Given populated, Then все5метрик/rival/revenge/period/recent5/profile/notifications доступны. Given released or reserved with activeJudge=null, Then Home не называет исторического пользователя текущим и не обещает свободное acquire. Given other auth session of same account, Then card не выдаёт mutation permission. Given terminal, Then historical attribution сохранена. Given hidden active event, Then оно не появляется через новый formatter. Given period race/error, Then прежние guards и данные сохраняются.
+- **Risk:** потерять второстепенные входы, неверно переименовать historical роль в current owner, изменить disclosure/visibility вместо presentation.
+- **Verification:** Home frontend/service/contract tests и web/API typecheck; disposablePG active visibility/released/reserved fixtures, browser360/390/1440 keyboard/long text/loading/empty/error/populated. Repository-wide gate требуется из-за cross-package response semantics, старый1257 не переобъявлять acceptance нового UI.
+- **Dependencies:** MATCH/JUDGE core target принят; RESULTS populated evidence и этот уточнённый target требуют independent review. Не обещать сокращение времени без user research.
+- **Documentation / rollback:** API_SPEC/API_AS_BUILT active presentation, UX_FLOWS/AT-HOME/test traceability/BACKLOG/CHANGELOG_DEV; откат своих code/tests/docs без данных и выпуска.
+
+
+### GAP-016 — Описание проблемы в помощи поддерживает несколько строк
+
+- **Type:** ux-control
+- **Priority:** P3
+- **Status:** ready
+- **Evidence:** F-AUTH-005; [Отчёт AUTH](audits/2026-09-13-ux-ui/auth/report.md), [находки](audits/2026-09-13-ux-ui/auth/findings.json), [точная спецификация](audits/2026-09-13-ux-ui/auth/target-spec.md), [схемы](audits/2026-09-13-ux-ui/auth/wireframes.html). Frozen45payloads проверены и приняты; [независимое review](audits/2026-09-13-ux-ui/auth-review.json). Частота в аудитории неизвестна.
+- **Expected:** Человек видит и редактирует длинное описание проблемы со ссылкой прямо в поле сообщения.
+- **Actual:** Контрол сообщения — однострочный input при maxlength4000. Неудобство длинного ввода — экспертная гипотеза; отправка/503retry работают.
+- **Repro:** Пакет AUTH, finding F-AUTH-005, runs/evidence; повторять на accepted local GAP012r6, synthetic users, desktop1440/mobile390 и narrow360 по применимости.
+- **Scenario / Epic / Story / Sprint:** SC-A03 → EP-UX-ACCESS → US-UX-HELP → S5 candidate.
+- **Inputs / REQ / AT / ADR:** HELP-003; AT-AUTH-009; accepted323-path candidate-source; target T-AUTH-HELP из AUTH. Доказательства package scope, не production claim.
+- **Write scope / contracts:** HelpPage.tsx, scoped field styles при необходимости и Help tests. API/types/data: без изменений; ограничения текущих handlers и авторизации сохраняются.
+- **Exact behavior:** Использовать native textarea с текущими field tokens (отдельного компонента ради страницы не создавать). Label/required/maxlength4000/materials description сохраняются. Начальная высота5строк mobile иdesktop; только вертикальный resize, max-height40vh с внутренней прокруткой. Категории/FAQ/submit payload неизменны.503 сохраняет текст, явный повтор один; успех очищает сообщение и объявляется status без перехвата фокуса во время ввода.
+- **Given / When / Then:** Given многострочный текст со ссылкой, Then переносы видны и уходят тем же message payload. Given503/401, Then текущие draft/reauth guards сохранены без auto replay. Given pending, Then повтор заблокирован. Given resize360/1440, Then нет горизонтального overflow.
+- **Subtasks:** 1) Прочитать source/target и зафиксировать failing observable acceptance на изменяемое поведение. 2) Внести ограниченный delta в указанный consumer с existing primitives. 3) Пройти описанные state/edge cases, keyboard и viewport checks; сохранить before/after evidence. 4) Передать независимому reviewer точный diff и evidence, обновить связанную документацию.
+- **Risk:** Не добавить richtext/attachments/новый API и не обрезать сохранённый текст стилем или контролом. Brand/navigation redesign вне задачи.
+- **Verification:** Focused meaningful component tests и web typecheck; реальный Chromium1440/390,360 по layout, keyboard focus/long text/pending/known error/reauth где применимо. Для logout проверить response и server auth state, не только URL. Прочие задачи не требуют повторять1257tests без новых contract/critical-journey изменений; AGENTS risk gate остаётся обязательным.
+- **Dependencies:** Пакет AUTH/постановка приняты Terra; существующий компонентный каталог не содержит продуктового textarea consumer.
+- **Documentation / rollback:** BACKLOG/CHANGELOG_DEV, UX_FLOWS/AT уточнение наблюдаемого поведения и test traceability; сохранить исторические evidence. Rollback только своего UI/test/docs delta, без данных/деплоя.
+
+
+### BUG-029 — Не предлагать повтор уже сохранённого очка после потери ответа
+
+- **Type:** critical-journey-recovery
+- **Priority:** P1
+- **Status:** ready
+- **Evidence:** ROOT-JUDGE-OUTCOME-01, [личное воспроизведение](audits/2026-09-13-ux-ui/coordinator-rechecks/judge-outcome/README.md), [receipt](audits/2026-09-13-ux-ui/coordinator-rechecks/judge-outcome/receipt.json), исходное F-JUDGE-001. Собственный disposable stand, exact323 source hashes, Chromium390, два контролируемых POST и authoritative readback.
+- **Expected:** Система различает сохранённый запрос, окончательный отказ и неизвестный исход; повторное очко не предлагается, когда exact intent уже применён. Неотправленные быстрые нажатия видимы и восстанавливаются только явно.
+- **Actual:** Commit первого запроса → потеря ответа → GET и UI1:0 с exact key, но текст «проверьте счёт и повторите». Следование инструкции создаёт новый key и2:0. Автоматического двойного POST не наблюдалось; частота естественных сбоев неизвестна.
+- **Repro:** replay.mjs в linked evidence: новое обычное лицо создаёт/ведёт synthetic матч, route.fetch пропускает успешный points POST, затем route.abort теряет ответ; проверить UI/API, затем отдельно выполнить предлагаемый повтор.
+- **Scenario / Epic / Story / Sprint:** SC-J01/J04 → EP-UX-CORE → US-UX-SCORE-RECOVERY «После сбоя ведущий понимает точный счёт» → S1 candidate, приоритет раньше перестановки экранов.
+- **Inputs / REQ / AT / ADR:** JUDGE-001/004/008/009, AT-JUDGE-007, D27; accepted GAP012r6; [точный алгоритм и UI](audits/2026-09-13-ux-ui/score-recovery-target.md). JudgePage drainPointQueue438–508/point511+, MatchService getMatch511+ и awardPoint1184+; текущие idempotencyKeys/version используются без нового endpoint.
+- **Write scope / contracts:** один владелец JudgePage/state helpers и focused tests; API/PG regression fixtures для доказательства ordering. Не менять reducer/score rules/permissions/stats. Если требуется изменение контрактов — отдельный явно определённый delta до реализации, а не скрытая эвристика.
+- **Exact behavior:** сохранять key/side/sentVersion и отдельно unsent intents. Сверять GET; exact key подтверждает применение, отсутствие ключа в раннем GET оставляет unknown. Не повторять POST автоматически. Явное начисление после проверки неизвестного исхода использует новую key и именно просмотренную expectedVersion, без silent rebase на background state. Остаток очереди показывается и отправляется/отбрасывается только явным решением. Все сообщения/ветви/ограничения — score-recovery-target.
+- **Subtasks:** 1) Зафиксировать meaningful failing UI acceptance lost-response/applied и unknown/late-write cases. 2) Ввести ограниченное состояние восстановления без потери intent/unsent count. 3) Добавить GET/safe explicit version-bound recovery и интерфейс решений; сохранить rapid-input порядок. 4) Проверить оба порядка задержанных транзакций в realPG, terminal/reauth/ownership и UI состояния. 5) Пройти repository-wide gate и независимое ревью; документировать фактический контракт.
+- **Given / When / Then:** Given первый points POST commit и потерянный ответ, When GET содержит его key, Then точный счёт и сообщение о сохранении, нет повторного POST/предложения повторить. Given oldPOST ещё выполняется и key отсутствует, Then unknown; при явном новом начислении old/new в обоих порядках не дают два очка благодаря проверенной version, конфликт не повторяется автоматически. Given unsent queue, Then количество/стороны видимы; до явного решения новые writes не уходят. Given lost ownership/401/terminal, Then recovery не обходит guards.
+- **Risk:** Повторное ручное начисление, скрытая потеря rapid taps, вечная блокировка восстановления, неправильное доказательство по aggregate score, late commit race. Ошибку видимости не исправлять только сменой текста без безопасного конечного пути.
+- **Verification:** Детерминированные component/state tests; controlled transport failure, offline/GET error, same-user other-session, pending boundary; disposable PostgreSQL ordering/rollback; repository-wide pnpm ci/принятый verify:all equivalent и desktop/mobile browser. Не использовать sleeps/retry-to-pass; сравнивать response и authoritative event/key/score.
+- **Dependencies:** BUG-024 для читаемой ошибки. Личный repro завершён; алгоритм/постановка приняты Terra на exact source version/key contract; статус ready означает готовность к реализации, не исправление. Продолжение иных UX пакетов не блокируется.
+- **Documentation / rollback:** PRD/UX/AT по наблюдаемому recovery, API_AS_BUILT уточнение доступных outcome данных если необходимо, traceability, BACKLOG/CHANGELOG_DEV. Rollback только scoped UI/tests/docs; DB/production mutation вне этой задачи.
+
+
+- **Readiness evidence:** [core-review](audits/2026-09-13-ux-ui/core-review.json); target принят, implementation и его обязательные проверки ещё не выполнены.
+
+### GAP-017 — Следующее действие матча соответствует состоянию и правам
+
+- **Type:** ux-hierarchy
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-M04/SC-J01/J02/J03 → EP-UX-CORE → US-UX-NEXT «Ведущий понимает, как продолжить и начать следующую игру» → S3 candidate.
+- **Evidence:** F-PILOT-002/003 и MATCH M06; [пилот](audits/2026-09-13-ux-ui/pilot/report.md), [role matrix](audits/2026-09-13-ux-ui/match/evidence/m06-role-action-matrix.json), [review](audits/2026-09-13-ux-ui/match-review.json). Равный акцент действий — экспертное наблюдение, частота ошибок неизвестна.
+- **Expected:** одно основное следующее действие рядом со счётом; все дополнительные разрешённые операции и новые игры доступны.
+- **Actual:** несколько равных кнопок, пустой журнал перед решением, после результата нет прямой пустой следующей игры. Историческая роль не доказывает текущего владения устройством.
+- **Repro:** waiting creator/nonparticipant → detail; затем creator+participant/current judge/reserved/free роли и finished former operator из пилота. Сравнить доступные действия и их порядок с матрицей.
+- **Inputs / REQ / AT / ADR:** GAP-012 r6 и323 source hashes; MATCH-008/010–014/017, JUDGE-001/002, D4/D7/D17/D18/D23/D24/D35; [единый контракт](audits/2026-09-13-ux-ui/core-target.md), [схемы](audits/2026-09-13-ux-ui/core-wireframes.html), AT-MATCH-013/017 и существующие проверки judge session/start/cancel.
+- **Exact behavior:** heading/status/refresh → score/roster/rules → judge state и primary по приоритету terminal → reservation → active judge → free slot → остальные обычные действия → приглашения → журнал → исключительные операции → назад. Полная таблица core-target обязательна, варианты старого T-MATCH-DETAIL заменены. Creator waiting/free: «Начать и вести счёт» открывает существующий judge setup, «Начать без ведения» сохраняет старый start dialog. Другой допустимый субъект при free slot получает judge entry, но не право начать. Совпадение userId показывает «Открыть ведение», auth session проверяет существующая JudgePage. Terminal допускает пустую /matches/new; eligible participant сохраняет отдельный revengeOf.
+- **Write scope / owner:** один frontend writer MatchDetailPage.tsx, локальные существующие стили и focused tests; shared buttons не форкать. Home — GAP-015, JudgePage — отдельные задачи, API/data/contracts не менять.
+- **Constraints / edges:** все комбинации creator/player/judge и reservation; stale owner/session, expiry, waiting/in_progress/pending_confirmation/finished/stopped/cancelled, standalone/tournament. Видимость D17 первична. Start creator-only; stop/no-show/cancel/void отдельно по guards; новый admin access не добавлять. Одна колонка, без sticky; BottomNav не закрывает controls. Длинные имена/пустой журнал/error/loading сохраняют доступность.
+- **Subtasks:** 1) Табличные acceptance cases на каждый primary и пересечения ролей. 2) Перестановка существующих элементов и единый вычисляемый primary без изменения handler/contracts. 3) Добавить пустую следующую игру и сохранить purposeful revenge. 4) Browser390/1440/360, клавиатура/фокус, auth-session negatives, документация и evidence.
+- **Given / When / Then:** Given creator+player/free/waiting, Then одна primary и доступен judge setup. Given другой participant/free, Then он может занять место, но start запрещён. Given тот же user на другом устройстве, Then userId не включает score controls и нет скрытого takeover. Given reservation, Then адресат видит принятие, остальные просмотр. Given finished former operator, Then новая игра открывает пустую manual форму; eligible revenge остаётся отдельным. Given403, Then roster/title не раскрыты.
+- **Risk:** потерять разрешённое действие из-за приоритетов, предоставить start не-создателю или считать исторического судью владельцем auth session.
+- **Verification:** component actor/state matrix, browser keyboard/touch/desktop/mobile и реальные session negatives; critical journey repository-wide по AGENTS при реализации, без повторного тестирования reducer ради схемы.
+- **Dependencies:** GAP-013 и общий core-target приняты Terra; BUG-018/019/025/026 сохраняют свои seams. Admin discovery исследует ADMIN отдельно. Target принят Terra, см. core-review.json.
+- **Documentation / rollback:** UX_FLOWS/AT/traceability, BACKLOG/CHANGELOG_DEV; rollback своего UI/test/docs delta, no DB/release.
+
+- **Readiness evidence:** [core-review](audits/2026-09-13-ux-ui/core-review.json); target принят, implementation и его обязательные проверки ещё не выполнены.
+
+### GAP-018 — Создатель явно приглашает выбранного игрока из деталей матча
+
+- **Type:** ux-capability-entry
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-M03/M04 → EP-UX-CORE → US-UX-INVITE «Приглашение доступно, когда я хочу позвать игрока» → S3 candidate.
+- **Evidence:** F-MATCH-002, M04 persisted replacement lifecycle и явный API invite; [находки](audits/2026-09-13-ux-ui/match/findings.json), [review evidence](audits/2026-09-13-ux-ui/match-review.json).
+- **Expected:** создатель приглашает текущего допустимого зарегистрированного участника отдельной кнопкой, без автоматической рассылки и без start gate.
+- **Actual:** замена корректно отменяет старое pending приглашение и не приглашает replacement автоматически; поддерживаемый API недоступен через его строку UI.
+- **Repro:** waiting2×2 с pending invite → заменить игрока → сохранить → у нового участника нет приглашения и кнопки; creator API createMatchInvitation успешно создаёт его.
+- **Inputs / REQ / AT / ADR:** MATCH-003/008/014, AT-MATCH-017, D35; frozen MATCH M04; MatchDetailPage.tsx invitation rows, api.createMatchInvitation(matchId,{userId,kind:'player'}), существующий lifecycle/service.
+- **Exact behavior:** waiting creator видит строки текущих зарегистрированных участников; без действующего приглашения — «Пригласить», declined/expired — «Пригласить снова», pending — текущий статус, accepted — принято. Нажатие создаёт только конкретное player invitation и обновляет серверные данные; редактирование состава никогда само не отправляет. Гостям account invitation не показывать. Изменение roster перед сохранением поясняет удаление старого и отсутствие автоинвайта нового участника. Accepted неизменённых участников сохраняются.
+- **Write scope / owner:** один frontend writer MatchDetailPage.tsx + focused tests, существующий api.ts без нового endpoint. Не переносить весь edit layout в эту задачу; его композиция по GAP-013.
+- **Constraints / edges:** creator-only; только текущий eligible user и waiting, без снятия backend guards. Pending блокирует повтор только этой отправки, состояние ошибки рядом со строкой; неизвестный исход → GET сверка, не автоматический POST. Рейс start/edit/decline/reinvite сверяет актуальные rows до нового явного действия. После старта нет нового приглашения; старые lifecycle состояния показываются по контракту.
+- **Subtasks:** 1) Red на replacement без row action и роли. 2) Вычислить отображение строк из текущего roster+invites, не сохранять отдельную invite policy. 3) Подключить существующий request с pending/error/readback. 4) Desktop/mobile+keyboard, lifecycle/API guards, docs.
+- **Given / When / Then:** Given новый registered replacement, When сохранить edit, Then автоPOSTinvite=0 и видна «Пригласить». When creator нажал, Then ровно один explicit запрос и pending из ответа. Given guest/noncreator/started, Then действие отсутствует и directAPI guard сохраняется. Given failed response, Then нет auto resend; GET актуализирует строку. Given accepted unchanged user, Then его статус не сбрасывается.
+- **Risk:** превратить optional invite в скрытый consent gate, дублировать отправку либо пригласить уже удалённого игрока.
+- **Verification:** component role/status matrix, browser390/1440 и API lifecycle negatives; использовать accepted transaction coverage с точной ссылкой, новые изменения контрактов потребуют repository-wide gate.
+- **Dependencies:** GAP-012 accepted, BUG-021 для контекстной ошибки, GAP-017 для порядка detail; постановка принята Terra и координатором. Q-UX-001 не решается этой задачей.
+- **Documentation / rollback:** UX_FLOWS/AT/traceability/BACKLOG/CHANGELOG_DEV; rollback только своего UI/test/docs delta.
+
+- **Readiness evidence:** [core-review](audits/2026-09-13-ux-ui/core-review.json); target принят, implementation и его обязательные проверки ещё не выполнены.
+
+### BUG-030 — Отмена матча имеет правильное название и необязательную причину
+
+- **Type:** ux-state-copy-contract
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-M04 → EP-UX-CORE → US-UX-CANCEL «Я понимаю последствия отмены и могу указать причину» → S2 candidate.
+- **Evidence:** F-MATCH-003, M04 cancel UI390 и persisted cancelled; [report](audits/2026-09-13-ux-ui/match/report.md). Source api.cancelMatch уже принимает reasonText, shared schema trim/max500.
+- **Expected:** «Отменить матч?» и «Отменён» обозначают cancel, optional reason передаётся без изменения прав/версии/idempotency.
+- **Actual:** текст сообщает «аннулирован», textarea причины отсутствует, хотя endpoint её поддерживает; persisted cancelled корректен.
+- **Repro:** creator waiting standalone → «Отменить матч» → проверить текст/поля → закрыть без запроса → подтвердить и сверить persisted cancelled.
+- **Inputs / REQ / AT / ADR:** MATCH-017, AT-MATCH-CANCEL-001/004, D23; отличие void по D24; MatchDetailPage.tsx onCancelConfirm, api.cancelMatch(id,expectedVersion,idempotencyKey,reasonText?), CancelMatchRequestSchema.
+- **Exact behavior:** заголовок «Отменить матч?», текст «Матч будет отменён без победителя и влияния на статистику. Ведение счёта завершится, игроки освободятся для других матчей». Текущее название матча рядом. Native textarea «Причина (необязательно)», maxlength500, trimmed empty → undefined; cancel reason не обязателен. «Не отменять»/X/Escape до отправки — no request и возврат focus. Подтверждение — существующие version/key, причина четвёртым аргументом. Pending фиксирует payload и блокирует повтор, поле и Close с явным disabled/progress. Успех: cancelled. Известный отказ оставляет значения и контекстную ошибку; unknown сначала GET-сверка, не автоматический POST. Не выдавать старую версию за новый retry без отдельного решения пользователя.
+- **Write scope / owner:** один frontend writer MatchDetailPage.tsx и focused tests; shared Dialog/error BUG-021, native textarea current tokens; API/schema/data не меняются.
+- **Constraints / edges:** 0/500/501 chars, whitespace, multiline, long title, keyboardfocus; creator/admin существующие guards, active standalone states, tournament/terminal denied. Admin discovery не решать расширением D17. Void по-прежнему отдельная операция, её copy не переименовывать.
+- **Subtasks:** 1) Red на copy/optional reason payload. 2) Добавить textarea и trim/current API argument. 3) Применить согласованный контекстный error/pending контракт. 4) Проверить no-op close, success, conflict/unknown, actor negatives и responsive.
+- **Given / When / Then:** Given empty reason, Then cancel допустим и reason omitted. Given meaningful multiline≤500, Then persisted audit reason соответствует trim. Given Close до отправки, Then POST=0. Given pending, Then повтор/изменение payload невозможны. Given known rejection, Then reason сохранена и error находится в dialog. Givenunknown, Then retry не записывает автоматически; состояние сначала прочитано. Given denied actor/kind/state, Then операция отклонена без изменений.
+- **Risk:** смешать cancel/void, скрыть ошибку закрытием окна, повторить неизвестную mutation или расширить admin видимость.
+- **Verification:** meaningful component payload/focus tests и browser390/1440+keyboard, persisted reason/cancel состояние в disposable environment; действующий API actor/version/idempotency gate сохранить.
+- **Dependencies:** BUG-021/026 общие состояния, GAP-012 accepted; постановка принята Terra и координатором. Это отдельный small dialog, решение pending bracket Q-UX-001 на него не переносится.
+- **Documentation / rollback:** UX_FLOWS/AT/traceability/BACKLOG/CHANGELOG_DEV; rollback своего UI/test/docs delta, no DB/release.
+
+
+- **Readiness evidence:** [core-review](audits/2026-09-13-ux-ui/core-review.json); target принят, implementation и его обязательные проверки ещё не выполнены.
+
+### BUG-031 — Ручная коррекция счёта сохраняет управляемый фокус
+
+- **Type:** accessibility-interaction
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-J01 → EP-UX-SYSTEM → US-UX-CORRECTION «Исправляю счёт с клавиатуры и возвращаюсь к игре» → S2 candidate.
+- **Evidence:** F-JUDGE-002, J-RUN-CORRECTION; [snapshot1440](audits/2026-09-13-ux-ui/judge/evidence/j07-correction-open-focus-1440.json), [screenshot](audits/2026-09-13-ux-ui/judge/evidence/screenshots/j07-correction-open-focus-1440.png). Runtime focus BODY при открытии и cancel, correction persistence прошла.
+- **Expected:** открытие переводит фокус в коррекцию, закрытие возвращает к понятному действию; сохранение и ошибки доступны клавиатуре.
+- **Actual:** после открытия и отмены focus теряется на BODY; клавиатурному пользователю приходится искать текущую область.
+- **Repro:** current judge in_progress,1440; keyboard открыть Действия→коррекцию, проверить activeElement, отменить и проверить возврат.
+- **Inputs / REQ / AT / ADR:** JUDGE-011, AT-JUDGE-010, D4/D7; [T-JUDGE-FOCUS](audits/2026-09-13-ux-ui/judge/target-spec.md#t-judge-focus-001--вход-и-возврат-фокуса-в-коррекции), current JudgePage correction branch, accepted GAP012r6.
+- **Exact behavior:** при обычном открытии focus всегда на заголовок «Ручная коррекция» с tabIndex=-1; не выбирать между heading и первым input по усмотрению исполнителя. Tab далее A→B→подающий→Сохранить→Отмена. Ошибка валидации переводит на первый invalid input и связывает сообщение. Request error сохраняет значения и фокусирует error summary. Эта задача меняет только управление фокусом: GET-first восстановления при неизвестном исходе ручной коррекции сейчас нет, и BUG-031 его не реализует и не объявляет безопасным. Отдельное непроверенное recovery наблюдение зафиксировано в TECH-006 и judge-additional-observations.md; никаких новых retry controls или автоматических mutations здесь не добавлять. Cancel/допустимый Escape возвращают focus на trigger коррекции; success — на «Действия» и polite announcement authoritative счёта/подачи. Если trigger размонтирован из-за terminal/lost-lock, focus на существующий heading текущего состояния.
+- **Write scope / owner:** один frontend writer JudgePage.tsx и focused tests. Inline correction не превращается в новый modal, нет нового focus trap. API/reducer/правила и аппаратное поведение не меняются.
+- **Constraints / edges:** mouse/touch opening тоже имеет устойчивый focus; pending payload/Close по BUG-026, score/Undo/finish во время коррекции сохраняют нынешние guards; ошибка не сбрасывает значения, потеря auth/lock не включает controls. Не перехватывать focus на каждом poll/score refresh.
+- **Subtasks:** 1) Keyboard Red open/cancel focus. 2) Named refs и focus transitions открытия/выхода без таймерных sleeps. 3) Validation/request/lost-lock targets без повторной mutation. 4) Browser1440/390+keyboard, docs/evidence.
+- **Given / When / Then:** Given correction closed, When keyboard activate, Then heading focused и следующий Tab ведёт к A. Givencancel, Then trigger focused, POST=0. Givensuccess, Then Действия focused и текущий счёт объявлен. Giveninvalid, Then первый invalid field focused с описанием. Givenbackgroundrefresh, Then focus остаётся у пользователя. Givenlostlock/terminal, Then текущий heading и недоступны мутации.
+- **Risk:** focus stealing при polling, фокус в скрытом поле после смены состояния или включение счёта до закрытия correction.
+- **Verification:** meaningful component focus transition tests и реальный Chromium keyboard/mobile/desktop; authoritative correction API unchanged, существующие regression tests сохранить. Spoken AT отдельно либо явно NOT_TESTED.
+- **Dependencies:** BUG-026 pending; BUG-029 относится к очку, не доказывает recovery ручной коррекции. Один последовательный writer JudgePage. Terra приняла focus target условно после удаления ложного recovery claim; coordinator устранил его и явно ограничил scope.
+- **Documentation / rollback:** UX_FLOWS/AT/traceability/BACKLOG/CHANGELOG_DEV; rollback своего UI/test/docs delta, без данных и release.
+
+- **Readiness evidence:** [core-review](audits/2026-09-13-ux-ui/core-review.json); target принят, implementation и его обязательные проверки ещё не выполнены.
+
+
+### BUG-032 — Подтверждать последствия отмены турнира, роспуска и выхода из готовой сетки
+
+- **Type:** ux-safety-confirmation
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-T05 → EP-UX-TOURNAMENT → US-UX-TOURNAMENT-CONTROL → S4 candidate.
+- **Evidence:** F-TOURNAMENT-001/002; T-RUN-007; [пакет](audits/2026-09-13-ux-ui/tournament/report.md), [обязательная коррекция и точный target](audits/2026-09-13-ux-ui/tournament-correction.md). Независимое [ревью принято](audits/2026-09-13-ux-ui/social-review.json); частота у реальных пользователей неизвестна.
+- **Expected:** Организатор и участник видят конкретное последствие до mutation и могут отказаться без изменений.
+- **Actual:** Три действия немедленно меняют состояние; participant generated exit делает needs_regeneration без предупреждения.
+- **Repro:** named runs в [runs.csv](audits/2026-09-13-ux-ui/tournament/runs.csv), syntheticactors и status как вfinding; authoritative state из runtime-observations.
+- **Inputs / REQ / AT / ADR:** TOURNAMENT-010/011/018, AT-TRN-007/008/014, UX§9; acceptedGAP012r6,323sourcehashes; exactseams TournamentDetailPage.tsx, существующий Dialog usage, focused tests.
+- **Exact behavior:** Отмена доступна только организатору в collecting / bracket_generated / needs_regeneration. Диалог называет турнир и сообщает, что продолжить его будет нельзя. Роспуск предупреждает: состав сохранится, текущая сетка и расстановка будут удалены. Выход участника из bracket_generated требует предупреждения о новой генерации; в collecting остаётся нынешний быстрый выход, после старта действует запрет. Первоначальный фокус — на безопасной вторичной кнопке. Запрос, права и итоговые статусы не меняются. Ожидание и восстановление определены в tournament-correction.md и BUG-021/026.
+- **Write scope / owner:** TournamentDetailPage.tsx, существующий Dialog usage, focused tests; один frontendwriter на общийTournamentDetailPage, последовательные taskdelta.
+- **Constraints / edges:** Закрытие и Escape до запроса, двойное нажатие, гонка со стартом, 401/403, устаревший ответ, длинное название и размонтированный инициатор. Не менять остановку турнира: она сохраняет спортивные результаты. Администратор не получает права организатора.
+- **Subtasks:** 1) Зафиксировать meaningful acceptance Red для описанного разрыва. 2) Выполнить ограниченное изменение UI, сохранив обработчики, payload и права. 3) Проверить каждый GWT, отрицательные случаи, ожидание и ошибки; для мутаций сверить авторитетные данные. 4) Снять desktop/mobile evidence, обновить документы и передать на ревью.
+- **Given / When / Then:** Given первое нажатие опасного действия, Then запросов нет и показан именованный диалог. Given отказ, Then состояние не изменено, фокус возвращён инициатору. Given подтверждение, Then отправлен один запрос и GET подтверждает cancelled / collecting / withdrawn + needs_regeneration. Given ожидание, Then повтор и закрытие честно недоступны, прогресс объявлен. Given запрещённые роль или статус, Then изменений нет.
+- **Risk:** Скрыть возможность, расширить роль или обещать другой исход. Изменение не должно менять серверные данные и топологию сетки.
+- **Verification:** Relevantwebtests/typecheck + browser390/1440/narrow360/keyboard/focus/pending/error; дляmutationпроверитьresponseиGETвdisposablePG. Приизмененииcriticaljourney/contract repository-widegateпоAGENTS; чистаякомпоновканепереобъявляет1257acceptance.
+- **Dependencies:** BUG-021/026. Q-UX-001 относится к другому окну. У трёх действий разные последствия и условия доступности; не объединять их в неопределённую универсальную операцию. Независимое ревью принято: [social-review](audits/2026-09-13-ux-ui/social-review.json).
+- **Documentation / rollback:** UX_FLOWS, AT и traceability при уточнении наблюдаемых условий; BACKLOG и CHANGELOG_DEV. Откат только своего UI/test/docs изменения, без базы данных и выпуска.
+
+
+### BUG-033 — Показывать итог турнира только после возникновения результата
+
+- **Type:** ux-state-hierarchy
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-T02/T04/T05 → EP-UX-TOURNAMENT → US-UX-TOURNAMENT-RESULT → S4 candidate.
+- **Evidence:** F-TOURNAMENT-003; T-RUN-004/006/007; [пакет](audits/2026-09-13-ux-ui/tournament/report.md), [обязательная коррекция и точный target](audits/2026-09-13-ux-ui/tournament-correction.md). Независимое [ревью принято](audits/2026-09-13-ux-ui/social-review.json); частота у реальных пользователей неизвестна.
+- **Expected:** Текущая работа отделена от итогов, все реальные результаты доступны после завершения.
+- **Actual:** Нулевая таблица выглядит как «Итоги» уже при сборе состава и может включать вышедшего участника.
+- **Repro:** named runs в [runs.csv](audits/2026-09-13-ux-ui/tournament/runs.csv), syntheticactors и status как вfinding; authoritative state из runtime-observations.
+- **Inputs / REQ / AT / ADR:** TOURNAMENT-015/016/017/018, AT-TRN-013/014, D35; acceptedGAP012r6,323sourcehashes; exactseams TournamentDetailPage.tsx summary branch и focused tests.
+- **Exact behavior:** В collecting / needs_regeneration / bracket_generated / in_progress блок «Итоги» не отображается. В finished / stopped сохраняются все значения серверного summary: места, очки, матчи, top3 согласно статусу; причина остановки остаётся видимой. В cancelled показать статус и существующие данные отмены без нулевой таблицы рейтинга. Не пересчитывать итог на клиенте и не возвращать вышедших игроков в активный состав. Ссылки на текущие, следующие и сыгранные матчи сохраняются. Вне контекста турнира admin не получает новые поля summary.
+- **Write scope / owner:** TournamentDetailPage.tsx summary branch и focused tests; один frontendwriter на общийTournamentDetailPage, последовательные taskdelta.
+- **Constraints / edges:** Пустые результаты, остановка после сыгранных матчей, нулевая длительность, гости, вышедшие участники, длинные имена, обновление active → finished и DTO без summary.
+- **Subtasks:** 1) Зафиксировать meaningful acceptance Red для описанного разрыва. 2) Выполнить ограниченное изменение UI, сохранив обработчики, payload и права. 3) Проверить каждый GWT, отрицательные случаи, ожидание и ошибки; для мутаций сверить авторитетные данные. 4) Снять desktop/mobile evidence, обновить документы и передать на ревью.
+- **Given / When / Then:** Given collecting или in_progress, Then нулевых «Итогов» нет, оперативные действия доступны. Given finished, Then все серверные места, очки, матчи и top3 сохранены. Given stopped, Then нет выдуманного победителя, сыгранные результаты доступны. Given cancelled, Then видна отмена без фиктивного рейтинга. Given ограниченный admin DTO, Then новых полей не появляется.
+- **Risk:** Скрыть возможность, расширить роль или обещать другой исход. Изменение не должно менять серверные данные и топологию сетки.
+- **Verification:** Relevantwebtests/typecheck + browser390/1440/narrow360/keyboard/focus/pending/error; дляmutationпроверитьresponseиGETвdisposablePG. Приизмененииcriticaljourney/contract repository-widegateпоAGENTS; чистаякомпоновканепереобъявляет1257acceptance.
+- **Dependencies:** GAP-012 принят. RESULTS дополнит проверку частичных результатов. Для реализации нужна fixture остановки после сыгранного матча: TOURNAMENT проверял stopped с нулём сыгранных матчей. Независимое ревью принято: [social-review](audits/2026-09-13-ux-ui/social-review.json).
+- **Documentation / rollback:** UX_FLOWS, AT и traceability при уточнении наблюдаемых условий; BACKLOG и CHANGELOG_DEV. Откат только своего UI/test/docs изменения, без базы данных и выпуска.
+
+
+### GAP-019 — Собрать экран турнира вокруг состава и ближайшей игровой задачи
+
+- **Type:** ux-layout
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-T01/T02/T04 → EP-UX-TOURNAMENT → US-UX-TOURNAMENT-ORIENT → S4 candidate.
+- **Evidence:** TOURNAMENT report/annotated-before-after; F003-related hierarchy; expert proposal; [пакет](audits/2026-09-13-ux-ui/tournament/report.md), [обязательная коррекция и точный target](audits/2026-09-13-ux-ui/tournament-correction.md). Независимое [ревью принято](audits/2026-09-13-ux-ui/social-review.json); частота у реальных пользователей неизвестна.
+- **Expected:** Организатор видит готовность состава и следующее действие, участник — свой текущий/следующий матч.
+- **Actual:** Управление и ранние итоги конкурируют с составом, сеткой и ближайшим матчем.
+- **Repro:** named runs в [runs.csv](audits/2026-09-13-ux-ui/tournament/runs.csv), syntheticactors и status как вfinding; authoritative state из runtime-observations.
+- **Inputs / REQ / AT / ADR:** TOURNAMENT-001/005/006/007/017, AT-TRN-004/009, D35; acceptedGAP012r6,323sourcehashes; exactseams TournamentDetailPage.tsx, scoped existingstyles и focused tests.
+- **Exact behavior:** Сохранить текущий shell шириной до 560px и одну колонку. Collecting / needs_regeneration: заголовок, статус и обновление → сводка правил с существующим редактированием → режим участия → активный состав, приглашения и добавление → построение или перестроение сетки → операции с турниром. Bracket_generated: готовность, состав, сетка и свой следующий матч; старт только организатору. In_progress: текущие и свой следующий матч → сетка → вторичные операции. Конечное состояние: серверный результат, сетка и сыгранные матчи. Все данные и входы сохраняются в пределах текущих прав; scoped admin получает только минимальную projection. Новая закреплённая панель, мини-карта и навигация не вводятся.
+- **Write scope / owner:** TournamentDetailPage.tsx, scoped existingstyles и focused tests; один frontendwriter на общийTournamentDetailPage, последовательные taskdelta.
+- **Constraints / edges:** Пересечение ролей, pending / declined приглашения, гости и сокомандники, пустое состояние, загрузка и ошибка, длинные имена, устаревшая сессия и причина needs_regeneration. Перестановка сама по себе не меняет политику подтверждений.
+- **Subtasks:** 1) Зафиксировать meaningful acceptance Red для описанного разрыва. 2) Выполнить ограниченное изменение UI, сохранив обработчики, payload и права. 3) Проверить каждый GWT, отрицательные случаи, ожидание и ошибки; для мутаций сверить авторитетные данные. 4) Снять desktop/mobile evidence, обновить документы и передать на ревью.
+- **Given / When / Then:** Given организатор в collecting, Then активный состав и добавление находятся перед опасными операциями, построение доступно по прежним условиям. Given участник в in_progress, Then его текущий или следующий матч находится перед вторичными данными. Given менее частая настройка или приглашение, Then подписанный вход сохраняется. Given минимальный admin DTO, Then полного экрана организатора нет. Given клавиатура на 360/1440, Then порядок DOM логичен, навигация не закрывает фокус.
+- **Risk:** Скрыть возможность, расширить роль или обещать другой исход. Изменение не должно менять серверные данные и топологию сетки.
+- **Verification:** Relevantwebtests/typecheck + browser390/1440/narrow360/keyboard/focus/pending/error; дляmutationпроверитьresponseиGETвdisposablePG. Приизмененииcriticaljourney/contract repository-widegateпоAGENTS; чистаякомпоновканепереобъявляет1257acceptance.
+- **Dependencies:** BUG-032/033 и общие BUG-018/019/025/026. Использовать принятые правила выбора основного действия, не расширяя права. Независимое ревью принято: [social-review](audits/2026-09-13-ux-ui/social-review.json).
+- **Documentation / rollback:** UX_FLOWS, AT и traceability при уточнении наблюдаемых условий; BACKLOG и CHANGELOG_DEV. Откат только своего UI/test/docs изменения, без базы данных и выпуска.
+
+
+### GAP-020 — Дать более компактный обзор сетки без уменьшения читаемости
+
+- **Type:** ux-navigation
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-T04 → EP-UX-TOURNAMENT → US-UX-BRACKET-OVERVIEW → S4 candidate.
+- **Evidence:** F-TOURNAMENT-004; T-RUN-002/003, экспертнаягипотеза, неusabilityблокер; [пакет](audits/2026-09-13-ux-ui/tournament/report.md), [обязательная коррекция и точный target](audits/2026-09-13-ux-ui/tournament-correction.md). Независимое [ревью принято](audits/2026-09-13-ux-ui/social-review.json); частота у реальных пользователей неизвестна.
+- **Expected:** Режим 75% даёт более компактный горизонтальный обзор, сохраняя читаемость и доступность действий.
+- **Actual:** Сетка не уменьшается ниже 100%; DE5/8 требует последовательной горизонтальной прокрутки.
+- **Repro:** named runs в [runs.csv](audits/2026-09-13-ux-ui/tournament/runs.csv), syntheticactors и status как вfinding; authoritative state из runtime-observations.
+- **Inputs / REQ / AT / ADR:** TOURNAMENT-009/017, AT-TRN-009, NFRaccessibility; acceptedGAP012r6,323sourcehashes; exactseams TournamentBracket.tsx, его текущиеstyles.cssправила, focused tests.
+- **Exact behavior:** Значения: 75%, 100%, 125%, 150%; исходное — 100%, границы честно отключают кнопки. На 75% колонка имеет ширину 165px, промежуток — прежние 48px, шаг перехода — 213px. Имена не меньше 13px, счёт не меньше 14px, строки и цели нажатия не меньше 44px; длинные имена переносятся. Существующий ResizeObserver пересчитывает связи между карточками. На 100/125/150 геометрия остаётся прежней. Процент виден и доступен вспомогательным технологиям; Arrow/Home/End и ссылки на матч сохраняются. Не масштабировать весь DOM через transform и не создавать новый renderer.
+- **Write scope / owner:** TournamentBracket.tsx, его текущиеstyles.cssправила, focused tests; один frontendwriter на общийTournamentDetailPage, последовательные taskdelta.
+- **Constraints / edges:** SE/DE на 3/5/8 участников, BYE, третье место, Winners/Losers/GrandFinal, длинные имена и гости, 360/390/844 landscape/1440, изменение размера при фокусе, связи после переноса текста и конечные состояния карточек.
+- **Subtasks:** 1) Зафиксировать meaningful acceptance Red для описанного разрыва. 2) Выполнить ограниченное изменение UI, сохранив обработчики, payload и права. 3) Проверить каждый GWT, отрицательные случаи, ожидание и ошибки; для мутаций сверить авторитетные данные. 4) Снять desktop/mobile evidence, обновить документы и передать на ревью.
+- **Given / When / Then:** Given 100%, When уменьшить, Then видны 75%, кнопка уменьшения недоступна, имя ≥13px, счёт ≥14px, цели ≥44px. Given длинное имя на 75%, Then оно переносится полностью, связь ведёт к правильной карточке. Given Home/End, Then границы полосы достижимы. Given 100/125/150, Then прежняя геометрия не ухудшена. Given любая полоса, Then нет горизонтального переполнения всей страницы, допустимый переход к матчу доступен.
+- **Risk:** Скрыть возможность, расширить роль или обещать другой исход. Изменение не должно менять серверные данные и топологию сетки.
+- **Verification:** Relevantwebtests/typecheck + browser390/1440/narrow360/keyboard/focus/pending/error; дляmutationпроверитьresponseиGETвdisposablePG. Приизмененииcriticaljourney/contract repository-widegateпоAGENTS; чистаякомпоновканепереобъявляет1257acceptance.
+- **Dependencies:** Нужна визуальная приёмка 75%, а не только добавление числа в массив состояния. Не обещать вместить всю DE8 без прокрутки. Данные и топология сетки не меняются. Независимое ревью принято: [social-review](audits/2026-09-13-ux-ui/social-review.json).
+- **Documentation / rollback:** UX_FLOWS, AT и traceability при уточнении наблюдаемых условий; BACKLOG и CHANGELOG_DEV. Откат только своего UI/test/docs изменения, без базы данных и выпуска.
+
+
+### GAP-021 — Убрать лишнее подтверждение обычного прямого добавления в состав
+
+- **Type:** ux-flow-friction
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-T01/T02/T03 → EP-UX-TOURNAMENT → US-UX-TOURNAMENT-ROSTER → S4 candidate.
+- **Evidence:** F-TOURNAMENT-005; T-RUN-001; expert hypothesis; [пакет](audits/2026-09-13-ux-ui/tournament/report.md), [обязательная коррекция и точный target](audits/2026-09-13-ux-ui/tournament-correction.md). Независимое [ревью принято](audits/2026-09-13-ux-ui/social-review.json); частота у реальных пользователей неизвестна.
+- **Expected:** Обычный прямой выбор добавляется явной кнопкой, а предупреждения об обходе согласия и изменении сетки сохраняются.
+- **Actual:** Организатор в прямом режиме collecting подтверждает дополнительное окно для каждого игрока, хотя обхода согласия и готовой сетки ещё нет.
+- **Repro:** named runs в [runs.csv](audits/2026-09-13-ux-ui/tournament/runs.csv), syntheticactors и status как вfinding; authoritative state из runtime-observations.
+- **Inputs / REQ / AT / ADR:** TOURNAMENT-005/007, AT-TRN-022/023, D35; acceptedGAP012r6,323sourcehashes; exactseams TournamentDetailPage.tsx addRegistered handler и focused tests.
+- **Exact behavior:** Без дополнительного окна работает только isOrganizer && requireParticipantConsent=false && status=collecting. Остальные допустимые ветви сохраняют именованное подтверждение с конкретным выбранным игроком и турниром. requiresOverride = consent || !isOrganizer; bracket_generated требует confirmBracketRegeneration. В needs_regeneration текст сообщает о необходимости новой генерации перед стартом, не обещая её автоматически. Существующие POST, ключи, actor/source, аудит и eligibility не меняются. Добавление гостя остаётся прежним.
+- **Write scope / owner:** TournamentDetailPage.tsx addRegistered handler и focused tests; один frontendwriter на общийTournamentDetailPage, последовательные taskdelta.
+- **Constraints / edges:** Admin, который сам является организатором, следует ветви организатора по PRD005; scoped admin вне контекста всегда подтверждает. Двойное нажатие, изменение picker во время запроса, ранее declined / left / expired, уже включённый игрок, blocked / busy, 401, гонка со стартом и неизвестный исход.
+- **Subtasks:** 1) Зафиксировать meaningful acceptance Red для описанного разрыва. 2) Выполнить ограниченное изменение UI, сохранив обработчики, payload и права. 3) Проверить каждый GWT, отрицательные случаи, ожидание и ошибки; для мутаций сверить авторитетные данные. 4) Снять desktop/mobile evidence, обновить документы и передать на ревью.
+- **Given / When / Then:** Given прямой режим collecting у организатора, When явно добавить выбранный ID, Then дополнительного окна нет и отправлен один POST. Given consent / scoped admin / готовая сетка, Then до именованного подтверждения POST=0, нужные флаги переданы по контракту. Given needs_regeneration, Then автоматическая перестройка не обещается. Given удержанный POST, Then выбранный ID не подменяется. Given отказ или неизвестный исход, Then автоматического повторного POST нет.
+- **Risk:** Скрыть возможность, расширить роль или обещать другой исход. Изменение не должно менять серверные данные и топологию сетки.
+- **Verification:** Relevantwebtests/typecheck + browser390/1440/narrow360/keyboard/focus/pending/error; дляmutationпроверитьresponseиGETвdisposablePG. Приизмененииcriticaljourney/contract repository-widegateпоAGENTS; чистаякомпоновканепереобъявляет1257acceptance.
+- **Dependencies:** BUG-025/026. Формулировка AT-TRN-022 согласована с PRD/D35. Серверные требования confirmation-флагов сохраняются. Независимое ревью принято: [social-review](audits/2026-09-13-ux-ui/social-review.json).
+- **Documentation / rollback:** UX_FLOWS, AT и traceability при уточнении наблюдаемых условий; BACKLOG и CHANGELOG_DEV. Откат только своего UI/test/docs изменения, без базы данных и выпуска.
+
+
+### GAP-023 — Называть действия ведения игры понятными словами
+
+- **Type:** ux-copy-and-discoverability
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-J01/02/04 → EP-UX-CORE → US-UX-SCORE-LANGUAGE «Человек у телефона понимает управление счётом и передачу» → S3 candidate.
+- **Evidence:** F-JUDGE-003 и F-PILOT-006, [JUDGE report](audits/2026-09-13-ux-ui/judge/report.md), [pilot](audits/2026-09-13-ux-ui/pilot/report.md). Экспертная гипотеза непонимания; слова наблюдались в runtime, ошибки реального человека не измерены. Иерархия MatchDetail уже принадлежит GAP-017, здесь только JudgePage copy.
+- **Expected:** названия объясняют действие без терминов «слот», TTL и названия внутреннего события; передача одного телефона явно отличается от передачи ведения на другом устройстве.
+- **Actual:** Undo, «Передать слот», «Освободить слот и выйти», техническое объяснение сессии; сообщение после failed release ссылается на TTL и raw error.
+- **Repro:** открыть рабочий JudgePage, панель «Действия», подготовить передачу, затем release success/failure; состояния lost-lock и readonly проверить отдельно.
+- **Inputs / REQ / AT / ADR:** JUDGE-001/004/006/007/010, AT-JUDGE-002/003/004/008/009/010, D7/D18; JudgePage.tsx, core-target.md и BUG-029 recovery. Все handlers/guards остаются прежними.
+- **Exact labels:** Undo → «Отменить очко» с accessible description «Отменяет последнее действующее очко. Ручную коррекцию не отменяет»; «Передать судейство» → «Передать ведение на другое устройство»; «Передать слот» → «Передать ведение»; «Освободить слот и выйти» → «Выйти из ведения», pending → «Выходим…»; lost-lock heading → «Ведение недоступно».
+- **Exact supporting copy:** в существующем handover блоке перед select: «Передаёте этот телефон? Можно продолжить без смены аккаунта. Записи останутся от текущего аккаунта. Для другого устройства выберите получателя». Не добавлять обязательный шаг идентификации. Основной context-tip: «Счёт меняет тот, кто сейчас ведёт игру на этом устройстве. Отмена снимает последнее действующее очко». Существующая подсказка ручной коррекции: «Коррекция меняет счёт и подачу. Она сохраняется отдельно от игровых очков».
+- **Release messages:** confirmed success «Вы вышли из ведения. Другой пользователь может продолжить»; already inactive «Ведение на этом устройстве уже не активно. Проверьте текущее состояние матча»; unknown «Не удалось проверить выход из ведения. Проверьте текущее состояние матча». Не обещать истечение в определённый срок, освобождение или синхронизацию без подтверждения; существующий переход к detail сохраняется, новых автоматических запросов/повторов нет. Handover success сообщает «Передача подготовлена для {имя}. Получатель должен принять её и открыть ведение на своём устройстве» — не утверждает, что получатель уже стал активным судьёй.
+- **Write scope / owner:** один frontend writer JudgePage.tsx, focused copy/semantics tests. Без нового словаря всего сервиса, редизайна или изменения API; label tests обновлять только когда они выражают доступное действие.
+- **Constraints / edges:** длинное имя,360/390/1440/landscape, screen-reader names соответствуют видимым; readonly/lost-lock не должны сообщать, что текущий человек может менять счёт; не переименовывать pending_confirmation в уже сохранённый результат. BUG-029 имеет отдельный exact recovery текст; его не заменять общей ошибкой. No-show/cancel/stop/void различаются и остаются на прежних местах.
+- **Subtasks:** 1) Зафиксировать исходные подписи и actor/state consumers. 2) Применить перечисленные строки и disclosure-level hint, сохранив handlers и guards. 3) Проверить переносы, доступные имена и честность success/unknown сообщений. 4) Сверить пользовательское понимание нейтральным заданием и обновить документы.
+- **Given / When / Then:** Given общий телефон передан другому человеку, Then текст не требует смены аккаунта. Given другая auth session, Then подсказка ведёт к существующей передаче и не обещает два активных владельца. Given только reservation создана, Then сообщение требует принятия, не объявляет передачу завершённой. Given failed release, Then нет утверждения об освобождении или auto retry. Given Undo, Then handler и граница после коррекции сохранены. Given readonly/lost-lock, Then изменение счёта по-прежнему недоступно.
+- **Risk:** упростить формулировку ценой ложного обещания владения или результата. Слова не меняют серверное состояние.
+- **Verification:** relevant web tests/typecheck, browser390/1440/landscape и360, keyboard/focus, release/handover success/unknown controlled responses; UI text сверить с authoritative state. Проверка понимания человеком остаётся отдельным исследовательским gate.
+- **Dependencies:** GAP-017/BUG-029 target contracts приняты; независимое review copy target принято после уточнения точных AT ссылок. Переименование не исправляет manual correction recovery из TECH-006.
+- **Documentation / rollback:** UX_FLOWS observable copy, BACKLOG/CHANGELOG_DEV, traceability изменённых tests; откат своих строк/tests/docs без данных и выпуска.
+
+### GAP-022 — Открывать команды через список, сохранив одну встроенную форму создания
+
+- **Type:** ux-layout
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-TE01/TE02 → EP-UX-TEAM → US-UX-TEAM-ORIENT «Участник быстро открывает нужную команду» → S4 candidate.
+- **Evidence:** F-TEAM-002, [пакет](audits/2026-09-13-ux-ui/team/report.md), TS-TEAM-01, [обязательная коррекция](audits/2026-09-13-ux-ui/team-correction.md). Экспертная гипотеза, частота и выигрыш времени не измерены.
+- **Expected:** возвращающийся участник видит свои команды, а создание остаётся явным и полным.
+- **Actual:** постоянно открытая форма из трёх полей предшествует списку при каждом посещении.
+- **Repro:** /profile → /teams с пустым и непустым списком, 390 и1440; создать команду и вернуться в список.
+- **Inputs / REQ / AT / ADR:** TEAM-001/002/003, AT-TEAM-001, D5; [точный target](audits/2026-09-13-ux-ui/team/target-spec.md#ts-team-01--список-сначала-и-одна-встроенная-форма), TeamsPage.tsx, existing create/list API; accepted GAP012r6.
+- **Exact behavior:** заголовок → «Мои команды» → одна «Создать команду» → существующая форма непосредственно под ней при раскрытии → текущая навигация. Inline disclosure, новый маршрут/диалог не вводится. В пустом состоянии используется та же кнопка и обработчик. При раскрытии фокус на название; до отправки «Скрыть форму» сворачивает и возвращает фокус. Pending блокирует поля и сворачивание. Успех добавляет команду в список, сворачивает форму и фокусирует её ссылку. Ошибка и данные остаются внутри формы. Возврат с detail сохраняет позицию списка; несохранённая форма не становится постоянным черновиком.
+- **Write scope / owner:** один frontend writer TeamsPage.tsx, локальные существующие стили и focused tests. Дополнительные поля/история/аватар/API не входят.
+- **Constraints / edges:** ноль/одна/несколько команд, длинное название без обрезания личности команды, роли текстом, list error с повтором GET, create known/unknown error без autoPOST, 401/403, клавиатура/касание, 360/390/1440. Один список и один экземпляр формы.
+- **Subtasks:** 1) Red для порядка, единственного create и сохранения всех полей. 2) Перенести существующую форму в inline disclosure. 3) Добавить переходы фокуса и contextual states без новых запросов по фоновому событию. 4) Browser/документы/evidence.
+- **Given / When / Then:** Given текущие команды, Then список — первый содержательный блок и все ссылки доступны. Given пустой список, When создать, Then раскрыта одна форма с прежней валидацией. Given pending, Then повтор и изменение payload невозможны. Given известный отказ, Then значения и ошибка сохранены внутри формы. Given успех, Then новая команда видна и фокус на её ссылке.
+- **Risk:** скрыть создание или нужную команду, завести второй черновик/обработчик, потерять focus после сворачивания.
+- **Verification:** web tests/typecheck, browser360/390/1440, keyboard/focus, loading/empty/error/pending/long names; create response + persisted GET.
+- **Dependencies:** BUG-026 для Teams create consumer; BUG-034 локальные ошибки. Независимое TEAM target review принято; реализация не выполнена.
+- **Documentation / rollback:** UX_FLOWS/AT/traceability при новых проверках, BACKLOG/CHANGELOG_DEV. Откат своего UI/test/docs изменения; без данных и выпуска.
+
+### BUG-034 — Ошибка настройки команды видна рядом с сохранением
+
+- **Type:** async-feedback
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-TE01 → EP-UX-SYSTEM → US-UX-CONTEXT-ERROR «Капитан понимает результат изменения» → S2 candidate.
+- **Evidence:** F-TEAM-003, PATCH500 на360, alertTop863.53 при viewport800; [origin screenshot](audits/2026-09-13-ux-ui/team/evidence/screenshots/te01-edit-error-origin-360.png), [runtime](audits/2026-09-13-ux-ui/team/evidence/runtime-states.json). Это page-card consumer принципа BUG-021; BUG-024 к нему не относится.
+- **Expected:** результат запроса и путь проверки находятся в карточке изменения, данные попытки не пропадают.
+- **Actual:** общий alert после нескольких блоков находится за пределами текущего viewport; исходное действие выглядит без результата.
+- **Repro:** капитан меняет слоган на360, PATCH получает controlled500; проверить положение alert до последующей прокрутки. Controlled500 в harness не даёт приложению права считать любой500 доказанным отказом.
+- **Inputs / REQ / AT / ADR:** TEAM-003, AT-TEAM-001, D26; TeamDetailPage.tsx settings action/error, existing PATCH/GET и BUG-021; [TEAM correction](audits/2026-09-13-ux-ui/team-correction.md).
+- **Exact behavior:** у сохранения настроек отдельное состояние ошибки внутри его карточки непосредственно перед кнопками. Введённые имя/слоган/приветствие сохранены, остальные допустимые разделы доступны. Known rejection объясняется локально. Network/5xx называется «Не удалось проверить сохранение» и даёт «Обновить данные» — только GET, без автоматического POST. Не сообщать «не сохранено» без доказательства. После чтения показать текущие серверные значения отдельно от попытки; новый Save остаётся явным действием действующего капитана, подтверждающим отправку его значений. Не вводить optimistic успех или новую серверную версию.
+- **Write scope / owner:** один frontend writer TeamDetailPage.tsx + focused tests; общий Alert/Dialog не форкать. API/data/права неизменны.
+- **Constraints / edges:** local draft и server values не подменяют друг друга молча; stale GET не меняет другую открытую команду; утрата капитанства/архив/401 скрывают недопустимые действия. При начале запроса не пытаться удержать фокус на native disabled кнопке: если он потерян, programmatic focus на локальный status; при ответе один раз на локальный error/success. Фоновое обновление не крадёт focus.
+- **Subtasks:** 1) Red: ошибка вне текущего действия. 2) Локализовать состояние операции и Alert. 3) Различить known/unknown copy и GET-only проверку, сохранить черновик. 4) Browser360/1440, focus, role loss, docs.
+- **Given / When / Then:** Given rejected PATCH, Then ошибка и попытка видны в settings. Given unknown outcome, Then нет утверждения об отказе и автоматического повторного POST; GET доступен. Given новый ответ, Then данные текущей команды показаны без потери попытки. Given role revoked, Then запись недоступна. Given background refresh, Then focus не меняется.
+- **Risk:** слепой повтор неизвестной операции, ложное сообщение о сохранении, перезапись попытки фоновым GET.
+- **Verification:** deferred request/component tests; browser360/390/1440 с известной ошибкой и потерянным ответом, focus и role guards; GET сравнение. Исторический run500 подтверждает placement, не все новые recovery branches.
+- **Dependencies:** BUG-021 общий принцип, BUG-026 pending. Это отдельный page-card implementation, не решение pending Dialog Q-UX-001. Точный recovery target принят independent Terra review.
+- **Documentation / rollback:** UX_FLOWS states, AT/traceability, BACKLOG/CHANGELOG_DEV; откат своего UI/test/docs изменения.
+
+### BUG-035 — Подтверждать исключение участника и передачу капитанства
+
+- **Type:** ux-safety-confirmation
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-TE02 → EP-UX-TEAM → US-UX-CAPTAIN-CONTROL «Капитан понимает изменение состава и полномочий» → S4 candidate.
+- **Evidence:** F-TEAM-004, прямые onClick и persisted remove/transfer без промежуточного шага; [report](audits/2026-09-13-ux-ui/team/report.md), [source](audits/2026-09-13-ux-ui/team/evidence/source-review.md). P2 safety-gap; необратимая потеря данных не доказана.
+- **Expected:** конкретный человек и последствия названы до изменения; отмена безопасна.
+- **Actual:** одно нажатие сразу прекращает membership или передаёт полномочия; немедленной отмены нет.
+- **Repro:** капитан активной команды выбирает remove, затем transfer другому участнику; проверить отсутствие промежуточного подтверждения и authoritative membership/captain.
+- **Inputs / REQ / AT / ADR:** TEAM-002/003/006/007, AT-TEAM-001/004/005; existing TeamDetailPage.tsx actions и Dialog, [target TS-TEAM-02](audits/2026-09-13-ux-ui/team/target-spec.md#ts-team-02--контекстные-ошибки-и-безопасные-действия), [correction](audits/2026-09-13-ux-ui/team-correction.md).
+- **Exact behavior:** доступные капитану действия строки сгруппированы под «Действия с {имя}». Это inline disclosure внутри строки: обычная Button с aria-expanded/aria-controls раскрывает две допустимые кнопки в потоке документа; Enter/Space активируют её, Tab последовательно проходит действия, Escape сворачивает и возвращает focus на раскрывающую кнопку. Role menu и стрелочную навигацию не вводить. Одновременно раскрыта одна строка; пустое раскрытие не показывается. Исключение открывает именованный Dialog с объяснением окончания активного участия и сохранения истории. Передача называет нового капитана и сообщает: прежний останется участником и потеряет управление составом. Первый focus на «Отмена», mutation только отдельным подтверждением. Pending честно блокирует повтор/Close; known failure остаётся локальным, unknown требует GET до нового явного решения. Успех обновляет права по серверу и фокусирует заголовок состава.
+- **Write scope / owner:** один frontend writer TeamDetailPage.tsx, существующие Button/Dialog из ui.tsx, локальный inline disclosure и focused tests. ui.tsx не экспортирует Menu; новая библиотека или общий компонент не нужны.
+- **Constraints / edges:** self/captain/ordinary member/outsider/archived роли по серверу; blocked/left target после открытия; transfer из другой сессии; длинное имя; cancel/escape/no-op; узкий экран, перенос кнопок внутри строки без горизонтального переполнения. Выход капитана без передачи остаётся запрещённым. Не менять автоматическую передачу при блокировке или архивирование.
+- **Subtasks:** 1) Red: один исходный click не должен писать. 2) Группировка допустимых действий и named confirmations. 3) Pending/error/authoritative refresh/focus. 4) Browser и role negatives, docs/evidence.
+- **Given / When / Then:** Given первая активация remove/transfer, Then persisted state не меняется и виден конкретный target. Given отмена, Then POST=0 и focus возвращён. Given подтверждение, Then один запрос; после transfer прежний капитан видит member права. Given stale/forbidden target, Then отказ без ложного успеха и без auto retry. Given архив, Then mutation controls отсутствуют.
+- **Risk:** скрыть разрешённое действие, сохранить старые права после передачи или направить запрос другому участнику.
+- **Verification:** component actor/status/menu/focus tests, browser390/1440/narrow360, persisted membership/captain и known/unknown failure. Изменение критического role journey требует gate по AGENTS.
+- **Dependencies:** BUG-021/026, TEAM independent target review принят. Не зависит от модели аватара, отзыва приглашений или нового исторического списка.
+- **Documentation / rollback:** UX_FLOWS/AT/traceability/BACKLOG/CHANGELOG_DEV; откат своего UI/test/docs изменения, без данных и выпуска.
+
+### GAP-024 — История показывает участников и контекст найденного события
+
+- **Type:** ux-result-discoverability
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-R01 → EP-UX-RESULTS → US-UX-HISTORY-FIND «Оператор узнаёт нужную игру в списке» → S4 candidate.
+- **Evidence:** F-RESULTS-001 expert hypothesis; [report](audits/2026-09-13-ux-ui/results/report.md), [search screenshot](audits/2026-09-13-ux-ui/results/evidence/runtime/history-search-390.png). Строки поиска не называют найденных игроков; человеческое время/ошибки не измерены.
+- **Expected:** матч различим по обеим сторонам, дате, формату, роли и результату; игра для других не требует считать оператора игроком.
+- **Actual:** title и «Матч · счёт · результат» не объясняют совпадение поиска по имени; часть имеющейся metadata не показана.
+- **Repro:** history с22+ synthetic событиями, поиск по имени игрока, открыть строку и вернуться; включить actor judge/organizer без участия, обычного участника и viewer.
+- **Inputs / REQ / AT / ADR:** HISTORY-001–004, PROFILE-006; AT-VIS-001/002/003/004; D17; HistoryService/HistoryPage, current HistoryItem/API/OpenAPI. [Обязательный root target](audits/2026-09-13-ux-ui/results-correction.md) заменяет counterpartyLabel исходной спецификации.
+- **Exact behavior:** header/Фильтры → поиск/Найти → существующие применённые условия и reset → список → Показать ещё. Match row: title → sideA — sideB → дата/время Europe/Moscow,1×1/2×2, все возвращённые роли → score/result/status. Tournament: title/date/format/roles/existing result/status, без выдуманного place. Ниже480px search и Найти идут двумя строками; все controls≥44px, row height auto, полные имена переносятся. Existing navigation/status chips/scroll order сохраняются.
+- **Contract delta:** HistoryItem получает sideA:string|null и sideB:string|null. Match values вычисляются в существующем authorized history query по сторонам/slots; tournament оба null. Отображаемые current names/guest snapshot следуют PROFILE-006 и существующему detail formatter. Без IDs/email/новых разрешений; не делать N+1 detail fetch. Для старого ответа без новых полей fallback к прежним title/metadata без фальшивых имён. Stable cursor/timestamp ordering и search predicate не меняются.
+- **Write scope / owner:** один bounded cross-package writer history-service.ts, API response/OpenAPI, web api HistoryItem/HistoryPage, existing ListRow styling and focused contracts/tests. Миграции не нужны; новую shared schema вводить только если существующая граница требует синхронизации, не ради общего рефакторинга.
+- **Constraints / edges:** operator не имеет opponent side;2v2, guest/blocked/current names, одинаковые имена, title/custom title, unknown fields in old response, empty search, no history, next-page error, same timestamp, actor switch, role player+judge. Данные не удалять из-за длинной строки. URL persistence F-RESULTS-002 отложен; существующий actor-scoped detail→Back сохраняется.
+- **Subtasks:** 1) Red for match identities for player/nonplaying operator, null tournament fields and unchanged pagination/visibility. 2) Добавить display fields в одном authorized query и контракте. 3) Вывести metadata и адаптивный порядок без второго обработчика списка. 4) Browser/PG/contract gate, schemas/документы/evidence.
+- **Given / When / Then:** Given C судил A/B, Then row показывает A иB, не «соперника C». Given2v2, Then обе стороны и все имена доступны. Given blocked historical player, Then имя сохранено по текущей политике, новая eligibility не выдана. Given unauthorized active event, Then оно по-прежнему отсутствует. Given pagination failure, Then прежние строки и cursor сохранены. Given detail→Back, Then фильтры/страницы/позиция и focus строки восстановлены; другой actor не получает snapshot.
+- **Risk:** расширить видимость, спутать стороны/счёт, замедлить pagination новыми запросами, потерять фильтры.
+- **Verification:** API/OpenAPI/typechecks/visibility+cursor PostgreSQL integration, focused HistoryPage, browser360/390/1440 keyboard/long text/pagination/error; repository-wide gate из-за API contract change. Схемы предложения не заменяют runtime after evidence.
+- **Dependencies:** RESULTS independent evidence/target review PASS; existing BUG-020 focus. Сохранение URL не блокирует эту задачу.
+- **Documentation / rollback:** API_SPEC/API_AS_BUILT, UX_FLOWS/AT-VIS-003 и traceability, BACKLOG/CHANGELOG_DEV; откат собственных code/contract/docs changes без данных/выпуска.
+
+### BUG-036 — Ошибка редактирования профиля привязана к полю и сохраняет попытку
+
+- **Type:** validation-and-recovery
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-R03 → EP-UX-SYSTEM → US-UX-PROFILE-EDIT «Пользователь исправляет конкретную ошибку» → S2 candidate.
+- **Evidence:** F-RESULTS-003;201 symbols organization→400, draft сохранён, generic page error и focus body; [screenshot](audits/2026-09-13-ux-ui/results/evidence/runtime/profile-validation-error-390.png), [report](audits/2026-09-13-ux-ui/results/report.md).
+- **Expected:** понятно, какое правило нарушено, где исправить и подтверждено ли сохранение.
+- **Actual:** error summary вне edit card сообщает только «Некорректные данные запроса», invalid/describedby отсутствуют.
+- **Repro:** на своём профиле ввести organization длиной201 и отправить; проверить response/field association/focus/draft.
+- **Inputs / REQ / AT / ADR:** PROFILE-001/003/004, AUTH-008, AT-PROFILE-001/004/005, D10; server ProfileUpdateSchema в apps/api/src/app.ts, ProfilePage.tsx, [точный target](audits/2026-09-13-ux-ui/results-correction.md).
+- **Exact behavior:** локальный validator повторяет server trim/limits: имя/фамилия1–100; organization/position≤200 илиnull; дата null либо точная валидная YYYY-MM-DD, year>0. Значение не обрезать. Failed client validation не делает PATCH; aria-invalid/describedby и error text находятся у поля, focus один раз в первое invalid по порядку формы. General response без field info остаётся локальным summary, не угадывать виновное поле. Pending замораживает отправленные поля/Save/Cancel, draft сохраняется. Success принимает authoritative response/profile; ошибка оставляет форму открытой.
+- **Unknown outcome:** network/5xx «Не удалось проверить сохранение», GET-only «Обновить данные», текущие данные показаны отдельно от введённых. Не обещать отказ/успех и не повторять PATCH автоматически. Новый Save явный, только того же actor и при действующей сессии. Same-actor reauth сохраняет in-memory draft, другой actor получает чистую форму; API/session-revoke/logout contracts не меняются.
+- **Write scope / owner:** один frontend writer ProfilePage.tsx и локальный validator, focused tests. Не переносить весь серверный schema layer между пакетами. Existing UI primitives и session Dialog сохраняются.
+- **Constraints / edges:** trimmed boundary values, whitespace-only names, leap day/invalid date, пустые optional fields/null, длинные raw spaces допустимые послеtrim, stale server read, role/account change, public/blocked profile. D10 avatar/email read-only; validation не вводит возрастные/бизнес ограничения. Background GET не крадёт focus и не стирает draft.
+- **Subtasks:** 1) Red meaningful boundary/errors+focus. 2) Клиентская проверка и field associations. 3) Локальный operation state и known/unknown copy/GET review. 4) Browser390/1440/narrow360, reauth/permission negatives, docs.
+- **Given / When / Then:** Given invalid length/date, Then0PATCH, конкретное поле и правило, focus в первом invalid. Given generic server400, Then локальная ошибка без ложного field blame, draft сохранён. Given response lost, Then нет autoPATCH и доступен GET-only review. Given same actor reauth, Then сохранена попытка без replay; other actor не видит её. Given public profile, Then edit не появляется.
+- **Risk:** frontend/server validation drift, потеря draft или ложная уверенность после неизвестного результата.
+- **Verification:** focused validator/ProfilePage/auth-recovery tests и web typecheck; browser360/390/1440 keyboard/focus/pending/known400/lost-response; сохраняемый результат сверить API GET на disposable stand. Revoke successful UI evidence остаётся отдельной проверкой, не proof всех reauth вариантов.
+- **Dependencies:** BUG-020/026 и agreed recovery principle BUG-034; RESULTS target review PASS. Не требует Q-UX-002 team avatar.
+- **Documentation / rollback:** UX_FLOWS/AT-PROFILE-004/traceability, BACKLOG/CHANGELOG_DEV; откат своих UI/tests/docs без данных и выпуска.
+
+### BUG-037 — Прочитанное уведомление сразу покидает фильтр «Актуальные»
+
+- **Type:** local-state-consistency
+- **Priority:** P3
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-R04 → EP-UX-RESULTS → US-UX-NOTIFICATION-TRIAGE «Пользователь видит только требующие внимания события» → S4 candidate.
+- **Evidence:** F-RESULTS-004 runtime, readAt обновлён, lifecycle=new оставляет non-actionable row до refresh; [report](audits/2026-09-13-ux-ui/results/report.md), [screenshot](audits/2026-09-13-ux-ui/results/evidence/runtime/notifications-actual-after-read-390.png).
+- **Expected:** successful read немедленно согласует список и badge, приглашение с доступным ответом остаётся видимым.
+- **Actual:** local batch handler обновляет readAt, но фильтрует только actionable/lifecycle; прочитанная обычная строка всё ещё «Актуальная».
+- **Repro:** checked Актуальные, unread non-actionable row, successful read-visible; до refresh сравнить visible rows/readAt/lifecycle. Контроль: pending invitation послеread должна остаться.
+- **Inputs / REQ / AT / ADR:** NOTIF-001/003/004/005/006, AT-NOTIF-001/003/004/005; NotificationsPage ActorNotificationsPage/visible/read-visible, [root target](audits/2026-09-13-ux-ui/results-correction.md). API unchanged.
+- **Exact behavior:** название «Актуальные» сохраняется, note «Непрочитанные уведомления и приглашения, на которые можно ответить». Effective current row: actionable OR(new/absent lifecycle AND readAt=null), terminal lifecycle не перезаписывать read ответом. Successful batch updates only returned IDs/readAt; non-actionable read row выходит сразу. Pending invitation остаётся actionable с «Прочитано» и прежними accept/decline. История содержит terminal reason/time без actions/popup.
+- **Write scope / owner:** один frontend writer NotificationsPage.tsx и focused tests; existing actor-key/remount, mounted/sequence guards и single-flight сохраняются. Не создавать новый API/lifecycle enum.
+- **Constraints / edges:** repeated read, partial response/omitted ID, read и decline/expiry одновременно, actor switch/unmount, failure response, empty filtered list, focus внутри удаляемой строки. Если focus удаляется: следующая строка → предыдущая → заголовок списка. Без background focus jump. Не обещать, что чтение означает согласие или отмену приглашения.
+- **Subtasks:** 1) Red local batch non-actionable vs pending-actionable. 2) Согласовать effective predicate и returned-ID update без terminal downgrade. 3) Focus fallback только при удалении focused row. 4) Browser/regression/docs.
+- **Given / When / Then:** Given non-actionable new, When successful read, Then row исчезла из Актуальные без refresh и есть в истории. Given pending invitation, Then read убирает unread badge, но не actions/row. Given terminal update выиграл гонку, Then stale read не возвращает new/actions. Given failure, Then отсутствует ложное локальное read. Given actor switch, Then прежний ответ не обновляет новый экран.
+- **Risk:** потерять доступный invitation action, воскресить terminal row или украсть keyboard focus.
+- **Verification:** NotificationsPage state tests including racing read/terminal, web typecheck, browser390/1440/360 and keyboard focus; API GET подтверждает сохранённое read состояние. Existing popup suppression/TTL behavior сохраняется; новые real-time TTL прогоны не требуются для локальной причины.
+- **Dependencies:** RESULTS independent review PASS; не зависит от нового имени фильтра или URL persistence.
+- **Documentation / rollback:** UX_FLOWS/AT-NOTIF-004/traceability, BACKLOG/CHANGELOG_DEV; откат своих UI/tests/docs без данных/выпуска.
+
+### GAP-025 — Определить и реализовать предусмотренный аватар команды
+
+- **Type:** functional-gap-pending-product-decision
+- **Priority:** P2
+- **Status:** blocked_decision
+- **Scenario / Epic / Story / Sprint:** SC-TE01 → EP-UX-TEAM → US-UX-TEAM-IDENTITY «Капитан задаёт необязательное изображение команды» → не включать в ready sprint до Q-UX-002.
+- **Evidence:** F-TEAM-001: PRD TEAM-001/003 предусматривает avatar, но field отсутствует в current UI/API/data; [TEAM report](audits/2026-09-13-ux-ui/team/report.md), [коррекция](audits/2026-09-13-ux-ui/team-correction.md), [review](audits/2026-09-13-ux-ui/social-review.json). Ранее наблюдение учитывал TECH-006, теперь один canonical owner — GAP-025.
+- **Expected:** необязательный аватар доступен капитану по принятой модели, команда остаётся узнаваемой без него и при ошибке изображения.
+- **Actual:** существующий create/edit поддерживает name/slogan/welcome без avatar.
+- **Repro:** создать и открыть active team, сверить формы и разрешённый team DTO; avatar отсутствует. Это functional gap текущего PRD, не запрос на ребрендинг.
+- **Inputs / REQ / AT / ADR:** TEAM-001/003, AT-TEAM-001, Q-UX-002; existing team data/API и D10 (только user/guest). D10 не распространять автоматически на team.
+- **Required decision:** выбрать модель из Q-UX-002. Координатор рекомендует существующий каталог готовых изображений без upload/storage. До решения не определять миграцию/контракт и не начинать реализацию; альтернативы не выдавать исполнителю как ready target.
+- **Scope after decision:** один bounded writer team schema/contracts/create/edit/render and tests; captain-only edits, membership/archive/history rules сохраняются. Реализация image upload или новых хранилищ отдельно требует полного scope/прав/ограничений и не выводится из этого аудита.
+- **Constraints / edges:** avatar omitted/default, существующие команды, fallback для missing asset, archived read-only, blocked/removed captain, длинное name, keyboard selection, unknown submit outcome, same-actor recovery. Функция не становится обязательным шагом создания команды.
+- **Subtasks:** 1) Закрыть Q-UX-002 принятым решением и одной точной моделью. 2) Определить nullable/default/legacy/API и точные limits, миграцию только если нужна. 3) Заполнить финальные GWT и write scope; independent readiness review. 4) Только затем implementation и gate по риску.
+- **Given / When / Then — обязательный каркас, не финальная приёмка:** Given нет выбранного avatar, Then создать команду можно. Given капитан изменяет допустимый avatar, Then server/UI согласованы. Given обычный участник/архив, Then изменение запрещено. После решения добавить конкретные допустимые значения, ошибки и совместимость; до этого задача не ready.
+- **Risk:** превратить локальный выбор изображения в непрошенный upload/storage проект, изменить D10 без решения или блокировать существующее создание.
+- **Verification:** при подготовке только source/PRD consistency и link checks; future checks определяются после решения. Runtime реализации не проводился.
+- **Dependencies:** Q-UX-002. Независимые GAP-022/BUG-034/035 не блокируются.
+- **Documentation / rollback:** DECISIONS/OPEN_QUESTIONS после ответа, requirements/AT/contracts/data as-built по фактическому scope, BACKLOG/CHANGELOG_DEV. Текущая запись не меняет приложение или базу.
+
+### GAP-026 — Карточка аккаунта с безопасной историей действий
+
+- **Type:** existing-requirement-gap
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-AD05 → EP-UX-ADMIN → US-UX-ACCOUNT-CONTEXT «Администратор проверяет аккаунт и видит, кто менял доступ» → S4 candidate.
+- **Evidence:** F-ADMIN-002, [отчёт](audits/2026-09-13-ux-ui/admin/report.md), A-RUN-002/003/005/006 и source-review: audit rows сохраняются, read endpoint/UI отсутствуют. Постоянный URL — предлагаемое решение, не существующее требование. GAP-010 исторически принимал slice без viewer; его статус не переносится на эту работу.
+- **Expected:** открываемая по ссылке карточка показывает разрешённые данные аккаунта и краткую историю, без секретов и неподтверждённых сведений.
+- **Actual:** профиль редактируется в modal, audit rows доступны только backend/DB; истории в интерфейсе нет.
+- **Repro:** active admin открывает каталог и профиль пользователя после block/unblock; проверить отсутствие timeline и наличие двух audit rows в disposable DB.
+- **Inputs / REQ / AT / ADR:** ADM-001/002/004/008; 09_LOCAL_AUTH_AND_TENNIS_ADMIN §7; AT-ADM-003/006, D6/D10; AdminPage, toAdminUser, auth-service/auditLogs; [точный обязательный контракт](audits/2026-09-13-ux-ui/admin-correction.md).
+- **Exact behavior:** `/admin/users/:id`: back → identity/status → existing edit → lifecycle actions → history. GET account использует существующий AdminUser allowlist. GET audit отдаёт только точного target, разрешённые action/changed-field names и actor/time; фиксированные20, cursor `(createdAt,id)` DESC. Нет raw meta, значений изменённых полей, секретов, выдуманного outcome или исторического имени автора. 401/403 скрывают данные, 404 локален; ошибки GET имеют Retry. После mutation success перечитать account/первую страницу, не повторять mutation.
+- **Write scope / owner:** один cross-package writer bounded AdminUser detail/audit GET routes/service/shared DTO/web route/tests; existing edit и mutation controls переиспользуются без копирования guard логики. Схема audit не меняется; индекс только при доказанной необходимости.
+- **Constraints / edges:** self/blocked target, смена actor/role во время запроса, null/missing author, unknown action/meta, одинаковое время событий, insert между страницами, empty/error, refresh/deep link, one-time secret только в существующем successful mutation response. Email read-only. Не читать чужие матчи.
+- **Subtasks:** 1) Red contract/authorization/allowlist/pagination. 2) Минимальные GET/service/DTO. 3) Карточка и история, существующая edit форма. 4) Browser/PG/full gate, документы.
+- **Given / When / Then:** Given admin и записи target, When detail/история открыты, Then видны только разрешённые поля и действия target в стабильном порядке. Given unknown secret-bearing meta, Then ничего из него не возвращается. Given nonadmin/blocked actor, Then нет данных. Given новая запись между страницами, Then старые не дублируются из-за offset. Given stale response после actor switch, Then данные прежнего actor не появляются. Given reload, Then тот же ID либо явный404.
+- **Risk:** утечка meta, смешение target/cursor, расширение прав, ложная история, двойная логика lifecycle guards.
+- **Verification:** API contract/authorization/service tests, disposable PostgreSQL pagination/ties/concurrent insert; repository-wide pnpm ci из-за контракта; browser360/390/1440 keyboard/focus/pending/known-error/stale-session. Проверять response и сохранённые факты, не только текст.
+- **Dependencies:** независимая приёмка ADMIN correction PASS, admin-review.json. GAP-027 использует этот route. BUG-038 не разрешает новый reset recovery автоматически.
+- **Documentation / rollback:** API_SPEC/API_AS_BUILT, UX_FLOWS, AT/traceability для нового read поведения, BACKLOG/CHANGELOG_DEV; scoped rollback собственных code/tests/docs, без удаления audit records и выпуска.
+
+### GAP-027 — Каталог администрирования начинается с поиска пользователей
+
+- **Type:** structural-ux-hypothesis
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-AD04 → EP-UX-ADMIN → US-UX-ADMIN-DIRECTORY «Найти аккаунт и нужное действие» → S4 candidate.
+- **Evidence:** F-ADMIN-001: createTop63.5, users583.5, search617.5 на390×844; до четырёх равных row actions. Поиск уже виден, его полная недоступность не заявляется. [Отчёт](audits/2026-09-13-ux-ui/admin/report.md), [обязательная коррекция](audits/2026-09-13-ux-ui/admin-correction.md).
+- **Expected:** список/поиск основной, создание и изменения доступа обнаружимы вторым уровнем, каждая функция сохранена.
+- **Actual:** полная форма создания стоит перед поиском, row actions равного визуального веса повторяются в каждой строке.
+- **Repro:** открыть `/admin` с несколькими synthetic users на390×844; сопоставить порядок блоков и row actions с A-RUN-001.
+- **Inputs / REQ / AT / ADR:** ADM-001–007; AT-ADM-001/002/003/006; D6/D10; AdminPage current fields/actor guards, GAP-026 route, BUG-035 inline disclosure pattern.
+- **Exact behavior:** профиль-back → заголовок → search/status/count → rows; «Добавить пользователя» раскрывает единственную inline форму перед rows, default closed. Dirty close подтверждается, pending не закрывается. Row name открывает GAP-026, «Действия» раскрывает inline обычные кнопки, один row открыт; aria-expanded/controls, normal Tab, Escape→trigger. Именованные lifecycle confirmations и role/self/status guards сохраняются. Loading/error/retry/empty рядом со списком. Существующий responsive shell сохраняется, новый table/menu dependency не вводится.
+- **Write scope / owner:** один frontend writer AdminPage и focused tests; не менять API/роли и не строить глобальный desktop shell.
+- **Constraints / edges:** 0/1/many users, длинные email/имена, null lastLogin, active/blocked/self/admin, lost session/pending mutation/list-load race, narrow360/focus/BottomNav. Одноразовый пароль после create не пропадает от автоматического закрытия формы; success показывает существующий secret dialog, затем очищает draft. BUG-038 state machine не заменять generic retry.
+- **Subtasks:** 1) Переместить каталог с сохранением состояния поиска. 2) Inline create/disclosure и focus. 3) Row actions/entry route, существующие dialogs. 4) Browser/state regressions/docs.
+- **Given / When / Then:** Given390 initial, Then search/status/Add предшествуют create fields. Given открыта row A и открывается B, Then A закрыта, focus остаётся на намеренном действии. Given cancel confirmation, Then0mutation. Given pending create, Then payload неизменен и форма не закрывается. Given success, Then secret показан один раз, user доступен в каталоге. Given keyboard360, Then все разрешённые действия достижимы и focus не скрыт.
+- **Risk:** скрыть частую команду, потерять draft/secret, добавить ложные права через отображение.
+- **Verification:** AdminPage state/interaction tests, web typecheck, browser360/390/1440/keyboard/error/loading/empty/pending, source capability comparison и authoritative GET после synthetic mutation. Full gate только если реализация расширит исходный UI scope.
+- **Dependencies:** GAP-026 route, BUG-020/021/026 применимые shared consumers; independent ADMIN readiness review PASS, admin-review.json.
+- **Documentation / rollback:** UX_FLOWS/AT/traceability, BACKLOG/CHANGELOG_DEV; вернуть только собственную UI компоновку/tests/docs без данных.
+
+### BUG-038 — Неопределённый результат сброса пароля выдаётся за обычную ошибку
+
+- **Type:** recovery-defect
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-AD06 → EP-UX-ADMIN → US-UX-RESET-RECOVERY → S4d candidate с отдельным contract/migration gate.
+- **Evidence:** F-ADMIN-003, A-RUN-004: reset применён200, ответ abort, старые session/password401,1POST,0recoveryGET, Confirm снова enabled рядом с Failed to fetch. Повтор не выполнялся. [Коррекция](audits/2026-09-13-ux-ui/admin-correction.md) отзывает автоматическую приёмку P1 и небезопасный unchanged-marker retry.
+- **Expected:** UI честно показывает неизвестный результат; не повторяет reset автоматически и не обещает получить уже утраченный one-time secret.
+- **Actual:** после применённого reset и потери ответа Confirm доступен рядом с общей сетевой ошибкой; конкретный исход не согласуется.
+- **Repro:** в disposable stand выполнить reset через route.fetch, после server200 abort client response; проверить1POST, старую session401 и enabled Confirm; не выполнять второй reset как часть исходного evidence.
+- **Inputs / REQ / AT / ADR:** ADM-007/008, AUTH-007, AT-AUTH-007; AuthService.resetPassword, temporaryPasswordIssues, AdminPage.runConfirm; existing actor locks/session revocation.
+- **Constraints / edges:** before/after commit response loss, delayed first request, другое reset/first-password между попытками, self-reset с отзывом собственной сессии, blocked/demoted actor, transactional rollback; прежний секрет не журналировать/не хранить для повторного получения.
+- **Risk:** повторная выдача с неизвестным итоговым порядком, утрата ещё одного пароля, необоснованная блокировка всей админки.
+
+- **Accepted target sources:** принято независимым Terra/root review, reset-review.json; эта спецификация является текущей постановкой. [Единый request receipt/CAS contract](audits/2026-09-13-ux-ui/admin-reset-spec/contract.md), [statechart](audits/2026-09-13-ux-ui/admin-reset-spec/statechart.md), [точные ordering tests](audits/2026-09-13-ux-ui/admin-reset-spec/tests.md) читать только с [обязательной коррекцией](audits/2026-09-13-ux-ui/admin-reset-correction.md). Исходные шесть файлов сохранены неизменными.
+- **Exact target:** existing reset POST требует UUID Idempotency-Key и expectedLastAppliedRequestId; preflight GET показывает только last admin-reset pointer, exact receipt GET — applied/rejected_state_changed/unknown без plaintext. Отдельный явно подтверждённый replacement с новым UUID/supersedes предшественника использует CAS. Сначала existing deterministic user locks/transaction auth, затем receipt и pointer CAS; все password/session/issue/audit/notification/receipt записи атомарны. Exact replay не выдаёт секрет второй раз. Early absence и5xx остаются unknown. Pointer не доказывает действительность временного пароля.
+- **Implementation scope / owner:** один bounded cross-package writer AuthService/reset routes/shared API DTO/OpenAPI, одна receipt table и nullable last_admin_password_reset_request_id, AdminPage flow и App-level one-time self-reset presentation, tests/docs. Login/first-change/change-password получают согласованный user→session lock/recheck для сохранения порядка, без нового auth framework/прав или изменения password policy.
+- **Self-reset and recovery:** полученный secret хранится только in-memory вне Protected boundary; local auth очищен, private UI и authenticated requests закрыты, Copy сохраняет показ, Close/reload уничтожают secret. Lost self-reset не имеет unauth recovery; другой active admin может помочь. Единственный admin требует отдельного сопровождения, готовая bootstrap-rotation процедура не заявляется. Несекретная request correlation привязана к actor+target и очищается по mandatory overlay.
+- **Subtasks:** 1) Red contract + migration compatibility + PG ordering/races. 2) Receipt/CAS/allowlists and deterministic locks. 3) Client single-flight GET/explicit replacement/one-time display. 4) Full repository/PG/browser acceptance and source docs. Сначала server, безопасно отклоняющий missing key, затем web; старый cached client получает понятное обновление страницы, не unsafe legacy reset.
+- **Given / When / Then:** Given A applied response lost, Then exact receipt confirms A without secret or POST. Given no receipt, Then unknown. Given B explicitly supersedes A, Then B remains last reset in A→B and B→A; receipt/key fingerprints prevent different payload replay. Given A→C→B chain conflict, Then C may safely reject without writes and needs fresh confirmation. Given login/change races, Then revoked/pre-reset credentials cannot create or overwrite a later reset; verify both orders. Given reset × block/demote, Then no deadlock from FK-before-user-lock. Given self received/lost, Then one-time display/auth boundary and no unauth bypass as above.
+- **Verification:** repository-wide pnpm ci, migration/schema checks and disposable PostgreSQL all RST/PG-RST cases with corrected010, browser360/390/1440/error/focus/pending/auth/storage-disabled; response AND persisted state, no secrets in artifacts. Update PRD/AT, API_SPEC/API_AS_BUILT, DATA_MODEL/AS_BUILT, UX_FLOWS, traceability/BACKLOG/CHANGELOG_DEV. Runtime новой реализации не проводился. Rollback перед применением данных отдельно проверяется: не удалять receipts/audit и не возвращать unsafe uncorrelated reset; старый UI может временно показывать refresh-required.
+- **Dependencies:** Independent Terra/root target review PASS; mandatory admin-reset-correction.md supersedes the original frozen proposal. Existing active-admin/session invariants remain required. No pending product decision for this bounded contract.
+- **Documentation / rollback:** Apply the documentation and safe compatibility rollback requirements stated above; no deployment or data mutation is authorized by target readiness.
+
+### GAP-028 — Минимальный доступ администратора к аварийному завершению по ID
+
+- **Type:** permission-boundary-decision
+- **Priority:** P2
+- **Status:** blocked_decision
+- **Scenario / Epic / Story / Sprint:** SC-AD07 → EP-UX-ADMIN → US-UX-MATCH-INCIDENT → вне ready sprint до Q-UX-003.
+- **Evidence:** F-ADMIN-004, A-RUN-007; exact ordinary detail403, нет row в list/history и UI entry, direct authorized force-close cancelled version0→1. [ADMIN correction](audits/2026-09-13-ux-ui/admin-correction.md). Исходный P1 — severity предложения автора, root P2: обход API существует, runtime отказ D17 корректен.
+- **Expected:** после принятого решения active admin может выполнить уже разрешённое D23 действие через ограниченный интерфейс; чужой live detail не раскрывается.
+- **Actual:** обычные list/detail/history скрывают active match корректно, отдельного admin recovery entry нет; direct authorized API работает.
+- **Repro:** пользователь создаёт/начинает standalone, outsider admin получает ordinary detail403, не находит ID entry в `/admin`; direct force-close в disposable fixture даёт cancelled.
+- **Inputs / REQ / AT / ADR:** D17/D23, MATCH-017, AT-ADM-MATCH-001/002 и остальные state tests как future matrix; current force-close API/guards. Не путать cancel с stop/void/purge.
+- **Required decision:** Q-UX-003: exact-ID read только id/kind/status/version/allowed action; без title, участников, счёта, судьи или событий. Поиск всех активных матчей не предлагается. До ответа не утверждать исключение из D17.
+- **Constraints / edges:** malformed/nonexistent ID, tutorial/tournament, active/terminal, stale version/concurrent finish, auth loss, optional reason; confirmed soft cancel без winner/stats. Доступ к необходимым DTO не даёт organizer powers.
+- **Subtasks:** 1) Решение/ADR и согласование D17. 2) Точный минимальный DTO/error/idempotency/unknown target и схема. 3) Independent review. 4) Implementation только после ready.
+- **Given / When / Then — обязательный каркас:** Given принят exact-ID seam и eligible standalone, Then admin видит только разрешённые поля и именованное подтверждение эффекта по ID. Given ordinary live route, Then прежний D17 сохраняется. Given invalid actor/state, Then0writes. До решения не считать это действующим требованием.
+- **Risk:** расширить наблюдаемость активных игр или скрыто разрешить другие операции.
+- **Verification:** подтверждён только один direct API force-close и D17 отказ; остальные состояния/акторы не повторялись. Future repository-wide/API/PG races/browser gate после принятия target.
+- **Dependencies:** Q-UX-003, agreed minimal read contract; не блокирует остальные admin задачи.
+- **Documentation / rollback:** после решения DECISIONS/OPEN_QUESTIONS, PRD/AT/API/UX_FLOWS и as-built; сейчас только backlog finding.
+
+### BUG-039 — Сверка ручной коррекции после потери ответа
+
+- **Type:** recovery-and-copy-defect
+- **Priority:** P2
+- **Status:** ready
+- **Scenario / Epic / Story / Sprint:** SC-J01/04 → EP-UX-CORE → US-UX-CORRECTION-RECOVERY «Ведущий понимает, сохранён ли исправленный счёт» → S2 candidate после BUG-029 state seam.
+- **Evidence:** OBS-JUDGE-001 теперь runtime, [дополнительный probe](audits/2026-09-13-ux-ui/judge-correction-probe/README.md): commit200 score4:2/version2, lost response board1:0; deliberate stale resend409 не создаёт второй event/key; early absence сменяется late commit. Desktop1440, mobile этой ветки не проверен.
+- **Expected:** коррекция сверяется по точному prefixed key, состояние/подпись честны, повтор не нужен для получения актуального счёта.
+- **Actual:** generic Failed to fetch, старое табло, enabled Save; после409 текст ошибочно приписывает собственную операцию другому устройству.
+- **Repro:** disposable owned judge, correction1:0→4:2, route.fetch200→abort; сравнить exact `manual-correction:<key>`/version/score/event с UI. Явный повтор staleversion409 оставить как negative control без утверждения двойных очков.
+- **Inputs / REQ / AT / ADR:** JUDGE-004/009/010/011, AT-JUDGE-010 technical correction baseline, AT-JUDGE-009 lost-lock/live sync, AT-JUDGE-002 one-device, AT-JUDGE-004 handover; D4/D7/D27; JudgePage correction, MatchService.manualCorrection rowlock/version/prefix; [точный target](audits/2026-09-13-ux-ui/correction-recovery-target.md), BUG-029 и BUG-031.
+- **Exact behavior:** сохранить submitted key/version/absolute values отдельно от draft; network/5xx→single-flight GET и временная блокировка новых writes. Exact prefixed key presence подтверждает именно попытку, UI принимает текущий GET (включая позднейшие события), не перезаписывает submitted snapshot. Absence остаётся unknown; GET-only Retry. После успешного GET явные подтверждения «Принять показанный счёт» без mutation либо «Задать другой счёт» с новой явно заполненной absolute form/UUID/точной прочитанной version. Ни autoPOST, ни hidden rebase. Conflict нейтрален относительно источника изменения. Lost lock/terminal/actor change не дают прав обратно.
+- **Write scope / owner:** один frontend writer JudgePage recovery state и focused tests, переиспользующий BUG-029 seam. API/reducer/data/eventLog semantics не меняются. BUG-031 focus-only остаётся отдельной небольшой задачей.
+- **Constraints / edges:** absolute correction не +1; serve participant ID, pending_confirmation→in_progress по текущим rules, duplicate/stale request, later score after key present, early GET/no key, failed GET, lost session/handover/terminal, sameactor draft/differentactor clean. Неотправленные score taps не проигрываются через correction recovery.
+- **Subtasks:** 1) Red lost-response/key/prefix and false other-device copy. 2) immutable submitted intent + shared recovery gate. 3) GET reconciliation/explicit review/new form/focus. 4) PG ordering controls/browser/full gate/docs.
+- **Given / When / Then:** Given exact key present after lost response, Then GET state accepted without POST and correction acknowledged. Given key absent in early GET, Then outcome unknown. Given original/new explicit correction compete at same reviewed version, Then one succeeds and other409, no automatic rebase. Given applied correction followed by point, Then current score not overwritten by old draft. Given another actor/terminal, Then no residual write access.
+- **Risk:** false failure, unnoticed draft overwrite or unintended absolute replacement; current negative probe proves CAS protection only in tested order.
+- **Verification:** focused JudgePage/state tests and web typecheck; disposable PG both original/new orders, competing point/finish; repository-wide pnpm ci for critical journey; browser360/390/1440/keyboard/focus/network. Current probe is evidence of existing issue, not future target acceptance.
+- **Dependencies:** BUG-029 recovery contract, BUG-031 focus mapping; independent target review PASS, correction-review.json.
+- **Documentation / rollback:** UX_FLOWS/AT/traceability, BACKLOG/CHANGELOG_DEV and evidence; rollback own UI/tests/docs only, no event/data rewrite or release.

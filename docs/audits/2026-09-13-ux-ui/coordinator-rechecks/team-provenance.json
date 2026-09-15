@@ -1,0 +1,10 @@
+{
+  "checkedAt": "2026-09-14T08:29:42.632Z",
+  "scope": "current post-run application tree in author-named disposable audit checkout; not historical execution trace",
+  "checkedPaths": 323,
+  "mismatches": [],
+  "dispatchManifestSha256": "c39ed47d9aaaadfba7fac3790bde26acac772ae9946e2f1c99bcdb6a1d46b3a6",
+  "incorrectHashInFrozenTeamReport": "c39ed47b617b793124ced607889d2102fb1ac2398a380c49321f61b473e9895b",
+  "correctCandidateFingerprint": "8e8762575a07e71a17192da327cbe1b5906ca33c1c2ef762c0f9a37463b94cb3",
+  "sourceCopy": "/private/tmp/tab10-team-audit.1u276g"
+}

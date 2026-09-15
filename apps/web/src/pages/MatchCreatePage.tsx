@@ -9,7 +9,7 @@ import { useAuth } from "../auth";
 type MatchFormat = "1v1" | "2v2";
 type OpponentMode = "user" | "guest";
 type FirstServerMethod = "random" | "manual" | "rally";
-type SlotKey = "partner" | "opponent1" | "opponent2";
+type SlotKey = "playerA" | "partner" | "opponent1" | "opponent2";
 type SlotState = { mode: OpponentMode; userId: string; guestName: string };
 type MatchParticipant = {
   side?: string;
@@ -106,13 +106,19 @@ export function MatchCreatePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const requestedOpponentId = searchParams.get("opponentId");
+  const revengeOf = searchParams.get("revengeOf");
+  const isPurposefulInvitation = Boolean(requestedOpponentId || revengeOf);
   const [title, setTitle] = useState(defaultMatchTitle);
   const [format, setFormat] = useState<MatchFormat>("1v1");
   const [pointsToWin, setPointsToWin] = useState("11");
   const [mercyEnabled, setMercyEnabled] = useState(true);
   const [mercyPoints, setMercyPoints] = useState("5");
   const [firstServerMethod, setFirstServerMethod] = useState<FirstServerMethod>("manual");
+  const [creatorParticipates, setCreatorParticipates] = useState(isPurposefulInvitation);
+  const [sendPlayerInvitations, setSendPlayerInvitations] = useState(isPurposefulInvitation);
   const [slots, setSlots] = useState<Record<SlotKey, SlotState>>({
+    playerA: emptySlot(),
     partner: emptySlot(),
     opponent1: emptySlot(),
     opponent2: emptySlot(),
@@ -126,8 +132,6 @@ export function MatchCreatePage() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  const requestedOpponentId = searchParams.get("opponentId");
-  const revengeOf = searchParams.get("revengeOf");
   const isSelfChallenge = Boolean(user?.id && requestedOpponentId === user.id);
   const source = revengeOf ? "revenge" : requestedOpponentId ? "challenge" : "manual";
 
@@ -172,6 +176,8 @@ export function MatchCreatePage() {
       return;
     }
     if (requestedOpponentId) {
+      setCreatorParticipates(true);
+      setSendPlayerInvitations(true);
       setSlots((current) => ({
         ...current,
         opponent1: { mode: "user", userId: requestedOpponentId, guestName: "" },
@@ -210,10 +216,13 @@ export function MatchCreatePage() {
             : "manual",
         );
         setSlots({
+          playerA: emptySlot(),
           partner: fromParticipant(sameSide[0]),
           opponent1: fromParticipant(otherSide[0]),
           opponent2: fromParticipant(otherSide[1]),
         });
+        setCreatorParticipates(true);
+        setSendPlayerInvitations(true);
         setPrefillState("idle");
       })
       .catch((reason: Error) => {
@@ -283,7 +292,9 @@ export function MatchCreatePage() {
         throw new Error("Порог сухой победы должен быть положительным целым числом");
       }
       const participants = [
-        { side: "A" as const, userId: user.id },
+        ...(creatorParticipates
+          ? [{ side: "A" as const, userId: user.id }]
+          : [slotPayload(slots.playerA, "A")]),
         ...(format === "2v2" ? [slotPayload(slots.partner, "A")] : []),
         slotPayload(slots.opponent1, "B"),
         ...(format === "2v2" ? [slotPayload(slots.opponent2, "B")] : []),
@@ -302,6 +313,7 @@ export function MatchCreatePage() {
         mercyPoints: mercyEnabled ? mercy : null,
         firstServerMethod,
         source,
+        sendPlayerInvitations,
         ...(judgeUserId ? { judgeUserId } : {}),
         participants,
       });
@@ -328,6 +340,18 @@ export function MatchCreatePage() {
           onChange={(value) => setFormat(value as MatchFormat)}
           options={[{ value: "1v1", label: "1 × 1" }, { value: "2v2", label: "2 × 2" }]}
         />
+        {source === "manual" ? (
+          <label className="match-create__check">
+            <input
+              type="checkbox"
+              checked={creatorParticipates}
+              onChange={(event) => setCreatorParticipates(event.target.checked)}
+            />
+            Создатель играет
+          </label>
+        ) : (
+          <p className="context-tip" role="note">В вызове или реванше создатель играет.</p>
+        )}
         <TextField
           label="Очков до победы"
           type="number"
@@ -407,6 +431,17 @@ export function MatchCreatePage() {
           clearable
           fullWidth
         />
+        <label className="match-create__check">
+          <input
+            type="checkbox"
+            checked={sendPlayerInvitations}
+            onChange={(event) => setSendPlayerInvitations(event.target.checked)}
+          />
+          Пригласить выбранных игроков
+        </label>
+        {!creatorParticipates ? (
+          <SlotEditor label="Игрок A" slot={slots.playerA} options={options} onChange={(value) => updateSlot("playerA", value)} />
+        ) : null}
         {format === "2v2" ? <SlotEditor label="Партнёр" slot={slots.partner} options={options} onChange={(value) => updateSlot("partner", value)} /> : null}
         <SlotEditor label={format === "2v2" ? "Соперник 1" : "Соперник"} slot={slots.opponent1} options={options} onChange={(value) => updateSlot("opponent1", value)} />
         {format === "2v2" ? <SlotEditor label="Соперник 2" slot={slots.opponent2} options={options} onChange={(value) => updateSlot("opponent2", value)} /> : null}

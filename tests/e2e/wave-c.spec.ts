@@ -44,6 +44,7 @@ test("Wave C AT-MATCH-013_016 2v2 team selection, rules, no-show and revenge", a
     await mutate(target, "POST", `/api/v1/team-invitations/${invitation.id}/respond`, { accept: true });
     await login(page); await page.goto("/matches/new");
     await page.getByLabel("Название", { exact: true }).fill(name);
+    await page.getByLabel("Создатель играет", { exact: true }).check();
     await page.getByRole("button", { name: "2 × 2", exact: true }).click();
     await page.getByRole("button", { name, exact: true }).click();
     await page.getByLabel("Очков до победы", { exact: true }).fill("7");

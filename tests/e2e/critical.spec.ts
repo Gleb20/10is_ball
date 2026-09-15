@@ -116,7 +116,11 @@ test("E2E_auth_match_judge__AT-MATCH-001_005_008_AT-JUDGE-001_003_006_007__finis
   await page.goto("/matches/new");
   await expect(page.getByRole("heading", { name: "Новый матч" })).toBeVisible();
   await page.getByLabel("Название").fill("TECH-002 critical journey");
-  await page.getByRole("button", { name: "Гость", exact: true }).click();
+  await page.getByLabel("Создатель играет", { exact: true }).check();
+  await page
+    .getByRole("group", { name: "Соперник: тип участника", exact: true })
+    .getByRole("button", { name: "Гость", exact: true })
+    .click();
   await page.getByLabel("Гость (Имя Фамилия)").fill("Гость E2E");
   await page.getByRole("button", { name: "Создать матч" }).click();
   await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+$/);
@@ -156,7 +160,11 @@ test("E2E_runtime_session_recovery__AT-AUTH-009__preserves_route_and_draft_witho
   await loginBrowser(page);
   await page.goto("/matches/new");
   await page.getByLabel("Название").fill("TECH-002 revoked draft");
-  await page.getByRole("button", { name: "Гость", exact: true }).click();
+  await page.getByLabel("Создатель играет", { exact: true }).check();
+  await page
+    .getByRole("group", { name: "Соперник: тип участника", exact: true })
+    .getByRole("button", { name: "Гость", exact: true })
+    .click();
   await page.getByLabel("Гость (Имя Фамилия)").fill("Черновик E2E");
 
   const revoker = await loginApi("tab10-tech-002-revoker");
@@ -211,6 +219,7 @@ test("E2E_runtime_session_recovery__AT-AUTH-009__preserves_route_and_draft_witho
   await expect(page.getByLabel("Гость (Имя Фамилия)")).toHaveValue(
     "Черновик E2E",
   );
+  await expect(page.getByLabel("Создатель играет", { exact: true })).toBeChecked();
   await expect(page.getByText("Требуется вход", { exact: true })).toHaveCount(0);
   await expectNoSeriousAxeViolations(page);
   await expectNoHorizontalOverflow(page);

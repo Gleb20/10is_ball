@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "audit": "common-components",
+  "baseline": {
+    "version": "3.0.0",
+    "sha": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "runtimeOrigin": "http://localhost:4517",
+    "apiOrigin": "http://localhost:4518",
+    "database": "disposable PostgreSQL on loopback port 32996"
+  },
+  "comparisons": [
+    {
+      "id": "CMP-SRC-001",
+      "finding": "F-CMP-001",
+      "component": "ic-kit Autocomplete",
+      "runtime": {
+        "comboboxAriaActiveDescendant": "_r_8_-option-0",
+        "activeOptionId": null,
+        "activeOptionDataActive": "true",
+        "activeOptionAriaSelected": "false"
+      },
+      "source": [
+        "packages/ic-kit/dist/ic-kit.js:8620-8635 renders option li elements without id",
+        "packages/ic-kit/dist/ic-kit.js:8884-8889 sets aria-activedescendant to a generated option id"
+      ],
+      "assessment": "confirmed runtime defect; the referenced active descendant does not exist"
+    },
+    {
+      "id": "CMP-SRC-002",
+      "finding": "F-CMP-003",
+      "component": "Autocomplete consumers",
+      "runtime": {
+        "inputIdBeforeSelection": "_r_8_",
+        "inputIdAfterSelection": "_r_a_",
+        "focusedAfterEnter": false,
+        "documentActiveElement": "body"
+      },
+      "source": [
+        "apps/web/src/pages/MatchCreatePage.tsx:78-85 uses a value-dependent key",
+        "apps/web/src/pages/MatchCreatePage.tsx:399-406 uses a value-dependent judge key",
+        "apps/web/src/pages/MatchDetailPage.tsx:103-110 repeats the value-dependent key"
+      ],
+      "assessment": "confirmed consumer defect; selection changes the key and remounts the control"
+    },
+    {
+      "id": "CMP-SRC-003",
+      "finding": "F-CMP-004",
+      "component": "TextField, Autocomplete and native radio focus",
+      "runtime": {
+        "textInputOutline": "rgb(101, 32, 165) solid 3px",
+        "textInputOutlineRadius": "0px",
+        "visualWrapperBorderRadius": "10px",
+        "visualWrapperFocusBorderWidth": "2px",
+        "darkRadioOutline": "rgb(203, 165, 248) solid 3px",
+        "darkRadioOutlineRadius": "0px"
+      },
+      "source": [
+        "ic-kit bundled input style suppresses the raw input outline and uses control focus-within",
+        "apps/web/src/styles.css:1330-1333 reapplies a global outline to every focus-visible descendant"
+      ],
+      "assessment": "confirmed cross-layer conflict; focus is present but drawn on the wrong geometry and can be duplicated"
+    },
+    {
+      "id": "CMP-SRC-004",
+      "finding": "F-CMP-005",
+      "component": "BracketAlgorithmDialog radio cards",
+      "runtime": {
+        "selectedBorder": "2px solid rgb(37, 99, 235)",
+        "selectedBoxShadow": "rgb(37, 99, 235) 0px 0px 0px 1px",
+        "focusOutline": "rgb(37, 99, 235) solid 2px",
+        "focusOutlineOffset": "2px"
+      },
+      "source": [
+        "apps/web/src/components/BracketAlgorithmDialog.css:47-50 adds an outer focus outline",
+        "apps/web/src/components/BracketAlgorithmDialog.css:52-55 adds selected border plus a same-color shadow"
+      ],
+      "assessment": "confirmed visual-state collision; selected and focused are encoded by three same-color contours"
+    }
+  ],
+  "withdrawnCandidates": [
+    {
+      "candidate": "BottomNav active link lacks aria-current",
+      "status": "withdrawn",
+      "reason": "The runtime snapshot recorded the active class but did not collect aria-current. React Router DOM 6.30.4 NavLink derives both the class callback and aria-current=page from the same isActive value (dist/index.js:804,851,865), so an active class produced by this callback is not evidence of a missing current-page semantic."
+    }
+  ],
+  "runtimeEvidence": "runtime-states.json",
+  "limitations": [
+    "The ic-kit package is a vendored prebuilt bundle; no unminified component source is present in this checkout.",
+    "CSS zoom 200 percent is a proxy and does not prove browser UI zoom or OS text scaling.",
+    "Touch was emulated; no physical device or spoken assistive technology was used."
+  ]
+}

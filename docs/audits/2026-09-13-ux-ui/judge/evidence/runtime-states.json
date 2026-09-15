@@ -1,0 +1,4083 @@
+{
+  "records": [
+    {
+      "id": "j01-setup-390",
+      "capturedAt": "2026-09-13T23:29:11.025Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "Поверните устройство горизонтально для удобного судействаПеред стартомОтменаТолько активный судья этой сессии меняет счё",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Отмена",
+          "disabled": false,
+          "rect": {
+            "x": 299.3,
+            "y": 78,
+            "width": 78.7,
+            "height": 44,
+            "top": 78,
+            "right": 378,
+            "bottom": 122,
+            "left": 299.3
+          }
+        },
+        {
+          "text": "↔",
+          "disabled": false,
+          "rect": {
+            "x": 167.11,
+            "y": 556.69,
+            "width": 55.78,
+            "height": 44,
+            "top": 556.69,
+            "right": 222.89,
+            "bottom": 600.69,
+            "left": 167.11
+          }
+        },
+        {
+          "text": "Начать матч",
+          "disabled": true,
+          "rect": {
+            "x": 139.88,
+            "y": 788,
+            "width": 110.23,
+            "height": 44,
+            "top": 788,
+            "right": 250.11,
+            "bottom": 832,
+            "left": 139.88
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [
+        "Поверните устройство горизонтально для удобного судейства"
+      ],
+      "scores": [
+        "0",
+        "0"
+      ],
+      "pointTargets": [],
+      "serve": null,
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-SETUP"
+    },
+    {
+      "id": "j02-setup-pending-controls-390",
+      "capturedAt": "2026-09-13T23:29:11.203Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "↔",
+        "ariaLabel": "Поменять стороны"
+      },
+      "buttons": [
+        {
+          "text": "Отмена",
+          "disabled": true,
+          "rect": {
+            "x": 299.3,
+            "y": 78,
+            "width": 78.7,
+            "height": 44,
+            "top": 78,
+            "right": 378,
+            "bottom": 122,
+            "left": 299.3
+          }
+        },
+        {
+          "text": "↔",
+          "disabled": false,
+          "rect": {
+            "x": 167.11,
+            "y": 556.69,
+            "width": 55.78,
+            "height": 44,
+            "top": 556.69,
+            "right": 222.89,
+            "bottom": 600.69,
+            "left": 167.11
+          }
+        },
+        {
+          "text": "Сохранение…",
+          "disabled": true,
+          "rect": {
+            "x": 135.14,
+            "y": 788,
+            "width": 119.72,
+            "height": 44,
+            "top": 788,
+            "right": 254.86,
+            "bottom": 832,
+            "left": 135.14
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [
+        "Поверните устройство горизонтально для удобного судейства"
+      ],
+      "scores": [
+        "0",
+        "0"
+      ],
+      "pointTargets": [],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 35.97,
+          "y": 564.28,
+          "width": 95.16,
+          "height": 28,
+          "top": 564.28,
+          "right": 131.13,
+          "bottom": 592.28,
+          "left": 35.97
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-SETUP",
+      "pendingSetup": {
+        "radioDisabled": false,
+        "swapDisabled": false,
+        "confirmDisabled": true
+      }
+    },
+    {
+      "id": "j03-live-390",
+      "capturedAt": "2026-09-13T23:29:11.405Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "Поверните устройство горизонтально для удобного судействаИдёт0:00НазадUndoЕщёСинтетическая Анна: 0. Синтетический Борис:",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 174.28,
+            "y": 78,
+            "width": 69.02,
+            "height": 44,
+            "top": 78,
+            "right": 243.3,
+            "bottom": 122,
+            "left": 174.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": false,
+          "rect": {
+            "x": 251.3,
+            "y": 78,
+            "width": 63.14,
+            "height": 44,
+            "top": 78,
+            "right": 314.44,
+            "bottom": 122,
+            "left": 251.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 322.44,
+            "y": 78,
+            "width": 55.56,
+            "height": 44,
+            "top": 78,
+            "right": 378,
+            "bottom": 122,
+            "left": 322.44
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 175,
+            "bottom": 814,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 215,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 364,
+            "bottom": 814,
+            "left": 215
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [
+        "Поверните устройство горизонтально для удобного судейства"
+      ],
+      "scores": [
+        "0",
+        "0"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 175,
+            "bottom": 814,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 215,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 364,
+            "bottom": 814,
+            "left": 215
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 52.92,
+          "y": 301.97,
+          "width": 95.16,
+          "height": 28,
+          "top": 301.97,
+          "right": 148.08,
+          "bottom": 329.97,
+          "left": 52.92
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-SCORE"
+    },
+    {
+      "id": "j04-live-360",
+      "capturedAt": "2026-09-13T23:29:11.428Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 360,
+        "height": 800
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "Поверните устройство горизонтально для удобного судействаИдёт0:00НазадUndoЕщёСинтетическая Анна: 0. Синтетический Борис:",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 144.28,
+            "y": 78,
+            "width": 69.02,
+            "height": 44,
+            "top": 78,
+            "right": 213.3,
+            "bottom": 122,
+            "left": 144.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": false,
+          "rect": {
+            "x": 221.3,
+            "y": 78,
+            "width": 63.14,
+            "height": 44,
+            "top": 78,
+            "right": 284.44,
+            "bottom": 122,
+            "left": 221.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 292.44,
+            "y": 78,
+            "width": 55.56,
+            "height": 44,
+            "top": 78,
+            "right": 348,
+            "bottom": 122,
+            "left": 292.44
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 714,
+            "width": 134,
+            "height": 56,
+            "top": 714,
+            "right": 160,
+            "bottom": 770,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 200,
+            "y": 714,
+            "width": 134,
+            "height": 56,
+            "top": 714,
+            "right": 334,
+            "bottom": 770,
+            "left": 200
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [
+        "Поверните устройство горизонтально для удобного судейства"
+      ],
+      "scores": [
+        "0",
+        "0"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 714,
+            "width": 134,
+            "height": 56,
+            "top": 714,
+            "right": 160,
+            "bottom": 770,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 200,
+            "y": 714,
+            "width": 134,
+            "height": 56,
+            "top": 714,
+            "right": 334,
+            "bottom": 770,
+            "left": 200
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 45.42,
+          "y": 301.97,
+          "width": 95.16,
+          "height": 28,
+          "top": 301.97,
+          "right": 140.58,
+          "bottom": 329.97,
+          "left": 45.42
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-RESPONSIVE"
+    },
+    {
+      "id": "j05-rapid-queue-landscape",
+      "capturedAt": "2026-09-13T23:29:11.522Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 844,
+        "height": 390
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "+1",
+        "ariaLabel": "+1 очко: Синтетическая Анна"
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": true,
+          "rect": {
+            "x": 628.28,
+            "y": 6,
+            "width": 69.02,
+            "height": 44,
+            "top": 6,
+            "right": 697.3,
+            "bottom": 50,
+            "left": 628.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": true,
+          "rect": {
+            "x": 705.3,
+            "y": 6,
+            "width": 63.14,
+            "height": 44,
+            "top": 6,
+            "right": 768.44,
+            "bottom": 50,
+            "left": 705.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": true,
+          "rect": {
+            "x": 776.44,
+            "y": 6,
+            "width": 55.56,
+            "height": 44,
+            "top": 6,
+            "right": 832,
+            "bottom": 50,
+            "left": 776.44
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 22,
+            "y": 318,
+            "width": 384,
+            "height": 48,
+            "top": 318,
+            "right": 406,
+            "bottom": 366,
+            "left": 22
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 438,
+            "y": 318,
+            "width": 384,
+            "height": 48,
+            "top": 318,
+            "right": 822,
+            "bottom": 366,
+            "left": 438
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [
+        "В очереди: 2"
+      ],
+      "scores": [
+        "0",
+        "0"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 22,
+            "y": 318,
+            "width": 384,
+            "height": 48,
+            "top": 318,
+            "right": 406,
+            "bottom": 366,
+            "left": 22
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 438,
+            "y": 318,
+            "width": 384,
+            "height": 48,
+            "top": 318,
+            "right": 822,
+            "bottom": 366,
+            "left": 438
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 166.42,
+          "y": 204.39,
+          "width": 95.16,
+          "height": 28,
+          "top": 204.39,
+          "right": 261.58,
+          "bottom": 232.39,
+          "left": 166.42
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-RAPID",
+      "heldPointCount": 1
+    },
+    {
+      "id": "j06-after-undo-landscape",
+      "capturedAt": "2026-09-13T23:29:11.768Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 844,
+        "height": 390
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "Идёт0:00НазадUndoЕщёСинтетическая Анна: 1. Синтетический Борис: 0. Подаёт Синтетическая Анна.Только активный судья этой ",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 628.28,
+            "y": 6,
+            "width": 69.02,
+            "height": 44,
+            "top": 6,
+            "right": 697.3,
+            "bottom": 50,
+            "left": 628.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": false,
+          "rect": {
+            "x": 705.3,
+            "y": 6,
+            "width": 63.14,
+            "height": 44,
+            "top": 6,
+            "right": 768.44,
+            "bottom": 50,
+            "left": 705.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 776.44,
+            "y": 6,
+            "width": 55.56,
+            "height": 44,
+            "top": 6,
+            "right": 832,
+            "bottom": 50,
+            "left": 776.44
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 22,
+            "y": 318,
+            "width": 384,
+            "height": 48,
+            "top": 318,
+            "right": 406,
+            "bottom": 366,
+            "left": 22
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 438,
+            "y": 318,
+            "width": 384,
+            "height": 48,
+            "top": 318,
+            "right": 822,
+            "bottom": 366,
+            "left": 438
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "scores": [
+        "1",
+        "0"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 22,
+            "y": 318,
+            "width": 384,
+            "height": 48,
+            "top": 318,
+            "right": 406,
+            "bottom": 366,
+            "left": 22
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 438,
+            "y": 318,
+            "width": 384,
+            "height": 48,
+            "top": 318,
+            "right": 822,
+            "bottom": 366,
+            "left": 438
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 166.42,
+          "y": 204.39,
+          "width": 95.16,
+          "height": 28,
+          "top": 204.39,
+          "right": 261.58,
+          "bottom": 232.39,
+          "left": 166.42
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-RAPID"
+    },
+    {
+      "id": "j07-correction-open-focus-1440",
+      "capturedAt": "2026-09-13T23:29:11.834Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 900
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "Идёт0:00НазадUndoЕщёСинтетическая Анна: 1. Синтетический Борис: 0. Подаёт Синтетическая Анна.Только активный судья этой ",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": true,
+          "rect": {
+            "x": 1224.28,
+            "y": 12,
+            "width": 69.02,
+            "height": 44,
+            "top": 12,
+            "right": 1293.3,
+            "bottom": 56,
+            "left": 1224.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": true,
+          "rect": {
+            "x": 1301.3,
+            "y": 12,
+            "width": 63.14,
+            "height": 44,
+            "top": 12,
+            "right": 1364.44,
+            "bottom": 56,
+            "left": 1301.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": true,
+          "rect": {
+            "x": 1372.44,
+            "y": 12,
+            "width": 55.56,
+            "height": 44,
+            "top": 12,
+            "right": 1428,
+            "bottom": 56,
+            "left": 1372.44
+          }
+        },
+        {
+          "text": "Сохранить коррекцию",
+          "disabled": false,
+          "rect": {
+            "x": 23,
+            "y": 528.03,
+            "width": 176.53,
+            "height": 44,
+            "top": 528.03,
+            "right": 199.53,
+            "bottom": 572.03,
+            "left": 23
+          }
+        },
+        {
+          "text": "Отмена",
+          "disabled": false,
+          "rect": {
+            "x": 207.53,
+            "y": 528.03,
+            "width": 78.7,
+            "height": 44,
+            "top": 528.03,
+            "right": 286.23,
+            "bottom": 572.03,
+            "left": 207.53
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": true,
+          "rect": {
+            "x": 26,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 700,
+            "bottom": 870,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": true,
+          "rect": {
+            "x": 740,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 1414,
+            "bottom": 870,
+            "left": 740
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "scores": [
+        "1",
+        "0"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": true,
+          "rect": {
+            "x": 26,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 700,
+            "bottom": 870,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": true,
+          "rect": {
+            "x": 740,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 1414,
+            "bottom": 870,
+            "left": 740
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 315.42,
+          "y": 747.03,
+          "width": 95.16,
+          "height": 28,
+          "top": 747.03,
+          "right": 410.58,
+          "bottom": 775.03,
+          "left": 315.42
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-CORRECTION",
+      "correctionOpenFocus": {
+        "tag": "BODY",
+        "id": null,
+        "text": "Идёт0:00НазадUndoЕщёСинтетическая Анна: 1. Синтетический Борис: 0. Подаёт Синтет"
+      }
+    },
+    {
+      "id": "j07b-correction-close-focus",
+      "correctionCloseFocus": {
+        "tag": "BODY",
+        "id": null,
+        "text": "Идёт0:00НазадUndoЕщёСинтетическая Анна: 1. Синтетический Борис: 0. Подаёт Синтет"
+      }
+    },
+    {
+      "id": "j08-handover-directory-pending-1440",
+      "capturedAt": "2026-09-13T23:29:12.356Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 900
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "judge-more-trigger",
+        "text": "Ещё",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 1224.28,
+            "y": 12,
+            "width": 69.02,
+            "height": 44,
+            "top": 12,
+            "right": 1293.3,
+            "bottom": 56,
+            "left": 1224.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": false,
+          "rect": {
+            "x": 1301.3,
+            "y": 12,
+            "width": 63.14,
+            "height": 44,
+            "top": 12,
+            "right": 1364.44,
+            "bottom": 56,
+            "left": 1301.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 1372.44,
+            "y": 12,
+            "width": 55.56,
+            "height": 44,
+            "top": 12,
+            "right": 1428,
+            "bottom": 56,
+            "left": 1372.44
+          }
+        },
+        {
+          "text": "Поменять местами на экране",
+          "disabled": false,
+          "rect": {
+            "x": 20,
+            "y": 112.19,
+            "width": 223.73,
+            "height": 152,
+            "top": 112.19,
+            "right": 243.73,
+            "bottom": 264.19,
+            "left": 20
+          }
+        },
+        {
+          "text": "Исправить счёт и подачу",
+          "disabled": false,
+          "rect": {
+            "x": 251.73,
+            "y": 112.19,
+            "width": 192.31,
+            "height": 152,
+            "top": 112.19,
+            "right": 444.05,
+            "bottom": 264.19,
+            "left": 251.73
+          }
+        },
+        {
+          "text": "Передать слот",
+          "disabled": true,
+          "rect": {
+            "x": 463.05,
+            "y": 209.19,
+            "width": 298,
+            "height": 44,
+            "top": 209.19,
+            "right": 761.05,
+            "bottom": 253.19,
+            "left": 463.05
+          }
+        },
+        {
+          "text": "Освободить слот и выйти",
+          "disabled": false,
+          "rect": {
+            "x": 780.05,
+            "y": 112.19,
+            "width": 195.47,
+            "height": 152,
+            "top": 112.19,
+            "right": 975.52,
+            "bottom": 264.19,
+            "left": 780.05
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 700,
+            "bottom": 870,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 740,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 1414,
+            "bottom": 870,
+            "left": 740
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "scores": [
+        "3",
+        "1"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 700,
+            "bottom": 870,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 740,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 1414,
+            "bottom": 870,
+            "left": 740
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 1029.42,
+          "y": 436.19,
+          "width": 95.16,
+          "height": 28,
+          "top": 436.19,
+          "right": 1124.58,
+          "bottom": 464.19,
+          "left": 1029.42
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-HANDOVER-DIRECTORY",
+      "directoryPending": {
+        "selectDisabled": false,
+        "optionCount": 1,
+        "busyCount": 0,
+        "retryCount": 0
+      }
+    },
+    {
+      "id": "j09-handover-directory-error-1440",
+      "capturedAt": "2026-09-13T23:29:12.686Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 900
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "judge-more-trigger",
+        "text": "Ещё",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 1224.28,
+            "y": 12,
+            "width": 69.02,
+            "height": 44,
+            "top": 12,
+            "right": 1293.3,
+            "bottom": 56,
+            "left": 1224.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": false,
+          "rect": {
+            "x": 1301.3,
+            "y": 12,
+            "width": 63.14,
+            "height": 44,
+            "top": 12,
+            "right": 1364.44,
+            "bottom": 56,
+            "left": 1301.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 1372.44,
+            "y": 12,
+            "width": 55.56,
+            "height": 44,
+            "top": 12,
+            "right": 1428,
+            "bottom": 56,
+            "left": 1372.44
+          }
+        },
+        {
+          "text": "Поменять местами на экране",
+          "disabled": false,
+          "rect": {
+            "x": 20,
+            "y": 112.19,
+            "width": 223.73,
+            "height": 152,
+            "top": 112.19,
+            "right": 243.73,
+            "bottom": 264.19,
+            "left": 20
+          }
+        },
+        {
+          "text": "Исправить счёт и подачу",
+          "disabled": false,
+          "rect": {
+            "x": 251.73,
+            "y": 112.19,
+            "width": 192.31,
+            "height": 152,
+            "top": 112.19,
+            "right": 444.05,
+            "bottom": 264.19,
+            "left": 251.73
+          }
+        },
+        {
+          "text": "Передать слот",
+          "disabled": true,
+          "rect": {
+            "x": 463.05,
+            "y": 209.19,
+            "width": 298,
+            "height": 44,
+            "top": 209.19,
+            "right": 761.05,
+            "bottom": 253.19,
+            "left": 463.05
+          }
+        },
+        {
+          "text": "Освободить слот и выйти",
+          "disabled": false,
+          "rect": {
+            "x": 780.05,
+            "y": 112.19,
+            "width": 195.47,
+            "height": 152,
+            "top": 112.19,
+            "right": 975.52,
+            "bottom": 264.19,
+            "left": 780.05
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 700,
+            "bottom": 870,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 740,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 1414,
+            "bottom": 870,
+            "left": 740
+          }
+        }
+      ],
+      "alerts": [
+        "Не удалось загрузить пользователей: Синтетическая ошибка каталога"
+      ],
+      "statuses": [],
+      "scores": [
+        "3",
+        "1"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 700,
+            "bottom": 870,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 740,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 1414,
+            "bottom": 870,
+            "left": 740
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 1029.42,
+          "y": 464.19,
+          "width": 95.16,
+          "height": 28,
+          "top": 464.19,
+          "right": 1124.58,
+          "bottom": 492.19,
+          "left": 1029.42
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": {
+        "fg": "rgb(176, 0, 32)",
+        "bg": "rgb(26, 29, 36)"
+      },
+      "horizontalOverflow": false,
+      "runId": "J-RUN-HANDOVER-DIRECTORY",
+      "directoryError": {
+        "selectDisabled": false,
+        "retryCount": 0,
+        "alert": "Не удалось загрузить пользователей: Синтетическая ошибка каталога"
+      }
+    },
+    {
+      "id": "j10-known-write-failure-dark-1440",
+      "capturedAt": "2026-09-13T23:29:13.076Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 900
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "+1",
+        "ariaLabel": "+1 очко: Синтетическая Анна"
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 1224.28,
+            "y": 12,
+            "width": 69.02,
+            "height": 44,
+            "top": 12,
+            "right": 1293.3,
+            "bottom": 56,
+            "left": 1224.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": false,
+          "rect": {
+            "x": 1301.3,
+            "y": 12,
+            "width": 63.14,
+            "height": 44,
+            "top": 12,
+            "right": 1364.44,
+            "bottom": 56,
+            "left": 1301.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 1372.44,
+            "y": 12,
+            "width": 55.56,
+            "height": 44,
+            "top": 12,
+            "right": 1428,
+            "bottom": 56,
+            "left": 1372.44
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 700,
+            "bottom": 870,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 740,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 1414,
+            "bottom": 870,
+            "left": 740
+          }
+        }
+      ],
+      "alerts": [
+        "Очко не подтверждено: Синтетическая ошибка записи. Очередь остановлена: проверьте счёт и повторите."
+      ],
+      "statuses": [],
+      "scores": [
+        "3",
+        "1"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 700,
+            "bottom": 870,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 740,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 1414,
+            "bottom": 870,
+            "left": 740
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 1029.42,
+          "y": 286.19,
+          "width": 95.16,
+          "height": 28,
+          "top": 286.19,
+          "right": 1124.58,
+          "bottom": 314.19,
+          "left": 1029.42
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": {
+        "fg": "rgb(176, 0, 32)",
+        "bg": "rgb(26, 29, 36)"
+      },
+      "horizontalOverflow": false,
+      "runId": "J-RUN-KNOWN-FAILURE",
+      "beforeVersion": 4
+    },
+    {
+      "id": "j11-unknown-outcome-authoritative-score-1440",
+      "capturedAt": "2026-09-13T23:29:13.278Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 900
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "+1",
+        "ariaLabel": "+1 очко: Синтетическая Анна"
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 1224.28,
+            "y": 12,
+            "width": 69.02,
+            "height": 44,
+            "top": 12,
+            "right": 1293.3,
+            "bottom": 56,
+            "left": 1224.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": false,
+          "rect": {
+            "x": 1301.3,
+            "y": 12,
+            "width": 63.14,
+            "height": 44,
+            "top": 12,
+            "right": 1364.44,
+            "bottom": 56,
+            "left": 1301.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 1372.44,
+            "y": 12,
+            "width": 55.56,
+            "height": 44,
+            "top": 12,
+            "right": 1428,
+            "bottom": 56,
+            "left": 1372.44
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 700,
+            "bottom": 870,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 740,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 1414,
+            "bottom": 870,
+            "left": 740
+          }
+        }
+      ],
+      "alerts": [
+        "Очко не подтверждено: Failed to fetch. Очередь остановлена: проверьте счёт и повторите."
+      ],
+      "statuses": [],
+      "scores": [
+        "4",
+        "1"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 700,
+            "bottom": 870,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 740,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 1414,
+            "bottom": 870,
+            "left": 740
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 1029.42,
+          "y": 286.19,
+          "width": 95.16,
+          "height": 28,
+          "top": 286.19,
+          "right": 1124.58,
+          "bottom": 314.19,
+          "left": 1029.42
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": {
+        "fg": "rgb(176, 0, 32)",
+        "bg": "rgb(26, 29, 36)"
+      },
+      "horizontalOverflow": false,
+      "runId": "J-RUN-UNKNOWN-OUTCOME",
+      "scoreBefore": 3,
+      "idempotencyKeyCaptured": true
+    },
+    {
+      "id": "j12-version-conflict-authoritative-refresh-1440",
+      "capturedAt": "2026-09-13T23:29:13.462Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 900
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "+1",
+        "ariaLabel": "+1 очко: Синтетическая Анна"
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 1224.28,
+            "y": 12,
+            "width": 69.02,
+            "height": 44,
+            "top": 12,
+            "right": 1293.3,
+            "bottom": 56,
+            "left": 1224.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": false,
+          "rect": {
+            "x": 1301.3,
+            "y": 12,
+            "width": 63.14,
+            "height": 44,
+            "top": 12,
+            "right": 1364.44,
+            "bottom": 56,
+            "left": 1301.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 1372.44,
+            "y": 12,
+            "width": 55.56,
+            "height": 44,
+            "top": 12,
+            "right": 1428,
+            "bottom": 56,
+            "left": 1372.44
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 700,
+            "bottom": 870,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 740,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 1414,
+            "bottom": 870,
+            "left": 740
+          }
+        }
+      ],
+      "alerts": [
+        "Счёт изменился на другом устройстве. Очередь остановлена: проверьте счёт и повторите неначисленное очко."
+      ],
+      "statuses": [],
+      "scores": [
+        "4",
+        "2"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 700,
+            "bottom": 870,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 740,
+            "y": 814,
+            "width": 674,
+            "height": 56,
+            "top": 814,
+            "right": 1414,
+            "bottom": 870,
+            "left": 740
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 315.42,
+          "y": 286.19,
+          "width": 95.16,
+          "height": 28,
+          "top": 286.19,
+          "right": 410.58,
+          "bottom": 314.19,
+          "left": 315.42
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": {
+        "fg": "rgb(176, 0, 32)",
+        "bg": "rgb(26, 29, 36)"
+      },
+      "horizontalOverflow": false,
+      "runId": "J-RUN-VERSION-CONFLICT",
+      "staleVersion": 5
+    },
+    {
+      "id": "j13-offline-no-recovery-action-390",
+      "capturedAt": "2026-09-13T23:29:13.791Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "+1",
+        "ariaLabel": "+1 очко: Синтетическая Анна"
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 174.28,
+            "y": 78,
+            "width": 69.02,
+            "height": 44,
+            "top": 78,
+            "right": 243.3,
+            "bottom": 122,
+            "left": 174.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": false,
+          "rect": {
+            "x": 251.3,
+            "y": 78,
+            "width": 63.14,
+            "height": 44,
+            "top": 78,
+            "right": 314.44,
+            "bottom": 122,
+            "left": 251.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 322.44,
+            "y": 78,
+            "width": 55.56,
+            "height": 44,
+            "top": 78,
+            "right": 378,
+            "bottom": 122,
+            "left": 322.44
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 175,
+            "bottom": 814,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 215,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 364,
+            "bottom": 814,
+            "left": 215
+          }
+        }
+      ],
+      "alerts": [
+        "Очко не подтверждено: Failed to fetch. Очередь остановлена: проверьте счёт и повторите."
+      ],
+      "statuses": [
+        "Поверните устройство горизонтально для удобного судейства"
+      ],
+      "scores": [
+        "4",
+        "2"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 175,
+            "bottom": 814,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 215,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 364,
+            "bottom": 814,
+            "left": 215
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 52.92,
+          "y": 347.97,
+          "width": 95.16,
+          "height": 28,
+          "top": 347.97,
+          "right": 148.08,
+          "bottom": 375.97,
+          "left": 52.92
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": {
+        "fg": "rgb(176, 0, 32)",
+        "bg": "rgb(26, 29, 36)"
+      },
+      "horizontalOverflow": false,
+      "runId": "J-RUN-OFFLINE",
+      "refreshButtons": 0
+    },
+    {
+      "id": "j14-handover-ready-390",
+      "capturedAt": "2026-09-13T23:29:14.054Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": "judge-more-trigger",
+        "text": "Ещё",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 174.28,
+            "y": 78,
+            "width": 69.02,
+            "height": 44,
+            "top": 78,
+            "right": 243.3,
+            "bottom": 122,
+            "left": 174.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": false,
+          "rect": {
+            "x": 251.3,
+            "y": 78,
+            "width": 63.14,
+            "height": 44,
+            "top": 78,
+            "right": 314.44,
+            "bottom": 122,
+            "left": 251.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 322.44,
+            "y": 78,
+            "width": 55.56,
+            "height": 44,
+            "top": 78,
+            "right": 378,
+            "bottom": 122,
+            "left": 322.44
+          }
+        },
+        {
+          "text": "Поменять местами на экране",
+          "disabled": false,
+          "rect": {
+            "x": 20,
+            "y": 194.38,
+            "width": 223.73,
+            "height": 44,
+            "top": 194.38,
+            "right": 243.73,
+            "bottom": 238.38,
+            "left": 20
+          }
+        },
+        {
+          "text": "Исправить счёт и подачу",
+          "disabled": false,
+          "rect": {
+            "x": 20,
+            "y": 246.38,
+            "width": 192.31,
+            "height": 44,
+            "top": 246.38,
+            "right": 212.31,
+            "bottom": 290.38,
+            "left": 20
+          }
+        },
+        {
+          "text": "Передать слот",
+          "disabled": false,
+          "rect": {
+            "x": 31,
+            "y": 395.38,
+            "width": 298,
+            "height": 44,
+            "top": 395.38,
+            "right": 329,
+            "bottom": 439.38,
+            "left": 31
+          }
+        },
+        {
+          "text": "Освободить слот и выйти",
+          "disabled": false,
+          "rect": {
+            "x": 20,
+            "y": 458.38,
+            "width": 195.47,
+            "height": 44,
+            "top": 458.38,
+            "right": 215.47,
+            "bottom": 502.38,
+            "left": 20
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 175,
+            "bottom": 814,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 215,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 364,
+            "bottom": 814,
+            "left": 215
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [
+        "Поверните устройство горизонтально для удобного судейства"
+      ],
+      "scores": [
+        "4",
+        "2"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 175,
+            "bottom": 814,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 215,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 364,
+            "bottom": 814,
+            "left": 215
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 52.92,
+          "y": 635.97,
+          "width": 95.16,
+          "height": 28,
+          "top": 635.97,
+          "right": 148.08,
+          "bottom": 663.97,
+          "left": 52.92
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-HANDOVER"
+    },
+    {
+      "id": "j15-handover-target-acquired-390",
+      "capturedAt": "2026-09-13T23:29:14.592Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "Поверните устройство горизонтально для удобного судействаИдёт0:03НазадUndoЕщёСинтетическая Анна: 4. Синтетический Борис:",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 174.28,
+            "y": 78,
+            "width": 69.02,
+            "height": 44,
+            "top": 78,
+            "right": 243.3,
+            "bottom": 122,
+            "left": 174.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": false,
+          "rect": {
+            "x": 251.3,
+            "y": 78,
+            "width": 63.14,
+            "height": 44,
+            "top": 78,
+            "right": 314.44,
+            "bottom": 122,
+            "left": 251.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 322.44,
+            "y": 78,
+            "width": 55.56,
+            "height": 44,
+            "top": 78,
+            "right": 378,
+            "bottom": 122,
+            "left": 322.44
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 175,
+            "bottom": 814,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 215,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 364,
+            "bottom": 814,
+            "left": 215
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [
+        "Поверните устройство горизонтально для удобного судейства"
+      ],
+      "scores": [
+        "4",
+        "2"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 175,
+            "bottom": 814,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 215,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 364,
+            "bottom": 814,
+            "left": 215
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 52.92,
+          "y": 301.97,
+          "width": 95.16,
+          "height": 28,
+          "top": 301.97,
+          "right": 148.08,
+          "bottom": 329.97,
+          "left": 52.92
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-HANDOVER"
+    },
+    {
+      "id": "j16-former-owner-blocked-390",
+      "capturedAt": "2026-09-13T23:29:15.020Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "Этот матч уже судит «Синтетическая Дарья», два судьи у матча — дело к драке. Давай не будем.ПовторитьСмотреть счётНазад ",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Повторить",
+          "disabled": false,
+          "rect": {
+            "x": 14.59,
+            "y": 426,
+            "width": 99,
+            "height": 44,
+            "top": 426,
+            "right": 113.59,
+            "bottom": 470,
+            "left": 14.59
+          }
+        },
+        {
+          "text": "Смотреть счёт",
+          "disabled": false,
+          "rect": {
+            "x": 121.59,
+            "y": 426,
+            "width": 123.58,
+            "height": 44,
+            "top": 426,
+            "right": 245.17,
+            "bottom": 470,
+            "left": 121.59
+          }
+        },
+        {
+          "text": "Назад к матчу",
+          "disabled": false,
+          "rect": {
+            "x": 253.17,
+            "y": 426,
+            "width": 122.22,
+            "height": 44,
+            "top": 426,
+            "right": 375.39,
+            "bottom": 470,
+            "left": 253.17
+          }
+        }
+      ],
+      "alerts": [
+        "Этот матч уже судит «Синтетическая Дарья», два судьи у матча — дело к драке. Давай не будем."
+      ],
+      "statuses": [],
+      "scores": [],
+      "pointTargets": [],
+      "serve": null,
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-OWNERSHIP"
+    },
+    {
+      "id": "j17-same-user-other-device-blocked-390",
+      "capturedAt": "2026-09-13T23:29:15.398Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "Судейство уже открыто на другом устройстве.ПовторитьСмотреть счётНазад к матчу",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Повторить",
+          "disabled": false,
+          "rect": {
+            "x": 14.59,
+            "y": 417,
+            "width": 99,
+            "height": 44,
+            "top": 417,
+            "right": 113.59,
+            "bottom": 461,
+            "left": 14.59
+          }
+        },
+        {
+          "text": "Смотреть счёт",
+          "disabled": false,
+          "rect": {
+            "x": 121.59,
+            "y": 417,
+            "width": 123.58,
+            "height": 44,
+            "top": 417,
+            "right": 245.17,
+            "bottom": 461,
+            "left": 121.59
+          }
+        },
+        {
+          "text": "Назад к матчу",
+          "disabled": false,
+          "rect": {
+            "x": 253.17,
+            "y": 417,
+            "width": 122.22,
+            "height": 44,
+            "top": 417,
+            "right": 375.39,
+            "bottom": 461,
+            "left": 253.17
+          }
+        }
+      ],
+      "alerts": [
+        "Судейство уже открыто на другом устройстве."
+      ],
+      "statuses": [],
+      "scores": [],
+      "pointTargets": [],
+      "serve": null,
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-OWNERSHIP"
+    },
+    {
+      "id": "j18-pending-confirmation-390",
+      "capturedAt": "2026-09-13T23:29:15.816Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "Поверните устройство горизонтально для удобного судействаПодтверждение0:04НазадUndoЕщёСинтетическая Анна: 9. Синтетическ",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 174.28,
+            "y": 78,
+            "width": 69.02,
+            "height": 44,
+            "top": 78,
+            "right": 243.3,
+            "bottom": 122,
+            "left": 174.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": true,
+          "rect": {
+            "x": 251.3,
+            "y": 78,
+            "width": 63.14,
+            "height": 44,
+            "top": 78,
+            "right": 314.44,
+            "bottom": 122,
+            "left": 251.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 322.44,
+            "y": 78,
+            "width": 55.56,
+            "height": 44,
+            "top": 78,
+            "right": 378,
+            "bottom": 122,
+            "left": 322.44
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": true,
+          "rect": {
+            "x": 26,
+            "y": 704,
+            "width": 149,
+            "height": 56,
+            "top": 704,
+            "right": 175,
+            "bottom": 760,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": true,
+          "rect": {
+            "x": 215,
+            "y": 704,
+            "width": 149,
+            "height": 56,
+            "top": 704,
+            "right": 364,
+            "bottom": 760,
+            "left": 215
+          }
+        },
+        {
+          "text": "Подтвердить результат",
+          "disabled": false,
+          "rect": {
+            "x": 43,
+            "y": 788,
+            "width": 183.3,
+            "height": 44,
+            "top": 788,
+            "right": 226.3,
+            "bottom": 832,
+            "left": 43
+          }
+        },
+        {
+          "text": "Продолжить",
+          "disabled": false,
+          "rect": {
+            "x": 234.3,
+            "y": 788,
+            "width": 112.69,
+            "height": 44,
+            "top": 788,
+            "right": 346.98,
+            "bottom": 832,
+            "left": 234.3
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [
+        "Поверните устройство горизонтально для удобного судейства"
+      ],
+      "scores": [
+        "9",
+        "2"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": true,
+          "rect": {
+            "x": 26,
+            "y": 704,
+            "width": 149,
+            "height": 56,
+            "top": 704,
+            "right": 175,
+            "bottom": 760,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": true,
+          "rect": {
+            "x": 215,
+            "y": 704,
+            "width": 149,
+            "height": 56,
+            "top": 704,
+            "right": 364,
+            "bottom": 760,
+            "left": 215
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 52.92,
+          "y": 301.97,
+          "width": 95.16,
+          "height": 28,
+          "top": 301.97,
+          "right": 148.08,
+          "bottom": 329.97,
+          "left": 52.92
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-CONFIRM"
+    },
+    {
+      "id": "matrix-pending-creator",
+      "matchId": "56a982d0-a579-44f4-8c5d-06bf1edc1136",
+      "text": "К содержимому\nJUDGE audit main\nОбновить\nПодтверждение\n\n9 : 2\n\n1 × 1\nдо 9 очков\nбез правила сухой победы\nпервая подача: вручную\n\nДлительность: 0:04\n\nСудит: Синтетическая Дарья\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\nСинтетическая Анна — очко\n\nТехническая коррекция учтена в текущем счёте и не показана как игровое очко.\n\nСудить\n\nМатч уже судит Синтетическая Дарья. Можно открыть счёт в режиме просмотра.\n\nОткрыть счёт\nОстановить матч\nЗафиксировать неявку\nОтменить матч\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "disabled": true
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false
+        },
+        {
+          "text": "Остановить матч",
+          "disabled": false
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "disabled": false
+        },
+        {
+          "text": "Отменить матч",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ],
+      "alerts": []
+    },
+    {
+      "id": "matrix-pending-participant",
+      "matchId": "56a982d0-a579-44f4-8c5d-06bf1edc1136",
+      "text": "К содержимому\nJUDGE audit main\nОбновить\nПодтверждение\n\n9 : 2\n\n1 × 1\nдо 9 очков\nбез правила сухой победы\nпервая подача: вручную\n\nДлительность: 0:05\n\nСудит: Синтетическая Дарья\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\nСинтетическая Анна — очко\n\nТехническая коррекция учтена в текущем счёте и не показана как игровое очко.\n\nСудить\n\nМатч уже судит Синтетическая Дарья. Можно открыть счёт в режиме просмотра.\n\nОткрыть счёт\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "disabled": true
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ],
+      "alerts": []
+    },
+    {
+      "id": "matrix-pending-judge",
+      "matchId": "56a982d0-a579-44f4-8c5d-06bf1edc1136",
+      "text": "К содержимому\nJUDGE audit main\nОбновить\nПодтверждение\n\n9 : 2\n\n1 × 1\nдо 9 очков\nбез правила сухой победы\nпервая подача: вручную\n\nДлительность: 0:05\n\nСудит: Синтетическая Дарья\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\nСинтетическая Анна — очко\n\nТехническая коррекция учтена в текущем счёте и не показана как игровое очко.\n\nСудить\nОткрыть счёт\nОстановить матч\nЗафиксировать неявку\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "disabled": false
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false
+        },
+        {
+          "text": "Остановить матч",
+          "disabled": false
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ],
+      "alerts": []
+    },
+    {
+      "id": "matrix-pending-outsider",
+      "matchId": "56a982d0-a579-44f4-8c5d-06bf1edc1136",
+      "text": "К содержимому\nМатч\nОбновить\n\nОшибка\n\nНедостаточно прав\n\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        }
+      ],
+      "alerts": [
+        "ОшибкаНедостаточно прав"
+      ]
+    },
+    {
+      "id": "j19-continue-after-proposal-390",
+      "capturedAt": "2026-09-13T23:29:17.408Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "Поверните устройство горизонтально для удобного судействаИдёт0:05НазадUndoЕщёСинтетическая Анна: 9. Синтетический Борис:",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 174.28,
+            "y": 78,
+            "width": 69.02,
+            "height": 44,
+            "top": 78,
+            "right": 243.3,
+            "bottom": 122,
+            "left": 174.28
+          }
+        },
+        {
+          "text": "Undo",
+          "disabled": false,
+          "rect": {
+            "x": 251.3,
+            "y": 78,
+            "width": 63.14,
+            "height": 44,
+            "top": 78,
+            "right": 314.44,
+            "bottom": 122,
+            "left": 251.3
+          }
+        },
+        {
+          "text": "Ещё",
+          "disabled": false,
+          "rect": {
+            "x": 322.44,
+            "y": 78,
+            "width": 55.56,
+            "height": 44,
+            "top": 78,
+            "right": 378,
+            "bottom": 122,
+            "left": 322.44
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 175,
+            "bottom": 814,
+            "left": 26
+          }
+        },
+        {
+          "text": "+1",
+          "disabled": false,
+          "rect": {
+            "x": 215,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 364,
+            "bottom": 814,
+            "left": 215
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [
+        "Поверните устройство горизонтально для удобного судейства"
+      ],
+      "scores": [
+        "9",
+        "2"
+      ],
+      "pointTargets": [
+        {
+          "label": "+1 очко: Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 26,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 175,
+            "bottom": 814,
+            "left": 26
+          }
+        },
+        {
+          "label": "+1 очко: Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 215,
+            "y": 758,
+            "width": 149,
+            "height": 56,
+            "top": 758,
+            "right": 364,
+            "bottom": 814,
+            "left": 215
+          }
+        }
+      ],
+      "serve": {
+        "text": "Подача",
+        "rect": {
+          "x": 52.92,
+          "y": 301.97,
+          "width": 95.16,
+          "height": 28,
+          "top": 301.97,
+          "right": 148.08,
+          "bottom": 329.97,
+          "left": 52.92
+        },
+        "fg": "rgb(15, 17, 21)",
+        "bg": "rgb(91, 159, 255)"
+      },
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-CONFIRM"
+    },
+    {
+      "id": "j20-finished-detail-390",
+      "capturedAt": "2026-09-13T23:29:17.663Z",
+      "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "К содержимомуМатчОбновление…\n\n\nГлавная\n\n\nИстория\n\n\nНачать\n\n\nРейтинг\n\n\nПрофиль",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Обновление…",
+          "disabled": true,
+          "rect": {
+            "x": 272.7,
+            "y": 18,
+            "width": 101.3,
+            "height": 44,
+            "top": 18,
+            "right": 374,
+            "bottom": 62,
+            "left": 272.7
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "scores": [],
+      "pointTargets": [],
+      "serve": null,
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-CONFIRM",
+      "persisted": {
+        "status": "finished",
+        "scoreA": 10,
+        "scoreB": 2,
+        "activeJudge": null
+      }
+    },
+    {
+      "id": "matrix-finished-creator",
+      "matchId": "56a982d0-a579-44f4-8c5d-06bf1edc1136",
+      "text": "К содержимому\nJUDGE audit main\nОбновить\nЗавершён\n\n10 : 2\n\n1 × 1\nдо 9 очков\nбез правила сухой победы\nпервая подача: вручную\n\nДлительность: 0:06\n\nСудья не назначен\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\nСинтетическая Анна — очко\nСинтетическая Анна — очко\n\nТехническая коррекция учтена в текущем счёте и не показана как игровое очко.\n\nАннулировать результат\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Аннулировать результат",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ],
+      "alerts": []
+    },
+    {
+      "id": "matrix-finished-participant",
+      "matchId": "56a982d0-a579-44f4-8c5d-06bf1edc1136",
+      "text": "К содержимому\nJUDGE audit main\nОбновить\nЗавершён\n\n10 : 2\n\n1 × 1\nдо 9 очков\nбез правила сухой победы\nпервая подача: вручную\n\nДлительность: 0:06\n\nСудья не назначен\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\nСинтетическая Анна — очко\nСинтетическая Анна — очко\n\nТехническая коррекция учтена в текущем счёте и не показана как игровое очко.\n\nСоздать реванш\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Создать реванш",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ],
+      "alerts": []
+    },
+    {
+      "id": "matrix-finished-judge",
+      "matchId": "56a982d0-a579-44f4-8c5d-06bf1edc1136",
+      "text": "К содержимому\nJUDGE audit main\nОбновить\nЗавершён\n\n10 : 2\n\n1 × 1\nдо 9 очков\nбез правила сухой победы\nпервая подача: вручную\n\nДлительность: 0:06\n\nСудья не назначен\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\nСинтетическая Анна — очко\nСинтетическая Анна — очко\n\nТехническая коррекция учтена в текущем счёте и не показана как игровое очко.\n\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ],
+      "alerts": []
+    },
+    {
+      "id": "matrix-finished-outsider",
+      "matchId": "56a982d0-a579-44f4-8c5d-06bf1edc1136",
+      "text": "К содержимому\nJUDGE audit main\nОбновить\nЗавершён\n\n10 : 2\n\n1 × 1\nдо 9 очков\nбез правила сухой победы\nпервая подача: вручную\n\nДлительность: 0:06\n\nСудья не назначен\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\nСинтетическая Анна — очко\nСинтетическая Анна — очко\n\nТехническая коррекция учтена в текущем счёте и не показана как игровое очко.\n\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ],
+      "alerts": []
+    },
+    {
+      "id": "matrix-waiting-creator",
+      "matchId": "1df1e583-3a8c-46ad-8f0a-dfd4011a6db3",
+      "text": "К содержимому\nJUDGE audit waiting\nОбновить\nОжидание\n\n0 : 0\n\n1 × 1\nдо 11 очков\nбез правила сухой победы\nпервая подача: вручную\n\nСудья не назначен\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\n\nПодтверждённых очков после последней коррекции нет.\n\nИзменить матч\nСтарт\nСудить\nОткрыть счёт\nЗафиксировать неявку\nОтменить матч\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Изменить матч",
+          "disabled": false
+        },
+        {
+          "text": "Старт",
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "disabled": false
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "disabled": false
+        },
+        {
+          "text": "Отменить матч",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ],
+      "alerts": []
+    },
+    {
+      "id": "j21-waiting-creator-detail-1440",
+      "capturedAt": "2026-09-13T23:29:19.565Z",
+      "url": "/matches/1df1e583-3a8c-46ad-8f0a-dfd4011a6db3",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 967
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "К содержимомуJUDGE audit waitingОбновить\n\n\nОжидание0 : 01 × 1до 11 очковбез правила сухой победыпервая подача: вручнуюСу",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Обновить",
+          "disabled": false,
+          "rect": {
+            "x": 908.19,
+            "y": 18,
+            "width": 75.81,
+            "height": 44,
+            "top": 18,
+            "right": 984,
+            "bottom": 62,
+            "left": 908.19
+          }
+        },
+        {
+          "text": "Изменить матч",
+          "disabled": false,
+          "rect": {
+            "x": 456,
+            "y": 498.84,
+            "width": 528,
+            "height": 44,
+            "top": 498.84,
+            "right": 984,
+            "bottom": 542.84,
+            "left": 456
+          }
+        },
+        {
+          "text": "Старт",
+          "disabled": false,
+          "rect": {
+            "x": 456,
+            "y": 554.84,
+            "width": 528,
+            "height": 44,
+            "top": 554.84,
+            "right": 984,
+            "bottom": 598.84,
+            "left": 456
+          }
+        },
+        {
+          "text": "Судить",
+          "disabled": false,
+          "rect": {
+            "x": 456,
+            "y": 610.84,
+            "width": 528,
+            "height": 44,
+            "top": 610.84,
+            "right": 984,
+            "bottom": 654.84,
+            "left": 456
+          }
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false,
+          "rect": {
+            "x": 456,
+            "y": 666.84,
+            "width": 528,
+            "height": 44,
+            "top": 666.84,
+            "right": 984,
+            "bottom": 710.84,
+            "left": 456
+          }
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "disabled": false,
+          "rect": {
+            "x": 456,
+            "y": 722.84,
+            "width": 528,
+            "height": 44,
+            "top": 722.84,
+            "right": 984,
+            "bottom": 766.84,
+            "left": 456
+          }
+        },
+        {
+          "text": "Отменить матч",
+          "disabled": false,
+          "rect": {
+            "x": 456,
+            "y": 778.84,
+            "width": 528,
+            "height": 44,
+            "top": 778.84,
+            "right": 984,
+            "bottom": 822.84,
+            "left": 456
+          }
+        },
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 456,
+            "y": 834.84,
+            "width": 528,
+            "height": 44,
+            "top": 834.84,
+            "right": 984,
+            "bottom": 878.84,
+            "left": 456
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "scores": [],
+      "pointTargets": [],
+      "serve": null,
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-ACTOR-MATRIX",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Изменить матч",
+          "disabled": false
+        },
+        {
+          "text": "Старт",
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "disabled": false
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "disabled": false
+        },
+        {
+          "text": "Отменить матч",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "id": "matrix-waiting-participant",
+      "matchId": "1df1e583-3a8c-46ad-8f0a-dfd4011a6db3",
+      "text": "К содержимому\nJUDGE audit waiting\nОбновить\nОжидание\n\n0 : 0\n\n1 × 1\nдо 11 очков\nбез правила сухой победы\nпервая подача: вручную\n\nСудья не назначен\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\n\nПодтверждённых очков после последней коррекции нет.\n\nСудить\nОткрыть счёт\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "disabled": false
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ],
+      "alerts": []
+    },
+    {
+      "id": "matrix-waiting-judge",
+      "matchId": "1df1e583-3a8c-46ad-8f0a-dfd4011a6db3",
+      "text": "К содержимому\nМатч\nОбновить\n\nОшибка\n\nНедостаточно прав\n\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        }
+      ],
+      "alerts": [
+        "ОшибкаНедостаточно прав"
+      ]
+    },
+    {
+      "id": "matrix-waiting-outsider",
+      "matchId": "1df1e583-3a8c-46ad-8f0a-dfd4011a6db3",
+      "text": "К содержимому\nМатч\nОбновить\n\nОшибка\n\nНедостаточно прав\n\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        }
+      ],
+      "alerts": [
+        "ОшибкаНедостаточно прав"
+      ]
+    },
+    {
+      "id": "j22-no-show-confirm-390",
+      "capturedAt": "2026-09-13T23:29:21.076Z",
+      "url": "/matches/1df1e583-3a8c-46ad-8f0a-dfd4011a6db3",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 165,
+        "width": 390,
+        "height": 1009
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": null,
+        "text": null,
+        "ariaLabel": "Закрыть"
+      },
+      "buttons": [
+        {
+          "text": "Обновить",
+          "disabled": false,
+          "rect": {
+            "x": 298.19,
+            "y": -147,
+            "width": 75.81,
+            "height": 44,
+            "top": -147,
+            "right": 374,
+            "bottom": -103,
+            "left": 298.19
+          }
+        },
+        {
+          "text": "Изменить матч",
+          "disabled": false,
+          "rect": {
+            "x": 16,
+            "y": 375.84,
+            "width": 358,
+            "height": 44,
+            "top": 375.84,
+            "right": 374,
+            "bottom": 419.84,
+            "left": 16
+          }
+        },
+        {
+          "text": "Старт",
+          "disabled": false,
+          "rect": {
+            "x": 16,
+            "y": 431.84,
+            "width": 358,
+            "height": 44,
+            "top": 431.84,
+            "right": 374,
+            "bottom": 475.84,
+            "left": 16
+          }
+        },
+        {
+          "text": "Судить",
+          "disabled": false,
+          "rect": {
+            "x": 16,
+            "y": 487.84,
+            "width": 358,
+            "height": 44,
+            "top": 487.84,
+            "right": 374,
+            "bottom": 531.84,
+            "left": 16
+          }
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false,
+          "rect": {
+            "x": 16,
+            "y": 543.84,
+            "width": 358,
+            "height": 44,
+            "top": 543.84,
+            "right": 374,
+            "bottom": 587.84,
+            "left": 16
+          }
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "disabled": false,
+          "rect": {
+            "x": 16,
+            "y": 599.84,
+            "width": 358,
+            "height": 44,
+            "top": 599.84,
+            "right": 374,
+            "bottom": 643.84,
+            "left": 16
+          }
+        },
+        {
+          "text": "Отменить матч",
+          "disabled": false,
+          "rect": {
+            "x": 16,
+            "y": 655.84,
+            "width": 358,
+            "height": 44,
+            "top": 655.84,
+            "right": 374,
+            "bottom": 699.84,
+            "left": 16
+          }
+        },
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 16,
+            "y": 711.84,
+            "width": 358,
+            "height": 44,
+            "top": 711.84,
+            "right": 374,
+            "bottom": 755.84,
+            "left": 16
+          }
+        },
+        {
+          "text": "",
+          "disabled": false,
+          "rect": {
+            "x": 302.81,
+            "y": 187,
+            "width": 46.19,
+            "height": 48,
+            "top": 187,
+            "right": 349,
+            "bottom": 235,
+            "left": 302.81
+          }
+        },
+        {
+          "text": "Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 41,
+            "y": 378,
+            "width": 150.41,
+            "height": 44,
+            "top": 378,
+            "right": 191.41,
+            "bottom": 422,
+            "left": 41
+          }
+        },
+        {
+          "text": "Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 190.41,
+            "y": 378,
+            "width": 158.59,
+            "height": 44,
+            "top": 378,
+            "right": 349,
+            "bottom": 422,
+            "left": 190.41
+          }
+        },
+        {
+          "text": "Отмена",
+          "disabled": false,
+          "rect": {
+            "x": 41,
+            "y": 561,
+            "width": 308,
+            "height": 44,
+            "top": 561,
+            "right": 349,
+            "bottom": 605,
+            "left": 41
+          }
+        },
+        {
+          "text": "Завершить по неявке",
+          "disabled": false,
+          "rect": {
+            "x": 41,
+            "y": 613,
+            "width": 308,
+            "height": 44,
+            "top": 613,
+            "right": 349,
+            "bottom": 657,
+            "left": 41
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "scores": [],
+      "pointTargets": [],
+      "serve": null,
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-NO-SHOW"
+    },
+    {
+      "id": "matrix-in-progress-creator",
+      "matchId": "2e3606c1-7579-4285-80c9-2f3a535c77a5",
+      "text": "К содержимому\nJUDGE audit stop\nОбновить\nИдёт\n\n0 : 0\n\n1 × 1\nдо 11 очков\nбез правила сухой победы\nпервая подача: вручную\n\nДлительность: 0:00\n\nСудит: Синтетическая Дарья\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\n\nПодтверждённых очков после последней коррекции нет.\n\nСудить\n\nМатч уже судит Синтетическая Дарья. Можно открыть счёт в режиме просмотра.\n\nОткрыть счёт\nОстановить матч\nЗафиксировать неявку\nОтменить матч\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "disabled": true
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false
+        },
+        {
+          "text": "Остановить матч",
+          "disabled": false
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "disabled": false
+        },
+        {
+          "text": "Отменить матч",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ],
+      "alerts": []
+    },
+    {
+      "id": "matrix-in-progress-participant",
+      "matchId": "2e3606c1-7579-4285-80c9-2f3a535c77a5",
+      "text": "К содержимому\nJUDGE audit stop\nОбновить\nИдёт\n\n0 : 0\n\n1 × 1\nдо 11 очков\nбез правила сухой победы\nпервая подача: вручную\n\nДлительность: 0:00\n\nСудит: Синтетическая Дарья\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\n\nПодтверждённых очков после последней коррекции нет.\n\nСудить\n\nМатч уже судит Синтетическая Дарья. Можно открыть счёт в режиме просмотра.\n\nОткрыть счёт\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "disabled": true
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ],
+      "alerts": []
+    },
+    {
+      "id": "matrix-in-progress-judge",
+      "matchId": "2e3606c1-7579-4285-80c9-2f3a535c77a5",
+      "text": "К содержимому\nJUDGE audit stop\nОбновить\nИдёт\n\n0 : 0\n\n1 × 1\nдо 11 очков\nбез правила сухой победы\nпервая подача: вручную\n\nДлительность: 0:01\n\nСудит: Синтетическая Дарья\n\nA: Синтетическая Анна\nB: Синтетический Борис\nЖурнал очков\n\nПодтверждённых очков после последней коррекции нет.\n\nСудить\nОткрыть счёт\nОстановить матч\nЗафиксировать неявку\nНазад\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "disabled": false
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false
+        },
+        {
+          "text": "Остановить матч",
+          "disabled": false
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ],
+      "alerts": []
+    },
+    {
+      "id": "j23-in-progress-judge-detail-1440",
+      "capturedAt": "2026-09-13T23:29:22.446Z",
+      "url": "/matches/2e3606c1-7579-4285-80c9-2f3a535c77a5",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 913
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "К содержимомуJUDGE audit stopОбновить\n\n\nИдёт0 : 01 × 1до 11 очковбез правила сухой победыпервая подача: вручнуюДлительно",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Обновить",
+          "disabled": false,
+          "rect": {
+            "x": 908.19,
+            "y": 18,
+            "width": 75.81,
+            "height": 44,
+            "top": 18,
+            "right": 984,
+            "bottom": 62,
+            "left": 908.19
+          }
+        },
+        {
+          "text": "Судить",
+          "disabled": false,
+          "rect": {
+            "x": 456,
+            "y": 556.84,
+            "width": 528,
+            "height": 44,
+            "top": 556.84,
+            "right": 984,
+            "bottom": 600.84,
+            "left": 456
+          }
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false,
+          "rect": {
+            "x": 456,
+            "y": 612.84,
+            "width": 528,
+            "height": 44,
+            "top": 612.84,
+            "right": 984,
+            "bottom": 656.84,
+            "left": 456
+          }
+        },
+        {
+          "text": "Остановить матч",
+          "disabled": false,
+          "rect": {
+            "x": 456,
+            "y": 668.84,
+            "width": 528,
+            "height": 44,
+            "top": 668.84,
+            "right": 984,
+            "bottom": 712.84,
+            "left": 456
+          }
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "disabled": false,
+          "rect": {
+            "x": 456,
+            "y": 724.84,
+            "width": 528,
+            "height": 44,
+            "top": 724.84,
+            "right": 984,
+            "bottom": 768.84,
+            "left": 456
+          }
+        },
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 456,
+            "y": 780.84,
+            "width": 528,
+            "height": 44,
+            "top": 780.84,
+            "right": 984,
+            "bottom": 824.84,
+            "left": 456
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "scores": [],
+      "pointTargets": [],
+      "serve": null,
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-ACTOR-MATRIX",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "disabled": false
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false
+        },
+        {
+          "text": "Остановить матч",
+          "disabled": false
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "id": "matrix-in-progress-outsider",
+      "matchId": "2e3606c1-7579-4285-80c9-2f3a535c77a5",
+      "text": "К содержимому\nМатч\nОбновить\n\nОшибка\n\nНедостаточно прав\n\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+      "actions": [
+        {
+          "text": "Обновить",
+          "disabled": false
+        }
+      ],
+      "alerts": [
+        "ОшибкаНедостаточно прав"
+      ]
+    },
+    {
+      "id": "j24-stop-form-390",
+      "capturedAt": "2026-09-13T23:29:23.163Z",
+      "url": "/matches/2e3606c1-7579-4285-80c9-2f3a535c77a5",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 1233
+      },
+      "activeElement": {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "Скрыть остановку",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Обновить",
+          "disabled": false,
+          "rect": {
+            "x": 298.19,
+            "y": 18,
+            "width": 75.81,
+            "height": 44,
+            "top": 18,
+            "right": 374,
+            "bottom": 62,
+            "left": 298.19
+          }
+        },
+        {
+          "text": "Судить",
+          "disabled": false,
+          "rect": {
+            "x": 16,
+            "y": 598.84,
+            "width": 358,
+            "height": 44,
+            "top": 598.84,
+            "right": 374,
+            "bottom": 642.84,
+            "left": 16
+          }
+        },
+        {
+          "text": "Открыть счёт",
+          "disabled": false,
+          "rect": {
+            "x": 16,
+            "y": 654.84,
+            "width": 358,
+            "height": 44,
+            "top": 654.84,
+            "right": 374,
+            "bottom": 698.84,
+            "left": 16
+          }
+        },
+        {
+          "text": "Скрыть остановку",
+          "disabled": false,
+          "rect": {
+            "x": 16,
+            "y": 710.84,
+            "width": 358,
+            "height": 44,
+            "top": 710.84,
+            "right": 374,
+            "bottom": 754.84,
+            "left": 16
+          }
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "disabled": false,
+          "rect": {
+            "x": 16,
+            "y": 766.84,
+            "width": 358,
+            "height": 44,
+            "top": 766.84,
+            "right": 374,
+            "bottom": 810.84,
+            "left": 16
+          }
+        },
+        {
+          "text": "Назад",
+          "disabled": false,
+          "rect": {
+            "x": 16,
+            "y": 822.84,
+            "width": 358,
+            "height": 44,
+            "top": 822.84,
+            "right": 374,
+            "bottom": 866.84,
+            "left": 16
+          }
+        },
+        {
+          "text": "Синтетическая Анна",
+          "disabled": false,
+          "rect": {
+            "x": 31,
+            "y": 973.84,
+            "width": 159.08,
+            "height": 44,
+            "top": 973.84,
+            "right": 190.08,
+            "bottom": 1017.84,
+            "left": 31
+          }
+        },
+        {
+          "text": "Синтетический Борис",
+          "disabled": false,
+          "rect": {
+            "x": 189.08,
+            "y": 973.84,
+            "width": 167.91,
+            "height": 44,
+            "top": 973.84,
+            "right": 356.98,
+            "bottom": 1017.84,
+            "left": 189.08
+          }
+        },
+        {
+          "text": "Травма",
+          "disabled": false,
+          "rect": {
+            "x": 31,
+            "y": 1029.84,
+            "width": 74.38,
+            "height": 44,
+            "top": 1029.84,
+            "right": 105.38,
+            "bottom": 1073.84,
+            "left": 31
+          }
+        },
+        {
+          "text": "Нехватка времени",
+          "disabled": false,
+          "rect": {
+            "x": 104.38,
+            "y": 1029.84,
+            "width": 148.88,
+            "height": 44,
+            "top": 1029.84,
+            "right": 253.25,
+            "bottom": 1073.84,
+            "left": 104.38
+          }
+        },
+        {
+          "text": "Другое",
+          "disabled": false,
+          "rect": {
+            "x": 252.25,
+            "y": 1029.84,
+            "width": 71.7,
+            "height": 44,
+            "top": 1029.84,
+            "right": 323.95,
+            "bottom": 1073.84,
+            "left": 252.25
+          }
+        },
+        {
+          "text": "Подтвердить остановку",
+          "disabled": false,
+          "rect": {
+            "x": 31,
+            "y": 1085.84,
+            "width": 328,
+            "height": 44,
+            "top": 1085.84,
+            "right": 359,
+            "bottom": 1129.84,
+            "left": 31
+          }
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "scores": [],
+      "pointTargets": [],
+      "serve": null,
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-STOP"
+    },
+    {
+      "id": "j25-release-failure-destination-warning-390",
+      "capturedAt": "2026-09-13T23:29:23.820Z",
+      "url": "/matches/6c729e7c-787f-4925-b0c4-b035dcdae14c",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "activeElement": {
+        "tag": "BODY",
+        "id": null,
+        "text": "К содержимому\n\n\nПроверьте слот судьиНе удалось подтвердить освобождение слота: Синтетическая ошибка освобождения. Он осв",
+        "ariaLabel": null
+      },
+      "buttons": [
+        {
+          "text": "Обновить",
+          "disabled": false,
+          "rect": {
+            "x": 298.19,
+            "y": 166,
+            "width": 75.81,
+            "height": 44,
+            "top": 166,
+            "right": 374,
+            "bottom": 210,
+            "left": 298.19
+          }
+        }
+      ],
+      "alerts": [
+        "Проверьте слот судьиНе удалось подтвердить освобождение слота: Синтетическая ошибка освобождения. Он освободится по TTL, если запрос не дошёл."
+      ],
+      "statuses": [],
+      "scores": [],
+      "pointTargets": [],
+      "serve": null,
+      "errorStyle": null,
+      "horizontalOverflow": false,
+      "runId": "J-RUN-RELEASE"
+    }
+  ],
+  "consoleProblems": [
+    {
+      "type": "console",
+      "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: the server responded with a status of 409 (Conflict)"
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: the server responded with a status of 409 (Conflict)"
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    },
+    {
+      "type": "console",
+      "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    }
+  ]
+}

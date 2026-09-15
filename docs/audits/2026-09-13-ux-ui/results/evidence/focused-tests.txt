@@ -1,0 +1,20 @@
+RESULTS focused verification — 2026-09-14
+
+Command:
+PATH=<Node 24.20.0 plus system paths> pnpm --filter @tab10/web exec vitest run src/auth-recovery.test.tsx src/pages/ProfilePage.test.tsx src/pages/HistoryPage.test.tsx src/pages/RankingsPage.test.tsx src/pages/NotificationsPage.gap008.test.tsx src/pages/HomePage.test.tsx
+
+Result:
+- Test files: 6 passed (6)
+- Tests: 34 passed (34)
+- Duration: 3.56s
+- Relevant checks include same-actor draft preservation, different-actor state clearing, no mutation replay, history return restoration, profile sessions/profile rendering, notification lifecycle/actor isolation, ranking challenge guards and populated Home composition.
+- Expected stderr: React Router v7 future-flag warnings only.
+
+Separate migration foundation result:
+- Migration foundation: 9 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted.
+- Evidence: migrations/environment.json, migrations/migration-summary.json, migrations/migrations.log.
+
+Browser replay result:
+- replay-results-audit.mjs exited 0 on a clean disposable database.
+- Scenarios: tutorialIsolation, historicalJudge, history, rankings, publicProfile, blockedHistoricalProfile, profileValidation, sessionRevoke, notifications, home, consoleErrors.
+- Injected 503 history pagination and 400 profile validation responses are intentional evidence states; their browser console resource errors are expected.

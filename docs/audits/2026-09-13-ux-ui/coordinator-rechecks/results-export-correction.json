@@ -1,0 +1,18 @@
+{
+  "cause": "Coordinator export omitted gitignored migrations.log after correct40/40 package import",
+  "originalManifestUnchanged": "b5633165133259c0e3810631c341121747cbf84a5c28b6fb41345f2a17167b15",
+  "exactPath": "results/evidence/migrations/migrations.log",
+  "sha256": "0a0c66b5c956ba6951d07aca34eb6981600f5f97a1877ead6bae11ba3fd35c78",
+  "contentReview": "1836 bytes, migration completion/NOTICE output; no URL, credentials or private keys",
+  "fix": "Explicit hash-pinned untracked reviewed extras; no blanket ignored-file export",
+  "verification": [
+    "Exact ignored payload included",
+    "Wrong hash rejected",
+    "Traversal rejected",
+    "Blocked .env path rejected"
+  ],
+  "notAWorkerEvidenceFailure": true,
+  "additionalAffectedPackage": "MATCH: 3 ignored logs omitted by coordinator exporter despite exact original import; all restored via pinned reviewed-export-extras.json",
+  "acceptedValidation": "results-review03 restored all 10 package manifests including MATCH79 and RESULTS40; Terra results-review05 PASS",
+  "supersededExports": "Earlier checkpoints remain historical; next complete checkpoint supersedes their missing ignored payloads. Application candidate unchanged."
+}

@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "checkedAt": "2026-09-14T09:41:33Z",
+  "ownedRuntime": {
+    "composeProject": "tab10-ux-correction-5517",
+    "containersRemaining": 0,
+    "volumesRemaining": 0,
+    "networksRemaining": 0
+  },
+  "ports": {
+    "5517": "free",
+    "5518": "free",
+    "33031": "free"
+  },
+  "privateArtifacts": {
+    "ownedSourceCopy": "deleted",
+    "composeFile": "deleted",
+    "apiLog": "deleted",
+    "webLog": "deleted",
+    "migrationEvidence": "deleted",
+    "runner": "deleted"
+  },
+  "scope": "Only tab10-ux-correction-5517 owned resources were removed; no prior audit or coordinator resources were targeted."
+}

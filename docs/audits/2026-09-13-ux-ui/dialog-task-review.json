@@ -1,0 +1,7 @@
+{
+  "scope": "BUG-021, BUG-022, Q-UX-001 and dialog-target.md",
+  "reviewer": "Terra High",
+  "status": "PASS",
+  "accepted": "Error target has explicit known/unknown outcome handling and no automatic mutation replay. Pending dismissal is blocked_decision until Q-UX-001 is resolved.",
+  "limitations": "Specification review only; no UI implementation or new runtime acceptance."
+}

@@ -1,0 +1,97 @@
+{
+  "id": "j02-setup-pending-controls-390",
+  "capturedAt": "2026-09-13T23:29:11.203Z",
+  "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "scroll": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 844
+  },
+  "activeElement": {
+    "tag": "BUTTON",
+    "id": null,
+    "text": "↔",
+    "ariaLabel": "Поменять стороны"
+  },
+  "buttons": [
+    {
+      "text": "Отмена",
+      "disabled": true,
+      "rect": {
+        "x": 299.3,
+        "y": 78,
+        "width": 78.7,
+        "height": 44,
+        "top": 78,
+        "right": 378,
+        "bottom": 122,
+        "left": 299.3
+      }
+    },
+    {
+      "text": "↔",
+      "disabled": false,
+      "rect": {
+        "x": 167.11,
+        "y": 556.69,
+        "width": 55.78,
+        "height": 44,
+        "top": 556.69,
+        "right": 222.89,
+        "bottom": 600.69,
+        "left": 167.11
+      }
+    },
+    {
+      "text": "Сохранение…",
+      "disabled": true,
+      "rect": {
+        "x": 135.14,
+        "y": 788,
+        "width": 119.72,
+        "height": 44,
+        "top": 788,
+        "right": 254.86,
+        "bottom": 832,
+        "left": 135.14
+      }
+    }
+  ],
+  "alerts": [],
+  "statuses": [
+    "Поверните устройство горизонтально для удобного судейства"
+  ],
+  "scores": [
+    "0",
+    "0"
+  ],
+  "pointTargets": [],
+  "serve": {
+    "text": "Подача",
+    "rect": {
+      "x": 35.97,
+      "y": 564.28,
+      "width": 95.16,
+      "height": 28,
+      "top": 564.28,
+      "right": 131.13,
+      "bottom": 592.28,
+      "left": 35.97
+    },
+    "fg": "rgb(15, 17, 21)",
+    "bg": "rgb(91, 159, 255)"
+  },
+  "errorStyle": null,
+  "horizontalOverflow": false,
+  "runId": "J-RUN-SETUP",
+  "pendingSetup": {
+    "radioDisabled": false,
+    "swapDisabled": false,
+    "confirmDisabled": true
+  }
+}

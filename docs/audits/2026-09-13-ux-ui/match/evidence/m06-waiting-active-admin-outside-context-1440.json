@@ -1,0 +1,17 @@
+{
+  "name": "m06-waiting-active-admin-outside-context-1440",
+  "capturedAt": "2026-09-13T23:20:42.043Z",
+  "url": "http://localhost:4817/matches/c89c564a-8273-4de1-b894-cb8d4e320f1a",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "title": "Tab-10",
+  "visibleText": "К содержимому\nМатч\nОбновить\n\nОшибка\n\nНедостаточно прав\n\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+  "horizontalOverflow": false,
+  "screenshot": "m06-waiting-active-admin-outside-context-1440.png",
+  "screenshotSha256": "1fdb065e3bb9252053b0a0d57068994989e5ef4a18fb78ee822084b1297c8bf3",
+  "scenario": "SC-M04",
+  "role": "active-admin-outside-context",
+  "forbidden": true
+}

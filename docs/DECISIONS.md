@@ -40,6 +40,7 @@
 | D30 | Historical-schema adoption and Free recovery exception | superseded by D31 for the disposable public stand |
 | D31 | Native-Git delivery to a disposable public stand | active |
 | D34 | Explicit onboarding completion | active |
+| D35 | Operator-first game setup and tournament consent policy | active |
 
 ## D16 — Documentation governance (2026-09-06)
 
@@ -546,3 +547,22 @@ target where they conflict with those ADRs.
 ## D34 — Explicit onboarding completion (2026-09-13)
 
 **Decision:** completing or exiting the optional tutorial returns the user to the persisted final onboarding step. The user explicitly completes onboarding with the final button; a tutorial result does not auto-complete the guide. This resolves Q-ONB-001 and preserves the approved BUG-012 behavior.
+
+## D35 — Operator-first game setup and tournament consent policy (2026-09-13)
+
+**Decision:** standalone ownership and playing are independent. Manual creation
+defaults to a nonplaying creator and direct registered-player selection; invitations
+are a separate voluntary option and do not gate start. Challenge/revenge keep the
+initiator in the roster and retain purposeful invitations.
+
+Tournament creation persists immutable `require_participant_consent`, default
+`false`. Organizer direct add remains available; required-consent override needs a
+named explicit confirmation. An active global admin receives only the minimal
+catalog/roster read and confirmed registered-user add needed for this exception;
+all other organizer rights remain unchanged. Confirmed add to a generated draft
+atomically regenerates it while retaining the existing seed prefix. Add operations
+record actor/source provenance and support optional fingerprinted idempotency.
+
+**Why:** the common table-side operator must be able to set up the people actually
+playing without impersonating a participant or waiting for device responses, while
+invitations and stricter tournament consent remain available as explicit choices.

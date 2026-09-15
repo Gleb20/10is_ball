@@ -1,0 +1,13 @@
+{
+  "kind": "structural proposal only; not application runtime",
+  "checks": [
+    {
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "overflow": false
+    }
+  ]
+}

@@ -1,0 +1,828 @@
+{
+  "snapshot": {
+    "base_head": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "candidate": "GAP012-r6",
+    "manifest_sha256": "6dec4f2dcf87b82a75dce3e439ee24ec55cd1486411db681919df50414c39292",
+    "runtime_gate": "accepted_local1257; inventory runtime coverage separately in requirement-coverage.csv",
+    "original_inventory": {
+      "base_head": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+      "candidate": "r3",
+      "manifest_sha256": "c60920f545e007ec656ee88194430acd6999558e7a531edb4f1904a22ad91b5e",
+      "runtime_gate": "pending"
+    }
+  },
+  "evidence_status": "source_inventory_not_runtime_test",
+  "entrypoint_policy": "per-capability proposal, no removal of functions; audit not complete",
+  "current_entry_points": {
+    "status": "source_observed_unverified",
+    "source": "apps/web/src/App.tsx:AppRoutes; apps/web/src/pages/*.tsx",
+    "routes": [
+      "/login",
+      "/first-password",
+      "/",
+      "/history",
+      "/start",
+      "/admin",
+      "/matches/new",
+      "/matches",
+      "/matches/:id",
+      "/matches/:id/judge",
+      "/rankings",
+      "/tournaments",
+      "/tournaments/:id",
+      "/teams",
+      "/teams/:id",
+      "/profile",
+      "/players/:userId",
+      "/help",
+      "/onboarding",
+      "/notifications"
+    ]
+  },
+  "proposed_entry_points": {
+    "status": "accepted_targets_with_explicit_decision_and_protocol_limits",
+    "routes": [],
+    "source": "Per-capability entries below; canonical BACKLOG is sole task status authority."
+  },
+  "unreachable_hypothesis": "None asserted from source alone; suspected unreachable routes or roles require runtime evidence.",
+  "gap_012_d35_state": "Current candidate source includes operator-first nonplaying standalone creation with voluntary invitations, immutable tournament creation consent policy, organizer/admin override, atomic regeneration after manual add, and scoped admin catalog/roster reads. Same-phone account behavior remains represented only where source requirements expose it; runtime acceptance is outside this inventory.",
+  "intentionally_excluded_cross_cutting_ids": [
+    "EMPTY-001..006",
+    "AUDIT-001..003"
+  ],
+  "capabilities": [
+    {
+      "id": "CAP-AUTH-001",
+      "group": "AUTH",
+      "requirements": [
+        "AUTH-001"
+      ],
+      "roles": [
+        "guest",
+        "active user"
+      ],
+      "source": "apps/web/src/App.tsx:Protected; apps/web/src/pages/LoginPage.tsx:LoginPage",
+      "audit_package_key": "AUTH",
+      "subarea": "access",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/login",
+          "protected routes"
+        ],
+        "source": "apps/web/src/App.tsx:Protected; apps/web/src/pages/LoginPage.tsx:LoginPage"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target",
+        "entries": [
+          "Existing /login and protected routes; contextual error recovery"
+        ],
+        "source": "BUG-028; canonical docs/BACKLOG.md"
+      },
+      "preservation": "All original entry-point functions retained; package limits and exceptions in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-AUTH-002",
+      "group": "AUTH",
+      "requirements": [
+        "AUTH-002",
+        "ADM-003"
+      ],
+      "roles": [
+        "admin"
+      ],
+      "source": "apps/web/src/pages/AdminPage.tsx:AdminPage",
+      "audit_package_key": "ADMIN",
+      "subarea": "admin account creation",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/admin"
+        ],
+        "source": "apps/web/src/pages/AdminPage.tsx:AdminPage"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target_with_coverage_limits",
+        "entries": [
+          "Retain /admin and Profile parent entry; directory first, one inline create form; user name opens /admin/users/:id, safe audit history and existing role-valid actions. One-time password remains success-only. Reset unknown target BUG038 accepted with admin-reset-correction.md; implementation not performed."
+        ],
+        "source": "GAP-026/027; admin-correction.md; admin-review.json"
+      }
+    },
+    {
+      "id": "CAP-AUTH-003",
+      "group": "AUTH",
+      "requirements": [
+        "AUTH-003",
+        "AUTH-004"
+      ],
+      "roles": [
+        "user",
+        "admin"
+      ],
+      "source": "apps/web/src/pages/FirstPasswordPage.tsx:FirstPasswordPage; apps/web/src/pages/LoginPage.tsx:LoginPage",
+      "audit_package_key": "AUTH",
+      "subarea": "first password",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/first-password",
+          "/login"
+        ],
+        "source": "apps/web/src/pages/FirstPasswordPage.tsx:FirstPasswordPage; apps/web/src/pages/LoginPage.tsx:LoginPage"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target",
+        "entries": [
+          "Existing /first-password; explicit real session exit and contextual validation"
+        ],
+        "source": "BUG-027/028; canonical docs/BACKLOG.md"
+      },
+      "preservation": "All original entry-point functions retained; package limits and exceptions in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-AUTH-004",
+      "group": "AUTH",
+      "requirements": [
+        "AUTH-005",
+        "AUTH-006",
+        "AUTH-007",
+        "AUTH-008"
+      ],
+      "roles": [
+        "active user",
+        "admin"
+      ],
+      "source": "apps/web/src/auth.tsx:AuthProvider; apps/web/src/pages/ProfilePage.tsx:ProfilePage",
+      "audit_package_key": "AUTH",
+      "subarea": "session",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/login",
+          "/profile"
+        ],
+        "source": "apps/web/src/auth.tsx:AuthProvider; apps/web/src/pages/ProfilePage.tsx:ProfilePage"
+      },
+      "proposed_entry_points": {
+        "status": "partial_target",
+        "entries": [
+          "Existing auth routes and /profile sessions; preserve same-actor reauth exception; sampled Profile/session runtime accepted with results-correction.md limits"
+        ],
+        "source": "BUG-027/028; canonical docs/BACKLOG.md"
+      },
+      "preservation": "All original entry-point functions retained; package limits and exceptions in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-ONB-001",
+      "group": "AUTH",
+      "requirements": [
+        "ONB-001",
+        "ONB-002",
+        "ONB-003",
+        "ONB-004",
+        "ONB-005"
+      ],
+      "roles": [
+        "new active user"
+      ],
+      "source": "apps/web/src/pages/OnboardingPage.tsx:OnboardingPage; apps/web/src/App.tsx:Protected",
+      "audit_package_key": "AUTH",
+      "subarea": "onboarding",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/onboarding",
+          "/matches/:id/judge?tutorial=1",
+          "/profile"
+        ],
+        "source": "apps/web/src/pages/OnboardingPage.tsx:OnboardingPage; apps/web/src/App.tsx:Protected"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target",
+        "entries": [
+          "Existing /onboarding and Profile restart; one Next per optional information step, explicit Close, tutorial return/completion preserved"
+        ],
+        "source": "GAP-014; canonical docs/BACKLOG.md"
+      },
+      "preservation": "All original entry-point functions retained; package limits and exceptions in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-HOME-001",
+      "group": "HOME",
+      "requirements": [
+        "HOME-001",
+        "HOME-002",
+        "HOME-003",
+        "HOME-004",
+        "HOME-005",
+        "HOME-006"
+      ],
+      "roles": [
+        "active user"
+      ],
+      "source": "apps/web/src/pages/HomePage.tsx:HomePage; apps/api/src/modules/home/home-service.ts:HomeService",
+      "audit_package_key": "AUTH",
+      "subarea": "home dashboard",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/"
+        ],
+        "source": "apps/web/src/pages/HomePage.tsx:HomePage; apps/api/src/modules/home/home-service.ts:HomeService"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target_with_coverage_limits",
+        "entries": [
+          "Existing /: current game or Start first; neutral active judge identity, then stats/rival/history; preserve existing DTO and account-vs-session distinction"
+        ],
+        "source": "GAP-015; results-correction.md"
+      },
+      "preservation": "Existing functions and permissions retained; exact runtime limitations in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-MATCH-001",
+      "group": "MATCH",
+      "requirements": [
+        "MATCH-001",
+        "MATCH-002",
+        "MATCH-003",
+        "MATCH-004",
+        "MATCH-005",
+        "MATCH-015"
+      ],
+      "roles": [
+        "active user",
+        "organizer"
+      ],
+      "source": "apps/web/src/pages/StartPage.tsx:StartPage; apps/web/src/pages/MatchCreatePage.tsx:MatchCreatePage; apps/api/src/modules/matches/match-service.ts:createMatch",
+      "audit_package_key": "MATCH",
+      "subarea": "create",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/start",
+          "/matches/new",
+          "/matches/:id"
+        ],
+        "source": "apps/web/src/pages/StartPage.tsx:StartPage; apps/web/src/pages/MatchCreatePage.tsx:MatchCreatePage; apps/api/src/modules/matches/match-service.ts:createMatch"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target",
+        "entries": [
+          "Existing /start → /matches/new; roster first, rules/advanced named disclosures; SideB quick choices preview"
+        ],
+        "source": "GAP-013; canonical docs/BACKLOG.md;core-review.json"
+      },
+      "gap_012_source_status": "present in r3 candidate source; runtime/UX verification pending",
+      "preservation": "All original entry-point functions retained; package limits and exceptions in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-MATCH-002",
+      "group": "MATCH",
+      "requirements": [
+        "MATCH-006",
+        "MATCH-007",
+        "MATCH-008",
+        "MATCH-009",
+        "MATCH-010",
+        "MATCH-011",
+        "MATCH-012",
+        "MATCH-013",
+        "MATCH-016",
+        "MATCH-017"
+      ],
+      "roles": [
+        "organizer",
+        "participant",
+        "active judge",
+        "admin"
+      ],
+      "source": "apps/web/src/pages/MatchDetailPage.tsx:MatchDetailPage; apps/api/src/modules/matches/match-service.ts:startMatch,cancelMatch,voidMatch",
+      "audit_package_key": "MATCH",
+      "subarea": "lifecycle",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/matches/:id"
+        ],
+        "source": "apps/web/src/pages/MatchDetailPage.tsx:MatchDetailPage; apps/api/src/modules/matches/match-service.ts:startMatch,cancelMatch,voidMatch"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target",
+        "entries": [
+          "Existing /matches/:id; state/actor primary, full independent actions, explicit invite row, cancel reason; judge route unchanged"
+        ],
+        "source": "GAP-017/018;BUG-030; canonical docs/BACKLOG.md;core-review.json"
+      },
+      "preservation": "All original entry-point functions retained; package limits and exceptions in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-MATCH-003",
+      "group": "MATCH",
+      "requirements": [
+        "MATCH-014"
+      ],
+      "roles": [
+        "active user"
+      ],
+      "source": "apps/web/src/pages/ProfilePage.tsx:ProfilePage; apps/web/src/pages/MatchDetailPage.tsx:MatchDetailPage; apps/web/src/pages/HomePage.tsx:HomePage",
+      "audit_package_key": "MATCH",
+      "subarea": "challenge/revenge",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/players/:userId",
+          "/matches/:id",
+          "/rankings",
+          "/"
+        ],
+        "source": "apps/web/src/pages/ProfilePage.tsx:ProfilePage; apps/web/src/pages/MatchDetailPage.tsx:MatchDetailPage; apps/web/src/pages/HomePage.tsx:HomePage"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target",
+        "entries": [
+          "Existing challenge/player/ranking and revenge result links preserved; blank next game separate"
+        ],
+        "source": "GAP-017; canonical docs/BACKLOG.md;core-review.json"
+      },
+      "preservation": "All original entry-point functions retained; package limits and exceptions in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-JUDGE-001",
+      "group": "JUDGE",
+      "requirements": [
+        "JUDGE-001",
+        "JUDGE-002",
+        "JUDGE-003",
+        "JUDGE-004",
+        "JUDGE-005",
+        "JUDGE-006",
+        "JUDGE-007",
+        "JUDGE-008",
+        "JUDGE-009",
+        "JUDGE-010",
+        "JUDGE-011",
+        "JUDGE-012"
+      ],
+      "roles": [
+        "any active user",
+        "active judge",
+        "organizer"
+      ],
+      "source": "apps/web/src/pages/JudgePage.tsx:JudgePage; apps/web/src/judgeUi.ts; apps/api/src/modules/matches/match-service.ts",
+      "audit_package_key": "JUDGE",
+      "subarea": "live judge",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/matches/:id/judge",
+          "/matches/:id"
+        ],
+        "source": "apps/web/src/pages/JudgePage.tsx:JudgePage; apps/web/src/judgeUi.ts; apps/api/src/modules/matches/match-service.ts"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target",
+        "entries": [
+          "Existing /matches/:id/judge; read-only same route query; exact-intent recovery and correction focus; no new account identification"
+        ],
+        "source": "BUG-029;core-target.md; canonical docs/BACKLOG.md;core-review.json"
+      },
+      "preservation": "All original entry-point functions retained; package limits and exceptions in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-TOURNAMENT-001",
+      "group": "TOURNAMENT",
+      "requirements": [
+        "TOURNAMENT-001",
+        "TOURNAMENT-002",
+        "TOURNAMENT-003",
+        "TOURNAMENT-004",
+        "TOURNAMENT-005",
+        "TOURNAMENT-006"
+      ],
+      "roles": [
+        "active user",
+        "organizer",
+        "participant"
+      ],
+      "source": "apps/web/src/pages/StartPage.tsx:StartPage; apps/web/src/pages/TournamentsPage.tsx:TournamentsPage; apps/web/src/pages/TournamentDetailPage.tsx:TournamentDetailPage",
+      "audit_package_key": "TOURNAMENT",
+      "subarea": "collect",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/start",
+          "/tournaments",
+          "/tournaments/:id"
+        ],
+        "source": "apps/web/src/pages/StartPage.tsx:StartPage; apps/web/src/pages/TournamentsPage.tsx:TournamentsPage; apps/web/src/pages/TournamentDetailPage.tsx:TournamentDetailPage"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target",
+        "entries": [
+          "Existing /tournaments and /tournaments/:id; roster/current-next before terminal summary; named advanced controls remain accessible; scoped admin override uses minimal DTO and existing permissions"
+        ],
+        "owner_package": "TOURNAMENT",
+        "source": "BUG-032/033;GAP-019/020/021;social-review.json;tournament-correction.md"
+      },
+      "gap_012_source_status": "present in r3 candidate source; runtime/UX verification pending"
+    },
+    {
+      "id": "CAP-TOURNAMENT-002",
+      "group": "TOURNAMENT",
+      "requirements": [
+        "TOURNAMENT-007",
+        "TOURNAMENT-008",
+        "TOURNAMENT-009",
+        "TOURNAMENT-010",
+        "TOURNAMENT-011",
+        "TOURNAMENT-012",
+        "TOURNAMENT-013",
+        "TOURNAMENT-014",
+        "TOURNAMENT-015",
+        "TOURNAMENT-016",
+        "TOURNAMENT-018",
+        "TOURNAMENT-019"
+      ],
+      "roles": [
+        "organizer",
+        "participant",
+        "active judge",
+        "admin (scoped intervention)"
+      ],
+      "source": "apps/web/src/pages/TournamentDetailPage.tsx:TournamentDetailPage; apps/web/src/pages/AdminPage.tsx:AdminPage; apps/web/src/components/TournamentBracket.tsx:TournamentBracket; apps/api/src/modules/tournaments/tournament-service.ts:TournamentService",
+      "audit_package_key": "TOURNAMENT",
+      "subarea": "lifecycle plus scoped admin catalog/detail/manual add",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/tournaments/:id",
+          "/matches/:id",
+          "/admin"
+        ],
+        "source": "apps/web/src/pages/TournamentDetailPage.tsx:TournamentDetailPage; apps/web/src/pages/AdminPage.tsx:AdminPage; apps/web/src/components/TournamentBracket.tsx:TournamentBracket; apps/api/src/modules/tournaments/tournament-service.ts:TournamentService"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target",
+        "entries": [
+          "Existing /tournaments and /tournaments/:id; roster/current-next before terminal summary; named advanced controls remain accessible; scoped admin override uses minimal DTO and existing permissions"
+        ],
+        "owner_package": "TOURNAMENT",
+        "source": "BUG-032/033;GAP-019/020/021;social-review.json;tournament-correction.md"
+      }
+    },
+    {
+      "id": "CAP-TOURNAMENT-003",
+      "group": "TOURNAMENT",
+      "requirements": [
+        "TOURNAMENT-017"
+      ],
+      "roles": [
+        "active user",
+        "organizer",
+        "participant",
+        "active judge"
+      ],
+      "source": "apps/web/src/pages/TournamentDetailPage.tsx:TournamentDetailPage",
+      "audit_package_key": "TOURNAMENT",
+      "subarea": "detail",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/tournaments/:id"
+        ],
+        "source": "apps/web/src/pages/TournamentDetailPage.tsx:TournamentDetailPage"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target",
+        "entries": [
+          "Existing /tournaments and /tournaments/:id; roster/current-next before terminal summary; named advanced controls remain accessible; scoped admin override uses minimal DTO and existing permissions"
+        ],
+        "owner_package": "TOURNAMENT",
+        "source": "BUG-032/033;GAP-019/020/021;social-review.json;tournament-correction.md"
+      }
+    },
+    {
+      "id": "CAP-TEAM-001",
+      "group": "TEAM",
+      "requirements": [
+        "TEAM-001",
+        "TEAM-002",
+        "TEAM-003",
+        "TEAM-004",
+        "TEAM-005",
+        "TEAM-006",
+        "TEAM-007",
+        "TEAM-008",
+        "TEAM-009"
+      ],
+      "roles": [
+        "active user",
+        "captain",
+        "team member"
+      ],
+      "source": "apps/web/src/pages/TeamsPage.tsx:TeamsPage; apps/web/src/pages/TeamDetailPage.tsx:TeamDetailPage; apps/api/src/modules/teams",
+      "audit_package_key": "TEAM",
+      "subarea": "lifecycle",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/teams",
+          "/teams/:id",
+          "/start",
+          "/matches/new"
+        ],
+        "source": "apps/web/src/pages/TeamsPage.tsx:TeamsPage; apps/web/src/pages/TeamDetailPage.tsx:TeamDetailPage; apps/api/src/modules/teams"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target",
+        "entries": [
+          "Existing Profile → /teams → /teams/:id; list before single inline create; local settings state and named roster confirmations; invitation/welcome/leave/archive retained"
+        ],
+        "owner_package": "TEAM",
+        "source": "GAP-022;BUG-034/035;team-correction.md;Q-UX-002 avatar unresolved;readiness-review.json"
+      }
+    },
+    {
+      "id": "CAP-HISTORY-001",
+      "group": "HISTORY",
+      "requirements": [
+        "HISTORY-001",
+        "HISTORY-002",
+        "HISTORY-003",
+        "HISTORY-004"
+      ],
+      "roles": [
+        "active user"
+      ],
+      "source": "apps/web/src/pages/HistoryPage.tsx:HistoryPage; apps/api/src/modules/history/history-service.ts:HistoryService",
+      "audit_package_key": "RESULTS",
+      "subarea": "history feed",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/history",
+          "/matches/:id",
+          "/tournaments/:id"
+        ],
+        "source": "apps/web/src/pages/HistoryPage.tsx:HistoryPage; apps/api/src/modules/history/history-service.ts:HistoryService"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target_with_coverage_limits",
+        "entries": [
+          "Existing /history and detail routes; compact rows retain both sideA/sideB and existing context metadata, filters and paging; URL persistence deferred"
+        ],
+        "source": "GAP-024; results-correction.md"
+      },
+      "preservation": "Existing functions and permissions retained; exact runtime limitations in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-RANKING-001",
+      "group": "RANKING",
+      "requirements": [
+        "RANK-001",
+        "RANK-002",
+        "RANK-003",
+        "RANK-004",
+        "RANK-005"
+      ],
+      "roles": [
+        "active user"
+      ],
+      "source": "apps/web/src/pages/RankingsPage.tsx:RankingsPage; apps/api/src/modules/rankings/ranking-service.ts:RankingService",
+      "audit_package_key": "RESULTS",
+      "subarea": "ranking browse",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/rankings",
+          "/players/:userId"
+        ],
+        "source": "apps/web/src/pages/RankingsPage.tsx:RankingsPage; apps/api/src/modules/rankings/ranking-service.ts:RankingService"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target_with_coverage_limits",
+        "entries": [
+          "Retain /rankings and /players/:userId, period/type and team/player distinctions; no unsupported UI change"
+        ],
+        "source": "results-correction.md; requirement-coverage.csv"
+      },
+      "preservation": "Existing functions and permissions retained; exact runtime limitations in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-PROFILE-001",
+      "group": "PROFILE",
+      "requirements": [
+        "PROFILE-001",
+        "PROFILE-002",
+        "PROFILE-003",
+        "PROFILE-004",
+        "PROFILE-006"
+      ],
+      "roles": [
+        "active user"
+      ],
+      "source": "apps/web/src/pages/ProfilePage.tsx:ProfilePage; apps/api/src/modules/profile/profile-service.ts:ProfileService",
+      "audit_package_key": "RESULTS",
+      "subarea": "own profile",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/profile"
+        ],
+        "source": "apps/web/src/pages/ProfilePage.tsx:ProfilePage; apps/api/src/modules/profile/profile-service.ts:ProfileService"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target_with_coverage_limits",
+        "entries": [
+          "Retain /profile edit, password and session entries; local field validation and error recovery preserve draft and privacy"
+        ],
+        "source": "BUG-036; results-correction.md"
+      },
+      "preservation": "Existing functions and permissions retained; exact runtime limitations in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-PROFILE-002",
+      "group": "PROFILE",
+      "requirements": [
+        "PROFILE-005"
+      ],
+      "roles": [
+        "active user"
+      ],
+      "source": "apps/web/src/App.tsx:AppRoutes (ProfilePage at /players/:userId); apps/web/src/pages/ProfilePage.tsx:ProfilePage",
+      "audit_package_key": "RESULTS",
+      "subarea": "public profile",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/players/:userId"
+        ],
+        "source": "apps/web/src/App.tsx:AppRoutes (ProfilePage at /players/:userId); apps/web/src/pages/ProfilePage.tsx:ProfilePage"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target_with_coverage_limits",
+        "entries": [
+          "Retain /players/:userId and role-valid challenge/revenge entries; never expose email/birth date; blocked historical card preserved"
+        ],
+        "source": "results-correction.md"
+      },
+      "preservation": "Existing functions and permissions retained; exact runtime limitations in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-NOTIF-001",
+      "group": "NOTIF",
+      "requirements": [
+        "NOTIF-001",
+        "NOTIF-002",
+        "NOTIF-003",
+        "NOTIF-004",
+        "NOTIF-005",
+        "NOTIF-006"
+      ],
+      "roles": [
+        "active user"
+      ],
+      "source": "apps/web/src/pages/NotificationsPage.tsx:NotificationsPage; apps/web/src/InvitationNotice.tsx:InvitationNotice",
+      "audit_package_key": "RESULTS",
+      "subarea": "notifications center",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/notifications",
+          "/",
+          "/profile"
+        ],
+        "source": "apps/web/src/pages/NotificationsPage.tsx:NotificationsPage; apps/web/src/InvitationNotice.tsx:InvitationNotice"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target_with_coverage_limits",
+        "entries": [
+          "Retain /notifications, Home and Profile entry points; Actual filter remains unread or actionable; successful read reconciles returned IDs without removing pending actions"
+        ],
+        "source": "BUG-037; results-correction.md"
+      },
+      "preservation": "Existing functions and permissions retained; exact runtime limitations in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-HELP-001",
+      "group": "HELP",
+      "requirements": [
+        "HELP-001",
+        "HELP-002",
+        "HELP-003"
+      ],
+      "roles": [
+        "active user"
+      ],
+      "source": "apps/web/src/pages/HelpPage.tsx:HelpPage",
+      "audit_package_key": "AUTH",
+      "subarea": "help/feedback",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/help",
+          "/matches/new",
+          "/matches/:id/judge",
+          "/rankings"
+        ],
+        "source": "apps/web/src/pages/HelpPage.tsx:HelpPage"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target",
+        "entries": [
+          "Existing /help; native multiline feedback, same categories/FAQ/retry; contextual tips preserved"
+        ],
+        "source": "GAP-016; canonical docs/BACKLOG.md"
+      },
+      "preservation": "All original entry-point functions retained; package limits and exceptions in requirement-coverage.csv."
+    },
+    {
+      "id": "CAP-ADMIN-001",
+      "group": "ADMIN",
+      "requirements": [
+        "ADM-001",
+        "ADM-002",
+        "ADM-003",
+        "ADM-004",
+        "ADM-005",
+        "ADM-006",
+        "ADM-007",
+        "ADM-008"
+      ],
+      "roles": [
+        "admin"
+      ],
+      "source": "apps/web/src/pages/AdminPage.tsx:AdminPage; apps/api/src/modules/auth/auth-service.ts:admin lifecycle methods",
+      "audit_package_key": "ADMIN",
+      "subarea": "users/audit",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/admin"
+        ],
+        "source": "apps/web/src/pages/AdminPage.tsx:AdminPage; apps/api/src/modules/auth/auth-service.ts:admin lifecycle methods"
+      },
+      "proposed_entry_points": {
+        "status": "accepted_target_with_coverage_limits",
+        "entries": [
+          "Retain /admin and Profile parent entry; directory first, one inline create form; user name opens /admin/users/:id, safe audit history and existing role-valid actions. One-time password remains success-only. Reset unknown target BUG038 accepted with admin-reset-correction.md; implementation not performed."
+        ],
+        "source": "GAP-026/027; admin-correction.md; admin-review.json"
+      }
+    },
+    {
+      "id": "CAP-ADMIN-002",
+      "group": "ADMIN",
+      "requirements": [
+        "MATCH-016",
+        "MATCH-017"
+      ],
+      "roles": [
+        "admin",
+        "organizer"
+      ],
+      "source": "apps/web/src/pages/MatchDetailPage.tsx:MatchDetailPage; apps/api/src/modules/matches/match-service.ts:cancelMatch,voidMatch",
+      "audit_package_key": "ADMIN",
+      "subarea": "match safeguards",
+      "evidence_status": "source_inventory_not_runtime_test",
+      "current_entry_points": {
+        "status": "source_observed_unverified",
+        "entries": [
+          "/matches/:id",
+          "/history"
+        ],
+        "source": "apps/web/src/pages/MatchDetailPage.tsx:MatchDetailPage; apps/api/src/modules/matches/match-service.ts:cancelMatch,voidMatch"
+      },
+      "proposed_entry_points": {
+        "status": "blocked_decision_partial_preservation",
+        "entries": [
+          "Existing authorized match mutations and D17 detail visibility remain; exact-ID minimum recovery proposal GAP028 blocked QUX003. No global live list or title/participants disclosure. Scoped tournament override retained."
+        ],
+        "source": "GAP-028; Q-UX-003; admin-correction.md"
+      }
+    }
+  ]
+}

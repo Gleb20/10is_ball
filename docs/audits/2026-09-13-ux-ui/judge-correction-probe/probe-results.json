@@ -1,0 +1,240 @@
+{
+  "status": "PASS",
+  "runtime": {
+    "environment": "test",
+    "version": "3.0.0",
+    "sha": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "browser": "Chromium via Playwright 1.63",
+    "viewport": "1440x900"
+  },
+  "branches": {
+    "commitThenAbort": {
+      "request": {
+        "idempotencyKey": "64979b06-8be0-4b85-8954-35034f599080",
+        "storedKey": "manual-correction:64979b06-8be0-4b85-8954-35034f599080",
+        "expectedVersion": 1,
+        "scoreA": 4,
+        "scoreB": 2,
+        "currentServerSide": "B"
+      },
+      "routeFetch": {
+        "status": 200,
+        "returned": {
+          "status": "in_progress",
+          "version": 2,
+          "scoreA": 4,
+          "scoreB": 2,
+          "currentServerSide": "B",
+          "manualCorrectionKeyCount": 1,
+          "manualCorrectionEventCount": 1
+        }
+      },
+      "before": {
+        "status": "in_progress",
+        "version": 1,
+        "scoreA": 1,
+        "scoreB": 0,
+        "currentServerSide": "A",
+        "manualCorrectionKeyCount": 0,
+        "manualCorrectionEventCount": 0
+      },
+      "authoritativeAfterCommit": {
+        "status": "in_progress",
+        "version": 2,
+        "scoreA": 4,
+        "scoreB": 2,
+        "currentServerSide": "B",
+        "manualCorrectionKeyCount": 1,
+        "manualCorrectionEventCount": 1
+      },
+      "auditEvent": {
+        "type": "manual_correction",
+        "idempotencyKey": "manual-correction:64979b06-8be0-4b85-8954-35034f599080",
+        "from": {
+          "scoreA": 1,
+          "scoreB": 0,
+          "currentServerSide": "A"
+        },
+        "to": {
+          "scoreA": 4,
+          "scoreB": 2,
+          "currentServerSide": "B"
+        }
+      },
+      "uiAfterLostResponse": {
+        "correctionOpen": true,
+        "alert": [
+          "Failed to fetch"
+        ],
+        "displayedScore": [
+          "1",
+          "0"
+        ],
+        "displayedServe": [
+          "ПОДАЧА"
+        ],
+        "draft": {
+          "scoreA": "4",
+          "scoreB": "2",
+          "serverLabel": "Синтетический probe Борис"
+        },
+        "saveLabel": "Сохранить коррекцию",
+        "saveDisabled": false
+      },
+      "explicitStaleResend": {
+        "request": {
+          "idempotencyKey": "27cffb10-8466-4ea1-ac3a-f63131d48d60",
+          "storedKey": "manual-correction:27cffb10-8466-4ea1-ac3a-f63131d48d60",
+          "expectedVersion": 1,
+          "scoreA": 4,
+          "scoreB": 2,
+          "currentServerSide": "B"
+        },
+        "response": {
+          "status": 409,
+          "code": "VERSION_CONFLICT"
+        },
+        "authoritativeAfter": {
+          "status": "in_progress",
+          "version": 2,
+          "scoreA": 4,
+          "scoreB": 2,
+          "currentServerSide": "B",
+          "manualCorrectionKeyCount": 1,
+          "manualCorrectionEventCount": 1
+        },
+        "storedKeyPresent": false,
+        "uiAfter": {
+          "correctionOpen": true,
+          "alert": [
+            "Матч изменился на другом устройстве. Данные обновлены; повторите коррекцию при необходимости."
+          ],
+          "displayedScore": [
+            "4",
+            "2"
+          ],
+          "displayedServe": [
+            "ПОДАЧА"
+          ],
+          "draft": {
+            "scoreA": "4",
+            "scoreB": "2",
+            "serverLabel": "Синтетический probe Борис"
+          },
+          "saveLabel": "Сохранить коррекцию",
+          "saveDisabled": false
+        }
+      }
+    },
+    "earlyGetBeforeForward": {
+      "request": {
+        "idempotencyKey": "27c17e75-a6df-4c67-9add-80167dc23cfa",
+        "storedKey": "manual-correction:27c17e75-a6df-4c67-9add-80167dc23cfa",
+        "expectedVersion": 1,
+        "scoreA": 2,
+        "scoreB": 1,
+        "currentServerSide": "B"
+      },
+      "before": {
+        "status": "in_progress",
+        "version": 1,
+        "scoreA": 1,
+        "scoreB": 0,
+        "currentServerSide": "A",
+        "manualCorrectionKeyCount": 0,
+        "manualCorrectionEventCount": 0
+      },
+      "earlyAuthoritativeRead": {
+        "status": "in_progress",
+        "version": 1,
+        "scoreA": 1,
+        "scoreB": 0,
+        "currentServerSide": "A",
+        "manualCorrectionKeyCount": 0,
+        "manualCorrectionEventCount": 0,
+        "storedKeyPresent": false
+      },
+      "uiWhileRequestHeld": {
+        "correctionOpen": true,
+        "alert": [],
+        "displayedScore": [
+          "1",
+          "0"
+        ],
+        "displayedServe": [
+          "ПОДАЧА"
+        ],
+        "draft": {
+          "scoreA": "2",
+          "scoreB": "1",
+          "serverLabel": "Синтетический probe Глеб"
+        },
+        "saveLabel": "Сохраняем…",
+        "saveDisabled": true
+      },
+      "routeFetchStatusAfterRelease": 200,
+      "lateAuthoritativeRead": {
+        "status": "in_progress",
+        "version": 2,
+        "scoreA": 2,
+        "scoreB": 1,
+        "currentServerSide": "B",
+        "manualCorrectionKeyCount": 1,
+        "manualCorrectionEventCount": 1,
+        "storedKeyPresent": true
+      },
+      "auditEvent": {
+        "type": "manual_correction",
+        "idempotencyKey": "manual-correction:27c17e75-a6df-4c67-9add-80167dc23cfa",
+        "from": {
+          "scoreA": 1,
+          "scoreB": 0,
+          "currentServerSide": "A"
+        },
+        "to": {
+          "scoreA": 2,
+          "scoreB": 1,
+          "currentServerSide": "B"
+        }
+      },
+      "uiAfterLostResponse": {
+        "correctionOpen": true,
+        "alert": [
+          "Failed to fetch"
+        ],
+        "displayedScore": [
+          "1",
+          "0"
+        ],
+        "displayedServe": [
+          "ПОДАЧА"
+        ],
+        "draft": {
+          "scoreA": "2",
+          "scoreB": "1",
+          "serverLabel": "Синтетический probe Глеб"
+        },
+        "saveLabel": "Сохранить коррекцию",
+        "saveDisabled": false
+      }
+    }
+  },
+  "console": {
+    "total": 3,
+    "pageErrors": 0,
+    "messages": [
+      {
+        "type": "console",
+        "message": "Failed to load resource: net::ERR_FAILED"
+      },
+      {
+        "type": "console",
+        "message": "Failed to load resource: the server responded with a status of 409 (Conflict)"
+      },
+      {
+        "type": "console",
+        "message": "Failed to load resource: net::ERR_FAILED"
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "audit_package": "RESULTS",
+  "date": "2026-09-14",
+  "frozen_export": "/private/tmp/tab10-ux-audit-dispatch-v1",
+  "frozen_path_count": 310,
+  "manifest_sha256": "c39ed47d9aaaadfba7fac3790bde26acac772ae9946e2f1c99bcdb6a1d46b3a6",
+  "head": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+  "accepted_delta": "GAP012r6",
+  "candidate_source_path_count": 323,
+  "candidate_source_fingerprint": "8e8762575a07e71a17192da327cbe1b5906ca33c1c2ef762c0f9a37463b94cb3",
+  "release_version": "3.0.0",
+  "release_state": "local, unpublished",
+  "runtime": {
+    "web": "http://localhost:5317",
+    "api": "http://127.0.0.1:5318",
+    "postgres": "127.0.0.1:33029/tab10_test_results",
+    "compose_project": "tab10-ux-results-5317",
+    "node": "24.20.0",
+    "pnpm": "9.15.0"
+  },
+  "full_gate": "not rerun; previously accepted 1257/1257 is context only",
+  "evidence_policy": "synthetic users and disposable PostgreSQL only; no credentials or session material retained"
+}

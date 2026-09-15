@@ -1,0 +1,355 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-14T09:16:58.367Z",
+  "baseline": {
+    "baseHead": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "candidate": "GAP012-r6",
+    "sourceFingerprint": "8e8762575a07e71a17192da327cbe1b5906ca33c1c2ef762c0f9a37463b94cb3",
+    "version": "3.0.0",
+    "published": false
+  },
+  "runs": {
+    "A-RUN-001": {
+      "scenarios": [
+        "SC-AD01",
+        "SC-AD08"
+      ],
+      "result": "FAIL_FINDINGS",
+      "hierarchy390": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "documentWidth": 390,
+        "createTop": 63.5,
+        "usersTop": 583.5,
+        "searchTop": 617.5,
+        "searchInitiallyVisible": true,
+        "activeBottomLabel": null,
+        "backLinks": 1
+      },
+      "narrow360": {
+        "viewport": 360,
+        "documentWidth": 360,
+        "overflow": false,
+        "focused": "Редактировать"
+      },
+      "desktop": {
+        "viewport": 1440,
+        "content": {
+          "x": 440,
+          "y": 0,
+          "width": 560,
+          "height": 1049.5,
+          "top": 0,
+          "right": 1000,
+          "bottom": 1049.5,
+          "left": 440
+        },
+        "documentWidth": 1440
+      },
+      "states": {
+        "loading": true,
+        "skeletonCount": 2,
+        "error": true,
+        "retryToEmpty": true
+      }
+    },
+    "A-RUN-002": {
+      "scenarios": [
+        "SC-AD01",
+        "SC-AD02"
+      ],
+      "result": "PASS_WITH_FINDING",
+      "tempPassword": {
+        "length": 16,
+        "copyVisible": true,
+        "persisted": false
+      },
+      "duplicate": {
+        "blocked": true,
+        "message": "Действие не выполненоEmail уже занят"
+      },
+      "profile": {
+        "editDialog": true,
+        "stableDetailUrl": false,
+        "auditHistoryVisible": false
+      }
+    },
+    "A-RUN-003": {
+      "scenarios": [
+        "SC-AD03"
+      ],
+      "result": "PASS",
+      "previousSession": {
+        "before": 200,
+        "after": 401
+      },
+      "oldLoginAfterReset": {
+        "status": 401,
+        "code": "INVALID_CREDENTIALS",
+        "mustChangePassword": null
+      },
+      "newLoginAfterReset": {
+        "status": 200,
+        "code": null,
+        "mustChangePassword": true
+      },
+      "tempSecretPersisted": false
+    },
+    "A-RUN-004": {
+      "scenarios": [
+        "SC-AD03"
+      ],
+      "result": "FAIL_FINDING",
+      "appliedStatus": 200,
+      "resetPosts": 1,
+      "getFirstAfterFailure": 0,
+      "dialogStillOpen": true,
+      "confirmStillEnabled": true,
+      "oldLogin": {
+        "status": 401,
+        "code": "INVALID_CREDENTIALS",
+        "mustChangePassword": null
+      },
+      "oldSessionStatus": 401,
+      "secretRecovered": false,
+      "blindRetryPerformed": false
+    },
+    "A-RUN-005": {
+      "scenarios": [
+        "SC-AD04",
+        "SC-AD07"
+      ],
+      "result": "PASS",
+      "blocked": {
+        "sessionStatus": 401,
+        "login": {
+          "status": 403,
+          "code": "ACCOUNT_BLOCKED",
+          "mustChangePassword": null
+        },
+        "directoryContains": false
+      },
+      "staleRecovery": {
+        "url": "/login",
+        "emailFocused": false,
+        "bottomNavVisible": 0
+      },
+      "unblocked": {
+        "login": {
+          "status": 200,
+          "code": null,
+          "mustChangePassword": false
+        },
+        "revokedSessionStillStatus": 401,
+        "directoryContains": true
+      }
+    },
+    "A-RUN-006": {
+      "scenarios": [
+        "SC-AD05"
+      ],
+      "result": "PASS",
+      "promoted": {
+        "oldSessionStatus": 401,
+        "freshLogin": {
+          "status": 200,
+          "code": null,
+          "mustChangePassword": false
+        }
+      },
+      "demoted": true,
+      "selfUI": {
+        "roleButtons": 0,
+        "blockButtons": 0,
+        "resetButtons": 1
+      },
+      "directGuards": {
+        "roleStatus": 403,
+        "roleCode": "SELF_ROLE_CHANGE_FORBIDDEN",
+        "blockStatus": 409,
+        "blockCode": "LAST_ADMIN"
+      }
+    },
+    "A-RUN-007": {
+      "scenarios": [
+        "SC-AD06"
+      ],
+      "result": "BLOCKED_DECISION",
+      "d17": {
+        "exactGetStatus": 403,
+        "listContains": false,
+        "historyContains": false,
+        "ordinaryDetail403Expected": true,
+        "ordinaryDetailError": "ОшибкаНедостаточно прав"
+      },
+      "adminEntry": {
+        "route": "/admin",
+        "containsMatchIdField": false,
+        "forceCloseButtons": 0
+      },
+      "d23": {
+        "directMutationStatus": "cancelled",
+        "priorVersion": 0,
+        "resultingVersion": 1
+      }
+    },
+    "A-RUN-008": {
+      "scenarios": [
+        "SC-AD06"
+      ],
+      "result": "PASS",
+      "entry": "/start → /tournaments → detail",
+      "namedConfirm": "Добавить Проверочный АдминДобавляет 1144fz в турнир «Admin scoped 1144fz»: добавить без ответа на приглашение и сразу перестроить уже созданную сетку?",
+      "added": {
+        "userId": "bb2045fb-12f7-4da4-8ff3-4ed8c1edf85b",
+        "exists": true,
+        "additionSource": "manual_override",
+        "bracketVersionBefore": 1,
+        "bracketVersionAfter": 2
+      },
+      "authority": {
+        "settingsStatus": 403,
+        "startStatus": 403,
+        "organizerControlsVisible": 0
+      }
+    }
+  },
+  "dialogs": [
+    {
+      "actor": "reset",
+      "action": "Сброс",
+      "text": "Сбросить пароль? Будет выдан новый временный пароль для admin-audit-reset-1144fz-1@audit.invalid.Отмена Подтвердить"
+    },
+    {
+      "actor": "blocked",
+      "action": "Блок",
+      "text": "Заблокировать пользователя? Сессии admin-audit-blocked-1144fz-3@audit.invalid будут отозваны. Продолжить?Отмена Подтвердить"
+    },
+    {
+      "actor": "role",
+      "action": "Сделать админом",
+      "text": "Сделать администратором? Роль admin-audit-role-1144fz-4@audit.invalid будет изменена. Все сессии пользователя будут сброшены — потребуется повторный вход.Отмена Подтвердить"
+    },
+    {
+      "actor": "role",
+      "action": "Снять админа",
+      "text": "Снять права администратора? Роль admin-audit-role-1144fz-4@audit.invalid будет изменена. Все сессии пользователя будут сброшены — потребуется повторный вход.Отмена Подтвердить"
+    }
+  ],
+  "console": [
+    {
+      "actor": "admin",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "actor": "admin",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "actor": "admin",
+      "type": "console",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "actor": "admin",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 409 (Conflict)"
+    },
+    {
+      "actor": "admin",
+      "type": "console",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "actor": "blocked",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "actor": "blocked",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "actor": "blocked",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "actor": "admin",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    }
+  ],
+  "auditPersistence": {
+    "rows": [
+      {
+        "entityId": "f7737c42-bc79-4d85-89fd-7b29065fb082",
+        "action": "user.created",
+        "createdAt": "2026-09-14T09:16:58.623Z"
+      },
+      {
+        "entityId": "034f08b1-d727-4a74-bda5-ef15069f3997",
+        "action": "user.created",
+        "createdAt": "2026-09-14T09:16:58.754Z"
+      },
+      {
+        "entityId": "4b855951-9949-4991-b4d5-c07c6885e644",
+        "action": "user.created",
+        "createdAt": "2026-09-14T09:16:58.896Z"
+      },
+      {
+        "entityId": "6a33ceda-fd39-4a40-88f6-c9628c4935dd",
+        "action": "user.created",
+        "createdAt": "2026-09-14T09:16:59.062Z"
+      },
+      {
+        "entityId": "f7737c42-bc79-4d85-89fd-7b29065fb082",
+        "action": "user.password_reset",
+        "createdAt": "2026-09-14T09:17:02.690Z"
+      },
+      {
+        "entityId": "034f08b1-d727-4a74-bda5-ef15069f3997",
+        "action": "user.password_reset",
+        "createdAt": "2026-09-14T09:17:03.104Z"
+      },
+      {
+        "entityId": "4b855951-9949-4991-b4d5-c07c6885e644",
+        "action": "user.blocked",
+        "createdAt": "2026-09-14T09:17:03.730Z"
+      },
+      {
+        "entityId": "4b855951-9949-4991-b4d5-c07c6885e644",
+        "action": "user.unblocked",
+        "createdAt": "2026-09-14T09:17:34.130Z"
+      },
+      {
+        "entityId": "6a33ceda-fd39-4a40-88f6-c9628c4935dd",
+        "action": "user.role_changed",
+        "createdAt": "2026-09-14T09:17:34.468Z"
+      },
+      {
+        "entityId": "6a33ceda-fd39-4a40-88f6-c9628c4935dd",
+        "action": "user.role_changed",
+        "createdAt": "2026-09-14T09:17:34.707Z"
+      }
+    ],
+    "temporaryPasswordIssues": [
+      {
+        "userId": "034f08b1-d727-4a74-bda5-ef15069f3997",
+        "issueCount": 2,
+        "latestIssuedAt": "2026-09-14T09:17:03.104Z"
+      },
+      {
+        "userId": "f7737c42-bc79-4d85-89fd-7b29065fb082",
+        "issueCount": 2,
+        "latestIssuedAt": "2026-09-14T09:17:02.690Z"
+      }
+    ],
+    "secretsPersisted": false
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "package": "TOURNAMENT",
+  "baseline": {
+    "baseHead": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+    "candidate": "GAP012-r6",
+    "candidateStatus": "verified_local_accepted_for_ux_audit",
+    "published": false,
+    "version": "3.0.0",
+    "candidateSourceFiles": 323,
+    "candidateSourceMismatchesAfterAudit": 0,
+    "candidateSourceFingerprint": "8e8762575a07e71a17192da327cbe1b5906ca33c1c2ef762c0f9a37463b94cb3",
+    "dispatchManifestSha256": "c39ed47d9aaaadfba7fac3790bde26acac772ae9946e2f1c99bcdb6a1d46b3a6",
+    "trackedPatchSha256": "30f672ae232cd2c729fc49661e5aed5e9603da70dd3570ccbae88953387d73c4"
+  },
+  "toolchain": {
+    "buildNode": "24.20.0",
+    "runnerNode": "20.20.2",
+    "pnpm": "9.15.0",
+    "playwright": "1.63.0",
+    "chromium": "153.0.8010.12",
+    "postgres": "16.15",
+    "postgresImage": "postgres:16.15-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685"
+  },
+  "runtime": {
+    "web": "localhost:5117",
+    "api": "127.0.0.1:5118",
+    "postgres": "127.0.0.1:33027",
+    "dockerProject": "tab10-ux-tournament-5117",
+    "releaseHealth": {
+      "sha": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+      "version": "3.0.0",
+      "environment": "test",
+      "dirty": true
+    }
+  },
+  "verification": {
+    "productionBuild": "PASS",
+    "migrationFoundation": {
+      "status": "PASS",
+      "passed": 9,
+      "failed": 0,
+      "breakdown": {
+        "localInitChecks": 4,
+        "migrationPasses": 1,
+        "runtimeRoleChecks": 4
+      }
+    },
+    "browserRuns": 7,
+    "screenshots": 33,
+    "finalRunCreatedAt": "2026-09-14T08:00:32.879Z"
+  },
+  "privacy": "Only synthetic users and local disposable data; credentials were generated in process memory and are absent from evidence."
+}

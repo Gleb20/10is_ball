@@ -1,0 +1,163 @@
+{
+  "url": "file:///private/tmp/tab10-ux-audit-20260913/docs/audits/2026-09-13-ux-ui/pilot/flow-report.html",
+  "title": "Tab-10 — пилот",
+  "body": "Tab-10 — пилот User Flow\n\n14.09.2026 · verified local GAP-012 r6 · Chromium153,390/1440 · экспертный проход\n\nuserflow\ninterface-design\nimpeccable review\nТекущее поведение\n\nСоздание для других, счёт, передача и завершение работают. Компоновка и выбор следующего действия требуют улучшений. Это не пользовательский тест.\n\n1Главная\n\nЛичная статистика → Начать\n\nViewport evidence\n\n2Выбор действия\n\nМатч / Турнир / Challenge-Revenge\n\nViewport evidence\n\n3Создание\n\nНазвание/правила → судья/invite → состав → создать\n\nViewport evidence\n\n4Ожидание\n\nПустой журнал → Старт / Судить / Открыть счёт\n\nViewport evidence\n\n5Старт и счёт\n\nПервый подающий → Начать → +1 / Undo / Ещё\n\nViewport evidence\n\n6Передача устройства\n\nЕщё → выбрать D → передать → уведомление D → judge\n\nViewport evidence\n\n7Результат\n\nПодтвердить → details → global Start → Match\n\nViewport evidence\n\nПредлагаемое поведение\n1Начало/продолжение\n\nОсновное действие выше персональных метрик; функции Home остаются.\n\n2Состав\n\nДве стороны → видимая сводка правил; дополнительные опции раскрываются с текущим состоянием.\n\n3Начать и вести\n\nОдин основной допустимый следующий шаг; чужое судейство не перехватывается.\n\n4Счёт\n\n+1, подача, отмена; передача телефона отличается от передачи устройства.\n\n5Результат и новая игра\n\nИтог → Новая игра; реванш и действия с результатом доступны отдельно.\n\nВетви и восстановление\n\nИнвайты добровольны. Первый подающий выбирается по правилам. Ошибочное очко отменяется; техническая коррекция — отдельное событие. Передача резервирует получателя; при истечении предложение перестаёт быть актуальным. Результат остаётся предварительным до подтверждения.\n\nПроверка паттернов\nПРОВЕРКА\tВЕРДИКТ\tОСНОВАНИЕ\nЗавершение оператором за других\tPASS\tP-MOBILE-01; UI и persisted result/stats\nКлавиатурный selector\tFAIL\tP-FOCUS-01; нет IDREF, потеря focus, старые popup\nПриоритет состава и следующего действия\tWARN\tF-PILOT001–003; экспертная гипотеза, не конверсия\nОшибки сети / zoom / physical AT\tNOT TESTED\tПилот не покрывает; явные назначения в runs.csv\nНаблюдение человека\tNOT TESTED\tИнтервью и нейтральные задания впереди\nЭкранный реестр\n\nHome, Start, MatchCreate, MatchDetail waiting/result, Judge setup/live/correction/confirmation, Notifications. Loading моменты сохранены отдельно; 2×2 только discovery. Полный реестр состояний и данные: отчёт, прогоны, target spec, схемы.\n\nОткрыто\n\nПриоритет Home и понятность терминов уточняются с пользователем. Active Home judge label проверяется отдельно. Q-UX-001 о pending Dialog не решён. Все схемы — предложения, приложение не переоформлялось.\n\nОснова — установленный userflow report-template; evidence paths локальны. Ни одного внешнего ресурса для просмотра не требуется.",
+  "focus": {
+    "tag": "BODY",
+    "role": null,
+    "label": null,
+    "text": "Tab-10 — пилот User Flow14.09.2026 · verified local GAP-012 r6 · Chromium153,390/1440 · экспертный п"
+  },
+  "controls": [
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Viewport evidence",
+      "rect": {
+        "x": 323,
+        "y": 413.296875,
+        "w": 134.75,
+        "h": 18
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Viewport evidence",
+      "rect": {
+        "x": 323,
+        "y": 558.578125,
+        "w": 134.75,
+        "h": 18
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Viewport evidence",
+      "rect": {
+        "x": 323,
+        "y": 703.859375,
+        "w": 134.75,
+        "h": 18
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Viewport evidence",
+      "rect": {
+        "x": 323,
+        "y": 849.140625,
+        "w": 134.75,
+        "h": 18
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Viewport evidence",
+      "rect": {
+        "x": 323,
+        "y": 994.421875,
+        "w": 134.75,
+        "h": 18
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Viewport evidence",
+      "rect": {
+        "x": 323,
+        "y": 1139.703125,
+        "w": 134.75,
+        "h": 18
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Viewport evidence",
+      "rect": {
+        "x": 323,
+        "y": 1284.984375,
+        "w": 134.75,
+        "h": 18
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "отчёт",
+      "rect": {
+        "x": 1055,
+        "y": 2677.96875,
+        "w": 40.609375,
+        "h": 18
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "прогоны",
+      "rect": {
+        "x": 304,
+        "y": 2702.765625,
+        "w": 64.875,
+        "h": 18
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "target spec",
+      "rect": {
+        "x": 377.5,
+        "y": 2702.765625,
+        "w": 82.5,
+        "h": 18
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "схемы",
+      "rect": {
+        "x": 468.625,
+        "y": 2702.765625,
+        "w": 48.640625,
+        "h": 18
+      }
+    }
+  ],
+  "viewport": {
+    "w": 1440,
+    "h": 1000,
+    "scrollX": 0,
+    "scrollY": 0,
+    "scrollWidth": 1440
+  }
+}

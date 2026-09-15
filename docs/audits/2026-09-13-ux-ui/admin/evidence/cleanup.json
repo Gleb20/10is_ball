@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-14T09:17:36.334Z",
+  "status": "complete",
+  "dockerProjectRemoved": true,
+  "tmpDirectoryRemoved": true,
+  "ports": {
+    "5417": "free",
+    "5418": "free",
+    "33030": "free"
+  },
+  "secretsPersisted": false
+}

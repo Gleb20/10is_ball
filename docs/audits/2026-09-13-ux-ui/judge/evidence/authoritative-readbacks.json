@@ -1,0 +1,30 @@
+{
+  "main": {
+    "id": "56a982d0-a579-44f4-8c5d-06bf1edc1136",
+    "status": "finished",
+    "scoreA": 10,
+    "scoreB": 2,
+    "winnerSide": "A",
+    "activeJudge": null
+  },
+  "noShow": {
+    "id": "1df1e583-3a8c-46ad-8f0a-dfd4011a6db3",
+    "status": "stopped",
+    "scoreA": 0,
+    "scoreB": 0,
+    "winnerSide": "A",
+    "finishReason": "no_show"
+  },
+  "stopped": {
+    "id": "2e3606c1-7579-4285-80c9-2f3a535c77a5",
+    "status": "stopped",
+    "scoreA": 0,
+    "scoreB": 0,
+    "winnerSide": "A",
+    "finishReason": "manual_stop"
+  },
+  "releaseWarningMatch": {
+    "id": "6c729e7c-787f-4925-b0c4-b035dcdae14c",
+    "status": "waiting"
+  }
+}

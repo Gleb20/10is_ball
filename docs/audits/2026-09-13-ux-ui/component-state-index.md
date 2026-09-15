@@ -1,0 +1,32 @@
+# Сводный каталог состояний компонентов
+
+Сводка принятых пакетов; окончательный полный state coverage ещё уточняется сценарными аудитами. Источники: [первый inventory](components/inventory.md), [supplement](components-supplement/inventory-delta.md), [recheck](components-recheck/report.md) **вместе с обязательной [коррекцией](components-recheck-correction/coverage-delta.md)**. Raw tables и viewport evidence остаются в этих пакетах; этот индекс их не заменяет.
+
+База первого/supplement прохода —9f71b9f; новая —GAP012r6. Координатор сравнил hashes `styles.css`, `ui.tsx`, vendored `ic-kit.js/css`: все четыре равны baseline-source и candidate-source. Это позволяет сохранить ограниченные выводы о неизменившихся общих стилях, но не объявлять старый screenshot проверкой нового consumer. Изменённые create/tournament/override перепроверены отдельно; текущие экземпляры оцениваются сценарными пакетами.
+
+| Семейство | Какие состояния действительно наблюдались | Новая база / задачи | Что ещё нельзя объявлять проверенным |
+|---|---|---|---|
+| Текстовые/числовые поля | placeholder/filled, выделение текста, mouse focus, keyboard focus-visible, error+focus, read-only/disabled в выбранных consumers | Общие стили неизменны; create/correction видны в pilot. BUG-020 — геометрия focus, без удаления индикатора | Реальный OS autofill, системная клавиатура, все сочетания каждого consumer |
+| Autocomplete / UserPicker | open/active option/selected, Enter/focus loss; touch390 tap; directory pending/error; query-zero diagnostic | BUG-018 — DOM/focus/popup ownership;019 — размещение;023 — name search/empty;025 — загрузка/retry | Точный fixed-nav intersection нового1440 и active-optionvisual360 NOT_TESTED. Native device/AT не проверены |
+| Checkbox | checked/unchecked и keyboard toggle в supplement; consent/creator/invite в recheck; pending creator/invite оставались enabled | BUG-026 — disable submitted payload, не отключение самой функции. Вид selected/focus отделён от disabled | Indeterminate не используется в audited source; disabled actual render требует проверки после будущего исправления |
+| Radio и radio-card | native selected/focus в judge; selected/unselected ArrowRight и disabled семантика в bracket Dialog | BUG-020 — лишние контуры; BUG-022 — label/pending согласованность и отдельное Q-UX-001 | Не называть input disabled доказательством визуально disabled всей карточки |
+| Button / segmented group | normal/hover/pressed, selected+aria-pressed, keyboard focus, disabled/saving в выбранных consumers; Space score в pilot | BUG-026 — scope payload controls; остальные сохранённые positive states | Полная матрица всех действий/ролей дополняется пакетами, не blanket PASS |
+| Native select | значение/focus, keyboard selection API в judge/correction, route recovery | Сохранить native semantics, state callback и IDs | Сам native popup не снят headless browser; selectOption не доказывает системный popup UX |
+| Dialog | open, trap Tab/ShiftTab, Escape/return вне pending; long/wrapping/viewport; pending disabled radio/actions; hidden page error | BUG-021 — in-dialog error/recovery; BUG-022 — enabled-looking ignored Close, решение пока открыто | Политика close не одинакова для всех dialog; нельзя переносить bracket вывод на временный пароль/finish автоматически |
+| Cards / list links | representative focus/selected, scorecards/read-only; матчи waiting/result/Home в pilot | Порядок actions и title/metadata уточняют MATCH/AUTH/RESULTS | Не все сущности и длинные/пустые состояния уже покрыты; не заменять mapping посещением одного card |
+| Bottom navigation | active/active+focus; aria-current существует; immersive judge её не показывает | Сохранить семантику NavLink. False missing-aria-current finding отозван | Прокрутка/открытая option и масштаб проверяются как сочетание конкретного экрана, не отдельный nav PASS |
+| Inline Alert / error | standalone AsyncState error виден, light pair6.36; dark judge real error2.58; modal-context error скрыт | BUG-024 — dark contrast; BUG-021 — место ошибки | Измеренные пары — ограниченная выборка, не WCAG certificate |
+| Skeleton / loading | two rectangular skeleton и disabledRefresh desktop/mobile в supplement; actual Home/creation loading pilot | AUTH/RESULTS дополняют содержательное recovery | Loading и ready-empty должны различаться; один screenshot loading не доказывает завершение |
+| Menu / tabs / tooltip / snackbar | Эти библиотечные consumers не найдены в указанном source scope; judge «Ещё» — custom group, navigation — links | N/A именно отсутствие применения библиотечного компонента | Не путать N/A library Menu с отсутствием задачи проверить custom «Ещё» или вкладки навигации |
+
+## Состояния не взаимозаменяемы
+
+Финальный root visual review дополнительного JUDGE c01 обнаружил тёмные подписи двух полей на dark correction card. Это screenshot observation без нового computed ratio; source labelText использует library secondary-text token. Дополнение BUG-024 задаёт два native label с прежней светлой подписью секции и проверкой association/контраста; глобальная тема белого Input не меняется. Измерение до/после обязательно при реализации, PNG не объявляется computed proof.
+
+Focus = куда направлен ввод; focus-visible = когда нужен видимый keyboard cue; выделение текста = диапазон символов; selected value = сохранённое значение поля; active option = вариант навигации в раскрытом списке; selected card/segment = режим. Для каждого inspected state raw запись и screenshot должны называть именно это состояние. Filled disabled и error+focus не подтверждаются отдельными filled/error кадрами.
+
+Нормальный/hover/pressed нельзя требовать от устройства без hover как одинаковую физическую механику. Touch emulation указывает способ взаимодействия, но не подтверждает реальные размеры пальца, on-screen keyboard, OS autofill или VoiceOver/TalkBack. Масштаб200% остаётся NOT_TESTED, если не управляли browser UI zoom; старый CSS zoom proxy не закрывает эту строку.
+
+## Контракт единообразия для дальнейших пакетов
+
+Повторно использовать общие компоненты и токены; у одинаковой сущности одинаковый порядок title/status/metadata/action. Разные сущности различать названием/составом полезных данных и существующими маркерами, не добавлением случайных цветов. Основное действие определяется сценарием/ролью/состоянием, а не всегда первой яркой кнопкой. Второстепенные функции остаются за подписанными действиями с видимой сводкой их состояния. Это целевая договорённость исследования; конкретные screens/specs проходят review отдельно.

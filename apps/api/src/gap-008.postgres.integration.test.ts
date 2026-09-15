@@ -79,6 +79,7 @@ describePostgres.sequential("GAP-008 PostgreSQL consent serialization", () => {
   it("serializes acceptance before start on the same match lock", async () => {
     const setup = await isolated("gap008_setup");
     const match = await setup.services.matches.createMatch({
+      sendPlayerInvitations: true,
       createdByUserId: creator,
       title: "Concurrent consent",
       format: "1v1",
@@ -126,6 +127,7 @@ describePostgres.sequential("GAP-008 PostgreSQL consent serialization", () => {
   it.each([false, true])("serializes concurrent reinvites into one pending row and notification (legacy side: %s)", async (legacySide) => {
     const setup = await isolated("gap008_reinvite_setup");
     const match = await setup.services.matches.createMatch({
+      sendPlayerInvitations: true,
       createdByUserId: creator,
       title: "Concurrent reinvite",
       format: "1v1",
@@ -234,6 +236,7 @@ describePostgres.sequential("GAP-008 PostgreSQL consent serialization", () => {
     const setup = await isolated(`gap008_order_setup_${operation}`);
     const matchInput = {
       createdByUserId: creator, title: "Cross-match consent locks", format: "1v1" as const,
+      sendPlayerInvitations: true,
       participants: [{ side: "A" as const, userId: creator }, { side: "B" as const, userId: player }],
     };
     const swapMatch = operation === "tournamentStart" ? null : await setup.services.matches.createMatch(matchInput);
@@ -263,8 +266,9 @@ describePostgres.sequential("GAP-008 PostgreSQL consent serialization", () => {
     const blocker = postgres(databaseUrl!, { max: 1 });
     const observer = postgres(databaseUrl!, { max: 1 });
     clients.push(blocker, observer);
-    // Pause after explicit user locks, before invitation/match FK KEY SHARE locks.
+    // Pause after explicit user locks, before the side-change cancellation or tournament match insert commits.
     const insertTable = tournament ? "matches" : "match_invitations";
+    const triggerEvent = tournament ? "INSERT" : "UPDATE";
     await db.execute(`
       CREATE FUNCTION gap008_pause_swap_insert() RETURNS trigger AS $$
       BEGIN
@@ -276,7 +280,7 @@ describePostgres.sequential("GAP-008 PostgreSQL consent serialization", () => {
       $$ LANGUAGE plpgsql;
     `);
     await db.execute(`
-      CREATE TRIGGER gap008_pause_swap_insert BEFORE INSERT ON ${insertTable}
+      CREATE TRIGGER gap008_pause_swap_insert BEFORE ${triggerEvent} ON ${insertTable}
       FOR EACH ROW EXECUTE FUNCTION gap008_pause_swap_insert();
     `);
     let release!: () => void;
@@ -338,9 +342,8 @@ describePostgres.sequential("GAP-008 PostgreSQL consent serialization", () => {
         expect(swapped!.participants.find((row) => row.userId === player)).toMatchObject({ side: "A" });
         expect(swapped!.invitations).toEqual(expect.arrayContaining([
           expect.objectContaining({ id: swapMatch!.invitations[0]!.id, status: "cancelled", expiryReason: "side_changed" }),
-          expect.objectContaining({ invitedUserId: player, status: "pending", participantSide: "A" }),
         ]));
-        expect(swapped!.invitations).toHaveLength(2);
+        expect(swapped!.invitations).toHaveLength(1);
       } else {
         expect(await setup.services.tournaments.get(tournament!.id)).toMatchObject({ status: "in_progress" });
         expect(await db.query.matches.findMany({ where: eq(schema.matches.tournamentId, tournament!.id) }))
@@ -369,6 +372,7 @@ describePostgres.sequential("GAP-008 PostgreSQL consent serialization", () => {
   it.each(["respond", "create"] as const)("rejects stale %s actor when blocking wins the user-row lock", async (action) => {
     const setup = await isolated(`gap008_block_setup_${action}`);
     const match = await setup.services.matches.createMatch({
+      sendPlayerInvitations: true,
       createdByUserId: creator,
       title: `Block before invitation ${action}`,
       format: "1v1",

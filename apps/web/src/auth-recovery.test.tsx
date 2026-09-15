@@ -85,6 +85,7 @@ describe("AT-AUTH-009 runtime session recovery", () => {
     const title = await screen.findByLabelText("Название");
     await user.clear(title);
     await user.type(title, "Финал после обеда");
+    await user.click(screen.getByLabelText("Создатель играет"));
     await user.click(screen.getByRole("button", { name: /^гость$/i }));
     await user.type(
       await screen.findByLabelText(/гость \(имя фамилия\)/i),
@@ -154,6 +155,7 @@ describe("AT-AUTH-009 runtime session recovery", () => {
     const title = await screen.findByLabelText("Название");
     await user.clear(title);
     await user.type(title, "Черновик другого пользователя");
+    await user.click(screen.getByLabelText("Создатель играет"));
     await user.click(screen.getByRole("button", { name: /^гость$/i }));
     await user.type(
       await screen.findByLabelText(/гость \(имя фамилия\)/i),

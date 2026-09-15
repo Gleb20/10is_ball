@@ -1,0 +1,102 @@
+{
+  "runId": "AUTH-A01",
+  "scenario": "SC-A01",
+  "browser": "Chromium 153.0.8010.12",
+  "viewport": "390x844 plus first-password 1440x900",
+  "fixture": {
+    "id": "459d1276-185e-4ec4-9cd0-2e888629364e",
+    "email": "ux-auth-first-9fd2e58704@tab10.test",
+    "status": "active",
+    "mustChangePassword": true,
+    "label": "Пользователь ОченьДлинноеИмяДляПроверки"
+  },
+  "results": {
+    "login": {
+      "result": "PASS",
+      "knownError": "Неверный email или пароль",
+      "knownErrorFocus": {
+        "tag": "body",
+        "name": "К содержимомуTab-10ВходСервис настольного тенниса для закрытой группыEmailПароль",
+        "id": null
+      },
+      "emailPreserved": true,
+      "tabSequence": [
+        {
+          "tag": "a",
+          "name": "К содержимому",
+          "id": null
+        },
+        {
+          "tag": "input",
+          "name": "email",
+          "id": "_r_0_"
+        },
+        {
+          "tag": "input",
+          "name": "password",
+          "id": "_r_2_"
+        },
+        {
+          "tag": "button",
+          "name": "Показать пароль",
+          "id": null
+        },
+        {
+          "tag": "button",
+          "name": "Войти",
+          "id": null
+        }
+      ]
+    },
+    "firstPassword": {
+      "result": "PASS_WITH_UX_FINDINGS",
+      "firstPasswordExit": {
+        "url": "/login",
+        "authStatus": 200,
+        "sessionStillAuthenticated": true
+      },
+      "mismatchFocus": {
+        "tag": "button",
+        "name": "Сохранить",
+        "id": null
+      },
+      "mismatchSemantics": {
+        "alert": "Пароли не совпадают",
+        "invalidCount": 0,
+        "describedBy": [
+          null,
+          null
+        ]
+      },
+      "policyError": "Пароль не соответствует политике: TOO_SHORT; MISSING_UPPERCASE; MISSING_DIGIT; MISSING_SPECIAL",
+      "policyFocus": {
+        "tag": "body",
+        "name": "К содержимомуTab-10Смена пароляЗадайте новый пароль при первом входеНовый пароль",
+        "id": null
+      }
+    },
+    "onboarding": {
+      "result": "PASS_WITH_UX_FINDING",
+      "step0Focus": {
+        "tag": "h2",
+        "name": "Главная",
+        "id": null
+      },
+      "persistedStep": true,
+      "tutorialURL": "/matches/81162f98-2b77-4184-b92a-3c818e7f9113/judge?tutorial=1",
+      "incompleteAfterTutorial": true
+    }
+  },
+  "evidence": [
+    "a01-login-390.png",
+    "a01-login-error-390.png",
+    "a01-first-password-1440.png",
+    "a01-first-password-exit-still-authenticated-390.png",
+    "a01-first-password-mismatch-390.png",
+    "a01-first-password-policy-error-390.png",
+    "a01-onboarding-step1-390.png",
+    "a01-onboarding-notifications-390.png",
+    "a01-onboarding-tutorial-390.png",
+    "a01-tutorial-entry-390.png"
+  ]
+}

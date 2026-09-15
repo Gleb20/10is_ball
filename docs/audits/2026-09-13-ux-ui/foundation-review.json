@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "scope": "research foundation only; not application or full UX audit",
+  "reviewer": "Terra High / research_protocol_review",
+  "baseline": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+  "cycles": 2,
+  "resolved": [
+    "Markdown/JSON baseline mismatch"
+  ],
+  "verified": {
+    "source_manifest_files": 317,
+    "capability_records": 22,
+    "prd_heading_requirements": 108,
+    "scenarios": 30,
+    "planned_core_runs": 60,
+    "docs_links": "PASS",
+    "diff_whitespace": "PASS"
+  },
+  "remaining": [
+    "GAP-012 implementation acceptance",
+    "component audit/recheck",
+    "pilot",
+    "flow packages",
+    "user session",
+    "prioritized executable backlog and synthesis"
+  ]
+}

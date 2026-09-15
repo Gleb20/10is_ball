@@ -1,0 +1,177 @@
+{
+  "id": "j21-waiting-creator-detail-1440",
+  "capturedAt": "2026-09-13T23:29:19.565Z",
+  "url": "/matches/1df1e583-3a8c-46ad-8f0a-dfd4011a6db3",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "scroll": {
+    "x": 0,
+    "y": 0,
+    "width": 1440,
+    "height": 967
+  },
+  "activeElement": {
+    "tag": "BODY",
+    "id": null,
+    "text": "К содержимомуJUDGE audit waitingОбновить\n\n\nОжидание0 : 01 × 1до 11 очковбез правила сухой победыпервая подача: вручнуюСу",
+    "ariaLabel": null
+  },
+  "buttons": [
+    {
+      "text": "Обновить",
+      "disabled": false,
+      "rect": {
+        "x": 908.19,
+        "y": 18,
+        "width": 75.81,
+        "height": 44,
+        "top": 18,
+        "right": 984,
+        "bottom": 62,
+        "left": 908.19
+      }
+    },
+    {
+      "text": "Изменить матч",
+      "disabled": false,
+      "rect": {
+        "x": 456,
+        "y": 498.84,
+        "width": 528,
+        "height": 44,
+        "top": 498.84,
+        "right": 984,
+        "bottom": 542.84,
+        "left": 456
+      }
+    },
+    {
+      "text": "Старт",
+      "disabled": false,
+      "rect": {
+        "x": 456,
+        "y": 554.84,
+        "width": 528,
+        "height": 44,
+        "top": 554.84,
+        "right": 984,
+        "bottom": 598.84,
+        "left": 456
+      }
+    },
+    {
+      "text": "Судить",
+      "disabled": false,
+      "rect": {
+        "x": 456,
+        "y": 610.84,
+        "width": 528,
+        "height": 44,
+        "top": 610.84,
+        "right": 984,
+        "bottom": 654.84,
+        "left": 456
+      }
+    },
+    {
+      "text": "Открыть счёт",
+      "disabled": false,
+      "rect": {
+        "x": 456,
+        "y": 666.84,
+        "width": 528,
+        "height": 44,
+        "top": 666.84,
+        "right": 984,
+        "bottom": 710.84,
+        "left": 456
+      }
+    },
+    {
+      "text": "Зафиксировать неявку",
+      "disabled": false,
+      "rect": {
+        "x": 456,
+        "y": 722.84,
+        "width": 528,
+        "height": 44,
+        "top": 722.84,
+        "right": 984,
+        "bottom": 766.84,
+        "left": 456
+      }
+    },
+    {
+      "text": "Отменить матч",
+      "disabled": false,
+      "rect": {
+        "x": 456,
+        "y": 778.84,
+        "width": 528,
+        "height": 44,
+        "top": 778.84,
+        "right": 984,
+        "bottom": 822.84,
+        "left": 456
+      }
+    },
+    {
+      "text": "Назад",
+      "disabled": false,
+      "rect": {
+        "x": 456,
+        "y": 834.84,
+        "width": 528,
+        "height": 44,
+        "top": 834.84,
+        "right": 984,
+        "bottom": 878.84,
+        "left": 456
+      }
+    }
+  ],
+  "alerts": [],
+  "statuses": [],
+  "scores": [],
+  "pointTargets": [],
+  "serve": null,
+  "errorStyle": null,
+  "horizontalOverflow": false,
+  "runId": "J-RUN-ACTOR-MATRIX",
+  "actions": [
+    {
+      "text": "Обновить",
+      "disabled": false
+    },
+    {
+      "text": "Изменить матч",
+      "disabled": false
+    },
+    {
+      "text": "Старт",
+      "disabled": false
+    },
+    {
+      "text": "Судить",
+      "disabled": false
+    },
+    {
+      "text": "Открыть счёт",
+      "disabled": false
+    },
+    {
+      "text": "Зафиксировать неявку",
+      "disabled": false
+    },
+    {
+      "text": "Отменить матч",
+      "disabled": false
+    },
+    {
+      "text": "Назад",
+      "disabled": false
+    }
+  ]
+}

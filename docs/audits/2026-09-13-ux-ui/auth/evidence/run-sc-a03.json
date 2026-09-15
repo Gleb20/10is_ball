@@ -1,0 +1,230 @@
+{
+  "runId": "AUTH-A03",
+  "scenario": "SC-A03",
+  "browser": "Chromium 153.0.8010.12",
+  "results": {
+    "emptyHome": {
+      "result": "PASS_WITH_HIERARCHY_HYPOTHESIS",
+      "geometry390": {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "document": {
+          "scrollWidth": 390,
+          "scrollHeight": 1465
+        },
+        "rows": {
+          "heading": {
+            "x": 16,
+            "y": 16,
+            "width": 358,
+            "height": 82.5,
+            "bottom": 98.5
+          },
+          "stats": {
+            "x": 16,
+            "y": 118.5,
+            "width": 358,
+            "height": 300,
+            "bottom": 418.5
+          },
+          "begin": {
+            "x": 16,
+            "y": 434.5,
+            "width": 358,
+            "height": 44,
+            "bottom": 478.5
+          },
+          "active": {
+            "x": 16,
+            "y": 494.5,
+            "width": 358,
+            "height": 252,
+            "bottom": 746.5
+          },
+          "shortcuts": {
+            "x": 16,
+            "y": 762.5,
+            "width": 358,
+            "height": 70,
+            "bottom": 832.5
+          },
+          "ranking": {
+            "x": 16,
+            "y": 848.5,
+            "width": 358,
+            "height": 204,
+            "bottom": 1052.5
+          },
+          "recent": {
+            "x": 16,
+            "y": 1068.5,
+            "width": 358,
+            "height": 308,
+            "bottom": 1376.5
+          },
+          "nav": {
+            "x": 0,
+            "y": 781.8125,
+            "width": 390,
+            "height": 62.1875,
+            "bottom": 844
+          }
+        }
+      },
+      "geometry1440": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "scrollWidth": 1440,
+          "scrollHeight": 1428
+        },
+        "rows": {
+          "shell": {
+            "x": 440,
+            "y": 0,
+            "width": 560,
+            "height": 1428,
+            "bottom": 1428
+          },
+          "stats": {
+            "x": 456,
+            "y": 82,
+            "width": 528,
+            "height": 300,
+            "bottom": 382
+          },
+          "begin": {
+            "x": 456,
+            "y": 398,
+            "width": 528,
+            "height": 44,
+            "bottom": 442
+          },
+          "nav": {
+            "x": 440,
+            "y": 837.8125,
+            "width": 560,
+            "height": 62.1875,
+            "bottom": 900
+          }
+        }
+      },
+      "geometry360": {
+        "viewport": {
+          "width": 360,
+          "height": 800
+        },
+        "document": {
+          "scrollWidth": 360,
+          "scrollHeight": 1605
+        },
+        "rows": {
+          "shell": {
+            "x": 0,
+            "y": 0,
+            "width": 360,
+            "height": 1604.5,
+            "bottom": 1604.5
+          },
+          "heading": {
+            "x": 16,
+            "y": 16,
+            "width": 328,
+            "height": 82.5,
+            "bottom": 98.5
+          },
+          "stats": {
+            "x": 16,
+            "y": 118.5,
+            "width": 328,
+            "height": 386,
+            "bottom": 504.5
+          },
+          "nav": {
+            "x": 0,
+            "y": 737.8125,
+            "width": 360,
+            "height": 62.1875,
+            "bottom": 800
+          }
+        }
+      },
+      "emptyExplanationsPresent": [
+        "Активных событий нет",
+        "История пока пуста"
+      ],
+      "contrast": [
+        {
+          "selector": ".hero-card .muted",
+          "color": "rgba(7, 7, 7, 0.58)",
+          "background": "rgb(255, 255, 255)",
+          "ratio": 5.01
+        },
+        {
+          "selector": ".hero-card strong",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgb(255, 255, 255)",
+          "ratio": 17.69
+        },
+        {
+          "selector": ".bottom-nav__item.active",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgb(245, 245, 245)",
+          "ratio": 16.34
+        }
+      ]
+    },
+    "profile": {
+      "result": "PASS",
+      "activeSessionSectionRendered": true,
+      "restartURL": "/onboarding"
+    },
+    "help": {
+      "result": "PASS_WITH_UX_FINDINGS",
+      "control": {
+        "tagName": "input",
+        "type": null,
+        "maxLength": "4000",
+        "multiline": false
+      },
+      "activeBottomNavItems": [],
+      "loadErrorFocusBeforeRetry": {
+        "tag": "body",
+        "name": "К содержимомуПомощьПовторить загрузку справки\n\n\nОшибкаСправка временно недоступн",
+        "id": null
+      },
+      "feedbackValuePreservedOn503": true,
+      "contrast": [
+        {
+          "selector": ".card .muted",
+          "color": "rgba(7, 7, 7, 0.58)",
+          "background": "rgb(255, 255, 255)",
+          "ratio": 5.01
+        },
+        {
+          "selector": ".section-title",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgb(255, 255, 255)",
+          "ratio": 17.69
+        }
+      ]
+    },
+    "axeSample": {
+      "homeViolations": [],
+      "helpViolations": []
+    }
+  },
+  "evidence": [
+    "a03-home-empty-390.png",
+    "a03-home-empty-1440.png",
+    "a03-home-empty-360.png",
+    "a03-profile-sessions-390.png",
+    "a03-help-390.png",
+    "a03-help-load-error-390.png",
+    "a03-feedback-error-390.png"
+  ]
+}

@@ -246,6 +246,24 @@ Focused worker evidence is42 PGlite/5 PostgreSQL cases; independent review
 identified an unverified cross-match user/FK lock cycle in side swap versus
 reinvite. Aggregate acceptance is paused for a deterministic concurrency probe.
 
+### GAP-012 operator-first setup contract
+
+`POST /matches` now treats `createdByUserId` as ownership independent of roster.
+`sendPlayerInvitations` defaults false; explicit player/judge invitation history is
+informational and start atomically cancels all pending rows with `match_started`.
+Manual web setup defaults creator participation false, while challenge/revenge keep
+creator participation and purposeful invitations true. The waiting editor preserves
+either owner-in-roster or nonplaying-owner layouts.
+
+Tournament create/read includes immutable `requireParticipantConsent`. Participant
+POST accepts organizer or active-admin registered-user add, optional confirmation
+flags and optional UUID idempotency header, returning `{participant,tournament}`.
+Guest add and every non-add capability remain organizer-only. Non-contextual admin
+list/detail are minimal projections without invitation/bracket/settings data.
+Confirmed add to `bracket_generated` runs participant/invite closure/audit/bracket
+regeneration in one serialized transaction; exact replay returns the prior row,
+including after start, while every new post-start add rejects without writes.
+
 The lock-cycle checkpoint above is superseded by focused Red/Green: three
 cross-match PostgreSQL40P01 cases are repaired by locking creator with all
 required users in one sorted group. This applies before waiting-side consent

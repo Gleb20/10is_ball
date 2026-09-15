@@ -1,0 +1,155 @@
+{
+  "id": "j13-offline-no-recovery-action-390",
+  "capturedAt": "2026-09-13T23:29:13.791Z",
+  "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "scroll": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 844
+  },
+  "activeElement": {
+    "tag": "BUTTON",
+    "id": null,
+    "text": "+1",
+    "ariaLabel": "+1 очко: Синтетическая Анна"
+  },
+  "buttons": [
+    {
+      "text": "Назад",
+      "disabled": false,
+      "rect": {
+        "x": 174.28,
+        "y": 78,
+        "width": 69.02,
+        "height": 44,
+        "top": 78,
+        "right": 243.3,
+        "bottom": 122,
+        "left": 174.28
+      }
+    },
+    {
+      "text": "Undo",
+      "disabled": false,
+      "rect": {
+        "x": 251.3,
+        "y": 78,
+        "width": 63.14,
+        "height": 44,
+        "top": 78,
+        "right": 314.44,
+        "bottom": 122,
+        "left": 251.3
+      }
+    },
+    {
+      "text": "Ещё",
+      "disabled": false,
+      "rect": {
+        "x": 322.44,
+        "y": 78,
+        "width": 55.56,
+        "height": 44,
+        "top": 78,
+        "right": 378,
+        "bottom": 122,
+        "left": 322.44
+      }
+    },
+    {
+      "text": "+1",
+      "disabled": false,
+      "rect": {
+        "x": 26,
+        "y": 758,
+        "width": 149,
+        "height": 56,
+        "top": 758,
+        "right": 175,
+        "bottom": 814,
+        "left": 26
+      }
+    },
+    {
+      "text": "+1",
+      "disabled": false,
+      "rect": {
+        "x": 215,
+        "y": 758,
+        "width": 149,
+        "height": 56,
+        "top": 758,
+        "right": 364,
+        "bottom": 814,
+        "left": 215
+      }
+    }
+  ],
+  "alerts": [
+    "Очко не подтверждено: Failed to fetch. Очередь остановлена: проверьте счёт и повторите."
+  ],
+  "statuses": [
+    "Поверните устройство горизонтально для удобного судейства"
+  ],
+  "scores": [
+    "4",
+    "2"
+  ],
+  "pointTargets": [
+    {
+      "label": "+1 очко: Синтетическая Анна",
+      "disabled": false,
+      "rect": {
+        "x": 26,
+        "y": 758,
+        "width": 149,
+        "height": 56,
+        "top": 758,
+        "right": 175,
+        "bottom": 814,
+        "left": 26
+      }
+    },
+    {
+      "label": "+1 очко: Синтетический Борис",
+      "disabled": false,
+      "rect": {
+        "x": 215,
+        "y": 758,
+        "width": 149,
+        "height": 56,
+        "top": 758,
+        "right": 364,
+        "bottom": 814,
+        "left": 215
+      }
+    }
+  ],
+  "serve": {
+    "text": "Подача",
+    "rect": {
+      "x": 52.92,
+      "y": 347.97,
+      "width": 95.16,
+      "height": 28,
+      "top": 347.97,
+      "right": 148.08,
+      "bottom": 375.97,
+      "left": 52.92
+    },
+    "fg": "rgb(15, 17, 21)",
+    "bg": "rgb(91, 159, 255)"
+  },
+  "errorStyle": {
+    "fg": "rgb(176, 0, 32)",
+    "bg": "rgb(26, 29, 36)"
+  },
+  "horizontalOverflow": false,
+  "runId": "J-RUN-OFFLINE",
+  "refreshButtons": 0
+}

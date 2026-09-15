@@ -1,0 +1,15 @@
+{
+  "checkedAtUtc": "2026-09-13T23:22:03Z",
+  "webPort4717": "closed",
+  "apiPort4718": "closed",
+  "postgresHostPort33017": "closed",
+  "composeProject": "tab10-ux-auth-4717",
+  "composeContainersRemaining": 0,
+  "composeVolumesRemoved": true,
+  "temporaryFiles": {
+    "/private/tmp/tab10-ux-auth-private.json": "deleted",
+    "/private/tmp/tab10-ux-auth-compose.yml": "deleted",
+    "/private/tmp/tab10-ux-auth-server.mjs": "deleted"
+  },
+  "note": "Only disposable local AUTH runtime assets were stopped/removed; no production or repository data was deleted."
+}

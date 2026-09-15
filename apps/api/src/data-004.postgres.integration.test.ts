@@ -9,6 +9,7 @@ import { resolveTestDatabaseUrl } from "./db/test-database-url.js";
 import {
   teamInvitations,
   teamMemberships,
+  tournamentInvitations,
   tournamentParticipants,
   users,
 } from "./db/schema.js";
@@ -141,14 +142,15 @@ describePostgres.sequential(
           userId: INVITEE_ID,
         }),
       ]);
-      expect(results[0]).toEqual({
-        status: "fulfilled",
-        value: { status: "accepted" },
-      });
-      if (results[1]?.status === "rejected") {
-        expect(results[1].reason).toMatchObject({
-          code: "ALREADY_IN_TOURNAMENT",
+      if (results[0]?.status === "fulfilled") {
+        expect(results[0].value).toEqual({ status: "accepted" });
+        expect(results[1]).toMatchObject({
+          status: "rejected",
+          reason: { code: "ALREADY_IN_TOURNAMENT" },
         });
+      } else {
+        expect(results[0].reason).toMatchObject({ code: "EXPIRED" });
+        expect(results[1]).toMatchObject({ status: "fulfilled" });
       }
       expect(
         await db.query.tournamentParticipants.findMany({
@@ -159,6 +161,13 @@ describePostgres.sequential(
           ),
         }),
       ).toHaveLength(1);
+      expect(
+        await db.query.tournamentInvitations.findFirst({
+          where: eq(tournamentInvitations.id, invitation!.id),
+        }),
+      ).toMatchObject({
+        status: results[0]?.status === "fulfilled" ? "accepted" : "cancelled",
+      });
     });
   },
 );

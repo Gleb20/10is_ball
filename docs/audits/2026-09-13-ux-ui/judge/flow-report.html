@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tab-10 JUDGE — User Flow Report</title>
+<style>
+  :root{--ink:#111;--muted:#666;--line:#ddd;--accent:#0b5fff;--ok:#0a7d33;--warn:#b45309;--bad:#b91c1c;--bg:#fafafa;--card:#fff}
+  *{box-sizing:border-box;margin:0} body{font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);padding:48px 24px;max-width:940px;margin:0 auto}
+  h1{font-size:28px;letter-spacing:-.02em} h2{font-size:20px;margin:48px 0 8px;padding-top:24px;border-top:1px solid var(--line)} h3{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:28px 0 12px}
+  p+p{margin-top:10px}.meta{color:var(--muted);font-size:14px;margin:6px 0 4px}.skills{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 0}.chip{font-size:13px;padding:3px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
+  .flow{list-style:none;padding:0;margin:16px 0}.flow>li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;position:relative}.flow>li+li{margin-top:34px}.flow>li+li::before{content:"";position:absolute;top:-27px;left:32px;width:2px;height:20px;background:var(--accent)}.flow>li+li::after{content:"";position:absolute;top:-12px;left:28px;border:5px solid transparent;border-top-color:var(--accent)}
+  .step-n{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);border:1.5px solid var(--accent);border-radius:999px;padding:1px 9px;margin-right:8px;vertical-align:1px}.step-t{font-weight:650}.step-d{color:var(--muted);font-size:14px;margin-top:6px}.cta{font-size:13px;margin-top:8px}.cta b{color:var(--ok)}.branch{font-size:13px;margin-top:8px;padding:8px 12px;background:#f4f6ff;border-left:3px solid var(--accent);border-radius:0 6px 6px 0}
+  table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card)}th,td{text-align:left;padding:9px 12px;border:1px solid var(--line);vertical-align:top}th{background:var(--bg);font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}.pass{color:var(--ok);font-weight:650}.warn{color:var(--warn);font-weight:650}.fail{color:var(--bad);font-weight:650}.nt{color:var(--muted);font-weight:650}.overflow{overflow-x:auto}a{color:var(--accent)}ul{margin:10px 0 0 20px}footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}@media print{body{background:#fff;padding:0}.flow>li{break-inside:avoid}}
+</style>
+</head>
+<body>
+<h1>Tab-10 JUDGE — User Flow Report</h1>
+<p class="meta">13.09.2026 · frozen base 9f71b9f4 · Chromium 153 · экспертный browser-проход, не user test</p>
+<div class="skills"><span class="chip">userflow · flow-errors</span><span class="chip">userflow · flow-sharing</span><span class="chip">interface-design</span><span class="chip">impeccable review</span></div>
+
+<h2>Итог</h2>
+<p>Основной путь судьи проходит и сохраняет правильное серверное состояние: rapid input, Undo, correction, handover, ownership, pending/continue/finish, no-show и stop. Главный риск находится в ветке неопределённого результата: сервер уже применил очко и UI это отобразил, но текст предлагает повторить действие. Клавиатурная коррекция также теряет focus при входе и возврате.</p>
+<p>Предлагаемый flow не меняет права и не добавляет автоматический retry. Он делает один следующий шаг главным, различает тот же телефон и другое устройство, а recovery делит на подтверждённую запись, подтверждённый отказ и неизвестный результат.</p>
+
+<h2>Flow: начать и вести счёт</h2>
+<p class="meta">Источник паттерна: flow-sharing + interface-design · Вход: MatchDetail в ожидании</p>
+<h3>Текущий путь</h3>
+<ol class="flow">
+  <li><span class="step-n">1</span><span class="step-t">MatchDetail: ожидание</span><p class="step-d">Creator видит пустой журнал и семь действий; «Старт» и «Судить» одинаково выделены.</p><p class="cta">Competing actions: <b>Старт / Судить</b></p></li>
+  <li><span class="step-n">2</span><span class="step-t">Захват и setup</span><p class="step-d">Судья выбирает первую подачу и стороны. При сохранении кнопка pending, но radios/swap остаются изменяемыми.</p><div class="branch">Pending mismatch → evidence `j02`; dedup BUG-026.</div></li>
+  <li><span class="step-n">3</span><span class="step-t">Счёт</span><p class="step-d">Две большие стороны, +1, подача, Undo, Ещё. Два быстрых тапа входят в видимую очередь и сохраняются по порядку.</p><p class="cta">Основное действие: <b>+1</b> → authoritative score</p></li>
+  <li><span class="step-n">4</span><span class="step-t">Исправление</span><p class="step-d">«Ещё» → correction. Данные сохраняются, но keyboard focus падает в BODY на входе и выходе.</p><div class="branch">Focus failure → F-JUDGE-002.</div></li>
+  <li><span class="step-n">5</span><span class="step-t">Предварительный результат</span><p class="step-d">Победное условие блокирует +1 и показывает Confirm / Continue. Continue возвращает live; Confirm делает result read-only.</p><p class="cta">Основное действие: <b>Подтвердить результат</b></p></li>
+</ol>
+<h3>Предлагаемый путь</h3>
+<ol class="flow">
+  <li><span class="step-n">1</span><span class="step-t">Один следующий шаг</span><p class="step-d">Для creator со свободным слотом — «Начать и вести счёт»; остальные действия вторичны и permission-aware.</p></li>
+  <li><span class="step-n">2</span><span class="step-t">Честный submitted snapshot</span><p class="step-d">После Start все payload controls заморожены; UI показывает отправленные стороны и подачу.</p></li>
+  <li><span class="step-n">3</span><span class="step-t">Операционное ведение</span><p class="step-d">+1 остаётся главным; «Отменить очко» и «Действия» заменяют технические Undo/Ещё.</p></li>
+  <li><span class="step-n">4</span><span class="step-t">Correction с focus contract</span><p class="step-d">Focus входит в heading/first field, остаётся при ошибке и возвращается к invoker.</p></li>
+  <li><span class="step-n">5</span><span class="step-t">Проверка результата</span><p class="step-d">Confirm — primary; Continue — secondary; результат сообщает authoritative score и следующую игру по роли.</p></li>
+</ol>
+
+<h2>Flow: тот же телефон или другое устройство</h2>
+<p class="meta">Источник паттерна: flow-sharing · Вход: активный JudgePage</p>
+<ol class="flow">
+  <li><span class="step-n">1</span><span class="step-t">Тот же телефон</span><p class="step-d">Никакой идентификации: счёт продолжает вести текущий аккаунт. Человек, который держит телефон, не меняет auth/session.</p><p class="cta">Основное действие: <b>продолжить счёт</b></p></li>
+  <li><span class="step-n">2</span><span class="step-t">Другое устройство</span><p class="step-d">Действия → «Передать на другое устройство» → выбрать активного пользователя.</p><div class="branch">Directory loading/error сейчас не честны → dedup BUG-025.</div></li>
+  <li><span class="step-n">3</span><span class="step-t">Резервирование</span><p class="step-d">Старый судья теряет mutation rights; выбранный target приобретает их один раз. Другие и вторая сессия того же пользователя получают read-only recovery.</p></li>
+  <li><span class="step-n">4</span><span class="step-t">Release</span><p class="step-d">«Завершить ведение и выйти» ждёт один best-effort release; destination показывает success/warning. Crash/tab close полагаются на TTL.</p></li>
+</ol>
+
+<h2>Flow: ошибка начисления и восстановление</h2>
+<p class="meta">Источник паттерна: flow-errors · Вход: запись очка</p>
+<h3>Сейчас</h3>
+<ol class="flow">
+  <li><span class="step-n">1</span><span class="step-t">Known no-write</span><p class="step-d">503 оставляет authoritative score и показывает error; красный текст 2.58:1 — BUG-024.</p></li>
+  <li><span class="step-n">2</span><span class="step-t">Unknown outcome</span><p class="step-d">Server applies point, response is lost, refresh displays changed score, but alert still says “repeat”.</p><div class="branch">Unsafe instruction → F-JUDGE-001.</div></li>
+  <li><span class="step-n">3</span><span class="step-t">Version conflict</span><p class="step-d">Queue stops, explicit stale message appears, authoritative score refreshes. No automatic replay.</p></li>
+  <li><span class="step-n">4</span><span class="step-t">Offline</span><p class="step-d">Last state stays visible, but the same generic repeat text appears and no Refresh/Retry action exists.</p></li>
+</ol>
+<h3>Предложение</h3>
+<ol class="flow">
+  <li><span class="step-n">1</span><span class="step-t">Pause and preserve context</span><p class="step-d">Keep score/serve visible; pause score mutations; announce connection/outcome state.</p></li>
+  <li><span class="step-n">2</span><span class="step-t">Read-only сверка</span><p class="step-d">Один раз получить authoritative state без повторной отправки score intent.</p><p class="cta">Основное действие: <b>Обновить счёт</b></p></li>
+  <li><span class="step-n">3</span><span class="step-t">Определить исход</span><p class="step-d">Exact intent key найден → запись подтверждена; server rejection → отказ подтверждён; иначе ручная сверка без инструкции повтора.</p></li>
+  <li><span class="step-n">4</span><span class="step-t">Resume deliberately</span><p class="step-d">Only after authoritative render and operator acknowledgement; stale queued taps are not replayed.</p></li>
+</ol>
+
+<h2>Реестр экранов</h2>
+<div class="overflow"><table>
+  <tr><th>Экран/state</th><th>Назначение</th><th>Основное действие</th><th>Loading/empty/error/recovery</th></tr>
+  <tr><td>MatchDetail waiting</td><td>Choose next match action</td><td>Role-specific start/judge/open</td><td>Last valid detail retained; manual refresh; empty log below actions</td></tr>
+  <tr><td>Judge setup</td><td>First serve and sides</td><td>Начать матч</td><td>Freeze all submitted controls; failure restores values</td></tr>
+  <tr><td>Judge live</td><td>Score and serve</td><td>+1</td><td>Visible queue; three-outcome mutation recovery</td></tr>
+  <tr><td>Correction</td><td>Technical baseline</td><td>Сохранить коррекцию</td><td>Focus entry/return; values retained on failure</td></tr>
+  <tr><td>Handover</td><td>Move ownership to another device</td><td>Передать на другое устройство</td><td>Loading/ready-empty/error/retry explicit</td></tr>
+  <tr><td>Pending confirmation</td><td>Verify terminal score</td><td>Подтвердить результат</td><td>Continue returns to live; external terminal → read-only</td></tr>
+  <tr><td>Ownership conflict</td><td>Prevent dual judge</td><td>Смотреть счёт</td><td>Retry ownership check; no silent reacquire</td></tr>
+  <tr><td>Stop/no-show/cancel/void</td><td>Exception outcome</td><td>Context-specific confirmation</td><td>Actor/state rules and consequences explicit</td></tr>
+</table></div>
+
+<h2>Проверка антипаттернов</h2>
+<div class="overflow"><table>
+  <tr><th>Проверка</th><th>Вердикт</th><th>Evidence</th></tr>
+  <tr><td>Rapid intentional input preserved without parallel writes</td><td class="pass">PASS</td><td>J-RUN-RAPID; queue=2; authoritative +2</td></tr>
+  <tr><td>Unknown mutation outcome does not invite duplication</td><td class="fail">FAIL</td><td>F-JUDGE-001; j11</td></tr>
+  <tr><td>Error keeps last authoritative context</td><td class="pass">PASS</td><td>known 503, version conflict, offline</td></tr>
+  <tr><td>Error offers a clear next recovery action</td><td class="fail">FAIL</td><td>offline recovery buttons=0; directory retry=0</td></tr>
+  <tr><td>Keyboard focus enters and returns from correction</td><td class="fail">FAIL</td><td>activeElement BODY on both transitions</td></tr>
+  <tr><td>Same phone vs another device is explicit</td><td class="warn">WARN</td><td>behavior correct; terminology uses slot/session language</td></tr>
+  <tr><td>One role/state primary action</td><td class="warn">WARN</td><td>waiting creator and current judge action matrices</td></tr>
+  <tr><td>Actor permissions preserved</td><td class="pass">PASS</td><td>four-actor waiting/in-progress/pending/finished matrix</td></tr>
+  <tr><td>390/360/landscape current layout</td><td class="pass">PASS</td><td>no horizontal overflow; +1 ≥48px in tested states</td></tr>
+  <tr><td>Physical handoff, WebKit, zoom200, spoken AT</td><td class="nt">NOT TESTED</td><td>Explicitly assigned to later verification</td></tr>
+  <tr><td>Human comprehension</td><td class="nt">NOT TESTED</td><td>F-JUDGE-003 remains expert hypothesis</td></tr>
+</table></div>
+
+<h2>Открытые вопросы и отложенные проверки</h2>
+<ul>
+  <li>Implementation synthesis must choose whether `Начать и вести счёт` composes current start/acquire calls or remains a hierarchy/copy-only change; no permission may expand.</li>
+  <li>Текущий GET уже отдаёт exact idempotency key/event log: наличие ключа доказывает запись, раннее отсутствие — ещё не отказ. Если дальнейший API-контракт понадобится для более быстрого определения, это отдельное решение.</li>
+  <li>Physical devices, WebKit, browser zoom 200%, and spoken AT remain parked verification, not implicit PASS.</li>
+</ul>
+
+<footer>Собрано на установленном userflow report template. Всё evidence локальное и synthetic: <a href="report.md">отчёт</a>, <a href="runs.csv">прогоны</a>, <a href="target-spec.md">целевая спецификация</a>, <a href="evidence/target-wireframes.html">схемы</a>.</footer>
+</body>
+</html>

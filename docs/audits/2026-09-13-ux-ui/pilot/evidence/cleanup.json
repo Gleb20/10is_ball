@@ -1,0 +1,11 @@
+{
+  "chromium": "closed via driver",
+  "api_pid27342": "TERM requested",
+  "web_pid27461": "TERM requested",
+  "compose_project": "tab10-ux-pilot-4617",
+  "compose_down_volumes": "PASS container/network removed; tmpfsDB",
+  "other_stands": "untouched",
+  "ports4617_4618": "no listeners verified",
+  "compose_containers": "none verified",
+  "driver_processes5067_41942": "KILL after Chromium closed; stdin kept node alive"
+}

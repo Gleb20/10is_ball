@@ -180,7 +180,12 @@ Create supports:
 - rules;
 - registered and guest participants;
 - optional judge invite;
+- optional `sendPlayerInvitations=false`; player selection alone never invites;
 - source `manual|challenge|revenge|tutorial`.
+
+`created_by_user_id` is ownership, not mandatory roster membership. A valid start
+does not wait for player/judge responses and atomically closes all pending match
+invitations with `match_started` plus their visible notifications.
 
 `GET /matches` и `GET /matches/{matchId}` применяют D17 к authenticated active
 actor. `waiting|in_progress|pending_confirmation` доступны только
@@ -194,8 +199,9 @@ actor. `waiting|in_progress|pending_confirmation` доступны только
 `POST /matches` принимает только object по runtime schema: непустое название,
 `format=1v1|2v2`, положительные целые `pointsToWin`/`mercyPoints` и структурно
 валидных registered/guest participants. Service дополнительно проверяет точное
-число игроков на каждой стороне, distinct active users и участие creator в
-standalone. Ошибка или отказ при записи любого participant откатывает весь create.
+число игроков на каждой стороне и distinct active users. В manual standalone
+creator может быть только оператором; в challenge/revenge creator обязан быть
+participant. Ошибка или отказ при записи любого participant откатывает весь create.
 Те же runtime gates проверяют side/version в point/undo, first server/setup и
 winner/reason в stop; validation error не меняет score, event log или version.
 
@@ -267,10 +273,15 @@ Errors:
 ## 10. Tournaments
 
 - `GET /tournaments`
-- `POST /tournaments`
+- `POST /tournaments` — accepts immutable-at-creation
+  `requireParticipantConsent=false`
 - `GET /tournaments/{tournamentId}`
 - `PATCH /tournaments/{tournamentId}` — до старта
-- `POST /tournaments/{tournamentId}/participants` — organizer-only direct roster mutation
+- `POST /tournaments/{tournamentId}/participants` — organizer or active admin
+  registered-user add; guest remains organizer-only. Strict body contains exactly
+  user or guest plus optional `confirmManualOverride` and
+  `confirmBracketRegeneration`; optional UUID `Idempotency-Key`. Response is
+  `{participant,tournament}`
 - `DELETE /tournaments/{tournamentId}/participants/{participantId}` —
   organizer-only; `participantId` обязан принадлежать route tournament, иначе
   `404 NOT_FOUND` без изменения обеих сущностей
@@ -288,7 +299,13 @@ Tournament invitation contract аналогичен team flow: organizer-only in
 один pending invite и один active registered participant на пару, actor-scoped
 response и stable terminal retry. Invite/respond/direct roster add/bracket close
 сериализуются по tournament row; notification и invitation/participant state
-коммитятся вместе.
+коммитятся вместе. `requireParticipantConsent` нельзя PATCH. Required-consent add
+и любой non-organizer admin add требуют `confirmManualOverride=true`. Добавление
+при `bracket_generated` требует `confirmBracketRegeneration=true` и атомарно
+перестраивает bracket с прежним seed prefix. Exact key replay возвращает прежний
+participant; different fingerprint даёт `409 IDEMPOTENCY_KEY_REUSED` без записей.
+После старта новый add отклоняется до любых side effects; exact replay успешного
+prestart add возвращает только его сохранённый participant без новых записей.
 
 `POST /tournaments/{tournamentId}/start` до materialization проверяет весь
 игровой roster, включая organizer/participant с bye. Любой зарегистрированный
@@ -302,6 +319,10 @@ organizer, active tournament participant и current active judge любого д
 match с неосвобождённой и неистёкшей judge session. `finished|stopped|cancelled`
 видит любой active club user. Existing hidden active tournament возвращает
 `403 FORBIDDEN`, неизвестный id — `404 NOT_FOUND`.
+
+Исключение D17 только для active global admin: list отдаёт `id/title/status`, detail
+— tournament identity/policy и active roster, необходимые для scoped add. Invite
+history, settings, bracket и остальные organizer capabilities не раскрываются.
 
 Errors:
 - `INSUFFICIENT_PLAYERS`
@@ -317,6 +338,9 @@ Errors:
   reset/migration (D25)
 - `FORBIDDEN` — actor не является organizer route tournament
 - `NOT_FOUND` — route tournament или связанный с route participant не найден
+- `MANUAL_OVERRIDE_CONFIRMATION_REQUIRED` — HTTP 409, confirmation отсутствует
+- `BRACKET_REGEN_CONFIRMATION_REQUIRED` — HTTP 409, перестроение не подтверждено
+- `IDEMPOTENCY_KEY_REUSED` — HTTP 409, ключ принадлежит другому fingerprint
 
 ## 11. FAQ / feedback
 
@@ -341,9 +365,10 @@ Errors:
 - finished/stopped standalone или tournament match void — active admin or match
   creator; no second approver; tournament downstream state preserved by D33.
 - judge mutations — active judge session.
-- tournament direct roster mutation and bracket generation/edit — organizer of
-  the route tournament before start; invitation response and self-withdraw use
-  their own contextual actor rules.
+- tournament registered-user add — organizer or active global admin with the
+  required explicit confirmations; guest add, removal, invitation and bracket/
+  lifecycle control remain organizer-only. Invitation response and self-withdraw
+  use their own contextual actor rules.
 - team edit/invite/remove — captain.
 - view active event — participant/judge/organizer.
 - view completed event — any active user.

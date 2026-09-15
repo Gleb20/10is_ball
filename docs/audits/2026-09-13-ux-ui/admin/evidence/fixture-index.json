@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-14T09:16:58.367Z",
+  "fixtures": [
+    {
+      "key": "reset",
+      "id": "f7737c42-bc79-4d85-89fd-7b29065fb082",
+      "label": "Проверочный Сброс 1144fz",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "lost-reset",
+      "id": "034f08b1-d727-4a74-bda5-ef15069f3997",
+      "label": "Проверочный ПотерянныйОтвет 1144fz",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "blocked",
+      "id": "4b855951-9949-4991-b4d5-c07c6885e644",
+      "label": "Проверочный Блокировка 1144fz",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "role",
+      "id": "6a33ceda-fd39-4a40-88f6-c9628c4935dd",
+      "label": "Проверочный Роль 1144fz",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "creator",
+      "id": "24d87f4f-3260-4878-b0f8-cd2c06c19803",
+      "label": "Проверочный Создатель 1144fz",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "player-a",
+      "id": "bab02b91-46a6-456f-9c9a-bcebf227faaa",
+      "label": "Проверочный ИгрокА 1144fz",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "player-b",
+      "id": "65e4ef6f-c613-4a0c-a693-8a142e450a60",
+      "label": "Проверочный ИгрокБ 1144fz",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "t-organizer",
+      "id": "2298da36-8935-4370-82db-4ecbec65a682",
+      "label": "Проверочный Организатор 1144fz",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "key": "t-target",
+      "id": "bb2045fb-12f7-4da4-8ff3-4ed8c1edf85b",
+      "label": "Проверочный АдминДобавляет 1144fz",
+      "role": "user",
+      "status": "active"
+    }
+  ]
+}

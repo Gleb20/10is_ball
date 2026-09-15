@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tab-10 RESULTS — target wireframes</title>
+<style>
+:root{--ink:#181818;--muted:#666;--line:#d8d8d8;--soft:#f5f3ff;--accent:#6e22df;--bad:#b42318;--bg:#f3f3f3;--card:#fff}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}header{max-width:1180px;margin:auto;padding:32px 20px 16px}h1{font-size:28px;margin:0 0 6px}h2{font-size:21px;margin:0}.meta,.muted{color:var(--muted)}.board{max-width:1180px;margin:auto;padding:16px 20px 48px;display:grid;grid-template-columns:390px 1fr;gap:28px;align-items:start}.device{background:#fff;border:2px solid #222;border-radius:24px;overflow:hidden;box-shadow:0 10px 35px #0001}.device.desktop{border-radius:16px}.bar{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.screen{padding:16px}.screen+.screen{border-top:12px solid var(--bg)}.screen-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.button{min-height:44px;padding:10px 14px;border:2px solid var(--accent);border-radius:9px;color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-weight:700}.button.primary{background:var(--accent);color:#fff}.input{height:48px;border:1px solid var(--line);border-radius:10px;padding:13px;background:#fff}.search{display:grid;grid-template-columns:1fr auto;gap:8px}.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.chip{background:var(--soft);color:#5320a2;border-radius:999px;padding:5px 9px;font-size:12px}.row{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:9px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.row strong{display:block}.row small{display:block;color:var(--muted);margin-top:3px}.status{font-size:12px;border-radius:999px;background:#e8f7ea;color:#16752d;padding:5px 8px}.status.free{background:#eee;color:#333}.error{border-left:4px solid var(--bad);padding:9px 11px;background:#fff0ee;color:#762018;margin-top:10px}.field-error{color:var(--bad);font-size:12px;margin:4px 0 0}.field.invalid{border:2px solid var(--bad);border-radius:10px;padding:10px;margin-top:10px}.field .input{width:100%;margin-top:5px}.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}.stat{border:1px solid var(--line);border-radius:10px;padding:9px}.stat strong{font-size:19px;display:block}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.note{border-left:4px solid var(--accent);background:var(--soft);padding:9px 11px;margin:12px 0}.section-label{text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-size:11px;font-weight:800;margin:0 0 8px}.desktop-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}.desktop .screen{padding:24px}.desktop .row{padding:14px}.mobile-only-title,.desktop-only-title{font-size:12px;background:#222;color:#fff;padding:5px 9px;border-radius:999px}.bottom{height:58px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;color:var(--muted);font-size:12px}@media(max-width:800px){header{padding-top:20px}.board{display:block;padding:10px 0 30px}.device{width:100%;border:0;border-radius:0;box-shadow:none}.device.desktop{display:none}.desktop-only-title{display:none}.stats{grid-template-columns:repeat(2,1fr)}.search{grid-template-columns:1fr}.search .button{width:100%}}
+</style>
+</head>
+<body>
+<header><h1>RESULTS target schemes</h1><p class="meta">Структура, не новый visual style · 390/360 mobile + 1440 desktop · права и функции сохранены</p></header>
+<main class="board">
+  <article class="device" aria-label="390px schemes">
+    <div class="bar"><strong>390 px</strong><span class="mobile-only-title">mobile</span></div>
+    <section class="screen" id="history-390">
+      <div class="screen-title"><h2>История</h2><span class="button">Фильтры · 2</span></div>
+      <div class="search"><div class="input">Соперница</div><span class="button primary">Найти</span></div>
+      <div class="chips"><span class="chip">Соперник: Соперница</span><span class="chip">Роль: игрок</span><span class="chip">Сбросить</span></div>
+      <div class="row"><div><strong>Клубная встреча 22</strong><small>Соперница Рита · сегодня 11:42 · 1×1 · вы играли</small><small>2:0 · Победа</small></div><span class="status">Завершён</span></div>
+      <div class="row"><div><strong>Парный вечер</strong><small>Соперница Рита + Исторический Борис · 13 сен · 2×2 · вы играли</small><small>2:0 · Победа</small></div><span class="status">Завершён</span></div>
+      <div class="error"><strong>Не удалось загрузить следующую страницу</strong><br>20 ранее загруженных событий сохранены.</div>
+      <div class="actions"><span class="button">Повторить</span><span class="button">Показать ещё</span></div>
+    </section>
+    <section class="screen" id="profile-390">
+      <p class="section-label">Профиль · редактирование</p><h2>Личные данные</h2>
+      <div class="field invalid"><strong>Организация</strong><div class="input">201 символ</div><p class="field-error">Не больше 200 символов. Значение сохранено в черновике.</p></div>
+      <div class="actions"><span class="button primary">Сохранить</span><span class="button">Отмена</span></div>
+      <div class="note">После reauth: тот же пользователь видит черновик; другой — чистую форму. Запрос не повторяется автоматически.</div>
+    </section>
+    <section class="screen" id="notifications-390">
+      <div class="screen-title"><h2>Уведомления</h2><span class="chip">Требуют внимания</span></div>
+      <div class="row"><div><strong>Приглашение в матч</strong><small>Прочитано · действие доступно</small></div><span class="status">Ответить</span></div>
+      <div class="actions"><span class="button primary">Принять</span><span class="button">Отклонить</span></div>
+      <div class="row"><div><strong>Истёкшее приглашение</strong><small>Истекло · срок приглашения истёк · 11:42</small></div><span class="status free">История</span></div>
+      <p class="muted">Прочитанное без действия сразу уходит из этого фильтра; refresh не нужен.</p>
+    </section>
+    <section class="screen" id="home-390">
+      <p class="section-label">Главная · action-first</p><h2>Привет, Роман</h2>
+      <div class="row"><div><strong>Свободный судейский слот</strong><small>Соперница Рита — Партнёр Тарас · 0:0</small><small>Слот судьи свободен · Ранее судили</small></div><span class="status free">Идёт</span></div>
+      <div class="actions"><span class="button primary" style="width:100%">Открыть событие</span></div>
+      <div class="row"><div><strong>Уведомления</strong><small>Непрочитанных: 0</small></div><span>›</span></div>
+      <div class="row"><div><strong>Профиль</strong><small>Сессии и личные данные</small></div><span>›</span></div>
+      <div class="stats"><div class="stat"><small>Сыграно</small><strong>22</strong></div><div class="stat"><small>Победы</small><strong>18</strong></div><div class="stat"><small>Поражения</small><strong>4</strong></div><div class="stat"><small>Win rate</small><strong>82%</strong></div><div class="stat"><small>Очков/матч</small><strong>1.6</strong></div></div>
+      <div class="row"><div><strong>Принципиальный соперник</strong><small>Соперница Рита · 22 матча</small></div><span class="button">Реванш</span></div>
+      <p class="muted">Ниже без удаления функций: Топ-3 + период → последние 5 → вся история.</p>
+    </section>
+    <div class="bottom"><span>Главная</span><span>История</span><span>Начать</span><span>Рейтинг</span><span>Профиль</span></div>
+  </article>
+
+  <article class="device desktop" aria-label="1440px schemes">
+    <div class="bar"><strong>1440 px viewport · existing centered app shell</strong><span class="desktop-only-title">desktop</span></div>
+    <div class="desktop-grid">
+      <div>
+        <section class="screen" id="history-1440">
+          <div class="screen-title"><h2>История</h2><span class="button">Фильтры · 2</span></div>
+          <div class="search"><div class="input">Соперница</div><span class="button primary">Найти</span></div>
+          <div class="chips"><span class="chip">Соперник: Соперница</span><span class="chip">Роль: игрок</span><span class="chip">13–14 сентября</span><span class="chip">Сбросить</span></div>
+          <div class="row"><div><strong>Клубная встреча 22</strong><small>Соперница Рита · 14 сентября, 11:42 · 1×1 · вы играли</small><small>2:0 · Победа</small></div><span class="status">Завершён</span></div>
+          <div class="row"><div><strong>Парный вечер с очень длинным названием</strong><small>Соперница Рита + Исторический Борис · 2×2 · вы играли</small></div><span class="status">Завершён</span></div>
+          <div class="actions"><span class="button">Показать ещё</span></div>
+        </section>
+        <section class="screen" id="home-1440"><p class="section-label">Главная</p><h2>Активное событие — первое решение</h2><div class="row"><div><strong>Свободный судейский слот</strong><small>Слот судьи свободен · Ранее судили</small></div><span class="status free">Идёт</span></div><div class="actions"><span class="button primary">Открыть событие</span><span class="button">Начать новое</span></div><div class="stats"><div class="stat"><small>Сыграно</small><strong>22</strong></div><div class="stat"><small>Победы</small><strong>18</strong></div><div class="stat"><small>Поражения</small><strong>4</strong></div><div class="stat"><small>Win rate</small><strong>82%</strong></div><div class="stat"><small>Очков/матч</small><strong>1.6</strong></div></div></section>
+      </div>
+      <div>
+        <section class="screen"><p class="section-label">Профиль</p><h2>Ошибка у поля</h2><div class="field invalid"><strong>Организация</strong><div class="input">201 символ</div><p class="field-error">Не больше 200 символов</p></div><div class="note">Focus приходит сюда один раз; draft и session controls остаются.</div></section>
+        <section class="screen"><p class="section-label">Уведомления</p><h2>Действие ≠ прочтение</h2><div class="row"><div><strong>Pending invitation</strong><small>Прочитано · можно ответить</small></div><span class="status">Actionable</span></div><div class="row"><div><strong>Source unavailable</strong><small>История · причина и server time</small></div><span class="status free">Terminal</span></div></section>
+        <section class="screen"><p class="section-label">Сохранить как есть</p><h2>Рейтинг</h2><div class="chips"><span class="chip">Всё время</span><span class="chip">Неделя</span><span class="chip">Месяц</span><span class="chip">Команда</span></div><p class="muted">Podium/list/profile/challenge guards без redesign.</p></section>
+      </div>
+    </div>
+  </article>
+</main>
+</body>
+</html>

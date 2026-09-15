@@ -1,0 +1,8 @@
+{
+  "diagnosticTournamentId": "cd994b4a-bf06-4067-a495-6612ea2e495f",
+  "status": "cancelled",
+  "participantsAdded": 0,
+  "matchesCreated": 0,
+  "diagnosticSession": "logged_out_and_context_closed",
+  "extraSyntheticDirectoryAccount": "retained until disposable DB teardown; never a match participant"
+}

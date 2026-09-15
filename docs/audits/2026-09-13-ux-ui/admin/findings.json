@@ -1,0 +1,95 @@
+[
+  {
+    "id": "F-ADMIN-001",
+    "title": "Каталог пользователей подчинён форме создания и стене равносильных действий",
+    "kind": "expert_hypothesis",
+    "priority": "P2",
+    "confidence": "high",
+    "frequency": "observed on every populated ADMIN catalog render in the isolated run; user-frequency metrics unavailable",
+    "place": "/admin, active admin, populated/loading/error/empty catalog, 360/390/1440",
+    "reproduction": "Открыть Профиль → Админка; сравнить вертикальный порядок, затем найти пользователя и просмотреть строку действий.",
+    "evidence": [
+      "evidence/screenshots/a01-admin-landing-390.png",
+      "evidence/screenshots/a01-admin-landing-1440.png",
+      "evidence/screenshots/a01-admin-row-focus-360.png",
+      "evidence/runtime-observations.json#runs/A-RUN-001"
+    ],
+    "impact": "Основная повторяемая задача — найти и проверить аккаунт — начинается после 520 px формы; 3–4 одинаково оформленных действия на каждой строке ухудшают сканирование и отделение опасных операций. На /admin ни один пункт нижней навигации не выбран, а desktop остаётся узкой 560 px колонкой.",
+    "basis": "flow-navigation + flow-tables expert review corroborated by measured geometry and inspected screenshots",
+    "dependencies": "shared PageLayout/Dialog/Button behavior must be preserved; no duplicate of shared COMPONENTS findings",
+    "remedy": "Сделать каталог первым экраном, перенести создание в отдельное раскрытие/route, сделать строку входом в стабильную карточку пользователя, оставить один контекстный primary action и убрать lifecycle/destructive actions в подписанное overflow/menu with confirmations.",
+    "preserved_functions": "search, status filter, create with role, profile edit, promote/demote, block/unblock, reset, one-time secret display, existing guards",
+    "canonical": "coordinator_triage_pending",
+    "detail": "report.md#f-admin-001",
+    "target": "target-spec.md#t-admin-001"
+  },
+  {
+    "id": "F-ADMIN-002",
+    "title": "У пользователя нет стабильной карточки и доступной lightweight audit history",
+    "kind": "runtime_defect",
+    "priority": "P2",
+    "confidence": "high",
+    "frequency": "deterministic in source and isolated runtime",
+    "place": "/admin, active admin, view/edit an account after lifecycle mutations",
+    "reproduction": "Найти пользователя, открыть «Редактировать», закрыть modal, затем попытаться перейти по стабильному URL или просмотреть историю create/edit/block/unblock/role/reset.",
+    "evidence": [
+      "evidence/runtime-observations.json#runs/A-RUN-002",
+      "evidence/runtime-observations.json#auditPersistence",
+      "source-review.md#admin-user-detail-and-audit"
+    ],
+    "impact": "Persisted audit rows существуют, но оператор не может проверить, кто и когда менял доступ, и не может поделиться/восстановить контекст конкретного аккаунта. Это не соответствует минимальному экрану lightweight audit history в 09_LOCAL_AUTH_AND_TENNIS_ADMIN §7.",
+    "basis": "runtime defect against an explicit minimum Admin UX surface; ADM-008 persistence itself passes",
+    "dependencies": "requires a read-only admin detail/audit contract that never returns secret hashes, session tokens or temporary passwords",
+    "remedy": "Добавить стабильную /admin/users/:id карточку с identity/status header, editable profile fields and paginated lightweight lifecycle timeline: actor, Moscow timestamp, action, changed field names, outcome; no secret-bearing values.",
+    "preserved_functions": "existing catalog and all mutations; email remains immutable in MVP; audit ledger remains append-only",
+    "canonical": "coordinator_triage_pending",
+    "detail": "report.md#f-admin-002",
+    "target": "target-spec.md#t-admin-002"
+  },
+  {
+    "id": "F-ADMIN-003",
+    "title": "Потерянный ответ reset оставляет применённую смену пароля повторяемой вслепую",
+    "kind": "runtime_defect",
+    "priority": "P1",
+    "confidence": "high",
+    "frequency": "deterministic under injected response loss after server commit",
+    "place": "/admin reset-password confirm, active admin, network response lost after HTTP 200",
+    "reproduction": "Перехватить единственный reset POST, дождаться server 200 и оборвать ответ клиенту; проверить dialog, старый пароль/сессию и количество GET/POST после ошибки.",
+    "evidence": [
+      "evidence/screenshots/a04-reset-lost-response-390.png",
+      "evidence/runtime-observations.json#runs/A-RUN-004",
+      "evidence/runtime-observations.json#auditPersistence"
+    ],
+    "impact": "Старый пароль и сессия уже отозваны, новый секрет недоступен, но confirm остаётся включённым; UI не выполняет GET-first и не отличает applied от rejected. Повтор выдаст ещё один пароль и расширит операционный инцидент.",
+    "basis": "injected runtime defect; no blind retry was performed by the audit",
+    "dependencies": "needs a non-secret reset issuance marker/read contract; must not persist or re-read a temporary password",
+    "remedy": "Перед reset зафиксировать known marker; после unknown outcome читать credentialRevision/latestTemporaryPasswordIssuedAt. Advanced marker → показать «применено, секрет утрачен», запретить retry и предложить отдельное подтверждённое новое issue; unchanged → разрешить retry; unreadable → keep unresolved and disabled with support guidance.",
+    "preserved_functions": "one-time secret semantics, full session revocation, mustChangePassword, explicit confirmation, no automatic replay",
+    "canonical": "coordinator_triage_pending",
+    "detail": "report.md#f-admin-003",
+    "target": "target-spec.md#t-admin-003"
+  },
+  {
+    "id": "F-ADMIN-004",
+    "title": "Разрешённый D23 force-close недостижим без раскрытия запрещённого D17 live-detail",
+    "kind": "blocked_decision",
+    "priority": "P1",
+    "confidence": "high",
+    "frequency": "deterministic for active standalone match where admin is outsider",
+    "place": "ADMIN incident recovery for exact active standalone match ID",
+    "reproduction": "Создать и запустить standalone match другим пользователем; как outsider active admin открыть ordinary detail and /admin, затем сравнить с direct admin force-close contract.",
+    "evidence": [
+      "evidence/screenshots/a07-active-match-d17-403-390.png",
+      "evidence/runtime-observations.json#runs/A-RUN-007",
+      "source-review.md#d17-d23-seam"
+    ],
+    "impact": "D17 корректно возвращает 403 и скрывает live match из list/history, но /admin не принимает exact ID и не даёт минимального recovery context. Операторское право D23 существует только на уровне API и практически недостижимо без прямого API-вызова.",
+    "basis": "product/security seam requiring an explicit decision; D17 denial itself is correct and is not a defect",
+    "dependencies": "coordinator/product/security decision on the minimum D17 exception; no global live-match catalog",
+    "remedy": "Разрешить active admin exact-ID recovery lookup with minimal metadata only, then named confirmation with status/version/consequences. Keep participant identities, score and event log closed by default; all writes retain actor/state/version/idempotency/audit checks and GET-first unknown-outcome recovery.",
+    "preserved_functions": "D17 ordinary detail denial, D23 actor/state rules, soft cancelled outcome, tournament/tutorial exclusions, no bulk recovery catalog",
+    "canonical": "coordinator_decision_required",
+    "detail": "report.md#f-admin-004",
+    "target": "target-spec.md#t-admin-004"
+  }
+]

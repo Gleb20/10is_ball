@@ -1,0 +1,422 @@
+{
+  "url": "http://localhost:4617/matches/new",
+  "title": "Tab-10",
+  "body": "К содержимому\nНовый матч\nНазвание\n1 × 1\n2 × 2\nСоздатель играет\nОчков до победы\nСухая победа при счёте 5:0\nПорог сухой победы\nВручную\nСлучайно\nРозыгрыш\n\nДо победного порога подача меняется после двух подач. После достижения порога — после каждого очка, пока не появится отрыв в два.\n\nСудья (необязательно)\nAdmin Tab10\nАнна Синтетическая\nЕлена Синтетическая\nБорис Синтетический\nДмитрий Синтетический\nПоздний Синтетический\nПригласить выбранных игроков\nИгрок A\nИгрок\nГость\nИгрок A\nAdmin Tab10\nАнна Синтетическая\nЕлена Синтетическая\nБорис Синтетический\nДмитрий Синтетический\nПоздний Синтетический\nСоперник\nИгрок\nГость\nСоперник\nАнна Синтетическая\nСоздать матч\nОтмена\nГлавная\nИстория\nНачать\nРейтинг\nПрофиль",
+  "focus": {
+    "tag": "INPUT",
+    "role": "combobox",
+    "label": null,
+    "text": ""
+  },
+  "controls": [
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "К содержимому",
+      "rect": {
+        "x": 12,
+        "y": -665.7999877929688,
+        "w": 135.21875,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "",
+      "value": "Матч 14.09, 01:34",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 484,
+        "y": -497.5,
+        "w": 264,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "1 × 1",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 471,
+        "y": -432.5,
+        "w": 52.078125,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "2 × 2",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 522.078125,
+        "y": -432.5,
+        "w": 54.1875,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": "checkbox",
+      "label": null,
+      "text": "",
+      "value": "on",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 475,
+        "y": -361,
+        "w": 13,
+        "h": 13
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": "number",
+      "label": null,
+      "text": "",
+      "value": "11",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 484,
+        "y": -283.5,
+        "w": 264,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": "checkbox",
+      "label": null,
+      "text": "",
+      "value": "on",
+      "disabled": false,
+      "checked": true,
+      "rect": {
+        "x": 475,
+        "y": -203,
+        "w": 13,
+        "h": 13
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": "number",
+      "label": null,
+      "text": "",
+      "value": "5",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 484,
+        "y": -125.5,
+        "w": 264,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Вручную",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 471,
+        "y": -60.5,
+        "w": 83.9375,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Случайно",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 553.9375,
+        "y": -60.5,
+        "w": 88.953125,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Розыгрыш",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 641.890625,
+        "y": -60.5,
+        "w": 93.140625,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": "combobox",
+      "type": null,
+      "label": null,
+      "text": "",
+      "value": "",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 484,
+        "y": 192.5,
+        "w": 472,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": null,
+      "type": "checkbox",
+      "label": null,
+      "text": "",
+      "value": "on",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 475,
+        "y": 273,
+        "w": 13,
+        "h": 13
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Игрок",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 485.5,
+        "y": 336.390625,
+        "w": 66.03125,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Гость",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 550.53125,
+        "y": 336.390625,
+        "w": 58.296875,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": "combobox",
+      "type": null,
+      "label": null,
+      "text": "",
+      "value": "",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 498.5,
+        "y": 429.390625,
+        "w": 443,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Игрок",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 485.5,
+        "y": 528.03125,
+        "w": 66.03125,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Гость",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 550.53125,
+        "y": 528.03125,
+        "w": 58.296875,
+        "h": 44
+      }
+    },
+    {
+      "tag": "INPUT",
+      "role": "combobox",
+      "type": null,
+      "label": null,
+      "text": "",
+      "value": "Анна",
+      "disabled": false,
+      "checked": false,
+      "rect": {
+        "x": 498.5,
+        "y": 621.03125,
+        "w": 419,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": "Очистить",
+      "text": "",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 911.5,
+        "y": 621.03125,
+        "w": 44,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "submit",
+      "label": null,
+      "text": "Создать матч",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 471,
+        "y": 696.78125,
+        "w": 498,
+        "h": 44
+      }
+    },
+    {
+      "tag": "BUTTON",
+      "role": null,
+      "type": "button",
+      "label": null,
+      "text": "Отмена",
+      "value": "",
+      "disabled": false,
+      "rect": {
+        "x": 471,
+        "y": 752.78125,
+        "w": 498,
+        "h": 44
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Главная",
+      "rect": {
+        "x": 448,
+        "y": 844.8125,
+        "w": 107.1875,
+        "h": 49.1875
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "История",
+      "rect": {
+        "x": 557.1875,
+        "y": 844.8125,
+        "w": 107.203125,
+        "h": 49.1875
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Начать",
+      "rect": {
+        "x": 666.390625,
+        "y": 844.8125,
+        "w": 107.203125,
+        "h": 49.1875
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Рейтинг",
+      "rect": {
+        "x": 775.59375,
+        "y": 844.8125,
+        "w": 107.203125,
+        "h": 49.1875
+      }
+    },
+    {
+      "tag": "A",
+      "role": null,
+      "type": null,
+      "label": null,
+      "text": "Профиль",
+      "rect": {
+        "x": 884.796875,
+        "y": 844.8125,
+        "w": 107.203125,
+        "h": 49.1875
+      }
+    }
+  ],
+  "viewport": {
+    "w": 1440,
+    "h": 900,
+    "scrollX": 0,
+    "scrollY": 613,
+    "scrollWidth": 1440
+  }
+}

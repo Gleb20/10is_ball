@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "completedAtUtc": "2026-09-14T08:09:43Z",
+  "runtime": {
+    "webPort5217Listening": false,
+    "apiPort5218Listening": false,
+    "credentialsRemoved": true
+  },
+  "database": {
+    "project": "projecttab10-ux-team-5217",
+    "port33028Listening": false,
+    "containerPresent": false,
+    "volumeRemoved": true
+  },
+  "verification": "lsof returned no listeners on 5217, 5218 or 33028; docker filtered listing returned no named container"
+}

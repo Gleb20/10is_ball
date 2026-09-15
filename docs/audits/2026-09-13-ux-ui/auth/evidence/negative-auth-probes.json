@@ -1,0 +1,35 @@
+{
+  "runId": "AUTH-NEG-01",
+  "fixture": {
+    "blockedUserId": "3ee1480a-1105-4ff0-b9f2-c4f0dce8c962",
+    "blockedStatusVerifiedByAdminMutation": true,
+    "neverLoggedUserId": "459d1276-185e-4ec4-9cd0-2e888629364e",
+    "dimensionsKeptSeparate": true
+  },
+  "accountExistenceCopy": {
+    "unknown": {
+      "status": 401,
+      "message": "Неверный email или пароль"
+    },
+    "blocked": {
+      "status": 403,
+      "message": "Аккаунт заблокирован"
+    }
+  },
+  "rateLimit": {
+    "statuses": [
+      401,
+      401,
+      401,
+      401,
+      401,
+      401,
+      401,
+      401,
+      401,
+      401,
+      429
+    ],
+    "message": "Слишком много попыток"
+  }
+}

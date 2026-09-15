@@ -1,0 +1,177 @@
+{
+  "id": "j18-pending-confirmation-390",
+  "capturedAt": "2026-09-13T23:29:15.816Z",
+  "url": "/matches/56a982d0-a579-44f4-8c5d-06bf1edc1136/judge",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "scroll": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 844
+  },
+  "activeElement": {
+    "tag": "BODY",
+    "id": null,
+    "text": "Поверните устройство горизонтально для удобного судействаПодтверждение0:04НазадUndoЕщёСинтетическая Анна: 9. Синтетическ",
+    "ariaLabel": null
+  },
+  "buttons": [
+    {
+      "text": "Назад",
+      "disabled": false,
+      "rect": {
+        "x": 174.28,
+        "y": 78,
+        "width": 69.02,
+        "height": 44,
+        "top": 78,
+        "right": 243.3,
+        "bottom": 122,
+        "left": 174.28
+      }
+    },
+    {
+      "text": "Undo",
+      "disabled": true,
+      "rect": {
+        "x": 251.3,
+        "y": 78,
+        "width": 63.14,
+        "height": 44,
+        "top": 78,
+        "right": 314.44,
+        "bottom": 122,
+        "left": 251.3
+      }
+    },
+    {
+      "text": "Ещё",
+      "disabled": false,
+      "rect": {
+        "x": 322.44,
+        "y": 78,
+        "width": 55.56,
+        "height": 44,
+        "top": 78,
+        "right": 378,
+        "bottom": 122,
+        "left": 322.44
+      }
+    },
+    {
+      "text": "+1",
+      "disabled": true,
+      "rect": {
+        "x": 26,
+        "y": 704,
+        "width": 149,
+        "height": 56,
+        "top": 704,
+        "right": 175,
+        "bottom": 760,
+        "left": 26
+      }
+    },
+    {
+      "text": "+1",
+      "disabled": true,
+      "rect": {
+        "x": 215,
+        "y": 704,
+        "width": 149,
+        "height": 56,
+        "top": 704,
+        "right": 364,
+        "bottom": 760,
+        "left": 215
+      }
+    },
+    {
+      "text": "Подтвердить результат",
+      "disabled": false,
+      "rect": {
+        "x": 43,
+        "y": 788,
+        "width": 183.3,
+        "height": 44,
+        "top": 788,
+        "right": 226.3,
+        "bottom": 832,
+        "left": 43
+      }
+    },
+    {
+      "text": "Продолжить",
+      "disabled": false,
+      "rect": {
+        "x": 234.3,
+        "y": 788,
+        "width": 112.69,
+        "height": 44,
+        "top": 788,
+        "right": 346.98,
+        "bottom": 832,
+        "left": 234.3
+      }
+    }
+  ],
+  "alerts": [],
+  "statuses": [
+    "Поверните устройство горизонтально для удобного судейства"
+  ],
+  "scores": [
+    "9",
+    "2"
+  ],
+  "pointTargets": [
+    {
+      "label": "+1 очко: Синтетическая Анна",
+      "disabled": true,
+      "rect": {
+        "x": 26,
+        "y": 704,
+        "width": 149,
+        "height": 56,
+        "top": 704,
+        "right": 175,
+        "bottom": 760,
+        "left": 26
+      }
+    },
+    {
+      "label": "+1 очко: Синтетический Борис",
+      "disabled": true,
+      "rect": {
+        "x": 215,
+        "y": 704,
+        "width": 149,
+        "height": 56,
+        "top": 704,
+        "right": 364,
+        "bottom": 760,
+        "left": 215
+      }
+    }
+  ],
+  "serve": {
+    "text": "Подача",
+    "rect": {
+      "x": 52.92,
+      "y": 301.97,
+      "width": 95.16,
+      "height": 28,
+      "top": 301.97,
+      "right": 148.08,
+      "bottom": 329.97,
+      "left": 52.92
+    },
+    "fg": "rgb(15, 17, 21)",
+    "bg": "rgb(91, 159, 255)"
+  },
+  "errorStyle": null,
+  "horizontalOverflow": false,
+  "runId": "J-RUN-CONFIRM"
+}

@@ -1,0 +1,11 @@
+{
+  "scope": "GAP012 historical V1 compatibility static delta review",
+  "status": "PASS",
+  "cycle": 3,
+  "adjustment": "Scope narrowed after r2 REWORK to exactly2files; priorcorrectedareas remained frozen",
+  "reviewer": "Terra High",
+  "snapshot": "/private/tmp/tab10-gap012-review-r3",
+  "export_manifest_sha256": "c60920f545e007ec656ee88194430acd6999558e7a531edb4f1904a22ad91b5e",
+  "evidence": "Historical3player/BYE fixture directly modifies legacyJSON with stale seedcolumns; regression does not invoke corrected swapAPI. Only R0/main seats feed preserved order, current members retained, new entrants appended.",
+  "runtime_acceptance": "PENDING fullPG/CI/browser evidence; reported11/11focused not independentaggregate"
+}

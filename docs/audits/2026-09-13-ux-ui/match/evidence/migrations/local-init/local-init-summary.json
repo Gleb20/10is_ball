@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "total": 4,
+  "passed": 4,
+  "failed": 0,
+  "skipped": 0,
+  "todo": 0,
+  "interrupted": 0,
+  "breakdown": {
+    "preExistingRoleGuardChecks": 1,
+    "initChecks": 1,
+    "migrationChecks": 1,
+    "attestationChecks": 1
+  }
+}

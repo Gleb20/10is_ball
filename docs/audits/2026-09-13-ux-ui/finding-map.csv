@@ -1,0 +1,58 @@
+finding,package,classification,canonical,disposition,evidence,mandatory_context
+F-PILOT-001,pilot,expert_hypothesis,GAP-013,Mapped to canonical task; priority/readiness live only in BACKLOG,pilot/report.md;pilot/findings.json,
+F-PILOT-002,pilot,expert_hypothesis,GAP-017,Mapped to canonical task; priority/readiness live only in BACKLOG,pilot/report.md;pilot/findings.json,
+F-PILOT-003,pilot,expert_hypothesis,GAP-017,Mapped to canonical task; priority/readiness live only in BACKLOG,pilot/report.md;pilot/findings.json,
+F-PILOT-004,pilot,runtime_defect,BUG-018;BUG-019,Mapped to canonical task; priority/readiness live only in BACKLOG,pilot/report.md;pilot/findings.json,
+F-PILOT-005,pilot,runtime_observation,GAP-015,"Deduplicated F-RESULTS005; neutral active attribution, no auth-session ownership claim",pilot/report.md;pilot/findings.json,
+F-PILOT-006,pilot,expert_hypothesis,GAP-023,Mapped to canonical task; priority/readiness live only in BACKLOG,pilot/report.md;pilot/findings.json,
+F-PILOT-007,pilot,expert_hypothesis,GAP-015,Mapped to canonical task; priority/readiness live only in BACKLOG,pilot/report.md;pilot/findings.json,
+F-AUTH-001,auth,runtime_defect,BUG-027,Mapped to canonical task; priority/readiness live only in BACKLOG,auth/report.md;auth/findings.json,auth-coverage-correction.md
+F-AUTH-002,auth,runtime_defect,BUG-028,Mapped to canonical task; priority/readiness live only in BACKLOG,auth/report.md;auth/findings.json,auth-coverage-correction.md
+F-AUTH-003,auth,expert_hypothesis,GAP-014,Mapped to canonical task; priority/readiness live only in BACKLOG,auth/report.md;auth/findings.json,auth-coverage-correction.md
+F-AUTH-004,auth,expert_hypothesis,GAP-015,Mapped to canonical task; priority/readiness live only in BACKLOG,auth/report.md;auth/findings.json,auth-coverage-correction.md
+F-AUTH-005,auth,expert_hypothesis,GAP-016,Mapped to canonical task; priority/readiness live only in BACKLOG,auth/report.md;auth/findings.json,auth-coverage-correction.md
+F-MATCH-001,match,expert_hypothesis,GAP-013,Mapped to canonical task; priority/readiness live only in BACKLOG,match/report.md;match/findings.json,core-target.md
+F-MATCH-002,match,runtime_defect,GAP-018,Preserve no automatic invitations after edit; explicit voluntary invite entry only,match/report.md;match/findings.json,core-target.md
+F-MATCH-003,match,runtime_defect,BUG-030,Mapped to canonical task; priority/readiness live only in BACKLOG,match/report.md;match/findings.json,core-target.md
+F-MATCH-004,match,runtime_defect,TECH-006,D17 live-detail denial is correct; ADMIN audits minimal D23 recovery entry,match/report.md;match/findings.json,core-target.md
+F-JUDGE-001,judge,runtime_defect,BUG-029,Mapped to canonical task; priority/readiness live only in BACKLOG,judge/report.md;judge/findings.json,judge-coverage-correction.md;core-target.md
+F-JUDGE-002,judge,runtime_defect,BUG-031,Mapped to canonical task; priority/readiness live only in BACKLOG,judge/report.md;judge/findings.json,judge-coverage-correction.md;core-target.md
+F-JUDGE-003,judge,expert_hypothesis,GAP-017;GAP-023,Mapped to canonical task; priority/readiness live only in BACKLOG,judge/report.md;judge/findings.json,judge-coverage-correction.md;core-target.md
+F-JUDGE-D024,judge,runtime_defect,BUG-024,Mapped to canonical task; priority/readiness live only in BACKLOG,judge/report.md;judge/findings.json,judge-coverage-correction.md;core-target.md
+F-JUDGE-D025,judge,runtime_defect,BUG-025,Mapped to canonical task; priority/readiness live only in BACKLOG,judge/report.md;judge/findings.json,judge-coverage-correction.md;core-target.md
+F-JUDGE-D026,judge,runtime_defect,BUG-026,Mapped to canonical task; priority/readiness live only in BACKLOG,judge/report.md;judge/findings.json,judge-coverage-correction.md;core-target.md
+F-TOURNAMENT-001,tournament,runtime_defect,BUG-032,Mapped to canonical task; priority/readiness live only in BACKLOG,tournament/report.md;tournament/findings.json,tournament-correction.md
+F-TOURNAMENT-002,tournament,runtime_defect,BUG-032,Mapped to canonical task; priority/readiness live only in BACKLOG,tournament/report.md;tournament/findings.json,tournament-correction.md
+F-TOURNAMENT-003,tournament,runtime_defect,BUG-033;GAP-019,Mapped to canonical task; priority/readiness live only in BACKLOG,tournament/report.md;tournament/findings.json,tournament-correction.md
+F-TOURNAMENT-004,tournament,expert_hypothesis,GAP-020,Mapped to canonical task; priority/readiness live only in BACKLOG,tournament/report.md;tournament/findings.json,tournament-correction.md
+F-TOURNAMENT-005,tournament,expert_hypothesis,GAP-021,Mapped to canonical task; priority/readiness live only in BACKLOG,tournament/report.md;tournament/findings.json,tournament-correction.md
+F-TEAM-001,team,runtime_defect,GAP-025;Q-UX-002,Existing functional requirement; avatar model unresolved Q-UX-002,team/report.md;team/findings.json,team-correction.md
+F-TEAM-002,team,expert_hypothesis,GAP-022,Mapped to canonical task; priority/readiness live only in BACKLOG,team/report.md;team/findings.json,team-correction.md
+F-TEAM-003,team,runtime_defect,BUG-034,Mapped to canonical task; priority/readiness live only in BACKLOG,team/report.md;team/findings.json,team-correction.md
+F-TEAM-004,team,runtime_defect,BUG-035,Mapped to canonical task; priority/readiness live only in BACKLOG,team/report.md;team/findings.json,team-correction.md
+F-TEAM-005,team,expert_hypothesis,TECH-006,New feature hypothesis; excluded from current behavior-preserving improvement program,team/report.md;team/findings.json,team-correction.md
+F-TEAM-007,team,expert_hypothesis,TECH-006,Discovery hypothesis; team group must not bypass consent; target not ready,team/report.md;team/findings.json,team-correction.md
+F-TEAM-008,team,expert_hypothesis,TECH-006,Historical discovery hypothesis; current permitted detail preserved; user validation pending,team/report.md;team/findings.json,team-correction.md
+F-CMP-001,components,runtime_defect,BUG-018,Mapped to canonical task; no claim of implementation,components-recheck/report.md;components-recheck-review.json,components-recheck-correction/report.md
+F-CMP-002,components,runtime_defect,BUG-019,Accepted bounded recheck; exact nav intersection and 1440/360 active-option visuals remain limited,components-recheck/report.md;components-recheck-review.json,components-recheck-correction/report.md
+F-CMP-003,components,runtime_defect,BUG-018,Mapped to canonical task; no claim of implementation,components-recheck/report.md;components-recheck-review.json,components-recheck-correction/report.md
+F-CMP-004,components,runtime_defect,BUG-020,Mapped to canonical task; no claim of implementation,components-recheck/report.md;components-recheck-review.json,components-recheck-correction/report.md
+F-CMP-005,components,runtime_defect,BUG-020,Mapped to canonical task; no claim of implementation,components-recheck/report.md;components-recheck-review.json,components-recheck-correction/report.md
+F-CMP-SUP-001,components,runtime_defect,BUG-021,Mapped to canonical task; no claim of implementation,components-recheck/report.md;components-recheck-review.json,components-recheck-correction/report.md
+F-CMP-SUP-002,components,runtime_defect,BUG-022,Mapped to canonical task; no claim of implementation,components-recheck/report.md;components-recheck-review.json,components-recheck-correction/report.md
+F-CMP-SUP-003,components,runtime_defect,BUG-024,Mapped to canonical task; no claim of implementation,components-recheck/report.md;components-recheck-review.json,components-recheck-correction/report.md
+F-CMP-R-001,components,runtime_defect,BUG-025,Mapped to canonical task; no claim of implementation,components-recheck/report.md;components-recheck-review.json,components-recheck-correction/report.md
+F-CMP-R-002,components,runtime_defect,BUG-026,Mapped to canonical task; no claim of implementation,components-recheck/report.md;components-recheck-review.json,components-recheck-correction/report.md
+F-PREP-001,preparation,runtime_defect,BUG-023,Name-order search mismatch; app bytes unchanged r3/r6; mobile check future acceptance,preparation-evidence/search-order-finding.md;search-order-review.json,
+F-TEAM-006,team,withdrawn_runtime_claim,GAP-013,Not a separate P1 bug: partial form A empty is valid; SideB discovery deduplicated to F-MATCH-001,team-correction.md,core-target.md
+OBS-JUDGE-001,judge,runtime_defect,BUG-039,Promoted from source hypothesis by additional desktop probe; P2 no duplicate point finding,judge-correction-probe/README.md;judge-correction-probe/probe-results.json,correction-recovery-target.md;judge-coverage-correction.md
+F-RESULTS-001,results,expert_hypothesis,GAP-024,Mapped to accepted canonical target; implementation not performed,results/report.md;results/findings.json;results-review.json,results-correction.md
+F-RESULTS-002,results,expert_hypothesis,TECH-006,URL persistence deferred hypothesis; current actor-scoped detailBack retained,results/report.md;results/findings.json;results-review.json,results-correction.md
+F-RESULTS-003,results,runtime_defect,BUG-036,Mapped to accepted canonical target; implementation not performed,results/report.md;results/findings.json;results-review.json,results-correction.md
+F-RESULTS-004,results,runtime_defect,BUG-037,Mapped to accepted canonical target; implementation not performed,results/report.md;results/findings.json;results-review.json,results-correction.md
+F-RESULTS-005,results,expert_hypothesis,GAP-015,Mapped to accepted canonical target; implementation not performed,results/report.md;results/findings.json;results-review.json,results-correction.md
+F-ADMIN-001,ADMIN,expert_hypothesis,GAP-027,Canonical readiness and priority only in BACKLOG; original target superseded,admin/report.md;admin/findings.json;admin/evidence/runtime-observations.json,admin-correction.md
+F-ADMIN-002,ADMIN,runtime_defect,GAP-026,Canonical readiness and priority only in BACKLOG; original target superseded,admin/report.md;admin/findings.json;admin/evidence/runtime-observations.json,admin-correction.md
+F-ADMIN-003,ADMIN,runtime_defect,BUG-038,Canonical readiness and priority only in BACKLOG; original target superseded,admin/report.md;admin/findings.json;admin/evidence/runtime-observations.json,admin-correction.md
+F-ADMIN-004,ADMIN,permission_gap_pending_decision,GAP-028;Q-UX-003,Canonical readiness and priority only in BACKLOG; original target superseded,admin/report.md;admin/findings.json;admin/evidence/runtime-observations.json,admin-correction.md
+OBS-ROOT-DARK-LABEL-001,COMPONENTS,rendered_visual_observation_with_source_support,BUG-024,"Bounded dark label addition; computed ratio to reproduce during implementation, no numeric claim",judge-correction-probe/screenshots/c01-commit-then-lost-response.png;JudgePage TextField;ic-kit labelText,component-state-index.md; canonical BUG-024 label target

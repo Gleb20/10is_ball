@@ -1,0 +1,14 @@
+{
+  "status": "PASS_WITH_MANDATORY_CORRECTION",
+  "scope": "Source-only target readiness, not implementation or runtime acceptance",
+  "reviewer": "Terra High research_protocol_review",
+  "snapshot": "/private/tmp/tab10-ux-reset-review-02",
+  "exportSha256": "f6bc802f8ec584108c21f7eb28d1eab37e270238079b2eb932b7383274a94b70",
+  "verifiedPaths": 750,
+  "packageManifest": "321992286d01ed9979cb3b172b2de4a81ba8aa6896b56739e1613fedc4dbbdb1",
+  "payloads": 6,
+  "mandatoryOverlay": "admin-reset-correction.md",
+  "readyTask": "BUG-038",
+  "acceptedByCoordinator": true,
+  "implementationChecks": "Mandatory future migration/contract/PG races/browser/repository-wide gate"
+}

@@ -1,0 +1,21 @@
+{
+  "kind": "bounded manual false-positive review, not blanket allowlist change",
+  "path": "docs/audits/2026-09-13-ux-ui/match/evidence/replay.mjs",
+  "sha256": "424de787e152e0b21f6b5173d9d2cefcdb8abd221da90fc4769050ca3d2ce67f",
+  "scannerFinding": "credential-url",
+  "verified": {
+    "loopbackOnly": true,
+    "syntheticRuntimeAccount": true,
+    "passwordAbsent": true,
+    "disposableFixturePort": true
+  },
+  "projectAllowlistUnchanged": true,
+  "fullRescanPending": false,
+  "fullRescan": {
+    "worktreeFiles": 932,
+    "candidates": 0,
+    "skipped": 0,
+    "reviewedBenign": 12,
+    "status": "PASS_WITH_TASK_LOCAL_REVIEWED_FALSE_POSITIVE"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "verifiedAtUtc": "2026-09-13T23:24:39Z",
+  "source": "/private/tmp/tab10-ux-audit-dispatch-v1/manifest.json",
+  "manifestSha256": "c39ed47d9aaaadfba7fac3790bde26acac772ae9946e2f1c99bcdb6a1d46b3a6",
+  "declaredBaseHead": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+  "actualGitHead": "9f71b9f4c91f6f7184e8c34716d7b57b7c27a221",
+  "declaredTrackedPatchSha256": "30f672ae232cd2c729fc49661e5aed5e9603da70dd3570ccbae88953387d73c4",
+  "declaredPathCount": 310,
+  "pathHashVerification": "310/310 PASS before runtime preparation",
+  "candidateSourceFingerprint": "8e8762575a07e71a17192da327cbe1b5906ca33c1c2ef762c0f9a37463b94cb3",
+  "candidateSourcePathCount": 323
+}

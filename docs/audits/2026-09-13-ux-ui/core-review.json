@@ -1,0 +1,31 @@
+{
+  "status": "PASS_TARGETS_WITH_MANDATORY_COVERAGE_CORRECTIONS",
+  "reviewer": "Terra High research_protocol_review",
+  "firstSnapshot": "/private/tmp/tab10-ux-core-review-01",
+  "firstExportSha256": "cd77b889bc152cd61a02a1c598088276384fd1ec35c5a378931fb25afb1e2523",
+  "secondSnapshot": "/private/tmp/tab10-ux-core-review-02",
+  "secondExportSha256": "c0d66431dacfa325f0bd09947bcad706d6641801f7544cb7cbdda61fafe3434d",
+  "evidence": "JUDGE runtime findings and root BUG029 repro substantiated; coverage overlays mandatory",
+  "targetVerdict": "core/score targets PASS; BUG024/025 ready; BUG026/031 conditional on two explicit corrections",
+  "correctionsAppliedByCoordinator": [
+    "BUG026 j02 relabelled first-step runtime only; second-step held/failure retained as future acceptance",
+    "BUG031 nonexistent GET-first manual correction claim removed; focus-only scope, source-only recovery observation explicitly deferred in TECH006"
+  ],
+  "readyTasks": [
+    "BUG-024",
+    "BUG-025",
+    "BUG-026",
+    "BUG-029",
+    "BUG-030",
+    "BUG-031",
+    "GAP-013",
+    "GAP-017",
+    "GAP-018"
+  ],
+  "mandatoryCorrections": [
+    "judge-coverage-correction.md",
+    "auth-coverage-correction.md"
+  ],
+  "implementation": "not performed",
+  "acceptedByCoordinator": true
+}

@@ -1,0 +1,9 @@
+878850f3c93de879c564c997b06d843aee5e65098b81bf88fc263ff0e8b582d8  ./README.md
+72568ae2af71de61dfcfeddf3804c9aae78a2a09a05c8882e40667bf53977e73  ./cleanup-receipt.json
+3142998a1f7657b4696be6906f770568e8b629b9095c98102f558ae5c8632914  ./probe-driver.mjs
+4ea50a83d31756e5b5d42b44979ac7f92866102318d2718c3e2fc7d50727d15e  ./probe-results.json
+d3a66456abbbcaa5a4a4eee9c29b0f6239feb4340eb8020a21245217c8f9f482  ./screenshots/c01-commit-then-lost-response.png
+8ba91dbb3a4e16960394b671d9dcbbfcba4ff4e789b983bd9eff5ec0727548ee  ./screenshots/c02-explicit-stale-resend.png
+aa332720f494a8044eba0f07fa3696591d879a6fd154b497611a2a818fe597c9  ./screenshots/c03-request-held-early-get.png
+70c8f72af60b9023940997ea84c3523f3a1efbc6e22f5197c4640a8d8888c485  ./screenshots/c04-delayed-commit-then-lost-response.png
+6f04946fac9d82189a990933ace4627b9e8e28045a26606c1286c3285aaadcfa  ./source-provenance.json
