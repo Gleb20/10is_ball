@@ -1,5 +1,11 @@
 # Deployment as-built
 
+## GAP-012 application release observed — 2026-09-15
+
+Application commit `682c98066ad80e2373a7893cc71482003e9eee42` was fast-forwarded to `main` and published by the existing native Git integrations without a version bump. Vercel deployment6451307944/status18355555064 completed `success`; `pnpm run smoke:public` observed version3.0.0 and the exact SHA on Render API, Vercel web and proxy after10 attempts/49062ms. Direct `/ready` reported `database=ok`. GitHub CI34926424343 completed all four jobs successfully. [Redacted evidence](../audit/evidence/gap012-public.json).
+
+Render startup retained the repository-controlled immutable forward path: migration0006 through `db:migrate -- --mode=apply`, then API start. No reset, down-migration, manual remote migration, seed or mutating public E2E ran. The additive migration and legacy-row preservation passed the local PostgreSQL/historical-upgrade gate; no separate public row-count or schema-ledger query was performed. Render control-plane tooling was unavailable in this task, so the Render provider deploy ID is not claimed; its completion is evidenced by exact-SHA direct health/readiness. The clean local exact-SHA stand uses the preserved local PostgreSQL at `http://localhost:5174`.
+
 ## Release 3.0.0 observed — 2026-09-13
 
 Direct-main code commit165aecdaaa2eba6ffa5fd9d39926bca155016c95 was published by

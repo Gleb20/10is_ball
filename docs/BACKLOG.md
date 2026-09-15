@@ -791,16 +791,17 @@ focused Wave A 59/59 и полный web suite 125/125.
 
 - **Type:** product-gap
 - **Priority:** P1
-- **Status:** verified_local
+- **Status:** verified_prod
 - **Requirements / acceptance:** MATCH-001/003/008/014; TOURNAMENT-001/005/007/012; AT-MATCH-013/017; AT-TRN-004/016/019/022/023; D35.
-- **Evidence:** pre-change contracts required creator membership and blocked start on pending outsider consent; tournament policy/admin add/provenance and transactional post-bracket add were absent. Focused current evidence is recorded below and in the linked plan.
+- **Evidence:** pre-change contracts required creator membership and blocked start on pending outsider consent; tournament policy/admin add/provenance and transactional post-bracket add were absent. Local acceptance is linked below; [public evidence](audit/evidence/gap012-public.json) records exact-SHA Render/Vercel convergence and hosted CI.
 - **Expected:** table-side operator создаёт A-vs-B, не занимая слот; selection не означает invite, а voluntary invitations не блокируют start. Tournament consent policy выбирается при создании; organizer/active admin имеет отдельный подтверждённый registered-user add, включая атомарную post-bracket regeneration до старта.
-- **Actual:** local candidate реализует direct default, explicit invitation flag, nonplaying creator edit/start, immutable tournament policy, scoped minimal admin DTO, provenance/audit/fingerprinted idempotency и serialized add/invite/start/regeneration.
+- **Actual:** published3.0.0 реализует direct default, explicit invitation flag, nonplaying creator edit/start, immutable tournament policy, scoped minimal admin DTO, provenance/audit/fingerprinted idempotency и serialized add/invite/start/regeneration.
 - **Repro:** создать manual A-vs-B от C и проверить creator membership/invite/start; затем создать required-consent tournament, попытаться organizer/admin add без confirmation, add к generated bracket и concurrent invite/add/start.
 - **User-visible outcome:** один телефон у стола может сразу открыть scoring для реально выбранных игроков; более строгий consent и приглашения остаются сознательными опциями, а опасный override всегда называет игрока, турнир и последствия.
 - **Non-goals:** изменение judge acquisition/scoring/stats, новые admin powers, typed-name confirmation, invitation-history UI для admin, release/version/deploy/production mutation.
 - **Risk:** потеря roster identity/history, неатомарная сетка, race с invite/start или расширение admin authority.
 - **Verification:** [`test-plans/GAP-012-game-setup.md`](test-plans/GAP-012-game-setup.md); focused PGlite/API/component/OpenAPI and PostgreSQL serialization gates green. Fresh full `verify:all`1257/1257 PASS: quality1123, PostgreSQL71, cleanup4, browser9 foundation+50 journeys (25desktop/25mobile390), zero failed/skipped/todo/interrupted. Final r6 source52 paths byte-identical before/after; Terra runtime review PASS. [Acceptance evidence](audit/evidence/gap012-local.json).
+- **Public verification 2026-09-15:** commit `682c98066ad80e2373a7893cc71482003e9eee42`; GitHub CI34926424343 all4 jobs success; Vercel deployment6451307944 success; Render API and Vercel web/proxy exact-SHA smoke PASS after10 attempts/49062ms; direct `/ready` reported database `ok`. [Evidence](audit/evidence/gap012-public.json).
 - **Dependencies:** D18, D35, DATA-004, GAP-008; forward migration `0006_gap_012_game_setup.sql`.
 - **Open questions:** нет; exact replay уже успешного add после start возвращает прежний outcome без mutation, новый post-start add запрещён.
 

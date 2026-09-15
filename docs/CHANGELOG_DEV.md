@@ -1,3 +1,10 @@
+## 2026-09-15 — GAP-012 опубликован как база UX-тестирования
+
+- Application commit `682c98066ad80e2373a7893cc71482003e9eee42` fast-forward опубликован в `main` native Render/Vercel Git-интеграциями без version bump. Exact-SHA public smoke web/API/proxy прошёл за10 попыток/49062ms; Vercel deployment6451307944 success, Render direct health/readiness отдают тот же SHA и database `ok`.
+- GitHub CI34926424343: Quality, PostgreSQL integration, compiled browser production-like и Release gate — success. Перед публикацией fresh local `verify:all` прошёл1257/1257; docs157, research-integrity323 и secret scan без ошибок/кандидатов; corrected frozen diff получил independent Terra ACCEPT.
+- Startup применял только immutable migration0006 через `--mode=apply`; reset, down-migration, remote seed и public mutation E2E не выполнялись. Сохранение legacy rows доказано migration/PostgreSQL gate; публичный row-count намеренно не запрашивался. Чистый local exact-SHA стенд запущен на `http://localhost:5174` поверх сохранённой PostgreSQL; исходный dirty checkout не менялся.
+- Канонический UX-research checkpoint импортирован полностью;35 ready и3 blocked будущих UX-задачи не реализованы. WebKit, physical-device, spoken-AT и пользовательское прохождение остаются открытыми ограничениями. [Evidence](audit/evidence/gap012-public.json).
+
 ## 2026-09-14 — Экспертный синтез всех пакетов
 
 - Готовы35 постановок:2 P1,30 P2,3 P3; ещё3 blocked product decisions. 22 capability groups,108 requirements,72 scenario/device rows и57 finding mappings. Все coverage ограничения сохраняются, пользовательских наблюдений0; полный аудит остаётся in_progress до пользовательского этапа.

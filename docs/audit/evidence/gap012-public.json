@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "status": "verified_prod",
+  "capturedAt": "2026-09-15T03:55:05.607Z",
+  "release": {
+    "sha": "682c98066ad80e2373a7893cc71482003e9eee42",
+    "version": "3.0.0",
+    "environment": "production",
+    "dirty": false
+  },
+  "origins": {
+    "web": "https://tab-10.vercel.app",
+    "api": "https://one0is-ball.onrender.com"
+  },
+  "publicSmoke": {
+    "command": "pnpm run smoke:public",
+    "ok": true,
+    "attempts": 10,
+    "elapsedMs": 49062,
+    "coverage": [
+      "web-release",
+      "web-health-proxy",
+      "web-ready-proxy",
+      "web-openapi-proxy",
+      "api-health",
+      "api-ready",
+      "api-openapi"
+    ]
+  },
+  "githubActions": {
+    "runId": 34926424343,
+    "url": "https://github.com/Gleb20/10is_ball/actions/runs/34926424343",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      { "id": 104245355981, "name": "Quality", "conclusion": "success" },
+      { "id": 104245355975, "name": "PostgreSQL integration", "conclusion": "success" },
+      { "id": 104245355853, "name": "Compiled browser production-like", "conclusion": "success" },
+      { "id": 104246360624, "name": "Release gate", "conclusion": "success" }
+    ]
+  },
+  "vercel": {
+    "deploymentId": 6451307944,
+    "statusId": 18355555064,
+    "state": "success",
+    "deploymentUrl": "https://tab-10-qja7bs7ef-its-adesign.vercel.app"
+  },
+  "render": {
+    "service": "10is_ball",
+    "state": "observed_live_exact_sha",
+    "providerDeployId": null,
+    "evidence": "Direct health and readiness returned the exact release SHA; readiness reported database ok. Render CLI/MCP was unavailable, so no control-plane deployment ID is claimed."
+  },
+  "migration": {
+    "name": "0006_gap_012_game_setup.sql",
+    "mode": "apply",
+    "direction": "forward-only",
+    "publicReadiness": "database ok",
+    "resetOrDownMigration": false,
+    "remoteSeed": false,
+    "publicRowCountQueried": false,
+    "preservationEvidence": "Additive schema plus successful local historical-upgrade and PostgreSQL migration tests; public readiness after exact-SHA startup."
+  },
+  "localStand": {
+    "url": "http://localhost:5174",
+    "apiUrl": "http://127.0.0.1:3002",
+    "sha": "682c98066ad80e2373a7893cc71482003e9eee42",
+    "version": "3.0.0",
+    "dirty": false,
+    "database": "preserved local PostgreSQL"
+  },
+  "localAcceptance": {
+    "total": 1257,
+    "passed": 1257,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0,
+    "quality": 1123,
+    "postgres": 71,
+    "browserProdlike": 59,
+    "cleanup": 4,
+    "independentReview": "ACCEPT"
+  },
+  "mutatingPublicTests": false,
+  "remainingLimits": [
+    "WebKit runtime",
+    "physical-device coverage",
+    "spoken assistive technology",
+    "user research session"
+  ]
+}
