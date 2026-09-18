@@ -1,3 +1,8 @@
+## 2026-09-18 — GAP-029, этап 1 опубликован на публичном стенде
+
+- Application commit `6b43d340fd9c11409ee70f378650436c3c569d72` fast-forward опубликован в `main` native Git integrations с SemVer 4.0.0. Read-only `pnpm run smoke:public` за 2 попытки/6903 ms подтвердил exact SHA/4.0.0 на web/API/proxy; прямой Render `/ready` сообщил `checks.database=ok`, Vercel commit status — `success`. GitHub CI35367073709 для того же SHA прошёл во всех четырёх jobs. [Public receipt](audit/evidence/gap029-stage1-public.json).
+- Пользовательская приёмка на телефоне ещё не проведена; physical-device, WebKit, spoken AT и серверная пагинация уведомлений остаются за пределами этого выпуска.
+
 ## 2026-09-18 — GAP-029, этап 1 verified_local
 
 - UI D37 скрывает игровые и турнирные invitation/challenge/revenge entry points, включая старые query prefill, popup и видимые notification rows; новые manual match/tournament не отправляют приглашения. Team invite, judge handover, owner-scoped legacy API/data и pending rows сохранены. FAQ/onboarding copy ограниченно обновлены.

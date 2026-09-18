@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "workItem": "GAP-029",
+  "stage": 1,
+  "status": "verified_prod",
+  "capturedAt": "2026-09-18T16:17:54Z",
+  "applicationRelease": {
+    "sha": "6b43d340fd9c11409ee70f378650436c3c569d72",
+    "version": "4.0.0",
+    "environment": "production",
+    "dirty": false
+  },
+  "origins": {
+    "web": "https://tab-10.vercel.app",
+    "api": "https://one0is-ball.onrender.com"
+  },
+  "publicSmoke": {
+    "command": "pnpm run smoke:public",
+    "readOnly": true,
+    "ok": true,
+    "attempts": 2,
+    "elapsedMs": 6903,
+    "coverage": [
+      "web-release",
+      "web-health-proxy",
+      "web-ready-proxy",
+      "web-openapi-proxy",
+      "api-health",
+      "api-ready",
+      "api-openapi"
+    ]
+  },
+  "githubActions": {
+    "runId": 35367073709,
+    "url": "https://github.com/Gleb20/10is_ball/actions/runs/35367073709",
+    "headSha": "6b43d340fd9c11409ee70f378650436c3c569d72",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      { "id": 105672014870, "name": "Quality", "conclusion": "success" },
+      { "id": 105672015245, "name": "PostgreSQL integration", "conclusion": "success" },
+      { "id": 105672015036, "name": "Compiled browser production-like", "conclusion": "success" },
+      { "id": 105673604050, "name": "Release gate", "conclusion": "success" }
+    ]
+  },
+  "vercel": {
+    "evidence": "Public GitHub commit status",
+    "state": "success",
+    "description": "Deployment has completed",
+    "targetUrl": "https://vercel.com/its-adesign/tab-10/FmfVbbZp9NPiAPNVwqExxqKBRajH"
+  },
+  "render": {
+    "state": "observed_live_exact_sha",
+    "readiness": "ready",
+    "database": "ok",
+    "providerDeployId": null,
+    "evidence": "Direct /ready returned exact application SHA, version 4.0.0 and checks.database=ok."
+  },
+  "manualRemoteMigration": false,
+  "remoteSeed": false,
+  "mutatingPublicTests": false,
+  "localAcceptance": {
+    "receipt": "gap029-stage1-final.json",
+    "passed": 1264,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0,
+    "independentReview": "PASS"
+  },
+  "remainingLimits": [
+    "User phone acceptance not conducted",
+    "Server notification pagination and later-page AT-UI-INV-002 not verified",
+    "Physical device, WebKit and spoken assistive technology not verified"
+  ]
+}

@@ -1,9 +1,21 @@
 # Deployment as-built
 
-Текущий runtime ниже остаётся фактическим историческим снимком. Принятое
-[SemVer-правило](../WORKFLOW.md#product-versioning) относится к будущим
-разрешённым выпускам; документационный этап TECH-008 не меняет версию,
-провайдеров или публичный runtime.
+Текущий публичный runtime — версия 4.0.0, GAP-029 stage 1. Принятое
+[SemVer-правило](../WORKFLOW.md#product-versioning) применено к этому выпуску.
+Документационный этап TECH-008 сам по себе не менял публичный runtime.
+
+## GAP-029 stage 1 application release observed — 2026-09-18
+
+Application commit `6b43d340fd9c11409ee70f378650436c3c569d72` был
+fast-forward опубликован в `main` через native Render/Vercel Git integrations.
+`pnpm run smoke:public` за 2 попытки/6903 ms подтвердил версию 4.0.0 и точный
+SHA на Render API, Vercel web и proxy; прямой `/ready` вернул
+`checks.database=ok`. Vercel commit status завершился `success`.
+GitHub CI run 35367073709 для того же SHA завершился `success`: Quality,
+PostgreSQL integration, Compiled browser production-like и Release gate.
+Проверка публичного стенда была только read-only. Ручные remote migrations,
+seed и mutating E2E не выполнялись; в этом этапе нет миграции схемы.
+[Redacted evidence](../audit/evidence/gap029-stage1-public.json).
 
 ## GAP-012 application release observed — 2026-09-15
 
