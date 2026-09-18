@@ -100,8 +100,10 @@ export function ProfilePage() {
 
   useEffect(() => {
     if (!user) return;
+    let active = true;
     setProfile(null);
     setError(null);
+    setUnreadCount(0);
     void loadProfile().catch((loadError) =>
       setError((loadError as Error).message),
     );
@@ -111,9 +113,10 @@ export function ProfilePage() {
       );
       void api
         .home()
-        .then((response) => setUnreadCount(response.unreadCount ?? 0))
-        .catch(() => setUnreadCount(0));
+        .then((response) => { if (active) setUnreadCount(response.notificationView === "available" ? response.unreadCount : 0); })
+        .catch(() => { if (active) setUnreadCount(0); });
     }
+    return () => { active = false; };
   }, [loadProfile, loadSessions, publicProfile, user?.id]);
 
   function beginEditing() {
@@ -325,11 +328,6 @@ export function ProfilePage() {
               )) : <p className="muted">Нет мест в текущих командах.</p>}
             </section>
 
-            {profile.canChallenge ? (
-              <Button onClick={() => navigate(`/matches/new?opponentId=${encodeURIComponent(identity.id)}&opponentName=${encodeURIComponent(identity.displayName)}`)}>
-                Бросить вызов
-              </Button>
-            ) : null}
 
             {profile.isOwn ? (
               <>

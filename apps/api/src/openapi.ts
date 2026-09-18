@@ -195,6 +195,7 @@ const schemas: Record<string, JsonSchema> = {
       topRankings: { type: "array", maxItems: 3, items: ref("Ranking") },
       unreadNotifications: { type: "array", maxItems: 5, items: ref("Notification") },
       unreadCount: { type: "integer", minimum: 0 },
+      notificationView: { type: "string", enum: ["available"] },
     },
     additionalProperties: true,
   },
@@ -1065,7 +1066,7 @@ export function openApiSpec(releaseVersion = productVersion()) {
         get: operation({ operationId: "getRankings", summary: "Get global or current-team rankings", tag: "Rankings", parameters: [queryParameter("period", { type: "string", enum: ["all_time", "week", "month", "calendar_week", "calendar_month"] }), queryParameter("scope", { type: "string", enum: ["all_time", "week", "month", "calendar_week", "calendar_month"] }), queryParameter("teamId", { type: "string", format: "uuid" })], response: ref("RankingResponse") }),
       },
       "/api/v1/home": {
-        get: operation({ operationId: "getHome", summary: "Get home dashboard", tag: "Home", parameters: [queryParameter("period", { type: "string", enum: ["all_time", "month"] })], response: ref("HomeDashboard") }),
+        get: operation({ operationId: "getHome", summary: "Get home dashboard", tag: "Home", parameters: [queryParameter("period", { type: "string", enum: ["all_time", "month"] }), queryParameter("notificationView", { type: "string", enum: ["available"] })], response: ref("HomeDashboard") }),
       },
       "/api/v1/tournaments": {
         get: operation({ operationId: "listTournaments", summary: "List visible tournaments; non-contextual admins receive the minimal id/title/status projection", tag: "Tournaments", response: arrayRef("tournaments", "TournamentListItem") }),
@@ -1142,7 +1143,17 @@ export function openApiSpec(releaseVersion = productVersion()) {
         post: operation({ operationId: "respondTeamInvitation", summary: "Accept or decline team invitation (compatibility)", tag: "Teams", mutation: true, parameters: pathParameters("id"), request: "InvitationResponseRequest", response: ref("TeamInvitationResponse") }),
       },
       "/api/v1/notifications": {
-        get: operation({ operationId: "listNotifications", summary: "List own notifications", tag: "Notifications", response: arrayRef("notifications", "Notification") }),
+        get: operation({ operationId: "listNotifications", summary: "List own notifications", tag: "Notifications", parameters: [queryParameter("notificationView", { type: "string", enum: ["available"] })], response: {
+          type: "object",
+          required: ["notifications"],
+          properties: {
+            notifications: { type: "array", items: ref("Notification") },
+            notificationView: { type: "string", enum: ["available"] },
+            unreadCount: { type: "integer", minimum: 0 },
+            unreadNotifications: { type: "array", maxItems: 5, items: ref("Notification") },
+          },
+          additionalProperties: false,
+        } }),
       },
       "/api/v1/notifications/{id}/read": {
         post: operation({ operationId: "markNotificationRead", summary: "Mark notification read", tag: "Notifications", mutation: true, parameters: pathParameters("id"), response: ref("Ok") }),
@@ -1153,6 +1164,7 @@ export function openApiSpec(releaseVersion = productVersion()) {
           summary: "Mark the visible notification selection read",
           tag: "Notifications",
           mutation: true,
+          parameters: [queryParameter("notificationView", { type: "string", enum: ["available"] })],
           request: "NotificationReadVisibleRequest",
           response: {
             type: "object",

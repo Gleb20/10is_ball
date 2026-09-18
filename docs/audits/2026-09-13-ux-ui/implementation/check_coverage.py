@@ -73,6 +73,36 @@ if UNIVERSE["counts"] != {"episodes": 82, "expert_items": 38}:
 with (HERE / "coverage.csv").open(newline="") as file:
     coverage = list(csv.DictReader(file))
 
+implementation = json.loads((HERE / "implementation-results.json").read_text())
+if implementation.get("schemaVersion") != 1:
+    errors.append("implementation result schema mismatch")
+result_rows = implementation.get("results", [])
+expected_stage1 = {
+    ("user-session-2026-09-16-table-01", "U01-FORM-007", "main"),
+    ("user-session-2026-09-16-table-01", "U01-FORM-007", "a01"),
+    ("user-session-2026-09-17-tournament-01", "T01-06", "main"),
+    ("user-session-2026-09-17-tournament-01", "T01-06", "a01"),
+    ("user-session-2026-09-17-tournament-01", "T01-06", "a02"),
+    ("user-session-2026-09-17-tournament-01", "T05-02", "main"),
+}
+overrides = {(r["source"], r["source_id"], r["atom_id"]): r for r in result_rows}
+if len(result_rows) != len(overrides) or set(overrides) != expected_stage1:
+    errors.append("stage 1 implementation result keys changed")
+coverage_by_key = {(r["source"], r["source_id"], r["atom_id"]): r for r in coverage}
+for key, result in overrides.items():
+    row = coverage_by_key.get(key)
+    if (result.get("canonical_task"), result.get("stage"), result.get("previousResult"), result.get("result")) != ("GAP-029", 1, "target_pending_implementation", "verified_local"):
+        errors.append(f"invalid stage 1 result: {key}")
+    if not row or (row["canonical_task"], row["stage"], row["result"]) != ("GAP-029", "1", "verified_local"):
+        errors.append(f"stage 1 coverage result mismatch: {key}")
+    evidence = ROOT / result["evidence"]
+    if not evidence.is_file() or sha(evidence) != result["evidenceSha256"]:
+        errors.append(f"stage 1 evidence missing or changed: {key}")
+for row in coverage:
+    key = (row["source"], row["source_id"], row["atom_id"])
+    if row["canonical_task"] == "GAP-029" and row["stage"] == "1" and key not in overrides:
+        errors.append(f"stage 1 result omitted from evidence overlay: {key}")
+
 required_fields = {
     "source", "source_id", "primary_turn_id", "atom_id", "atom_label", "evidence_kind",
     "disposition", "decision_or_gate", "canonical_task", "stage",

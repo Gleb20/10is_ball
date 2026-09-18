@@ -25,10 +25,6 @@ function activeMemberLabel(count: number): string {
   return `${count} ${noun}`;
 }
 
-function challengeUrl(row: RankingRow): string {
-  return `/matches/new?opponentId=${encodeURIComponent(row.userId)}&opponentName=${encodeURIComponent(row.displayName)}`;
-}
-
 function profileUrl(row: RankingRow, actorUserId?: string): string {
   return row.userId === actorUserId
     ? "/profile"
@@ -170,15 +166,6 @@ export function RankingsPage() {
                         <strong className="podium__name">{row.displayName}</strong>
                       </Link>
                       <span className="muted">{row.wins} побед</span>
-                      {user && row.userId !== user.id ? (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => navigate(challengeUrl(row))}
-                        >
-                          Вызов
-                        </Button>
-                      ) : null}
                     </div>
                   );
                 })}
@@ -211,15 +198,6 @@ export function RankingsPage() {
                       </span>
                     </span>
                   </Link>
-                  {user && row.userId !== user.id ? (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => navigate(challengeUrl(row))}
-                    >
-                      Вызов
-                    </Button>
-                  ) : null}
                 </div>
               ))}
             </div>

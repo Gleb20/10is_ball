@@ -35,7 +35,7 @@ async function login(page: Page) {
 }
 async function noOverflow(page: Page) { expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); }
 
-test("Wave C AT-MATCH-013_016 2v2 team selection, rules, no-show and revenge", async ({ page }, info) => {
+test("Wave C AT-MATCH-013_016 2v2 team selection, rules, no-show and hidden revenge", async ({ page }, info) => {
   const name = `c-roster-${info.project.name}`;
   const { admin, actor, target, user } = await fixture(name);
   try {
@@ -66,16 +66,13 @@ test("Wave C AT-MATCH-013_016 2v2 team selection, rules, no-show and revenge", a
     await page.getByRole("button", { name: "Завершить по неявке", exact: true }).click();
     await expect(page.getByText("Матч завершён из-за неявки", { exact: true })).toBeVisible();
     expect((await (await admin.get(`/api/v1/matches/${id}`)).json()).match).toMatchObject({ status: "stopped", winnerSide: "A", scoreA: 0, scoreB: 0, finishReason: "no_show" });
-    await page.getByRole("button", { name: "Создать реванш", exact: true }).click();
-    await expect(page.getByLabel("Название", { exact: true })).toHaveValue(`Реванш: ${name}`);
-    await expect(page.getByLabel("Очков до победы", { exact: true })).toHaveValue("7");
-    await page.getByRole("button", { name: "Создать матч", exact: true }).click();
-    await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+$/);
-    const revengeId = page.url().split("/").at(-1)!;
-    const revenge = (await (await admin.get(`/api/v1/matches/${revengeId}`)).json()).match;
-    expect(revenge).toMatchObject({ source: "revenge", format: "2v2", pointsToWin: 7 });
-    await mutate(admin, "POST", `/api/v1/matches/${revengeId}/cancel`, { expectedVersion: revenge.version });
-    await page.reload(); await expect(page.getByText("Отменён", { exact: true }).first()).toBeVisible(); await noOverflow(page);
+    await expect(page.getByRole("button", { name: "Создать реванш", exact: true })).toHaveCount(0);
+    await page.goto(`/matches/new?revengeOf=${id}&returnTo=match`);
+    await expect(page).toHaveURL(/\/matches\/new\?returnTo=match$/);
+    await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
+    await expect(page.getByLabel("Очков до победы", { exact: true })).toHaveValue("11");
+    await expect(page.getByLabel("Пригласить выбранных игроков", { exact: true })).toHaveCount(0);
+    await noOverflow(page);
   } finally { await Promise.all([admin.dispose(), target.dispose()]); }
 });
 

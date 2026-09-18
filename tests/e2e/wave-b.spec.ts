@@ -106,13 +106,15 @@ test("Wave B AT-PROFILE-001..005 AT-RANK-005..006 own edit, revoke, team and pri
     await page.screenshot({ path: info.outputPath("rankings.png"), fullPage: true });
     await page.getByRole("link", { name: `Открыть карточку ${suffix} Соперник` }).click();
     await expect(page).toHaveURL(new RegExp(`/players/${created.user.id}$`));
-    await expect(page.getByRole("button", { name: "Бросить вызов" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Бросить вызов" })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Статистика", exact: true })).toBeVisible();
     await expect(page.getByText(created.user.email, { exact: true })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Личные данные" })).toHaveCount(0);
     await page.screenshot({ path: info.outputPath("public-profile.png"), fullPage: true });
-    await page.getByRole("button", { name: "Бросить вызов" }).click();
-    await expect(page).toHaveURL(new RegExp(`opponentId=${created.user.id}`));
+    await page.goto(`/matches/new?opponentId=${created.user.id}&opponentName=${encodeURIComponent(suffix)}&returnTo=profile`);
+    await expect(page).toHaveURL(/\/matches\/new\?returnTo=profile$/);
+    await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
+    await expect(page.getByLabel("Пригласить выбранных игроков", { exact: true })).toHaveCount(0);
     await noOverflow(page);
   } finally {
     await Promise.all([admin.dispose(), extra.dispose(), rival.dispose()]);

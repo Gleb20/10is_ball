@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "workItem": "GAP-029",
+  "stage": 1,
+  "status": "verified_local",
+  "review": "pending",
+  "baseHead": "35e67a6f8725eb5a94ad2cf8d476177f6c71f3cb",
+  "productVersion": "4.0.0",
+  "published": false,
+  "gate": {
+    "command": "pnpm run ci",
+    "node": "24.20.0",
+    "summary": {
+      "schemaVersion": 1,
+      "status": "passed",
+      "totals": {
+        "total": 1264,
+        "passed": 1264,
+        "failed": 0,
+        "skipped": 0,
+        "todo": 0,
+        "interrupted": 0
+      },
+      "lanes": [
+        {
+          "name": "cleanup-foundation",
+          "status": "passed",
+          "total": 4,
+          "passed": 4,
+          "failed": 0,
+          "skipped": 0,
+          "todo": 0,
+          "interrupted": 0
+        },
+        {
+          "name": "quality",
+          "status": "passed",
+          "total": 1129,
+          "passed": 1129,
+          "failed": 0,
+          "skipped": 0,
+          "todo": 0,
+          "interrupted": 0
+        },
+        {
+          "name": "postgres",
+          "status": "passed",
+          "total": 72,
+          "passed": 72,
+          "failed": 0,
+          "skipped": 0,
+          "todo": 0,
+          "interrupted": 0
+        },
+        {
+          "name": "browser-prodlike",
+          "status": "passed",
+          "total": 59,
+          "passed": 59,
+          "failed": 0,
+          "skipped": 0,
+          "todo": 0,
+          "interrupted": 0
+        }
+      ],
+      "disposableComposeProject": "tab10-verify-92186",
+      "disposablePostgresPort": 33071
+    },
+    "evidenceDirectory": "/private/tmp/gap029-stage1-verify-r4"
+  },
+  "focused": {
+    "apiPgliteNotifications": "9/9",
+    "apiPgliteFaq": "4/4",
+    "apiTypecheck": "pass",
+    "secretScanCandidates": 0
+  },
+  "browserScreenshots": [
+    {
+      "path": "docs/audits/2026-09-13-ux-ui/implementation/stage1-evidence/chromium-desktop-rankings-targets-1440.png",
+      "sha256": "c80be728cdb37fb47bcac1b3674d5a51ba7a439dfea18ce19024a2fe6ab7a102",
+      "bytes": 80183
+    },
+    {
+      "path": "docs/audits/2026-09-13-ux-ui/implementation/stage1-evidence/chromium-mobile-390-rankings-targets-360.png",
+      "sha256": "32699857b715ce69f5042789d61a81a257959beb4407c123ea164d2053a27df4",
+      "bytes": 41703
+    },
+    {
+      "path": "docs/audits/2026-09-13-ux-ui/implementation/stage1-evidence/chromium-desktop-notifications-error.png",
+      "sha256": "80aa2356d661eb82e169ff1117283da6b2ba2608ce7787f74878be8dd94513d5",
+      "bytes": 23583
+    },
+    {
+      "path": "docs/audits/2026-09-13-ux-ui/implementation/stage1-evidence/chromium-mobile-390-notifications-error.png",
+      "sha256": "2b546e2e574bcf4d8b6d13bd2b7658091b51d25d4d3a6ce7cb33b9477426afcb",
+      "bytes": 19925
+    }
+  ],
+  "diagnosticHistory": [
+    {
+      "evidenceDirectory": "/private/tmp/gap029-stage1-verify",
+      "finding": "pre-existing exact loopback fixture in new git-ref/index scanner scopes; exact blob allowlist entries added after review"
+    },
+    {
+      "evidenceDirectory": "/private/tmp/gap029-stage1-verify-r2",
+      "finding": "quality and PostgreSQL passed; Chromium launch blocked by macOS sandbox before scenarios"
+    },
+    {
+      "evidenceDirectory": "/private/tmp/gap029-stage1-verify-r3",
+      "finding": "48/50 browser scenarios passed; two Wave F test request intercepts missed new opt-in query; matcher corrected"
+    }
+  ],
+  "limits": [
+    "No server notification pagination in this stage",
+    "No physical-device, WebKit or spoken-AT acceptance",
+    "No independent review, commit, push, deploy or public verification"
+  ],
+  "documentation": {
+    "checkDocs": {
+      "checkedFiles": 161,
+      "brokenLinks": 0,
+      "brokenAnchors": 0,
+      "duplicateBacklogDefinitions": 0,
+      "incompleteBacklogItems": 0,
+      "invalidBacklogStatuses": 0
+    },
+    "gitDiffCheck": "passed after canonical document update"
+  }
+}

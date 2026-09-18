@@ -17,6 +17,19 @@ it("GAP-009 completes existing FAQ, corrects D7 and remains idempotent", async (
   expect(articles.filter(a => a.title === "Кто может судить?")).toHaveLength(1);
   expect(articles.find(a => a.title === "Кто может судить?")?.body).toContain("любой активный пользователь");
 });
+it("GAP-029 updates only the built-in invitation FAQ without changing custom articles", async () => {
+  const context = await createMigratedPgliteDb(); close = context.close;
+  await context.db.insert(faqArticles).values([
+    { id: "00000000-0000-4000-8000-000000009007", category: "Уведомления", title: "Где найти приглашения?", body: "Приглашения в матч и турнир доступны.", sortOrder: 7 },
+    { category: "Команды", title: "Моя статья", body: "Пользовательский текст", sortOrder: 8 },
+  ]);
+  const help = new HelpService(context.db);
+  await help.seedFaq();
+  const articles = await help.listFaq();
+  expect(articles.find((article) => article.title === "Где найти приглашения?")?.body).toContain("приглашения в команду");
+  expect(articles.find((article) => article.title === "Где найти приглашения?")?.body).not.toContain("приглашения в матч");
+  expect(articles.find((article) => article.title === "Моя статья")?.body).toBe("Пользовательский текст");
+});
 it("GAP-009 validates feedback kinds and text before persistence", async () => {
   const context = await createMigratedPgliteDb(); close = context.close;
   const [user] = await context.db.insert(users).values({ email: "help@test.local", passwordHash: "x", firstName: "Help", lastName: "Synthetic" }).returning();

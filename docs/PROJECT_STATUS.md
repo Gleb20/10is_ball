@@ -1,5 +1,29 @@
 # Tab-10 — статус проекта
 
+## GAP-029, этап 1 verified_local — 2026-09-18
+
+Локальный кандидат 4.0.0 на базе документационного stage 0 скрывает игровые и
+турнирные приглашения, вызовы и реванши во всём новом UI. Ручной матч не
+отправляет приглашения; турнир создаётся без consent policy. Team invitations,
+judge handover, старые API и pending записи сохранены. Новый web использует
+`notificationView=available` для списка, Home и `read-visible`; без параметра
+старые клиенты сохраняют прежнее чтение собственных notification IDs. FAQ и
+onboarding copy согласованы с временной доступностью.
+
+Fresh `pnpm run ci`: 1264/1264, 0 failed/skipped/todo/interrupted; quality1129,
+PostgreSQL72, browser59 (50 Chromium journeys desktop/390), cleanup4.
+[Локальный gate](audit/evidence/gap029-stage1-local.json) и
+[итоговый receipt](audit/evidence/gap029-stage1-final.json) связывают frozen R1,
+Terra PASS и просмотр десяти compiled desktop/390 кадров. Шесть строк GAP-029
+в атомарном реестре имеют `verified_local` с точным evidence overlay; остальные
+строки не изменены. Координатор принял stage 1 локально. Пустая рамка быстрых
+подсказок на MatchCreate существовала на исходной базе и остаётся в GAP-013.
+Первые два диагностических прогона: sandbox заблокировал запуск Chromium, затем
+старый E2E request matcher не учитывал opt-in query; после исправления matcher
+полный gate прошёл. Это локальная приёмка, не публикация: commit/push/deploy
+ещё не выполнены. Серверная пагинация уведомлений и
+последующие страницы AT-UI-INV-002 остаются будущим контрактом.
+
 ## Интерфейсная программа, этап 0 accepted_local — 2026-09-18
 
 На чистом исходном SHA `17a69cacde94c12b7b754e8909dae12cc73a700f`
@@ -20,7 +44,7 @@ feedback одного автора с prior exposure не доказывает U
 получили межэкранный status/icon inventory в stage 3. `ready` GAP-013/017/019
 относится только к ограниченным исполнимым частям; идеи за Q-UX-004–010
 ожидают решений, runtime acceptance по новым AT не проводилась.
-Текущие пять tabs и invitation UI остаются as-built до этапов 1/2. TECH-007
+На момент этапа 0 пять tabs и invitation UI оставались as-built до этапов 1/2. TECH-007
 `verified_local` для правила обязательного SemVer при будущем разрешённом выпуске;
 TECH-008 остаётся `in_progress` до завершения программы. Стадия 0
 не меняет версию 3.0.0, runtime и публичный стенд. Q-UX-001..011 остаются

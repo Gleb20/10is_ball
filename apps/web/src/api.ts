@@ -299,6 +299,7 @@ export type HomeResponse = {
   topRankings: HomeRanking[];
   unreadNotifications: Array<Record<string, unknown>>;
   unreadCount: number;
+  notificationView?: "available";
 };
 
 /** Every delivery environment uses relative API paths through its same-origin proxy. */
@@ -395,7 +396,7 @@ export const api = {
       body: JSON.stringify({ newPassword }),
     }),
   home: (period: "all_time" | "month" = "all_time") =>
-    request<HomeResponse>(`/api/v1/home?period=${period}`),
+    request<HomeResponse>(`/api/v1/home?period=${period}&notificationView=available`),
   history: ({ signal, ...filters }: HistoryFilters = {}) => {
     const query = new URLSearchParams();
     for (const [key, value] of Object.entries(filters)) {
@@ -800,8 +801,8 @@ export const api = {
       { method: "POST" },
     ),
   notifications: () =>
-    request<{ notifications: Array<Record<string, unknown>> }>(
-      "/api/v1/notifications",
+    request<{ notifications: Array<Record<string, unknown>>; notificationView?: "available"; unreadCount?: number }>(
+      "/api/v1/notifications?notificationView=available",
     ),
   markNotificationRead: (id: string) =>
     request<{ ok: boolean }>(`/api/v1/notifications/${id}/read`, {
@@ -811,7 +812,7 @@ export const api = {
     request<{
       updated: number;
       notifications: Array<{ id: string; readAt: string }>;
-    }>("/api/v1/notifications/read-visible", {
+    }>("/api/v1/notifications/read-visible?notificationView=available", {
       method: "POST",
       body: JSON.stringify({ notificationIds }),
     }),

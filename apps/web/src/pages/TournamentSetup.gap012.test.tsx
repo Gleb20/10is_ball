@@ -51,15 +51,12 @@ describe("GAP-012 tournament setup", () => {
     vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue("00000000-0000-4000-8000-000000012201");
   });
 
-  it("persists the immutable consent policy selected at creation", async () => {
-    const user = userEvent.setup();
+  it("GAP-029 creates direct-roster tournaments without a consent selector", async () => {
     render(<MemoryRouter><TournamentsPage /></MemoryRouter>);
-    const policy = screen.getByLabelText("Требовать согласие приглашённых участников");
-    expect(policy).not.toBeChecked();
-    await user.click(policy);
+    expect(screen.queryByLabelText("Требовать согласие приглашённых участников")).not.toBeInTheDocument();
     fireEvent.submit(screen.getByRole("form", { name: "Создание турнира" }));
     await waitFor(() => expect(createTournament).toHaveBeenCalledWith(expect.objectContaining({
-      requireParticipantConsent: true,
+      requireParticipantConsent: false,
       organizerParticipates: true,
     })));
   });

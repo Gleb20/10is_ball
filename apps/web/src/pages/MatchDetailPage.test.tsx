@@ -790,7 +790,7 @@ describe("GAP-005 match detail completion", () => {
     });
   });
 
-  it("shows rules, clean effective point log, and revenge for a participant", async () => {
+  it("shows rules and clean effective point log without a revenge action", async () => {
     getMatch.mockResolvedValue({
       match: {
         id: "complete",
@@ -822,13 +822,11 @@ describe("GAP-005 match detail completion", () => {
         activeJudge: null,
       },
     });
-    const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/matches/complete"]}>
         <AuthProvider>
           <Routes>
             <Route path="/matches/:id" element={<MatchDetailPage />} />
-            <Route path="/matches/new" element={<span>revenge-create</span>} />
           </Routes>
         </AuthProvider>
       </MemoryRouter>,
@@ -840,8 +838,7 @@ describe("GAP-005 match detail completion", () => {
     expect(within(log).getAllByRole("listitem")).toHaveLength(2);
     expect(within(log).queryByText(/^Creator User.*очко$/)).toBeInTheDocument();
     expect(within(log).queryByText(/^Rival One.*очко$/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /создать реванш/i }));
-    expect(await screen.findByText("revenge-create")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /создать реванш/i })).not.toBeInTheDocument();
   });
 
   it("records no-show with expected version and preserves the returned score", async () => {

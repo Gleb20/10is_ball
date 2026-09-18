@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Alert, Autocomplete, Button, TextField } from "../ui";
 import { PageLayout } from "../layout";
 import { FilterBar } from "../patterns";
@@ -11,13 +11,6 @@ type OpponentMode = "user" | "guest";
 type FirstServerMethod = "random" | "manual" | "rally";
 type SlotKey = "playerA" | "partner" | "opponent1" | "opponent2";
 type SlotState = { mode: OpponentMode; userId: string; guestName: string };
-type MatchParticipant = {
-  side?: string;
-  userId?: string | null;
-  guestFirstName?: string | null;
-  guestLastName?: string | null;
-};
-
 const emptySlot = (): SlotState => ({ mode: "user", userId: "", guestName: "" });
 
 export function defaultMatchTitle(d = new Date()) {
@@ -33,20 +26,6 @@ export function defaultMatchTitle(d = new Date()) {
 function defaultMercyPoints(pointsToWin: number): number {
   if (pointsToWin === 21) return 10;
   return pointsToWin === 11 ? 5 : Math.max(1, Math.floor(pointsToWin / 2));
-}
-
-function fromParticipant(participant?: MatchParticipant): SlotState {
-  if (!participant) return emptySlot();
-  if (participant.userId) {
-    return { mode: "user", userId: participant.userId, guestName: "" };
-  }
-  return {
-    mode: "guest",
-    userId: "",
-    guestName: [participant.guestFirstName, participant.guestLastName]
-      .filter(Boolean)
-      .join(" "),
-  };
 }
 
 function SlotEditor({
@@ -105,18 +84,14 @@ function SlotEditor({
 export function MatchCreatePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const requestedOpponentId = searchParams.get("opponentId");
-  const revengeOf = searchParams.get("revengeOf");
-  const isPurposefulInvitation = Boolean(requestedOpponentId || revengeOf);
+  const location = useLocation();
   const [title, setTitle] = useState(defaultMatchTitle);
   const [format, setFormat] = useState<MatchFormat>("1v1");
   const [pointsToWin, setPointsToWin] = useState("11");
   const [mercyEnabled, setMercyEnabled] = useState(true);
   const [mercyPoints, setMercyPoints] = useState("5");
   const [firstServerMethod, setFirstServerMethod] = useState<FirstServerMethod>("manual");
-  const [creatorParticipates, setCreatorParticipates] = useState(isPurposefulInvitation);
-  const [sendPlayerInvitations, setSendPlayerInvitations] = useState(isPurposefulInvitation);
+  const [creatorParticipates, setCreatorParticipates] = useState(false);
   const [slots, setSlots] = useState<Record<SlotKey, SlotState>>({
     playerA: emptySlot(),
     partner: emptySlot(),
@@ -124,32 +99,24 @@ export function MatchCreatePage() {
     opponent2: emptySlot(),
   });
   const [options, setOptions] = useState<Array<{ value: string; label: string }>>([]);
-  const [judgeOptions, setJudgeOptions] = useState<Array<{ value: string; label: string }>>([]);
-  const [judgeUserId, setJudgeUserId] = useState("");
   const [createOptions, setCreateOptions] = useState<MatchCreateOptions | null>(null);
   const [directoryState, setDirectoryState] = useState<"loading" | "ready" | "error">("loading");
-  const [prefillState, setPrefillState] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  const isSelfChallenge = Boolean(user?.id && requestedOpponentId === user.id);
-  const source = revengeOf ? "revenge" : requestedOpponentId ? "challenge" : "manual";
-
-  const challengeHint = useMemo(() => {
-    if (isSelfChallenge) return null;
-    const name = searchParams.get("opponentName");
-    return name ? `Вызов: ${name}` : null;
-  }, [isSelfChallenge, searchParams]);
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const hiddenKeys = ["opponentId", "opponentName", "revengeOf", "source"];
+    if (!hiddenKeys.some((key) => query.has(key))) return;
+    hiddenKeys.forEach((key) => query.delete(key));
+    navigate({ pathname: location.pathname, search: query.toString() ? `?${query}` : "" }, { replace: true });
+  }, [location.pathname, location.search, navigate]);
 
   const loadDirectory = useCallback(async () => {
     setDirectoryState("loading");
     try {
       const response = await api.matchCreateOptions();
       setCreateOptions(response);
-      setJudgeOptions(response.users.map((candidate) => ({
-        value: candidate.id,
-        label: `${candidate.firstName ?? ""} ${candidate.lastName ?? ""}`.trim(),
-      })));
       setOptions(
         response.users
           .filter((candidate) => candidate.id !== user?.id)
@@ -167,73 +134,6 @@ export function MatchCreatePage() {
   useEffect(() => {
     void loadDirectory();
   }, [loadDirectory]);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    if (requestedOpponentId === user.id) {
-      setSlots((current) => ({ ...current, opponent1: emptySlot() }));
-      setError("Нельзя вызвать самого себя");
-      return;
-    }
-    if (requestedOpponentId) {
-      setCreatorParticipates(true);
-      setSendPlayerInvitations(true);
-      setSlots((current) => ({
-        ...current,
-        opponent1: { mode: "user", userId: requestedOpponentId, guestName: "" },
-      }));
-      const name = searchParams.get("opponentName");
-      if (name) setTitle(`Матч vs ${name}`);
-    }
-  }, [requestedOpponentId, searchParams, user?.id]);
-
-  useEffect(() => {
-    if (!revengeOf || !user?.id) return;
-    let active = true;
-    setPrefillState("loading");
-    void api
-      .getMatch(revengeOf)
-      .then((response) => {
-        if (!active) return;
-        const match = response.match;
-        const participants = (match.participants ?? []) as MatchParticipant[];
-        const own = participants.find((participant) => participant.userId === user.id);
-        if (!own) throw new Error("Реванш доступен только участнику матча");
-        const sameSide = participants.filter(
-          (participant) => participant.side === own.side && participant !== own,
-        );
-        const otherSide = participants.filter((participant) => participant.side !== own.side);
-        const nextFormat: MatchFormat = match.format === "2v2" ? "2v2" : "1v1";
-        const nextPoints = Number(match.pointsToWin ?? 11);
-        setFormat(nextFormat);
-        setTitle(`Реванш: ${String(match.title)}`);
-        setPointsToWin(String(nextPoints));
-        setMercyEnabled(Boolean(match.mercyEnabled));
-        setMercyPoints(String(match.mercyPoints ?? defaultMercyPoints(nextPoints)));
-        setFirstServerMethod(
-          ["random", "manual", "rally"].includes(String(match.firstServerMethod))
-            ? (match.firstServerMethod as FirstServerMethod)
-            : "manual",
-        );
-        setSlots({
-          playerA: emptySlot(),
-          partner: fromParticipant(sameSide[0]),
-          opponent1: fromParticipant(otherSide[0]),
-          opponent2: fromParticipant(otherSide[1]),
-        });
-        setCreatorParticipates(true);
-        setSendPlayerInvitations(true);
-        setPrefillState("idle");
-      })
-      .catch((reason: Error) => {
-        if (!active) return;
-        setPrefillState("error");
-        setError(reason.message || "Не удалось подготовить реванш");
-      });
-    return () => {
-      active = false;
-    };
-  }, [revengeOf, user?.id]);
 
   function updateSlot(key: SlotKey, value: SlotState) {
     setSlots((current) => ({ ...current, [key]: value }));
@@ -282,7 +182,6 @@ export function MatchCreatePage() {
     setError(null);
     try {
       if (!user?.id) throw new Error("Сессия пользователя не загружена");
-      if (isSelfChallenge) throw new Error("Нельзя вызвать самого себя");
       const points = Number(pointsToWin);
       const mercy = Number(mercyPoints);
       if (!Number.isInteger(points) || points < 1) {
@@ -312,9 +211,8 @@ export function MatchCreatePage() {
         mercyEnabled,
         mercyPoints: mercyEnabled ? mercy : null,
         firstServerMethod,
-        source,
-        sendPlayerInvitations,
-        ...(judgeUserId ? { judgeUserId } : {}),
+        source: "manual",
+        sendPlayerInvitations: false,
         participants,
       });
       navigate(`/matches/${response.match.id}`);
@@ -329,9 +227,7 @@ export function MatchCreatePage() {
   }
 
   return (
-    <PageLayout title={revengeOf ? "Реванш" : "Новый матч"}>
-      {challengeHint ? <p className="muted">{challengeHint}</p> : null}
-      {prefillState === "loading" ? <p role="status">Подготавливаем реванш…</p> : null}
+    <PageLayout title="Новый матч">
       <form className="card stack" onSubmit={create} aria-label="Создание матча">
         <TextField label="Название" value={title} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setTitle(event.target.value)} required />
         <FilterBar
@@ -340,18 +236,14 @@ export function MatchCreatePage() {
           onChange={(value) => setFormat(value as MatchFormat)}
           options={[{ value: "1v1", label: "1 × 1" }, { value: "2v2", label: "2 × 2" }]}
         />
-        {source === "manual" ? (
-          <label className="match-create__check">
-            <input
-              type="checkbox"
-              checked={creatorParticipates}
-              onChange={(event) => setCreatorParticipates(event.target.checked)}
-            />
-            Создатель играет
-          </label>
-        ) : (
-          <p className="context-tip" role="note">В вызове или реванше создатель играет.</p>
-        )}
+        <label className="match-create__check">
+          <input
+            type="checkbox"
+            checked={creatorParticipates}
+            onChange={(event) => setCreatorParticipates(event.target.checked)}
+          />
+          Создатель играет
+        </label>
         <TextField
           label="Очков до победы"
           type="number"
@@ -420,25 +312,6 @@ export function MatchCreatePage() {
             ) : null}
           </section>
         ) : null}
-        <Autocomplete
-          key={`judge-${judgeUserId}`}
-          label="Судья (необязательно)"
-          placeholder="Выберите активного пользователя"
-          options={judgeOptions}
-          value={judgeUserId}
-          defaultInputValue={judgeOptions.find((option) => option.value === judgeUserId)?.label ?? ""}
-          onChange={setJudgeUserId}
-          clearable
-          fullWidth
-        />
-        <label className="match-create__check">
-          <input
-            type="checkbox"
-            checked={sendPlayerInvitations}
-            onChange={(event) => setSendPlayerInvitations(event.target.checked)}
-          />
-          Пригласить выбранных игроков
-        </label>
         {!creatorParticipates ? (
           <SlotEditor label="Игрок A" slot={slots.playerA} options={options} onChange={(value) => updateSlot("playerA", value)} />
         ) : null}
@@ -446,8 +319,8 @@ export function MatchCreatePage() {
         <SlotEditor label={format === "2v2" ? "Соперник 1" : "Соперник"} slot={slots.opponent1} options={options} onChange={(value) => updateSlot("opponent1", value)} />
         {format === "2v2" ? <SlotEditor label="Соперник 2" slot={slots.opponent2} options={options} onChange={(value) => updateSlot("opponent2", value)} /> : null}
         <div className="stack stack--actions">
-          <Button type="submit" disabled={pending || prefillState === "loading"}>{pending ? "Создание…" : "Создать матч"}</Button>
-          <Button type="button" variant="secondary" onClick={() => navigate(requestedOpponentId ? "/rankings" : "/start")}>Отмена</Button>
+          <Button type="submit" disabled={pending}>{pending ? "Создание…" : "Создать матч"}</Button>
+          <Button type="button" variant="secondary" onClick={() => navigate("/start")}>Отмена</Button>
         </div>
         {error ? <Alert type="error" variant="tonal" title="Ошибка" description={error} /> : null}
       </form>

@@ -109,13 +109,12 @@ test("GAP-012 operator creates A-vs-B, edits it and starts without player consen
     await page.goto("/matches/new");
     await page.getByLabel("Название", { exact: true }).fill(title);
     await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
-    await expect(page.getByLabel("Пригласить выбранных игроков", { exact: true })).not.toBeChecked();
+    await expect(page.getByLabel("Пригласить выбранных игроков", { exact: true })).toHaveCount(0);
     await page.getByRole("combobox", { name: "Игрок A", exact: true }).fill(playerA.label);
     await page.getByRole("option", { name: playerA.label, exact: true }).click();
     await page.getByRole("combobox", { name: "Соперник", exact: true }).fill(playerB.label);
     await page.getByRole("option", { name: playerB.label, exact: true }).click();
-    await page.getByRole("combobox", { name: "Судья (необязательно)", exact: true }).fill(judge.label);
-    await page.getByRole("option", { name: judge.label, exact: true }).click();
+    await expect(page.getByRole("combobox", { name: "Судья (необязательно)", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Создать матч", exact: true }).click();
     await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+$/);
     const matchId = page.url().split("/").at(-1)!;
@@ -127,8 +126,8 @@ test("GAP-012 operator creates A-vs-B, edits it and starts without player consen
       [playerA.user.id, playerB.user.id].sort(),
     );
     expect(match.participants.some((row: { userId?: string }) => row.userId === fixture.user.id)).toBe(false);
-    expect(match.invitations.filter((row: { kind: string }) => row.kind === "player")).toEqual([]);
-    const judgeInvitation = match.invitations.find((row: { kind: string }) => row.kind === "judge");
+    expect(match.invitations).toEqual([]);
+    const { invitation: judgeInvitation } = await mutate(fixture.api, `/api/v1/matches/${matchId}/invitations`, { userId: judge.user.id, kind: "judge" });
     expect(judgeInvitation).toMatchObject({ invitedUserId: judge.user.id, status: "pending" });
     await expect(page.getByRole("button", { name: "Старт", exact: true })).toBeEnabled();
     await page.getByRole("button", { name: "Изменить матч", exact: true }).click();

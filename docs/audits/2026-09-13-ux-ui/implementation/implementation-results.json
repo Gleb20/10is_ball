@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "results": [
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "U01-FORM-007",
+      "atom_id": "main",
+      "canonical_task": "GAP-029",
+      "stage": 1,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/gap029-stage1-final.json",
+      "evidenceSha256": "d2aaabb603649884ec53693ce6490b804a4b6203aa1d8ffde58ec6538cb8781c"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "U01-FORM-007",
+      "atom_id": "a01",
+      "canonical_task": "GAP-029",
+      "stage": 1,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/gap029-stage1-final.json",
+      "evidenceSha256": "d2aaabb603649884ec53693ce6490b804a4b6203aa1d8ffde58ec6538cb8781c"
+    },
+    {
+      "source": "user-session-2026-09-17-tournament-01",
+      "source_id": "T01-06",
+      "atom_id": "main",
+      "canonical_task": "GAP-029",
+      "stage": 1,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/gap029-stage1-final.json",
+      "evidenceSha256": "d2aaabb603649884ec53693ce6490b804a4b6203aa1d8ffde58ec6538cb8781c"
+    },
+    {
+      "source": "user-session-2026-09-17-tournament-01",
+      "source_id": "T01-06",
+      "atom_id": "a01",
+      "canonical_task": "GAP-029",
+      "stage": 1,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/gap029-stage1-final.json",
+      "evidenceSha256": "d2aaabb603649884ec53693ce6490b804a4b6203aa1d8ffde58ec6538cb8781c"
+    },
+    {
+      "source": "user-session-2026-09-17-tournament-01",
+      "source_id": "T01-06",
+      "atom_id": "a02",
+      "canonical_task": "GAP-029",
+      "stage": 1,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/gap029-stage1-final.json",
+      "evidenceSha256": "d2aaabb603649884ec53693ce6490b804a4b6203aa1d8ffde58ec6538cb8781c"
+    },
+    {
+      "source": "user-session-2026-09-17-tournament-01",
+      "source_id": "T05-02",
+      "atom_id": "main",
+      "canonical_task": "GAP-029",
+      "stage": 1,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/gap029-stage1-final.json",
+      "evidenceSha256": "d2aaabb603649884ec53693ce6490b804a4b6203aa1d8ffde58ec6538cb8781c"
+    }
+  ]
+}

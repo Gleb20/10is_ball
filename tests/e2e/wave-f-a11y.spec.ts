@@ -177,9 +177,10 @@ test('Wave F onboarding heading and recovery states keep keyboard context', asyn
     await page.keyboard.press('Tab');await page.getByRole('link',{name:'К содержимому',exact:true}).focus();await page.keyboard.press('Enter');await expect(page.locator('#main-content')).toBeFocused();
     await page.goto('/notifications');await axe(page,'notifications');
     // A read failure must leave a visible recovery action and an announced error.
-    await page.route('**/api/v1/notifications',route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({code:'UNAVAILABLE',message:'Синтетическая ошибка'})}));
+    const notificationRoute = (url: URL) => url.pathname === '/api/v1/notifications' && url.searchParams.get('notificationView') === 'available';
+    await page.route(notificationRoute,route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({code:'UNAVAILABLE',message:'Синтетическая ошибка'})}));
     await page.reload();await expect(page.getByRole('button',{name:/Повторить|Обновить/}).first()).toBeVisible();await expect(page.getByRole('alert').first()).toBeVisible();
-    await capture(page,'notifications-error');await page.unroute('**/api/v1/notifications');
+    await capture(page,'notifications-error');await page.unroute(notificationRoute);
   } finally { await api.dispose(); }
 });
 

@@ -14,12 +14,6 @@ export function StartPage() {
         <Button variant="secondary" onClick={() => navigate("/tournaments")}>
           Турнир
         </Button>
-        <Button variant="secondary" onClick={() => navigate("/rankings")}>
-          Challenge / Revenge
-        </Button>
-        <p className="muted">
-          Challenge: выберите соперника в рейтинге и бросьте вызов.
-        </p>
       </div>
     </PageLayout>
   );

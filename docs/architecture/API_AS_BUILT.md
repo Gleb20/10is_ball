@@ -126,7 +126,15 @@ matched router path.
 - `PATCH /api/v1/me/onboarding` принимает `set-step`, explicit `complete` или
   `restart` и возвращает безопасную user projection.
 - `POST /api/v1/notifications/read-visible` атомарно отмечает переданные owner
-  notification IDs и возвращает authoritative `readAt`.
+  notification IDs и возвращает authoritative `readAt`. При
+  `notificationView=available` этот POST исключает скрытые invitation types;
+  без параметра сохраняет прежнее поведение для старого клиента.
+- `GET /api/v1/notifications` и `GET /api/v1/home` сохраняют legacy-ответ без
+  query. Opt-in `notificationView=available` исключает game/judge/tournament
+  invitations из UI списка, unread count и первых пяти; marker позволяет новому
+  web не выдавать непроверенный legacy count за видимый. Список пока не разбит
+  сервером на страницы. Скрытые invitation rows и их read state остаются в БД;
+  штатный expiry/cancel lifecycle не заменён новым переходом.
 - Tournament invite/respond/roster transitions сериализуются по tournament row;
   start проверяет весь roster, включая bye, до первой записи.
 

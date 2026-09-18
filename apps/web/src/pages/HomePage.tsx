@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, Avatar, Button, EmptyState } from "../ui";
 import { PageLayout } from "../layout";
@@ -89,13 +89,17 @@ export function HomePage() {
   const [period, setPeriod] = useState<"all_time" | "month">("all_time");
   const [data, setData] = useState<HomeResponse | null>(null);
   const requestSequence = useRef(0);
+  useEffect(() => {
+    requestSequence.current += 1;
+    setData(null);
+  }, [user?.id]);
   const load = useCallback(async () => {
     const sequence = ++requestSequence.current;
     const response = await api.home(period);
     if (sequence === requestSequence.current) setData(response);
-  }, [period]);
+  }, [period, user?.id]);
   const { error, refreshing, refreshNow } = useVisibleRefresh(load, {
-    refreshKey: period,
+    refreshKey: `${user?.id ?? "anonymous"}:${period}`,
   });
 
   const myStats = data?.myStats;
@@ -108,8 +112,7 @@ export function HomePage() {
     : [];
   const topRankings = data?.topRankings ?? [];
   const recentEvents = data?.recentEvents ?? [];
-  const unreadCount =
-    data?.unreadCount ?? data?.unreadNotifications?.length ?? 0;
+  const unreadCount = data?.notificationView === "available" ? data.unreadCount : null;
 
   return (
     <PageLayout
@@ -185,17 +188,6 @@ export function HomePage() {
                       {myStats.rival.matchCount} очных матча
                     </span>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() =>
-                      navigate(
-                        `/matches/new?opponentId=${encodeURIComponent(myStats.rival!.userId)}&opponentName=${encodeURIComponent(myStats.rival!.displayName)}&source=revenge`,
-                      )
-                    }
-                  >
-                    Реванш
-                  </Button>
                 </div>
               ) : (
                 <p className="muted">
@@ -242,7 +234,7 @@ export function HomePage() {
                 <div className="list-row__body">
                   <strong>Уведомления</strong>
                   <span className="muted">
-                    Непрочитанных: {unreadCount}
+                    {unreadCount === null ? "Открыть уведомления" : `Непрочитанных: ${unreadCount}`}
                   </span>
                 </div>
                 <span className="list-row__chevron" aria-hidden>

@@ -107,11 +107,10 @@ describe("AT-NOTIF-005 terminal invitation lifecycle", () => {
     expect(await screen.findByText("Прочитано")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Актуальные" }));
-    expect(screen.getByText("Отменённый турнир")).toBeInTheDocument();
+    expect(screen.queryByText("Отменённый турнир")).not.toBeInTheDocument();
     expect(screen.getByText("Истёкшая команда")).toBeInTheDocument();
-    expect(screen.getByText("Отменено")).toBeInTheDocument();
+    expect(screen.queryByText("Отменено")).not.toBeInTheDocument();
     expect(screen.getByText("Истекло")).toBeInTheDocument();
-    expect(screen.getByText(/7 сентября 2026.*12:00/i)).toBeInTheDocument();
     expect(screen.getByText(/Причина: срок приглашения истёк/i)).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /принять|отклонить/i })).toHaveLength(2);
   });
@@ -137,5 +136,23 @@ describe("AT-NOTIF-005 terminal invitation lifecycle", () => {
     expect(respondTeamInvitation).toHaveBeenCalledTimes(1);
     expect(accept).toBeDisabled();
     resolveResponse({ ok: true });
+  });
+
+  it("GAP-029: old API rows never expose hidden invitations or mark them read", async () => {
+    notifications.mockResolvedValue({ notifications: [
+      ...Array.from({ length: 7 }, (_, index) => ({
+        id: `hidden-${index}`, type: index % 2 ? "judge_invitation" : "match_invitation",
+        title: `Hidden ${index}`, body: "Game", lifecycle: "new", readAt: null,
+      })),
+      { id: "tournament", type: "tournament_invitation", title: "Hidden tournament", body: "Tournament", lifecycle: "new", readAt: null },
+      { id: "team", type: "team_invitation", title: "Team remains", body: "Team", lifecycle: "new", actionable: true, readAt: null, payload: { invitationId: "team-invite" } },
+      { id: "handover", type: "judge_handover_offered", title: "Handover remains", body: "Judge", lifecycle: "new", readAt: null, payload: { matchId: "match" } },
+    ] });
+    render(<MemoryRouter><NotificationsPage /></MemoryRouter>);
+    expect(await screen.findByText("Team remains")).toBeInTheDocument();
+    expect(screen.getByText("Handover remains")).toBeInTheDocument();
+    expect(screen.queryByText(/Hidden/)).not.toBeInTheDocument();
+    await waitFor(() => expect(markNotificationsReadVisible).toHaveBeenCalledWith(["team", "handover"]));
+    expect(screen.getAllByRole("button", { name: /принять|отклонить/i })).toHaveLength(2);
   });
 });

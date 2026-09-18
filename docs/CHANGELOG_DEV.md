@@ -1,3 +1,9 @@
+## 2026-09-18 — GAP-029, этап 1 verified_local
+
+- UI D37 скрывает игровые и турнирные invitation/challenge/revenge entry points, включая старые query prefill, popup и видимые notification rows; новые manual match/tournament не отправляют приглашения. Team invite, judge handover, owner-scoped legacy API/data и pending rows сохранены. FAQ/onboarding copy ограниченно обновлены.
+- Новый opt-in `notificationView=available` применяется к GET list/Home и POST read-visible; без параметра legacy-контракты сохраняются. Mixed-type PGlite/PG tests проверяют count/first five/readAt и старое чтение собственных hidden IDs. Root version 4.0.0 — кандидат без commit/push/deploy.
+- Fresh Node24.20.0 `pnpm run ci`: **1264/1264**, quality1129, PostgreSQL72, browser59 (50 desktop/390 journeys), cleanup4; ноль failed/skipped/todo/interrupted. [Final local receipt](audit/evidence/gap029-stage1-final.json) связывает R1 freeze/rollback, Terra PASS, coordinator visual acceptance и десять compiled desktop/390 кадров. Две точные scanner allowlist записи относятся к известному loopback blob; sandbox Chromium launch denial и исправленный E2E URL matcher сохранены как диагностическая история. Шесть stage-1 atoms имеют evidence-bound `verified_local` при неизменных остальных source rows/disposition. Пагинация уведомлений, физические устройства/WebKit/spoken AT не проверялись.
+
 ## 2026-09-18 — TECH-008, этап 0 accepted_local: документационная база интерфейса
 
 - Приняты D36 (Главная как единственный глобальный вход, контекстная навигация) и D37 (временное скрытие игровых и турнирных приглашений/challenges в UI при сохранении API и данных). Целевое поведение согласовано в PRD, UX flows, AT и traceability; runtime ещё не менялся.

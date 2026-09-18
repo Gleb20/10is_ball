@@ -129,9 +129,10 @@ describe("GAP-008 match consent and prestart editing", () => {
   it("keeps creator start available while a voluntary player invitation is pending", async () => {
     renderPage();
 
-    expect(await screen.findByText("Rival Player")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Consent match" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^старт$/i })).toBeEnabled();
-    expect(screen.getByRole("status")).toHaveTextContent(/приглашения добровольные.*не мешают старту/i);
+    expect(screen.queryByText(/приглашения добровольные/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Приглашения матча" })).not.toBeInTheDocument();
 
     cleanup();
     getMatch.mockResolvedValue({
@@ -143,38 +144,29 @@ describe("GAP-008 match consent and prestart editing", () => {
     expect(await screen.findByRole("button", { name: /^старт$/i })).toBeEnabled();
   });
 
-  it("lets the invited user answer once and reloads the persisted invitation state", async () => {
+  it("GAP-029 keeps a pending invitation hidden for its recipient", async () => {
     currentUser = { ...currentUser, id: "u2", email: "rival@example.test", firstName: "Rival", lastName: "Player" };
-    const accepted = waitingMatch({ invitations: [invitation({ status: "accepted", respondedAt: "2026-09-13T10:05:00.000Z" })] });
-    respondMatchInvitation.mockResolvedValue({ invitation: invitation({ status: "accepted" }) });
-    getMatch.mockResolvedValueOnce({ match: waitingMatch() }).mockResolvedValue({ match: accepted });
-    const user = userEvent.setup();
     renderPage();
-
-    const accept = await screen.findByRole("button", { name: "Принять" });
-    await Promise.all([user.click(accept), user.click(accept)]);
-
-    expect(respondMatchInvitation).toHaveBeenCalledTimes(1);
-    expect(respondMatchInvitation).toHaveBeenCalledWith("inv-player", true);
-    expect(await screen.findByText("Принято")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Consent match" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Принять" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Согласования")).not.toBeInTheDocument();
+    expect(respondMatchInvitation).not.toHaveBeenCalled();
   });
 
-  it("offers one re-invite for the latest declined consent and never after acceptance", async () => {
+  it("GAP-029 never offers reinvitation from old declined or accepted rows", async () => {
     const declined = invitation({ status: "declined", respondedAt: "2026-09-13T10:05:00.000Z" });
     const accepted = invitation({ id: "inv-accepted", status: "accepted", createdAt: "2026-09-13T10:10:00.000Z" });
     getMatch.mockResolvedValue({ match: waitingMatch({ invitations: [declined] }) });
-    createMatchInvitation.mockResolvedValue({ invitation: invitation({ id: "inv-retry" }) });
-    const user = userEvent.setup();
     const view = renderPage();
-
-    await user.click(await screen.findByRole("button", { name: "Пригласить снова" }));
-    expect(createMatchInvitation).toHaveBeenCalledWith("m1", { userId: "u2", kind: "player" });
+    await screen.findByRole("heading", { name: "Consent match" });
+    expect(screen.queryByRole("button", { name: "Пригласить снова" })).not.toBeInTheDocument();
 
     getMatch.mockResolvedValue({ match: waitingMatch({ invitations: [declined, accepted] }) });
     view.unmount();
     renderPage();
-    await screen.findByText("Принято");
+    await screen.findByRole("heading", { name: "Consent match" });
     expect(screen.queryByRole("button", { name: "Пригласить снова" })).not.toBeInTheDocument();
+    expect(createMatchInvitation).not.toHaveBeenCalled();
   });
 
   it("sends the full roster, retains unchanged participant ids, and drops the id for a replacement", async () => {

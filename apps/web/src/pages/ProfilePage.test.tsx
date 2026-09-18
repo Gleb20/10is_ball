@@ -221,18 +221,14 @@ describe("GAP-002 profile flow", () => {
     expect(api.sessions).toHaveBeenCalledTimes(2);
   });
 
-  it("PROFILE-005: public card stays privacy-safe and routes Challenge with a prefilled opponent", async () => {
-    const user = userEvent.setup();
+  it("PROFILE-005 / D37: public card stays privacy-safe without challenge entry", async () => {
     renderProfile("/players/u2");
     expect(await screen.findByText("Соперник Борис")).toBeInTheDocument();
     expect(api.playerProfile).toHaveBeenCalledWith("u2");
     expect(screen.queryByText("anna@profile.test")).not.toBeInTheDocument();
     expect(screen.queryByText("10.05.1990")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Редактировать профиль" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Бросить вызов" }));
-    expect(screen.getByLabelText("location")).toHaveTextContent(
-      "/matches/new?opponentId=u2&opponentName=%D0%A1%D0%BE%D0%BF%D0%B5%D1%80%D0%BD%D0%B8%D0%BA%20%D0%91%D0%BE%D1%80%D0%B8%D1%81",
-    );
+    expect(screen.queryByRole("button", { name: "Бросить вызов" })).not.toBeInTheDocument();
   });
 
   it("routes the actor's own ranking card to the full own profile", async () => {

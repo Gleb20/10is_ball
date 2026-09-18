@@ -1,12 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { MatchCreatePage } from "./MatchCreatePage";
 import { AuthProvider } from "../auth";
 
 const matchCreateOptions = vi.fn();
 const createMatch = vi.fn();
+function LocationProbe() { const location = useLocation(); return <output data-testid="location">{location.pathname}{location.search}</output>; }
 
 vi.mock("../api", () => ({
   api: {
@@ -80,25 +81,22 @@ describe("REQ_ui__match_create_autocomplete", () => {
     ).toBeInTheDocument();
   });
 
-  it("BUG-010: rejects a self-challenge supplied through the URL", async () => {
-    const user = userEvent.setup();
+  it("GAP-029: removes legacy challenge query without applying its player or invite intent", async () => {
     render(
       <MemoryRouter
-        initialEntries={["/matches/new?opponentId=u1&opponentName=A%20User"]}
+        initialEntries={["/matches/new?opponentId=u1&opponentName=A%20User&source=revenge&returnTo=home"]}
       >
         <AuthProvider>
           <MatchCreatePage />
+          <LocationProbe />
         </AuthProvider>
       </MemoryRouter>,
     );
-
-    expect(
-      await screen.findByText(/нельзя вызвать самого себя/i),
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /создать матч/i }));
-
+    expect(await screen.findByTestId("location")).toHaveTextContent("/matches/new?returnTo=home");
+    expect(screen.getByLabelText("Создатель играет")).not.toBeChecked();
+    expect(screen.queryByText(/вызов|реванш/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Пригласить выбранных игроков")).not.toBeInTheDocument();
     expect(createMatch).not.toHaveBeenCalled();
-    expect(screen.getByText(/нельзя вызвать самого себя/i)).toBeInTheDocument();
   });
 
   it("GAP-012: submits manual A-vs-B without the operator and without invitations by default", async () => {
@@ -126,19 +124,23 @@ describe("REQ_ui__match_create_autocomplete", () => {
     }));
   });
 
-  it("GAP-012: keeps the creator and invitation intent for a challenge", async () => {
+  it("GAP-029: legacy challenge URL only creates a manually chosen match", async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/matches/new?opponentId=u2&opponentName=B%20Rival"]}>
         <AuthProvider><MatchCreatePage /></AuthProvider>
       </MemoryRouter>,
     );
-    await screen.findByText("В вызове или реванше создатель играет.");
-    expect(screen.getByLabelText("Пригласить выбранных игроков")).toBeChecked();
+    await screen.findByRole("form", { name: /создание матча/i });
+    expect(screen.getByLabelText("Создатель играет")).not.toBeChecked();
+    expect(screen.getByRole("combobox", { name: "Соперник" })).toHaveValue("");
+    await user.click(screen.getByLabelText("Создатель играет"));
+    await user.click(screen.getByRole("combobox", { name: "Соперник" }));
+    await user.click(await screen.findByText("B Rival"));
     await user.click(screen.getByRole("button", { name: /создать матч/i }));
     expect(createMatch).toHaveBeenCalledWith(expect.objectContaining({
-      source: "challenge",
-      sendPlayerInvitations: true,
+      source: "manual",
+      sendPlayerInvitations: false,
       participants: [
         { side: "A", userId: "u1" },
         { side: "B", userId: "u2" },
@@ -180,8 +182,7 @@ describe("REQ_ui__match_create_autocomplete", () => {
     await user.click(await screen.findByText("Rival Three"));
     await user.click(screen.getByLabelText("Соперник 2"));
     await user.click(await screen.findByText("Rival Four"));
-    await user.click(screen.getByLabelText("Судья (необязательно)"));
-    await user.click(await screen.findByText("Partner Two"));
+    expect(screen.queryByLabelText("Судья (необязательно)")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /создать матч/i }));
 
     expect(createMatch).toHaveBeenCalledWith(expect.objectContaining({
@@ -190,7 +191,6 @@ describe("REQ_ui__match_create_autocomplete", () => {
       mercyPoints: 7,
       firstServerMethod: "random",
       sendPlayerInvitations: false,
-      judgeUserId: "u2",
       participants: [
         { side: "A", userId: "u1" },
         { side: "A", userId: "u2" },

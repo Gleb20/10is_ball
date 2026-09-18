@@ -46,6 +46,7 @@ const dashboard: HomeResponse = {
   topRankings: [{ userId: "u1", displayName: "Игрок Анна", wins: 2, avatarKey: null }],
   unreadNotifications: [],
   unreadCount: 4,
+  notificationView: "available" as const,
 };
 
 describe("AT-HOME dashboard", () => {
@@ -63,6 +64,17 @@ describe("AT-HOME dashboard", () => {
     expect(screen.getByText("Последние события")).toBeInTheDocument();
     expect(screen.getByText("Непрочитанных: 4")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /открыть профиль/i })).toBeInTheDocument();
+  });
+
+  it("GAP-029 does not treat an old API's unverified count as zero or expose its preview", async () => {
+    vi.mocked(api.home).mockResolvedValue({
+      ...dashboard, notificationView: undefined, unreadCount: 8,
+      unreadNotifications: [{ id: "old", type: "match_invitation", title: "Hidden game" }],
+    });
+    render(<MemoryRouter><AuthProvider><HomePage /></AuthProvider></MemoryRouter>);
+    expect(await screen.findByText("Открыть уведомления")).toBeInTheDocument();
+    expect(screen.queryByText(/Непрочитанных:/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Hidden game")).not.toBeInTheDocument();
   });
 
   it("reloads top-3 for the month period", async () => {

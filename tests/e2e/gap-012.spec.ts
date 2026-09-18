@@ -74,13 +74,14 @@ test("GAP-012 immutable consent policy and scoped admin post-bracket add", async
     await page.getByRole("button", { name: "Войти", exact: true }).click();
     await expect(page).toHaveURL(/\/$/);
     await page.goto("/tournaments");
-    await page.getByLabel("Название", { exact: true }).fill(title);
-    await page.getByLabel("Организатор участвует", { exact: true }).uncheck();
-    await page.getByLabel("Требовать согласие приглашённых участников", { exact: true }).check();
-    await page.getByRole("button", { name: "Создать", exact: true }).click();
+    await expect(page.getByLabel("Требовать согласие приглашённых участников", { exact: true })).toHaveCount(0);
+    const { tournament: legacyTournament } = await mutate(organizer.api!, "/api/v1/tournaments", {
+      title, format: "single_elimination", organizerParticipates: false, requireParticipantConsent: true,
+    });
+    const tournamentId = legacyTournament.id;
+    await page.goto(`/tournaments/${tournamentId}`);
     await expect(page).toHaveURL(/\/tournaments\/[0-9a-f-]+$/);
-    const tournamentId = page.url().split("/").at(-1)!;
-    await expect(page.getByRole("note")).toContainText("требуется согласие");
+    await expect(page.getByText(/требуется согласие/i)).toHaveCount(0);
 
     for (const name of ["Первый", "Второй", "Третий"]) {
       await mutate(organizer.api!, `/api/v1/tournaments/${tournamentId}/participants`, {
@@ -93,7 +94,7 @@ test("GAP-012 immutable consent policy and scoped admin post-bracket add", async
     const seedPrefix = generated.bracketJson.seedOrder;
 
     await adminPage.goto(`/tournaments/${tournamentId}`);
-    await expect(adminPage.getByRole("note")).toContainText("требуется согласие");
+    await expect(adminPage.getByText(/требуется согласие/i)).toHaveCount(0);
     await expect(adminPage.getByRole("heading", { name: "Настройки и правила", exact: true })).toHaveCount(0);
     await expect(adminPage.getByRole("button", { name: "Старт", exact: true })).toHaveCount(0);
     await expect(adminPage.getByLabel("Добавить гостя (Имя Фамилия)")).toHaveCount(0);

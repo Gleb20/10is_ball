@@ -29,7 +29,6 @@ export function TournamentsPage() {
     "single_elimination" | "double_elimination"
   >("single_elimination");
   const [organizerParticipates, setOrganizerParticipates] = useState(true);
-  const [requireParticipantConsent, setRequireParticipantConsent] = useState(false);
   const submission = useSingleFlight();
 
   const load = useCallback(async () => {
@@ -47,7 +46,7 @@ export function TournamentsPage() {
           title,
           format,
           organizerParticipates,
-          requireParticipantConsent,
+          requireParticipantConsent: false,
         });
         navigate(`/tournaments/${result.tournament.id}`);
       } catch (error) {
@@ -94,17 +93,6 @@ export function TournamentsPage() {
           />
           Организатор участвует
         </label>
-        <label className="match-create__check">
-          <input
-            type="checkbox"
-            checked={requireParticipantConsent}
-            onChange={(e) => setRequireParticipantConsent(e.target.checked)}
-          />
-          Требовать согласие приглашённых участников
-        </label>
-        <p className="context-tip" role="note">
-          Настройка фиксируется при создании. Ручное добавление останется отдельным подтверждаемым действием.
-        </p>
         <Button type="submit" disabled={submission.pending}>
           {submission.pending ? "Создание…" : "Создать"}
         </Button>

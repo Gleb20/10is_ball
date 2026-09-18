@@ -34,6 +34,8 @@ type NotificationRow = {
   };
 };
 
+const hiddenInvitationTypes = new Set(["match_invitation", "judge_invitation", "tournament_invitation"]);
+
 function lifecycleLabel(n: NotificationRow): string {
   if ((n.lifecycle === "new" || !n.lifecycle) && n.readAt) {
     return "Прочитано";
@@ -107,7 +109,9 @@ function ActorNotificationsPage({ userId }: { userId?: string }) {
     if (!userId || (mutating.current && !force)) return;
     const current = ++sequence.current;
     const res = await api.notifications();
-    if (mounted.current && current === sequence.current) setItems(res.notifications as NotificationRow[]);
+    if (mounted.current && current === sequence.current) {
+      setItems((res.notifications as NotificationRow[]).filter((row) => !hiddenInvitationTypes.has(row.type)));
+    }
   }, [userId]);
   const { error, refreshNow } = useVisibleRefresh(load, { refreshKey: userId });
   useEffect(() => {
@@ -129,6 +133,7 @@ function ActorNotificationsPage({ userId }: { userId?: string }) {
       .map((notification) => notification.id)
       .filter((id) => !readRequests.current.has(id));
     if (ids.length === 0) return;
+    sequence.current += 1;
     ids.forEach((id) => readRequests.current.add(id));
     void api
       .markNotificationsReadVisible(ids)
@@ -198,49 +203,6 @@ function ActorNotificationsPage({ userId }: { userId?: string }) {
     });
   }
 
-  async function respondTournamentInvite(
-    invitationId: string,
-    accept: boolean,
-  ) {
-    await action.run(async () => {
-      mutating.current = true;
-      sequence.current += 1;
-      setActionError(null);
-      try {
-        await api.respondTournamentInvitation(invitationId, accept);
-        if (!mounted.current) return;
-        await load(true);
-      } catch (e) {
-        if (!mounted.current) return;
-        if ((e as Error & { status?: number }).status !== 401) { setActionError((e as Error).message); await load(true); }
-      } finally {
-        mutating.current = false;
-      }
-    });
-  }
-
-  async function respondMatchInvite(invitationId: string, accept: boolean, judge: boolean) {
-    await action.run(async () => {
-      mutating.current = true;
-      sequence.current += 1;
-      setActionError(null);
-      try {
-        const result = await api.respondMatchInvitation(invitationId, accept);
-        if (!mounted.current) return;
-        if (accept && result.invitation.status === "accepted") {
-          navigate(`/matches/${result.invitation.matchId}${judge ? "/judge" : ""}`);
-          return;
-        }
-        await load(true);
-      } catch (cause) {
-        if (!mounted.current) return;
-        if ((cause as Error & { status?: number }).status !== 401) { setActionError((cause as Error).message); await load(true); }
-      } finally {
-        mutating.current = false;
-      }
-    });
-  }
-
   const isInviteActionable = (n: NotificationRow) =>
     (n.actionable ?? (n.lifecycle ?? "new") === "new") &&
     Boolean(n.payload?.invitationId);
@@ -303,12 +265,6 @@ function ActorNotificationsPage({ userId }: { userId?: string }) {
                     : ""}
                 </p>
               ) : null}
-              {["match_invitation", "judge_invitation"].includes(n.type) && n.payload?.invitationId && isInviteActionable(n) ? (
-                <div className="row">
-                  <Button disabled={action.pending} onClick={() => void respondMatchInvite(n.payload!.invitationId!, true, n.type === "judge_invitation")}>Принять</Button>
-                  <Button variant="secondary" disabled={action.pending} onClick={() => void respondMatchInvite(n.payload!.invitationId!, false, n.type === "judge_invitation")}>Отклонить</Button>
-                </div>
-              ) : null}
               {n.type === "team_invitation" &&
               n.payload?.invitationId &&
               isInviteActionable(n) ? (
@@ -328,37 +284,6 @@ function ActorNotificationsPage({ userId }: { userId?: string }) {
                     disabled={action.pending}
                     onClick={() =>
                       void respondTeamInvite(n.payload!.invitationId!, false)
-                    }
-                  >
-                    Отклонить
-                  </Button>
-                </div>
-              ) : null}
-              {n.type === "tournament_invitation" &&
-              n.payload?.invitationId &&
-              isInviteActionable(n) ? (
-                <div className="row">
-                  <Button
-                    size="sm"
-                    disabled={action.pending}
-                    onClick={() =>
-                      void respondTournamentInvite(
-                        n.payload!.invitationId!,
-                        true,
-                      )
-                    }
-                  >
-                    Принять
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={action.pending}
-                    onClick={() =>
-                      void respondTournamentInvite(
-                        n.payload!.invitationId!,
-                        false,
-                      )
                     }
                   >
                     Отклонить

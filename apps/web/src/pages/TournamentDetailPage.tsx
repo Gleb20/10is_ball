@@ -42,13 +42,6 @@ type Participant = {
   status?: string;
 };
 
-type InvitationRow = {
-  id: string;
-  status: string;
-  invitedUserId: string;
-  displayName?: string;
-};
-
 type MatchRow = {
   id: string;
   title?: string;
@@ -70,8 +63,6 @@ export function TournamentDetailPage() {
   const [guest, setGuest] = useState("");
   const [pickUserId, setPickUserId] = useState("");
   const [pickInput, setPickInput] = useState("");
-  const [inviteUserId, setInviteUserId] = useState("");
-  const [inviteInput, setInviteInput] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionHint, setActionHint] = useState<string | null>(null);
   const { pending: busy, run: runSingleFlight } = useSingleFlight();
@@ -138,26 +129,15 @@ export function TournamentDetailPage() {
   });
 
   const participants = (tournament?.participants as Participant[]) ?? [];
-  const invitations = (tournament?.invitations as InvitationRow[]) ?? [];
   const activeParticipants = participants.filter(
     (p) => !p.status || p.status === "active",
   );
-  const pendingInvites = invitations.filter((i) => i.status === "pending");
-  const declinedInvites = invitations.filter((i) => i.status === "declined");
   const rosterUserIds = useMemo(
     () =>
       activeParticipants
         .map((p) => p.userId)
         .filter((uid): uid is string => Boolean(uid)),
     [activeParticipants],
-  );
-  const excludeInviteIds = useMemo(
-    () => [
-      ...rosterUserIds,
-      ...pendingInvites.map((i) => i.invitedUserId),
-      ...declinedInvites.map((i) => i.invitedUserId),
-    ],
-    [rosterUserIds, pendingInvites, declinedInvites],
   );
   const nameMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -569,12 +549,6 @@ export function TournamentDetailPage() {
               )}
             </div> : null}
 
-            <p className="context-tip" role="note">
-              {tournament.requireParticipantConsent
-                ? "Для приглашённых участников требуется согласие. Ручное добавление — отдельное подтверждаемое исключение."
-                : "Состав можно заполнить напрямую; приглашения остаются добровольными."}
-            </p>
-
             {actionError ? (
               <Alert
                 type="error"
@@ -708,35 +682,6 @@ export function TournamentDetailPage() {
                   </div>
                 ))
               )}
-              {isOrganizer && canEditRoster ? pendingInvites.map((inv) => (
-                <div key={inv.id} className="row">
-                  <span>
-                    {inv.displayName ?? "Игрок"}
-                    <span className="muted"> · ожидает ответ</span>
-                  </span>
-                </div>
-              )) : null}
-              {isOrganizer && canEditRoster ? declinedInvites.map((inv) => (
-                <div key={inv.id} className="row">
-                  <span>
-                    {inv.displayName ?? "Игрок"}
-                    <span className="muted"> · отказался</span>
-                  </span>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    disabled={busy}
-                    onClick={() =>
-                      void runAction(async () => {
-                        await api.cancelTournamentInvitation(id!, inv.id);
-                        await load(true);
-                      }, "Приглашение удалено")
-                    }
-                  >
-                    Удалить
-                  </Button>
-                </div>
-              )) : null}
               {canAddRegistered ? <UserPicker
                 label="Добавить игрока"
                 value={pickUserId}
@@ -770,29 +715,6 @@ export function TournamentDetailPage() {
                 }}
               >
                 Добавить в состав
-              </Button> : null}
-              {isOrganizer && canEditRoster ? <UserPicker
-                label="Пригласить игрока"
-                value={inviteUserId}
-                onChange={setInviteUserId}
-                inputValue={inviteInput}
-                onInputChange={setInviteInput}
-                excludeUserIds={excludeInviteIds}
-                excludeSelf
-              /> : null}
-              {isOrganizer && canEditRoster ? <Button
-                variant="secondary"
-                disabled={busy || !inviteUserId}
-                onClick={() =>
-                  void runAction(async () => {
-                    await api.inviteTournament(id!, inviteUserId);
-                    setInviteUserId("");
-                    setInviteInput("");
-                    await load(true);
-                  }, "Приглашение отправлено")
-                }
-              >
-                Отправить приглашение
               </Button> : null}
               {isOrganizer && canEditRoster ? <TextField
                 label="Добавить гостя (Имя Фамилия)"

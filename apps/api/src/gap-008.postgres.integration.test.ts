@@ -76,6 +76,42 @@ describePostgres.sequential("GAP-008 PostgreSQL consent serialization", () => {
     });
   }
 
+  it("GAP-029 keeps hidden invitation rows pending when visible notifications are read", async () => {
+    const setup = await isolated("gap029_projection");
+    const match = await setup.services.matches.createMatch({
+      sendPlayerInvitations: true,
+      createdByUserId: creator,
+      title: "Visible projection",
+      format: "1v1",
+      participants: [
+        { side: "A", userId: creator },
+        { side: "B", userId: player },
+      ],
+    });
+    const invitation = match!.invitations[0]!;
+    const hidden = await db.query.notifications.findFirst({
+      where: and(eq(notifications.userId, player), eq(notifications.type, "match_invitation")),
+    });
+    const [visible] = await db.insert(notifications).values({
+      userId: player,
+      type: "judge_handover_offered",
+      title: "Judge handover",
+      body: "Handover remains available",
+    }).returning();
+    const snapshot = await setup.services.notifications.visibleSnapshot(player);
+    expect(snapshot.notifications.map((row) => row.id)).toContain(visible!.id);
+    expect(snapshot.notifications.map((row) => row.id)).not.toContain(hidden!.id);
+    expect(snapshot.unreadCount).toBe(1);
+    expect(snapshot.unreadNotifications.map((row) => row.id)).toEqual([visible!.id]);
+    expect(await setup.services.notifications.markVisibleRead(player, [visible!.id, hidden!.id], "available"))
+      .toMatchObject([{ id: visible!.id }]);
+    expect(await db.query.notifications.findFirst({ where: eq(notifications.id, hidden!.id) }))
+      .toMatchObject({ readAt: null });
+    expect(await db.query.matchInvitations.findFirst({ where: eq(matchInvitations.id, invitation.id) }))
+      .toMatchObject({ status: "pending" });
+    await setup.app.close();
+  });
+
   it("serializes acceptance before start on the same match lock", async () => {
     const setup = await isolated("gap008_setup");
     const match = await setup.services.matches.createMatch({

@@ -1323,16 +1323,18 @@ export async function buildApp(opts: {
   );
 
   app.get("/api/v1/home", { preHandler: requireAuth }, async (req) => {
-    const query = req.query as { period?: string };
+    const query = req.query as { period?: string; notificationView?: string };
     const rankingPeriod = query.period === "month" ? "month" : "all_time";
     const dashboard = await services.home.dashboard(
       req.authUser!.id,
       rankingPeriod,
     );
+    if (query.notificationView === "available") {
+      const { unreadCount, unreadNotifications } = await services.notifications.visibleSnapshot(req.authUser!.id);
+      return { ...dashboard, unreadCount, unreadNotifications, notificationView: "available" };
+    }
     const unread = await services.notifications.unread(req.authUser!.id);
-    const unreadCount = await services.notifications.unreadCount(
-      req.authUser!.id,
-    );
+    const unreadCount = await services.notifications.unreadCount(req.authUser!.id);
     return {
       ...dashboard,
       unreadNotifications: unread.slice(0, 5),
@@ -1718,6 +1720,10 @@ export async function buildApp(opts: {
     "/api/v1/notifications",
     { preHandler: requireAuth },
     async (req) => {
+      const query = req.query as { notificationView?: string };
+      if (query.notificationView === "available") {
+        return { ...(await services.notifications.visibleSnapshot(req.authUser!.id)), notificationView: "available" };
+      }
       const list = await services.notifications.list(req.authUser!.id);
       return { notifications: list };
     },
@@ -1742,9 +1748,11 @@ export async function buildApp(opts: {
     async (req, reply) => {
       try {
         const body = parseBody(NotificationReadVisibleSchema, req.body);
+        const query = req.query as { notificationView?: string };
         const updated = await services.notifications.markVisibleRead(
           req.authUser!.id,
           body.notificationIds,
+          query.notificationView === "available" ? "available" : undefined,
         );
         return { updated: updated.length, notifications: updated };
       } catch (error) {

@@ -143,6 +143,20 @@ team deletion; historical membership and event rows are retained.
 
 Actionable действия вызывают endpoint исходной сущности, а не универсальную произвольную команду notification.
 
+При D37 `GET /notifications?notificationView=available` возвращает только записи,
+доступные новому UI: исключены `match_invitation`, `judge_invitation`,
+`tournament_invitation`. Ответ добавляет `notificationView=available`,
+`unreadCount` и первые пять `unreadNotifications`; count и preview вычисляются
+после отбора типов из того же owner-scoped набора. `GET /home` принимает тот же
+opt-in параметр и использует тот же видимый count/preview. Без параметра оба
+endpoint сохраняют прежние ответы для существующих клиентов. Новый web вызывает
+`POST /notifications/read-visible?notificationView=available`: сервер отмечает
+только переданные владельцем ID доступных типов. Без параметра этот POST
+сохраняет прежнюю семантику и может прочитать переданное собственное игровое
+приглашение; сам фильтр ничего не читает и не принимает. Текущий runtime отдаёт полный список без cursor; cursor
+выше остаётся целевым контрактом будущей пагинации, где отбор типов должен
+предшествовать странице.
+
 ## 8. Matches
 
 - `GET /matches`

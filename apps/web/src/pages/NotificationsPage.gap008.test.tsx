@@ -3,25 +3,28 @@ import { afterEach,beforeEach,expect,it,vi } from "vitest";
 import { cleanup,fireEvent,render,screen,waitFor } from "@testing-library/react";
 import { MemoryRouter,useLocation } from "react-router-dom";
 import { NotificationsPage } from "./NotificationsPage";
-const mock=vi.hoisted(()=>({notifications:vi.fn(),respondMatchInvitation:vi.fn(),read:vi.fn()}));
+const mock=vi.hoisted(()=>({notifications:vi.fn(),respondTeamInvitation:vi.fn(),read:vi.fn()}));
 let actorId="u";
 vi.mock("../auth",()=>({useAuth:()=>({user:{id:actorId}})}));
-vi.mock("../api",()=>({api:{notifications:mock.notifications,respondMatchInvitation:mock.respondMatchInvitation,markNotificationsReadVisible:mock.read}}));
-beforeEach(()=>{actorId="u";mock.notifications.mockReset();mock.respondMatchInvitation.mockReset();mock.read.mockReset();mock.read.mockResolvedValue({notifications:[]});mock.respondMatchInvitation.mockResolvedValue({invitation:{status:"accepted",matchId:"m"}});});
+vi.mock("../api",()=>({api:{notifications:mock.notifications,respondTeamInvitation:mock.respondTeamInvitation,markNotificationsReadVisible:mock.read}}));
+beforeEach(()=>{actorId="u";mock.notifications.mockReset();mock.respondTeamInvitation.mockReset();mock.read.mockReset();mock.read.mockResolvedValue({notifications:[]});mock.respondTeamInvitation.mockResolvedValue({status:"accepted",teamId:"t"});});
 afterEach(()=>cleanup());
 function LocationProbe(){const location=useLocation();return <output data-testid="location">{location.pathname}</output>;}
-it("GAP-008 offers actions on a read player invitation and retains terminal reason",async()=>{
+it("GAP-029 hides a read but still actionable player invitation",async()=>{
  const invitation={id:"n",type:"match_invitation",title:"Внешний матч",body:"Участие",lifecycle:"read",readAt:"2026-09-13T10:00:00Z",actionable:true,payload:{invitationId:"i",matchId:"m"}};
  mock.notifications.mockResolvedValueOnce({notifications:[invitation]}).mockResolvedValue({notifications:[{...invitation,actionable:false,lifecycle:"accepted"}]});
  render(<MemoryRouter><NotificationsPage/></MemoryRouter>);
- fireEvent.click(await screen.findByRole("button",{name:"Принять"}));
- expect(mock.respondMatchInvitation).toHaveBeenCalledWith("i",true);
+ expect(await screen.findByText("Нет актуальных уведомлений")).toBeVisible();
+ fireEvent.click(screen.getByRole("checkbox"));
+ expect(screen.queryByText("Внешний матч")).not.toBeInTheDocument();
+ expect(mock.respondTeamInvitation).not.toHaveBeenCalled();
 });
-it("GAP-008 history explains that a match started and does not offer invitation actions",async()=>{
+it("GAP-029 hides terminal judge invitation history while preserving other events",async()=>{
  mock.notifications.mockResolvedValue({notifications:[{id:"n",type:"judge_invitation",title:"Завершённое приглашение",body:"Судья",lifecycle:"cancelled",actionable:false,reasonCode:"match_started",readAt:"2026-09-13T10:00:00Z",payload:{invitationId:"i",matchId:"m"}}]});
  render(<MemoryRouter><NotificationsPage/></MemoryRouter>);
  fireEvent.click(screen.getByRole("checkbox"));
- expect(await screen.findByText(/матч уже начался/i)).toBeVisible();
+ expect(await screen.findByText("Нет уведомлений")).toBeVisible();
+ expect(screen.queryByText(/матч уже начался/i)).not.toBeInTheDocument();
  expect(screen.queryByRole("button",{name:"Принять"})).not.toBeInTheDocument();
 });
 it("GAP-008 never shows the previous actor's rows while the next actor loads",async()=>{
@@ -36,14 +39,14 @@ it("GAP-008 never shows the previous actor's rows while the next actor loads",as
  resolveNext({notifications:[]});
  await waitFor(()=>expect(screen.getByText("Нет актуальных уведомлений")).toBeVisible());
 });
-it("GAP-008 ignores a previous actor's accepted response after an actor switch",async()=>{
- let resolveAccept!:(value:{invitation:{status:string;matchId:string}})=>void;
- mock.notifications.mockResolvedValueOnce({notifications:[{id:"n",type:"match_invitation",title:"Матч A",body:"Участие",lifecycle:"read",readAt:"2026-09-13T10:00:00Z",actionable:true,payload:{invitationId:"i",matchId:"m"}}]}).mockResolvedValue({notifications:[]});
- mock.respondMatchInvitation.mockImplementationOnce(()=>new Promise(resolve=>{resolveAccept=resolve;}));
+it("GAP-029 ignores a previous actor's team acceptance after an actor switch",async()=>{
+ let resolveAccept!:(value:{status:string;teamId:string})=>void;
+ mock.notifications.mockResolvedValueOnce({notifications:[{id:"n",type:"team_invitation",title:"Команда A",body:"Участие",lifecycle:"read",readAt:"2026-09-13T10:00:00Z",actionable:true,payload:{invitationId:"i",teamId:"t"}}]}).mockResolvedValue({notifications:[]});
+ mock.respondTeamInvitation.mockImplementationOnce(()=>new Promise(resolve=>{resolveAccept=resolve;}));
  const view=render(<MemoryRouter initialEntries={["/notifications"]}><NotificationsPage/><LocationProbe/></MemoryRouter>);
  fireEvent.click(await screen.findByRole("button",{name:"Принять"}));
  actorId="b";view.rerender(<MemoryRouter initialEntries={["/notifications"]}><NotificationsPage/><LocationProbe/></MemoryRouter>);
- resolveAccept({invitation:{status:"accepted",matchId:"m"}});
+ resolveAccept({status:"accepted",teamId:"t"});
  await waitFor(()=>expect(screen.getByTestId("location")).toHaveTextContent("/notifications"));
 });
 it("GAP-008 opens a judge handover offer on the judge route",async()=>{

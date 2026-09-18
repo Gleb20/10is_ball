@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, lte } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lte, notInArray } from "drizzle-orm";
 import type { Clock } from "@tab10/test-utils";
 import type { Db } from "../../db/client.js";
 import {
@@ -25,6 +25,10 @@ type InvitationNotificationType =
   | "tournament_invitation"
   | "match_invitation"
   | "judge_invitation";
+
+const hiddenUiInvitationTypes = new Set<string>([
+  "match_invitation", "judge_invitation", "tournament_invitation",
+]);
 
 export async function markInvitationNotificationsRead(
   db: Db,
@@ -74,6 +78,17 @@ export class NotificationService {
     return this.enrichLifecycle(rows);
   }
 
+  /** D37 UI projection. Legacy list/unread APIs retain their complete history. */
+  async visibleSnapshot(userId: string) {
+    const notifications = (await this.list(userId)).filter(
+      (notification) => !hiddenUiInvitationTypes.has(notification.type),
+    );
+    const unread = notifications.filter(
+      (notification) => notification.lifecycle === "new" && notification.readAt === null,
+    );
+    return { notifications, unreadCount: unread.length, unreadNotifications: unread.slice(0, 5) };
+  }
+
   async unread(userId: string) {
     await this.synchronizeInvitationLifecycles(userId);
     return this.db.query.notifications.findMany({
@@ -109,7 +124,7 @@ export class NotificationService {
     return updated ?? null;
   }
 
-  async markVisibleRead(userId: string, notificationIds: string[]) {
+  async markVisibleRead(userId: string, notificationIds: string[], notificationView?: "available") {
     const ids = [...new Set(notificationIds)];
     if (ids.length === 0) return [];
     return this.db
@@ -119,6 +134,7 @@ export class NotificationService {
         and(
           eq(notifications.userId, userId),
           inArray(notifications.id, ids),
+          ...(notificationView === "available" ? [notInArray(notifications.type, [...hiddenUiInvitationTypes])] : []),
           isNull(notifications.readAt),
         ),
       )
@@ -402,7 +418,7 @@ export class HelpService {
       ["Подача", "Как меняется подача?", "Выберите первую подачу в настройках матча. До равного счёта у порога победы подача меняется каждые два очка, затем — после каждого. Ошибка счёта исправляется через Undo или коррекцию судьи."],
       ["Рейтинг", "Как считается рейтинг?", "Сначала сравниваются победы, затем процент побед и число матчей. Можно выбрать всё время, текущую неделю или месяц по московскому времени. Учебные и аннулированные матчи не учитываются."],
       ["Команды", "Как устроена команда?", "Капитан приглашает участников и управляет составом. Перед выходом капитан передаёт свою роль. Если активных участников не осталось, команда архивируется."],
-      ["Уведомления", "Где найти приглашения?", "Откройте уведомления с главной или из профиля. Приглашения в матч, турнир и судейство действуют 10 минут, в команду — 14 дней. История сохраняет причину завершения приглашения."],
+      ["Уведомления", "Где найти приглашения?", "Откройте уведомления с главной или из профиля. Здесь доступны приглашения в команду и сообщения о передаче судейства. Приглашение в команду действует 14 дней; история сохраняет причину его завершения."],
     ] as const;
     await this.db.transaction(async (tx) => {
       for (const [index, [category, title, body]] of articles.entries()) {

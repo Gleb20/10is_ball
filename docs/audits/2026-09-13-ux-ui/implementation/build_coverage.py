@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -189,6 +190,33 @@ def main() -> None:
         rows.append(["expert-stage-08", source_id, "expert_package", "main", headings[source_id], "expert_review",
                      disposition, decision, source_id, stage_for[source_id], ";".join(acceptance[:8]),
                      "pending_decision" if disposition == "decision_gate" else "historical_target_reconciled_not_implemented"])
+
+    # Implementation outcomes are a separate, evidence-bound overlay. Keep the
+    # frozen source routing and dispositions unchanged when regenerating CSV.
+    outcomes = json.loads((HERE / "implementation-results.json").read_text())
+    if outcomes.get("schemaVersion") != 1:
+        raise ValueError("implementation result schema mismatch")
+    by_key = {}
+    for outcome in outcomes["results"]:
+        key = (outcome["source"], outcome["source_id"], outcome["atom_id"])
+        if key in by_key or outcome["result"] != "verified_local":
+            raise ValueError(f"invalid or duplicate implementation outcome: {key}")
+        evidence = ROOT / outcome["evidence"]
+        if not evidence.is_file() or hashlib.sha256(evidence.read_bytes()).hexdigest() != outcome["evidenceSha256"]:
+            raise ValueError(f"implementation evidence missing or changed: {key}")
+        by_key[key] = outcome
+    applied = set()
+    for row in rows:
+        key = (row[0], row[1], row[3])
+        outcome = by_key.get(key)
+        if outcome is None:
+            continue
+        if (row[8], row[9], row[11]) != (outcome["canonical_task"], outcome["stage"], outcome["previousResult"]):
+            raise ValueError(f"implementation outcome drift: {key}")
+        row[11] = outcome["result"]
+        applied.add(key)
+    if applied != set(by_key):
+        raise ValueError(f"implementation outcomes not found: {set(by_key) - applied}")
 
     with (HERE / "coverage.csv").open("w", newline="") as file:
         writer = csv.writer(file)

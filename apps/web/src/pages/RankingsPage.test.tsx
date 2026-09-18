@@ -43,8 +43,7 @@ describe("BUG-010 ranking challenge guard", () => {
     });
   });
 
-  it("does not offer Challenge for the current user and keeps it for a rival", async () => {
-    const user = userEvent.setup();
+  it("D37 hides challenge entry for self and rivals while keeping profile links", async () => {
     render(
       <MemoryRouter initialEntries={["/rankings"]}>
         <AuthProvider>
@@ -68,12 +67,8 @@ describe("BUG-010 ranking challenge guard", () => {
       within(selfSlot as HTMLElement).getByRole("link", { name: /self player/i }),
     ).toHaveAttribute("href", "/profile");
 
-    await user.click(
-      within(rivalSlot as HTMLElement).getByRole("button", { name: /вызов/i }),
-    );
-    expect(screen.getByLabelText("location")).toHaveTextContent(
-      "/matches/new?opponentId=u2&opponentName=Other%20Player",
-    );
+    expect(within(rivalSlot as HTMLElement).queryByRole("button", { name: /вызов/i })).not.toBeInTheDocument();
+    expect(within(rivalSlot as HTMLElement).getByRole("link", { name: /other player/i })).toHaveAttribute("href", "/players/u2");
   });
 
   it("RANK-002/004 switches Moscow period and own-team presentation", async () => {
@@ -111,7 +106,7 @@ describe("BUG-010 ranking challenge guard", () => {
     expect(screen.getByText(/2 активных участника/i)).toBeInTheDocument();
   });
 
-  it("RANK-005 opens a public card from every ranking row and keeps Challenge for a non-podium rival", async () => {
+  it("RANK-005 opens a public card from every ranking row without Challenge", async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={["/rankings"]}>
@@ -126,8 +121,8 @@ describe("BUG-010 ranking challenge guard", () => {
     const restRow = (await screen.findByText("Rest Player")).closest(".ranking-row");
     expect(restRow).not.toBeNull();
     expect(
-      within(restRow as HTMLElement).getByRole("button", { name: /вызов/i }),
-    ).toBeInTheDocument();
+      within(restRow as HTMLElement).queryByRole("button", { name: /вызов/i }),
+    ).not.toBeInTheDocument();
     await user.click(
       within(restRow as HTMLElement).getByRole("link", { name: /rest player/i }),
     );

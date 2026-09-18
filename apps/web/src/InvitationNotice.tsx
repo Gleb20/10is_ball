@@ -5,7 +5,6 @@ import { Button } from "./ui";
 import { useVisibleRefresh } from "./useVisibleRefresh";
 
 type Notice = { id: string; title: string; body?: string; expiresAt: string };
-const invitationTypes = new Set(["team_invitation", "tournament_invitation", "match_invitation", "judge_invitation"]);
 
 export function InvitationNotice({ userId, enabled }: { userId: string; enabled: boolean }) {
   const location = useLocation();
@@ -29,7 +28,7 @@ function ActiveNotice() {
     if (!mounted.current || request !== sequence.current) return;
     const fresh = response.notifications.find((row) =>
       typeof row.id === "string" && !dismissed.current.has(row.id) &&
-      invitationTypes.has(String(row.type)) && row.actionable === true && !row.readAt &&
+      row.type === "team_invitation" && row.actionable === true && !row.readAt &&
       typeof row.expiresAt === "string" && Date.parse(row.expiresAt) > Date.now(),
     );
     setNotice(fresh ? { id: String(fresh.id), title: String(fresh.title), body: typeof fresh.body === "string" ? fresh.body : undefined, expiresAt: String(fresh.expiresAt) } : null);

@@ -8,7 +8,7 @@ import {
   RefreshButton,
   StatusChip,
 } from "../patterns";
-import { api, type MatchInvitation, type MatchParticipantInput } from "../api";
+import { api, type MatchParticipantInput } from "../api";
 import { useAuth } from "../auth";
 import {
   elapsedMs,
@@ -122,17 +122,6 @@ function EditSlotField({
   );
 }
 
-function InvitationStatus({ status }: { status: MatchInvitation["status"] }) {
-  const labels: Record<MatchInvitation["status"], string> = {
-    pending: "Ожидает ответа",
-    accepted: "Принято",
-    declined: "Отклонено",
-    expired: "Истекло",
-    cancelled: "Отменено",
-  };
-  return <span>{labels[status]}</span>;
-}
-
 function cleanPointLog(events: MatchEvent[]): Array<"A" | "B"> {
   const points: Array<"A" | "B"> = [];
   for (const event of events) {
@@ -212,7 +201,6 @@ export function MatchDetailPage() {
   }, [match?.status]);
 
   const participants = (match?.participants as EditorParticipant[] | undefined) ?? [];
-  const invitations = (match?.invitations as MatchInvitation[] | undefined) ?? [];
 
   const activeJudge = match?.activeJudge as ActiveJudge | null | undefined;
   const judgeTakenByOther =
@@ -230,19 +218,11 @@ export function MatchDetailPage() {
   const isCurrentJudge =
     Boolean(user?.id) && activeJudge?.userId === user?.id;
   const canStart = match?.status === "waiting" && isCreator;
-  const pendingPlayerInvitations = invitations.filter(
-    (invitation) => invitation.kind === "player" && invitation.status === "pending",
-  );
   const canStop =
     (match?.status === "in_progress" ||
       match?.status === "pending_confirmation") &&
     (isCreator || isCurrentJudge);
   const canNoShow = isActiveStatus && (isCreator || isCurrentJudge);
-  const currentUserParticipates = participants.some((p) => p.userId === user?.id);
-  const canCreateRevenge =
-    match?.kind === "standalone" &&
-    ["finished", "stopped"].includes(String(match?.status)) &&
-    currentUserParticipates;
 
   const sideName = (side: "A" | "B") =>
     participants
@@ -282,7 +262,7 @@ export function MatchDetailPage() {
       : null;
 
   useEffect(() => {
-    if (!editOpen && invitations.length === 0) return;
+    if (!editOpen) return;
     let current = true;
     void api.matchCreateOptions().then((response) => {
       if (current) setDirectoryOptions(response.users.map((candidate) => ({
@@ -291,7 +271,7 @@ export function MatchDetailPage() {
       })));
     }).catch(() => undefined);
     return () => { current = false; };
-  }, [editOpen, invitations.length]);
+  }, [editOpen]);
 
   async function runMutation(task: (sequence: number, requestedId: string) => Promise<void>) {
     if (!id) return;
@@ -380,55 +360,6 @@ export function MatchDetailPage() {
     } catch (error) {
       setEditError((error as Error).message);
     }
-  }
-
-  async function respondToInvitation(invitation: MatchInvitation, accept: boolean) {
-    await runMutation(async (sequence, requestedId) => {
-      setActionError(null);
-      try {
-        await api.respondMatchInvitation(invitation.id, accept);
-        const response = await api.getMatch(requestedId);
-        applyMatch(sequence, requestedId, response.match);
-      } catch (error) {
-        if ((error as Error & { status?: number }).status !== 401) setActionError((error as Error).message);
-      }
-    });
-  }
-
-  async function reinvite(invitation: MatchInvitation) {
-    await runMutation(async (sequence, requestedId) => {
-      setActionError(null);
-      try {
-        await api.createMatchInvitation(requestedId, { userId: invitation.invitedUserId, kind: invitation.kind });
-        const response = await api.getMatch(requestedId);
-        applyMatch(sequence, requestedId, response.match);
-      } catch (error) {
-        if ((error as Error & { status?: number }).status !== 401) setActionError((error as Error).message);
-      }
-    });
-  }
-
-  function invitationName(invitation: MatchInvitation) {
-    const participant = participants.find((candidate) => candidate.id === invitation.matchParticipantId);
-    if (participant?.displayName) return participant.displayName;
-    const directoryName = directoryOptions.find((option) => option.value === invitation.invitedUserId)?.label;
-    if (directoryName) return directoryName;
-    if (invitation.invitedUserId === user?.id) return `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
-    return invitation.kind === "judge" ? "Приглашённый судья" : "Приглашённый игрок";
-  }
-
-  function canReinvite(invitation: MatchInvitation) {
-    if (!isCreator || (invitation.status !== "expired" && invitation.status !== "declined")) return false;
-    const sameTarget = invitations.filter((candidate) =>
-      candidate.kind === invitation.kind &&
-      candidate.invitedUserId === invitation.invitedUserId &&
-      candidate.matchParticipantId === invitation.matchParticipantId,
-    );
-    if (sameTarget.some((candidate) => candidate.status === "accepted" || candidate.status === "pending")) return false;
-    const latest = sameTarget.reduce((current, candidate) =>
-      candidate.createdAt > current.createdAt ? candidate : current,
-    invitation);
-    return latest.id === invitation.id;
   }
 
   async function onStart() {
@@ -637,31 +568,6 @@ export function MatchDetailPage() {
                 />
               ) : null}
             </div>
-            {match.status === "waiting" && invitations.length > 0 ? (
-              <section className="card stack" aria-label="Приглашения матча">
-                <h2>Согласования</h2>
-                {invitations.map((invitation) => (
-                  <div className="list-row list-row--static" key={invitation.id}>
-                    <div className="list-row__body">
-                      <strong>{invitationName(invitation)}</strong>
-                      <span className="muted">
-                        {invitation.kind === "judge" ? "Судья" : `Игрок · сторона ${invitation.participantSide ?? "—"}`}
-                      </span>
-                      <InvitationStatus status={invitation.status} />
-                    </div>
-                    {invitation.invitedUserId === user?.id && invitation.status === "pending" ? (
-                      <div className="row">
-                        <Button size="sm" disabled={action.pending} onClick={() => void respondToInvitation(invitation, true)}>Принять</Button>
-                        <Button size="sm" variant="secondary" disabled={action.pending} onClick={() => void respondToInvitation(invitation, false)}>Отклонить</Button>
-                      </div>
-                    ) : null}
-                    {canReinvite(invitation) ? (
-                      <Button size="sm" variant="secondary" disabled={action.pending} onClick={() => void reinvite(invitation)}>Пригласить снова</Button>
-                    ) : null}
-                  </div>
-                ))}
-              </section>
-            ) : null}
             <div className="card stack" aria-label="Журнал очков">
               <h2>Журнал очков</h2>
               {pointLog.length > 0 ? (
@@ -692,11 +598,6 @@ export function MatchDetailPage() {
                   Старт
                 </Button>
               )}
-              {canStart && pendingPlayerInvitations.length > 0 ? (
-                <p className="muted" role="status">
-                  Приглашения добровольные и не мешают старту. После старта ожидающие приглашения закроются.
-                </p>
-              ) : null}
               {(match.status === "in_progress" ||
                 match.status === "pending_confirmation" ||
                 match.status === "waiting") && (
@@ -737,11 +638,6 @@ export function MatchDetailPage() {
                   onClick={() => setNoShowOpen(true)}
                 >
                   Зафиксировать неявку
-                </Button>
-              ) : null}
-              {canCreateRevenge ? (
-                <Button onClick={() => navigate(`/matches/new?revengeOf=${id}`)}>
-                  Создать реванш
                 </Button>
               ) : null}
               {canCancel ? (

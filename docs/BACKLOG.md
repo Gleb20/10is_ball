@@ -2027,13 +2027,13 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** product-availability
 - **Priority:** P1
-- **Status:** ready
+- **Status:** verified_local
 - **Evidence:** D37, U01-FORM-007, T01-06, T05-02; прежний GAP-018 target superseded.
 - **Expected:** UI не создаёт/не предлагает game/tournament invites, challenge/revenge; старые записи и API сохраняются, team invite и judge handover доступны.
-- **Actual:** current UI содержит create options, action links, old query prefill, popup/notification paths и общий unread count.
+- **Actual:** stage 1 local candidate 4.0.0 скрывает invitation/challenge/revenge UI и старые prefill query. Новый web использует `notificationView=available` для list/Home/read-visible; legacy API/data остаются доступны. Terra PASS и coordinator visual acceptance получены; публикация ещё не выполнена.
 - **Repro:** пройти Home/profile/ranking/match/tournament/notification и старые URL с pending invitation на исходном SHA.
 - **Risk:** ложный badge/пустые первые пять, утрата handover или самопроизвольное принятие старого invite.
-- **Verification:** AT-UI-INV-001/002, UI/API contract fixture mixed invite types, browser role/deep-link/401/390/desktop; authoritative persisted rows не меняются.
+- **Verification:** AT-UI-INV-001/002, mixed-type API/PGlite/PG fixture, legacy и opt-in read-visible, desktop/390 browser. Fresh `pnpm run ci` 1264/1264 (quality1129, PG72, browser59, cleanup4), 0 failed/skipped/todo/interrupted; [final local receipt](audit/evidence/gap029-stage1-final.json). Pending invitation/readAt сохранены. Шесть stage-1 atom results детерминированно `verified_local`; серверной пагинации пока нет, future-page часть AT-UI-INV-002 остаётся непроверенной.
 - **Dependencies:** D37, NOTIF-005, GAP-017/018/BUG-037 overlay; один writer для shared notification/filter seam.
 
 ### GAP-030 — Главная как единственный глобальный вход и контекстный возврат

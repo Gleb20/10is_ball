@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "candidate": {
+    "version": "4.0.0",
+    "baseHead": "35e67a6f8725eb5a94ad2cf8d476177f6c71f3cb",
+    "frozenManifestSha256": "e4399f782c0fefc2dbfc6ede116c5c15f0a4b848254a28162a9c3ead04c9ea49",
+    "compiledWebRelease": {
+      "sha": "0123456789abcdef0123456789abcdef01234567",
+      "version": "4.0.0",
+      "environment": "test",
+      "dirty": false
+    },
+    "compiledApiEntrypoint": "apps/api/dist/index.js"
+  },
+  "stand": {
+    "kind": "owned disposable in-memory PGlite",
+    "cleanedUp": true,
+    "ownedPortsClosedVerified": true
+  },
+  "screenshots": [
+    {
+      "file": "desktop-1440-match-create.png",
+      "url": "/matches/new",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "png": {
+        "width": 1440,
+        "height": 1355
+      },
+      "sha256": "e595a7f5858f44515b756bc5314193ffb6bd858173234fe057d99a279fd5eff6",
+      "checks": [
+        "roster player A and opponent visible",
+        "rules and create CTA visible",
+        "optional judge and player invitation fields absent"
+      ]
+    },
+    {
+      "file": "desktop-1440-match-create-top.png",
+      "url": "/matches/new",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "png": {
+        "width": 1440,
+        "height": 900
+      },
+      "sha256": "92a8d35a7dd6b0ee6a2ffe8301d38c7049c83574d7c42df888c936c204b69024",
+      "checks": [
+        "viewport top without full-page fixed-navigation stitching"
+      ]
+    },
+    {
+      "file": "desktop-1440-match-create-actions.png",
+      "url": "/matches/new",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "png": {
+        "width": 1440,
+        "height": 900
+      },
+      "sha256": "0b9970a6afa1cd9815e9dcd9d01d7b8730c6a207edd30d93137d5f62cfad09ce",
+      "checks": [
+        "roster and create CTA visible at scroll position",
+        "viewport capture without full-page fixed-navigation stitching"
+      ]
+    },
+    {
+      "file": "desktop-1440-tournament-create.png",
+      "url": "/tournaments",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "png": {
+        "width": 1440,
+        "height": 900
+      },
+      "sha256": "1f15a13ba1fe8ccdc4791b1d3a0f051471d0322c47a437606d545515ea96c9c2",
+      "checks": [
+        "title, format, organizer roster and create CTA visible",
+        "consent field absent"
+      ]
+    },
+    {
+      "file": "desktop-1440-tournament-detail.png",
+      "url": "/tournaments/e715d5dc-c3ed-4966-b491-1925cd1c40c3",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "png": {
+        "width": 1440,
+        "height": 1034
+      },
+      "sha256": "d117575ba5bb047c716f06c79a1b835acf15816ff6f2fdf70e1ebe27a9f8362c",
+      "checks": [
+        "rules and manual registered/guest roster visible",
+        "invitation picker absent"
+      ]
+    },
+    {
+      "file": "mobile-390-match-create.png",
+      "url": "/matches/new",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "png": {
+        "width": 390,
+        "height": 1385
+      },
+      "sha256": "926367caf20e97a5fbd05796432b1328b2a605a57807501868fc55a0f6264601",
+      "checks": [
+        "roster player A and opponent visible",
+        "rules and create CTA visible",
+        "optional judge and player invitation fields absent"
+      ]
+    },
+    {
+      "file": "mobile-390-match-create-top.png",
+      "url": "/matches/new",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "png": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "3bdbb29d8b62245e8cc797a154a93858c13f9b9f0bc63009b41669678b1e988d",
+      "checks": [
+        "viewport top without full-page fixed-navigation stitching"
+      ]
+    },
+    {
+      "file": "mobile-390-match-create-actions.png",
+      "url": "/matches/new",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "png": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "f4a771e5d1e5d6520c237b0ce0b38ab7d0a62eaf3fb81846442565ade7b273fe",
+      "checks": [
+        "roster and create CTA visible at scroll position",
+        "viewport capture without full-page fixed-navigation stitching"
+      ]
+    },
+    {
+      "file": "mobile-390-tournament-create.png",
+      "url": "/tournaments",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "png": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "180b2e9e38f5aaed3bf29604d52bd369f1b5853b5e677604253faa9db1d49eda",
+      "checks": [
+        "title, format, organizer roster and create CTA visible",
+        "consent field absent"
+      ]
+    },
+    {
+      "file": "mobile-390-tournament-detail.png",
+      "url": "/tournaments/2a36f702-38d3-4520-b445-8ab5fb989408",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "png": {
+        "width": 390,
+        "height": 1061
+      },
+      "sha256": "e1df5ddbfc21f3cff533f175bc25f0f210b0c9d8241cc5f5e943db911acd10da",
+      "checks": [
+        "rules and manual registered/guest roster visible",
+        "invitation picker absent"
+      ]
+    }
+  ],
+  "visualReview": {
+    "coordinator": "accepted_local",
+    "scope": "MatchCreate, TournamentCreate and tournament manual roster/rules at desktop 1440 and mobile 390",
+    "fullPageFixedNavigation": "Fixed bottom navigation appears mid-page in stitched full-page screenshots; viewport top/actions frames show actual viewport placement.",
+    "preExistingFinding": "Empty quick-suggestions frame in MatchCreate matches baseline and remains GAP-013 stage 5."
+  }
+}

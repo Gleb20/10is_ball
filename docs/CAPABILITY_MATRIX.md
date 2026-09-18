@@ -1,7 +1,11 @@
 # Capability matrix
 
-Снимок на **2026-09-13**. Это оценка end-to-end способности, а не наличия файла
+Снимок на **2026-09-18**. Это оценка end-to-end способности, а не наличия файла
 или зелёного unit test.
+
+GAP-029/D37 — локально проверенный кандидат 4.0.0, ещё не опубликованный.
+Исторические release-свидетельства ниже относятся к прежнему UI; локальный
+[receipt](audit/evidence/gap029-stage1-final.json) фиксирует новый overlay.
 
 Статусы: `verified` — целевой сценарий подтверждён на достаточном уровне;
 `partial` — полезная часть работает, покрытие неполно; `broken` — реализация есть,
@@ -15,11 +19,11 @@
 | Admin account lifecycle | create/role/block/unblock/reset | `verified` | Wave E functional local acceptance1229/1229 successful lanes, including38 desktop/390 browser journeys; fresh F gate1249/1249 also passes; public release and full compatibility/device acceptance remain separate | SEC-004, BUG-011, GAP-010 |
 | Session management | sliding session, list/revoke/change password | `verified` | Wave B local 1010/1010 gate and strengthened browser 19/19 passed; desktop/390 rendered review accepted. Released 2.0.0 at 8f36941; read-only exact-SHA smoke and CI34728440590 passed. | GAP-002 |
 | Own profile | view/edit/stats/avatar/sessions | `verified` | Wave B local 1010/1010 gate and strengthened browser 19/19 passed; desktop/390 rendered review accepted. Released 2.0.0 at 8f36941; read-only exact-SHA smoke and CI34728440590 passed. | GAP-002 |
-| Public player profile | privacy-safe card + challenge | `verified` | Wave B local 1010/1010 gate and strengthened browser 19/19 passed; desktop/390 rendered review accepted. Released 2.0.0 at 8f36941; read-only exact-SHA smoke and CI34728440590 passed. | GAP-002 |
+| Public player profile | privacy-safe card; challenge temporarily hidden by D37 | `verified` | Historical Wave B local/release evidence for card; GAP-029 local 1264/1264 verifies hidden challenge, public 4.0.0 not released. | GAP-002, GAP-029 |
 | Home dashboard | hero, active/recent events, stats/rival | `verified` | Wave A local 965-check gate passed and 1.11.0 exact SHA released; see wave-a-local evidence | GAP-001 |
 | Rankings | all/week/month and team ranking | `verified` | Wave B local 1010/1010 gate and strengthened browser 19/19 passed; desktop/390 rendered review accepted. Released 2.0.0 at 8f36941; read-only exact-SHA smoke and CI34728440590 passed. | GAP-004 |
 | Event visibility | Active scoped; completed visible active club-wide | `partial` | API list/detail/home enforce organizer/participant/current-judge active scope and club-wide terminal visibility; full history UX remains | GAP-003 |
-| Match creation | Operator-owned valid 1v1/2v2 roster, rules and voluntary invitations | `partial` | GAP-012 focused API/component checks prove nonplaying creator, explicit invitation flag, nonblocking start and prestart edit. Fresh desktop/390/full gate pending. | BUG-010, GAP-005, GAP-012 |
+| Match creation | Operator-owned valid 1v1/2v2 roster and rules; invitations temporarily hidden by D37 | `partial` | GAP-029 local 1264/1264: browser manual setup without UI invitations, legacy API and rows preserved; broader match completion scope remains. | BUG-010, GAP-005, GAP-012, GAP-029 |
 | Match start | Only creator/organizer starts valid match | `verified` | server actor matrix rejects participant/judge/outsider/admin without ownership | — |
 | Judge acquire/score/undo/finish | One live judge; reliable score lifecycle | `verified` | Wave C1056/1056 local gate; two-client handover/creator start, PostgreSQL races and technical undo history | BUG-004, BUG-005, GAP-005 |
 | Early stop | Organizer or active judge chooses winner/reason | `verified` | participant rejected; creator/current active judge accepted by API matrix | — |
@@ -31,7 +35,7 @@
 | Tournament scoped admin add | Minimal catalog/roster view and confirmed registered-user add only | `partial` | GAP-012 API/service tests prove minimal DTO, actor matrix, confirmation and audit; desktop/390 journey/full gate pending. | GAP-012 |
 | Tournament visibility/history | То же правило event visibility | `verified` | active scope and club-wide terminal API matrix implemented | — |
 | Teams | captain/invite/member/leave/archive/use-in-event | `verified` | Wave D final local gate 1135/1135 covers detail/welcome/edit/invite history/respond/transfer/remove/leave/archive, privacy-safe membership DTO and event-picker use. PostgreSQL serialization covers accept/block/captain races and atomic block reassignment/archive. Public Wave D release remains pending. | DATA-004, GAP-007 |
-| Notifications | actionable current items/read/expiry/popup | `verified` | Wave E functional local acceptance1229/1229 successful lanes, including38 desktop/390 browser journeys; fresh F gate1249/1249 also passes; public release and full compatibility/device acceptance remain separate | BUG-013, GAP-008 |
+| Notifications | actionable available items/read/expiry/popup under D37 | `partial` | GAP-029 local 1264/1264 covers mixed hidden/visible count and first five, legacy/opt-in reads, PG persisted rows and desktop/390 recovery. Future server pagination/subsequent-page AT-UI-INV-002 remains open; 4.0.0 not released. | BUG-013, GAP-008, GAP-029 |
 | Onboarding | once/resume/skip/restart/tutorial isolation | `verified` | Wave E functional local acceptance1229/1229 successful lanes, including38 desktop/390 browser journeys; fresh F gate1249/1249 also passes; public release and full compatibility/device acceptance remain separate | BUG-012, GAP-009 |
 | Help/feedback | FAQ, categories, context help | `verified` | Wave E functional local acceptance1229/1229 successful lanes, including38 desktop/390 browser journeys; fresh F gate1249/1249 also passes; public release and full compatibility/device acceptance remain separate | GAP-009 |
 | Accessibility/responsive | 360px+, keyboard, WCAG AA, judge landscape | `partial` | F shared geometry/contrast/focus/judge/bracket fixes pass fresh1249/1249 and Firefox7/7; WebKit native page creation fails7 cases, latest-two/device/AT and axe incomplete checks remain. [Evidence](audit/evidence/wave-f-local.json) | GAP-011, TECH-002 |
