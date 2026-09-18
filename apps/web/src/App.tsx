@@ -2,8 +2,7 @@ import { Activity, useRef } from "react";
 import { InvitationNotice } from "./InvitationNotice";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth";
-import { AppShell, shouldShowBottomNav } from "./layout";
-import type { BottomNavGuideTarget } from "./layout";
+import { AppShell } from "./layout";
 import { Alert, Button, Skeleton } from "./ui";
 import { LoginPage } from "./pages/LoginPage";
 import { FirstPasswordPage } from "./pages/FirstPasswordPage";
@@ -72,28 +71,12 @@ function AppRoutes() {
     retryStartup,
     reauthRequired,
   } = useAuth();
-  const location = useLocation();
   const onboardingActive = user?.onboardingCompletedAt === null;
-  const onboardingNavTargets: ReadonlyArray<BottomNavGuideTarget | null> = [
-    "/",
-    "/rankings",
-    "/history",
-    null,
-    "/profile",
-    "/start",
-    null,
-  ];
-  const onboardingGuideTarget = onboardingActive && location.pathname === "/onboarding"
-    ? onboardingNavTargets[user?.onboardingStep ?? 0] ?? null
-    : undefined;
-  const showNav = (!onboardingActive || location.pathname === "/onboarding") && shouldShowBottomNav(location.pathname, {
-    authenticated: Boolean(user),
-    mustChangePassword: Boolean(user?.mustChangePassword),
-  });
+  const showTaskNav = Boolean(user && !user.mustChangePassword && !onboardingActive && !reauthRequired);
 
   if (loading) {
     return (
-      <AppShell showNav={false}>
+      <AppShell>
         <div className="card stack" role="status" aria-live="polite">
           <strong>
             {startupPhase === "waking"
@@ -114,7 +97,7 @@ function AppRoutes() {
 
   if (startupPhase === "failed") {
     return (
-      <AppShell showNav={false}>
+      <AppShell>
         <div className="card stack">
           <Alert
             type="error"
@@ -129,7 +112,7 @@ function AppRoutes() {
   }
 
   return (
-    <AppShell showNav={showNav} onboardingGuideTarget={onboardingGuideTarget}>
+    <AppShell showTaskNav={showTaskNav} userId={user?.id}>
       {user ? <InvitationNotice userId={user.id} enabled={!user.mustChangePassword && !onboardingActive && !reauthRequired} /> : null}
       <Routes>
         <Route
@@ -220,6 +203,14 @@ function AppRoutes() {
           element={
             <Protected>
               <TournamentsPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/tournaments/new"
+          element={
+            <Protected>
+              <TournamentsPage createOnly />
             </Protected>
           }
         />

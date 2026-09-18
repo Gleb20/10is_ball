@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "totals": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "cases": [
+    {
+      "name": "success",
+      "status": "passed"
+    },
+    {
+      "name": "induced-failure",
+      "status": "passed"
+    },
+    {
+      "name": "sigint",
+      "status": "passed"
+    },
+    {
+      "name": "sigterm",
+      "status": "passed"
+    }
+  ]
+}

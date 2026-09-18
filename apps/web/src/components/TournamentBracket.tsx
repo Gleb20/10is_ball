@@ -22,6 +22,8 @@ import { initialsFromName } from "../rankingUi";
 import { avatarSrc } from "../avatarSrc";
 
 type Props = {
+  tournamentId?: string;
+  userId?: string;
   names: Map<string, string> | Record<string, string>;
   matches: BracketMatchLike[];
   avatars?: Map<string, string | null> | Record<string, string | null>;
@@ -122,12 +124,13 @@ function MatchCard({
   card,
   registerCard,
   highlightedParticipantIds,
+  onOpen,
 }: {
   card: BracketCard;
   registerCard: (key: string, el: HTMLElement | null) => void;
   highlightedParticipantIds?: ReadonlySet<string>;
+  onOpen: (matchId: string, judge: boolean, cardKey: string) => void;
 }) {
-  const navigate = useNavigate();
   const scoreParts = card.scoreLabel?.split(":") ?? null;
 
   return (
@@ -176,7 +179,7 @@ function MatchCard({
           <Button
             size="sm"
             aria-label={`Судить: ${card.slotA.displayName} — ${card.slotB.displayName}`}
-            onClick={() => navigate(`/matches/${card.matchId}/judge`)}
+            onClick={() => onOpen(card.matchId!, true, card.key)}
           >
             Судить
           </Button>
@@ -186,7 +189,7 @@ function MatchCard({
             size="sm"
             variant="secondary"
             aria-label={`Открыть: ${card.slotA.displayName} — ${card.slotB.displayName}`}
-            onClick={() => navigate(`/matches/${card.matchId}`)}
+            onClick={() => onOpen(card.matchId!, false, card.key)}
           >
             Открыть
           </Button>
@@ -279,13 +282,26 @@ function BandConnectors({
 function BracketBandView({
   band,
   highlightedParticipantIds,
+  tournamentId,
+  userId,
 }: {
   band: BracketBand;
   highlightedParticipantIds?: ReadonlySet<string>;
+  tournamentId?: string;
+  userId?: string;
 }) {
+  const navigate = useNavigate();
+  const [returnState] = useState(() => {
+    if (!tournamentId || !userId) return null;
+    try {
+      const raw = window.sessionStorage.getItem("tab10.bracket.return");
+      const saved = raw ? JSON.parse(raw) as { tournamentId: string; userId: string; bandId: string; zoom: number; scrollLeft: number; scrollTop: number; windowY: number; cardKey: string } : null;
+      return saved?.tournamentId === tournamentId && saved.userId === userId && saved.bandId === band.id ? saved : null;
+    } catch { return null; }
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
   const headingId = useId();
-  const [zoom, setZoom] = useState(100);
+  const [zoom, setZoom] = useState(returnState?.zoom ?? 100);
   const [edges, setEdges] = useState({ start: true, end: false });
   const updateEdges = useCallback(() => {
     const scroll = scrollRef.current;
@@ -298,6 +314,36 @@ function BracketBandView({
   const columnsRef = useRef<HTMLDivElement>(null);
   const cardEls = useRef(new Map<string, HTMLElement>()).current;
   const [revision, setRevision] = useState(0);
+
+  useLayoutEffect(() => {
+    if (!returnState) return;
+    try { window.sessionStorage.removeItem("tab10.bracket.return"); } catch { /* return context is optional */ }
+    const frame = window.requestAnimationFrame(() => {
+      const scroll = scrollRef.current;
+      if (scroll) {
+        scroll.scrollLeft = returnState.scrollLeft;
+        scroll.scrollTop = returnState.scrollTop;
+      }
+      window.scrollTo(0, returnState.windowY);
+      const card = cardEls.get(returnState.cardKey);
+      card?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [returnState, cardEls]);
+
+  function openMatch(matchId: string, judge: boolean, cardKey: string) {
+    if (tournamentId && userId) {
+      const scroll = scrollRef.current;
+      try {
+        window.sessionStorage.setItem("tab10.bracket.return", JSON.stringify({
+          tournamentId, userId, bandId: band.id, zoom,
+          scrollLeft: scroll?.scrollLeft ?? 0, scrollTop: scroll?.scrollTop ?? 0,
+          windowY: window.scrollY, cardKey, matchId,
+        }));
+      } catch { /* opening the match does not depend on saved scroll position */ }
+    }
+    navigate(`/matches/${matchId}${judge ? "/judge" : ""}`, { state: tournamentId ? { returnTo: `/tournaments/${tournamentId}`, returnLabel: "К сетке" } : undefined });
+  }
 
   const registerCard = useCallback(
     (key: string, el: HTMLElement | null) => {
@@ -391,6 +437,7 @@ function BracketBandView({
                       card={card}
                       registerCard={registerCard}
                       highlightedParticipantIds={highlightedParticipantIds}
+                      onOpen={openMatch}
                     />
                   ))}
                 </div>
@@ -404,7 +451,7 @@ function BracketBandView({
 }
 
 export function TournamentBracket(props: Props) {
-  const { names, matches, avatars, seeds, highlightedParticipantIds } = props;
+  const { names, matches, avatars, seeds, highlightedParticipantIds, tournamentId, userId } = props;
   const vm =
     "graph" in props && props.graph
       ? buildBracketViewModelV2(props.graph, names, matches, {
@@ -440,6 +487,8 @@ export function TournamentBracket(props: Props) {
           key={band.id}
           band={band}
           highlightedParticipantIds={highlightedParticipantIds}
+          tournamentId={tournamentId}
+          userId={userId}
         />
       ))}
     </div>

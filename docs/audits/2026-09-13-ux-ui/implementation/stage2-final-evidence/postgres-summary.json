@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "total": 72,
+  "passed": 72,
+  "failed": 0,
+  "skipped": 0,
+  "todo": 0,
+  "interrupted": 0,
+  "suites": [
+    "apps/api/src/db/migrations.postgres.integration.test.ts",
+    "apps/api/src/postgres-date.integration.test.ts",
+    "apps/api/src/data-004.postgres.integration.test.ts",
+    "apps/api/src/history.postgres.integration.test.ts",
+    "apps/api/src/gap-005.postgres.integration.test.ts",
+    "apps/api/src/gap-007.postgres.integration.test.ts",
+    "apps/api/src/gap-006.postgres.integration.test.ts",
+    "apps/api/src/gap-008.postgres.integration.test.ts",
+    "apps/api/src/gap-010.postgres.integration.test.ts",
+    "apps/api/src/gap-012.postgres.integration.test.ts"
+  ],
+  "migrations": "fresh and adopted baselines, exact local role initializer, migration rollback/concurrency, idempotent compiled entrypoint, and runtime-role probes",
+  "postgres": "16.15",
+  "breakdown": {
+    "foundationChecks": 9,
+    "integrationTests": 63
+  }
+}

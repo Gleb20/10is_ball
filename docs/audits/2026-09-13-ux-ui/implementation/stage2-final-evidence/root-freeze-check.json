@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-09-18T18:57:06.218846+00:00",
+  "baseHead": "e3b22876d6a60f88658c7628bf12a95a92466894",
+  "manifest": "/private/tmp/tab10-stage2-r2-freeze-v2/manifest.json",
+  "manifestSha256": "54e922b791dcbdb4c0594a691f108cf48c82627c68c1ccc37c4fc0081d9bdf8c",
+  "sourceScopeAndHashes": 74,
+  "tracked": 50,
+  "untracked": 24,
+  "patchAndArchiveHashes": "PASS",
+  "forwardApplyAndHashes": "PASS",
+  "rollbackAllBaseFiles": 1202,
+  "rollback": "PASS",
+  "disposableTree": "/private/tmp/tab10-stage2-r2-root-rollback-2yxjgp3o/tree",
+  "limitations": "Gate logs are external; aggregate CI, independent review and public deployment still pending. Initial verification attempt stopped before extraction because system Python lacks tarfile filter argument; this successful run used checked regular-file/directory extraction."
+}

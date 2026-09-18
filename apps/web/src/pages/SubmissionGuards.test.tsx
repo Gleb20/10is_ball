@@ -90,9 +90,9 @@ describe("BUG-009 scoped critical form submission guards", () => {
       apiMock: createTournament,
       renderPage: () =>
         render(
-          <MemoryRouter initialEntries={["/tournaments"]}>
+          <MemoryRouter initialEntries={["/tournaments/new"]}>
             <Routes>
-              <Route path="/tournaments" element={<TournamentsPage />} />
+              <Route path="/tournaments/new" element={<TournamentsPage createOnly />} />
             </Routes>
           </MemoryRouter>,
         ),

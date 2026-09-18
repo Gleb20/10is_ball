@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { AppShell, BottomNav } from "./layout";
+import { AppShell, TaskNavigation } from "./layout";
 import { AsyncState } from "./patterns";
 import { AuthLayout } from "./authUi";
 import { Button } from "./ui";
@@ -28,24 +28,22 @@ describe("REQ_ui__a11y_360_smoke", () => {
     setViewport(1024, 768);
   });
 
-  it("renders five semantic bottom tabs (geometry is verified by Wave F browser tests)", () => {
+  it("renders task context navigation without a persistent tab bar", () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/history"]}>
         <div>
-          <BottomNav />
+          <TaskNavigation />
         </div>
       </MemoryRouter>,
     );
-    const nav = screen.getByRole("navigation", {
-      name: /основная навигация/i,
-    });
-    expect(nav.children).toHaveLength(5);
+    expect(screen.getByRole("navigation", { name: "Возврат" })).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: /основная навигация/i })).not.toBeInTheDocument();
   });
 
   it("exposes skip link and main landmark in AppShell", () => {
     render(
       <MemoryRouter>
-        <AppShell showNav>
+        <AppShell showTaskNav>
           <p>Контент</p>
         </AppShell>
       </MemoryRouter>,
@@ -58,7 +56,7 @@ describe("REQ_ui__a11y_360_smoke", () => {
   it("hides skip link in immersive judge shell", () => {
     const { container } = render(
       <MemoryRouter initialEntries={["/matches/m1/judge"]}>
-        <AppShell showNav={false}>
+        <AppShell showTaskNav={false}>
           <p>Judge</p>
         </AppShell>
       </MemoryRouter>,
@@ -106,12 +104,7 @@ describe("REQ_ui__a11y_360_smoke", () => {
     expect(css).toMatch(/\.skip-link/);
     expect(css).toMatch(/:focus-visible/);
     expect(css).toMatch(/prefers-reduced-motion/);
-    expect(css).toMatch(
-      /\.bottom-nav__item\s*\{[^}]*min-height:\s*48px/s,
-    );
-    expect(css).toMatch(
-      /\.bottom-nav__item\s*\{[^}]*min-width:\s*44px/s,
-    );
+    expect(css).toMatch(/\.home-action\s*\{[^}]*min-height:\s*48px/s);
     expect(css).toMatch(/\.list-row\s*\{[^}]*min-height:\s*56px/s);
   });
 });

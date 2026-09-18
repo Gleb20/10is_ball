@@ -1430,12 +1430,15 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** ux-hierarchy-and-state-presentation
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local (текущая часть D36 этапа 2; исторический exact-layout target ниже superseded)
+- **Local acceptance (2026-09-18):** [stage 2 final receipt](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json) связывает base `e3b22876`, frozen R2 v2, единый CI 1291/1291, Terra PASS и root acceptance. Фактические player/current judge/organizer дела, текущая подпись судьи и иерархия Home проверены локально. Публикация 4.1.0 и телефонная приёмка не проведены; исторический экспертный GAP-015 остаётся `superseded_target`.
+- **Stage 2 implementation overlay (2026-09-18):** `currentTasks` включает все собственные дела по фактическим ролям player/current judge/organizer, с приоритетом идущей игры, первыми двумя карточками и раскрытием остальных. Активный судья берётся из `activeJudge`, terminal подпись остаётся исторической. Старые «exact layout/DTO shape» ниже — superseded этим overlay и D36: совместимый `activeEvents` сохранён, добавлены `currentTasks` и `recentRole`. Новые права, статистические формулы и миграции не вводятся.
 - **Target overlay D36:** compact avatar/name/surname/rank/played/wins/losses, direct match/tournament CTAs, current player/judge/organizer task before history; secondary stats in profile. Five-tab/Start-hub/greeting target below is superseded. See GAP-030/031 and AT-HOME-003.
 - **Current GWT / historical boundary:** Given Home for active player, judge or organizer, When current events load, Then compact header and direct match/tournament actions lead, role-scoped current task precedes history, secondary stats are in profile, all required entries remain discoverable. AT-HOME-001..003. Old five-tab/Start/greeting instructions below are historical only.
 - **Evidence:** F-AUTH-004/F-PILOT-007 и F-PILOT-005/F-RESULTS-005; [AUTH](audits/2026-09-13-ux-ui/auth-review.json), [RESULTS](audits/2026-09-13-ux-ui/results/report.md), [populated Home](audits/2026-09-13-ux-ui/results/evidence/runtime/home-results-390.png). Layout benefit remains expert hypothesis; released judge mismatch observed, score permissions unchanged. RESULTS independent evidence/target review PASS.
 - **Expected:** оператор видит текущую игру/вход к созданию раньше статистики, понимает актуальность ведения; все данные и входы сохранены.
-- **Actual:** statistics/rival block предшествует игре; active card после release использует последнее historical judge session и «Вы судили», хотя activeJudge=null.
+- **Actual:** локальный кандидат ставит действия и все собственные текущие дела перед историей и рейтингом; активная подпись судьи соответствует текущей серверной сессии. [Финальная локальная приёмка](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json).
+- **Historical actual before D36 stage 2 (superseded):** statistics/rival block предшествует игре; active card после release использует последнее historical judge session и «Вы судили», хотя activeJudge=null.
 - **Repro:** пустой и populated Home, active standalone/tournament/both; acquire→release→Home/detail compare; контроль active reservation, same-user another auth session и terminal card.
 - **Scenario / Epic / Story / Sprint:** SC-A03/M01/J02/R01 → EP-UX-CORE → US-UX-ORIENT → S3 candidate.
 - **Inputs / REQ / AT / ADR:** HOME-001–006, AT-HOME-001/002, AT-EMPTY-001, AT-VIS-001/002/004; D5/D17; accepted GAP012r6, core-target.md, [обязательный RESULTS target](audits/2026-09-13-ux-ui/results-correction.md). Исходная proposed DTO expansion заменена следующим минимальным контрактом.
@@ -2030,7 +2033,7 @@ backlog ID, version, commit, push or public deployment was created.
 - **Status:** verified_prod
 - **Evidence:** D37, U01-FORM-007, T01-06, T05-02; прежний GAP-018 target superseded.
 - **Expected:** UI не создаёт/не предлагает game/tournament invites, challenge/revenge; старые записи и API сохраняются, team invite и judge handover доступны.
-- **Actual:** stage 1 версии 4.0.0 опубликован на disposable public stand: invitation/challenge/revenge UI и старые prefill query скрыты. Новый web использует `notificationView=available` для list/Home/read-visible; legacy API/data остаются доступны. Terra PASS и coordinator visual acceptance получены; пользовательская приёмка на телефоне ещё не проведена.
+- **Actual:** stage 1 версии 4.0.0 опубликован на тестовом проде Vercel + Render + Neon: invitation/challenge/revenge UI и старые prefill query скрыты. Новый web использует `notificationView=available` для list/Home/read-visible; legacy API/data остаются доступны. Terra PASS и coordinator visual acceptance получены; пользовательская приёмка на телефоне ещё не проведена.
 - **Repro:** пройти Home/profile/ranking/match/tournament/notification и старые URL с pending invitation на исходном SHA.
 - **Risk:** ложный badge/пустые первые пять, утрата handover или самопроизвольное принятие старого invite.
 - **Verification:** AT-UI-INV-001/002, mixed-type API/PGlite/PG fixture, legacy и opt-in read-visible, desktop/390 browser. Fresh `pnpm run ci` 1264/1264 (quality1129, PG72, browser59, cleanup4), 0 failed/skipped/todo/interrupted; [final local receipt](audit/evidence/gap029-stage1-final.json). Read-only [public receipt](audit/evidence/gap029-stage1-public.json): exact SHA/4.0.0 на web/API/proxy, Render database ready, GitHub CI all four jobs success. Pending invitation/readAt сохранены. Шесть stage-1 atom results детерминированно `verified_local` как локальные атомарные проверки; серверной пагинации пока нет, future-page часть AT-UI-INV-002 остаётся непроверенной.
@@ -2040,23 +2043,30 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** navigation
 - **Priority:** P1
-- **Status:** ready
-- **Evidence:** D36, HOME-006, U01-START-001, T01-01/07; current App/layout still render five tabs.
+- **Status:** in_progress (навигация этапа 2 verified_local; Browser Back из Judge остаётся в безопасной навигации этапа 6)
+- **Local acceptance (2026-09-18):** [stage 2 final receipt](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json): CI 1291/1291, desktop/390, Terra и root PASS. Все разрешённые входы доступны также при первом pending/error Home; история и сетка восстанавливают контекст после серверного чтения; явный Home из Judge освобождает слот и подтверждается GET. Browser Back оставляет слот занятым, поэтому автоматический release для этого способа ухода не принят. Публичный стенд остаётся на 4.0.0.
+- **Implementation delta:** tabs удалены; `/` ведёт к прямым действиям, `/start` перенаправляет к ним с фокусом, `/tournaments/new` открывает создание, `/tournaments` остаётся списком. Контекст истории и сетки хранится по аккаунту в пределах вкладки и перепроверяется сервером; явный Home из Judge проходит через existing release guard. Deep-link fallback и 404 ведут к доступному разделу/Home.
+- **Evidence:** D36, HOME-006, U01-START-001, T01-01/07; final local receipt выше. Пять tabs относятся к исходной базе до этапа 2.
 - **Expected:** без bottom tabs/menu доступны все разрешённые routes; Back возвращает в ту же сетку/историю, Home безопасен при deep link/auth/404/judge.
-- **Actual:** текущая навигация опирается на five-tab shell и `/start` hub; onboarding anchors ссылаются на tabs.
+- **Actual:** локальный кандидат использует Home и контекстный возврат; native Browser Back из Judge не освобождает серверный слот.
 - **Repro:** `App.tsx` route inventory, `/start`, bracket→match, history filter→detail, direct detail reload.
 - **Risk:** потеря редких функций, контекста, judge slot или доступности при удалении shell.
 - **Verification:** AT-HOME-003, AT-ONB-004, browser 390/desktop/keyboard/reauth/403/404/safe-area; judge release по серверу.
+- **Stage 2 browser residual (2026-09-18):** compiled Chromium desktop/390 подтвердил явный Home → release и серверный `activeJudge=null`; Browser Back из Judge оставил слот активным. Это отдельный способ ухода, который текущий release guard не перехватывает. Автоматическое освобождение для browser Back не заявлять; согласовать его с отдельной работой над judge navigation/recovery до закрытия этого края.
+- **R2 verified local:** при pending/ошибке первого GET Home история и рейтинг остаются доступны именованными ссылками без вымышленных метрик; component Red→Green, compiled desktop/390 и полный gate прошли. Browser Back остаток передан этапу 6.
 - **Dependencies:** D36, GAP-029 UI availability; один shell writer, onboarding в том же delta.
 
 ### GAP-031 — Компактная Home и текущие задачи по роли
 
 - **Type:** product-hierarchy
 - **Priority:** P2
-- **Status:** ready
+- **Status:** in_progress (принятая реализация этапа 2 verified_local; HOME-003 Maps/iPhone остаётся гипотезой до воспроизведения)
+- **Local acceptance (2026-09-18):** [stage 2 final receipt](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json): Home component 10/10, API Home 9/9, полный CI 1291/1291, Terra и root PASS. Ровно 23 принятых пользовательских атома этапа 2 имеют evidence-bound `verified_local`; HOME-003 main/a01 не закрыты. Это локальная приёмка реализации, не телефонное исследование и не публикация.
+- **Implementation delta:** шапка и два прямых CTA, все личные current tasks, история `Все/Только мои`, top-3, уведомления и названные вторичные входы. `recentRole=player` фильтруется сервером до top-5; полный набор собственных результатов питает `myStats`. Обновление Home фоновое с сохранением последнего валидного ответа и явным Retry после ошибки.
+- **R2 verified local:** турнирные карточки строятся из матчей/состава/judge sessions без full-detail fanout; чужой admin каталог не становится личными `currentTasks`, но совместимый `activeEvents.tournament` сохраняет существующий `topThree` для одного выбранного турнира. HOME-004/a03 «Только мои» означает участие игроком по D36/AT-HOME-001. Для HOME-007/a03 обычный завершённый матч ставит стороны/счёт первыми, длительность третьей, знак победителя у серверной `winnerSide`; особые terminal исходы остаются видимы. Формат/судья доступны в деталях. HOME-003 Maps/iPhone остаётся непроверенным сообщением.
 - **Evidence:** D36, HOME-001/002/004/005/007, GAP-015; интервью — qualitative feedback одного автора.
 - **Expected:** compact avatar/name/surname/rank/matches/wins/losses, direct match/tournament CTA, role-aware current tasks ahead of history; secondary stats в profile; Home обновляется фоном без постоянного «Обновить», Retry после ошибки.
-- **Actual:** current hero/detail и invited-tournament emphasis перегружают начало Home.
+- **Actual:** локальный кандидат выполняет принятый target; причина сообщения о Google Maps и физическое поведение iPhone не воспроизведены.
 - **Repro:** Home с участником, судьёй, организатором, пустой историей и несколькими текущими событиями.
 - **Risk:** скрыть событие другой роли или утратить доступ к истории/ranking/notifications/profile.
 - **Verification:** AT-HOME-001..003, visibility/role API fixture и browser 390/desktop/empty/loading/error/keyboard.

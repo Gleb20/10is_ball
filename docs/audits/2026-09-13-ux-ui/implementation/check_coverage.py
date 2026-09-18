@@ -85,23 +85,57 @@ expected_stage1 = {
     ("user-session-2026-09-17-tournament-01", "T01-06", "a02"),
     ("user-session-2026-09-17-tournament-01", "T05-02", "main"),
 }
+stage2_atoms = {
+    "HOME-001": ("main", "a01", "a02"),
+    "HOME-002": ("main", "a01", "a02", "a03"),
+    "HOME-004": ("main", "a01", "a02", "a03"),
+    "HOME-005": ("main", "a01", "a02", "a03"),
+    "HOME-006": ("main", "a01", "a02"),
+    "HOME-007": ("main", "a01", "a02", "a03"),
+    "U01-START-001": ("main",),
+}
+expected_stage2 = {
+    ("user-session-2026-09-16-table-01", source_id, atom_id)
+    for source_id, atom_ids in stage2_atoms.items() for atom_id in atom_ids
+}
+if len(expected_stage2) != 23:
+    errors.append("stage 2 eligible atom count changed")
 overrides = {(r["source"], r["source_id"], r["atom_id"]): r for r in result_rows}
-if len(result_rows) != len(overrides) or set(overrides) != expected_stage1:
-    errors.append("stage 1 implementation result keys changed")
+if len(result_rows) != len(overrides) or set(overrides) != expected_stage1 | expected_stage2:
+    errors.append("stage 1 or 2 implementation result keys changed")
 coverage_by_key = {(r["source"], r["source_id"], r["atom_id"]): r for r in coverage}
+home_role_key = ("user-session-2026-09-16-table-01", "HOME-004", "a01")
+if coverage_by_key.get(home_role_key, {}).get("acceptance") != "AT-HOME-001":
+    errors.append("HOME-004/a01 lacks AT-HOME-001 bounded projection acceptance")
 for key, result in overrides.items():
     row = coverage_by_key.get(key)
-    if (result.get("canonical_task"), result.get("stage"), result.get("previousResult"), result.get("result")) != ("GAP-029", 1, "target_pending_implementation", "verified_local"):
-        errors.append(f"invalid stage 1 result: {key}")
-    if not row or (row["canonical_task"], row["stage"], row["result"]) != ("GAP-029", "1", "verified_local"):
-        errors.append(f"stage 1 coverage result mismatch: {key}")
+    if key in expected_stage1:
+        expected_task, expected_stage = "GAP-029", 1
+    elif key in expected_stage2:
+        expected_task = "GAP-030" if key[1] in {"HOME-006", "U01-START-001"} else "GAP-031"
+        expected_stage = 2
+    else:
+        errors.append(f"unrecognized implementation result: {key}")
+        continue
+    if (result.get("canonical_task"), result.get("stage"), result.get("previousResult"), result.get("result")) != (expected_task, expected_stage, "target_pending_implementation", "verified_local"):
+        errors.append(f"invalid stage {expected_stage} result: {key}")
+    if not row or (row["canonical_task"], row["stage"], row["result"]) != (expected_task, str(expected_stage), "verified_local"):
+        errors.append(f"stage {expected_stage} coverage result mismatch: {key}")
+    if key in expected_stage2 and row and row["disposition"] != "accepted_target":
+        errors.append(f"stage 2 non-target marked verified: {key}")
     evidence = ROOT / result["evidence"]
     if not evidence.is_file() or sha(evidence) != result["evidenceSha256"]:
-        errors.append(f"stage 1 evidence missing or changed: {key}")
+        errors.append(f"implementation evidence missing or changed: {key}")
 for row in coverage:
     key = (row["source"], row["source_id"], row["atom_id"])
     if row["canonical_task"] == "GAP-029" and row["stage"] == "1" and key not in overrides:
         errors.append(f"stage 1 result omitted from evidence overlay: {key}")
+    if row["stage"] == "2" and row["source"].startswith("user-session-") and row["disposition"] == "accepted_target" and key not in expected_stage2:
+        errors.append(f"new stage 2 target lacks acceptance review: {key}")
+    if row["source_id"] == "HOME-003" and row["atom_id"] in {"main", "a01"} and row["result"] == "verified_local":
+        errors.append(f"unreproduced Maps atom marked verified: {key}")
+    if row["source"] == "expert-stage-08" and row["source_id"] == "GAP-015" and row["disposition"] != "superseded_target":
+        errors.append("historical GAP-015 target was restored")
 
 required_fields = {
     "source", "source_id", "primary_turn_id", "atom_id", "atom_label", "evidence_kind",

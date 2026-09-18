@@ -54,8 +54,10 @@ export function ListRow({
   leading,
   trailing,
   onClick,
+  state,
 }: {
   to?: string;
+  state?: unknown;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   leading?: React.ReactNode;
@@ -80,7 +82,7 @@ export function ListRow({
 
   if (to) {
     return (
-      <Link to={to} className="list-row">
+      <Link to={to} state={state} className="list-row" onClick={onClick}>
         {body}
       </Link>
     );

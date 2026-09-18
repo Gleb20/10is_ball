@@ -1,63 +1,44 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { Alert, Icon } from "./ui";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Alert, Button } from "./ui";
 
 export type JudgeExitNotice = {
   kind: "success" | "warning";
   message: string;
 };
 
-const TABS = [
-  { to: "/", end: true, label: "Главная", icon: "Design/Layout" },
-  { to: "/history", label: "История", icon: "Time/Clock" },
-  { to: "/start", label: "Начать", icon: "Math & Finances/Plus" },
-  { to: "/rankings", label: "Рейтинг", icon: "Games/Trophy" },
-  { to: "/profile", label: "Профиль", icon: "People/User" },
-] as const;
-export type BottomNavGuideTarget = (typeof TABS)[number]["to"];
-
-export function shouldShowBottomNav(pathname: string, opts: {
-  authenticated: boolean;
-  mustChangePassword: boolean;
-}): boolean {
-  if (!opts.authenticated || opts.mustChangePassword) return false;
-  if (pathname === "/login" || pathname === "/first-password") return false;
-  if (/\/matches\/[^/]+\/judge$/.test(pathname)) return false;
-  return true;
+function fallbackFor(pathname: string): { to: string; label: string } {
+  if (pathname.startsWith("/teams/")) return { to: "/teams", label: "К командам" };
+  if (pathname.startsWith("/tournaments/")) return { to: "/tournaments", label: "К турнирам" };
+  if (pathname.startsWith("/matches/")) return { to: "/matches", label: "К матчам" };
+  return { to: "/", label: "На главную" };
 }
 
-export function BottomNav({
-  guideTarget,
-}: {
-  guideTarget?: BottomNavGuideTarget | null;
-}) {
-  const guideActive = guideTarget !== undefined;
+function savedSource(pathname: string, userId?: string) {
+  if (!userId || typeof window === "undefined") return null;
+  try {
+    const history = JSON.parse(window.sessionStorage.getItem("tab10.history.return") ?? "null") as { userId?: string; detailPath?: string } | null;
+    if (history?.userId === userId && history.detailPath === pathname) return { to: "/history", label: "К истории" };
+    const bracket = JSON.parse(window.sessionStorage.getItem("tab10.bracket.return") ?? "null") as { userId?: string; tournamentId?: string; matchId?: string } | null;
+    if (bracket?.userId === userId && bracket.matchId && pathname === `/matches/${bracket.matchId}` && bracket.tournamentId) {
+      return { to: `/tournaments/${bracket.tournamentId}`, label: "К сетке" };
+    }
+  } catch { return null; }
+  return null;
+}
+
+export function TaskNavigation({ userId }: { userId?: string }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const state = location.state as { returnTo?: unknown; returnLabel?: unknown } | null;
+  const source = typeof state?.returnTo === "string" && state.returnTo.startsWith("/") && !state.returnTo.startsWith("//")
+    ? { to: state.returnTo, label: typeof state.returnLabel === "string" ? state.returnLabel : "Назад" }
+    : savedSource(location.pathname, userId) ?? fallbackFor(location.pathname);
+  if (["/", "/login", "/first-password", "/onboarding", "/start"].includes(location.pathname) ||
+      /\/matches\/[^/]+\/judge$/.test(location.pathname)) return null;
   return (
-    <nav className="bottom-nav" aria-label="Основная навигация">
-      {TABS.map((tab) => {
-        const isGuideTarget = guideTarget === tab.to;
-        const content = <><Icon path={tab.icon} size={22} weight="regular" /><span>{tab.label}</span></>;
-        return guideActive ? (
-          <span
-            key={tab.to}
-            className={isGuideTarget ? "bottom-nav__item bottom-nav__item--guide" : "bottom-nav__item"}
-            data-onboarding-target={isGuideTarget ? "true" : undefined}
-            aria-current={isGuideTarget ? "step" : undefined}
-          >
-            {content}
-          </span>
-        ) : (
-          <NavLink
-            key={tab.to}
-            to={tab.to}
-            end={"end" in tab ? tab.end : false}
-            className={({ isActive }) =>
-              isActive ? "bottom-nav__item active" : "bottom-nav__item"
-            }
-          >
-            {content}
-          </NavLink>
-        );
-      })}
+    <nav className="task-navigation" aria-label="Возврат">
+      <Button size="sm" variant="secondary" onClick={() => navigate(source.to)}>{source.label}</Button>
+      {source.to !== "/" ? <Button size="sm" variant="secondary" onClick={() => navigate("/")}>На главную</Button> : null}
     </nav>
   );
 }
@@ -96,12 +77,12 @@ export function PageLayout({
 
 export function AppShell({
   children,
-  showNav,
-  onboardingGuideTarget,
+  showTaskNav = false,
+  userId,
 }: {
   children: React.ReactNode;
-  showNav: boolean;
-  onboardingGuideTarget?: BottomNavGuideTarget | null;
+  showTaskNav?: boolean;
+  userId?: string;
 }) {
   const location = useLocation();
   const immersive = /\/matches\/[^/]+\/judge$/.test(location.pathname);
@@ -123,10 +104,9 @@ export function AppShell({
       <main
         id="main-content"
         tabIndex={-1}
-        className={
-          showNav ? "app-main" : "app-main app-main--no-nav"
-        }
+        className="app-main"
       >
+        {showTaskNav && !immersive ? <TaskNavigation userId={userId} /> : null}
         {judgeExitNotice && !immersive ? (
           <Alert
             type={judgeExitNotice.kind === "success" ? "success" : "warning"}
@@ -141,7 +121,6 @@ export function AppShell({
         ) : null}
         {children}
       </main>
-      {showNav ? <BottomNav guideTarget={onboardingGuideTarget} /> : null}
     </div>
   );
 }

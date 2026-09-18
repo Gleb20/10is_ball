@@ -52,7 +52,7 @@ describe("GAP-012 tournament setup", () => {
   });
 
   it("GAP-029 creates direct-roster tournaments without a consent selector", async () => {
-    render(<MemoryRouter><TournamentsPage /></MemoryRouter>);
+    render(<MemoryRouter><TournamentsPage createOnly /></MemoryRouter>);
     expect(screen.queryByLabelText("Требовать согласие приглашённых участников")).not.toBeInTheDocument();
     fireEvent.submit(screen.getByRole("form", { name: "Создание турнира" }));
     await waitFor(() => expect(createTournament).toHaveBeenCalledWith(expect.objectContaining({

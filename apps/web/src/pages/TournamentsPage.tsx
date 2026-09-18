@@ -20,7 +20,7 @@ export function defaultTournamentTitle(d = new Date()) {
   })}`;
 }
 
-export function TournamentsPage() {
+export function TournamentsPage({ createOnly = false }: { createOnly?: boolean }) {
   const navigate = useNavigate();
   const [list, setList] = useState<Array<Record<string, unknown>> | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -32,10 +32,11 @@ export function TournamentsPage() {
   const submission = useSingleFlight();
 
   const load = useCallback(async () => {
+    if (createOnly) return;
     const res = await api.listTournaments();
     setList(res.tournaments);
-  }, []);
-  const { error: loadError, refreshing, refreshNow } = useVisibleRefresh(load);
+  }, [createOnly]);
+  const { error: loadError, refreshing, refreshNow } = useVisibleRefresh(load, { pollingEnabled: !createOnly });
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -57,12 +58,12 @@ export function TournamentsPage() {
 
   return (
     <PageLayout
-      title="Турниры"
+      title={createOnly ? "Подготовка турнира" : "Турниры"}
       action={
-        <RefreshButton refreshing={refreshing} onRefresh={refreshNow} />
+        createOnly ? undefined : <div className="row"><RefreshButton refreshing={refreshing} onRefresh={refreshNow} /><Button size="sm" onClick={() => navigate("/tournaments/new")}>Провести турнир</Button></div>
       }
     >
-      <form
+      {createOnly ? <form
         className="card stack"
         onSubmit={create}
         aria-label="Создание турнира"
@@ -97,14 +98,15 @@ export function TournamentsPage() {
           {submission.pending ? "Создание…" : "Создать"}
         </Button>
         {formError ? <p className="error" role="alert">{formError}</p> : null}
-      </form>
+      </form> : null}
 
-      <AsyncState
+      {!createOnly ? <AsyncState
         loading={list === null && !loadError}
         error={!list ? loadError : null}
         empty={list !== null && list.length === 0}
         emptyTitle="Нет турниров"
-        emptyDescription="Создайте турнир выше или через «Начать»."
+        emptyDescription="Проведите первый турнир."
+        emptyAction={<Button onClick={() => navigate("/tournaments/new")}>Провести турнир</Button>}
       >
         <div className="stack">
           {list && loadError ? (
@@ -127,7 +129,7 @@ export function TournamentsPage() {
             />
           ))}
         </div>
-      </AsyncState>
+      </AsyncState> : null}
     </PageLayout>
   );
 }

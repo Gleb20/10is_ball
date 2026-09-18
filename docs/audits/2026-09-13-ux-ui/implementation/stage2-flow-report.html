@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tab-10 — этап 2: маршруты и возврат</title>
+<style>
+  :root{color-scheme:light;--ink:#171321;--muted:#5c5368;--line:#d9d4e0;--accent:#5814ab;--bg:#faf8fc}
+  *{box-sizing:border-box}body{max-width:900px;margin:auto;padding:32px 20px;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}
+  h1{font-size:1.8rem}h2{margin-top:2.5rem;border-top:1px solid var(--line);padding-top:1rem}h3{font-size:1rem}
+  .meta,.note{color:var(--muted)}.chips{display:flex;gap:.5rem;flex-wrap:wrap}.chip{border:1px solid var(--line);border-radius:1rem;padding:.15rem .6rem;background:white}
+  .flow{list-style:none;padding:0;display:grid;gap:.75rem}.flow li{border:1px solid var(--line);border-radius:.7rem;background:white;padding:1rem}
+  .number{color:var(--accent);font-weight:700;margin-right:.5rem}.branch{border-left:3px solid var(--accent);padding-left:.7rem}
+  .scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;background:white}th,td{padding:.6rem;text-align:left;vertical-align:top;border:1px solid var(--line)}th{background:#f0eaf7}
+  .pass{font-weight:700;color:#08682b}.warn{font-weight:700;color:#8e4400}.not-tested{font-weight:700;color:#5c5368}
+  @media print{body{padding:0;background:white}.flow li{break-inside:avoid}}
+</style>
+</head>
+<body>
+<h1>Tab-10 · этап 2</h1>
+<p class="meta">18 сентября 2026 · Home как вход, текущие задачи и возврат к истории/сетке. Реализация-кандидат 4.1.0; пользовательское исследование не проводилось.</p>
+<div class="chips"><span class="chip">userflow: flow-navigation</span><span class="chip">flow-app-shell</span><span class="chip">flow-errors</span><span class="chip">interface-design</span></div>
+<h2>Сводка</h2>
+<p>Home ведёт прямо к созданию матча или турнира и показывает текущие задачи раньше истории и рейтинга. Общие нижние вкладки удалены; путь назад зависит от открытого задания и сохранённого источника. Данные после возврата загружаются заново с сервера. Проверки ниже отражают локальные тесты кандидата; опубликованный стенд остаётся на 4.0.0.</p>
+<p class="note">R2: история и рейтинг доступны даже при первом ожидании/ошибке Home; обычная завершённая карточка матча ставит имена и счёт первыми, длительность третьей и отмечает победившую сторону по серверному факту. Локальная приёмка: <a href="stage2-final-evidence/stage2-final-receipt.json">итоговый receipt</a>, единый CI 1291/1291, Terra и root PASS. На опубликованном стенде остаётся 4.0.0; пользовательское тестирование на телефоне не проводилось.</p>
+
+<h2>Поток 1 · от Home к делу</h2>
+<p class="meta">Вход: авторизованный пользователь открывает / или старую ссылку /start.</p>
+<ol class="flow">
+  <li><span class="number">1</span><strong>Главная</strong><p>Компактный профиль и уведомления, два действия, задачи по фактическим ролям, история, топ-3 и названные вторичные разделы.</p><p>Основное действие: «Начать матч» → /matches/new; «Провести турнир» → /tournaments/new.</p><p class="branch">Если есть более двух текущих дел → «Ещё N текущих дел» раскрывает остальные. Если данных нет → подсказка и создание; если запрос ошибся → Retry, ссылки остаются доступны.</p></li>
+  <li><span class="number">2</span><strong>Создание или существующее дело</strong><p>Контекстная кнопка ведёт к исходному разделу; Home всегда доступен там, где уход не нарушает владение слотом.</p><p>Основное действие: существующие создание/открытие → разрешённые детали.</p></li>
+  <li><span class="number">3</span><strong>Судейство</strong><p>Явный Home освобождает слот через серверный запрос и сообщает подтверждённый либо неопределённый результат на Home.</p><p>Основное действие: «На главную» → / после release.</p></li>
+</ol>
+<h3>Инвентарь экранов</h3><div class="scroll"><table><tr><th>Экран</th><th>Назначение</th><th>Основное действие</th><th>Loading / empty / error</th></tr>
+<tr><td>Home</td><td>Выбрать ближайшее дело</td><td>Создать матч/турнир или открыть текущую задачу</td><td>Skeleton; объяснение пустой истории/рейтинга; Retry с сохранением вторичных ссылок</td></tr>
+<tr><td>Формы</td><td>Подготовить событие</td><td>Создать по прежним правам и правилам</td><td>Существующие состояния отправки и ошибок</td></tr>
+<tr><td>Judge</td><td>Вести счёт</td><td>Счёт/завершение или явный Home</td><td>Незавершённый release даёт предупреждение, не обещание успеха</td></tr></table></div>
+<h3>Проверка антипаттернов</h3><div class="scroll"><table><tr><th>Проверка</th><th>Вердикт</th><th>Основание</th></tr>
+<tr><td>Глобальный маршрут не зависит от скрытой вкладки</td><td class="pass">PASS локально</td><td>App route/source review и compiled Chromium desktop/390 smoke</td></tr>
+<tr><td>Ошибка Home не скрывает основные переходы</td><td class="pass">PASS локально</td><td>Stage2 browser 503 fixture и Home component test</td></tr>
+<tr><td>Уход из Judge сообщает результат release</td><td class="pass">PASS для явного Home</td><td>Judge component release success/error tests; Browser Back отдельно ниже</td></tr></table></div>
+
+<h2>Поток 2 · вернуться к источнику</h2>
+<p class="meta">Вход: история с фильтром или турнирная сетка с выбранной карточкой.</p>
+<ol class="flow">
+  <li><span class="number">1</span><strong>История или сетка</strong><p>Фильтр/поиск/загруженные страницы либо масштаб/прокрутка/рабочая карточка сохраняются с ключом аккаунта в пределах вкладки.</p><p>Основное действие: открыть доступный матч.</p></li>
+  <li><span class="number">2</span><strong>Деталь</strong><p>Контекстная кнопка называет источник: «К истории» или «К сетке».</p><p>Основное действие: вернуться к источнику.</p><p class="branch">При прямой ссылке без контекста → доступный список или Home; закрытый объект не раскрывается.</p></li>
+  <li><span class="number">3</span><strong>Восстановленный список</strong><p>Данные заново запрашиваются у сервера до показа, затем восстанавливаются положение и фокус.</p><p>Основное действие: продолжить с прежнего места.</p></li>
+</ol>
+<h3>Инвентарь экранов</h3><div class="scroll"><table><tr><th>Экран</th><th>Назначение</th><th>Основное действие</th><th>Loading / empty / error</th></tr>
+<tr><td>История</td><td>Найти событие</td><td>Открыть результат</td><td>Повторная загрузка страниц до восстановления scroll; прежние empty/error</td></tr>
+<tr><td>Сетка</td><td>Продолжить турнир</td><td>Открыть рабочую карточку</td><td>Существующие loading/permission состояния; zoom и позиция из same-user контекста</td></tr>
+<tr><td>Деталь</td><td>Просмотреть событие</td><td>Контекстный Back</td><td>Прямой вход использует безопасный fallback</td></tr></table></div>
+<h3>Проверка антипаттернов</h3><div class="scroll"><table><tr><th>Проверка</th><th>Вердикт</th><th>Основание</th></tr>
+<tr><td>Возврат не ведёт в произвольную внешнюю историю</td><td class="pass">PASS локально</td><td>TaskNavigation source/fallback tests</td></tr>
+<tr><td>Возврат сохраняет контекст после повторного запроса</td><td class="pass">PASS локально</td><td>History pagination/detail browser test и tournament single-elimination/8 bracket→Judge→Cancel→bracket browser test на desktop/390: 125% и фокус рабочей карточки восстановлены. При отказе sessionStorage переход всё равно выполняется в component tests.</td></tr>
+<tr><td>Физическое мобильное поведение и spoken AT</td><td class="not-tested">НЕ ПРОВЕРЕНО</td><td>Compiled Chromium 390 не заменяет устройство и screen reader</td></tr></table></div>
+
+<h2>Визуальная проверка</h2>
+<p>R2: <a href="stage2-r2-evidence/home-default-desktop-1280.png">Home desktop</a>, <a href="stage2-r2-evidence/home-default-mobile-390.png">Home 390</a>, <a href="stage2-r2-evidence/home-error-desktop-1280.png">ошибка desktop</a>, <a href="stage2-r2-evidence/home-error-mobile-390.png">ошибка 390</a>, <a href="stage2-r2-evidence/home-result-desktop-1280.png">результат desktop</a> и <a href="stage2-r2-evidence/home-result-mobile-390.png">результат 390 с длинными одинаковыми именами</a>. Обычный Home использует локальную БД; ошибка и результаты заданы синтетическими GET /home, только для проверки представления. <a href="stage2-r2-evidence/visual-method.json">Метод R2</a>.</p>
+<p class="note">Следующие кадры относятся к исходному R1 и оставлены как историческая база:</p>
+<p><a href="stage2-evidence/home-default-desktop-1280.png">Home desktop 1280</a> и <a href="stage2-evidence/home-default-mobile-390.png">Home mobile 390</a> сняты в полном браузерном маршруте с локальной тестовой БД. Дополнительные <a href="stage2-evidence/home-tasks-desktop-1440.png">desktop 1440</a>, <a href="stage2-evidence/home-expanded-mobile-390.png">раскрытые дела 390</a>, <a href="stage2-evidence/home-long-names-mobile-390.png">длинные имена 390</a>, <a href="stage2-evidence/home-empty-mobile-390.png">пустое состояние</a> и <a href="stage2-evidence/home-error-mobile-390.png">ошибка</a> используют синтетические ответы только GET /home; это проверка расположения, не подтверждение данных. <a href="stage2-evidence/visual-method.json">Метод и полный список</a>.</p>
+<h2>Открытые вопросы и отложенное</h2>
+<ul><li>Browser Back во время владения judge slot: в compiled Chromium desktop/390 после browser Back серверный слот остался активным. Явная кнопка «На главную» затем освободила его с подтверждённым ответом. Это ограничение выхода через браузерную историю, не успех release; отдельное решение требуется перед обещанием автоматического освобождения для любого способа ухода.</li><li>Физическое устройство, WebKit и spoken AT остаются в TECH-002/GAP-011.</li><li>Сообщение о переходе из статистики в Google Maps остаётся гипотезой до воспроизведения.</li></ul>
+<footer><p class="note">Шаблон userflow адаптирован к D36/D37 и локальной доказательной базе. Это отчёт о реализуемом потоке и проверках, не результат пользовательского теста.</p></footer>
+</body></html>

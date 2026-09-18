@@ -256,6 +256,7 @@ export type HomeMatchEvent = {
   sideA?: string;
   sideB?: string;
   winnerName?: string | null;
+  winnerSide?: "A" | "B" | null;
   durationSeconds?: number | null;
   format?: string;
   judgeName?: string | null;
@@ -270,12 +271,19 @@ export type HomeTournamentEvent = {
   status: string;
   topThree?: string[];
   durationSeconds?: number | null;
+  hasCurrentMatch?: boolean;
   userRole?: "participant" | "judge" | "organizer" | "viewer";
   occurredAt?: string;
 };
 
+export type HomeCurrentTask = (HomeMatchEvent | HomeTournamentEvent) & {
+  currentRoles: Array<"player" | "current_judge" | "organizer">;
+  updatedAt: string;
+};
+
 export type HomeResponse = {
   rankingPeriod: "all_time" | "month";
+  recentRole?: "all" | "player";
   myStats: {
     rank: number | null;
     matchesPlayed: number;
@@ -295,6 +303,7 @@ export type HomeResponse = {
     match: HomeMatchEvent | null;
     tournament: HomeTournamentEvent | null;
   };
+  currentTasks?: HomeCurrentTask[];
   recentEvents: Array<HomeMatchEvent | HomeTournamentEvent>;
   topRankings: HomeRanking[];
   unreadNotifications: Array<Record<string, unknown>>;
@@ -395,8 +404,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ newPassword }),
     }),
-  home: (period: "all_time" | "month" = "all_time") =>
-    request<HomeResponse>(`/api/v1/home?period=${period}&notificationView=available`),
+  home: (period: "all_time" | "month" = "all_time", recentRole: "all" | "player" = "all") =>
+    request<HomeResponse>(`/api/v1/home?period=${period}&recentRole=${recentRole}&notificationView=available`),
   history: ({ signal, ...filters }: HistoryFilters = {}) => {
     const query = new URLSearchParams();
     for (const [key, value] of Object.entries(filters)) {

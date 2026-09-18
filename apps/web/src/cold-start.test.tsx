@@ -123,6 +123,6 @@ describe("OPS-005 bounded cold-start UX", () => {
       await vi.advanceTimersByTimeAsync(2_000);
     });
     expect(screen.queryByText("Сервис просыпается…")).toBeNull();
-    expect(screen.getByText(/привет, warm/i)).toBeVisible();
+    expect(screen.getByRole("link", { name: /профиль: warm user/i })).toBeVisible();
   });
 });

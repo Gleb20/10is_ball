@@ -95,7 +95,29 @@ Errors:
 - `GET /players/{userId}`
 - `POST /profile/onboarding/restart`
 
-`GET /home` возвращает hero stats, active summaries, last five, ranking top, rival summaries, notification indicator, `myStats`.
+`GET /home?period=all_time|month&recentRole=all|player` возвращает hero stats,
+совместимые `activeEvents`, `currentTasks`, последние пять завершённых событий,
+ranking top, rival summaries, notification indicator и `myStats`. Без
+`recentRole` действует `all`. Фильтр `player` применяется по участию игроком
+**до** ограничения пятью строками; одна роль судьи не включает событие.
+`currentTasks` содержит все видимые actor-scoped незавершённые собственные
+матчи и турниры с фактическими `currentRoles` (player/current judge/organizer),
+упорядоченные по срочности, затем `updatedAt` и стабильному ID. Историческая
+judge session не даёт текущую роль. Активное `judgeName` берётся из
+`activeJudge`; terminal события сохраняют историческую подпись судьи.
+`myStats` вычисляется по полному набору собственных матчей, независимо от
+количества более новых чужих событий. Ответ не подтверждает владение judge
+lock конкретной auth session и не расширяет права доступа.
+Home match event сохраняет `winnerName` для совместимости и добавляет
+необязательный `winnerSide: "A"|"B"|null` из серверного результата. Отсутствие
+поля в старом ответе не позволяет клиенту выводить победителя по тексту имени.
+Турнирные сводки получают имена гостей и зарегистрированных участников из
+состава игр, а текущего судью — только из неосвобождённой, не зарезервированной
+и неистёкшей сессии. Сводка не требует полного `getMatch` каждой игры сетки;
+чужой активный турнир из admin каталога не становится личным `currentTasks`.
+Для одного выбранного такого турнира legacy `activeEvents.tournament`
+сохраняет прежнюю сводку результата, включая `topThree`, без загрузки деталей
+каждой игры остальных турниров каталога.
 
 Успешный ответ `PATCH /profile/me` строится по явному allowlist и содержит только
 поля собственного профиля: `id`, `email`, `role`, `status`, `firstName`,

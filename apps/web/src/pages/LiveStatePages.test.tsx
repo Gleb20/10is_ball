@@ -216,9 +216,9 @@ describe("BUG-008 live match, tournament, list, and home surfaces", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Сеть недоступна",
     );
-    fireEvent.click(screen.getByRole("button", { name: "Обновить" }));
+    fireEvent.click(screen.getByRole("button", { name: "Повторить" }));
     expect(
-      await screen.findByText("Активных событий нет"),
+      await screen.findByText("История пока пуста"),
     ).toBeInTheDocument();
     expect(home).toHaveBeenCalledTimes(2);
   });

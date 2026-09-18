@@ -327,6 +327,14 @@ describe("AT-VIS-003 history controls and states", () => {
       .mockResolvedValueOnce({
         items: [{ type: "match", id: "second", title: "Вторая игра", status: "finished", matchKind: "standalone", scoreA: 11, scoreB: 9, format: "1v1", occurredAt: "2026-09-06T10:00:00.000Z", roles: ["player"], result: "win" }],
         nextCursor: null,
+      })
+      .mockResolvedValueOnce({
+        items: [{ type: "match", id: "first", title: "Первая игра", status: "finished", matchKind: "standalone", scoreA: 11, scoreB: 8, format: "1v1", occurredAt: "2026-09-07T10:00:00.000Z", roles: ["player"], result: "win" }],
+        nextCursor: "next",
+      })
+      .mockResolvedValueOnce({
+        items: [{ type: "match", id: "second", title: "Вторая игра", status: "finished", matchKind: "standalone", scoreA: 11, scoreB: 9, format: "1v1", occurredAt: "2026-09-06T10:00:00.000Z", roles: ["player"], result: "win" }],
+        nextCursor: null,
       });
     const user = userEvent.setup();
     function Detail() {
@@ -349,6 +357,34 @@ describe("AT-VIS-003 history controls and states", () => {
     await user.click(await screen.findByRole("button", { name: "Назад" }));
     expect(await screen.findByText("Первая игра")).toBeInTheDocument();
     expect(screen.getByText("Вторая игра")).toBeInTheDocument();
-    expect(history).toHaveBeenCalledTimes(2);
+    expect(history).toHaveBeenCalledTimes(4);
+  });
+
+  it("opens a history detail when session storage rejects return context", async () => {
+    history.mockResolvedValue({
+      items: [{ type: "match", id: "m1", title: "Матч для перехода", status: "finished", matchKind: "standalone", scoreA: 11, scoreB: 8, format: "1v1", occurredAt: "2026-09-07T10:00:00.000Z", roles: ["player"], result: "win" }],
+      nextCursor: null,
+    });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/history"]}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/matches/:id" element={<div>Деталь открыта</div>} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+    const link = await screen.findByRole("link", { name: /Матч для перехода/ });
+    const storage = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("StorageError"); });
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    try {
+      await user.click(link);
+      expect(await screen.findByText("Деталь открыта")).toBeInTheDocument();
+    } finally {
+      storage.mockRestore();
+      scrollTo.mockRestore();
+    }
   });
 });

@@ -83,7 +83,7 @@ read/playable по текущему коду/ADR, но для V1 DE извест
 ## Web routes
 
 Authenticated shell: `/`, `/history`, `/start`, `/admin`, `/matches`,
-`/matches/new`, `/matches/:id`, `/rankings`, `/tournaments`,
+`/matches/new`, `/matches/:id`, `/rankings`, `/tournaments`, `/tournaments/new`,
 `/tournaments/:id`, `/teams`, `/profile`, `/help`, `/onboarding`,
 `/notifications`. Judge route `/matches/:id/judge` immersive. Вне shell:
 `/login`, `/first-password`; `*` показывает Not Found.
@@ -94,6 +94,17 @@ persisted onboarding, полный Home dashboard, notification lifecycle, guard
 form submissions и общий visible-only refresh primitive. JudgePage сохраняет
 отдельный ownership heartbeat, сериализованную score queue и D33 terminal/void
 read-only behavior.
+
+Stage 2 candidate D36: shell без bottom tabs и общего меню; Home содержит
+прямые CTA, личные текущие дела, историю и top-3 с вторичными текстовыми
+входами. `/start` переводит к Home actions. TaskNavigation использует источник
+перехода либо same-account контекст истории/сетки и безопасный route fallback.
+История повторно загружает страницы перед восстановлением scroll; сетка
+восстанавливает zoom, позицию и рабочую карточку. Явный Home в Judge проходит
+через existing releaseAndExit и переносит результат на целевую страницу.
+При первом pending/error Home сохраняет именованные входы в историю и рейтинг;
+завершённая краткая карточка матча показывает победившую сторону по `winnerSide`
+без повтора имени. Турнирные сводки обходятся без полного match detail fanout.
 
 ## Delivery boundary
 

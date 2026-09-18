@@ -122,7 +122,27 @@ matched router path.
 
 ## Wave A contracts
 
-- `GET /api/v1/home?period=all_time|month` возвращает typed dashboard aggregate.
+- `GET /api/v1/home?period=all_time|month&recentRole=all|player` возвращает
+  typed dashboard aggregate. `recentRole=player` выбирает последние пять
+  событий с участием игроком после actor visibility и до лимита. Добавлен
+  `currentTasks` с фактическими `currentRoles`, `updatedAt` и признаком
+  текущего матча в турнире. Список не ограничен первой карточкой каждого типа;
+  `activeEvents`, `hero` и `lastMatches` сохранены для старых клиентов.
+  Активное `judgeName` отражает `activeJudge`, terminal — историческую сессию.
+  `myStats` учитывает полный набор собственных standalone-результатов, даже
+  когда более 50 свежих чужих событий видимы в клубе. Статистика и rival
+  вычисляются из уже отобранных match rows и одной bulk-выборки зарегистрированных
+  соперников; `getMatch` вызывается только для текущих и пяти недавних
+  standalone-карточек, а не для каждого личного исторического результата.
+  Турнирные карточки сводятся из строк матчей, участников и judge sessions без
+  вызова `getMatch` для каждой игры; текущим судья считается только при
+  действующей неосвобождённой и не зарезервированной сессии. Чужой активный
+  турнир, видимый в admin каталоге, не становится личной задачей; совместимый
+  `activeEvents.tournament` сохраняет сводку и существующий `topThree` только
+  для одного выбранного активного турнира, с ролью viewer и без full-detail
+  fanout остальных турниров каталога.
+  Match event добавляет необязательный `winnerSide` из результата; старые
+  `winnerName` и ответы без нового поля остаются допустимыми.
 - `PATCH /api/v1/me/onboarding` принимает `set-step`, explicit `complete` или
   `restart` и возвращает безопасную user projection.
 - `POST /api/v1/notifications/read-visible` атомарно отмечает переданные owner

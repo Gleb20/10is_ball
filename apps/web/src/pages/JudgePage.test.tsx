@@ -97,6 +97,7 @@ function renderJudge(path = "/matches/m1/judge") {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
+        <Route path="/" element={<Destination label="home" />} />
         <Route path="/matches/:id/judge" element={<JudgePage />} />
         <Route
           path="/matches/:id"
@@ -441,6 +442,25 @@ describe("REQ_ui__judge_immersive", () => {
     });
 
     expect(await screen.findByText("match-detail")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/слот судьи освобождён/i);
+  });
+
+  it("GAP-030 Home waits for judge release and reports success at Home", async () => {
+    const user = userEvent.setup();
+    const release = deferred<{ ok: boolean }>();
+    releaseJudge.mockReturnValue(release.promise);
+    renderJudge();
+
+    await screen.findByTestId("judge-screen");
+    await user.click(screen.getByRole("button", { name: "На главную" }));
+    expect(releaseJudge).toHaveBeenCalledWith("m1");
+    expect(screen.getByTestId("judge-screen")).toBeInTheDocument();
+
+    await act(async () => {
+      release.resolve({ ok: true });
+      await release.promise;
+    });
+    expect(await screen.findByText("home")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(/слот судьи освобождён/i);
   });
 

@@ -1,5 +1,42 @@
 # Tab-10 — статус проекта
 
+## Этап 2 D36 — локально принят, кандидат 4.1.0, 2026-09-18
+
+[Финальный receipt](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json)
+связывает base `e3b22876d6a60f88658c7628bf12a95a92466894`, frozen R2 v2
+manifest `54e922b791dcbdb4c0594a691f108cf48c82627c68c1ccc37c4fc0081d9bdf8c`,
+Terra PASS, root scope/visual/rollback PASS и единый `pnpm run ci` **1291/1291**:
+cleanup 4, quality 1146, PostgreSQL 72, compiled browser 69. Ноль failed,
+skipped, todo или interrupted; все 74 source hashes совпали после CI. R1 и
+первый R2 freeze сохранены неизменными, commit/push/deploy не выполнялись.
+
+Текущая часть GAP-015 принята `verified_local`; GAP-030 остаётся `in_progress`
+из-за Browser Back из Judge, который оставляет судейский слот занятым (явный
+Home release подтверждён сервером). GAP-031 остаётся `in_progress` только из-за
+невоспроизведённого HOME-003 Maps/iPhone; принятые 23 пользовательских атома
+этапа 2 имеют evidence-bound `verified_local`. Совместимый
+`activeEvents.tournament` сохраняет `topThree` одного выбранного чужого
+активного турнира admin без включения чужого каталога в `currentTasks` и без
+full-detail fanout. Физический iPhone, WebKit, spoken AT и пользовательская
+приёмка не проводились. Публичный стенд остаётся на 4.0.0; 4.1.0 не опубликован.
+
+## Этап 2 D36 — исторический R1 кандидат до R2 приёмки, 2026-09-18
+
+В worktree от опубликованной базы `e3b22876d6a60f88658c7628bf12a95a92466894`
+подготовлены GAP-030/031 и актуальная часть GAP-015: Home как глобальный вход,
+текущие дела по роли, прямые создание матча/турнира, фильтр «Только мои» до
+ограничения пятью, контекстный возврат из истории и сетки. Совместимый
+`activeEvents` сохранён, добавлены `currentTasks`/`recentRole`; новых миграций нет.
+Версия 4.1.0 — локальный кандидат. Публичный стенд остаётся на 4.0.0, пока
+координатор не примет diff и не разрешит публикацию. Статусы GAP-030/031/015
+`in_progress`; независимый review ещё не зафиксирован. Compiled Chromium
+desktop/390 + 9 migration foundation прошёл 67/67 на изолированном PostgreSQL.
+Явная кнопка Home из Judge освобождает слот; Browser Back в обоих браузерных
+проектах оставил слот активным и записан как остаточный край GAP-030.
+[Локальный receipt этапа](audits/2026-09-13-ux-ui/implementation/stage2-evidence/stage2-local-receipt.json)
+разделяет финальные quality/browser lanes, PostgreSQL после API-дельты и
+предшествующий неуспешный агрегат. Финальный `verify:fast` — 1141/1141.
+
 ## GAP-029, этап 1 verified_prod — 2026-09-18
 
 Опубликованная версия 4.0.0 на базе документационного stage 0 скрывает игровые и

@@ -198,31 +198,26 @@ test("Wave E onboarding resume, tutorial return, restart and Help feedback", asy
     await page.getByRole("button", { name: /Сохранить/ }).click();
     await expect(page).toHaveURL(/\/onboarding$/);
 
-    const navigation = page.getByRole("navigation", { name: "Основная навигация", exact: true });
-    const expectGuide = async (heading: string, navTarget?: string) => {
+    const expectGuide = async (heading: string) => {
       await expect(page.getByRole("heading", { name: heading, exact: true })).toBeFocused();
-      if (navTarget) {
-        await expect(navigation.getByText(navTarget, { exact: true }).locator("..")).toHaveAttribute("data-onboarding-target", "true");
-      } else {
-        await expect(navigation.locator("[data-onboarding-target='true']")).toHaveCount(0);
-      }
+      await expect(page.getByRole("navigation", { name: "Основная навигация", exact: true })).toHaveCount(0);
     };
 
-    await expectGuide("Главная", "Главная");
+    await expectGuide("Главная");
     await page.getByRole("button", { name: "Пропустить шаг", exact: true }).click();
-    await expectGuide("Рейтинг", "Рейтинг");
+    await expectGuide("Рейтинг");
     await page.getByRole("button", { name: "Далее", exact: true }).click();
-    await expectGuide("История", "История");
+    await expectGuide("История");
     await page.getByRole("button", { name: "Далее", exact: true }).click();
     await expectGuide("Уведомления");
     await expect(page.getByRole("note", { name: "Где найти уведомления", exact: true })).toContainText(/Главной.*Профиле/);
     await page.getByRole("button", { name: "Далее", exact: true }).click();
-    await expectGuide("Профиль", "Профиль");
+    await expectGuide("Профиль");
     await page.reload();
-    await expectGuide("Профиль", "Профиль");
+    await expectGuide("Профиль");
     await expect(page.getByText("Шаг 5 из 7", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Далее", exact: true }).click();
-    await expectGuide("Начать", "Начать");
+    await expectGuide("Начать");
     await page.getByRole("button", { name: "Далее", exact: true }).click();
     await expectGuide("Учебный матч");
     await page.getByRole("button", { name: "Матч с Призрачным Олегом", exact: true }).click();
@@ -239,7 +234,7 @@ test("Wave E onboarding resume, tutorial return, restart and Help feedback", asy
     await page.goto("/profile");
     await page.getByText("Пройти онбординг заново", { exact: true }).click();
     await expect(page).toHaveURL(/\/onboarding$/);
-    await expectGuide("Главная", "Главная");
+    await expectGuide("Главная");
     await page.getByRole("button", { name: "Закрыть онбординг", exact: true }).click();
     await expect(page).toHaveURL(/\/$/);
 

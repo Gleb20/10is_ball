@@ -25,7 +25,7 @@ for (const format of ["single_elimination", "double_elimination"] as const) for 
     const title = `D ${format} ${size} ${info.project.name}`;
     const errors: string[] = []; page.on("pageerror", (e) => errors.push(e.message));
     try {
-      await login(page); await page.goto("/tournaments");
+      await login(page); await page.goto("/tournaments/new");
       await page.getByLabel("Название", { exact: true }).fill(title);
       if (format === "double_elimination") await page.getByRole("button", { name: "Double", exact: true }).click();
       await page.getByRole("button", { name: "Создать", exact: true }).click();
@@ -57,6 +57,20 @@ for (const format of ["single_elimination", "double_elimination"] as const) for 
       await page.getByRole("button", { name: "Старт", exact: true }).click();
       let tournament = (await (await api.get(`/api/v1/tournaments/${id}`)).json()).tournament;
       await expect.poll(async () => (await (await api.get(`/api/v1/tournaments/${id}`)).json()).tournament.status).toBe("in_progress");
+      if (format === "single_elimination" && size === 8) {
+        const zoomIn = page.getByRole("button", { name: "Увеличить сетку: Победители" });
+        await zoomIn.click();
+        await expect(page.getByRole("status", { name: "Масштаб: Победители" })).toHaveText("125%");
+        const workingCard = page.getByRole("button", { name: /^Судить:/ }).first();
+        const cardKey = await workingCard.locator("xpath=ancestor::*[@data-bracket-card]").getAttribute("data-bracket-card");
+        expect(cardKey).toBeTruthy();
+        await workingCard.click();
+        await expect(page.getByTestId("judge-setup")).toBeVisible();
+        await page.getByRole("button", { name: "Отмена" }).click();
+        await expect(page).toHaveURL(new RegExp(`/tournaments/${id}$`));
+        await expect(page.getByRole("status", { name: "Масштаб: Победители" })).toHaveText("125%");
+        await expect(page.locator(`[data-bracket-card="${cardKey}"] button`).first()).toBeFocused();
+      }
       const completed = new Set<string>();
       for (let step = 0; step < 40; step++) {
         tournament = (await (await api.get(`/api/v1/tournaments/${id}`)).json()).tournament;

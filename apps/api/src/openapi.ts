@@ -143,11 +143,15 @@ const schemas: Record<string, JsonSchema> = {
       sideA: { type: "string" },
       sideB: { type: "string" },
       winnerName: { type: "string", nullable: true },
+      winnerSide: { type: "string", enum: ["A", "B"], nullable: true },
       durationSeconds: { type: "integer", minimum: 0, nullable: true },
       format: { type: "string" },
       judgeName: { type: "string", nullable: true },
       topThree: { type: "array", maxItems: 3, items: { type: "string" } },
       userRole: { type: "string", enum: ["participant", "judge", "organizer", "viewer"] },
+      currentRoles: { type: "array", uniqueItems: true, items: { type: "string", enum: ["player", "current_judge", "organizer"] } },
+      hasCurrentMatch: { type: "boolean" },
+      updatedAt: { type: "string", format: "date-time" },
       occurredAt: { type: "string", format: "date-time" },
     },
     additionalProperties: false,
@@ -157,6 +161,7 @@ const schemas: Record<string, JsonSchema> = {
     required: ["rankingPeriod", "myStats", "activeEvents", "recentEvents", "topRankings", "unreadNotifications", "unreadCount"],
     properties: {
       rankingPeriod: { type: "string", enum: ["all_time", "month"] },
+      recentRole: { type: "string", enum: ["all", "player"] },
       myStats: {
         type: "object",
         required: ["rank", "matchesPlayed", "wins", "losses", "winRate", "averagePoints", "displayName", "avatarKey", "rival"],
@@ -192,6 +197,7 @@ const schemas: Record<string, JsonSchema> = {
         additionalProperties: false,
       },
       recentEvents: { type: "array", maxItems: 5, items: ref("HomeEvent") },
+      currentTasks: { type: "array", items: ref("HomeEvent") },
       topRankings: { type: "array", maxItems: 3, items: ref("Ranking") },
       unreadNotifications: { type: "array", maxItems: 5, items: ref("Notification") },
       unreadCount: { type: "integer", minimum: 0 },
@@ -1066,7 +1072,7 @@ export function openApiSpec(releaseVersion = productVersion()) {
         get: operation({ operationId: "getRankings", summary: "Get global or current-team rankings", tag: "Rankings", parameters: [queryParameter("period", { type: "string", enum: ["all_time", "week", "month", "calendar_week", "calendar_month"] }), queryParameter("scope", { type: "string", enum: ["all_time", "week", "month", "calendar_week", "calendar_month"] }), queryParameter("teamId", { type: "string", format: "uuid" })], response: ref("RankingResponse") }),
       },
       "/api/v1/home": {
-        get: operation({ operationId: "getHome", summary: "Get home dashboard", tag: "Home", parameters: [queryParameter("period", { type: "string", enum: ["all_time", "month"] }), queryParameter("notificationView", { type: "string", enum: ["available"] })], response: ref("HomeDashboard") }),
+        get: operation({ operationId: "getHome", summary: "Get home dashboard", tag: "Home", parameters: [queryParameter("period", { type: "string", enum: ["all_time", "month"] }), queryParameter("recentRole", { type: "string", enum: ["all", "player"] }), queryParameter("notificationView", { type: "string", enum: ["available"] })], response: ref("HomeDashboard") }),
       },
       "/api/v1/tournaments": {
         get: operation({ operationId: "listTournaments", summary: "List visible tournaments; non-contextual admins receive the minimal id/title/status projection", tag: "Tournaments", response: arrayRef("tournaments", "TournamentListItem") }),

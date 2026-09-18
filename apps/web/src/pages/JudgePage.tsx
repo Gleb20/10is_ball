@@ -166,13 +166,17 @@ export function JudgePage() {
   }, [id, updateMatch]);
 
   const exitAfterJudge = useCallback(
-    (m: MatchState | null, notice?: JudgeExitNotice) => {
+    (m: MatchState | null, notice?: JudgeExitNotice, destination?: "/") => {
       if (m?.kind === "tutorial") {
         navigate("/onboarding");
         return;
       }
       const tournamentId = m?.tournamentId ? String(m.tournamentId) : null;
       const options = notice ? { state: { judgeExitNotice: notice } } : undefined;
+      if (destination === "/") {
+        navigate("/", options);
+        return;
+      }
       if (tournamentId) {
         navigate(`/tournaments/${tournamentId}`, options);
         return;
@@ -559,7 +563,7 @@ export function JudgePage() {
     }
   }
 
-  async function releaseAndExit() {
+  async function releaseAndExit(destination?: "/") {
     if (
       !id ||
       exitPendingRef.current ||
@@ -594,7 +598,7 @@ export function JudgePage() {
     }
     exitPendingRef.current = false;
     setExitPending(false);
-    exitAfterJudge(matchRef.current ?? match, notice);
+    exitAfterJudge(matchRef.current ?? match, notice, destination);
   }
 
   async function onConfirmFinish() {
@@ -949,6 +953,12 @@ export function JudgePage() {
           ) : null}
         </div>
         <div className="judge-toolbar__actions">
+          {!readonly && !lostLock ? <Button
+            variant="secondary"
+            className="judge-touch"
+            onClick={() => void releaseAndExit("/")}
+            disabled={exitPending || setupPending || undoPending || terminalPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
+          >На главную</Button> : null}
           {isSetup ? (
             <Button
               variant="secondary"

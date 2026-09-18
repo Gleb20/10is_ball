@@ -59,7 +59,7 @@ async function loginBrowser(page: Page) {
   await page.getByRole("button", { name: "Войти" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(
-    page.getByRole("heading", { name: "Привет, Admin" }),
+    page.getByRole("link", { name: /Профиль: Admin/ }),
   ).toBeVisible();
 }
 

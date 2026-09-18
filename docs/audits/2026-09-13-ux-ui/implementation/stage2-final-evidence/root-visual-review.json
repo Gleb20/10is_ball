@@ -1,0 +1,34 @@
+{
+  "reviewedAt": "2026-09-18T18:46:24.541294+00:00",
+  "reviewer": "root",
+  "method": "Each of six saved PNG files inspected via view_image. Not a fresh independent browser session. Source tree not yet frozen.",
+  "files": {
+    "home-default-desktop-1280.png": "e368cb33b99a38809e7d13a3acb6981735ddc694dfd5666c8974aaa1cb466d25",
+    "home-default-mobile-390.png": "5d9292aa1acfeb1c4bb755352048a8053e93b0d3b4a2e751eef9a06318cbeb81",
+    "home-error-desktop-1280.png": "2a076db545c3164c2f1f85fbf55584d03b299a7662b3d24b744839eb6c743c8d",
+    "home-error-mobile-390.png": "25943bb7cdd89f22a8b458a385a4edc08b11e1aebd24cab651e10bf630ad8f14",
+    "home-result-desktop-1280.png": "924dfc318de75936f43c7e6510da374d2c5410aae5695432fafdf42441c1906a",
+    "home-result-mobile-390.png": "da49d5d6d115cbe37218d161b442f3d1ed6bbd775711364c6aedd7a79182bee8"
+  },
+  "observations": [
+    "History and ranking links are visible during initial Home HTTP503 failure, in desktop and mobile images.",
+    "Completed standalone result cards retain names, score and duration; winner mark is adjacent to the response-selected side despite equal display names. No duplicated winner sentence or ordinary finished badge.",
+    "Long names wrap inside the mobile card; score remains visible. Keyboard and API correctness require separate test evidence.",
+    "Real disposable data includes cancelled/stopped cards with explicit status. Existing status chip arrows are deferred to stage3 GAP034, not claimed fixed."
+  ],
+  "limitations": [
+    "Default images use live disposable API; error and result-specific images intercept GET /home as documented in visual-method.json.",
+    "No physical iPhone or spoken assistive technology verification.",
+    "Tournament placement presentation belongs to stage8; existing topThree rendering is not accepted as a new sports result algorithm."
+  ],
+  "decision": "Visual R2 observations acceptable within stage2 scope; awaiting frozen source, aggregate CI, independent review and root acceptance.",
+  "followup": {
+    "reviewedAt": "2026-09-18T18:54:30.759710+00:00",
+    "files": {
+      "home-result-mobile-390.png": "09c5b0aa4316360d160995530c2afb3e8590f17033445b724fd3e5703fcb40b9",
+      "home-result-desktop-1280.png": "545d70d1eb5986a71d692ef554939ac1b78c345d55fa400207248e04e62b88bb"
+    },
+    "method": "Both changed result images reopened via view_image after no-break winner-marker fix.",
+    "result": "Winner mark stays with the last name on mobile; names and score stay within card. New clean fixture contains known zero match counts; no claim that loading/error fallback displays zero."
+  }
+}

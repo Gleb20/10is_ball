@@ -1,0 +1,264 @@
+{
+  "schemaVersion": 1,
+  "state": "accepted_local_with_explicit_residuals",
+  "baseHead": "e3b22876d6a60f88658c7628bf12a95a92466894",
+  "candidateVersion": "4.1.0",
+  "frozenSourceManifest": "/private/tmp/tab10-stage2-r2-freeze-v2/manifest.json",
+  "frozenSourceManifestSha256": "54e922b791dcbdb4c0594a691f108cf48c82627c68c1ccc37c4fc0081d9bdf8c",
+  "frozenSourcePaths": 74,
+  "frozenSourceHashCheck": "74/74 match after aggregate CI",
+  "frozenRollback": "forward package reproduced source; reverse restored 1202 base files in disposable tree",
+  "aggregate": {
+    "total": 1291,
+    "passed": 1291,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "lanes": [
+    {
+      "name": "cleanup-foundation",
+      "status": "passed",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "quality",
+      "status": "passed",
+      "total": 1146,
+      "passed": 1146,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "postgres",
+      "status": "passed",
+      "total": 72,
+      "passed": 72,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "browser-prodlike",
+      "status": "passed",
+      "total": 69,
+      "passed": 69,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    }
+  ],
+  "copies": {
+    "aggregate-summary.json": "758dcd6824a82e5ffedd567bcf1d0134e40789604e52b305a214906da9d3a7d7",
+    "browser-summary.json": "708f62044edd6597e608c93d67f4acacaa1fb408ec1c3a70981abf6af95a5bb7",
+    "cleanup-summary.json": "afb042c3c36b6406714ff4590663517ce692a5c09b3599cfddf3aefe94a43a90",
+    "coverage-review.md": "ea92695651ff1c5ba056f347e5be39a05f95b9e33b46736382e90cef94fffe59",
+    "postgres-summary.json": "7c8a06f86f4d8cd6ac6288a7bfc89983b0b4713740e30edfc6ed6d4b111a62d1",
+    "quality-summary.json": "179547e894b2d6c4a2c7dbd08795ac2f48969f89d8db72fab57f585ab4116e74",
+    "root-freeze-check.json": "cf4a288d8e5a46fc1f66eb05dcd218d54963d818cc00d498882e57c3afb30a09",
+    "root-local-acceptance.json": "367632c1b1a05dc3bd335174bc4fa8b104ae5f350bfa4519ce7f9e462771eec8",
+    "root-visual-review.json": "246960bb8ddba3da6d018b9f4a35caf167a5835d772ecfc3277d741299c80b6b",
+    "terra-review.md": "51e40a900f76eb16f976b3fa497b78cfc561420614566f6047d8647518535c4f"
+  },
+  "independentReview": "Terra R2 PASS; root scope, visual, hash and rollback review PASS; root accepted local implementation",
+  "boundedTournamentProjection": {
+    "test": "apps/api/src/home.integration.test.ts / foreign active tournament for admin",
+    "facts": [
+      "16-match foreign active bracket",
+      "legacy activeEvents topThree includes winner",
+      "currentTasks empty",
+      "getMatch zero",
+      "tournaments.get exactly once"
+    ]
+  },
+  "coverageEligibleAtoms": [
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-001",
+      "atom_id": "main",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-LIVE-002"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-001",
+      "atom_id": "a01",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-LIVE-002"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-001",
+      "atom_id": "a02",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-LIVE-002"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-002",
+      "atom_id": "main",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-002",
+      "atom_id": "a01",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-002",
+      "atom_id": "a02",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-002",
+      "atom_id": "a03",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-004",
+      "atom_id": "main",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-004",
+      "atom_id": "a01",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-001"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-004",
+      "atom_id": "a02",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-002"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-004",
+      "atom_id": "a03",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-001"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-005",
+      "atom_id": "main",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-005",
+      "atom_id": "a01",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-002"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-005",
+      "atom_id": "a02",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-005",
+      "atom_id": "a03",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-006",
+      "atom_id": "main",
+      "canonical_task": "GAP-030",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-006",
+      "atom_id": "a01",
+      "canonical_task": "GAP-030",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-006",
+      "atom_id": "a02",
+      "canonical_task": "GAP-030",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-007",
+      "atom_id": "main",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-007",
+      "atom_id": "a01",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-007",
+      "atom_id": "a02",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "HOME-007",
+      "atom_id": "a03",
+      "canonical_task": "GAP-031",
+      "acceptance": "AT-HOME-003"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "U01-START-001",
+      "atom_id": "main",
+      "canonical_task": "GAP-030",
+      "acceptance": "AT-HOME-003"
+    }
+  ],
+  "coverageExclusions": [
+    "HOME-003 main/a01 Maps and physical-cause report remains unproven",
+    "historical expert GAP-015 row remains superseded_target"
+  ],
+  "residuals": [
+    "Browser Back from Judge leaves active judge slot; explicit Home release verified; safe navigation work remains in stage 6",
+    "physical iPhone, WebKit and spoken assistive technology not verified",
+    "Google Maps report not reproduced",
+    "user phone acceptance not conducted"
+  ],
+  "publication": {
+    "commit": false,
+    "push": false,
+    "deploy": false,
+    "publicVersion": "4.0.0",
+    "candidateVersion": "4.1.0"
+  }
+}

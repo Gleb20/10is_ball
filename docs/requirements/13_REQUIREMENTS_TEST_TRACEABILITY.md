@@ -1,21 +1,22 @@
 # Requirements ↔ Tests Traceability
 
-## Интерфейсная программа D36/D37 — stage 1 local evidence
+## Интерфейсная программа D36/D37 — stage 2 accepted locally
 
 | Новый target | Acceptance | Текущее свидетельство | Coverage / backlog |
 |---|---|---|---|
-| HOME-007 и обновлённые HOME-001/002/004 | AT-HOME-001..003 | Решение и source review; browser реализация ещё не выполнена | `partial`; GAP-030/031, GAP-015 |
+| HOME-007 и обновлённые HOME-001/002/004 | AT-HOME-001..003 | [Stage 2 final receipt](../audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json): R2 Red→Green `HomePage.test.tsx` 10/10 проверяет pending/error ссылки, стороны/счёт, winnerSide при одинаковых именах, 2×2 и особые исходы; `home.integration.test.ts` 9/9 проверяет 55 личных результатов, крупную чужую admin сетку с bounded projection и legacy topThree без full-detail fanout, guest/registered names и active/expired judge. `stage2-home.spec.ts` прошёл в compiled desktop/390 CI 1291/1291; Terra/root PASS. HOME-004/a01 связан с AT-HOME-001. Browser Back Judge и HOME-003 Maps/iPhone остаются явными остатками. | 23 user atoms `verified_local`; current GAP-015 target verified_local, GAP-030/031 in_progress по остаткам |
 | UI-001 статусные чипы и иконки всех поверхностей | AT-UI-STATUS-001 | U01-DETAIL-002/U01-JUDGE-003; stage 3 inventory и runtime consumers ещё не выполнены | `partial`; GAP-034, затем GAP-017/032 и соответствующие экранные work orders |
 | TOURNAMENT-020 phase composition | AT-TRN-024 | T01/T02 rules/roster и T03/T04 generated/active source review; runtime ещё не выполнен | `partial`; один GAP-019 scope A stage 7, scope B stage 8 |
 | UI-доступность D37 поверх MATCH-003/014, TOURNAMENT-001, NOTIF-005 | AT-UI-INV-001/002 | GAP-029 PGlite `gap-008-notifications`9/9, FAQ4/4, PG `gap-008` в общем PG72/72, component web235/235 и desktop/390 browser50/50 в fresh `ci`1264/1264. Mixed hidden/visible count/first five, legacy/opt-in read-visible, pending/readAt и deep links проверены; Terra PASS и coordinator visual acceptance. | Шесть GAP-029 stage-1 atoms `verified_local` через evidence overlay; серверной пагинации нет, subsequent-page target AT-UI-INV-002 остаётся `partial`; GAP-018 blocked_decision |
-| Onboarding после удаления tabs | AT-ONB-004 | Исходные anchors всё ещё привязаны к tabs | `partial`; GAP-030/GAP-014 |
+| Onboarding после удаления tabs | AT-ONB-004 | `onboarding-resume.test.tsx` и `wave-e-user.spec.ts` прошли в stage 2 compiled desktop/390 CI 1291/1291; [receipt](../audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json). | `verified_local` для stage 2 anchors; broader GAP-030 Browser Back residual |
 
 Полная [программа](../test-plans/TECH-008-interface-programme.md) и
 [coverage](../audits/2026-09-13-ux-ui/implementation/coverage.csv) являются
 планом и трассировкой источников. Stage 1 подтверждён только локальным
 [receipt](../audit/evidence/gap029-stage1-final.json) и
-[implementation-results.json](../audits/2026-09-13-ux-ui/implementation/implementation-results.json); остальные
-новые targets не подтверждены старыми результатами ниже.
+[implementation-results.json](../audits/2026-09-13-ux-ui/implementation/implementation-results.json);
+stage 2 — локальным [receipt](../audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json).
+Остальные новые targets не подтверждены этими результатами.
 
 Обновлено **2026-09-15**. Таблица показывает существующий
 evidence и пробелы; перечисление слоя не означает, что слой уже реализован.

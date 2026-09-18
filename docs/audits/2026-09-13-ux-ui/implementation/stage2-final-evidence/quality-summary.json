@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "totals": {
+    "total": 1146,
+    "passed": 1146,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "suites": [
+    {
+      "name": "shared",
+      "total": 534,
+      "passed": 534,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "test-utils",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "web",
+      "total": 245,
+      "passed": 245,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "api",
+      "total": 318,
+      "passed": 318,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "ops-safety",
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "release-scripts",
+      "total": 13,
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "verify-scripts",
+      "total": 17,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "trace-sanitizer",
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "release-gate",
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "apps/api/src/gap-012.postgres.integration.test.ts",
+      "reason": "Tournament roster and bracket serialization requires PostgreSQL.",
+      "coveredBy": "scripts/verify/run-postgres.mjs"
+    },
+    {
+      "path": "apps/api/src/gap-010.postgres.integration.test.ts",
+      "reason": "Admin and match lock ordering requires PostgreSQL.",
+      "coveredBy": "scripts/verify/run-postgres.mjs"
+    },
+    {
+      "path": "apps/api/src/gap-008.postgres.integration.test.ts",
+      "reason": "Notification lifecycle and concurrency require PostgreSQL.",
+      "coveredBy": "scripts/verify/run-postgres.mjs"
+    },
+    {
+      "path": "apps/api/src/gap-006.postgres.integration.test.ts",
+      "reason": "Tournament start/edit/stop serialization requires PostgreSQL.",
+      "coveredBy": "scripts/verify/run-postgres.mjs"
+    },
+    {
+      "path": "apps/api/src/gap-007.postgres.integration.test.ts",
+      "reason": "Team captain and blocking concurrency require PostgreSQL.",
+      "coveredBy": "scripts/verify/run-postgres.mjs"
+    },
+    {
+      "path": "apps/api/src/gap-005.postgres.integration.test.ts",
+      "reason": "Match start and handover concurrency run against required PostgreSQL.",
+      "coveredBy": "scripts/verify/run-postgres.mjs"
+    },
+    {
+      "path": "apps/api/src/history.postgres.integration.test.ts",
+      "reason": "History SQL result and cursor parity run against required PostgreSQL.",
+      "coveredBy": "scripts/verify/run-postgres.mjs"
+    },
+    {
+      "path": "apps/api/src/postgres-date.integration.test.ts",
+      "reason": "Executed as a required, zero-skip suite by verify:postgres.",
+      "coveredBy": "scripts/verify/run-postgres.mjs"
+    },
+    {
+      "path": "apps/api/src/db/migrations.postgres.integration.test.ts",
+      "reason": "Executed as a required, zero-skip suite by verify:postgres.",
+      "coveredBy": "scripts/verify/run-postgres.mjs"
+    },
+    {
+      "path": "apps/api/src/data-004.postgres.integration.test.ts",
+      "reason": "Required concurrency suite executed by verify:postgres.",
+      "coveredBy": "scripts/verify/run-postgres.mjs"
+    }
+  ]
+}

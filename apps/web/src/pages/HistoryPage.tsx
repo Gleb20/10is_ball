@@ -65,8 +65,8 @@ export function HistoryPage() {
   const { user } = useAuth();
   const restoredRef = useRef<{
     userId: string;
-    items: HistoryItem[];
-    nextCursor: string | null;
+    loadedCount: number;
+    scrollY: number;
     search: string;
     filters: FilterDraft;
   } | null>(null);
@@ -77,14 +77,14 @@ export function HistoryPage() {
       const restored = raw ? JSON.parse(raw) : null;
       if (restored?.userId === user?.id) restoredRef.current = restored;
     } catch {
-      window.sessionStorage.removeItem("tab10.history.return");
+      try { window.sessionStorage.removeItem("tab10.history.return"); } catch { /* context is optional */ }
     }
   }
   const restored = restoredRef.current;
-  const skipRestoredLoadRef = useRef(Boolean(restored));
+  const restoreScrollRef = useRef(restored?.scrollY ?? null);
   const requestSequence = useRef(0);
-  const [items, setItems] = useState<HistoryItem[] | null>(restored?.items ?? null);
-  const [nextCursor, setNextCursor] = useState<string | null>(restored?.nextCursor ?? null);
+  const [items, setItems] = useState<HistoryItem[] | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [initialError, setInitialError] = useState<string | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -99,10 +99,6 @@ export function HistoryPage() {
 
   useEffect(() => {
     if (!user) return;
-    if (skipRestoredLoadRef.current) {
-      skipRestoredLoadRef.current = false;
-      return;
-    }
     const controller = new AbortController();
     const sequence = ++requestSequence.current;
     setItems(null);
@@ -110,15 +106,22 @@ export function HistoryPage() {
     setInitialError(null);
     setPageError(null);
     setLoadingMore(false);
-    void api
-      .history({
-        ...toApiFilters(filters, appliedSearch),
-        signal: controller.signal,
-      })
+    void (async () => {
+      const baseFilters = toApiFilters(filters, appliedSearch);
+      let response = await api.history({ ...baseFilters, signal: controller.signal });
+      const freshItems = [...response.items];
+      const wanted = restoredRef.current?.loadedCount ?? 0;
+      while (response.nextCursor && freshItems.length < wanted && !controller.signal.aborted) {
+        response = await api.history({ ...baseFilters, cursor: response.nextCursor, signal: controller.signal });
+        freshItems.push(...response.items);
+      }
+      return { freshItems, nextCursor: response.nextCursor };
+    })()
       .then((response) => {
         if (sequence !== requestSequence.current) return;
-        setItems(response.items);
+        setItems(response.freshItems);
         setNextCursor(response.nextCursor);
+        restoredRef.current = null;
       })
       .catch((error: Error) => {
         if (controller.signal.aborted || sequence !== requestSequence.current) {
@@ -129,12 +132,22 @@ export function HistoryPage() {
     return () => controller.abort();
   }, [filters, appliedSearch, reloadToken, user?.id]);
 
-  function rememberReturn() {
+  useEffect(() => {
+    if (items === null || restoreScrollRef.current === null) return;
+    const scrollY = restoreScrollRef.current;
+    restoreScrollRef.current = null;
+    window.requestAnimationFrame(() => window.scrollTo(0, scrollY));
+  }, [items]);
+
+  function rememberReturn(item: HistoryItem) {
     if (!user || !items) return;
-    window.sessionStorage.setItem(
-      "tab10.history.return",
-      JSON.stringify({ userId: user.id, items, nextCursor, search: appliedSearch, filters }),
-    );
+    const detailPath = item.type === "match" ? `/matches/${item.id}` : `/tournaments/${item.id}`;
+    try {
+      window.sessionStorage.setItem(
+        "tab10.history.return",
+        JSON.stringify({ userId: user.id, detailPath, loadedCount: items.length, scrollY: window.scrollY, search: appliedSearch, filters }),
+      );
+    } catch { /* navigation still works without saved list position */ }
   }
 
   async function loadNextPage() {
@@ -264,7 +277,7 @@ export function HistoryPage() {
             hasQuery ? (
               <Button onClick={resetFilters}>Сбросить условия</Button>
             ) : (
-              <Button onClick={() => navigate("/start")}>Начать</Button>
+              <Button onClick={() => navigate("/matches/new")}>Начать матч</Button>
             )
           }
         >
@@ -279,7 +292,7 @@ export function HistoryPage() {
                 item.status !== "voided";
               return (
                 <div key={`${item.type}-${item.id}`} className="row history-row">
-                  <div className="history-row__link" onClick={rememberReturn}>
+                  <div className="history-row__link">
                     <ListRow
                       to={
                         item.type === "match"
@@ -287,6 +300,8 @@ export function HistoryPage() {
                           : `/tournaments/${item.id}`
                       }
                       title={item.title}
+                      state={{ returnTo: "/history", returnLabel: "К истории" }}
+                      onClick={() => rememberReturn(item)}
                       subtitle={itemSubtitle(item)}
                       trailing={
                         <StatusChip

@@ -3,9 +3,13 @@
 Снимок на **2026-09-18**. Это оценка end-to-end способности, а не наличия файла
 или зелёного unit test.
 
-GAP-029/D37 — локально проверенный кандидат 4.0.0, ещё не опубликованный.
-Исторические release-свидетельства ниже относятся к прежнему UI; локальный
-[receipt](audit/evidence/gap029-stage1-final.json) фиксирует новый overlay.
+GAP-029/D37 версия 4.0.0 опубликована и подтверждена [public receipt](audit/evidence/gap029-stage1-public.json).
+GAP-015 и реализованная часть GAP-030/031/D36 версии 4.1.0 приняты локально:
+[stage 2 final receipt](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json)
+содержит CI 1291/1291, Terra и root PASS. GAP-030 остаётся partial из-за
+Browser Back Judge, GAP-031 — из-за невоспроизведённого HOME-003 Maps/iPhone;
+публичный стенд ещё на 4.0.0. Исторические release-свидетельства ниже относятся
+к соответствующим прежним версиям.
 
 Статусы: `verified` — целевой сценарий подтверждён на достаточном уровне;
 `partial` — полезная часть работает, покрытие неполно; `broken` — реализация есть,
@@ -19,8 +23,9 @@ GAP-029/D37 — локально проверенный кандидат 4.0.0, 
 | Admin account lifecycle | create/role/block/unblock/reset | `verified` | Wave E functional local acceptance1229/1229 successful lanes, including38 desktop/390 browser journeys; fresh F gate1249/1249 also passes; public release and full compatibility/device acceptance remain separate | SEC-004, BUG-011, GAP-010 |
 | Session management | sliding session, list/revoke/change password | `verified` | Wave B local 1010/1010 gate and strengthened browser 19/19 passed; desktop/390 rendered review accepted. Released 2.0.0 at 8f36941; read-only exact-SHA smoke and CI34728440590 passed. | GAP-002 |
 | Own profile | view/edit/stats/avatar/sessions | `verified` | Wave B local 1010/1010 gate and strengthened browser 19/19 passed; desktop/390 rendered review accepted. Released 2.0.0 at 8f36941; read-only exact-SHA smoke and CI34728440590 passed. | GAP-002 |
-| Public player profile | privacy-safe card; challenge temporarily hidden by D37 | `verified` | Historical Wave B local/release evidence for card; GAP-029 local 1264/1264 verifies hidden challenge, public 4.0.0 not released. | GAP-002, GAP-029 |
-| Home dashboard | hero, active/recent events, stats/rival | `verified` | Wave A local 965-check gate passed and 1.11.0 exact SHA released; see wave-a-local evidence | GAP-001 |
+| Public player profile | privacy-safe card; challenge temporarily hidden by D37 | `verified` | Historical Wave B local/release evidence for card; GAP-029 local 1264/1264 and public 4.0.0 receipt verify hidden challenge. | GAP-002, GAP-029 |
+| Home dashboard | compact identity, direct actions, all current role tasks, recent/ranking | `partial` | D36 stage 2 implementation accepted locally: [1291/1291 aggregate and review](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json); 23 user atoms verified_local, including loading/error links, bounded tournament projection and server-side winner mark. Current GAP-015 target verified_local; broader GAP-031 remains open for HOME-003 Maps/iPhone reproduction. 4.1.0 is not public. | GAP-001, GAP-015, GAP-031 |
+| Global navigation and contextual return | Home entry and source-aware History/bracket return with safe Judge exit | `partial` | Stage 2 compiled desktop/390 and API check explicit Home release; native Browser Back from Judge leaves active judge slot. Remaining recovery belongs to stage 6. [Local receipt](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json). | GAP-030, GAP-017 |
 | Rankings | all/week/month and team ranking | `verified` | Wave B local 1010/1010 gate and strengthened browser 19/19 passed; desktop/390 rendered review accepted. Released 2.0.0 at 8f36941; read-only exact-SHA smoke and CI34728440590 passed. | GAP-004 |
 | Event visibility | Active scoped; completed visible active club-wide | `partial` | API list/detail/home enforce organizer/participant/current-judge active scope and club-wide terminal visibility; full history UX remains | GAP-003 |
 | Match creation | Operator-owned valid 1v1/2v2 roster and rules; invitations temporarily hidden by D37 | `partial` | GAP-029 local 1264/1264: browser manual setup without UI invitations, legacy API and rows preserved; broader match completion scope remains. | BUG-010, GAP-005, GAP-012, GAP-029 |
@@ -35,7 +40,7 @@ GAP-029/D37 — локально проверенный кандидат 4.0.0, 
 | Tournament scoped admin add | Minimal catalog/roster view and confirmed registered-user add only | `partial` | GAP-012 API/service tests prove minimal DTO, actor matrix, confirmation and audit; desktop/390 journey/full gate pending. | GAP-012 |
 | Tournament visibility/history | То же правило event visibility | `verified` | active scope and club-wide terminal API matrix implemented | — |
 | Teams | captain/invite/member/leave/archive/use-in-event | `verified` | Wave D final local gate 1135/1135 covers detail/welcome/edit/invite history/respond/transfer/remove/leave/archive, privacy-safe membership DTO and event-picker use. PostgreSQL serialization covers accept/block/captain races and atomic block reassignment/archive. Public Wave D release remains pending. | DATA-004, GAP-007 |
-| Notifications | actionable available items/read/expiry/popup under D37 | `partial` | GAP-029 local 1264/1264 covers mixed hidden/visible count and first five, legacy/opt-in reads, PG persisted rows and desktop/390 recovery. Future server pagination/subsequent-page AT-UI-INV-002 remains open; 4.0.0 not released. | BUG-013, GAP-008, GAP-029 |
+| Notifications | actionable available items/read/expiry/popup under D37 | `partial` | GAP-029 local 1264/1264 and public 4.0.0 receipt cover mixed hidden/visible count and first five, legacy/opt-in reads, PG persisted rows and desktop/390 recovery. Future server pagination/subsequent-page AT-UI-INV-002 remains open. | BUG-013, GAP-008, GAP-029 |
 | Onboarding | once/resume/skip/restart/tutorial isolation | `verified` | Wave E functional local acceptance1229/1229 successful lanes, including38 desktop/390 browser journeys; fresh F gate1249/1249 also passes; public release and full compatibility/device acceptance remain separate | BUG-012, GAP-009 |
 | Help/feedback | FAQ, categories, context help | `verified` | Wave E functional local acceptance1229/1229 successful lanes, including38 desktop/390 browser journeys; fresh F gate1249/1249 also passes; public release and full compatibility/device acceptance remain separate | GAP-009 |
 | Accessibility/responsive | 360px+, keyboard, WCAG AA, judge landscape | `partial` | F shared geometry/contrast/focus/judge/bracket fixes pass fresh1249/1249 and Firefox7/7; WebKit native page creation fails7 cases, latest-two/device/AT and axe incomplete checks remain. [Evidence](audit/evidence/wave-f-local.json) | GAP-011, TECH-002 |

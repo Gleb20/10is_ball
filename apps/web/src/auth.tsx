@@ -39,6 +39,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const startupControllerRef = useRef<AbortController | null>(null);
 
   const setUser = useCallback((nextUser: User | null) => {
+    if (!nextUser || (userRef.current && userRef.current.id !== nextUser.id)) {
+      try {
+        window.sessionStorage.removeItem("tab10.history.return");
+        window.sessionStorage.removeItem("tab10.bracket.return");
+      } catch { /* unavailable storage must not block logout or account switch */ }
+    }
     userRef.current = nextUser;
     setUserState(nextUser);
     setReauthRequired(false);

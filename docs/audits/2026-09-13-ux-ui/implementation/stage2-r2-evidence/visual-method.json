@@ -1,0 +1,23 @@
+{
+  "environment": "compiled local web and API, disposable PostgreSQL, Playwright Chromium",
+  "viewports": ["1280x800", "390x844"],
+  "defaultHome": "live GET /home on a disposable test database",
+  "errorHome": "synthetic HTTP 503 for GET /home only; verifies named routes without invented metrics",
+  "resultHome": "synthetic successful GET /home only; two finished matches with identical names on both sides, including long names; winnerSide B and A come from response facts",
+  "resultMetrics": "profile statistics are from the disposable database and are not assertions for the synthetic result cards",
+  "checks": [
+    "result card exposes side-specific accessible winner mark and retains score and duration hierarchy",
+    "winner mark stays on the same line as the last word of its side on both viewports",
+    "ordinary finished card omits repeated winner line and redundant status",
+    "document has no horizontal viewport overflow on both browser viewports"
+  ],
+  "files": [
+    "home-default-desktop-1280.png",
+    "home-default-mobile-390.png",
+    "home-error-desktop-1280.png",
+    "home-error-mobile-390.png",
+    "home-result-desktop-1280.png",
+    "home-result-mobile-390.png"
+  ],
+  "scope": "visual and navigation evidence only; physical iPhone and spoken assistive technology not tested"
+}

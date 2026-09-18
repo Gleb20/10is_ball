@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { App } from "./App";
@@ -81,11 +81,7 @@ describe("BUG-012 onboarding resume flow", () => {
     expect(
       await screen.findByRole("heading", { name: "Профиль" }),
     ).toBeVisible();
-    const navigation = screen.getByRole("navigation", { name: "Основная навигация" });
-    expect(within(navigation).getByText("Профиль").closest(".bottom-nav__item")).toHaveAttribute(
-      "data-onboarding-target",
-      "true",
-    );
+    expect(screen.queryByRole("navigation", { name: "Основная навигация" })).not.toBeInTheDocument();
     expect(serverUser.onboardingStep).toBe(4);
 
     first.unmount();
@@ -102,10 +98,7 @@ describe("BUG-012 onboarding resume flow", () => {
     await user.click(screen.getByRole("button", { name: /^далее$/i }));
     const startHeading = await screen.findByRole("heading", { name: "Начать" });
     expect(startHeading).toHaveFocus();
-    expect(within(screen.getByRole("navigation", { name: "Основная навигация" })).getByText("Начать").closest(".bottom-nav__item")).toHaveAttribute(
-      "data-onboarding-target",
-      "true",
-    );
+    expect(screen.getByText(/на Главной доступны отдельные действия/i)).toBeVisible();
   });
 
   it("highlights reachable navigation targets without leaving the persisted guide", async () => {
@@ -135,12 +128,7 @@ describe("BUG-012 onboarding resume flow", () => {
     for (const label of ["Главная", "Рейтинг", "История"]) {
       const heading = await screen.findByRole("heading", { name: label });
       await waitFor(() => expect(heading).toHaveFocus());
-      const navigation = screen.getByRole("navigation", { name: "Основная навигация" });
-      expect(within(navigation).getByText(label).closest(".bottom-nav__item")).toHaveAttribute(
-        "data-onboarding-target",
-        "true",
-      );
-      expect(within(navigation).queryByRole("link")).toBeNull();
+      expect(screen.queryByRole("navigation", { name: "Основная навигация" })).toBeNull();
       expect(screen.getByTestId("location")).toHaveTextContent("/onboarding");
       await user.click(screen.getByRole("button", {
         name: label === "Рейтинг" ? /пропустить шаг/i : /^далее$/i,

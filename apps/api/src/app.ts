@@ -1323,11 +1323,13 @@ export async function buildApp(opts: {
   );
 
   app.get("/api/v1/home", { preHandler: requireAuth }, async (req) => {
-    const query = req.query as { period?: string; notificationView?: string };
+    const query = req.query as { period?: string; notificationView?: string; recentRole?: string };
     const rankingPeriod = query.period === "month" ? "month" : "all_time";
+    const recentRole = query.recentRole === "player" ? "player" : "all";
     const dashboard = await services.home.dashboard(
       req.authUser!.id,
       rankingPeriod,
+      recentRole,
     );
     if (query.notificationView === "available") {
       const { unreadCount, unreadNotifications } = await services.notifications.visibleSnapshot(req.authUser!.id);

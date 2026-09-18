@@ -51,7 +51,7 @@ test("compiled web and API work through the same-origin production-like proxy", 
   await page.getByRole("button", { name: "Войти" }).click();
 
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { name: "Привет, Admin" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Профиль: Admin/ })).toBeVisible();
 
   const sessionCookie = (await page.context().cookies()).find(
     (cookie) => cookie.name === "tab10_session",

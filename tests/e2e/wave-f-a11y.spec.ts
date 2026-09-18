@@ -173,7 +173,7 @@ test('Wave F onboarding heading and recovery states keep keyboard context', asyn
     await expect(page.getByRole('heading',{name:'Рейтинг',exact:true})).toBeFocused();
     await capture(page,'onboarding-focus');
     await mutate(api,'/api/v1/me/onboarding',{action:'complete'},'PATCH');
-    await page.goto('/');await expect(page.getByRole('heading',{name:/Привет/})).toBeVisible();
+    await page.goto('/');await expect(page.getByRole('link',{name:/Профиль:/})).toBeVisible();
     await page.keyboard.press('Tab');await page.getByRole('link',{name:'К содержимому',exact:true}).focus();await page.keyboard.press('Enter');await expect(page.locator('#main-content')).toBeFocused();
     await page.goto('/notifications');await axe(page,'notifications');
     // A read failure must leave a visible recovery action and an announced error.

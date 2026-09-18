@@ -13,9 +13,6 @@ export function NotFoundPage() {
         action={
           <div className="stack stack--actions">
             <Button onClick={() => navigate("/")}>На главную</Button>
-            <Button variant="secondary" onClick={() => navigate(-1)}>
-              Назад
-            </Button>
           </div>
         }
       />

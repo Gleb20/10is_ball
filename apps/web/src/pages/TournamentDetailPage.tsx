@@ -758,6 +758,7 @@ export function TournamentDetailPage() {
                     <div key={m.id} className="row">
                       <Link
                         to={`/matches/${m.id}`}
+                        state={{ returnTo: `/tournaments/${id}`, returnLabel: "К турниру" }}
                         className="list-row tournament-live-match"
                       >
                         <span className="tournament-live-match__vs">{vs}</span>
@@ -768,7 +769,7 @@ export function TournamentDetailPage() {
                       {m.status !== "finished" && m.status !== "stopped" ? (
                         <Button
                           size="sm"
-                          onClick={() => navigate(`/matches/${m.id}/judge`)}
+                          onClick={() => navigate(`/matches/${m.id}/judge`, { state: { returnTo: `/tournaments/${id}`, returnLabel: "К турниру" } })}
                         >
                           Судить
                         </Button>
@@ -783,12 +784,12 @@ export function TournamentDetailPage() {
               <div className="card stack">
                 <h2 className="section-title">Ваши матчи</h2>
                 {currentOwnMatch ? (
-                  <Link to={`/matches/${currentOwnMatch.id}`}>
+                  <Link to={`/matches/${currentOwnMatch.id}`} state={{ returnTo: `/tournaments/${id}`, returnLabel: "К турниру" }}>
                     Текущий матч: {currentOwnMatch.title ?? "Открыть"}
                   </Link>
                 ) : null}
                 {nextOwnMatch ? (
-                  <Link to={`/matches/${nextOwnMatch.id}`}>
+                  <Link to={`/matches/${nextOwnMatch.id}`} state={{ returnTo: `/tournaments/${id}`, returnLabel: "К турниру" }}>
                     Следующий матч: {nextOwnMatch.title ?? "Открыть"}
                   </Link>
                 ) : nextOwnBracketNode ? (
@@ -867,6 +868,8 @@ export function TournamentDetailPage() {
                 {bracketV2 ? (
                   <TournamentBracket
                     graph={bracketV2}
+                    tournamentId={id}
+                    userId={user?.id}
                     names={nameMap}
                     matches={matches}
                     avatars={avatarMap}
@@ -876,6 +879,8 @@ export function TournamentDetailPage() {
                 ) : bracketV1 ? (
                   <TournamentBracket
                     bracket={bracketV1}
+                    tournamentId={id}
+                    userId={user?.id}
                     names={nameMap}
                     matches={matches}
                     avatars={avatarMap}

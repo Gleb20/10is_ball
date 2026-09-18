@@ -1,0 +1,24 @@
+{
+  "environment": "compiled local web and API, disposable test PostgreSQL",
+  "syntheticViewport": [
+    "1440x900",
+    "390x844"
+  ],
+  "method": "Playwright browser; GET /home fulfilled with synthetic responses for tasks, long names, empty and error screenshots; tournament create uses live API; visual review only",
+  "liveHome": "Compiled end-to-end suite against disposable PostgreSQL, no Home response mock; default desktop 1280x800 and mobile 390x844",
+  "checks": [
+    "collapsed tasks computed display none",
+    "long names cause no horizontal viewport overflow"
+  ],
+  "files": [
+    "home-default-desktop-1280.png",
+    "home-default-mobile-390.png",
+    "home-tasks-desktop-1440.png",
+    "home-expanded-desktop-1440.png",
+    "home-expanded-mobile-390.png",
+    "home-long-names-mobile-390.png",
+    "home-empty-mobile-390.png",
+    "home-error-mobile-390.png",
+    "tournament-create-mobile-390.png"
+  ]
+}

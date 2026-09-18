@@ -1,0 +1,69 @@
+{
+  "checkedAt": "2026-09-18T19:04:16.226320+00:00",
+  "state": "accepted_local_with_explicit_residuals",
+  "manifest": "/private/tmp/tab10-stage2-r2-freeze-v2/manifest.json",
+  "manifestSha256": "54e922b791dcbdb4c0594a691f108cf48c82627c68c1ccc37c4fc0081d9bdf8c",
+  "aggregateSummary": "/private/tmp/tab10-stage2-r2-final-ci/local-summary.json",
+  "aggregateSha256": "758dcd6824a82e5ffedd567bcf1d0134e40789604e52b305a214906da9d3a7d7",
+  "totals": {
+    "total": 1291,
+    "passed": 1291,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "lanes": [
+    {
+      "name": "cleanup-foundation",
+      "status": "passed",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "quality",
+      "status": "passed",
+      "total": 1146,
+      "passed": 1146,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "postgres",
+      "status": "passed",
+      "total": 72,
+      "passed": 72,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "browser-prodlike",
+      "status": "passed",
+      "total": 69,
+      "passed": 69,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    }
+  ],
+  "sourceHashesAfterCI": "74/74 match",
+  "independentReview": "Terra R2 PASS",
+  "rollback": "Root real forward/reverse package restored1202basefiles",
+  "visualEvidence": "stage2-r2-root-visual-review.json",
+  "coverage": "23 eligible accepted-target user atoms may now become verified_local; Maps2 and historicalexpertGAP015 not closed",
+  "residuals": [
+    "Native BrowserBack from Judge leaves judge slot; explicitHome release verified. Separate safe-navigation work stage6.",
+    "Maps physicalcause unproven; physicaliPhone,WebKit,spokenAT notverified.",
+    "User phone acceptance and publicrelease pending."
+  ],
+  "authorizedNext": "Final documents/evidence/coverage only; runtime/tests/version immutable. Commit/push/deploy remain gated."
+}
