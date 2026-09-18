@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "workItems": ["GAP-015", "GAP-030", "GAP-031"],
+  "stage": 2,
+  "status": "public_runtime_observed_ci_failed",
+  "capturedAt": "2026-09-18T19:23:30Z",
+  "applicationRelease": {
+    "sha": "0279657b227bd6ca10116376bec0e2e11561ab4b",
+    "version": "4.1.0",
+    "environment": "production",
+    "dirty": false
+  },
+  "origins": {
+    "web": "https://tab-10.vercel.app",
+    "api": "https://one0is-ball.onrender.com"
+  },
+  "publicSmoke": {
+    "command": "pnpm run smoke:public",
+    "readOnly": true,
+    "ok": true,
+    "attempts": 14,
+    "elapsedMs": 70276,
+    "checkedAt": "2026-09-18T19:23:03.350Z",
+    "coverage": [
+      "web-release",
+      "web-health-proxy",
+      "web-ready-proxy",
+      "web-openapi-proxy",
+      "api-health",
+      "api-ready",
+      "api-openapi"
+    ]
+  },
+  "githubActions": {
+    "runId": 35385224009,
+    "url": "https://github.com/Gleb20/10is_ball/actions/runs/35385224009",
+    "headSha": "0279657b227bd6ca10116376bec0e2e11561ab4b",
+    "status": "completed",
+    "conclusion": "failure",
+    "jobs": [
+      { "name": "Quality", "conclusion": "success" },
+      { "name": "PostgreSQL integration", "conclusion": "success" },
+      { "name": "Compiled browser production-like", "conclusion": "failure" },
+      { "name": "Release gate", "conclusion": "failure" }
+    ],
+    "browserResult": {
+      "passed": 58,
+      "failed": 2,
+      "projects": ["chromium-desktop", "chromium-mobile-390"],
+      "test": "AT-HOME-003 Home keeps direct actions and all secondary routes at mobile and desktop",
+      "cause": "Global На главную button locator matched both the Возврат navigation button and the empty notifications status button."
+    }
+  },
+  "vercel": {
+    "evidence": "Public GitHub commit status and exact-SHA web response",
+    "state": "success",
+    "targetUrl": "https://vercel.com/its-adesign/tab-10/4UJzgiH1jT5eUbzspKME5Hf7LcHH"
+  },
+  "render": {
+    "state": "observed_live_exact_sha",
+    "readiness": "ready",
+    "database": "ok",
+    "providerDeployId": null
+  },
+  "manualRemoteMigration": false,
+  "remoteSeed": false,
+  "mutatingPublicTests": false,
+  "localAcceptance": {
+    "receipt": "../../audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json",
+    "passed": 1291,
+    "failed": 0,
+    "independentReview": "PASS"
+  },
+  "remainingLimits": [
+    "Hosted release gate failed on two browser locator assertions; corrective test review and a fresh hosted CI run are required",
+    "No mutating public user journeys were run",
+    "Browser Back from Judge leaves the judge slot active",
+    "HOME-003 Maps/iPhone was not reproduced",
+    "Physical iPhone, WebKit, spoken assistive technology and user acceptance were not conducted"
+  ]
+}

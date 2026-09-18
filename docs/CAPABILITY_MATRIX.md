@@ -8,8 +8,13 @@ GAP-015 и реализованная часть GAP-030/031/D36 версии 4.
 [stage 2 final receipt](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json)
 содержит CI 1291/1291, Terra и root PASS. GAP-030 остаётся partial из-за
 Browser Back Judge, GAP-031 — из-за невоспроизведённого HOME-003 Maps/iPhone;
-публичный стенд ещё на 4.0.0. Исторические release-свидетельства ниже относятся
-к соответствующим прежним версиям.
+версия 4.1.0 опубликована с exact-SHA read-only smoke на web/API/proxy и
+готовой БД: [public receipt](audit/evidence/stage2-public.json). Это не
+публичная пользовательская приёмка. Исторические release-свидетельства ниже
+относятся к соответствующим прежним версиям.
+Первый hosted CI на application SHA завершился `failure` в browser lane из-за
+строгого тестового локатора; [локальная коррекция](audit/evidence/stage2-ci-correction.json)
+прошла 69/69, новый hosted release gate ожидается после review.
 
 Статусы: `verified` — целевой сценарий подтверждён на достаточном уровне;
 `partial` — полезная часть работает, покрытие неполно; `broken` — реализация есть,
@@ -24,7 +29,7 @@ Browser Back Judge, GAP-031 — из-за невоспроизведённого
 | Session management | sliding session, list/revoke/change password | `verified` | Wave B local 1010/1010 gate and strengthened browser 19/19 passed; desktop/390 rendered review accepted. Released 2.0.0 at 8f36941; read-only exact-SHA smoke and CI34728440590 passed. | GAP-002 |
 | Own profile | view/edit/stats/avatar/sessions | `verified` | Wave B local 1010/1010 gate and strengthened browser 19/19 passed; desktop/390 rendered review accepted. Released 2.0.0 at 8f36941; read-only exact-SHA smoke and CI34728440590 passed. | GAP-002 |
 | Public player profile | privacy-safe card; challenge temporarily hidden by D37 | `verified` | Historical Wave B local/release evidence for card; GAP-029 local 1264/1264 and public 4.0.0 receipt verify hidden challenge. | GAP-002, GAP-029 |
-| Home dashboard | compact identity, direct actions, all current role tasks, recent/ranking | `partial` | D36 stage 2 implementation accepted locally: [1291/1291 aggregate and review](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json); 23 user atoms verified_local, including loading/error links, bounded tournament projection and server-side winner mark. Current GAP-015 target verified_local; broader GAP-031 remains open for HOME-003 Maps/iPhone reproduction. 4.1.0 is not public. | GAP-001, GAP-015, GAP-031 |
+| Home dashboard | compact identity, direct actions, all current role tasks, recent/ranking | `partial` | D36 stage 2 implementation accepted locally: [1291/1291 aggregate and review](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json); 23 user atoms verified_local, including loading/error links, bounded tournament projection and server-side winner mark. Version 4.1.0 release identity is [publicly verified](audit/evidence/stage2-public.json); GAP-015 remains verified_local and broader GAP-031 remains open for HOME-003 Maps/iPhone reproduction. | GAP-001, GAP-015, GAP-031 |
 | Global navigation and contextual return | Home entry and source-aware History/bracket return with safe Judge exit | `partial` | Stage 2 compiled desktop/390 and API check explicit Home release; native Browser Back from Judge leaves active judge slot. Remaining recovery belongs to stage 6. [Local receipt](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json). | GAP-030, GAP-017 |
 | Rankings | all/week/month and team ranking | `verified` | Wave B local 1010/1010 gate and strengthened browser 19/19 passed; desktop/390 rendered review accepted. Released 2.0.0 at 8f36941; read-only exact-SHA smoke and CI34728440590 passed. | GAP-004 |
 | Event visibility | Active scoped; completed visible active club-wide | `partial` | API list/detail/home enforce organizer/participant/current-judge active scope and club-wide terminal visibility; full history UX remains | GAP-003 |

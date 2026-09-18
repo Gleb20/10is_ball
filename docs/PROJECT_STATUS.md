@@ -1,6 +1,26 @@
 # Tab-10 — статус проекта
 
-## Этап 2 D36 — локально принят, кандидат 4.1.0, 2026-09-18
+## Этап 2 D36 — выпуск 4.1.0 на публичном стенде, 2026-09-18
+
+Application commit `0279657b227bd6ca10116376bec0e2e11561ab4b`
+fast-forward опубликован в `main` через штатные Render/Vercel Git-интеграции.
+Read-only `pnpm run smoke:public` подтвердил тот же SHA и версию 4.1.0 на
+Vercel web/proxy и Render API (14 попыток, 70276 ms); прямой `/ready` вернул
+`status=ready`, `checks.database=ok` и тот же release. Публичная проверка
+подтверждает идентичность и доступность выпуска, а не выполнение пользовательских
+сценариев на публичных данных. [Публичный receipt](audit/evidence/stage2-public.json).
+GAP-015 и 23 атома этапа 2 сохраняют `verified_local`; GAP-030/031 остаются
+`in_progress` по ограничениям ниже. Публичные мутации, ручная миграция и seed не
+проводились.
+Hosted CI run `35385224009` для application SHA завершился `failure`:
+Quality и PostgreSQL integration прошли, browser lane — 58/60 из-за двух
+strict-locator ошибок одного теста AT-HOME-003 на desktop/390; Release gate
+корректно отклонил выпуск. [Диагноз и локальный Red/Green](audit/evidence/stage2-ci-correction.json)
+фиксируют тестовое уточнение и свежий compiled browser 69/69 на отдельной
+одноразовой БД. Corrective commit и новый hosted CI ожидают review; техническая
+приёмка публикации ещё не завершена.
+
+## Этап 2 D36 — исторический локальный checkpoint до выпуска 4.1.0, 2026-09-18
 
 [Финальный receipt](audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json)
 связывает base `e3b22876d6a60f88658c7628bf12a95a92466894`, frozen R2 v2

@@ -35,10 +35,24 @@ test("AT-HOME-003 Home keeps direct actions and all secondary routes at mobile a
   await expect(page).toHaveURL(/\/matches\/new$/);
   await expect(page.getByRole("heading", { name: "Новый матч" })).toBeVisible();
 
-  for (const route of ["/history", "/rankings", "/teams", "/help", "/notifications", "/profile", "/admin"]) {
+  const emptyNotificationsRequest = /\/api\/v1\/notifications\?notificationView=available$/;
+  for (const [route, heading] of [["/history", "История"], ["/rankings", "Рейтинг"], ["/teams", "Команды"], ["/help", "Помощь"], ["/notifications", "Уведомления"], ["/profile", "Профиль"], ["/admin", "Админка"]] as const) {
+    if (route === "/notifications") {
+      await page.route(emptyNotificationsRequest, (request) => request.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ notifications: [], notificationView: "available", unreadCount: 0 }),
+      }));
+    }
     await page.goto(route);
     await expect(page.getByRole("main")).toBeVisible();
-    await expect(page.getByRole("button", { name: "На главную" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+    if (route === "/notifications") {
+      await expect(page.getByRole("heading", { name: "Нет актуальных уведомлений" })).toBeVisible();
+      await expect(page.getByRole("status").getByRole("button", { name: "На главную", exact: true })).toBeVisible();
+    }
+    await expect(page.getByRole("navigation", { name: "Возврат" }).getByRole("button", { name: "На главную", exact: true })).toBeVisible();
+    if (route === "/notifications") await page.unroute(emptyNotificationsRequest);
   }
   await page.goto("/unknown-stage2-route");
   await expect(page.getByRole("heading", { name: "Страница не найдена" })).toBeVisible();

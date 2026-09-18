@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "stage": 2,
+  "status": "ready_for_root_review",
+  "applicationSha": "0279657b227bd6ca10116376bec0e2e11561ab4b",
+  "version": "4.1.0",
+  "hostedFailure": {
+    "runId": 35385224009,
+    "url": "https://github.com/Gleb20/10is_ball/actions/runs/35385224009/job/105730453216",
+    "browserPassed": 58,
+    "browserFailed": 2,
+    "failedTest": "AT-HOME-003 Home keeps direct actions and all secondary routes at mobile and desktop",
+    "projects": ["chromium-desktop", "chromium-mobile-390"],
+    "cause": "The global На главную button locator matched the Возврат navigation button and the notifications empty status button."
+  },
+  "correction": {
+    "path": "../../../tests/e2e/stage2-home.spec.ts",
+    "sha256": "10e67db469133edc996bcfa3700b2d0b99e70ea518d9e277d48c84bbb0d598fa",
+    "scope": "E2E test only; runtime, API, CSS, CI configuration and product version unchanged",
+    "behavior": "Force an empty notifications response, assert both legitimate Home buttons, assert each preserved route heading, and scope the navigation assertion to the named Возврат region."
+  },
+  "localRed": {
+    "command": "zsh /private/tmp/tab10-stage2-run-compiled-browser.sh red-host",
+    "environment": "compiled API and Vite preview, fresh disposable PostgreSQL 16.15, Chromium desktop and 390",
+    "total": 69,
+    "passed": 67,
+    "failed": 2,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0,
+    "failure": "Same strict mode violation in both projects at the global На главную locator after the deterministic empty notifications fixture",
+    "evidence": "/private/tmp/tab10-stage2-ci-red-host-evidence/browser-summary.json"
+  },
+  "localGreen": {
+    "command": "zsh /private/tmp/tab10-stage2-run-compiled-browser.sh green-host",
+    "environment": "compiled API and Vite preview, separate fresh disposable PostgreSQL 16.15, Chromium desktop and 390",
+    "total": 69,
+    "passed": 69,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0,
+    "breakdown": { "browser": 60, "migrationFoundation": 9 },
+    "evidence": "/private/tmp/tab10-stage2-ci-green-host-evidence/browser-summary.json"
+  },
+  "sandboxDiagnostic": "A first unprivileged local attempt could not launch Chromium and is excluded from Red/Green behavior evidence.",
+  "disposableContainersRemoved": true,
+  "correctiveCommit": null,
+  "freshHostedCi": null
+}

@@ -1,8 +1,24 @@
 # Deployment as-built
 
-Текущий публичный runtime — версия 4.0.0, GAP-029 stage 1. Принятое
+Текущий публичный runtime — версия 4.1.0, D36 stage 2. Принятое
 [SemVer-правило](../WORKFLOW.md#product-versioning) применено к этому выпуску.
-Документационный этап TECH-008 сам по себе не менял публичный runtime.
+
+## D36 stage 2 application release observed — 2026-09-18
+
+Application commit `0279657b227bd6ca10116376bec0e2e11561ab4b`
+fast-forward опубликован в `main` штатными Render/Vercel Git-интеграциями.
+`pnpm run smoke:public` за 14 попыток/70276 ms подтвердил точный SHA и версию
+4.1.0 на Vercel web/proxy и Render API. Отдельный read-only smoke проверил все
+семь release/health/ready/OpenAPI endpoints; прямой Render `/ready` вернул
+`checks.database=ok`. Публичные пользовательские сценарии и mutating E2E не
+запускались. В выпуске нет новой миграции схемы; ручная remote migration и seed
+не выполнялись. [Redacted evidence](../audit/evidence/stage2-public.json).
+Hosted CI run `35385224009` для application SHA завершился `failure`:
+Quality и PostgreSQL integration прошли, browser lane 58/60 из-за
+неоднозначного тестового локатора на пустых уведомлениях; Release gate
+корректно отклонил результат. [Correction receipt](../audit/evidence/stage2-ci-correction.json)
+фиксирует воспроизводимый Red и локальный compiled Green 69/69; новый hosted
+gate требуется после review и corrective commit.
 
 ## GAP-029 stage 1 application release observed — 2026-09-18
 
