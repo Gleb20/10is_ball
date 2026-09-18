@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tab-10 · Этап 0 · карта потоков</title>
+  <style>
+    :root{font-family:system-ui,sans-serif;color:#183126;background:#f7f9f4}
+    body{max-width:1060px;margin:0 auto;padding:24px}
+    h1,h2,h3{line-height:1.2}h1{font-size:2rem}h2{margin-top:2rem}
+    .lead{max-width:76ch}.chips{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+    .chips span{border:1px solid #afc4b5;border-radius:99px;padding:4px 10px;background:white}
+    .flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
+    .step{background:white;border:1px solid #cedbd0;border-radius:12px;padding:14px}
+    .step b{display:block;margin-bottom:5px}table{border-collapse:collapse;width:100%;background:white}
+    th,td{border:1px solid #cedbd0;padding:9px;text-align:left;vertical-align:top}
+    th{background:#e8f1e8}.warn{background:#fff2ce}.not-tested{background:#f5e7e7}
+    a{color:#215b40}small{color:#465a4b}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Tab-10 · карта потоков этапа 0</h1>
+    <p class="lead">18 сентября 2026. Целевое поведение D36/D37, source review на SHA
+      17a69cac. Это схема для work orders, а не реализованный UI или новая проверка
+      браузера. Данные об одном физическом iPhone получены из качественных
+      самоотчётов и описаний кадров; все 44 оригинала просмотрены Luna, две
+      spot checks выполнены координатором. JPG остаются вне репозитория; кадры
+      не подтверждают касания, API/DB или persistent zoom.</p>
+    <div class="chips"><span>flow-navigation</span><span>flow-app-shell</span><span>flow-errors</span><span>flow-onboarding</span></div>
+    <p><a href="../../../test-plans/TECH-008-interface-programme.md">Программа</a> ·
+      <a href="coverage.csv">Атомарный реестр</a> ·
+      <a href="../../../DECISIONS.md">Решения</a></p>
+  </header>
+  <main>
+    <section>
+      <h2>Поток 1 · Home → матч → судейство → следующий шаг</h2>
+      <div class="flow">
+        <div class="step"><b>1. Home</b>Текущая задача по роли; прямой «Начать матч» → `/matches/new`. История и вторичные разделы обнаружимы.</div>
+        <div class="step"><b>2. Состав и правила</b>Оператор выбирает A и B вне собственного игрового места. Редкие правила доступны, приглашения в игру скрыты.</div>
+        <div class="step"><b>3. Матч</b>Проверка состава, судьи и start rights. Сокращение create/acquire/start зависит от Q-UX-006.</div>
+        <div class="step"><b>4. Судейство</b>Один active judge; score intent/version/idempotency, восстановление по authoritative GET, доступный выход.</div>
+        <div class="step"><b>5. Результат</b>Immutable result и auditable void по D24/D33; следующий шаг виден по роли. Replay/10-second Undo требуют решений.</div>
+      </div>
+      <table><thead><tr><th>Экран</th><th>Основное действие</th><th>Обязательные состояния</th></tr></thead><tbody>
+        <tr><td>Home</td><td>Прямой match CTA</td><td>loading, empty, error, role visibility</td></tr>
+        <tr><td>Setup</td><td>Выбрать состав и создать</td><td>invalid/blocked/busy, pending submit, keyboard, safe area</td></tr>
+        <tr><td>Detail/Judge</td><td>Начать/судить/завершить</td><td>401/403, stale session, lost lock, score uncertainty, terminal readonly</td></tr>
+      </tbody></table>
+      <p>Общая семантика статусных чипов и иконок проходит inventory/target GAP-034
+        в этапе 3; match/judge применяет её в этапе 6. Статус не выглядит
+        действием без действия, serve icon остаётся отдельным judge consumer.</p>
+    </section>
+    <section>
+      <h2>Поток 2 · Home → турнир → сетка → матч → та же сетка</h2>
+      <div class="flow">
+        <div class="step"><b>1. Home</b>Прямой «Провести турнир»; организатор может не играть.</div>
+        <div class="step"><b>2. Правила и состав</b>Понятная сетка проигравших; `requireParticipantConsent=false`; direct roster в прежних правах.</div>
+        <div class="step"><b>3. Draft bracket</b>Сетка на первом плане, read-only summary, управление посевом и перестройкой до старта.</div>
+        <div class="step"><b>4. Active bracket</b>Рабочий этап и разрешённые готовые пары; переход в матч и возврат к той же сетке.</div>
+        <div class="step"><b>5. Outcome</b>После результата краткий top-3 с доступом к полным итогам; stopped — без чемпиона.</div>
+      </div>
+      <table><thead><tr><th>Экран</th><th>Основное действие</th><th>Обязательные состояния</th></tr></thead><tbody>
+        <tr><td>Setup</td><td>Правила → состав</td><td>0/2/3/64 игроков, guest, duplicate, pending/error</td></tr>
+        <tr><td>Bracket</td><td>Построить/начать/судить</td><td>SE/DE/BYE/third place, mobile scroll/zoom, keyboard focus, invalidation</td></tr>
+        <tr><td>Outcome</td><td>Изучить итог</td><td>zero/finished/stopped/cancelled, full statistics secondary</td></tr>
+      </tbody></table>
+      <p>GAP-019 имеет одного writer на TournamentDetailPage: этап 7 принимает
+        rules/roster/pre-generation, этап 8 после него — generated/active/terminal
+        composition. Сетка и ближайший матч идут раньше повторных сводок;
+        stage 8 применяет и общий status/icon target GAP-034.</p>
+    </section>
+    <section>
+      <h2>Сверка типичных ловушек</h2>
+      <table><thead><tr><th>Проверка</th><th>Статус</th><th>Основание</th></tr></thead><tbody>
+        <tr><td>Обязательный пустой hub между Home и созданием</td><td class="warn">WARN</td><td>В текущем App есть `/start`; D36 требует прямые CTA.</td></tr>
+        <tr><td>Потеря deep link через auth</td><td class="not-tested">NOT TESTED</td><td>Целевой контракт есть; этап 0 не выполнял browser flow.</td></tr>
+        <tr><td>Back не возвращает в сетку или фильтр истории</td><td class="not-tested">NOT TESTED</td><td>Контекстный путь задан для этапа 2/8/10; runtime здесь не проверялся.</td></tr>
+        <tr><td>Скрытое приглашение оставляет badge</td><td class="warn">WARN</td><td>`unreadCount` и первые пять требуют единого stage 1 контракта.</td></tr>
+        <tr><td>Физический zoom/landscape</td><td class="not-tested">NOT TESTED</td><td>Есть качественный feedback, но нет собственного physical-iPhone повторения.</td></tr>
+        <tr><td>Onboarding ведёт на удалённые tabs</td><td class="warn">WARN</td><td>Текущий App выбирает guide target из прежних пяти tabs.</td></tr>
+      </tbody></table>
+    </section>
+    <footer>
+      <h2>Открытые вопросы и отложенные элементы</h2>
+      <p>Q-UX-001..011 описаны в OPEN_QUESTIONS. Guest identity, custom score memory,
+        create/acquire/start, replay, 10-second Undo, история ведущих, future date,
+        team avatar, pending dialog и admin exact-ID read не получают статус ready
+        без решения. Motion допускается только с reduced motion и доступным
+        keyboard/touch эквивалентом. Временное скрытие invitations — принятое D37,
+        а их последующее возвращение — отдельная будущая развилка.</p>
+      <small>Отчёт построен по source review; PASS браузерной или пользовательской
+        приёмки этим файлом не заявляется.</small>
+    </footer>
+  </main>
+</body>
+</html>

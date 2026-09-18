@@ -1,0 +1,13 @@
+{
+  "source_thread": "01a0b052-0f3e-79b3-a1c8-63b2db1b1474",
+  "received": "2026-09-17",
+  "files": {
+    "report.md": "79d8bfcd5c18ac4ece1cd8b02c5f533dc5f80d970b18a57a22f60107f65e3ade",
+    "observations.csv": "8e0a449176a17b2aebca64ba8c6af5c78c424481ca7c993350b27dde71116231",
+    "flow-report.html": "181215a214835a80ed344f71fbe8621e942af0ec1f239e0ac58c4654364762e0"
+  },
+  "rows": 43,
+  "unique_image_hash_references": 25,
+  "original_images_received": false,
+  "runtime_reverified_by_coordinator": false
+}

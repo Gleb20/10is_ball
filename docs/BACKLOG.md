@@ -1146,11 +1146,13 @@ backlog ID, version, commit, push or public deployment was created.
 - **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. P1 также воспроизведён координатором в пилоте; блокирующих продуктовых решений нет. Постановка принята independent Terra review; runtime будущего исправления ещё не выполнен.
 - **Documentation / rollback:** BACKLOG, CHANGELOG_DEV, test traceability и component recheck evidence. Rollback только собственного bounded diff; сохранённая failing regression показывает возвращённое ограничение.
 
-### BUG-019 — Поле выбора игрока и активный вариант остаются видимыми над навигацией
+### BUG-019 — Поле выбора и активный вариант видимы над клавиатурой и safe area
 
 - **Type:** layout-interaction
 - **Priority:** P2
 - **Status:** ready
+- **Target overlay D36:** fixed bottom nav no longer exists; accepted outcome is active option and field visible above keyboard/safe area at 360/390px and desktop, with scroll/focus restored. Any older nav-occlusion wording below is superseded, not a directive to keep a bottom bar.
+- **Current GWT / historical boundary:** Given picker opened on a narrow phone with software keyboard and safe area, When active option moves by keyboard/touch, Then field and option remain visible without occlusion or lost focus; desktop remains usable. AT-MATCH-016. The older fixed-bottom-nav Expected/Target/GWT below is historical evidence only.
 - **Scenario / Epic / Story / Sprint:** SC-C02, SC-M01/M02 → EP-UX-CORE → US-UX-SELECT → S1 candidate после новой базы.
 - **Requirements:** MATCH-001/003, AT-MATCH-013/016; [NFR §9–10](requirements/06_NFR_CONSTRAINTS.md#9-accessibility-и-ux); нового ADR/API/data change нет.
 - **Evidence:** F-CMP-002, [runtime rects и screenshots](audits/2026-09-13-ux-ui/components/report.md#f-cmp-002--клавиатурная-active-option-скрывается-fixed-navigation), [Terra PASS](audits/2026-09-13-ux-ui/components-review.json), baseline9f71b9f. Наблюдение 1/1 при данной позиции, распространённость по всем экранам не измерена.
@@ -1263,23 +1265,26 @@ backlog ID, version, commit, push or public deployment was created.
 - **Type:** ux-layout
 - **Priority:** P2
 - **Status:** ready
+- **Target overlay D36/D37:** direct Home → match setup, operator outside roster by default, composition before rare rules; invite controls/challenge prefill are unavailable. Remembered custom values and create/acquire/start depend on Q-UX-005/006; older invite steps below are superseded.
+- **Executable readiness boundary:** `ready` относится только к перестановке существующих полей ручного матча, доступным сводкам/ошибкам, сохранению 1v1/2v2 и нынешней guest selection. Reusable guest identity, сохранение custom score между формами и объединённый create/acquire/start не исполнять до Q-UX-004/005/006; старые invite/challenge сценарии ниже не входят в этот work order по D37.
+- **Current GWT / historical boundary:** Given C creates for A/B from Home, When C configures 1v1/2v2, Then roster comes before optional rules, C is not a player by default, registered selection sends no invite, and valid options remain reachable. AT-MATCH-016/017. Old invite and Start-hub instructions below are historical; Q-UX-004/005/006 gate new identity/memory/combined mutation.
 - **Evidence:** F-PILOT-001, [пилот](audits/2026-09-13-ux-ui/pilot/report.md), [target T-PILOT-CREATE](audits/2026-09-13-ux-ui/pilot/target-spec.md#t-pilot-create--сначала-состав-затем-проверка-правил), [схемы390/1440](audits/2026-09-13-ux-ui/pilot/wireframes.html). Измерение390: первое игровое место y≈1060; частота проблем реальных пользователей неизвестна. Экспертная рекомендация, не доказанная потеря конверсии.
-- **Expected:** человек выбирает стороны раньше дополнительных настроек, всегда видит применяемые правила и состояние приглашений; все прежние возможности находятся через подписанные раскрываемые блоки.
+- **Expected:** человек выбирает стороны раньше дополнительных настроек, видит применяемые правила и разрешённые D37 настройки через подписанные раскрываемые блоки.
 - **Actual:** название, правила, длинная справка, необязательный судья и приглашения предшествуют составу; пустой suggestions section сохраняет рамку при отсутствии вариантов.
 - **Repro:** активный returning user, manual `/matches/new`, creator=false, без recent/frequent/team options; viewport390×844 → положение первого игрового места; сопоставить с p03/p04 pilot.
-- **Risk:** потерять prefill, selected roster, ошибку в закрытом блоке или неверно превратить optional invite в gate. Общие формы используются и challenge/revenge.
+- **Risk:** потерять selected roster, ошибку в закрытом блоке или прежний контракт ручного создания; legacy challenge/revenge prefill не должен открывать скрытый D37 UI.
 - **Verification:** acceptance-level DOM tests на порядок/сводки/disclosure/error focus; browser390/1440 и360 narrow, keyboard/touch, empty/nonempty suggestions, custom rules/2×2/guests/prefill. Полный повтор score engine не требуется для чистой перестановки формы; если изменятся shared contracts/critical mutation — repository-wide gate по AGENTS.
 - **Dependencies:** GAP-012 verified_local; BUG-018/019/023 — согласованные контракты выбора. Pilotreview PASS. Общие pending/directory задачи BUG025/026 сформулированы; core target принят Terra; consumer025/026 уточнены после review.
 - **Scenario / Epic / Story / Sprint:** SC-M01/M02 → EP-UX-CORE «Управление игрой без лишних препятствий» → US-UX-SETUP «Ведущий задаёт состав и понимает правила» → S3 candidate.
 - **Inputs / REQ / AT / ADR:** accepted local GAP012r6 application manifest; MATCH-001–005, MATCH-008/014/015; AT-MATCH-013/015/016/017; D35; target T-PILOT-CREATE. Новый продуктовый режим не вводится. Конкретные JSX seams: MatchCreatePage.tsx slots63–100, form331+, rules382, suggestions389–422, judge423; стили match-create__suggestions в styles.css774+.
 - **User outcome / non-goals:** выбор A/B первым; сохранение всех функций. Не менять бренд, правила, API, приглашения, доступность пользователей, право старта, не добавлять постоянные черновики/автостарт/clone. Сохранить существующее исключение AUTH-006 / AT-AUTH-009: при runtime401 безопасный in-memory draft остаётся hidden/inert; повторный вход тем же actor восстанавливает его без replay mutation, другой actor получает чистую форму. Обычный уход со страницы по MATCH-015 по-прежнему уничтожает draft.
 - **Write scope / owner:** один frontend writer: `apps/web/src/pages/MatchCreatePage.tsx`, scoped existing styles и focused tests; общий Autocomplete исправляется в BUG-018/019, не форкать его ради этой формы. API/types/data: none.
-- **Exact behavior:** порядок: heading/format/creator → side A/B slots и непустые quick choices → rules summary/disclosure → title/judge/invite summary/disclosure → Create/Cancel. Сводки из текущего form state, не второй копии. Ошибки раскрывают нужную секцию. Inline buttons aria-expanded/controls, focus сохраняется на trigger; сворачивание активного region возвращает focus. Подробности — [core-target](audits/2026-09-13-ux-ui/core-target.md) и [схема](audits/2026-09-13-ux-ui/core-wireframes.html), которые заменяют противоречивый T-MATCH-CREATE. Shortcuts остаются у стороны B; заполненное B1 заменяется только после локального preview, команда всегда показывает preview B1/B2. Не вводить произвольное назначение shortcuts активному месту.
-- **Roles / states / edges:** manual creator=false; challenge/revenge creator/invite=true по исходным правилам; 1×1/2×2, registered/guest/team/recent/frequent; пустые группы без blank panel; выбранный недоступный user показывает исходную validation и не теряет остальные данные; длинные имена/названия переносятся; collapsed error открывается; directory loading/empty/error — единый контракт. Submit payload фиксируется на отправке, неизвестный результат не повторять автоматически.
+- **Exact behavior:** порядок: heading/format/creator → side A/B slots и непустые quick choices → rules summary/disclosure → title/judge summary/disclosure → Create/Cancel. D37 скрывает invite summary/control. Старое поле «Судья» как приглашение судьи не возвращается в summary/disclosure; если показан current owner, это только read-only контекст в действующих правах. Сводки из текущего form state, не второй копии. Ошибки раскрывают нужную секцию. Inline buttons aria-expanded/controls, focus сохраняется на trigger; сворачивание активного region возвращает focus. Подробности — [core-target](audits/2026-09-13-ux-ui/core-target.md) и [схема](audits/2026-09-13-ux-ui/core-wireframes.html) только в части, согласованной с D36/D37. Shortcuts остаются у стороны B; заполненное B1 заменяется только после локального preview, команда всегда показывает preview B1/B2. Не вводить произвольное назначение shortcuts активному месту.
+- **Roles / states / edges:** manual creator=false; challenge/revenge entry/prefill UI скрыты по D37; 1×1/2×2, registered/guest/team/recent/frequent; пустые группы без blank panel; выбранный недоступный user показывает исходную validation и не теряет остальные данные; длинные имена/названия переносятся; collapsed error открывается; directory loading/empty/error — единый контракт. Submit payload фиксируется на отправке, неизвестный результат не повторять автоматически.
 - **Subtasks:** 1) Зафиксировать meaningful Red по порядку и доступности всех возможностей, используя реальный form state; результат — failing acceptance. 2) Переставить существующие slots/controls без изменения handlers/payload, устранить пустую suggestions рамку; результат — UI order и прежний create DTO. 3) Добавить сводки/disclosures с error-focus и prefill, явное назначение B1 и preview команды/замены; результат — видимое состояние даже при закрытом блоке. 4) Проверить desktop/mobile и крайние состояния, обновить docs и приложить viewport evidence; результат — ready review delta с измерениями, не только build.
-- **Given / When / Then:** Given manual1×1 empty roster, When open390×844, Then первый slot виден до редких параметров, creator/invite выключены. Given2×2, When switchformat, Then по2 места в каждой стороне и все прежние guest/user controls доступны. Givencustomrules и invite=true, When close regions, Then сводки показывают фактические значения и inviteon. Giveninvalidfield в закрытом блоке, When submit, Then region раскрыт, ошибка доступна, focus на нужном поле, mutation не отправлен. Givenchallenge/revenge prefill, When submit valid form, Then source/participants/invites соответствуют D35, скрытых подтверждений нет. Givenpendingmutation, When пытаться менять payload-controls, Then применён единый принятый pending contract, дубляPOST нет.
+- **Given / When / Then:** Given manual1×1 empty roster, When open390×844, Then первый slot виден до редких параметров, creator вне состава по умолчанию, invite controls отсутствуют. Given2×2, When switchformat, Then по2 места в каждой стороне и все прежние guest/user controls доступны. Given custom rules, When close regions, Then сводки показывают фактические значения. Given invalid field в закрытом блоке, When submit, Then region раскрыт, ошибка доступна, focus на нужном поле, mutation не отправлен. Given старый challenge/revenge deep link, Then скрытый prefill не применяется и новая game invitation не отправляется (GAP-029/AT-UI-INV-001). Given pending mutation, When менять payload-controls, Then принят единый pending contract, дубля POST нет.
 - **Documentation / rollback:** UX_FLOWS/AT уточнить структуру без изменения domain правил, traceability для новых тестов, BACKLOG/CHANGELOG_DEV и source evidence; rollback только scoped UI/test diff, без DB rollback. Не редактировать историческую r6 acceptance.
-- **Readiness:** контракты BUG025/026 и MATCH синтез приняты; открытых продуктовых развилок нет. Исследование частоты/скорости с человеком ещё впереди; не обещать улучшение времени в процентах.
+- **Readiness:** для ограниченной перестановки формы контракты BUG025/026 и MATCH синтез приняты. Q-UX-004/005/006 остаются открытыми и блокируют только соответствующие новые механики; старые invite/challenge пункты ниже superseded D37. Исследование частоты/скорости с человеком ещё впереди; не обещать улучшение времени в процентах.
 
 
 - **Readiness evidence:** [core-review](audits/2026-09-13-ux-ui/core-review.json); target принят, implementation и его обязательные проверки ещё не выполнены.
@@ -1426,6 +1431,8 @@ backlog ID, version, commit, push or public deployment was created.
 - **Type:** ux-hierarchy-and-state-presentation
 - **Priority:** P2
 - **Status:** ready
+- **Target overlay D36:** compact avatar/name/surname/rank/played/wins/losses, direct match/tournament CTAs, current player/judge/organizer task before history; secondary stats in profile. Five-tab/Start-hub/greeting target below is superseded. See GAP-030/031 and AT-HOME-003.
+- **Current GWT / historical boundary:** Given Home for active player, judge or organizer, When current events load, Then compact header and direct match/tournament actions lead, role-scoped current task precedes history, secondary stats are in profile, all required entries remain discoverable. AT-HOME-001..003. Old five-tab/Start/greeting instructions below are historical only.
 - **Evidence:** F-AUTH-004/F-PILOT-007 и F-PILOT-005/F-RESULTS-005; [AUTH](audits/2026-09-13-ux-ui/auth-review.json), [RESULTS](audits/2026-09-13-ux-ui/results/report.md), [populated Home](audits/2026-09-13-ux-ui/results/evidence/runtime/home-results-390.png). Layout benefit remains expert hypothesis; released judge mismatch observed, score permissions unchanged. RESULTS independent evidence/target review PASS.
 - **Expected:** оператор видит текущую игру/вход к созданию раньше статистики, понимает актуальность ведения; все данные и входы сохранены.
 - **Actual:** statistics/rival block предшествует игре; active card после release использует последнее historical judge session и «Вы судили», хотя activeJudge=null.
@@ -1494,17 +1501,20 @@ backlog ID, version, commit, push or public deployment was created.
 - **Type:** ux-hierarchy
 - **Priority:** P2
 - **Status:** ready
+- **Target overlay D37:** next actions preserve actor/state rights but do not expose game invitations or revenge. Old invitation/CTA target below is superseded; judge handover and safe exit remain. See GAP-029 and AT-UI-INV-001.
+- **Executable readiness boundary:** `ready` относится к иерархии существующих разрешённых действий, current judge session и безопасному переходу; не включает совмещённый create/acquire/start (Q-UX-006), replay (Q-UX-007), ten-second Undo/archive (Q-UX-008) или историю держателей общего телефона (Q-UX-009). Старые строки об invitation/revenge ниже сохранены как исторический target и не исполняются при D37. Семантику status chips для всех экранов задаёт GAP-034 в этапе 3; этот match consumer проверяется в этапе 6.
+- **Current GWT / historical boundary:** Given match in waiting/active/terminal state for each actor, When detail opens, Then only the authorized next action leads, game invite/revenge is absent, handover remains, and judge exit uses authoritative state. AT-UI-INV-001/AT-HOME-003. Old invitation actions below are historical only.
 - **Scenario / Epic / Story / Sprint:** SC-M04/SC-J01/J02/J03 → EP-UX-CORE → US-UX-NEXT «Ведущий понимает, как продолжить и начать следующую игру» → S3 candidate.
 - **Evidence:** F-PILOT-002/003 и MATCH M06; [пилот](audits/2026-09-13-ux-ui/pilot/report.md), [role matrix](audits/2026-09-13-ux-ui/match/evidence/m06-role-action-matrix.json), [review](audits/2026-09-13-ux-ui/match-review.json). Равный акцент действий — экспертное наблюдение, частота ошибок неизвестна.
 - **Expected:** одно основное следующее действие рядом со счётом; все дополнительные разрешённые операции и новые игры доступны.
 - **Actual:** несколько равных кнопок, пустой журнал перед решением, после результата нет прямой пустой следующей игры. Историческая роль не доказывает текущего владения устройством.
 - **Repro:** waiting creator/nonparticipant → detail; затем creator+participant/current judge/reserved/free роли и finished former operator из пилота. Сравнить доступные действия и их порядок с матрицей.
 - **Inputs / REQ / AT / ADR:** GAP-012 r6 и323 source hashes; MATCH-008/010–014/017, JUDGE-001/002, D4/D7/D17/D18/D23/D24/D35; [единый контракт](audits/2026-09-13-ux-ui/core-target.md), [схемы](audits/2026-09-13-ux-ui/core-wireframes.html), AT-MATCH-013/017 и существующие проверки judge session/start/cancel.
-- **Exact behavior:** heading/status/refresh → score/roster/rules → judge state и primary по приоритету terminal → reservation → active judge → free slot → остальные обычные действия → приглашения → журнал → исключительные операции → назад. Полная таблица core-target обязательна, варианты старого T-MATCH-DETAIL заменены. Creator waiting/free: «Начать и вести счёт» открывает существующий judge setup, «Начать без ведения» сохраняет старый start dialog. Другой допустимый субъект при free slot получает judge entry, но не право начать. Совпадение userId показывает «Открыть ведение», auth session проверяет существующая JudgePage. Terminal допускает пустую /matches/new; eligible participant сохраняет отдельный revengeOf.
+- **Exact behavior:** heading/status → score/roster/rules → judge state и primary по приоритету terminal → reservation → active judge → free slot → остальные разрешённые действия → журнал → исключительные операции → назад. Game invitation и revenge entry не показываются по D37; постоянный Home Refresh не добавляется. Таблица [core-target](audits/2026-09-13-ux-ui/core-target.md) применяется только после D36/D37 overlay. Creator waiting/free: существующий judge setup и start остаются отдельными до Q-UX-006. Другой допустимый субъект при free slot получает judge entry, но не право начать. Совпадение userId показывает «Открыть ведение», auth session проверяет существующая JudgePage. Terminal допускает пустую /matches/new без автоматического переноса roster/rules или revengeOf.
 - **Write scope / owner:** один frontend writer MatchDetailPage.tsx, локальные существующие стили и focused tests; shared buttons не форкать. Home — GAP-015, JudgePage — отдельные задачи, API/data/contracts не менять.
-- **Constraints / edges:** все комбинации creator/player/judge и reservation; stale owner/session, expiry, waiting/in_progress/pending_confirmation/finished/stopped/cancelled, standalone/tournament. Видимость D17 первична. Start creator-only; stop/no-show/cancel/void отдельно по guards; новый admin access не добавлять. Одна колонка, без sticky; BottomNav не закрывает controls. Длинные имена/пустой журнал/error/loading сохраняют доступность.
-- **Subtasks:** 1) Табличные acceptance cases на каждый primary и пересечения ролей. 2) Перестановка существующих элементов и единый вычисляемый primary без изменения handler/contracts. 3) Добавить пустую следующую игру и сохранить purposeful revenge. 4) Browser390/1440/360, клавиатура/фокус, auth-session negatives, документация и evidence.
-- **Given / When / Then:** Given creator+player/free/waiting, Then одна primary и доступен judge setup. Given другой participant/free, Then он может занять место, но start запрещён. Given тот же user на другом устройстве, Then userId не включает score controls и нет скрытого takeover. Given reservation, Then адресат видит принятие, остальные просмотр. Given finished former operator, Then новая игра открывает пустую manual форму; eligible revenge остаётся отдельным. Given403, Then roster/title не раскрыты.
+- **Constraints / edges:** все комбинации creator/player/judge и reservation; stale owner/session, expiry, waiting/in_progress/pending_confirmation/finished/stopped/cancelled, standalone/tournament. Видимость D17 первична. Start creator-only; stop/no-show/cancel/void отдельно по guards; новый admin access не добавлять. Одна колонка, без sticky; удалённый BottomNav не заменяется локальным перекрытием. Длинные имена/пустой журнал/error/loading сохраняют доступность.
+- **Subtasks:** 1) Табличные acceptance cases на каждый primary и пересечения ролей. 2) Перестановка существующих элементов и единый вычисляемый primary без изменения handler/contracts. 3) Добавить пустую следующую ручную игру без replay/revenge. 4) Browser390/1440/360, клавиатура/фокус, auth-session negatives, документация и evidence; применить принятый GAP-034 target к status chips.
+- **Given / When / Then:** Given creator+player/free/waiting, Then одна primary и доступен существующий judge setup. Given другой participant/free, Then он может занять место, но start запрещён. Given тот же user на другом устройстве, Then userId не включает score controls и нет скрытого takeover. Given reservation, Then адресат видит принятие, остальные просмотр. Given finished former operator, Then новая игра открывает пустую manual форму без скрытого replay/revenge. Given403, Then roster/title не раскрыты.
 - **Risk:** потерять разрешённое действие из-за приоритетов, предоставить start не-создателю или считать исторического судью владельцем auth session.
 - **Verification:** component actor/state matrix, browser keyboard/touch/desktop/mobile и реальные session negatives; critical journey repository-wide по AGENTS при реализации, без повторного тестирования reducer ради схемы.
 - **Dependencies:** GAP-013 и общий core-target приняты Terra; BUG-018/019/025/026 сохраняют свои seams. Admin discovery исследует ADMIN отдельно. Target принят Terra, см. core-review.json.
@@ -1512,28 +1522,18 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Readiness evidence:** [core-review](audits/2026-09-13-ux-ui/core-review.json); target принят, implementation и его обязательные проверки ещё не выполнены.
 
-### GAP-018 — Создатель явно приглашает выбранного игрока из деталей матча
+### GAP-018 — Повторно открыть игровые приглашения только по отдельному решению
 
-- **Type:** ux-capability-entry
+- **Type:** decision-gated-availability
 - **Priority:** P2
-- **Status:** ready
-- **Scenario / Epic / Story / Sprint:** SC-M03/M04 → EP-UX-CORE → US-UX-INVITE «Приглашение доступно, когда я хочу позвать игрока» → S3 candidate.
-- **Evidence:** F-MATCH-002, M04 persisted replacement lifecycle и явный API invite; [находки](audits/2026-09-13-ux-ui/match/findings.json), [review evidence](audits/2026-09-13-ux-ui/match-review.json).
-- **Expected:** создатель приглашает текущего допустимого зарегистрированного участника отдельной кнопкой, без автоматической рассылки и без start gate.
-- **Actual:** замена корректно отменяет старое pending приглашение и не приглашает replacement автоматически; поддерживаемый API недоступен через его строку UI.
-- **Repro:** waiting2×2 с pending invite → заменить игрока → сохранить → у нового участника нет приглашения и кнопки; creator API createMatchInvitation успешно создаёт его.
-- **Inputs / REQ / AT / ADR:** MATCH-003/008/014, AT-MATCH-017, D35; frozen MATCH M04; MatchDetailPage.tsx invitation rows, api.createMatchInvitation(matchId,{userId,kind:'player'}), существующий lifecycle/service.
-- **Exact behavior:** waiting creator видит строки текущих зарегистрированных участников; без действующего приглашения — «Пригласить», declined/expired — «Пригласить снова», pending — текущий статус, accepted — принято. Нажатие создаёт только конкретное player invitation и обновляет серверные данные; редактирование состава никогда само не отправляет. Гостям account invitation не показывать. Изменение roster перед сохранением поясняет удаление старого и отсутствие автоинвайта нового участника. Accepted неизменённых участников сохраняются.
-- **Write scope / owner:** один frontend writer MatchDetailPage.tsx + focused tests, существующий api.ts без нового endpoint. Не переносить весь edit layout в эту задачу; его композиция по GAP-013.
-- **Constraints / edges:** creator-only; только текущий eligible user и waiting, без снятия backend guards. Pending блокирует повтор только этой отправки, состояние ошибки рядом со строкой; неизвестный исход → GET сверка, не автоматический POST. Рейс start/edit/decline/reinvite сверяет актуальные rows до нового явного действия. После старта нет нового приглашения; старые lifecycle состояния показываются по контракту.
-- **Subtasks:** 1) Red на replacement без row action и роли. 2) Вычислить отображение строк из текущего roster+invites, не сохранять отдельную invite policy. 3) Подключить существующий request с pending/error/readback. 4) Desktop/mobile+keyboard, lifecycle/API guards, docs.
-- **Given / When / Then:** Given новый registered replacement, When сохранить edit, Then автоPOSTinvite=0 и видна «Пригласить». When creator нажал, Then ровно один explicit запрос и pending из ответа. Given guest/noncreator/started, Then действие отсутствует и directAPI guard сохраняется. Given failed response, Then нет auto resend; GET актуализирует строку. Given accepted unchanged user, Then его статус не сбрасывается.
-- **Risk:** превратить optional invite в скрытый consent gate, дублировать отправку либо пригласить уже удалённого игрока.
-- **Verification:** component role/status matrix, browser390/1440 и API lifecycle negatives; использовать accepted transaction coverage с точной ссылкой, новые изменения контрактов потребуют repository-wide gate.
-- **Dependencies:** GAP-012 accepted, BUG-021 для контекстной ошибки, GAP-017 для порядка detail; постановка принята Terra и координатором. Q-UX-001 не решается этой задачей.
-- **Documentation / rollback:** UX_FLOWS/AT/traceability/BACKLOG/CHANGELOG_DEV; rollback только своего UI/test/docs delta.
-
-- **Readiness evidence:** [core-review](audits/2026-09-13-ux-ui/core-review.json); target принят, implementation и его обязательные проверки ещё не выполнены.
+- **Status:** blocked_decision
+- **Evidence:** F-MATCH-002, M04 persisted replacement lifecycle и исходный экспертный target сохранены в immutable package; D37 временно скрывает game/tournament invitation UI.
+- **Expected:** прежний target «создатель явно приглашает из деталей» superseded. Реактивация возможна только после отдельного решения о scope, роли, старых pending rows и acceptance.
+- **Actual:** текущий runtime ещё показывает UI invitations; его временное скрытие — GAP-029. Старые API/data rows сохраняются.
+- **Repro:** сверить D35/D37 и legacy `/matches/:id` invitation action; не реализовывать старое описание как готовую задачу.
+- **Risk:** восстановить скрытую функцию преждевременно или автоматически принять старые приглашения.
+- **Verification:** после решения — новый AT, role/expiry/notification/browser/PG checks; на этапе 0 только consistency review.
+- **Dependencies:** Q-UX-011 о возвращении UI; GAP-029 и D37 действуют до него.
 
 ### BUG-030 — Отмена матча имеет правильное название и необязательную причину
 
@@ -1610,6 +1610,8 @@ backlog ID, version, commit, push or public deployment was created.
 - **Type:** ux-state-hierarchy
 - **Priority:** P2
 - **Status:** ready
+- **Target overlay D36:** show compact top-3 only after actual result, preserve secondary access to full TOURNAMENT-015/017 stats; stopped has no champion. Old all-results-in-primary-block target below is superseded.
+- **Current GWT / historical boundary:** Given tournament collecting/generated/active/stopped/finished, When summary opens, Then zero results and false champion are absent, finished top-3 is primary and full TOURNAMENT-015/017 stats remain available secondarily. AT-TRN-012/013. Old primary all-results layout below is historical only.
 - **Scenario / Epic / Story / Sprint:** SC-T02/T04/T05 → EP-UX-TOURNAMENT → US-UX-TOURNAMENT-RESULT → S4 candidate.
 - **Evidence:** F-TOURNAMENT-003; T-RUN-004/006/007; [пакет](audits/2026-09-13-ux-ui/tournament/report.md), [обязательная коррекция и точный target](audits/2026-09-13-ux-ui/tournament-correction.md). Независимое [ревью принято](audits/2026-09-13-ux-ui/social-review.json); частота у реальных пользователей неизвестна.
 - **Expected:** Текущая работа отделена от итогов, все реальные результаты доступны после завершения.
@@ -1632,20 +1634,24 @@ backlog ID, version, commit, push or public deployment was created.
 - **Type:** ux-layout
 - **Priority:** P2
 - **Status:** ready
+- **Target overlay D36/D37:** rules and roster precede bracket; state prioritizes current match/bracket, with no new global nav or consent/invite UI. Preserve pre-start edit, regeneration, organizer/admin rights and existing read-only summaries. Older invite/navigation target below is superseded.
+- **Executable readiness boundary / staged ownership:** один canonical GAP-019 и один frontend writer на `TournamentDetailPage.tsx` в каждый момент. Этап 7 меняет только collecting/needs_regeneration и authoritative rules/roster/pre-generation: порядок, существующее редактирование, права, guest selection без новой identity. Этап 8 после принятого delta этапа 7 меняет bracket_generated/in_progress/terminal composition: сетка и рабочий матч впереди повторных summary, read-only сводки вторичны. Это последовательные subscopes одной задачи, не два параллельных writers; `ready` не открывает future scheduling (Q-UX-010), reusable guest (Q-UX-004), invitations (D37) или неизвестные mutation semantics. BUG-032/033 и GAP-020 координируются в этапе 8 на том же общем файле последовательно.
+- **Stage acceptance:** этап 7 — Given organizer в collecting/needs_regeneration, Then правила и состав до построения, prestart edit/regeneration и guards сохранены (AT-TRN-024 scope A, AT-TRN-022/023 для mutation). Этап 8 — Given generated/active/terminal, Then сетка/текущий матч либо действительный результат имеют первенство, полный read-only summary достижим вторично, stopped не получает чемпиона (AT-TRN-024 scope B и AT-TRN-012/013 для результата). Для каждого состояния отдельно проверить organizer/participant/scoped admin, empty/loading/error/pending, keyboard 360/390 и desktop, response + authoritative GET после mutation. Полный GAP-019 не `verified_local`, пока оба subscopes не приняты.
+- **Current GWT / historical boundary:** Given organizer/admin/participant opens tournament at each lifecycle state, When they act, Then rules and roster are authoritative before bracket, current match/bracket lead during play, rights and prestart regeneration persist, and no global nav or game invite UI appears. AT-TRN-024/AT-UI-INV-001. Conflicting older navigation/consent target below is historical only.
 - **Scenario / Epic / Story / Sprint:** SC-T01/T02/T04 → EP-UX-TOURNAMENT → US-UX-TOURNAMENT-ORIENT → S4 candidate.
 - **Evidence:** TOURNAMENT report/annotated-before-after; F003-related hierarchy; expert proposal; [пакет](audits/2026-09-13-ux-ui/tournament/report.md), [обязательная коррекция и точный target](audits/2026-09-13-ux-ui/tournament-correction.md). Независимое [ревью принято](audits/2026-09-13-ux-ui/social-review.json); частота у реальных пользователей неизвестна.
 - **Expected:** Организатор видит готовность состава и следующее действие, участник — свой текущий/следующий матч.
 - **Actual:** Управление и ранние итоги конкурируют с составом, сеткой и ближайшим матчем.
 - **Repro:** named runs в [runs.csv](audits/2026-09-13-ux-ui/tournament/runs.csv), syntheticactors и status как вfinding; authoritative state из runtime-observations.
-- **Inputs / REQ / AT / ADR:** TOURNAMENT-001/005/006/007/017, AT-TRN-004/009, D35; acceptedGAP012r6,323sourcehashes; exactseams TournamentDetailPage.tsx, scoped existingstyles и focused tests.
-- **Exact behavior:** Сохранить текущий shell шириной до 560px и одну колонку. Collecting / needs_regeneration: заголовок, статус и обновление → сводка правил с существующим редактированием → режим участия → активный состав, приглашения и добавление → построение или перестроение сетки → операции с турниром. Bracket_generated: готовность, состав, сетка и свой следующий матч; старт только организатору. In_progress: текущие и свой следующий матч → сетка → вторичные операции. Конечное состояние: серверный результат, сетка и сыгранные матчи. Все данные и входы сохраняются в пределах текущих прав; scoped admin получает только минимальную projection. Новая закреплённая панель, мини-карта и навигация не вводятся.
+- **Inputs / REQ / AT / ADR:** TOURNAMENT-001/005/006/007/017/020, AT-TRN-004/009/024, D35/D36/D37; accepted GAP012-r6 source; exact seams TournamentDetailPage.tsx, scoped existing styles и focused tests.
+- **Exact behavior:** Сохранить текущий shell шириной до 560px и одну колонку. Этап 7 — collecting/needs_regeneration: заголовок/status → authoritative rules с существующим prestart edit → режим участия → активный состав и прямое добавление → построение/перестроение сетки → исключительные операции. D37 скрывает приглашения и согласие в UI, но не удаляет старые rows/API. Этап 8 — bracket_generated: готовность, сетка и свой следующий матч перед повторным read-only summary; старт только организатору. In_progress: текущий/следующий матч → сетка → вторичные операции. Terminal: действительный серверный результат, сетка и сыгранные матчи, полный summary доступен вторично; stopped без выдуманного чемпиона. Все данные и входы сохраняются в пределах текущих прав; scoped admin получает только минимальную projection. Новая закреплённая панель, мини-карта и навигация не вводятся.
 - **Write scope / owner:** TournamentDetailPage.tsx, scoped existingstyles и focused tests; один frontendwriter на общийTournamentDetailPage, последовательные taskdelta.
 - **Constraints / edges:** Пересечение ролей, pending / declined приглашения, гости и сокомандники, пустое состояние, загрузка и ошибка, длинные имена, устаревшая сессия и причина needs_regeneration. Перестановка сама по себе не меняет политику подтверждений.
 - **Subtasks:** 1) Зафиксировать meaningful acceptance Red для описанного разрыва. 2) Выполнить ограниченное изменение UI, сохранив обработчики, payload и права. 3) Проверить каждый GWT, отрицательные случаи, ожидание и ошибки; для мутаций сверить авторитетные данные. 4) Снять desktop/mobile evidence, обновить документы и передать на ревью.
-- **Given / When / Then:** Given организатор в collecting, Then активный состав и добавление находятся перед опасными операциями, построение доступно по прежним условиям. Given участник в in_progress, Then его текущий или следующий матч находится перед вторичными данными. Given менее частая настройка или приглашение, Then подписанный вход сохраняется. Given минимальный admin DTO, Then полного экрана организатора нет. Given клавиатура на 360/1440, Then порядок DOM логичен, навигация не закрывает фокус.
+- **Given / When / Then:** Given организатор в collecting/needs_regeneration, Then действующие правила и активный состав с добавлением стоят до опасных операций, построение доступно по прежним условиям. Given participant в bracket_generated/in_progress, Then сетка и текущий/следующий матч стоят до вторичного read-only summary. Given terminal, Then действительный результат доступен без ложного чемпиона; полная статистика сохранена. Given скрытые D37 приглашения, Then их controls и badges отсутствуют, team/judge paths не теряются. Given минимальный admin DTO, Then полного экрана организатора нет. Given клавиатура на 360/1440, Then порядок DOM логичен и фокус не закрыт.
 - **Risk:** Скрыть возможность, расширить роль или обещать другой исход. Изменение не должно менять серверные данные и топологию сетки.
 - **Verification:** Relevantwebtests/typecheck + browser390/1440/narrow360/keyboard/focus/pending/error; дляmutationпроверитьresponseиGETвdisposablePG. Приизмененииcriticaljourney/contract repository-widegateпоAGENTS; чистаякомпоновканепереобъявляет1257acceptance.
-- **Dependencies:** BUG-032/033 и общие BUG-018/019/025/026. Использовать принятые правила выбора основного действия, не расширяя права. Независимое ревью принято: [social-review](audits/2026-09-13-ux-ui/social-review.json).
+- **Dependencies:** этап 7 — GAP-029/D37, BUG-018/019/025/026 и действующие D35 guards; Q-UX-004/010 блокируют только новую guest identity/future scheduling. Этап 8 — принятый delta этапа 7, GAP-020, BUG-032/033 и D24/D35, один последовательный writer на общем файле. Использовать принятые правила выбора основного действия, не расширяя права. Независимое ревью исходного экспертного target принято: [social-review](audits/2026-09-13-ux-ui/social-review.json); новое stage split ещё требует приёмки.
 - **Documentation / rollback:** UX_FLOWS, AT и traceability при уточнении наблюдаемых условий; BACKLOG и CHANGELOG_DEV. Откат только своего UI/test/docs изменения, без базы данных и выпуска.
 
 
@@ -1654,6 +1660,10 @@ backlog ID, version, commit, push or public deployment was created.
 - **Type:** ux-navigation
 - **Priority:** P2
 - **Status:** ready
+- **2026-09-18 boundary:** accepted 75% overview below относится к основной
+  сетке SE/DE. Отдельный матч за третье место сохраняется, но предложение
+  убрать его собственные zoom/arrow controls выделено в GAP-033; не
+  переносить туда обязательное масштабирование основной сетки.
 - **Scenario / Epic / Story / Sprint:** SC-T04 → EP-UX-TOURNAMENT → US-UX-BRACKET-OVERVIEW → S4 candidate.
 - **Evidence:** F-TOURNAMENT-004; T-RUN-002/003, экспертнаягипотеза, неusabilityблокер; [пакет](audits/2026-09-13-ux-ui/tournament/report.md), [обязательная коррекция и точный target](audits/2026-09-13-ux-ui/tournament-correction.md). Независимое [ревью принято](audits/2026-09-13-ux-ui/social-review.json); частота у реальных пользователей неизвестна.
 - **Expected:** Режим 75% даёт более компактный горизонтальный обзор, сохраняя читаемость и доступность действий.
@@ -1784,6 +1794,10 @@ backlog ID, version, commit, push or public deployment was created.
 - **Type:** ux-result-discoverability
 - **Priority:** P2
 - **Status:** ready
+- **Primary-text addition 2026-09-18:** U01-FORM-001 относится также к поиску
+  уже сыгранных матчей по фамилиям участников, не к BUG-023 picker. Given C
+  создал/судил A-vs-B, When поиск по фамилии A/B, Then запись находится и
+  обе стороны объясняют совпадение; AT-VIS-003, stage 10.
 - **Scenario / Epic / Story / Sprint:** SC-R01 → EP-UX-RESULTS → US-UX-HISTORY-FIND «Оператор узнаёт нужную игру в списке» → S4 candidate.
 - **Evidence:** F-RESULTS-001 expert hypothesis; [report](audits/2026-09-13-ux-ui/results/report.md), [search screenshot](audits/2026-09-13-ux-ui/results/evidence/runtime/history-search-390.png). Строки поиска не называют найденных игроков; человеческое время/ошибки не измерены.
 - **Expected:** матч различим по обеим сторонам, дате, формату, роли и результату; игра для других не требует считать оператора игроком.
@@ -1828,6 +1842,8 @@ backlog ID, version, commit, push or public deployment was created.
 - **Type:** local-state-consistency
 - **Priority:** P3
 - **Status:** ready
+- **Target overlay D37:** actionable/read changes preserve team invitations, judge_handover/offered and reservations while suppressing hidden game/tournament invitations consistently in list, popup, first-five and unreadCount. A row-only filter is insufficient.
+- **Current GWT / historical boundary:** Given hidden game invitations mixed with team and judge-handover notices, When unread/actionable list or first-five loads, Then visible rows, badge/count and pagination agree, team/handover actions remain, and old pending rows are unchanged. AT-UI-INV-002. Conflicting old all-invite counter target below is historical only.
 - **Scenario / Epic / Story / Sprint:** SC-R04 → EP-UX-RESULTS → US-UX-NOTIFICATION-TRIAGE «Пользователь видит только требующие внимания события» → S4 candidate.
 - **Evidence:** F-RESULTS-004 runtime, readAt обновлён, lifecycle=new оставляет non-actionable row до refresh; [report](audits/2026-09-13-ux-ui/results/report.md), [screenshot](audits/2026-09-13-ux-ui/results/evidence/runtime/notifications-actual-after-read-390.png).
 - **Expected:** successful read немедленно согласует список и badge, приглашение с доступным ответом остаётся видимым.
@@ -1971,3 +1987,132 @@ backlog ID, version, commit, push or public deployment was created.
 - **Verification:** focused JudgePage/state tests and web typecheck; disposable PG both original/new orders, competing point/finish; repository-wide pnpm ci for critical journey; browser360/390/1440/keyboard/focus/network. Current probe is evidence of existing issue, not future target acceptance.
 - **Dependencies:** BUG-029 recovery contract, BUG-031 focus mapping; independent target review PASS, correction-review.json.
 - **Documentation / rollback:** UX_FLOWS/AT/traceability, BACKLOG/CHANGELOG_DEV and evidence; rollback own UI/tests/docs only, no event/data rewrite or release.
+
+## Программа интерфейса 2026-09-18 — current decision overlay
+
+[D36/D37](DECISIONS.md) и [TECH-008 plan](test-plans/TECH-008-interface-programme.md)
+заменяют противоречащие navigation/invitation targets экспертного пакета. Старый
+пакет и его 38 ID остаются evidence, но его прежние 35 ready / 3 blocked не
+являются счётом готовности новых targets. Новые задачи ниже и обновлённые
+старые headings составляют **один** canonical backlog. Эпизоды и подпункты:
+[coverage](audits/2026-09-13-ux-ui/implementation/coverage.csv).
+
+### TECH-007 — Обязательное SemVer-повышение при разрешённом выпуске
+
+- **Type:** delivery-process
+- **Priority:** P2
+- **Status:** verified_local
+- **Evidence:** принятие пользователем SemVer 2026-09-15; прежние D4/VERSIONING считали любой новый flow MAJOR, а 3.0.0 сохранялась после нового поведения.
+- **Expected:** разрешённый выпуск продукта включает правильный PATCH/MINOR/MAJOR и exact version/SHA без отдельного согласования номера.
+- **Actual:** правило SemVer и release/version parity принято и проверено документально в stage 0; runtime версия 3.0.0 не меняется. Следующий разрешённый выпуск проверяет применение правила отдельно.
+- **Repro:** сопоставить D4, VERSIONING и WORKFLOW на одном новом совместимом flow и docs-only commit.
+- **Risk:** старый номер для изменённого продукта или ошибочный MAJOR; несоответствие web/API/proxy.
+- **Verification:** stage 0 docs audit 161 файл, 0 broken links/anchors/incomplete items, consistency review и independent Terra PASS; runtime release gate проверяется при следующем разрешённом выпуске.
+- **Dependencies:** D4 clarification, текущий WORKFLOW §7; не разрешает самостоятельный push/tag/reset.
+
+### TECH-008 — Единая программа и покрытие 82 эпизодов / 38 экспертных задач
+
+- **Type:** research-and-delivery-specification
+- **Priority:** P1
+- **Status:** in_progress
+- **Evidence:** два качественных user packages, экспертный checkpoint, принятые D36/D37 и [frozen source universe](audits/2026-09-13-ux-ui/implementation/source-universe.json).
+- **Expected:** один атомарный реестр episode/subpoint→evidence→decision/gate→canonical task→stage→AT→result; полная route/state карта и проверяемые work orders этапов 1–14.
+- **Actual:** stage 0 принят локально после независимого Terra PASS и coordinator checks; 236 атомарных строк покрывают 82 эпизода и 38 экспертных ID. Полная программа этапов 1–14 остаётся `in_progress`; пользовательские сеансы не были количественным тестом.
+- **Repro:** сравнить 39+43 CSV IDs и 38 экспертных IDs с реестром; проверить составные комментарии по full reports и watchlist.
+- **Risk:** потерять подпункт, принять самоотчёт за runtime, продублировать backlog или объявить decision-gated механику ready.
+- **Verification:** [stage 0 acceptance receipt](audits/2026-09-13-ux-ui/implementation/stage0-acceptance.json), coverage checker, docs links/anchors, manual semantic atom review, independent frozen-delta review и проверка rollback. Runtime acceptance следующих этапов отдельно.
+- **Dependencies:** [programme](test-plans/TECH-008-interface-programme.md), D36/D37; нет runtime/deploy в этапе 0.
+
+### GAP-029 — Временно скрыть игровые и турнирные приглашения и вызовы во всём UI
+
+- **Type:** product-availability
+- **Priority:** P1
+- **Status:** ready
+- **Evidence:** D37, U01-FORM-007, T01-06, T05-02; прежний GAP-018 target superseded.
+- **Expected:** UI не создаёт/не предлагает game/tournament invites, challenge/revenge; старые записи и API сохраняются, team invite и judge handover доступны.
+- **Actual:** current UI содержит create options, action links, old query prefill, popup/notification paths и общий unread count.
+- **Repro:** пройти Home/profile/ranking/match/tournament/notification и старые URL с pending invitation на исходном SHA.
+- **Risk:** ложный badge/пустые первые пять, утрата handover или самопроизвольное принятие старого invite.
+- **Verification:** AT-UI-INV-001/002, UI/API contract fixture mixed invite types, browser role/deep-link/401/390/desktop; authoritative persisted rows не меняются.
+- **Dependencies:** D37, NOTIF-005, GAP-017/018/BUG-037 overlay; один writer для shared notification/filter seam.
+
+### GAP-030 — Главная как единственный глобальный вход и контекстный возврат
+
+- **Type:** navigation
+- **Priority:** P1
+- **Status:** ready
+- **Evidence:** D36, HOME-006, U01-START-001, T01-01/07; current App/layout still render five tabs.
+- **Expected:** без bottom tabs/menu доступны все разрешённые routes; Back возвращает в ту же сетку/историю, Home безопасен при deep link/auth/404/judge.
+- **Actual:** текущая навигация опирается на five-tab shell и `/start` hub; onboarding anchors ссылаются на tabs.
+- **Repro:** `App.tsx` route inventory, `/start`, bracket→match, history filter→detail, direct detail reload.
+- **Risk:** потеря редких функций, контекста, judge slot или доступности при удалении shell.
+- **Verification:** AT-HOME-003, AT-ONB-004, browser 390/desktop/keyboard/reauth/403/404/safe-area; judge release по серверу.
+- **Dependencies:** D36, GAP-029 UI availability; один shell writer, onboarding в том же delta.
+
+### GAP-031 — Компактная Home и текущие задачи по роли
+
+- **Type:** product-hierarchy
+- **Priority:** P2
+- **Status:** ready
+- **Evidence:** D36, HOME-001/002/004/005/007, GAP-015; интервью — qualitative feedback одного автора.
+- **Expected:** compact avatar/name/surname/rank/matches/wins/losses, direct match/tournament CTA, role-aware current tasks ahead of history; secondary stats в profile; Home обновляется фоном без постоянного «Обновить», Retry после ошибки.
+- **Actual:** current hero/detail и invited-tournament emphasis перегружают начало Home.
+- **Repro:** Home с участником, судьёй, организатором, пустой историей и несколькими текущими событиями.
+- **Risk:** скрыть событие другой роли или утратить доступ к истории/ranking/notifications/profile.
+- **Verification:** AT-HOME-001..003, visibility/role API fixture и browser 390/desktop/empty/loading/error/keyboard.
+- **Dependencies:** D36, GAP-030 shell, GAP-015 superseding target; право видимости не расширяется.
+
+### GAP-032 — Ведение матча и следующий шаг без потери судейских инвариантов
+
+- **Type:** interaction-concept
+- **Priority:** P2
+- **Status:** confirmed
+- **Evidence:** U01-DETAIL-001..004, U01-JUDGE-001..006, GAP-017/023; жесты и таймер — предложения, не verified runtime.
+- **Expected:** стабильные touch targets/счёт/подача/журнал, ясное подтверждение и следующий шаг; reduced motion и keyboard alternative.
+- **Actual:** детали и судейство требуют отдельной спецификации геометрии и recovery; white gutters и zoom нужно воспроизвести на физическом устройстве.
+- **Repro:** текущий JudgePage portrait/landscape и матчи разных состояний, затем scoped browser/device probe.
+- **Risk:** случайное очко от scroll/tap, ложный результат, изменение прав через UI.
+- **Verification:** после accepted target — component/browser/PG по затронутому поведению, D24/D33 и fast taps; physical iPhone отдельно.
+- **Dependencies:** BUG-029/031/039, Q-UX-006/007/008/009 для новых механик; до решений только существующие безопасные seams.
+
+### BUG-040 — Проверить и устранить iPhone zoom и landscape gutters
+
+- **Type:** mobile-runtime-finding
+- **Priority:** P2
+- **Status:** confirmed
+- **Evidence:** AUTH-003 и U01-JUDGE-001, self-report с кадрами; CSS-причина не установлена. Visual receipt 44 кадров подтверждает отдельные видимые состояния, но не воспроизводит persistent zoom; оригиналы во внешнем ephemeral источнике.
+- **Expected:** auth focus/keyboard и judge rotation не оставляют навязанное приближение или белые поля; пользовательский zoom остаётся разрешён.
+- **Actual:** сообщённые физические состояния ещё не воспроизведены независимо.
+- **Repro:** physical iPhone с точным браузером/версией/viewport/font/keyboard/orientation; сверить до/после shell change.
+- **Risk:** объявить эмуляцию подтверждением физического дефекта или запретить доступное масштабирование.
+- **Verification:** browser emulation для разработки и отдельный physical-iPhone gate после публикации; evidence явного device/OS/browser.
+- **Dependencies:** этап 3/6, GAP-030 body/safe-area restore; до повторения не повышать severity по предположению.
+
+### GAP-033 — Упростить отдельный band матча за третье место
+
+- **Type:** bracket-interaction
+- **Priority:** P2
+- **Status:** confirmed
+- **Evidence:** первичный комментарий T03-08: матч за третье место нужен, отдельные zoom/arrow controls для одной пары воспринимаются лишними; перекрытие при scroll — пока гипотеза.
+- **Expected:** отдельная пара за третье место и вход в неё доступны, без избыточных локальных controls; масштаб и навигация основной SE/DE сетки по GAP-020 сохраняются.
+- **Actual:** текущий third-place band имеет собственные arrows/zoom; mobile перекрытие независимо не воспроизведено.
+- **Repro:** SE3/5/8, DE5/8 и third-place на 390/desktop/keyboard; сравнить управление band и scroll regions.
+- **Risk:** удалить доступ к матчу или сломать фокус/обзор основной сетки.
+- **Verification:** после точного target — focused bracket tests и browser mobile/desktop/keyboard/scroll, отдельная проверка overlap hypothesis.
+- **Dependencies:** stage 8 GAP-020, TOURNAMENT-017/AT-TRN-010; target и визуальная приёмка до `ready`.
+
+### GAP-034 — Общая семантика статусных чипов и иконок
+
+- **Type:** cross-surface-ui-semantics
+- **Priority:** P2
+- **Status:** confirmed
+- **Evidence:** первичные U01-DETAIL-002 («любой из статусных чипов в системе» выглядит кнопкой с неясной иконкой) и U01-JUDGE-003 (иконка подающего и согласованность иконок сервиса); один автор, без доказанной частоты ошибки. Существующий визуальный baseline — опубликованный продукт по D22.
+- **Expected:** статусы читаются как данные, действия — как действия; иконка, если она нужна, означает одно и то же в родственных контекстах и дополняется понятным текстом/accessible name. Focus, selected, active, pending и error не смешиваются с доменным статусом. Никакого rebrand или новой художественной системы.
+- **Actual:** реакция на match status chip и serve icon зафиксирована в отзыве; поведение всех поверхностей и точный visual target ещё не инвентаризированы.
+- **Repro:** на исходном SHA открыть match detail и judge serve setup с текущими статусами/иконкой, затем теми же ролями пройти Home, tournament, history, notifications, team и admin; записать rendered/DOM роль каждого chip/action без предположения о клике из кадра.
+- **Stage 3 bounded output / owner:** один writer сначала составляет inventory фактических chip/icon семейств и состояний по Home, match/judge, tournament/bracket, history, notifications, team и admin (только доступные роли и видимые по D37 данные). Для каждой семьи фиксирует источник значения, статический/интерактивный характер, label/icon/цвет/focus/selected/active/disabled/pending/error, responsive и screen-reader meaning; затем предлагает минимальный target и sample на текущих компонентах. `ready` только после принятия inventory/target; одна общая семантика без преждевременной замены всех consumers.
+- **Consumer sequence:** stage 3 — общий контракт и Home/common-control sample после Home shell; stage 6 — match/judge; stage 8 — tournament/bracket; stage 9 — team; stage 10 — history/notifications; stage 11 — admin. Каждый consumer применяет принятый контракт в своём bounded work order и не переписывает общий компонент параллельно с другим writer. GAP-017/GAP-032 сохраняют отдельную подачу/счёт и права; GAP-034 задаёт только общую status/icon грамматику.
+- **Given / When / Then:** Given non-actionable match/tournament/account/team/notification status, When он показан рядом с разрешённым действием, Then роль чипа, текст и focus не обещают click; keyboard/screen reader получают смысл без угадывания иконки или цвета. Given selected filter или active judge/action, Then это различимо от persisted domain status и интерактивность соответствует доступным правам. Given loading/pending/error, Then смысл состояния и достижимое следующее действие сохраняются на 360/390/desktop и в light/dark. Отсутствие скрытых D37 приглашений не превращается в фиктивный статус.
+- **Risk:** скрыть редкое состояние, сделать невидимым разрешённое действие, изменить actor rights или заменить ясный текст декоративной иконкой.
+- **Verification:** stage 3 inventory + target review по всем семьям/ролям и representative rendered states; для каждого consumer — focused semantics tests и browser keyboard/focus/contrast/light-dark/mobile/desktop, без тестов на имя CSS class. Проверить сохранение всех meaningful states и D17/D35 visibility/rights; runtime acceptance только после соответствующего этапа.
+- **Dependencies:** D22/D36/D37, AT-UI-STATUS-001, BUG-020 focus и имеющиеся компоненты; конкретный visual target должен пройти review до реализации. Никаких новых API/data/permissions.

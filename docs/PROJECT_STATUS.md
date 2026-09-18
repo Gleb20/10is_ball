@@ -1,5 +1,32 @@
 # Tab-10 — статус проекта
 
+## Интерфейсная программа, этап 0 accepted_local — 2026-09-18
+
+На чистом исходном SHA `17a69cacde94c12b7b754e8909dae12cc73a700f`
+принята локально документационная база D36/D37. [Receipt](audits/2026-09-13-ux-ui/implementation/stage0-acceptance.json)
+отделяет эту приёмку от runtime этапов 1–14. Новый
+[план](test-plans/TECH-008-interface-programme.md) и
+[атомарный реестр](audits/2026-09-13-ux-ui/implementation/coverage.csv)
+сопоставляют 82 уникальных эпизода и 38 экспертных ID; это покрытие источников,
+а не готовность 82 функций или runtime acceptance. Прежние 35 ready / 3 blocked
+ниже — исторический экспертный checkpoint до нового overlay. Качественный
+feedback одного автора с prior exposure не доказывает U01/U03/U05, API/DB
+сохранность или физическое исправление zoom; оригиналы 19+25 кадров не включены
+в репозиторий. [Visual receipt](audits/2026-09-13-ux-ui/implementation/sources/primary-visual-receipt.json)
+фиксирует просмотр всех 44 кадров Luna и две независимые spot checks координатора:
+видимые состояния согласуются с отчётами, а касания/runtime/zoom этим не доказаны.
+После независимого review реестр содержит 236 атомарных строк: GAP-019 разделён
+на последовательные stage 7/8 subscopes одной задачи, а UI-001/GAP-034
+получили межэкранный status/icon inventory в stage 3. `ready` GAP-013/017/019
+относится только к ограниченным исполнимым частям; идеи за Q-UX-004–010
+ожидают решений, runtime acceptance по новым AT не проводилась.
+Текущие пять tabs и invitation UI остаются as-built до этапов 1/2. TECH-007
+`verified_local` для правила обязательного SemVer при будущем разрешённом выпуске;
+TECH-008 остаётся `in_progress` до завершения программы. Стадия 0
+не меняет версию 3.0.0, runtime и публичный стенд. Q-UX-001..011 остаются
+решающими воротами для зависимых механик. GAP-011/TECH-002 проверяются заново
+после соответствующего этапа.
+
 ## UX/UI исследование — 2026-09-15
 
 TECH-006 выполняется на опубликованной GAP012-r6 базе: local1257/1257, independent Terra/root acceptance, hosted CI и exact-SHA public smoke. Пилот и COMPONENTS/AUTH/MATCH/JUDGE/TOURNAMENT/TEAM/RESULTS/ADMIN приняты с обязательными corrections и явными ограничениями. Дополнительная ручная коррекция, reset-контракт и финальный экспертный синтез приняты. [Исследование и ограничения](audits/2026-09-13-ux-ui/README.md), [финальное review](audits/2026-09-13-ux-ui/final-review.json).

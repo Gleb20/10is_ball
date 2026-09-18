@@ -1,0 +1,292 @@
+{
+  "date": "2026-09-18",
+  "reviewer": "/root/feedback_coverage_check; Luna",
+  "method": "All44 originals viewed through view_image, not hashes alone. Root spot-checked two stated images. No screenshots copied; no personal names/autofill transcribed.",
+  "counts": {
+    "match": 19,
+    "tournament": 25
+  },
+  "root_spot_checks": [
+    "match/51F8D0D6-2181-4D84-8B3F-539D1670A77F/3-Фото-3.jpg",
+    "tournament/8AA8D59E-BC1C-47BD-8743-CCB6401EF6BC/6-Фото-6.jpg"
+  ],
+  "findings": [
+    "Reports describe visible setup/judge/bracket/result states consistently.",
+    "Bottom tabs visible on ordinary pages; immersive judge is distinct and does not display them in root sample.",
+    "Separate third-place zoom/arrows and pregame zero results visible.",
+    "Invitation UI and native direct-add confirm are observed current behavior, not target acceptance. Accepted programme hides game invites and removes unnecessary ordinary direct-add confirm while preserving required override/rebuild warnings.",
+    "Maps screenshot shows external destination; does not establish app cause."
+  ],
+  "limitations": [
+    "No continuous taps, timing, API/DB persistence or independent role verification.",
+    "No team-invitation response or notification-response runtime coverage from these frames.",
+    "Physical zoom persistence remains self-report plus snapshots, not newly reproduced runtime.",
+    "Originals are external ephemeral source files, intentionally excluded from repository."
+  ],
+  "files": [
+    {
+      "source": "match",
+      "relative_path": "5073E2FD-4175-4B63-B09D-086E70FF83DA/1-Фото-1.jpg",
+      "sha256": "6a04d6a2ba39f96bbe91c0fdc055f43bfcd601666222151aaa4972d80101e760",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "5073E2FD-4175-4B63-B09D-086E70FF83DA/2-Фото-2.jpg",
+      "sha256": "a36d2372daadc30674a549606761df76ddcdeb58b028540068a24cfec7bc198c",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "51F8D0D6-2181-4D84-8B3F-539D1670A77F/1-Фото-1.jpg",
+      "sha256": "d6f0a230b2a222b4cff2e1b8bd84597d18f9a4f556ff320b27d5df919593e4e3",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "51F8D0D6-2181-4D84-8B3F-539D1670A77F/2-Фото-2.jpg",
+      "sha256": "595b0cb45a82bd8df834d283224db913db8a59dfc1ec0cb839e66dfc08a76392",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "51F8D0D6-2181-4D84-8B3F-539D1670A77F/3-Фото-3.jpg",
+      "sha256": "7dc29c3f8782dd3a6a57be3177b4a7e53e380f92a3d20fadfcc7caad087eec7f",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "51F8D0D6-2181-4D84-8B3F-539D1670A77F/4-Фото-4.jpg",
+      "sha256": "a90aa3dee1921ae1114e31ca15b9a172ba525ff297ae69af19c815d83b367930",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "51F8D0D6-2181-4D84-8B3F-539D1670A77F/5-Фото-5.jpg",
+      "sha256": "86131757d8f2ce969a220088a6e5adbdc09084248c1449e65d4b19f8e9a56108",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "51F8D0D6-2181-4D84-8B3F-539D1670A77F/6-Фото-6.jpg",
+      "sha256": "f6b6987ea2bdea6f6f387e38892503db7111b1954342f6046fb636cfd5d9f348",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "6C72FE46-AAB1-4046-BEC8-8CF245BF8D9A/1-Фото-1.jpg",
+      "sha256": "5c701bc98f945f2ea14e44a5456bbfcd799ad80f587409b60bf2f380aa9c2860",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "6C72FE46-AAB1-4046-BEC8-8CF245BF8D9A/2-Фото-2.jpg",
+      "sha256": "c4526c23abe0cf609578329bb00de7058cc8afcf0cf3c17d1347cc6b8db68b47",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "6C72FE46-AAB1-4046-BEC8-8CF245BF8D9A/3-Фото-3.jpg",
+      "sha256": "886737e821760334976a1bb262f1678069395941dadf1b867ad792a46a6a3b31",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "6C72FE46-AAB1-4046-BEC8-8CF245BF8D9A/4-Фото-4.jpg",
+      "sha256": "7d1987e6b63bcf3dc3816326d3c78b8544c498fb34d04508ff8b250094f256e8",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "70586FF4-7D7B-40D3-BEBF-CCA1E9C8E050/1-Фото-1.jpg",
+      "sha256": "5f3449f5bdb12a7542f0faaa43e80cc3b9809541efe6b57550b16a3cc014f521",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "70586FF4-7D7B-40D3-BEBF-CCA1E9C8E050/2-Фото-2.jpg",
+      "sha256": "f84dcf54c304d1185bc31b79e5d0be3ca689d93a54e45511a1e3c62297f14f43",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "70586FF4-7D7B-40D3-BEBF-CCA1E9C8E050/3-Фото-3.jpg",
+      "sha256": "39b1e57395e277cafbaa45dec1f7f3772dd8453e2957a8e0432b9339d644250d",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "70586FF4-7D7B-40D3-BEBF-CCA1E9C8E050/4-Фото-4.jpg",
+      "sha256": "19d6738e056d62d2859978443641f5d85dea5f31eb3cd18282cf55fd354f29a1",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "89C38F9E-0DC7-4EF5-8872-8C8C8F88FA83/1-Фото-1.jpg",
+      "sha256": "08239cc8dbd558a0c86d3c847ec52da03fc675da1757c9bdb11c96492100d6e5",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "89C38F9E-0DC7-4EF5-8872-8C8C8F88FA83/2-Фото-2.jpg",
+      "sha256": "59a0bddfef089f95f409857568dc97f4d64efefec4f3f95c0658b472ca0f8fb6",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "match",
+      "relative_path": "89C38F9E-0DC7-4EF5-8872-8C8C8F88FA83/3-Фото-3.jpg",
+      "sha256": "675c30e389cc58693148d908b6a4f0749bb7adbd9121309685bcf1bd28523a3c",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "57E083E0-A031-484F-BBD0-DC598638F400/1-Фото-1.jpg",
+      "sha256": "a2e9cfb8801cd6d197bd485ee7e877dd5d30cca81080eb03103d25d433d0760b",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "631D4E57-9275-4B51-A8C9-A75E31BBAB3D/1-Фото-1.jpg",
+      "sha256": "4aeaa5b64c8e78afd98740a0dbfd468c3da2ea831e552885eaec53d745a8f1be",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "631D4E57-9275-4B51-A8C9-A75E31BBAB3D/2-Фото-2.jpg",
+      "sha256": "41731a90b42eb37943b97a3aa0806550360c1daae7a322c2804f54ac80053224",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "631D4E57-9275-4B51-A8C9-A75E31BBAB3D/3-Фото-3.jpg",
+      "sha256": "a9c671a88cc42be3a7b75c448039d6b75b2a9afcd5f8fe1aa4c6f1a94d744623",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "631D4E57-9275-4B51-A8C9-A75E31BBAB3D/4-Фото-4.jpg",
+      "sha256": "044f8a4fbcc89ea55be3327082a8c9431b5f7e90ffcab0ec91e5a661db74778a",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "631D4E57-9275-4B51-A8C9-A75E31BBAB3D/5-Фото-5.jpg",
+      "sha256": "74a78bc8b85cbc422bb942eba773b147e52b2e20c2873587100b31e187fabe66",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "631D4E57-9275-4B51-A8C9-A75E31BBAB3D/6-Фото-6.jpg",
+      "sha256": "3d79e463526ef60493f81be4c8270d3f761863468cca1cf14c3c4a1fdc4ea6b8",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "631D4E57-9275-4B51-A8C9-A75E31BBAB3D/7-Фото-7.jpg",
+      "sha256": "42cf777493ab8c368abeb7a1394e9ee441cc2909ee751f300fc4dfe6c3e82bfb",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "631D4E57-9275-4B51-A8C9-A75E31BBAB3D/8-Фото-8.jpg",
+      "sha256": "9acc42e4c4398c9a1eeecd9be4e67f8394b8f0a4df5dd48035ba830efd3f9c6d",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "631D4E57-9275-4B51-A8C9-A75E31BBAB3D/9-Фото-9.jpg",
+      "sha256": "b55c94901d2d12c6355181c3f086ef01999dd7122b6705f3cc20040e093d15b4",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "8AA8D59E-BC1C-47BD-8743-CCB6401EF6BC/1-Фото-1.jpg",
+      "sha256": "94c335b98afe60699c69a3aa00c3eb55cd1d520e06df21e3751d3e6d7bad3673",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "8AA8D59E-BC1C-47BD-8743-CCB6401EF6BC/2-Фото-2.jpg",
+      "sha256": "87536daf3a9810ed9054016a3ea49f746071beeeeec7ffbf6fe68fa565118138",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "8AA8D59E-BC1C-47BD-8743-CCB6401EF6BC/3-Фото-3.jpg",
+      "sha256": "2c388b14f4080ce25c5ed524642ef4fed7cd00c8dae0a9b3c8a4622587ad8766",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "8AA8D59E-BC1C-47BD-8743-CCB6401EF6BC/4-Фото-4.jpg",
+      "sha256": "20d4e68018662d61ee6a961a797ab13697df9547b4c9a57fd4c0d87c29568beb",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "8AA8D59E-BC1C-47BD-8743-CCB6401EF6BC/5-Фото-5.jpg",
+      "sha256": "b2415c7ba7eb1d3a52c5e1b48cc5b1c3b67eec0c413495e3c3a8113ae6d5c9cd",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "8AA8D59E-BC1C-47BD-8743-CCB6401EF6BC/6-Фото-6.jpg",
+      "sha256": "a725422be793e9ad2445c6b7766c99c456d2514e18ebd680d97c348484b5d60f",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "8AA8D59E-BC1C-47BD-8743-CCB6401EF6BC/7-Фото-7.jpg",
+      "sha256": "5e1f51d6b453628452ae2d85803afdb8091c3061c41942f6b61ced9f078d6b5b",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "D1CABF0F-D31A-4EFB-9264-C1EB12C101D3/1-Фото-1.jpg",
+      "sha256": "89a3343037ffcbed5b0adaeda921f680cf85fdc2f578427b70e58644d1133a4e",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "D1CABF0F-D31A-4EFB-9264-C1EB12C101D3/2-Фото-2.jpg",
+      "sha256": "dd898b3fdbc5de98ce7465a052fc556add5069b8ff8bfae610ca9380fb3527ce",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "D1CABF0F-D31A-4EFB-9264-C1EB12C101D3/3-Фото-3.jpg",
+      "sha256": "7972bea3a026b574011f50e57f586078ab105629b4b4eaaa214852ad1f5de4f2",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "D1CABF0F-D31A-4EFB-9264-C1EB12C101D3/4-Фото-4.jpg",
+      "sha256": "eb44b9149e7cff612fbc58762133c71043a74c168ebbbed56728c17a75a32a68",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "D1CABF0F-D31A-4EFB-9264-C1EB12C101D3/5-Фото-5.jpg",
+      "sha256": "916cc70bf3d6d00f9fc0bd589888ceaf41d83a3a9e5fd29c80a209cdf891ea73",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "D1CABF0F-D31A-4EFB-9264-C1EB12C101D3/6-Фото-6.jpg",
+      "sha256": "b2e03bdd06fc005f6a7ff2213062ca3b8fc7c70b78c78fd53b6809f70a1f4332",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "D1CABF0F-D31A-4EFB-9264-C1EB12C101D3/7-Фото-7.jpg",
+      "sha256": "ba319e69d5787b9754b5c6ac57b4bcbaf576d5db0580663e122037956f58da24",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    },
+    {
+      "source": "tournament",
+      "relative_path": "D1CABF0F-D31A-4EFB-9264-C1EB12C101D3/8-Фото-8.jpg",
+      "sha256": "67623b5231d131c395e56d6b6bd247be0b5a8b9c5e78753ba6ec5f98ab73a149",
+      "visual_inspection": "Luna view_image pass 2026-09-18"
+    }
+  ]
+}

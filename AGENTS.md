@@ -129,6 +129,12 @@ and the public result may be checked read-only. It does not cover force-pushes,
 history rewrites, version/tag changes, mutating public E2E, down-migrations,
 automatic restore, DNS/billing/access changes or future valuable production data.
 
+An authorized product release in the accepted interface programme includes the
+required SemVer bump without separate approval of its number. Apply
+[the version policy](docs/WORKFLOW.md#product-versioning) before final release
+verification. This clarification does not authorize a version change for a
+documentation-only stage, or expand D32 to resets, secrets or infrastructure.
+
 Never use production as a test fixture. Production may be inspected read-only as
 a visual/behavioral baseline when access is available. Do not bypass approval by
 calling a lower-level tool. Avoid destructive commands, preserve user work, and

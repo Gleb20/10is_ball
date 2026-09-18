@@ -14,6 +14,10 @@ Git-интеграциями Render и Vercel.
 - Playwright `1.63.0` и управляемый им Chromium;
 - product version берётся только из корневого `package.json`.
 
+Перед каждым разрешённым выпуском изменённого продукта применяйте обязательный
+[SemVer gate](WORKFLOW.md#product-versioning); документационный этап TECH-008
+не повышает 3.0.0 и не публикует runtime.
+
 `pnpm dev` поднимает локальный PostgreSQL 16 и запускает API/web через тот же
 same-origin proxy, который используется на публичном стенде. PGlite доступен
 только как явно упрощённый `pnpm dev:pglite`.

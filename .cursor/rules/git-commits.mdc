@@ -10,5 +10,7 @@ Follow the current solo-development override in
 [`../../docs/WORKFLOW.md`](../../docs/WORKFLOW.md), and version semantics in
 [`../../docs/VERSIONING.md`](../../docs/VERSIONING.md). D32 authorizes direct
 verified commits and pushes to `main` plus native public-stand deployment until
-the user explicitly revokes it; it never authorizes force-push, tag or version
-bump.
+the user explicitly revokes it. An authorized product release includes its
+mandatory SemVer bump under [`WORKFLOW.md#product-versioning`](../../docs/WORKFLOW.md#product-versioning);
+the standalone documentation stage does not. D32 never authorizes force-push,
+tag, reset, secrets or infrastructure changes.

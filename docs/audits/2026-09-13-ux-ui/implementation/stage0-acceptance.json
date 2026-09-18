@@ -1,0 +1,41 @@
+{
+  "work_item": "TECH-008",
+  "stage": 0,
+  "status": "accepted_local",
+  "scope": "documentation_only",
+  "baseline_sha": "17a69cacde94c12b7b754e8909dae12cc73a700f",
+  "reviewed_r2_manifest": {
+    "path": "/private/tmp/tab10-stage0-7eb9-r2/manifest.json",
+    "sha256": "6b4dcf3124b9e7b2fedb1b81d5dbbb6585f3127d0ddce1fe54bd92a651cc3aa8"
+  },
+  "independent_review": {
+    "reviewer": "Terra",
+    "result": "PASS",
+    "source": "coordinator acceptance handoff after r2 review"
+  },
+  "coordinator_checks": {
+    "coverage_rows": 236,
+    "source_episodes": 82,
+    "expert_ids": 38,
+    "docs_checked": 161,
+    "backlog_definitions": 101,
+    "docs_errors": 0,
+    "frozen_file_hashes_checked": 35,
+    "result": "PASS"
+  },
+  "r2_rollback": {
+    "receipt_path": "/private/tmp/tab10-stage0-7eb9-r2/rollback-receipt.json",
+    "result": "PASS"
+  },
+  "staged_diff_check": {
+    "command": "git -c core.whitespace=cr-at-eol,-blank-at-eof diff --cached --check",
+    "result": "PASS",
+    "reason": "Generated coverage.csv uses CSV CRLF; two exact copied primary-message JSON files have a source blank line at EOF. Raw staged check reports only these formatting warnings; source copies are verified by SHA-256. No repository Git configuration was changed."
+  },
+  "limits": [
+    "No application runtime or database behavior was changed or verified in stage 0.",
+    "No browser journey or physical device behavior was verified in stage 0.",
+    "Qualitative self-report and still images do not prove taps, persisted state, or persistent zoom.",
+    "Stages 1–14 remain in_progress under TECH-008."
+  ]
+}

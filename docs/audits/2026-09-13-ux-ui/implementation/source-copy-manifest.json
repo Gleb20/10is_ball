@@ -1,0 +1,46 @@
+{
+  "sessions/2026-09-16-table-01/report.md": {
+    "sha256": "fad2df7434e6241d685559e0ca9a1bfe43743104f11c9676dfd47c84dbd05bb6",
+    "bytes": 65269
+  },
+  "sessions/2026-09-16-table-01/observations.csv": {
+    "sha256": "ed7ac042a5780d33209bb3040ca3d0863c6107267c9f9e96b1ce611b7d3b8a7d",
+    "bytes": 15498
+  },
+  "sessions/2026-09-16-table-01/receipt.json": {
+    "sha256": "1d8ee6872a1030c828036f8f92f9f79a291ae99e4bd2cfdd30b79c82d206fa61",
+    "bytes": 552
+  },
+  "sessions/2026-09-17-tournament-01/report.md": {
+    "sha256": "79d8bfcd5c18ac4ece1cd8b02c5f533dc5f80d970b18a57a22f60107f65e3ade",
+    "bytes": 41014
+  },
+  "sessions/2026-09-17-tournament-01/observations.csv": {
+    "sha256": "8e0a449176a17b2aebca64ba8c6af5c78c424481ca7c993350b27dde71116231",
+    "bytes": 16238
+  },
+  "sessions/2026-09-17-tournament-01/receipt.json": {
+    "sha256": "3e2689bef339402644655958c97219e897153352446cf146ef506d8ef4d8c257",
+    "bytes": 511
+  },
+  "sessions/2026-09-17-tournament-01/flow-report.html": {
+    "sha256": "181215a214835a80ed344f71fbe8621e942af0ec1f239e0ac58c4654364762e0",
+    "bytes": 14202
+  },
+  "sources/match-primary-messages.json": {
+    "sha256": "26a46f341818aadc6780aa071f9bdea79f9ced1f8690ed3abfe7f28439d46b73",
+    "bytes": 29676
+  },
+  "sources/tournament-primary-messages.json": {
+    "sha256": "56683edca70fec9abdb0a746e71bbabc2c035238397ab01378d42574cf8e9cce",
+    "bytes": 14853
+  },
+  "source-universe.json": {
+    "sha256": "cdc5c0ddbb40b09953bcccea3820bc11a701991ccb3436f1a31390483535875a",
+    "bytes": 3466
+  },
+  "sources/primary-visual-receipt.json": {
+    "sha256": "71ac473aa7b2e1d495602b700994467da8a6798b06d53e825ec612ffabc2ba05",
+    "bytes": 13213
+  }
+}

@@ -260,6 +260,9 @@ server по зафиксированному режиму и отклоняет 
 player/judge invitations не блокируют start. Start закрывает все pending rows как
 `cancelled/match_started` и читает notifications атомарно. Challenge/revenge по-
 прежнему включает creator как игрока и purposeful invitations.
+Последние invitation/challenge clauses проверяют сохраняемый API/domain contract;
+их UI temporarily unavailable по D37 и AT-UI-INV-001. Текущий UI путь ручного
+создания отправляет ноль invitations.
 
 ### AT-MATCH-VOID-001 No hard delete
 После void finished standalone match исходный результат и event/audit facts остаются,
@@ -454,6 +457,20 @@ version; reuse с другим payload даёт `IDEMPOTENCY_KEY_REUSED`. Пос
 отклоняется с нулём записей; exact replay успешного prestart add возвращает прежний
 participant и также не меняет state.
 
+### AT-TRN-024 Tournament phase composition (TOURNAMENT-020)
+Scope A: Given collecting/needs_regeneration for organizer, participant and
+scoped admin, When открыть карточку, Then действующие rules/roster и разрешённое
+prestart edit видны до build/regenerate и исключительных действий; forbidden
+controls отсутствуют, а действующий POST/guards/authoritative GET сохранены.
+Scope B после приёмки A: Given bracket_generated/in_progress, Then сетка и
+готовый current/next match стоят до повторного read-only summary, переход в
+match возвращает в ту же сетку, права seed/swap/late add/start соблюдены.
+Given finished/stopped/cancelled, Then показаны только действительные
+результаты и доступна полная статистика; stopped не получает чемпиона.
+В обоих scopes keyboard 360/390/desktop, loading/empty/error/pending и
+role-specific visibility проходят без новых game/tournament invitation UI.
+Acceptance одного scope не переводит весь GAP-019 в `verified_local`.
+
 ## RANKING
 
 ### AT-RANK-001 Sort
@@ -478,7 +495,8 @@ Blocked user отсутствует в текущем рейтинге.
 
 ### AT-RANK-006 Переход в публичный профиль
 Каждая строка, включая podium, открывает каноническую публичную карточку.
-Вызов сопернику открывает форму с выбранной целью; самому себе CTA отсутствует.
+Существующий контракт вызова с выбранной целью сохраняется, но его CTA и prefill
+недоступны в UI пока действует D37; самому себе CTA отсутствует всегда.
 Поздний ответ предыдущего периода/команды не заменяет текущий выбор.
 
 ## TEAMS
@@ -511,6 +529,9 @@ active membership. Wrong captain/invited user и injected downstream fault не
 
 ### AT-NOTIF-001 Active action
 Актуальная карточка позволяет принять/отклонить и синхронизирует invitation status.
+Для UI при D37 это относится только к видимым типам; game/tournament invite
+actions и popups скрыты, team/handover доступны. AT-UI-INV-002 проверяет
+согласованный count и выборку.
 Standalone player/judge invitation добровольно и не резервирует слот или старт.
 История привязана к participant UUID и стороне; prestart replacement/swap не
 переносит старую запись и не создаёт новую автоматически. Запрос,
@@ -565,6 +586,8 @@ Blocked user не получает завершённое событие; tutori
 пагинацию, включая одинаковые timestamps без повторов. Дни фильтра вычисляются
 по Москве независимо от timezone клиента. Возврат из деталей сохраняет фильтры,
 поиск и загруженные страницы; ошибка следующей страницы сохраняет предыдущие.
+Поиск по фамилии A или B находит матч A-vs-B, созданный/судимый C, не считая
+C игровым участником; совпадение объясняется видимыми именами в строке.
 Для finished турнира победа соответствует сохранённому championParticipantId,
 поражение — другому активному участнику. Stopped/cancelled турнир и пользователь
 без роли участника не получают win/loss; неизвестный чемпион не создаёт результат.
@@ -573,15 +596,58 @@ Blocked user не получает завершённое событие; tutori
 ### AT-HOME-001 Dashboard composition
 Авторизованный пользователь получает на главной не более одного доступного
 активного standalone-матча и одного доступного активного турнира, последние пять
-завершённых standalone-матчей/турниров в общем хронологическом порядке, полный
-hero-набор `played/wins/losses/winRate/averagePoints` и принципиального соперника
-только после трёх очных матчей. Матчи и турниры не обходят AT-VIS-001/002/004.
+завершённых standalone-матчей/турниров в общем хронологическом порядке.
+Существующий `GET /home` aggregate может сохранять
+`played/wins/losses/winRate/averagePoints` и соперника после трёх очных матчей:
+это API data contract, **не** обязательство отображать полный hero на Home.
+Текущий UI target показывает компактную шапку
+avatar/name/surname/rank/played/wins/losses, вторичные показатели раскрывает в
+профиле и не показывает скрытый D37 «Реванш»; задача по роли
+player/judge/organizer предшествует истории. Матчи и турниры не обходят
+AT-VIS-001/002/004.
 
 ### AT-HOME-002 Ranking period and empty actions
 Топ-3 по умолчанию строится за всё время; переключатель «за месяц» обновляет тот
 же dashboard без смешивания ответов периодов. При отсутствии активных событий,
 истории, рейтинга или принципиального соперника каждый раздел объясняет состояние
 и предлагает релевантное действие. Главная сохраняет входы в уведомления и профиль.
+
+### AT-HOME-003 Home-first shell and context return
+Given active user, When он открывает `/` на телефоне или desktop, Then видит
+прямые «Начать матч» и «Провести турнир», доступные историю, рейтинг, профиль,
+команды, уведомления, помощь, обучение, сессии и admin только по роли; bottom
+tabs и общего меню нет. Bracket → match → Back возвращает в ту же сетку;
+history with filters/loaded pages → detail → Back сохраняет фильтры и scroll.
+Reload/deep link не требуют прежнего history entry. 401/first-password/reauth,
+403 и 404 дают безопасное продолжение; выход из judge не заявляет освобождение
+слота до авторитетного ответа сервера. Onboarding не ссылается на удалённые tabs.
+
+### AT-UI-STATUS-001 Cross-surface status and icon meaning
+Given доступное пользователю состояние match/judge, tournament/bracket, Home,
+history, team, notification или admin, When рядом показаны status chip и
+действие, Then status имеет понятный текст/accessible name и не получает
+семантику кнопки без действия; доступная кнопка имеет собственную роль и focus.
+Иконка, если используется, поддерживает единый смысл и не является единственным
+носителем статуса. Selected filter, active/current judge, persisted event status,
+loading/pending/error различимы; запрещённое действие не возникает из чипа.
+Для каждого семейства проверяются применимые состояния, права и light/dark,
+360/390/desktop, keyboard/focus и screen-reader text. Скрытые по D37 события
+не получают видимый статус. Stage 3 принимает inventory/target; browser
+acceptance каждого consumer выполняется в его отдельном этапе.
+
+### AT-UI-INV-001 Temporary game invitation availability (D37)
+Given new manual match/tournament, When оператор создаёт их в UI, Then match не
+отправляет invitations, tournament создаётся с `requireParticipantConsent=false`,
+а game/tournament invite, challenge/revenge, старые query/deep-link entry points
+и popups не предлагают скрытые действия. Старые pending rows не меняются.
+Team invitation, judge reservation и handover остаются доступны в своих правах.
+
+### AT-UI-INV-002 Visible notification count
+Given смешанные скрытые game/tournament и видимые team/handover уведомления,
+When центр и Home загружают первую и последующие страницы, Then видимые записи,
+actionable состояние, unread count и badge согласованы. Скрытые записи не
+вытесняют видимые из первых пяти и не дают ложный badge. Смена аккаунта,
+истечение сессии и stale ответ не раскрывают скрытые/чужие записи.
 
 ## LIVE STATE
 
@@ -595,7 +661,9 @@ tournament detail прекращает polling после получения ter
 
 ### AT-LIVE-002 Manual retry and request coalescing
 
-На каждой live surface доступно ручное «Обновить». Initial failure можно повторить
+На Home нет постоянной кнопки «Обновить»: visible-data refresh фоновый. После
+initial/background failure доступен явный Retry; другие live surfaces сохраняют
+ручной refresh, пока их этап не задаст новый target. Initial failure можно повторить
 без navigation/reload; background failure сохраняет последние валидные данные и
 показывает warning. Timer/manual/visible refresh, возникшие во время одного
 in-flight request, не создают второй параллельный request. JudgePage сохраняет
@@ -634,6 +702,11 @@ membership/participant transition и notification effect.
 tutorial сначала сохраняет последний step и создаёт не более одного match при
 double-click; выход/завершение tutorial возвращает на последний шаг. До решения
 Q-ONB-001 completion остаётся отдельным explicit действием.
+
+### AT-ONB-004 Shell adaptation
+Первый вход и повторный tutorial ведут по существующим доступным destinations,
+включая новые прямые CTA с Home; focus и resume сохраняются, удалённые tabs и
+скрытые invitations не объявляются доступными. Завершение остаётся явным по D34.
 
 ### AT-EMPTY-001 Zero data
 Новый пользователь видит осмысленные empty states и CTA, а не нули без объяснения.

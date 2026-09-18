@@ -1,0 +1,13 @@
+{
+  "source_thread": "01a0a3c3-7b48-7e41-8045-a6f4cd347479",
+  "received": "2026-09-17",
+  "source_directory": "/Users/liubavskii/.codex/worktrees/bd7f/tab10/docs/audits/2026-09-13-ux-ui/sessions/2026-09-16-table-01",
+  "files": {
+    "report.md": "fad2df7434e6241d685559e0ca9a1bfe43743104f11c9676dfd47c84dbd05bb6",
+    "observations.csv": "ed7ac042a5780d33209bb3040ca3d0863c6107267c9f9e96b1ce611b7d3b8a7d"
+  },
+  "csv_rows": 39,
+  "unique_image_hash_references": 19,
+  "original_images_received": false,
+  "runtime_reverified_by_coordinator": false
+}

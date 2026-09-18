@@ -11,8 +11,8 @@
 | D1 | Stack | active |
 | D2 | Test database without Docker | active, fidelity risk tracked |
 | D3 | Initial open-question defaults | mixed / historical table |
-| D4 | Versioning semantics | active; Git/release-note portion superseded by D16/D19 |
-| D5 | Mobile shell IA | active |
+| D4 | Versioning semantics | SemVer clarification 2026-09-18; Git/release-note portion superseded by D16/D19 |
+| D5 | Mobile shell IA | five-tab navigation superseded by D36; other scoped defaults retained |
 | D6 | Admin role change | active |
 | D7 | Who may acquire judge | active |
 | D8 | Mercy rule | active |
@@ -41,6 +41,8 @@
 | D31 | Native-Git delivery to a disposable public stand | active |
 | D34 | Explicit onboarding completion | active |
 | D35 | Operator-first game setup and tournament consent policy | active |
+| D36 | Home-first navigation and role-aware dashboard | active; supersedes D5 navigation scope |
+| D37 | Temporary UI availability of game invitations and challenges | active overlay; D35 backend semantics retained |
 
 ## D16 — Documentation governance (2026-09-06)
 
@@ -392,6 +394,15 @@ permission pointer, не отдельным шаблоном commit message.
 **Current recorded release:** 1.10.1. Следующая версия не назначается автоматически.
 План hard-delete из прежней release note отменён для finished results D19.
 
+**Clarification accepted 2026-09-18:** для последующих разрешённых выпусков
+применяется SemVer по последствиям: PATCH — исправление без новой возможности,
+MINOR — совместимое расширение, MAJOR — несовместимый контракт или поддерживаемый
+способ использования. Сам по себе новый экран/флоу не требует MAJOR. Версия
+обязательно повышается в рамках уже разрешённого выпуска, без отдельного
+согласования номера; документация, тесты и повторная публикация неизменённого
+продукта её не повышают. Канонический порядок — [WORKFLOW](WORKFLOW.md#product-versioning).
+Исторические сведения о 1.10.1 и прежней семантике выше сохранены как история.
+
 ## D11 — Compact SE bye vs Challonge DE (2026-07-21)
 
 **Decision:** Single elimination uses **successive odd-bye** (one bye when remaining count is odd; prefer seats that have not yet received a bye, else last in order). Bracket `size` = participant count (not next power of 2). Double elimination keeps **Challonge pad-to-Po2** WB via `generatePowerOf2SingleEliminationBracket`.
@@ -475,6 +486,11 @@ target where they conflict with those ADRs.
 **Why:** Быстрый узнаваемый UI в сетке и матче без storage pipeline.
 
 ## D5 — Mobile shell IA (2026-07-20)
+
+**Navigation scope superseded by D36 (2026-09-18).** Таблица пяти tabs,
+`/start` как основной hub и Phase 10 target ниже являются историческим target,
+а не инструкцией для новой программы. Остальные решения D5 действуют только
+там, где не противоречат D36/D37 и обновлённым требованиям.
 
 **Decision:** Bottom navigation = вариант **A** (полный UX-spec из [`05_UX_FLOWS.md`](requirements/05_UX_FLOWS.md) §1), не вариант B (текущие табы прототипа Матчи/Турниры).
 
@@ -566,3 +582,48 @@ record actor/source provenance and support optional fingerprinted idempotency.
 **Why:** the common table-side operator must be able to set up the people actually
 playing without impersonating a participant or waiting for device responses, while
 invitations and stricter tournament consent remain available as explicit choices.
+
+## D36 — Home-first navigation and role-aware dashboard (2026-09-18)
+
+**Decision:** Home (`/`) is the sole global entry point. The product has no
+bottom tabs and no universal menu. Home exposes direct «Начать матч» and
+«Провести турнир», and discoverable entry points to history, ranking, profile,
+teams, notifications, help, learning, sessions and role-gated admin. Its compact
+header contains avatar, first and last name, rank, matches, wins and losses;
+secondary statistics move to profile. Active events are selected by current
+player, judge and organizer roles, and the next current task precedes history.
+This replaces the former invited-tournaments-only emphasis.
+Home refreshes current data in the background while visible; it has no permanent
+manual «Обновить» action. Retry after a visible load error remains available.
+
+Within a task, Back returns to the actual source context, and Home is available
+without discarding an unresolved mutation. Bracket → match → the same bracket
+and filtered history → detail → the same filters/scroll are acceptance paths.
+Deep links, reload, auth/first-password/reauth, 403/404 and a safe judge exit
+must have explicit fallbacks; release/acquire state is never inferred from a
+navigation click. Onboarding anchors adapt with the shell in the same increment.
+Current production remains the visual regression baseline (D22); this decision
+does not authorize a stylistic rebrand or weaken actor-scoped visibility.
+
+**Supersedes:** D5's five-tab shell, `/start` as the primary creation hub and
+the related Phase 10 navigation target. Existing routes may remain for incoming
+links, with a safe and explicit destination. D5's unrelated decisions survive.
+
+## D37 — Temporary UI availability of game invitations and challenges (2026-09-18)
+
+**Decision:** until a later explicit product decision, game and tournament
+invitations and challenge/revenge entry points are hidden throughout the UI.
+New manual matches do not send invitations; new tournaments use
+`requireParticipantConsent=false`. Existing invitations remain persisted and are
+neither accepted automatically nor migrated. Old links, query prefill, popups,
+notifications and counters must not expose misleading actions or badges. The
+organizer and active admin retain only their existing manual pre-start roster
+rights and safeguards. Team invitations, judge reservations, handover and related
+notifications remain usable.
+
+This is an availability overlay on D35, not a deletion of API, data, audit or
+consent semantics. No invitation response journey was observed in the qualitative
+feedback. Re-enabling these features requires a separate decision and acceptance
+plan. The stage 1 UI work must reconcile filtered notification list and
+`unreadCount` together, including pagination and the first-five-unread selection;
+it must not merely hide rows while leaving a misleading badge.

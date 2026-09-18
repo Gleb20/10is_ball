@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tab-10 — создание турнира — протокол потока</title>
+<style>
+  :root{--ink:#202027;--muted:#5c5c68;--line:#d9d9e2;--accent:#6722c5;--warn:#8f5000;--bg:#faf9fc;--card:#fff}
+  *{box-sizing:border-box}
+  body{font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);padding:36px 20px;max-width:880px;margin:0 auto}
+  h1{font-size:28px;line-height:1.2;margin:0 0 8px}h2{font-size:20px;margin:42px 0 10px;padding-top:20px;border-top:1px solid var(--line)}h3{font-size:15px;margin:26px 0 10px}
+  p{margin:8px 0}.meta,.small{color:var(--muted);font-size:14px}.chips{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0}.chip{font-size:13px;padding:3px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
+  .flow{list-style:none;padding:0;margin:18px 0}.flow>li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:15px 17px;position:relative}.flow>li+li{margin-top:30px}.flow>li+li::before{content:"";position:absolute;top:-26px;left:30px;width:2px;height:18px;background:var(--accent)}.flow>li+li::after{content:"";position:absolute;top:-11px;left:26px;border:5px solid transparent;border-top-color:var(--accent)}
+  .n{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:1px 8px;margin-right:8px}.step-title{font-weight:700}.cta{font-size:14px;color:var(--muted)}.branch{font-size:14px;background:#f4effd;border-left:3px solid var(--accent);padding:7px 10px;margin-top:8px}
+  .overflow{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;background:var(--card)}th,td{text-align:left;padding:9px 11px;border:1px solid var(--line);vertical-align:top}th{background:#f4f2f8;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.warn{color:var(--warn);font-weight:700}.na{color:var(--muted);font-weight:700}a{color:#52209a}footer{margin-top:44px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+  @media print{body{padding:0;background:#fff}.flow>li{break-inside:avoid}}
+</style>
+</head>
+<body>
+<h1>Tab-10 — создание турнира</h1>
+<p class="meta">17.09.2026 · Удалённый отзыв одного создателя продукта на опубликованной версии 3.0.0, SHA 17a69cacde94c12b7b754e8909dae12cc73a700f</p>
+<div class="chips"><span class="chip">userflow</span><span class="chip">flow-forms</span><span class="chip">flow-sharing</span><span class="chip">self_report + отдельные кадры телефона</span></div>
+<p>Участник самостоятельно описал путь от входа в создание до видимого завершённого турнира. Модератор не видел касаний, не изменял опубликованные записи и не проверял API/БД. Предложения ниже не являются принятыми продуктовыми решениями. Полные цитаты, различение источников и SHA-256 снимков — в <a href="report.md">основном отчёте</a> и <a href="observations.csv">таблице эпизодов</a>.</p>
+
+<h2>Путь с прямым набором состава</h2>
+<p class="meta">Точка входа по самоотчёту: «Начать» → «Турнир». Сценарий ответов на приглашения отложен участником и не проводился.</p>
+<ol class="flow">
+  <li><span class="n">1</span><span class="step-title">Первый экран создания</span><p>Предложенное название, Single/Double, участие организатора, требование согласия. Участник не понял формат без размышления и хотел видеть основные правила и этапность здесь.</p><p class="cta">Действие в текущем UI: «Создать» → страница созданного турнира.</p><div class="branch">Видимый кадр первой формы и следующей комнаты различается названием и участием организатора; точные значения первой формы нельзя переносить на созданную комнату.</div></li>
+  <li><span class="n">2</span><span class="step-title">Настройки и прямой состав</span><p>Правила снова доступны через «Изменить». Зарегистрированный игрок, приглашение и гость добавляются через отдельные поля; прямое добавление показало браузерный confirm. Позже в составе видны девять тестовых участников.</p><p class="cta">Действие в текущем UI: «Построить сетку» → выбор способа построения.</p><div class="branch">Участник предлагает одно поле и гостя при отсутствии пользователя; последствия ошибки в имени и идентичности не проверялись.</div></li>
+  <li><span class="n">3</span><span class="step-title">Выбор построения</span><p>Диалог объясняет компактную и классическую сетку. Участника выбор в целом устроил; замечание только к иконке заголовка.</p><p class="cta">Действие в текущем UI: «Построить сетку» → готовая сетка.</p></li>
+  <li><span class="n">4</span><span class="step-title">Готовая сетка</span><p>До сетки расположены повторное summary, alert, управление и состав. На показанном участке нет связей между ещё не сыгранными парами. Уменьшение от исходных 100% недоступно; отдельный матч за третье место получил собственную навигацию.</p><p class="cta">Действие в текущем UI: «Старт» → активный турнир.</p><div class="branch">Позднее добавление и перестройка до старта существуют по D35; предложение заменить их возвратом требует отдельного решения.</div></li>
+  <li><span class="n">5</span><span class="step-title">Активный турнир и матчи</span><p>Сверху показаны правила, заметка, success alert и список текущих матчей. В сетке есть «Судить» и «Открыть»; вход в матч из сетки участник назвал удобным. Он просит полноэкранный обзор, связи к следующему слоту и фокус на ближайшем готовом матче минимального незавершённого этапа.</p><p class="cta">Действие в текущем UI: «Судить» в паре → экран ведения матча.</p><div class="branch">Фокус обзора — предложение участника; оно не равно запрету играть готовый матч более позднего раунда.</div></li>
+  <li><span class="n">6</span><span class="step-title">Завершённое состояние</span><p>На кадрах видны чемпион, сыгранные пары и итоговая таблица. У первого места указано 21 игровое очко, у третьего — 27. Участник считает таблицу рядом с местами вводящей в заблуждение и предлагает показывать в итогах только призовые места.</p><p class="cta">Действие в текущем UI: «Открыть» → детали сыгранного матча.</p><div class="branch">Места и сумма игровых очков — разные показатели по TOURNAMENT-015; изменение их видимости требует согласования.</div></li>
+</ol>
+
+<h3>Инвентарь экранов и состояний</h3>
+<div class="overflow"><table><tr><th>Экран</th><th>Задача</th><th>Основное действие</th><th>Границы проверки</th></tr>
+  <tr><td>Форма создания</td><td>Задать турнир и политику состава</td><td>Создать</td><td>Видим один кадр; validation, loading и error не тестировались</td></tr>
+  <tr><td>Комната сбора</td><td>Правила и участники</td><td>Построить сетку</td><td>Видны пустой и заполненный состав, confirm и success; ошибки/возвраты не тестировались</td></tr>
+  <tr><td>Выбор построения</td><td>Выбрать геометрию сетки</td><td>Построить сетку</td><td>Виден диалог; pending/error и закрытие во время операции не тестировались</td></tr>
+  <tr><td>Готовая сетка</td><td>Проверить пары и начать</td><td>Старт</td><td>Видна сетка на телефоне; полный граф и последствия позднего изменения не проходились</td></tr>
+  <tr><td>Активная сетка</td><td>Найти и провести матч</td><td>Судить</td><td>Видны текущие и сыгранные пары; число лично сыгранных матчей неизвестно</td></tr>
+  <tr><td>Завершённый турнир</td><td>Посмотреть призёров и историю</td><td>Открыть матч</td><td>Виден итоговый кадр; серверные данные независимо не проверялись</td></tr>
+</table></div>
+
+<h3>Проверка паттернов из flow-forms и flow-sharing</h3>
+<div class="overflow"><table><tr><th>Проверка</th><th>Оценка</th><th>Основание</th></tr>
+  <tr><td>Формат и правила понятны до сохранения</td><td class="warn">WARN</td><td>Участник понял Single/Double после размышления, а «Правило преимущества» не понял; правила редактируются на следующем экране.</td></tr>
+  <tr><td>Набор состава не требует лишних подтверждений</td><td class="warn">WARN</td><td>На телефоне показан native confirm для direct add; уже записанный F-TOURNAMENT-005 касается этого случая.</td></tr>
+  <tr><td>Результат каждого шага видим и уместен</td><td class="warn">WARN</td><td>Success alert и нулевые «Итоги» видны до релевантного результата; пользователь счёл их шумом. Совпадает с F-TOURNAMENT-003.</td></tr>
+  <tr><td>Связи в сетке показывают путь до следующей пары</td><td class="warn">WARN</td><td>На кадрах связей нет; source-review показывает, что connector ждёт определённого winnerSide.</td></tr>
+  <tr><td>Масштаб позволяет обзор</td><td class="warn">WARN</td><td>На исходных 100% уменьшение disabled. Совпадает с F-TOURNAMENT-004; исправление в продукте не подтверждалось.</td></tr>
+  <tr><td>Сценарий с ответами на приглашения</td><td class="na">NOT TESTED</td><td>Участник отложил приглашения и остановил сессию; поведение pending/declined не оценивалось.</td></tr>
+  <tr><td>Отмена/роспуск подтверждаются безопасно</td><td class="na">NOT TESTED</td><td>В этой сессии действия не нажимались. Экспертный F-TOURNAMENT-001 остаётся отдельным evidence.</td></tr>
+</table></div>
+
+<h2>Открытые решения и отложенное</h2>
+<ul>
+  <li>Участник попросил передать откладывание приглашений на участие; не уточнил, относится ли это к видимости UI, реализации функции или сроку её отдельного тестирования. D35 не менялся.</li>
+  <li>Нужна отдельная договорённость о post-bracket add/dissolve, статистических итогах и новом обзоре сетки; локальный source-review не равен мобильной проверке предложенной схемы.</li>
+  <li>Ощущение перекрытия сетки при прокрутке и смещение счёта зафиксированы как отзыв и кадры, без воспроизведения движения модератором.</li>
+</ul>
+<footer>Протокол одного участника с предшествующим опытом. Оригиналы 25 снимков не включены; SHA-256 перечислены в <a href="report.md">отчёте</a>. Приложение и canonical backlog не изменялись.</footer>
+</body>
+</html>

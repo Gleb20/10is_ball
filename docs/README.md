@@ -5,13 +5,16 @@
 
 ## С чего начать
 
-1. [PROJECT_STATUS.md](PROJECT_STATUS.md) — короткий честный снимок состояния.
-2. [audits/2026-09-06-baseline.md](audits/2026-09-06-baseline.md) — неизменяемая
+1. [TECH-008 interface programme](test-plans/TECH-008-interface-programme.md) —
+   текущие решения D36/D37, этапы и gate; старые экспертные targets читать через
+   этот overlay и живой BACKLOG, а не передавать исполнителю без сверки.
+2. [PROJECT_STATUS.md](PROJECT_STATUS.md) — короткий честный снимок состояния.
+3. [audits/2026-09-06-baseline.md](audits/2026-09-06-baseline.md) — неизменяемая
    исходная точка аудита.
-3. [BACKLOG.md](BACKLOG.md) — живой приоритизированный список работ.
-4. [CAPABILITY_MATRIX.md](CAPABILITY_MATRIX.md) — покрытие продукта по возможностям.
-5. [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) — решения, которых нет в репозитории.
-6. [WORKFLOW.md](WORKFLOW.md) — как менять код, требования, тесты и журнал вместе.
+4. [BACKLOG.md](BACKLOG.md) — живой приоритизированный список работ.
+5. [CAPABILITY_MATRIX.md](CAPABILITY_MATRIX.md) — покрытие продукта по возможностям.
+6. [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) — решения, которых нет в репозитории.
+7. [WORKFLOW.md](WORKFLOW.md) — как менять код, требования, тесты и журнал вместе.
 
 ## Иерархия источников истины
 
@@ -46,6 +49,7 @@
 | Статус и следующий этап | [PROJECT_STATUS.md](PROJECT_STATUS.md) |
 | Живой backlog | [BACKLOG.md](BACKLOG.md) |
 | Оркестрация разработки | [ORCHESTRATION.md](ORCHESTRATION.md) |
+| Текущая интерфейсная программа и атомарное покрытие | [TECH-008 plan](test-plans/TECH-008-interface-programme.md) |
 | Возможности продукта | [CAPABILITY_MATRIX.md](CAPABILITY_MATRIX.md) |
 | Нерешённые вопросы | [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) |
 | Архитектура as-built | [architecture/AS_BUILT.md](architecture/AS_BUILT.md) |

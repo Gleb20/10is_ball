@@ -1,3 +1,11 @@
+## 2026-09-18 — TECH-008, этап 0 accepted_local: документационная база интерфейса
+
+- Приняты D36 (Главная как единственный глобальный вход, контекстная навигация) и D37 (временное скрытие игровых и турнирных приглашений/challenges в UI при сохранении API и данных). Целевое поведение согласовано в PRD, UX flows, AT и traceability; runtime ещё не менялся.
+- Программа этапов 0–14, связанные задачи BACKLOG, открытые решения Q-UX-004–011 и release/version boundary зафиксированы без изменения версии 3.0.0. Исходные отчёты двух сеансов, 15 первичных сообщений и визуальный receipt скопированы с SHA-256 manifest; coverage связывает 82 эпизода и 38 экспертных ID с 236 атомарными строками. Просмотр 44 кадров подтверждён receipt; физические касания, API/DB и persistent zoom им не подтверждены.
+- Review correction r2: GAP-019 разделён на последовательные stage 7 rules/roster и stage 8 generated/active/terminal subscopes с одним writer и AT-TRN-024. UI-001/GAP-034/AT-UI-STATUS-001 ведут межэкранный status/icon inventory stage 3 и последующих consumers. Ready GAP-013/017/019 ограничены исполнимым scope; Q-UX-004–010 не стали разрешёнными механиками.
+- Независимый Terra r2 PASS и coordinator checks приняли только документационный stage 0; [receipt](audits/2026-09-13-ux-ui/implementation/stage0-acceptance.json) ссылается на frozen r2 manifest и rollback. TECH-007 `verified_local` для правила SemVer, TECH-008 остаётся `in_progress` для этапов 1–14. GAP-013 уточняет, что старое поле «Судья» не возвращается как invitation control.
+- Проверка этапа: `python3 docs/audits/2026-09-13-ux-ui/implementation/build_coverage.py` → 236 строк; `python3 docs/audits/2026-09-13-ux-ui/implementation/check_coverage.py` → `errors=[]`; `node scripts/audit/check-docs.mjs` → 161 файл, 0 broken links/anchors/incomplete items; `git diff --check` → PASS. Новый r2 freeze и rollback проверяются отдельно. Commit, push, deploy, runtime tests и version bump не выполнялись.
+
 ## 2026-09-15 — GAP-012 опубликован как база UX-тестирования
 
 - Application commit `682c98066ad80e2373a7893cc71482003e9eee42` fast-forward опубликован в `main` native Render/Vercel Git-интеграциями без version bump. Exact-SHA public smoke web/API/proxy прошёл за10 попыток/49062ms; Vercel deployment6451307944 success, Render direct health/readiness отдают тот же SHA и database `ok`.

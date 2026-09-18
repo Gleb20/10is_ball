@@ -4,6 +4,9 @@
 > использоваться для новых релизов. Канонический exact-SHA процесс описан в
 > [`DELIVERY.md`](DELIVERY.md); фактический provider-state — в
 > [`operations/DEPLOYMENT_AS_BUILT.md`](operations/DEPLOYMENT_AS_BUILT.md).
+> Версия и разрешение на её повышение регулируются только
+> [WORKFLOW §7](WORKFLOW.md#product-versioning) и AGENTS.md; исторические шаги
+> ниже не определяют новый release target.
 
 Фактический снимок и известные риски: [operations/DEPLOYMENT_AS_BUILT.md](operations/DEPLOYMENT_AS_BUILT.md).
 

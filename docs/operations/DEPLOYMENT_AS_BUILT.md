@@ -1,5 +1,10 @@
 # Deployment as-built
 
+Текущий runtime ниже остаётся фактическим историческим снимком. Принятое
+[SemVer-правило](../WORKFLOW.md#product-versioning) относится к будущим
+разрешённым выпускам; документационный этап TECH-008 не меняет версию,
+провайдеров или публичный runtime.
+
 ## GAP-012 application release observed — 2026-09-15
 
 Application commit `682c98066ad80e2373a7893cc71482003e9eee42` was fast-forwarded to `main` and published by the existing native Git integrations without a version bump. Vercel deployment6451307944/status18355555064 completed `success`; `pnpm run smoke:public` observed version3.0.0 and the exact SHA on Render API, Vercel web and proxy after10 attempts/49062ms. Direct `/ready` reported `database=ok`. GitHub CI34926424343 completed all four jobs successfully. [Redacted evidence](../audit/evidence/gap012-public.json).
