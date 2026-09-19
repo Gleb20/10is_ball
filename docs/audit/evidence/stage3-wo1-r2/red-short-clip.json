@@ -1,0 +1,107 @@
+{
+  "viewport": "390x844",
+  "initial": {
+    "field": {
+      "x": 31,
+      "y": 256,
+      "width": 286,
+      "height": 44,
+      "top": 256,
+      "right": 317,
+      "bottom": 300,
+      "left": 31
+    },
+    "clip": {
+      "x": 18,
+      "y": 218,
+      "width": 336,
+      "height": 120,
+      "top": 218,
+      "right": 354,
+      "bottom": 338,
+      "left": 18
+    },
+    "menu": {
+      "x": 18,
+      "y": 219,
+      "width": 336,
+      "height": 240,
+      "top": 219,
+      "right": 354,
+      "bottom": 459,
+      "left": 18
+    },
+    "active": {
+      "x": 30,
+      "y": 411,
+      "width": 312,
+      "height": 36,
+      "top": 411,
+      "right": 342,
+      "bottom": 447,
+      "left": 30
+    },
+    "above": 30,
+    "below": 30,
+    "menuPosition": "absolute",
+    "menuStyleTop": "0px",
+    "outerScrollTop": 0,
+    "listScrollTop": 656,
+    "activeVisibleInClip": false,
+    "scrollIntoViewCalls": 5,
+    "focusRetained": true,
+    "selectedValue": "Игрок"
+  },
+  "afterManualScroll": {
+    "field": {
+      "x": 31,
+      "y": 226,
+      "width": 286,
+      "height": 44,
+      "top": 226,
+      "right": 317,
+      "bottom": 270,
+      "left": 31
+    },
+    "clip": {
+      "x": 18,
+      "y": 188,
+      "width": 336,
+      "height": 120,
+      "top": 188,
+      "right": 354,
+      "bottom": 308,
+      "left": 18
+    },
+    "menu": {
+      "x": 18,
+      "y": 189,
+      "width": 336,
+      "height": 240,
+      "top": 189,
+      "right": 354,
+      "bottom": 429,
+      "left": 18
+    },
+    "active": {
+      "x": 30,
+      "y": 381,
+      "width": 312,
+      "height": 36,
+      "top": 381,
+      "right": 342,
+      "bottom": 417,
+      "left": 30
+    },
+    "above": 30,
+    "below": 30,
+    "menuPosition": "absolute",
+    "menuStyleTop": "0px",
+    "outerScrollTop": 30,
+    "listScrollTop": 656,
+    "activeVisibleInClip": false,
+    "scrollIntoViewCalls": 6,
+    "focusRetained": true,
+    "selectedValue": "Игрок"
+  }
+}

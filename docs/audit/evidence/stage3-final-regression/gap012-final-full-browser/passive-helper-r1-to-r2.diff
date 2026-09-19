@@ -1,0 +1,23 @@
+--- /private/tmp/tab10-gap012-passive-helper.ts	2026-09-19 04:12:03
++++ /private/tmp/tab10-gap012-passive-helper-r2.ts	2026-09-19 04:34:49
+@@ -60,7 +60,19 @@
+       const control = field.parentElement;
+       const controlRef = control?.parentElement ?? null;
+       const root = controlRef?.parentElement ?? null;
+-      const shapeMatches = Boolean(control?.hasAttribute("data-readonly") && root?.querySelector('[id]') && controlRef?.parentElement);
++      const labelIds = (field.getAttribute("aria-labelledby") || "").trim().split(/\s+/).filter(Boolean);
++      const shapeMatches = Boolean(
++        control && controlRef && root &&
++        field.parentElement === control &&
++        control.parentElement === controlRef &&
++        controlRef.parentElement === root &&
++        root.contains(field) &&
++        labelIds.length > 0 &&
++        labelIds.every((id) => {
++          const label = document.getElementById(id);
++          return Boolean(label && root.contains(label));
++        }),
++      );
+       const viewport = window.visualViewport;
+       const inset = safeBottom();
+       const visualTop = viewport?.offsetTop ?? 0;

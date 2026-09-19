@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "fixture": "route-only synthetic UI payload with nonempty frequent/recent/team groups",
+  "phases": [
+    {
+      "scenario": "before-focus",
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "scenario": "between-focus-input",
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "scenario": "release-on-input",
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "scenario": "after-fill",
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    }
+  ],
+  "failedScenarios": []
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "artifact": "docs/audit/evidence/stage3-final-regression/quality/vitest-api.json",
+  "reason": "Generated test evidence contained a synthetic loopback database URL inside test titles; the URL value was removed before release packaging.",
+  "category": "credential-url",
+  "fields": [
+    "$.testResults[41].assertionResults[2].fullName",
+    "$.testResults[41].assertionResults[2].title",
+    "$.testResults[41].assertionResults[3].fullName",
+    "$.testResults[41].assertionResults[3].title",
+    "$.testResults[41].assertionResults[4].fullName",
+    "$.testResults[41].assertionResults[4].title",
+    "$.testResults[41].assertionResults[5].fullName",
+    "$.testResults[41].assertionResults[5].title",
+    "$.testResults[41].assertionResults[6].fullName",
+    "$.testResults[41].assertionResults[6].title"
+  ],
+  "replacement": "[REDACTED_LOOPBACK_DATABASE_URL]",
+  "rawSha256": "5290c979d277d6fe0914c8c2359328572fde42d11e60a30113ba2e16cf7c52c6",
+  "sanitizedSha256": "58224ce3f1b95e0ceb7bcbc836f8122ca368ca9eec861639386fc85e53cb5762",
+  "rawArtifactRetained": false,
+  "presentInFrozenWo1ToWo4Evidence": false
+}

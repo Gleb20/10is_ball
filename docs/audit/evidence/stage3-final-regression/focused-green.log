@@ -1,0 +1,47 @@
+
+ RUN  v3.2.7 /Users/liubavskii/.codex/worktrees/c870/tab10/apps/web
+
+stderr | src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > BUG-026 freezes every visible match payload control while create is pending, then preserves a rejected attempt
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+stderr | src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > BUG-018 keeps the edit-dialog opponent field mounted and focused after choosing another player
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ ✓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > BUG-026 freezes every visible match payload control while create is pending, then preserves a rejected attempt 213ms
+ ✓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > defaults to player mode with opponent autocomplete 20ms
+ ✓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > BUG-018 keeps the same focused player field after Enter selects a user 53ms
+ ✓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > BUG-018 preserves a search typed before match options finish loading 76ms
+ ✓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > offers guest and player modes 46ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > BUG-018 keeps the edit-dialog opponent field mounted and focused after choosing another player 265ms
+ ✓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > GAP-029: removes legacy challenge query without applying its player or invite intent 13ms
+ ✓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > GAP-012: submits manual A-vs-B without the operator and without invitations by default 80ms
+ ✓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > GAP-029: legacy challenge URL only creates a manually chosen match 65ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > BUG-018 preserves a replacement search while edit options finish loading 209ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > BUG-018 resolves an untouched selected label when edit options arrive 63ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > shows force-close and delete for admin on standalone active match 10ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > hides admin CTAs for non-admin 9ms
+ ✓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > GAP-005: submits a complete 2v2 roster with custom rules and first-server mode 185ms
+ ✓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > MATCH-004: uses frequent, recent and team groups from the create options 62ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > MATCH-008: creator starts a waiting manual match without taking another judge's slot 61ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > MATCH-008: creator starts a waiting rally match without taking another judge's slot 53ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > MATCH-008: random start leaves the server choice to the API 39ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > GAP-005 keeps the start dialog open when cancel is clicked during the request 69ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > shows cancel for organizer on waiting standalone match 11ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > hides cancel for outsider on waiting match 8ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > AT-MATCH-CANCEL-004: first click only opens named confirmation 65ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > AT-MATCH-START-001/STOP-002: participant sees no start, stop, or cancel action 11ms
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > AT-MATCH-STOP-001: current active judge sees stop but not cancel 13ms
+ ✓ src/pages/MatchDetailPage.test.tsx > AT-MATCH-VOID-003 confirmation > requires a separate confirmation that names soft invalidation and stats impact 66ms
+ ✓ src/pages/MatchDetailPage.test.tsx > AT-MATCH-VOID-003 confirmation > warns the tournament creator that the rest of the bracket is preserved 22ms
+ ✓ src/pages/MatchDetailPage.test.tsx > AT-MATCH-VOID-003 confirmation > hides void for a tournament participant who is not its creator 8ms
+ ✓ src/pages/MatchDetailPage.test.tsx > BUG-006/BUG-009 match action failures > keeps loaded match context and action-local error while blocking duplicate stop 37ms
+ ✓ src/pages/MatchDetailPage.test.tsx > GAP-005 match detail completion > shows rules and clean effective point log without a revenge action 11ms
+ ✓ src/pages/MatchDetailPage.test.tsx > GAP-005 match detail completion > records no-show with expected version and preserves the returned score 50ms
+
+ Test Files  2 passed (2)
+      Tests  30 passed (30)
+   Start at  03:35:57
+   Duration  2.55s (transform 660ms, setup 179ms, collect 1.91s, tests 1.90s, environment 372ms, prepare 71ms)
+

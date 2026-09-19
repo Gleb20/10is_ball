@@ -36,6 +36,7 @@ type EditorParticipant = {
 type EditorSlot = {
   mode: "user" | "guest";
   userId: string;
+  userLabel?: string;
   guestName: string;
   originalId?: string;
   originalSide?: "A" | "B";
@@ -55,6 +56,7 @@ function editorSlotFrom(participant?: EditorParticipant): EditorSlot {
   return {
     mode: participant.userId ? "user" : "guest",
     userId: participant.userId ?? "",
+    userLabel: participant.userId ? participant.displayName ?? "" : undefined,
     guestName: participant.userId ? "" : [participant.guestFirstName, participant.guestLastName].filter(Boolean).join(" "),
     originalId: participant.id,
     originalSide: participant.side,
@@ -91,6 +93,18 @@ function EditSlotField({
   options: Array<{ value: string; label: string }>;
   onChange: (slot: EditorSlot) => void;
 }) {
+  const [inputText, setInputText] = useState(() => options.find((option) => option.value === slot.userId)?.label ?? slot.userLabel ?? "");
+  const inputDirtyRef = useRef(false);
+  const selectionIdentity = `${slot.mode}:${slot.userId}:${slot.originalId ?? ""}`;
+  const selectionIdentityRef = useRef(selectionIdentity);
+  const selectedLabel = options.find((option) => option.value === slot.userId)?.label;
+  useEffect(() => {
+    const selectionChanged = selectionIdentityRef.current !== selectionIdentity;
+    selectionIdentityRef.current = selectionIdentity;
+    if (!selectionChanged && (inputDirtyRef.current || !slot.userId || !selectedLabel)) return;
+    inputDirtyRef.current = false;
+    setInputText(selectedLabel ?? slot.userLabel ?? "");
+  }, [selectedLabel, selectionIdentity, slot.userId, slot.userLabel]);
   return (
     <fieldset className="match-create__slot stack">
       <legend>{label}</legend>
@@ -102,12 +116,12 @@ function EditSlotField({
       />
       {slot.mode === "user" ? (
         <Autocomplete
-          key={`${label}-${slot.userId}-${options.find((option) => option.value === slot.userId)?.label ?? "loading"}`}
           label={label}
           options={options}
           value={slot.userId}
-          defaultInputValue={options.find((option) => option.value === slot.userId)?.label ?? ""}
-          onChange={(userId) => onChange({ ...slot, userId })}
+          inputValue={inputText}
+          onInputChange={(value) => { inputDirtyRef.current = true; setInputText(value); }}
+          onChange={(userId) => onChange({ ...slot, userId, userLabel: options.find((option) => option.value === userId)?.label ?? "" })}
           clearable
           fullWidth
         />

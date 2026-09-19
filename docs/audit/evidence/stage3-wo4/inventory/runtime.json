@@ -1,0 +1,3869 @@
+{
+  "source": "WO3 R2 frozen source built into private/tmp; entirely synthetic intercepted API",
+  "baseManifestSha256": "54860798d7c0744a838e7d1b299a2f44ea34f03c7e6176f7663afe51adc030fd",
+  "cases": [
+    {
+      "name": "home",
+      "route": "/",
+      "width": 360,
+      "height": 800,
+      "urlAfterLoad": "/",
+      "markerVisible": true,
+      "screenshot": "home-360.png",
+      "chips": [
+        {
+          "text": "Ожидание",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 95.890625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-waiting"
+        },
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 64.578125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-in_progress"
+        },
+        {
+          "text": "Подтверждение",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 128.734375,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-pending_confirmation"
+        },
+        {
+          "text": "Сбор",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 65.28125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-collecting"
+        },
+        {
+          "text": "Остановлен",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 103.828125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-stopped"
+        },
+        {
+          "text": "Завершён",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(3, 118, 14)",
+          "background": "rgb(216, 242, 218)",
+          "width": 93.21875,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-finished"
+        }
+      ],
+      "trophy": [
+        {
+          "label": "Победитель: сторона B",
+          "sideText": "Одинаковое Имя 🏆",
+          "sideIndex": 1
+        }
+      ],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "Скрыть остальные",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Все",
+          "ariaLabel": null,
+          "pressed": "true",
+          "disabled": false
+        },
+        {
+          "text": "Только мои",
+          "ariaLabel": null,
+          "pressed": "false",
+          "disabled": false
+        },
+        {
+          "text": "Всё время",
+          "ariaLabel": null,
+          "pressed": "true",
+          "disabled": false
+        },
+        {
+          "text": "За месяц",
+          "ariaLabel": null,
+          "pressed": "false",
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "home-chip-360.png",
+      "urlAfterChipClick": "/matches/m-waiting"
+    },
+    {
+      "name": "home",
+      "route": "/",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/",
+      "markerVisible": true,
+      "screenshot": "home-390.png",
+      "chips": [
+        {
+          "text": "Ожидание",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 95.890625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-waiting"
+        },
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 64.578125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-in_progress"
+        },
+        {
+          "text": "Подтверждение",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 128.734375,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-pending_confirmation"
+        },
+        {
+          "text": "Сбор",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 65.28125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-collecting"
+        },
+        {
+          "text": "Остановлен",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 103.828125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-stopped"
+        },
+        {
+          "text": "Завершён",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(3, 118, 14)",
+          "background": "rgb(216, 242, 218)",
+          "width": 93.21875,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-finished"
+        }
+      ],
+      "trophy": [
+        {
+          "label": "Победитель: сторона B",
+          "sideText": "Одинаковое Имя 🏆",
+          "sideIndex": 1
+        }
+      ],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "Скрыть остальные",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Все",
+          "ariaLabel": null,
+          "pressed": "true",
+          "disabled": false
+        },
+        {
+          "text": "Только мои",
+          "ariaLabel": null,
+          "pressed": "false",
+          "disabled": false
+        },
+        {
+          "text": "Всё время",
+          "ariaLabel": null,
+          "pressed": "true",
+          "disabled": false
+        },
+        {
+          "text": "За месяц",
+          "ariaLabel": null,
+          "pressed": "false",
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "home-chip-390.png",
+      "keyboardFocus": [
+        {
+          "tag": "A",
+          "text": "Смотреть все",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Все",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Только мои",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "Одинаковое Имя — Одинаковое Имя 🏆11:98 мин",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "Анна Оператор — Борис Игрок4:3\n\n\nОстановлен",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": true
+        },
+        {
+          "tag": "A",
+          "text": "Финал кубкаТоп-3: Анна, Борис, Вера\n\n\nЗавершён",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": true
+        },
+        {
+          "tag": "A",
+          "text": "Смотреть все",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Всё время",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "За месяц",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "Анна Оператор",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "Матчи",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "Турниры",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "Команды",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "Помощь",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "Админка",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BODY",
+          "text": "К содержимомуАОАнна ОператорУведомления (1)#7 в рейтингеМатчи9Поб",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": true
+        },
+        {
+          "tag": "A",
+          "text": "К содержимому",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "АОАнна Оператор",
+          "ariaLabel": "Профиль: Анна Оператор; сеансы и обучение",
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "Уведомления (1)",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "Начать матч",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "Провести турнир",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "A",
+          "text": "Анна Оператор — Борис Игрок0:0Вы организатор\n\n\nОжидание",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": true
+        },
+        {
+          "tag": "A",
+          "text": "Анна Оператор — Борис Игрок4:3\n\n\nИдёт",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": true
+        },
+        {
+          "tag": "A",
+          "text": "Анна Оператор — Борис Игрок11:9\n\n\nПодтверждение",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": true
+        }
+      ],
+      "urlAfterChipClick": "/matches/m-waiting"
+    },
+    {
+      "name": "home",
+      "route": "/",
+      "width": 1440,
+      "height": 900,
+      "urlAfterLoad": "/",
+      "markerVisible": true,
+      "screenshot": "home-1440.png",
+      "chips": [
+        {
+          "text": "Ожидание",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 95.890625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-waiting"
+        },
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 64.578125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-in_progress"
+        },
+        {
+          "text": "Подтверждение",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 128.734375,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-pending_confirmation"
+        },
+        {
+          "text": "Сбор",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 65.28125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-collecting"
+        },
+        {
+          "text": "Остановлен",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 103.828125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-stopped"
+        },
+        {
+          "text": "Завершён",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(3, 118, 14)",
+          "background": "rgb(216, 242, 218)",
+          "width": 93.21875,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-finished"
+        }
+      ],
+      "trophy": [
+        {
+          "label": "Победитель: сторона B",
+          "sideText": "Одинаковое Имя 🏆",
+          "sideIndex": 1
+        }
+      ],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "Скрыть остальные",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Все",
+          "ariaLabel": null,
+          "pressed": "true",
+          "disabled": false
+        },
+        {
+          "text": "Только мои",
+          "ariaLabel": null,
+          "pressed": "false",
+          "disabled": false
+        },
+        {
+          "text": "Всё время",
+          "ariaLabel": null,
+          "pressed": "true",
+          "disabled": false
+        },
+        {
+          "text": "За месяц",
+          "ariaLabel": null,
+          "pressed": "false",
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "home-chip-1440.png",
+      "urlAfterChipClick": "/matches/m-waiting"
+    },
+    {
+      "name": "home-os-dark",
+      "route": "/",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/",
+      "markerVisible": true,
+      "screenshot": "home-os-dark-390.png",
+      "chips": [
+        {
+          "text": "Ожидание",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 95.890625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-waiting"
+        },
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 64.578125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-in_progress"
+        },
+        {
+          "text": "Подтверждение",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": false,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 0,
+          "height": 0,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-pending_confirmation"
+        },
+        {
+          "text": "Сбор",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": false,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 0,
+          "height": 0,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-collecting"
+        },
+        {
+          "text": "Остановлен",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 103.828125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-stopped"
+        },
+        {
+          "text": "Завершён",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(3, 118, 14)",
+          "background": "rgb(216, 242, 218)",
+          "width": 93.21875,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-finished"
+        }
+      ],
+      "trophy": [
+        {
+          "label": "Победитель: сторона B",
+          "sideText": "Одинаковое Имя 🏆",
+          "sideIndex": 1
+        }
+      ],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "Ещё 2 текущих дела",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Все",
+          "ariaLabel": null,
+          "pressed": "true",
+          "disabled": false
+        },
+        {
+          "text": "Только мои",
+          "ariaLabel": null,
+          "pressed": "false",
+          "disabled": false
+        },
+        {
+          "text": "Всё время",
+          "ariaLabel": null,
+          "pressed": "true",
+          "disabled": false
+        },
+        {
+          "text": "За месяц",
+          "ariaLabel": null,
+          "pressed": "false",
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "home-os-dark-chip-390.png"
+    },
+    {
+      "name": "home-pending",
+      "route": "/",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/",
+      "markerVisible": true,
+      "screenshot": "home-pending-390.png",
+      "chips": [],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [
+        {
+          "text": "",
+          "tag": "DIV",
+          "role": "status",
+          "tabIndex": -1,
+          "ariaLabel": "Загружаем главную",
+          "title": null
+        }
+      ],
+      "buttons": [],
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "name": "home-empty",
+      "route": "/",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/",
+      "markerVisible": true,
+      "screenshot": "home-empty-390.png",
+      "chips": [],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [
+        {
+          "text": "История пока пустаЗдесь появятся завершённые матчи и турниры.Начать матч",
+          "tag": "DIV",
+          "role": "status",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Рейтинг пока пустПосле завершённых матчей здесь появятся игроки.",
+          "tag": "DIV",
+          "role": "status",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "buttons": [
+        {
+          "text": "Все",
+          "ariaLabel": null,
+          "pressed": "true",
+          "disabled": false
+        },
+        {
+          "text": "Только мои",
+          "ariaLabel": null,
+          "pressed": "false",
+          "disabled": false
+        },
+        {
+          "text": "Всё время",
+          "ariaLabel": null,
+          "pressed": "true",
+          "disabled": false
+        },
+        {
+          "text": "За месяц",
+          "ariaLabel": null,
+          "pressed": "false",
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "name": "home-error",
+      "route": "/",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/",
+      "markerVisible": true,
+      "screenshot": "home-error-390.png",
+      "chips": [],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [
+        {
+          "text": "Не удалось загрузить главнуюСинтетическая ошибка загрузки",
+          "tag": "DIV",
+          "role": "alert",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "Повторить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "name": "matches",
+      "route": "/matches",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/matches",
+      "markerVisible": true,
+      "screenshot": "matches-390.png",
+      "chips": [
+        {
+          "text": "Ожидание",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 95.890625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-waiting"
+        },
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 64.578125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-in_progress"
+        },
+        {
+          "text": "Подтверждение",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 128.734375,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-pending_confirmation"
+        },
+        {
+          "text": "Завершён",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(3, 118, 14)",
+          "background": "rgb(216, 242, 218)",
+          "width": 93.21875,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-finished"
+        },
+        {
+          "text": "Остановлен",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 103.828125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-stopped"
+        },
+        {
+          "text": "Отменён",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 86.65625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-cancelled"
+        },
+        {
+          "text": "Аннулирован",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 112.03125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-voided"
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [
+        {
+          "text": "Ожидание",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Идёт",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Подтверждение",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Завершён",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Остановлен",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Отменён",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Аннулирован",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Новый",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "matches-chip-390.png",
+      "urlAfterChipClick": "/matches/m-waiting"
+    },
+    {
+      "name": "match-detail",
+      "route": "/matches/m-waiting",
+      "width": 360,
+      "height": 800,
+      "urlAfterLoad": "/matches/m-waiting",
+      "markerVisible": true,
+      "screenshot": "match-detail-360.png",
+      "chips": [
+        {
+          "text": "Ожидание",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 95.890625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "К матчам",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Изменить матч",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Старт",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Открыть счёт",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Отменить матч",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Принудительно закрыть",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить из истории",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "match-detail-chip-360.png",
+      "urlAfterChipClick": "/matches/m-waiting"
+    },
+    {
+      "name": "match-detail",
+      "route": "/matches/m-waiting",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/matches/m-waiting",
+      "markerVisible": true,
+      "screenshot": "match-detail-390.png",
+      "chips": [
+        {
+          "text": "Ожидание",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 95.890625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "К матчам",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Изменить матч",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Старт",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Открыть счёт",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Отменить матч",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Принудительно закрыть",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить из истории",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "match-detail-chip-390.png",
+      "keyboardFocus": [
+        {
+          "tag": "A",
+          "text": "К содержимому",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "К матчам",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "На главную",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Обновить",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Изменить матч",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Старт",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Судить",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Открыть счёт",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Зафиксировать неявку",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Отменить матч",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Принудительно закрыть",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Удалить из истории",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Назад",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BODY",
+          "text": "К содержимомуК матчамНа главнуюМатч waiting — длинное синтетическ",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": true
+        },
+        {
+          "tag": "A",
+          "text": "К содержимому",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "К матчам",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "На главную",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Обновить",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Изменить матч",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Старт",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Судить",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Открыть счёт",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Зафиксировать неявку",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Отменить матч",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        }
+      ],
+      "urlAfterChipClick": "/matches/m-waiting"
+    },
+    {
+      "name": "match-detail",
+      "route": "/matches/m-waiting",
+      "width": 1440,
+      "height": 900,
+      "urlAfterLoad": "/matches/m-waiting",
+      "markerVisible": true,
+      "screenshot": "match-detail-1440.png",
+      "chips": [
+        {
+          "text": "Ожидание",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 95.890625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "К матчам",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Изменить матч",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Старт",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Судить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Открыть счёт",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Зафиксировать неявку",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Отменить матч",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Принудительно закрыть",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить из истории",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "match-detail-chip-1440.png",
+      "urlAfterChipClick": "/matches/m-waiting"
+    },
+    {
+      "name": "tournaments",
+      "route": "/tournaments",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/tournaments",
+      "markerVisible": true,
+      "screenshot": "tournaments-390.png",
+      "chips": [
+        {
+          "text": "Сбор",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 65.28125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-collecting"
+        },
+        {
+          "text": "Сетка готова",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(3, 118, 14)",
+          "background": "rgb(216, 242, 218)",
+          "width": 107.765625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-bracket_generated"
+        },
+        {
+          "text": "Нужна перегенерация",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 164.328125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-needs_regeneration"
+        },
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 64.578125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-in_progress"
+        },
+        {
+          "text": "Завершён",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(3, 118, 14)",
+          "background": "rgb(216, 242, 218)",
+          "width": 93.21875,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-finished"
+        },
+        {
+          "text": "Остановлен",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 103.828125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-stopped"
+        },
+        {
+          "text": "Отменён",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 86.65625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-cancelled"
+        },
+        {
+          "text": "Распущен",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 92.125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-dissolved"
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [
+        {
+          "text": "Сбор",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Сетка готова",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Нужна перегенерация",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Идёт",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Завершён",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Остановлен",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Отменён",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Распущен",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Провести турнир",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "tournaments-chip-390.png"
+    },
+    {
+      "name": "tournament-detail",
+      "route": "/tournaments/t-collecting",
+      "width": 360,
+      "height": 800,
+      "urlAfterLoad": "/tournaments/t-collecting",
+      "markerVisible": true,
+      "screenshot": "tournament-detail-360.png",
+      "chips": [
+        {
+          "text": "Сбор",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 65.28125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [
+        {
+          "text": "Нет доступных игроков",
+          "tag": "P",
+          "role": "status",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "buttons": [
+        {
+          "text": "К турнирам",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Изменить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Построить сетку",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Отменить турнир",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Выйти из турнира",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Добавить в состав",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "Добавить гостя",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": true
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "tournament-detail-chip-360.png"
+    },
+    {
+      "name": "tournament-detail",
+      "route": "/tournaments/t-collecting",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/tournaments/t-collecting",
+      "markerVisible": true,
+      "screenshot": "tournament-detail-390.png",
+      "chips": [
+        {
+          "text": "Сбор",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 65.28125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [
+        {
+          "text": "Нет доступных игроков",
+          "tag": "P",
+          "role": "status",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "buttons": [
+        {
+          "text": "К турнирам",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Изменить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Построить сетку",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Отменить турнир",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Выйти из турнира",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Добавить в состав",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "Добавить гостя",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": true
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "tournament-detail-chip-390.png"
+    },
+    {
+      "name": "tournament-detail",
+      "route": "/tournaments/t-collecting",
+      "width": 1440,
+      "height": 900,
+      "urlAfterLoad": "/tournaments/t-collecting",
+      "markerVisible": true,
+      "screenshot": "tournament-detail-1440.png",
+      "chips": [
+        {
+          "text": "Сбор",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 65.28125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [
+        {
+          "text": "Нет доступных игроков",
+          "tag": "P",
+          "role": "status",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "buttons": [
+        {
+          "text": "К турнирам",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Изменить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Построить сетку",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Отменить турнир",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Выйти из турнира",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Добавить в состав",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "Добавить гостя",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": true
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "tournament-detail-chip-1440.png"
+    },
+    {
+      "name": "tournament-bracket-se",
+      "route": "/tournaments/t-finished",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/tournaments/t-finished",
+      "markerVisible": true,
+      "screenshot": "tournament-bracket-se-390.png",
+      "chips": [
+        {
+          "text": "Завершён",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(3, 118, 14)",
+          "background": "rgb(216, 242, 218)",
+          "width": 93.21875,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [
+        {
+          "text": "АОЧемпион: Анна Оператор",
+          "tag": "DIV",
+          "role": "status",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "✕",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": "Выбыл",
+          "title": "Выбыл"
+        },
+        {
+          "text": "✕",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": "Выбыл",
+          "title": "Выбыл"
+        },
+        {
+          "text": "✕",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": "Выбыл",
+          "title": "Выбыл"
+        }
+      ],
+      "notification": [],
+      "alerts": [],
+      "statuses": [
+        {
+          "text": "АОЧемпион: Анна Оператор",
+          "tag": "DIV",
+          "role": "status",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "buttons": [
+        {
+          "text": "К турнирам",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "←",
+          "ariaLabel": "Предыдущий раунд: Победители",
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "→",
+          "ariaLabel": "Следующий раунд: Победители",
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "−",
+          "ariaLabel": "Уменьшить сетку: Победители",
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "+",
+          "ariaLabel": "Увеличить сетку: Победители",
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "tournament-bracket-se-chip-390.png"
+    },
+    {
+      "name": "tournament-bracket-de",
+      "route": "/tournaments/t-in_progress",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/tournaments/t-in_progress",
+      "markerVisible": true,
+      "screenshot": "tournament-bracket-de-390.png",
+      "chips": [
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 64.578125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [
+        {
+          "text": "↓",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": "В сетку проигравших",
+          "title": "В сетку проигравших"
+        }
+      ],
+      "notification": [],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "К турнирам",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Остановить турнир",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "←",
+          "ariaLabel": "Предыдущий раунд: Победители",
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "→",
+          "ariaLabel": "Следующий раунд: Победители",
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "−",
+          "ariaLabel": "Уменьшить сетку: Победители",
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "+",
+          "ariaLabel": "Увеличить сетку: Победители",
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "←",
+          "ariaLabel": "Предыдущий раунд: Проигравшие",
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "→",
+          "ariaLabel": "Следующий раунд: Проигравшие",
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "−",
+          "ariaLabel": "Уменьшить сетку: Проигравшие",
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "+",
+          "ariaLabel": "Увеличить сетку: Проигравшие",
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "←",
+          "ariaLabel": "Предыдущий раунд: Гранд-финал",
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "→",
+          "ariaLabel": "Следующий раунд: Гранд-финал",
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "−",
+          "ariaLabel": "Уменьшить сетку: Гранд-финал",
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "+",
+          "ariaLabel": "Увеличить сетку: Гранд-финал",
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "tournament-bracket-de-chip-390.png"
+    },
+    {
+      "name": "history",
+      "route": "/history",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/history",
+      "markerVisible": true,
+      "screenshot": "history-390.png",
+      "chips": [
+        {
+          "text": "Ожидание",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 95.890625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-waiting"
+        },
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 64.578125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-in_progress"
+        },
+        {
+          "text": "Подтверждение",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 128.734375,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-pending_confirmation"
+        },
+        {
+          "text": "Завершён",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(3, 118, 14)",
+          "background": "rgb(216, 242, 218)",
+          "width": 93.21875,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-finished"
+        },
+        {
+          "text": "Остановлен",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 103.828125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-stopped"
+        },
+        {
+          "text": "Отменён",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 86.65625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-cancelled"
+        },
+        {
+          "text": "Аннулирован",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 112.03125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/matches/m-voided"
+        },
+        {
+          "text": "Сбор",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 65.28125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-collecting"
+        },
+        {
+          "text": "Сетка готова",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(3, 118, 14)",
+          "background": "rgb(216, 242, 218)",
+          "width": 107.765625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-bracket_generated"
+        },
+        {
+          "text": "Нужна перегенерация",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 164.328125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-needs_regeneration"
+        },
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgba(7, 7, 7, 0.93)",
+          "background": "rgba(7, 7, 7, 0.1)",
+          "width": 64.578125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/tournaments/t-in_progress"
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [
+        {
+          "text": "Ожидание",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Идёт",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Подтверждение",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Завершён",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Остановлен",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Отменён",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Аннулирован",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Сбор",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Сетка готова",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Нужна перегенерация",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Идёт",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Фильтры",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Найти",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Удалить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "history-chip-390.png"
+    },
+    {
+      "name": "admin",
+      "route": "/admin",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/admin",
+      "markerVisible": true,
+      "screenshot": "admin-390.png",
+      "chips": [
+        {
+          "text": "Активен",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(3, 118, 14)",
+          "background": "rgb(216, 242, 218)",
+          "width": 83,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        },
+        {
+          "text": "Заблокирован",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(170, 19, 19)",
+          "background": "rgb(253, 232, 232)",
+          "width": 118.203125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Создать",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Найти",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Редактировать",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Сброс",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Редактировать",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Сделать админом",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Разблокировать",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Сброс",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "admin-chip-390.png",
+      "keyboardFocus": [
+        {
+          "tag": "A",
+          "text": "К содержимому",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "На главную",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "SELECT",
+          "text": "Игрок (user)Админ (admin)",
+          "ariaLabel": "Роль",
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Создать",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "SELECT",
+          "text": "ВсеАктивныеЗаблокированные",
+          "ariaLabel": "Статус",
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Найти",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Редактировать",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Сброс",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Редактировать",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Сделать админом",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Разблокировать",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Сброс",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BODY",
+          "text": "К содержимомуНа главнуюАдминкаНовый пользовательEmailИмяФамилияРо",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": true
+        },
+        {
+          "tag": "A",
+          "text": "К содержимому",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "На главную",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "SELECT",
+          "text": "Игрок (user)Админ (admin)",
+          "ariaLabel": "Роль",
+          "isChip": false,
+          "containsChip": false
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Создать",
+          "ariaLabel": null,
+          "isChip": false,
+          "containsChip": false
+        }
+      ]
+    },
+    {
+      "name": "judge-readonly",
+      "route": "/matches/m-in_progress/judge?mode=readonly",
+      "width": 360,
+      "height": 800,
+      "urlAfterLoad": "/matches/m-in_progress/judge?mode=readonly",
+      "markerVisible": true,
+      "screenshot": "judge-readonly-360.png",
+      "chips": [],
+      "trophy": [],
+      "judge": [
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Только просмотр",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Подача",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [
+        {
+          "text": "Поверните устройство горизонтально для удобного судейства",
+          "tag": "P",
+          "role": "status",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "buttons": [
+        {
+          "text": "К матчу",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "name": "judge-readonly",
+      "route": "/matches/m-in_progress/judge?mode=readonly",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/matches/m-in_progress/judge?mode=readonly",
+      "markerVisible": true,
+      "screenshot": "judge-readonly-390.png",
+      "chips": [],
+      "trophy": [],
+      "judge": [
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Только просмотр",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Подача",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [
+        {
+          "text": "Поверните устройство горизонтально для удобного судейства",
+          "tag": "P",
+          "role": "status",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "buttons": [
+        {
+          "text": "К матчу",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "name": "judge-readonly",
+      "route": "/matches/m-in_progress/judge?mode=readonly",
+      "width": 1440,
+      "height": 900,
+      "urlAfterLoad": "/matches/m-in_progress/judge?mode=readonly",
+      "markerVisible": true,
+      "screenshot": "judge-readonly-1440.png",
+      "chips": [],
+      "trophy": [],
+      "judge": [
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Только просмотр",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Подача",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "К матчу",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "name": "judge-readonly-os-dark",
+      "route": "/matches/m-in_progress/judge?mode=readonly",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/matches/m-in_progress/judge?mode=readonly",
+      "markerVisible": true,
+      "screenshot": "judge-readonly-os-dark-390.png",
+      "chips": [],
+      "trophy": [],
+      "judge": [
+        {
+          "text": "Идёт",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Только просмотр",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Подача",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [
+        {
+          "text": "Поверните устройство горизонтально для удобного судейства",
+          "tag": "P",
+          "role": "status",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "buttons": [
+        {
+          "text": "К матчу",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "name": "team-detail",
+      "route": "/teams/team-active",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/teams/team-active",
+      "markerVisible": true,
+      "screenshot": "team-detail-390.png",
+      "chips": [
+        {
+          "text": "Активна",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 82.71875,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        },
+        {
+          "text": "Вы капитан",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 100.734375,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [
+        {
+          "text": "ПередатьИсключить",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "alerts": [],
+      "statuses": [
+        {
+          "text": "Нет доступных игроков",
+          "tag": "P",
+          "role": "status",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "buttons": [
+        {
+          "text": "К командам",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Передать",
+          "ariaLabel": "Передать капитанство Вера Игрок",
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Исключить",
+          "ariaLabel": "Исключить Вера Игрок",
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Сохранить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Пригласить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "Выйти из команды",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": true
+        },
+        {
+          "text": "К списку команд",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "team-detail-chip-390.png"
+    },
+    {
+      "name": "team-archived",
+      "route": "/teams/team-archived",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/teams/team-archived",
+      "markerVisible": true,
+      "screenshot": "team-archived-390.png",
+      "chips": [
+        {
+          "text": "Архив",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 70.984375,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        },
+        {
+          "text": "Вы капитан",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 100.734375,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [
+        {
+          "text": "Команда в архивеСостав и настройки доступны только для просмотра.",
+          "tag": "DIV",
+          "role": "alert",
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "К командам",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "К списку команд",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "team-archived-chip-390.png"
+    },
+    {
+      "name": "notifications",
+      "route": "/notifications",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/notifications",
+      "markerVisible": true,
+      "screenshot": "notifications-390.png",
+      "chips": [],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [
+        {
+          "text": "Прочитано",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Прочитано",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Принято",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Отклонено",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Истекло",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Отменено",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Назад",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Обновить уведомления",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Принять",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Отклонить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": []
+    },
+    {
+      "name": "profile",
+      "route": "/profile",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/profile",
+      "markerVisible": true,
+      "screenshot": "profile-390.png",
+      "chips": [
+        {
+          "text": "#7 в рейтинге",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 114.703125,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        },
+        {
+          "text": "Админ",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 74.4375,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        },
+        {
+          "text": "1",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(88, 20, 171)",
+          "background": "rgb(235, 222, 252)",
+          "width": 41.59375,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": "A",
+          "parentHref": "/notifications"
+        },
+        {
+          "text": "Текущая",
+          "tag": "SPAN",
+          "role": null,
+          "tabIndex": -1,
+          "visible": true,
+          "cursor": "pointer",
+          "color": "rgb(3, 118, 14)",
+          "background": "rgb(216, 242, 218)",
+          "width": 84.265625,
+          "height": 24,
+          "icon": true,
+          "iconAriaHidden": "true",
+          "parentActionTag": null,
+          "parentHref": null
+        }
+      ],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [
+        {
+          "text": "1",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Текущая",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        },
+        {
+          "text": "Завершить",
+          "tag": "DIV",
+          "role": null,
+          "tabIndex": -1,
+          "ariaLabel": null,
+          "title": null
+        }
+      ],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "На главную",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Редактировать профиль",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Пройти онбординг зановоНачать с первого шага и при желании сыграть уче",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Завершить",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        },
+        {
+          "text": "Выйти",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "statusScreenshot": "profile-chip-390.png"
+    },
+    {
+      "name": "login-eye",
+      "route": "/login",
+      "width": 390,
+      "height": 844,
+      "urlAfterLoad": "/login",
+      "markerVisible": true,
+      "screenshot": "login-eye-390.png",
+      "chips": [],
+      "trophy": [],
+      "judge": [],
+      "bracket": [],
+      "notification": [],
+      "alerts": [],
+      "statuses": [],
+      "buttons": [
+        {
+          "text": "",
+          "ariaLabel": "Показать пароль",
+          "pressed": "false",
+          "disabled": false
+        },
+        {
+          "text": "Войти",
+          "ariaLabel": null,
+          "pressed": null,
+          "disabled": false
+        }
+      ],
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "eye": {
+        "count": 1,
+        "type": "button",
+        "nameBefore": "Показать пароль",
+        "pressedBefore": "false",
+        "nameAfter": "Скрыть пароль",
+        "pressedAfter": "true"
+      }
+    }
+  ],
+  "unknownRequests": []
+}

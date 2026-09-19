@@ -1,8 +1,80 @@
 import { useState } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { expect, it } from "vitest";
-import { Dialog } from "./ui";
+import { expect, it, vi } from "vitest";
+import { Autocomplete, Dialog } from "./ui";
+
+it("BUG-018 gives the keyboard-active option a real ID owned by its listbox", async () => {
+  const user = userEvent.setup();
+  render(<><Autocomplete label="Игрок A" options={[{ value: "a", label: "Анна Первая" }]} />
+    <Autocomplete label="Соперник" options={[{ value: "b", label: "Борис Второй" }]} /></>);
+  const first = screen.getByRole("combobox", { name: "Игрок A" });
+  await user.click(first);
+  await user.keyboard("{ArrowDown}");
+  const activeId = first.getAttribute("aria-activedescendant");
+  expect(activeId).toBeTruthy();
+  const option = document.getElementById(activeId!);
+  expect(option).toBe(screen.getByRole("option", { name: "Анна Первая" }));
+  expect(screen.getByRole("listbox").contains(option)).toBe(true);
+  expect(screen.getByRole("combobox", { name: "Соперник" })).not.toHaveAttribute("aria-activedescendant");
+});
+it("BUG-018 does not select a hidden active option after Escape", async () => {
+  const onChange = vi.fn();
+  const user = userEvent.setup();
+  render(<Autocomplete label="Игрок" options={[{ value: "a", label: "Анна" }]} onChange={onChange} />);
+  const input = screen.getByRole("combobox", { name: "Игрок" });
+  await user.click(input);
+  await user.keyboard("{ArrowDown}{Escape}{Enter}");
+  expect(onChange).not.toHaveBeenCalled();
+  expect(input).not.toHaveAttribute("aria-activedescendant");
+});
+
+it("BUG-018 closes an open option list when its picker becomes disabled", async () => {
+  function Example() {
+    const [disabled, setDisabled] = useState(false);
+    return <><Autocomplete label="Игрок" options={[{ value: "a", label: "Анна" }]} disabled={disabled} />
+      <button onClick={() => setDisabled(true)}>Отключить</button></>;
+  }
+  const user = userEvent.setup();
+  render(<Example />);
+  await user.click(screen.getByRole("combobox", { name: "Игрок" }));
+  expect(screen.getByRole("option", { name: "Анна" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Отключить" }));
+  expect(screen.queryByRole("option", { name: "Анна" })).not.toBeInTheDocument();
+});
+it("BUG-018 closes the first popup on Tab without changing its value", async () => {
+  const onChange = vi.fn();
+  const user = userEvent.setup();
+  render(<><Autocomplete label="Первый" options={[{ value: "a", label: "Анна" }]} onChange={onChange} />
+    <Autocomplete label="Второй" options={[{ value: "b", label: "Борис" }]} /></>);
+  const first = screen.getByRole("combobox", { name: "Первый" });
+  await user.click(first);
+  expect(first).toHaveAttribute("aria-expanded", "true");
+  await user.tab();
+  expect(first).toHaveAttribute("aria-expanded", "false");
+  expect(screen.queryByRole("option", { name: "Анна" })).not.toBeInTheDocument();
+  expect(onChange).not.toHaveBeenCalled();
+});
+
+it("BUG-023 keeps duplicate labels as distinct IDs and announces a genuine zero match", async () => {
+  const onChange = vi.fn();
+  const user = userEvent.setup();
+  render(<Autocomplete label="Игрок" options={[{ value: "a", label: "Анна Первая" }, { value: "b", label: "Анна Первая" }]} onChange={onChange} />);
+  const input = screen.getByRole("combobox", { name: "Игрок" });
+  await user.type(input, "ПЕРВАЯ АнНа");
+  const options = screen.getAllByRole("option", { name: "Анна Первая" });
+  expect(options).toHaveLength(2);
+  expect(onChange).not.toHaveBeenCalled();
+  await user.clear(input);
+  await user.type(input, "Анна Несовпадение");
+  expect(screen.getByRole("status")).toHaveTextContent("Ничего не найдено");
+  expect(screen.getByRole("status")).toHaveAttribute("aria-live", "polite");
+  expect(screen.getByRole("status")).toHaveAttribute("aria-atomic", "true");
+  expect(document.getElementById(input.getAttribute("aria-controls")!)).toBe(screen.getByRole("listbox"));
+  expect(screen.queryByRole("option")).not.toBeInTheDocument();
+  expect(input).not.toHaveAttribute("aria-activedescendant");
+  expect(input).toHaveFocus();
+});
 it("GAP-011 Dialog keeps focus while its parent rerenders and traps the current controls", async () => {
  function Example() {
   const [value,setValue]=useState('');const [open,setOpen]=useState(false);

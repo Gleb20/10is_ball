@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "scope": "accepted Stage 3 WO4 source compared with final late-query R2 tree",
+  "productAndVendorFilesCompared": 20,
+  "productAndVendorFilesUnchanged": 20,
+  "testFilesWithExpectedDelta": 2,
+  "testFiles": [
+    {
+      "path": "apps/web/src/pages/MatchCreatePage.test.tsx",
+      "acceptedHashReconstructed": "8ca7f6261963f86728840b84ed7302e2203645bcd78b95ce9b4dfb36bc2d0005",
+      "finalHash": "7e6050411edab1b0d020f3d7de17725d18f5fa10ba0c7c9dbf7b3e92694b30d5",
+      "delta": "removed unsupported exact:true from Guest and Player role queries only"
+    },
+    {
+      "path": "apps/web/src/pages/MatchDetailPage.test.tsx",
+      "acceptedHashReconstructed": "9d39a30a47264399b8c26707f42e1627731cf34c1f51c866956959ff651402b3",
+      "finalHash": "12879b44f0106c4f8729f7d95d4d2c66164297864855d81382deb643b4d9233f",
+      "delta": "removed unsupported exact:true from Guest and Player role queries only"
+    }
+  ],
+  "assertionsAndTestNamesPreserved": true,
+  "runtimeRerunRequired": false,
+  "note": "Byte-for-byte reverse reconstruction of the four locator option removals yields the accepted hashes; no product change or test-scope expansion resulted."
+}

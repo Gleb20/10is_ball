@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "status": "failed",
+  "total": 69,
+  "passed": 17,
+  "failed": 52,
+  "skipped": 0,
+  "todo": 0,
+  "interrupted": 0,
+  "runtime": {
+    "api": "compiled Node entrypoint",
+    "web": "compiled Vite preview",
+    "database": "disposable PostgreSQL 16 with separate migrator/runtime roles",
+    "origin": "http://localhost:4273",
+    "apiTransport": "same-origin Vite preview proxy"
+  },
+  "postgres": "16.15",
+  "release": {
+    "sha": "0123456789abcdef0123456789abcdef01234567",
+    "version": "4.1.1",
+    "environment": "test",
+    "dirty": false
+  },
+  "traceSanitization": {
+    "status": "passed",
+    "traceCount": 52,
+    "policy": "tab10-playwright-trace-minimal-v1"
+  },
+  "breakdown": {
+    "foundationChecks": 9,
+    "browserTests": 8
+  }
+}

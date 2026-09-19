@@ -13,6 +13,7 @@ const cancelMatch = vi.fn();
 const voidMatch = vi.fn();
 const adminForceCloseMatch = vi.fn();
 const noShowMatch = vi.fn();
+const matchCreateOptions = vi.fn();
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -32,6 +33,7 @@ vi.mock("../api", () => ({
     voidMatch: (...a: unknown[]) => voidMatch(...a),
     adminForceCloseMatch: (...a: unknown[]) => adminForceCloseMatch(...a),
     noShowMatch: (...a: unknown[]) => noShowMatch(...a),
+    matchCreateOptions: (...a: unknown[]) => matchCreateOptions(...a),
     adminDeleteMatch: vi.fn(),
   },
 }));
@@ -67,6 +69,111 @@ describe("REQ_ui__admin_match_ops", () => {
         activeJudge: null,
       },
     });
+    matchCreateOptions.mockResolvedValue({ users: [] });
+  });
+
+  it("BUG-018 keeps the edit-dialog opponent field mounted and focused after choosing another player", async () => {
+    getMatch.mockResolvedValue({ match: {
+      id: "m1", title: "Матч", kind: "standalone", status: "waiting", format: "1v1",
+      version: 0, scoreA: 0, scoreB: 0, createdByUserId: "admin1",
+      participants: [
+        { id: "p1", side: "A", userId: "admin1", displayName: "Admin User" },
+        { id: "p2", side: "B", userId: "u2", displayName: "Second Player" },
+      ], activeJudge: null,
+    } });
+    matchCreateOptions.mockResolvedValue({ users: [
+      { id: "admin1", firstName: "Admin", lastName: "User" },
+      { id: "u2", firstName: "Second", lastName: "Player" },
+      { id: "u3", firstName: "Third", lastName: "Player" },
+    ] });
+    const user = userEvent.setup();
+    render(<MemoryRouter initialEntries={["/matches/m1"]}><AuthProvider><Routes><Route path="/matches/:id" element={<MatchDetailPage />} /></Routes></AuthProvider></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: "Изменить матч" }));
+    const dialog = screen.getByRole("dialog", { name: "Изменить матч" });
+    const input = within(dialog).getByRole("combobox", { name: "Соперник" });
+    await waitFor(() => expect(input).toHaveValue("Second Player"));
+    await user.clear(input);
+    await user.type(input, "Third");
+    await user.keyboard("{ArrowDown}{Enter}");
+    expect(within(dialog).getByRole("combobox", { name: "Соперник" })).toBe(input);
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue("Third Player");
+  });
+
+  it("BUG-018 preserves a replacement search while edit options finish loading", async () => {
+    getMatch.mockResolvedValue({ match: {
+      id: "m1", title: "Матч", kind: "standalone", status: "waiting", format: "1v1",
+      version: 0, scoreA: 0, scoreB: 0, createdByUserId: "admin1",
+      participants: [
+        { id: "p1", side: "A", userId: "admin1", displayName: "Admin User" },
+        { id: "p2", side: "B", userId: "u2", displayName: "Second Player" },
+      ], activeJudge: null,
+    } });
+    const held = deferred<{ users: Array<{ id: string; firstName: string; lastName: string }> }>();
+    matchCreateOptions.mockReturnValueOnce(held.promise);
+    const user = userEvent.setup();
+    render(<MemoryRouter initialEntries={["/matches/m1"]}><AuthProvider><Routes><Route path="/matches/:id" element={<MatchDetailPage />} /></Routes></AuthProvider></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: "Изменить матч" }));
+    const dialog = screen.getByRole("dialog", { name: "Изменить матч" });
+    const input = within(dialog).getByRole("combobox", { name: "Соперник" });
+    expect(input).toHaveValue("Second Player");
+    await user.clear(input);
+    await user.type(input, "Third");
+    held.resolve({ users: [
+      { id: "u2", firstName: "Second", lastName: "Player" },
+      { id: "u3", firstName: "Third", lastName: "Player" },
+    ] });
+    expect(await within(dialog).findByRole("option", { name: "Third Player" })).toBeVisible();
+    await user.keyboard("{ArrowDown}");
+    expect(input).toHaveValue("Third");
+    await user.keyboard("{Enter}");
+    expect(input).toHaveValue("Third Player");
+    expect(input).toHaveFocus();
+    await user.click(within(dialog).getByRole("button", { name: "Очистить" }));
+    expect(input).toHaveValue("");
+    expect(input).toHaveFocus();
+  });
+
+  it("BUG-018 resolves an untouched selected label when edit options arrive", async () => {
+    getMatch.mockResolvedValue({ match: {
+      id: "m1", title: "Матч", kind: "standalone", status: "waiting", format: "1v1",
+      version: 0, scoreA: 0, scoreB: 0, createdByUserId: "admin1",
+      participants: [
+        { id: "p1", side: "A", userId: "admin1", displayName: "Admin User" },
+        { id: "p2", side: "B", userId: "u2" },
+      ], activeJudge: null,
+    } });
+    const held = deferred<{ users: Array<{ id: string; firstName: string; lastName: string }> }>();
+    matchCreateOptions.mockReturnValueOnce(held.promise);
+    const user = userEvent.setup();
+    render(<MemoryRouter initialEntries={["/matches/m1"]}><AuthProvider><Routes><Route path="/matches/:id" element={<MatchDetailPage />} /></Routes></AuthProvider></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: "Изменить матч" }));
+    const input = within(screen.getByRole("dialog", { name: "Изменить матч" })).getByRole("combobox", { name: "Соперник" });
+    expect(input).toHaveValue("");
+    held.resolve({ users: [{ id: "u2", firstName: "Second", lastName: "Player" }] });
+    await waitFor(() => expect(input).toHaveValue("Second Player"));
+  });
+
+  it("BUG-018 clears a replacement search after edit guest mode resets the slot", async () => {
+    getMatch.mockResolvedValue({ match: {
+      id: "m1", title: "Матч", kind: "standalone", status: "waiting", format: "1v1",
+      version: 0, scoreA: 0, scoreB: 0, createdByUserId: "admin1",
+      participants: [
+        { id: "p1", side: "A", userId: "admin1", displayName: "Admin User" },
+        { id: "p2", side: "B", userId: "u2", displayName: "Second Player" },
+      ], activeJudge: null,
+    } });
+    const user = userEvent.setup();
+    render(<MemoryRouter initialEntries={["/matches/m1"]}><AuthProvider><Routes><Route path="/matches/:id" element={<MatchDetailPage />} /></Routes></AuthProvider></MemoryRouter>);
+    await user.click(await screen.findByRole("button", { name: "Изменить матч" }));
+    const dialog = screen.getByRole("dialog", { name: "Изменить матч" });
+    const group = within(dialog).getByRole("group", { name: "Соперник" });
+    const input = within(group).getByRole("combobox", { name: "Соперник" });
+    await user.clear(input);
+    await user.type(input, "Third");
+    await user.click(within(group).getByRole("button", { name: "Гость" }));
+    await user.click(within(group).getByRole("button", { name: "Игрок" }));
+    expect(within(group).getByRole("combobox", { name: "Соперник" })).toHaveValue("");
   });
 
   it("shows force-close and delete for admin on standalone active match", async () => {

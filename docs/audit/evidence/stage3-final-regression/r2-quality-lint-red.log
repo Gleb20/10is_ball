@@ -1,0 +1,425 @@
+
+> 10is-ball@4.1.1 verify:fast /Users/liubavskii/.codex/worktrees/c870/tab10
+> node scripts/verify/doctor.mjs && pnpm --filter @tab10/shared --filter @tab10/test-utils run build && pnpm audit:check && pnpm lint && pnpm typecheck && pnpm build && pnpm test:fast
+
+Toolchain ready: Node 24.20.0, pnpm 9.15.0
+Scope: 2 of 6 workspace projects
+packages/test-utils build$ tsc -p tsconfig.json
+packages/shared build$ tsc -p tsconfig.json
+packages/test-utils build: Done
+packages/shared build: Done
+
+> 10is-ball@4.1.1 audit:check /Users/liubavskii/.codex/worktrees/c870/tab10
+> pnpm audit:docs && pnpm audit:routes && pnpm audit:secrets:self-test && pnpm audit:secrets && pnpm audit:reproduce-busy-bye
+
+
+> 10is-ball@4.1.1 audit:docs /Users/liubavskii/.codex/worktrees/c870/tab10
+> node scripts/audit/check-docs.mjs
+
+{
+  "checkedFiles": 174,
+  "brokenLinks": [],
+  "brokenAnchors": [],
+  "backlogDefinitionCount": 102,
+  "duplicateBacklogDefinitions": [],
+  "malformedBacklogHeadings": [],
+  "incompleteBacklogItems": [],
+  "invalidBacklogStatuses": [],
+  "unknownBacklogReferences": []
+}
+
+> 10is-ball@4.1.1 audit:routes /Users/liubavskii/.codex/worktrees/c870/tab10
+> node scripts/audit/route-openapi-inventory.mjs --baseline docs/audit/evidence/route-openapi-inventory.json
+
+{
+  "schemaVersion": 1,
+  "source": "apps/api/src/app.ts",
+  "openApiSource": "apps/api/src/openapi.ts",
+  "inventoryMethod": "direct literal app.<method>() registrations and openApiSpec paths across their source files",
+  "limitations": [
+    "Routes registered dynamically, through plugins, or outside apps/api/src/app.ts require a separate inventory update"
+  ],
+  "registeredCount": 84,
+  "documentedCount": 84,
+  "registeredPathCount": 75,
+  "documentedPathCount": 75,
+  "coveragePercent": 100,
+  "registered": [
+    "DELETE /api/v1/admin/matches/{matchId}",
+    "DELETE /api/v1/auth/sessions/{sessionId}",
+    "DELETE /api/v1/teams/{id}/members/{userId}",
+    "DELETE /api/v1/tournaments/{id}/invitations/{invitationId}",
+    "DELETE /api/v1/tournaments/{id}/participants/{participantId}",
+    "GET /api/v1/admin/users",
+    "GET /api/v1/auth/me",
+    "GET /api/v1/auth/sessions",
+    "GET /api/v1/faq",
+    "GET /api/v1/history",
+    "GET /api/v1/home",
+    "GET /api/v1/matches",
+    "GET /api/v1/matches/create-options",
+    "GET /api/v1/matches/{matchId}",
+    "GET /api/v1/notifications",
+    "GET /api/v1/openapi.json",
+    "GET /api/v1/players/{userId}",
+    "GET /api/v1/profile/me",
+    "GET /api/v1/rankings",
+    "GET /api/v1/teams",
+    "GET /api/v1/teams/{id}",
+    "GET /api/v1/tournaments",
+    "GET /api/v1/tournaments/{id}",
+    "GET /api/v1/users/directory",
+    "GET /health",
+    "GET /ready",
+    "PATCH /api/v1/admin/users/{userId}",
+    "PATCH /api/v1/matches/{matchId}",
+    "PATCH /api/v1/me/onboarding",
+    "PATCH /api/v1/me/profile",
+    "PATCH /api/v1/profile/me",
+    "PATCH /api/v1/teams/{id}",
+    "PATCH /api/v1/tournaments/{id}",
+    "PATCH /api/v1/tournaments/{id}/bracket",
+    "POST /api/v1/admin/matches/{matchId}/force-close",
+    "POST /api/v1/admin/users",
+    "POST /api/v1/admin/users/{userId}/block",
+    "POST /api/v1/admin/users/{userId}/reset-password",
+    "POST /api/v1/admin/users/{userId}/unblock",
+    "POST /api/v1/auth/login",
+    "POST /api/v1/auth/logout",
+    "POST /api/v1/auth/password/change",
+    "POST /api/v1/auth/password/first-change",
+    "POST /api/v1/feedback",
+    "POST /api/v1/match-invitations/{id}/accept",
+    "POST /api/v1/match-invitations/{id}/decline",
+    "POST /api/v1/matches",
+    "POST /api/v1/matches/tutorial",
+    "POST /api/v1/matches/{matchId}/cancel",
+    "POST /api/v1/matches/{matchId}/confirm-finish",
+    "POST /api/v1/matches/{matchId}/invitations",
+    "POST /api/v1/matches/{matchId}/judge/acquire",
+    "POST /api/v1/matches/{matchId}/judge/handover",
+    "POST /api/v1/matches/{matchId}/judge/heartbeat",
+    "POST /api/v1/matches/{matchId}/judge/release",
+    "POST /api/v1/matches/{matchId}/judge/setup",
+    "POST /api/v1/matches/{matchId}/manual-correction",
+    "POST /api/v1/matches/{matchId}/no-show",
+    "POST /api/v1/matches/{matchId}/points",
+    "POST /api/v1/matches/{matchId}/revert-finish",
+    "POST /api/v1/matches/{matchId}/start",
+    "POST /api/v1/matches/{matchId}/stop",
+    "POST /api/v1/matches/{matchId}/undo",
+    "POST /api/v1/matches/{matchId}/void",
+    "POST /api/v1/notifications/read-visible",
+    "POST /api/v1/notifications/{id}/read",
+    "POST /api/v1/team-invitations/{id}/accept",
+    "POST /api/v1/team-invitations/{id}/decline",
+    "POST /api/v1/team-invitations/{id}/respond",
+    "POST /api/v1/teams",
+    "POST /api/v1/teams/{id}/captain-transfer",
+    "POST /api/v1/teams/{id}/invitations",
+    "POST /api/v1/teams/{id}/invite",
+    "POST /api/v1/teams/{id}/leave",
+    "POST /api/v1/tournament-invitations/{id}/respond",
+    "POST /api/v1/tournaments",
+    "POST /api/v1/tournaments/{id}/bracket",
+    "POST /api/v1/tournaments/{id}/cancel",
+    "POST /api/v1/tournaments/{id}/dissolve-bracket",
+    "POST /api/v1/tournaments/{id}/invitations",
+    "POST /api/v1/tournaments/{id}/participants",
+    "POST /api/v1/tournaments/{id}/start",
+    "POST /api/v1/tournaments/{id}/stop",
+    "POST /api/v1/tournaments/{id}/withdraw"
+  ],
+  "documented": [
+    "DELETE /api/v1/admin/matches/{matchId}",
+    "DELETE /api/v1/auth/sessions/{sessionId}",
+    "DELETE /api/v1/teams/{id}/members/{userId}",
+    "DELETE /api/v1/tournaments/{id}/invitations/{invitationId}",
+    "DELETE /api/v1/tournaments/{id}/participants/{participantId}",
+    "GET /api/v1/admin/users",
+    "GET /api/v1/auth/me",
+    "GET /api/v1/auth/sessions",
+    "GET /api/v1/faq",
+    "GET /api/v1/history",
+    "GET /api/v1/home",
+    "GET /api/v1/matches",
+    "GET /api/v1/matches/create-options",
+    "GET /api/v1/matches/{matchId}",
+    "GET /api/v1/notifications",
+    "GET /api/v1/openapi.json",
+    "GET /api/v1/players/{userId}",
+    "GET /api/v1/profile/me",
+    "GET /api/v1/rankings",
+    "GET /api/v1/teams",
+    "GET /api/v1/teams/{id}",
+    "GET /api/v1/tournaments",
+    "GET /api/v1/tournaments/{id}",
+    "GET /api/v1/users/directory",
+    "GET /health",
+    "GET /ready",
+    "PATCH /api/v1/admin/users/{userId}",
+    "PATCH /api/v1/matches/{matchId}",
+    "PATCH /api/v1/me/onboarding",
+    "PATCH /api/v1/me/profile",
+    "PATCH /api/v1/profile/me",
+    "PATCH /api/v1/teams/{id}",
+    "PATCH /api/v1/tournaments/{id}",
+    "PATCH /api/v1/tournaments/{id}/bracket",
+    "POST /api/v1/admin/matches/{matchId}/force-close",
+    "POST /api/v1/admin/users",
+    "POST /api/v1/admin/users/{userId}/block",
+    "POST /api/v1/admin/users/{userId}/reset-password",
+    "POST /api/v1/admin/users/{userId}/unblock",
+    "POST /api/v1/auth/login",
+    "POST /api/v1/auth/logout",
+    "POST /api/v1/auth/password/change",
+    "POST /api/v1/auth/password/first-change",
+    "POST /api/v1/feedback",
+    "POST /api/v1/match-invitations/{id}/accept",
+    "POST /api/v1/match-invitations/{id}/decline",
+    "POST /api/v1/matches",
+    "POST /api/v1/matches/tutorial",
+    "POST /api/v1/matches/{matchId}/cancel",
+    "POST /api/v1/matches/{matchId}/confirm-finish",
+    "POST /api/v1/matches/{matchId}/invitations",
+    "POST /api/v1/matches/{matchId}/judge/acquire",
+    "POST /api/v1/matches/{matchId}/judge/handover",
+    "POST /api/v1/matches/{matchId}/judge/heartbeat",
+    "POST /api/v1/matches/{matchId}/judge/release",
+    "POST /api/v1/matches/{matchId}/judge/setup",
+    "POST /api/v1/matches/{matchId}/manual-correction",
+    "POST /api/v1/matches/{matchId}/no-show",
+    "POST /api/v1/matches/{matchId}/points",
+    "POST /api/v1/matches/{matchId}/revert-finish",
+    "POST /api/v1/matches/{matchId}/start",
+    "POST /api/v1/matches/{matchId}/stop",
+    "POST /api/v1/matches/{matchId}/undo",
+    "POST /api/v1/matches/{matchId}/void",
+    "POST /api/v1/notifications/read-visible",
+    "POST /api/v1/notifications/{id}/read",
+    "POST /api/v1/team-invitations/{id}/accept",
+    "POST /api/v1/team-invitations/{id}/decline",
+    "POST /api/v1/team-invitations/{id}/respond",
+    "POST /api/v1/teams",
+    "POST /api/v1/teams/{id}/captain-transfer",
+    "POST /api/v1/teams/{id}/invitations",
+    "POST /api/v1/teams/{id}/invite",
+    "POST /api/v1/teams/{id}/leave",
+    "POST /api/v1/tournament-invitations/{id}/respond",
+    "POST /api/v1/tournaments",
+    "POST /api/v1/tournaments/{id}/bracket",
+    "POST /api/v1/tournaments/{id}/cancel",
+    "POST /api/v1/tournaments/{id}/dissolve-bracket",
+    "POST /api/v1/tournaments/{id}/invitations",
+    "POST /api/v1/tournaments/{id}/participants",
+    "POST /api/v1/tournaments/{id}/start",
+    "POST /api/v1/tournaments/{id}/stop",
+    "POST /api/v1/tournaments/{id}/withdraw"
+  ],
+  "missingFromOpenApi": [],
+  "notRegistered": []
+}
+
+> 10is-ball@4.1.1 audit:secrets:self-test /Users/liubavskii/.codex/worktrees/c870/tab10
+> node scripts/audit/secret-scan.mjs --self-test
+
+{"status":"passed","cases":25}
+
+> 10is-ball@4.1.1 audit:secrets /Users/liubavskii/.codex/worktrees/c870/tab10
+> bash scripts/audit/secret-scan.sh
+
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-19T00:44:34.208Z",
+  "maxBlobBytes": 20000000,
+  "discoveredWorktreeFiles": 1490,
+  "discoveredIgnoredEnvFiles": 0,
+  "scannedWorktreeFiles": 1490,
+  "absentWorktreeFiles": 0,
+  "scannedRefObjects": 4535,
+  "scannedRefBlobs": 3166,
+  "discoveredIndexEntries": 1239,
+  "scannedIndexBlobs": 1012,
+  "indexBlobsCoveredByRefs": 227,
+  "skippedInputs": [],
+  "candidates": [],
+  "reviewedBenignFindings": [
+    {
+      "scope": "worktree",
+      "path": "docs/audits/2026-09-13-ux-ui/admin/evidence/safe-replay/run-admin-audit.mjs",
+      "kind": "credential-url",
+      "reason": "Frozen audit replay uses a loopback test database URL without a password"
+    },
+    {
+      "scope": "worktree",
+      "path": "docs/audits/2026-09-13-ux-ui/match/evidence/replay.mjs",
+      "kind": "credential-url",
+      "reason": "Frozen audit replay uses a loopback test database URL without a password"
+    },
+    {
+      "scope": "git-refs",
+      "object": "03e98c27321d96e2dd519d789488085478ff4dc9",
+      "path": "artifacts/ux-audit-2026-09-13/core-checkpoint-07/export/files/docs/audits/2026-09-13-ux-ui/match/evidence/replay.mjs",
+      "kind": "credential-url",
+      "reason": "Frozen audit replay uses a loopback test database URL without a password"
+    },
+    {
+      "scope": "git-refs",
+      "object": "59e876d8c3c4983268dc34ae57f19a270b133fa4",
+      "path": "artifacts/ux-audit-2026-09-13/expert-stage-08/export/files/docs/audits/2026-09-13-ux-ui/admin/evidence/safe-replay/run-admin-audit.mjs",
+      "kind": "credential-url",
+      "reason": "Frozen audit export carries the same reviewed loopback test database URL without a password"
+    },
+    {
+      "scope": "git-refs",
+      "object": "8ea18e9b9feb7b96c548f2a062b7d71cfa017473",
+      "path": "scripts/backup-rehearsal.sh",
+      "kind": "credential-url",
+      "reason": "Preserved Codex snapshot ref with a synthetic loopback-only database fixture"
+    },
+    {
+      "scope": "git-refs",
+      "object": "2d4a0b6f6eb89c0ad9ea09812e8af94e559c07f0",
+      "path": "scripts/ops-safety.test.mjs",
+      "kind": "credential-url",
+      "reason": "Preserved Codex snapshot ref with a synthetic loopback-only database fixture"
+    },
+    {
+      "scope": "git-refs",
+      "object": "2f65baa625b873786559be99c2c84325488a76c1",
+      "path": ".github/workflows/ci.yml",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "2f65baa625b873786559be99c2c84325488a76c1",
+      "path": ".github/workflows/ci.yml",
+      "kind": "secret-assignment",
+      "reason": "Historical loopback-only tab10 CI database password"
+    },
+    {
+      "scope": "git-refs",
+      "object": "7662a5224327e3c4da1336267a6f8f8481d152db",
+      "path": "README.md",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "6b38a04e1bc01dc9c940a15fa30067e62e3eaa61",
+      "path": "apps/api/drizzle.config.ts",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "e16323313aa8a3227a857db5bae6fb803bac51a2",
+      "path": "scripts/backup-rehearsal.sh",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "bdc0c1d1ba87a4fd2d63947a2bd9c2e890193357",
+      "path": ".github/workflows/ci.yml",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "bdc0c1d1ba87a4fd2d63947a2bd9c2e890193357",
+      "path": ".github/workflows/ci.yml",
+      "kind": "secret-assignment",
+      "reason": "Historical loopback-only tab10 CI database password"
+    },
+    {
+      "scope": "git-refs",
+      "object": "65891ce648b89167ed531b7ede01e64006c1f0fe",
+      "path": "README.md",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "479450ea26674a9dc49c3edb8ac9b34727af1d4f",
+      "path": "README.md",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "68f3fb9ff6311e252817d7843272afd7b2c4fd97",
+      "path": "README.md",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "698c4c2ce1b33bdb7080ad7956d68cdfa39407e8",
+      "path": "README.md",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-index",
+      "object": "59e876d8c3c4983268dc34ae57f19a270b133fa4",
+      "path": "docs/audits/2026-09-13-ux-ui/admin/evidence/safe-replay/run-admin-audit.mjs",
+      "kind": "credential-url",
+      "reason": "Frozen audit replay uses a loopback test database URL without a password"
+    },
+    {
+      "scope": "git-index",
+      "object": "03e98c27321d96e2dd519d789488085478ff4dc9",
+      "path": "docs/audits/2026-09-13-ux-ui/match/evidence/replay.mjs",
+      "kind": "credential-url",
+      "reason": "Frozen audit replay uses a loopback test database URL without a password"
+    }
+  ]
+}
+
+> 10is-ball@4.1.1 audit:reproduce-busy-bye /Users/liubavskii/.codex/worktrees/c870/tab10
+> node scripts/audit/reproduce-tournament-busy-bye.mjs
+
+Verified the deterministic busy-player/bye tournament-start regression.
+The busy organizer receives a bye, start is rejected, and tournament state is unchanged.
+
+> 10is-ball@4.1.1 lint /Users/liubavskii/.codex/worktrees/c870/tab10
+> pnpm -r run lint
+
+Scope: 5 of 6 workspace projects
+packages/ic-kit lint$ echo 'ic-kit vendored; skip'
+packages/shared lint$ tsc -p tsconfig.json --noEmit
+packages/test-utils lint$ tsc -p tsconfig.json --noEmit
+packages/ic-kit lint: ic-kit vendored; skip
+packages/ic-kit lint: Done
+packages/test-utils lint: Done
+packages/shared lint: Done
+apps/api lint$ tsc -p tsconfig.json --noEmit
+apps/web lint$ tsc -b --noEmit
+apps/web lint: src/pages/MatchCreatePage.test.tsx(140,73): error TS2769: No overload matches this call.
+apps/web lint:   Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+apps/web lint:     Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+apps/web lint:   Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+apps/web lint:     Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+apps/web lint: src/pages/MatchCreatePage.test.tsx(141,73): error TS2769: No overload matches this call.
+apps/web lint:   Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+apps/web lint:     Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+apps/web lint:   Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+apps/web lint:     Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+apps/web lint: src/pages/MatchDetailPage.test.tsx(174,73): error TS2769: No overload matches this call.
+apps/web lint:   Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+apps/web lint:     Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+apps/web lint:   Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+apps/web lint:     Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+apps/web lint: src/pages/MatchDetailPage.test.tsx(175,73): error TS2769: No overload matches this call.
+apps/web lint:   Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+apps/web lint:     Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+apps/web lint:   Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+apps/web lint:     Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+apps/web lint: Failed
+/Users/liubavskii/.codex/worktrees/c870/tab10/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @tab10/web@1.0.0 lint: `tsc -b --noEmit`
+Exit status 1
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Command failed with exit code 1.

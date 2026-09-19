@@ -2,6 +2,20 @@
 
 Текущий публичный runtime — версия 4.1.0, D36 stage 2. Принятое
 [SemVer-правило](../WORKFLOW.md#product-versioning) применено к этому выпуску.
+Локально подготовлен PATCH-кандидат 4.1.1 этапа 3; он ещё не commit, не push и
+не опубликован, поэтому наблюдение публичной версии 4.1.0 ниже сохраняется.
+
+## D36 stage 2 terminal gate observed — 2026-09-18
+
+После первого application release test-only corrective commit
+`550d3680a08a8faf4e1e4afbfcc373c942f155d0` опубликован в `main`.
+GitHub Actions run `35388043867` завершился `success` для Quality,
+PostgreSQL integration, Compiled browser и Release gate. Read-only
+`pnpm run smoke:public` подтвердил 4.1.0 и exact SHA на Vercel web/proxy и
+Render API (19 попыток/96188 ms); Render `/ready` вернул `database=ok`.
+[Терминальный receipt](../audit/evidence/stage2-terminal-release-receipt.json).
+Исторический failed run ниже сохранён. Публичные пользовательские мутации,
+ручной remote seed и migration не проводились.
 
 ## D36 stage 2 application release observed — 2026-09-18
 

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "reviewStatus": "root-and-Terra-approved-before-runtime",
+  "strictTypecheck": "passed",
+  "files": {
+    "passive-helper-r1-to-r2.diff": {
+      "sha256": "1111d712e714d9550c25496753780655a4928d35b3f1c90ac7c2e7a6b075a149",
+      "bytes": 1144
+    },
+    "passive-helper-r1.ts": {
+      "sha256": "16bdfac5c8ab704e53bad6d2e40ae599daefdb0f9d1a7aa443c710b1c89b1a35",
+      "bytes": 13282
+    },
+    "passive-helper-r2.ts": {
+      "sha256": "b5cdf0f660626a5c44078f265fe4cb8949edc9c8b7abd5bd53c70201ba0b7b82",
+      "bytes": 13692
+    }
+  }
+}

@@ -1,0 +1,4 @@
+
+> @tab10/web@1.0.0 typecheck /Users/liubavskii/.codex/worktrees/c870/tab10/apps/web
+> tsc -b --noEmit
+

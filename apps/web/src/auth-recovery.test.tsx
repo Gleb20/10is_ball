@@ -29,7 +29,7 @@ function jsonResponse(status: number, body: unknown) {
 
 function LocationProbe() {
   const location = useLocation();
-  return <output data-testid="location">{location.pathname}</output>;
+  return <output data-testid="location">{location.pathname}{location.search}{location.hash}</output>;
 }
 
 describe("AT-AUTH-009 runtime session recovery", () => {
@@ -76,7 +76,7 @@ describe("AT-AUTH-009 runtime session recovery", () => {
     const user = userEvent.setup();
 
     render(
-      <MemoryRouter initialEntries={["/matches/new"]}>
+      <MemoryRouter initialEntries={["/matches/new?returnTo=home#draft"]}>
         <App />
         <LocationProbe />
       </MemoryRouter>,
@@ -95,7 +95,7 @@ describe("AT-AUTH-009 runtime session recovery", () => {
 
     expect(await screen.findByRole("heading", { name: "Вход" })).toBeVisible();
     expect(screen.getByText(/сессия завершена/i)).toBeVisible();
-    expect(screen.getByTestId("location")).toHaveTextContent("/matches/new");
+    expect(screen.getByTestId("location")).toHaveTextContent("/matches/new?returnTo=home#draft");
     expect(createAttempts).toBe(1);
 
     await user.type(screen.getByLabelText("Email"), activeUser.email);
@@ -107,7 +107,7 @@ describe("AT-AUTH-009 runtime session recovery", () => {
         screen.queryByRole("heading", { name: "Вход" }),
       ).not.toBeInTheDocument();
     });
-    expect(screen.getByTestId("location")).toHaveTextContent("/matches/new");
+    expect(screen.getByTestId("location")).toHaveTextContent("/matches/new?returnTo=home#draft");
     expect(screen.getByLabelText("Название")).toHaveValue("Финал после обеда");
     expect(screen.getByLabelText(/гость \(имя фамилия\)/i)).toHaveValue(
       "Анна Тестова",

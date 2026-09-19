@@ -47,7 +47,7 @@ test("compiled web and API work through the same-origin production-like proxy", 
   await expect(page).toHaveTitle(/Tab-10/i);
   await expect(page.getByRole("form", { name: "Форма входа" })).toBeVisible();
   await page.getByLabel("Email").fill(adminEmail);
-  await page.getByLabel("Пароль").fill(adminPassword);
+  await page.getByLabel("Пароль", { exact: true }).fill(adminPassword);
   await page.getByRole("button", { name: "Войти" }).click();
 
   await expect(page).toHaveURL(/\/$/);

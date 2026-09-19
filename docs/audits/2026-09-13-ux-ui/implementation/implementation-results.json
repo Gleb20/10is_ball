@@ -319,6 +319,215 @@
       "result": "verified_local",
       "evidence": "docs/audits/2026-09-13-ux-ui/implementation/stage2-final-evidence/stage2-final-receipt.json",
       "evidenceSha256": "a3b99dd41ef77b875cb1a1c6d9dc8f2c382390af465a8fc778593d30659b0596"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "AUTH-001",
+      "atom_id": "main",
+      "canonical_task": "BUG-028",
+      "stage": 3,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo2-r2/README.md",
+      "evidenceSha256": "51f8f0e09f353b321c7fecffdf68da83a2b85e25942c3f6443ba85eb1f986a7c"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "AUTH-001",
+      "atom_id": "a01",
+      "canonical_task": "BUG-028",
+      "stage": 3,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo2-r2/README.md",
+      "evidenceSha256": "51f8f0e09f353b321c7fecffdf68da83a2b85e25942c3f6443ba85eb1f986a7c"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "AUTH-001",
+      "atom_id": "a02",
+      "canonical_task": "BUG-028",
+      "stage": 3,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo2-r2/README.md",
+      "evidenceSha256": "51f8f0e09f353b321c7fecffdf68da83a2b85e25942c3f6443ba85eb1f986a7c"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "AUTH-002",
+      "atom_id": "main",
+      "canonical_task": "BUG-028",
+      "stage": 3,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo2-r2/README.md",
+      "evidenceSha256": "51f8f0e09f353b321c7fecffdf68da83a2b85e25942c3f6443ba85eb1f986a7c"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "AUTH-002",
+      "atom_id": "a01",
+      "canonical_task": "BUG-028",
+      "stage": 3,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo2-r2/README.md",
+      "evidenceSha256": "51f8f0e09f353b321c7fecffdf68da83a2b85e25942c3f6443ba85eb1f986a7c"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "AUTH-004",
+      "atom_id": "main",
+      "canonical_task": "BUG-028",
+      "stage": 3,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo2-r2/README.md",
+      "evidenceSha256": "51f8f0e09f353b321c7fecffdf68da83a2b85e25942c3f6443ba85eb1f986a7c"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "AUTH-004",
+      "atom_id": "a01",
+      "canonical_task": "BUG-020",
+      "stage": 3,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo2-r2/README.md",
+      "evidenceSha256": "51f8f0e09f353b321c7fecffdf68da83a2b85e25942c3f6443ba85eb1f986a7c"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "U01-DETAIL-002",
+      "atom_id": "a01",
+      "canonical_task": "GAP-034",
+      "stage": 3,
+      "previousResult": "target_pending_implementation",
+      "result": "common_sample_verified_local_domain_consumers_pending",
+      "evidence": "docs/audit/evidence/stage3-wo4/README.md",
+      "evidenceSha256": "5fccb4ac4f520bcd0584b00bd81422678e949058b7649770754c8b7dbfa415f3"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "U01-JUDGE-003",
+      "atom_id": "a03",
+      "canonical_task": "GAP-034",
+      "stage": 3,
+      "previousResult": "target_pending_implementation",
+      "result": "common_sample_verified_local_domain_consumers_pending",
+      "evidence": "docs/audit/evidence/stage3-wo4/README.md",
+      "evidenceSha256": "5fccb4ac4f520bcd0584b00bd81422678e949058b7649770754c8b7dbfa415f3"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-018",
+      "atom_id": "main",
+      "canonical_task": "BUG-018",
+      "stage": 3,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo1-r2/README.md",
+      "evidenceSha256": "925d272e2e295ce6251a0e214e3700ac8e54cb3b6fab698c7bb8b58bd19aca1e"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-023",
+      "atom_id": "main",
+      "canonical_task": "BUG-023",
+      "stage": 3,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo1-r2/README.md",
+      "evidenceSha256": "925d272e2e295ce6251a0e214e3700ac8e54cb3b6fab698c7bb8b58bd19aca1e"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-025",
+      "atom_id": "main",
+      "canonical_task": "BUG-025",
+      "stage": 3,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo1-r2/README.md",
+      "evidenceSha256": "925d272e2e295ce6251a0e214e3700ac8e54cb3b6fab698c7bb8b58bd19aca1e"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-019",
+      "atom_id": "main",
+      "canonical_task": "BUG-019",
+      "stage": 3,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local_physical_device_pending",
+      "evidence": "docs/audit/evidence/stage3-wo1-r2/README.md",
+      "evidenceSha256": "925d272e2e295ce6251a0e214e3700ac8e54cb3b6fab698c7bb8b58bd19aca1e"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-020",
+      "atom_id": "main",
+      "canonical_task": "BUG-020",
+      "stage": 3,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo2-r2/README.md",
+      "evidenceSha256": "51f8f0e09f353b321c7fecffdf68da83a2b85e25942c3f6443ba85eb1f986a7c"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-021",
+      "atom_id": "main",
+      "canonical_task": "BUG-021",
+      "stage": 3,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo3-r2/README.md",
+      "evidenceSha256": "75678364bff35fbdd7b347005a9c0947d18d1b03b995fe4594c75ce47fa50639"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-024",
+      "atom_id": "main",
+      "canonical_task": "BUG-024",
+      "stage": 3,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo3-r2/README.md",
+      "evidenceSha256": "75678364bff35fbdd7b347005a9c0947d18d1b03b995fe4594c75ce47fa50639"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-026",
+      "atom_id": "main",
+      "canonical_task": "BUG-026",
+      "stage": 3,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo3-r2/README.md",
+      "evidenceSha256": "75678364bff35fbdd7b347005a9c0947d18d1b03b995fe4594c75ce47fa50639"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-027",
+      "atom_id": "main",
+      "canonical_task": "BUG-027",
+      "stage": 3,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo2-r2/README.md",
+      "evidenceSha256": "51f8f0e09f353b321c7fecffdf68da83a2b85e25942c3f6443ba85eb1f986a7c"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-028",
+      "atom_id": "main",
+      "canonical_task": "BUG-028",
+      "stage": 3,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage3-wo2-r2/README.md",
+      "evidenceSha256": "51f8f0e09f353b321c7fecffdf68da83a2b85e25942c3f6443ba85eb1f986a7c"
     }
   ]
 }

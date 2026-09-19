@@ -40,18 +40,20 @@
   border: 2px solid var(--ic-color-border, #d0d5dd);
   border-radius: 12px;
   cursor: pointer;
-  background: var(--ic-color-surface, #fff);
+  background: var(--surfaces-surface-1, #fff);
+  color: var(--text-main-on-surface, #1a1d23);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .bracket-algo-card:has(input:focus-visible) {
-  outline: 2px solid var(--ic-color-primary, #2563eb);
+  outline: 3px solid var(--app-focus-ring, #6520a5);
   outline-offset: 2px;
 }
+.bracket-algo-card input:focus-visible { outline: none; }
 
 .bracket-algo-card--selected {
   border-color: var(--ic-color-primary, #2563eb);
-  box-shadow: 0 0 0 1px var(--ic-color-primary, #2563eb);
+  background: color-mix(in srgb, var(--ic-color-primary, #2563eb) 8%, var(--surfaces-surface-1, #fff));
 }
 
 .bracket-algo-card--disabled {
@@ -73,12 +75,12 @@
 .bracket-algo-card__desc {
   font-size: 0.88rem;
   line-height: 1.45;
-  color: var(--ic-color-text-secondary, #5c6370);
+  color: var(--text-secondary-on-surface, #5c6370);
 }
 
 .bracket-algo-card__hint {
   font-size: 0.8rem;
-  color: var(--ic-color-text-secondary, #5c6370);
+  color: var(--text-secondary-on-surface, #5c6370);
   font-style: italic;
 }
 

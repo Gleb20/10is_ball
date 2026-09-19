@@ -1,0 +1,78 @@
+
+ RUN  v3.2.7 /Users/liubavskii/.codex/worktrees/c870/tab10/apps/web
+
+stderr | src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > BUG-018 clears an unfinished player search after guest mode resets the slot
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ ↓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > BUG-026 freezes every visible match payload control while create is pending, then preserves a rejected attempt
+ ↓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > defaults to player mode with opponent autocomplete
+ ↓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > BUG-018 keeps the same focused player field after Enter selects a user
+ ↓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > BUG-018 preserves a search typed before match options finish loading
+ × src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > BUG-018 clears an unfinished player search after guest mode resets the slot 150ms
+   → expect(element).toHaveValue()
+
+Expected the element to have value:
+
+Received:
+  Alpha
+ ↓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > offers guest and player modes
+ ↓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > GAP-029: removes legacy challenge query without applying its player or invite intent
+ ↓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > GAP-012: submits manual A-vs-B without the operator and without invitations by default
+ ↓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > GAP-029: legacy challenge URL only creates a manually chosen match
+ ↓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > GAP-005: submits a complete 2v2 roster with custom rules and first-server mode
+ ↓ src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > MATCH-004: uses frequent, recent and team groups from the create options
+stderr | src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > BUG-018 clears a replacement search after edit guest mode resets the slot
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > BUG-018 keeps the edit-dialog opponent field mounted and focused after choosing another player
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > BUG-018 preserves a replacement search while edit options finish loading
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > BUG-018 resolves an untouched selected label when edit options arrive
+ ✓ src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > BUG-018 clears a replacement search after edit guest mode resets the slot 286ms
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > shows force-close and delete for admin on standalone active match
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__admin_match_ops > hides admin CTAs for non-admin
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > MATCH-008: creator starts a waiting manual match without taking another judge's slot
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > MATCH-008: creator starts a waiting rally match without taking another judge's slot
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > MATCH-008: random start leaves the server choice to the API
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > GAP-005 keeps the start dialog open when cancel is clicked during the request
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > shows cancel for organizer on waiting standalone match
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > hides cancel for outsider on waiting match
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > AT-MATCH-CANCEL-004: first click only opens named confirmation
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > AT-MATCH-START-001/STOP-002: participant sees no start, stop, or cancel action
+ ↓ src/pages/MatchDetailPage.test.tsx > REQ_ui__match_cancel > AT-MATCH-STOP-001: current active judge sees stop but not cancel
+ ↓ src/pages/MatchDetailPage.test.tsx > AT-MATCH-VOID-003 confirmation > requires a separate confirmation that names soft invalidation and stats impact
+ ↓ src/pages/MatchDetailPage.test.tsx > AT-MATCH-VOID-003 confirmation > warns the tournament creator that the rest of the bracket is preserved
+ ↓ src/pages/MatchDetailPage.test.tsx > AT-MATCH-VOID-003 confirmation > hides void for a tournament participant who is not its creator
+ ↓ src/pages/MatchDetailPage.test.tsx > BUG-006/BUG-009 match action failures > keeps loaded match context and action-local error while blocking duplicate stop
+ ↓ src/pages/MatchDetailPage.test.tsx > GAP-005 match detail completion > shows rules and clean effective point log without a revenge action
+ ↓ src/pages/MatchDetailPage.test.tsx > GAP-005 match detail completion > records no-show with expected version and preserves the returned score
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/MatchCreatePage.test.tsx > REQ_ui__match_create_autocomplete > BUG-018 clears an unfinished player search after guest mode resets the slot
+Error: expect(element).toHaveValue()
+
+Expected the element to have value:
+
+Received:
+  Alpha
+ ❯ src/pages/MatchCreatePage.test.tsx:142:70
+    140|     await user.click(within(group).getByRole("button", { name: "Гость"…
+    141|     await user.click(within(group).getByRole("button", { name: "Игрок"…
+    142|     expect(within(group).getByRole("combobox", { name: "Игрок A" })).t…
+       |                                                                      ^
+    143|   });
+    144| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 1 passed | 30 skipped (32)
+   Start at  03:39:49
+   Duration  1.80s (transform 632ms, setup 245ms, collect 1.75s, tests 438ms, environment 559ms, prepare 75ms)
+
+undefined
+/Users/liubavskii/.codex/worktrees/c870/tab10/apps/web:
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: vitest run src/pages/MatchCreatePage.test.tsx src/pages/MatchDetailPage.test.tsx -t clears an unfinished player search|clears a replacement search --reporter=verbose

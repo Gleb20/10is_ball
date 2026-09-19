@@ -9,6 +9,8 @@
 Внешняя зависимость фиксируется в `Dependencies`, но не создаёт новый status.
 Правила ведения — в [WORKFLOW.md](WORKFLOW.md).
 
+Текущий локальный checkpoint этапа 3 (2026-09-19): WO1 R2, WO2 R2 и WO3 R2 приняты Terra/root; WO4 inventory/target принят, общий `StatusChip` sample — кандидат на независимое review. Старые формулировки в evidence-описаниях ниже отражают дату их создания. Общий CI, устройство/AT, версия и выпуск не приняты.
+
 Wave A (`BUG-004..016`, `GAP-001`, `OPS-005`) интегрируется по
 [`OPS-004 completion waves`](test-plans/OPS-004-completion-waves.md). Frozen
 source evidence от 2026-09-07 остаётся историческим `verified_local` evidence;
@@ -1126,7 +1128,8 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** accessibility-interaction
 - **Priority:** P1
-- **Status:** ready
+- **Status:** verified_local — WO1 R2, aggregate quality/PostgreSQL и финальный compiled browser 69/69 приняты локально; physical device/WebKit/spoken AT ограничения указаны отдельно.
+- **WO1 evidence:** option IDREF, Escape/Tab/disabled, MatchCreate и MatchDetail focused tests; Chromium keyboard/touch Dialog 360/390/desktop и [geometry receipt](audit/evidence/stage3-wo1/geometry.json). Spoken AT ещё не проверена.
 - **Scenario / Epic / Story / Sprint:** SC-C02, SC-M01/M02 → EP-UX-CORE «Управление игрой без лишних препятствий» → US-UX-SELECT «Оператор выбирает любого допустимого игрока с клавиатуры» → S1 candidate; готовность проверяется по принятому recheck ниже.
 - **Requirements:** MATCH-001/003; AT-MATCH-013/016; [NFR §9–10](requirements/06_NFR_CONSTRAINTS.md#9-accessibility-и-ux). Новый продуктовый ADR не требуется: исправление существующего keyboard contract. GAP-012 определяет состав и приглашения, это изменение их не переопределяет.
 - **Evidence:** F-CMP-001 и F-CMP-003 в [отчёте](audits/2026-09-13-ux-ui/components/report.md), raw states `light/autocomplete/open-keyboard-focus`, `light/autocomplete/keyboard-active-option`, `light/autocomplete/chosen-option-focus-lost-to-body`; baseline 9f71b9f, manifest3354f542; [Terra PASS](audits/2026-09-13-ux-ui/components-review.json). Confidence high; глобальная частота неизвестна.
@@ -1143,14 +1146,16 @@ backlog ID, version, commit, push or public deployment was created.
 - **Verification:** component regression IDREF/focus + web/package typecheck/tests; real browser desktop keyboard и mobile touch emulation, light/dark где компонент используется; accessibility tree и отдельный spoken-AT spot-check с явной отметкой ограничения при недоступности. Общий компонент требует проверки его consumers, build alone недостаточен.
 - **Constraints / non-goals:** не выключать aria-activedescendant/focus ради зелёного теста; не менять разрешённые варианты, формат user/guest, серверные правила, навигацию или оформление всех экранов.
 - **Risk:** исправление remount может выявить старую зависимость default label от key; контролируемое значение обязано обновляться при prefill/revenge/reset. Нужна адресная проверка этих ветвей.
-- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. P1 также воспроизведён координатором в пилоте; блокирующих продуктовых решений нет. Постановка принята independent Terra review; runtime будущего исправления ещё не выполнен.
+- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. P1 также воспроизведён координатором в пилоте; блокирующих продуктовых решений нет. WO1 R2 и финальный Stage 3 compiled browser 69/69 приняты локально; physical device/WebKit/spoken AT остаются отдельными ограничениями.
 - **Documentation / rollback:** BACKLOG, CHANGELOG_DEV, test traceability и component recheck evidence. Rollback только собственного bounded diff; сохранённая failing regression показывает возвращённое ограничение.
 
 ### BUG-019 — Поле выбора и активный вариант видимы над клавиатурой и safe area
 
 - **Type:** layout-interaction
 - **Priority:** P2
-- **Status:** ready
+- **Status:** in_progress — локальная геометрия и финальный compiled browser приняты; physical keyboard/safe-area остаются обязательными, а причина одиночного desktop timeout не установлена.
+- **Stage 3 aggregate residual:** финальный original-order compiled browser прошёл 60/60 + 9 foundation; desktop/mobile GAP-012 сохранили query, input identity и выбор без blur. Более ранний одиночный desktop timeout не воспроизведён, но его причина не установлена и он не объявлен harmless/pre-existing/fixed. Подтверждённая late-query коррекция — отдельный deterministic Red/Green. Physical keyboard/safe-area всё ещё не проверены.
+- **WO1 evidence:** R1 geometry получила Terra `REWORK` для короткого clip; [R2 Red/Green](audit/evidence/stage3-wo1-r2/README.md) воспроизводит эту ветку и проверяет page/вложенный Dialog, 360/390/desktop, empty status, 500px viewport approximation, выбор `u20` и свободную ручную прокрутку. Финальный Stage 3 compiled browser 69/69 принят; физическая клавиатура/safe area и причина более раннего таймаута остаются непроверенными.
 - **Target overlay D36:** fixed bottom nav no longer exists; accepted outcome is active option and field visible above keyboard/safe area at 360/390px and desktop, with scroll/focus restored. Any older nav-occlusion wording below is superseded, not a directive to keep a bottom bar.
 - **Current GWT / historical boundary:** Given picker opened on a narrow phone with software keyboard and safe area, When active option moves by keyboard/touch, Then field and option remain visible without occlusion or lost focus; desktop remains usable. AT-MATCH-016. The older fixed-bottom-nav Expected/Target/GWT below is historical evidence only.
 - **Scenario / Epic / Story / Sprint:** SC-C02, SC-M01/M02 → EP-UX-CORE → US-UX-SELECT → S1 candidate после новой базы.
@@ -1167,14 +1172,15 @@ backlog ID, version, commit, push or public deployment was created.
 - **Verification:** browser 360/390/768/1440, keyboard Tab/Arrows/Enter/Escape, pointer/touch emulation, длинный список и масштаб; viewport rects + screenshots. Physical virtual keyboard/safe-area проверять отдельно, не подменять CSS proxy фактом устройства.
 - **Constraints / non-goals:** не прятать nav/варианты, не уменьшать hit targets ниже44px, не заставлять пользователя вручную искать список прокруткой; без серверных изменений и общего restyling.
 - **Risk:** overflow ancestor, stacking context и virtual keyboard меняют доступную область; screenshot fullPage может скрыть перекрытие.
-- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. BUG-018 keyboard semantics. Exact nav intersection на1440/360 и визуальный active option там NOT_TESTED; подтверждён raw ниже viewport и390 tap. Эти ограничения не выдавать за полный geometry pass. Постановка принята independent Terra review; runtime будущего исправления ещё не выполнен.
+- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. BUG-018 keyboard semantics. Старые ограничения про fixed nav относятся к baseline до D36; новый локальный viewport/Dialog runtime WO1 записан выше. WO1 R2 и финальный Stage 3 compiled browser 69/69 приняты локально; физическая клавиатура/safe area и причина более раннего таймаута остаются непроверенными.
 - **Documentation / rollback:** BACKLOG/CHANGELOG_DEV, traceability новых tests и recheck matrix; rollback scoped styles/component delta.
 
 ### BUG-020 — Фокус и выбранное состояние имеют согласованные границы
 
 - **Type:** component-state-consistency
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — WO1 R2, aggregate quality/PostgreSQL и финальный compiled browser 69/69 приняты локально; physical device/WebKit/spoken AT ограничения указаны отдельно.
+- **WO1 evidence:** Chromium computed before/after, light 390/1280 и отдельно dark-token diagnostic в [state matrix](audit/evidence/stage3-wo1/matrix.json), native readonly text selection, disabled filled value и selected+focus radio-card. Приложение фиксирует light theme; dark-token diagnostic обнаружил недостаточный контраст подписей и не заявлен как pass production dark. WebKit/spoken AT остаются вне этой проверки.
 - **Scenario / Epic / Story / Sprint:** SC-C01/C03/C04 → EP-UX-SYSTEM «Предсказуемые общие компоненты» → US-UX-STATE «Пользователь различает ввод, выбор и ошибку» → S1/S2 candidate; P3 radio-card refinement внутри общего исправления, не отдельный спринт.
 - **Requirements:** [NFR §9–10](requirements/06_NFR_CONSTRAINTS.md#9-accessibility-и-ux), существующие AUTH/MATCH/JUDGE acceptance сохраняются; AT сценарии состояний конкретизированы ниже. Product/API/data ADR не требуется.
 - **Evidence:** F-CMP-004/005 в [отчёте](audits/2026-09-13-ux-ui/components/report.md), [Terra PASS](audits/2026-09-13-ux-ui/components-review.json), user observation focus/selected, baseline9f71b9f. Отделено от native select, где одна округлая рамка уже корректна.
@@ -1189,14 +1195,16 @@ backlog ID, version, commit, push or public deployment was created.
 - **Verification:** real browser light/dark, 390/1440 +360/zoom, pointer/keyboard, applicable state combinations, clipping/contrast/hit targets. Component/DOM tests только для изменённых semantics; визуальный результат подтверждают кадры и измерения, а не тест на CSS class name.
 - **Constraints / non-goals:** не скрывать focus, не убирать keyboard access, не менять фирменную палитру/типографику, не навязывать новый компонент корректным native controls. Text selection не приравнивать к выбранной option.
 - **Risk:** :has/focus-visible и specificity пересекаются с vendored component CSS; проверить поддерживаемые движки, не обещать Safari без прогона.
-- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. Сохранить state catalog и независимые GAP-011/TECH-002 device/AT остатки; продуктовых развилок нет. Постановка принята independent Terra review; runtime будущего исправления ещё не выполнен.
+- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. Сохранить state catalog и независимые GAP-011/TECH-002 device/AT остатки; продуктовых развилок нет. WO1 R2 и финальный Stage 3 compiled browser 69/69 приняты локально; device/AT ограничения остаются.
 - **Documentation / rollback:** BACKLOG/CHANGELOG_DEV, state matrix, test traceability при добавлении регрессий; rollback своего scoped style delta.
 
 ### BUG-021 — Ошибка построения сетки видна в открытом диалоге
 
+- **WO3 R2 accepted local checkpoint:** [Red/Green](audit/evidence/stage3-wo3-r2/README.md) на frozen R1: подтверждённый POST с положительной версией не принимает GET без конечной числовой версии не ниже неё. Terra/root R2 review и финальный Stage 3 compiled browser 69/69 приняты локально.
+- **WO3 accepted local base:** [Red/Green и browser evidence](audit/evidence/stage3-wo3/README.md) на принятой WO2 R2 базе; ошибка внутри Dialog, unknown outcome блокирует повторный POST после GET и Close/reopen. Подтверждённый POST с неудачным readback остаётся заблокированным до явного GET, подтвердившего актуальную сетку; после этого окно закрывается. R2 принят как локальный checkpoint; исторический repro ниже сохранён.
 - **Type:** error-recovery
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — WO3 R2, aggregate quality/PostgreSQL и финальный compiled browser 69/69 приняты локально; неохваченные будущие consumers остаются отдельными задачами.
 - **Scenario / Epic / Story / Sprint:** SC-C04/SC-T05 → EP-UX-SYSTEM → US-UX-DIALOG «Пользователь понимает результат действия в окне» → S2 candidate; accepted GAP012-r6.
 - **Requirements:** AT-TRN-001/004/005 сохраняют состав/генерацию/посев; NFR §9–10. Отдельная UI-приёмка ниже дополняет эти функциональные сценарии, не объявляется уже существующим AT.
 - **Evidence:** F-CMP-SUP-001, [report](audits/2026-09-13-ux-ui/components-supplement/report.md), [Terra PASS](audits/2026-09-13-ux-ui/components-supplement-review.json). Controlled503,1440/390; alertInsideModal=false, activeInsideModal=true. High confidence, observed1/1; частота в эксплуатации неизвестна.
@@ -1241,7 +1249,9 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** search-consistency
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — WO1 R2, aggregate quality/PostgreSQL и финальный compiled browser 69/69 приняты локально; physical device/WebKit/spoken AT ограничения указаны отдельно.
+- **Stage 3 aggregate residual:** финальный original-order compiled browser прошёл 60/60 + 9 foundation и оба GAP-012 capture сохранили query/identity/selection. Более ранний одиночный desktop timeout причины не получил; он не считается доказанно связанным с поиском и не объявлен harmless/pre-existing/fixed. Late-query regression исправлена отдельным deterministic Red/Green.
+- **WO1 evidence:** token-order/case/duplicate-ID/zero-match component tests и [tournament/team browser picker](audit/evidence/stage3-wo1/picker.json) на 390/desktop. Shared popup показывает нейтральное «Ничего не найдено. Проверьте написание имени.»; семантика и текст проверяются на independent review.
 - **Scenario / Epic / Story / Sprint:** SC-C02, SC-T01/T03, SC-M01 → EP-UX-CORE → US-UX-SELECT → S1 candidate, после финальной GAP-012 базы и mobile recheck.
 - **Requirements:** TOURNAMENT-003/004, MATCH-001/002; NFR §9–10. Существующие права и AT турнирного roster/матча сохраняются; отдельная приёмка поиска задана ниже.
 - **Evidence:** [F-PREP-001](audits/2026-09-13-ux-ui/preparation-evidence/search-order-finding.md), source и runtime r3, Chromium1440×900, обычный organizer. Новые аккаунты уже active: отсутствие первого входа не объясняет результат поиска.
@@ -1256,7 +1266,7 @@ backlog ID, version, commit, push or public deployment was created.
 - **Verification:** focused predicate/компонентные проверки для независимых краёв; browser390/1440, оба порядка полного имени, partial/Cyrillic/case/whitespace, empty/loading/error, клавиатура/касание. Не считать исправление search выполненным по тому, что fixture использовал обходной запрос из одного слова.
 - **Constraints / non-goals:** не менять публичные labels, палитру, форму имён во всём продукте, backend search, permissions/exclusions, правила согласий или auto-selection. Не искать по скрытым email/ID/служебным полям.
 - **Risk:** общая библиотека может использовать predicate в других селекторах; проверить всех consumers и сохранить disabled/группы/стабильный порядок. Частота проблемы в аудитории unknown.
-- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. BUG-018/019 shared seams; имя/family order воспроизведено в preparation, app source bytes неизменны между r3/r6. Mobile order search остаётся будущей приёмкой, не подтверждённым run. Постановка принята independent Terra review; runtime будущего исправления ещё не выполнен.
+- **Dependencies:** GAP012-r6 принят; [повторная проверка](audits/2026-09-13-ux-ui/components-recheck-review.json) и её обязательная коррекция приняты. BUG-018/019 shared seams; имя/family order воспроизведено в preparation, app source bytes неизменны между r3/r6. Локальный mobile-emulation order search WO1 записан выше; физический телефон и review реализации ожидаются. Постановка принята independent Terra review.
 - **Documentation / rollback:** BACKLOG/CHANGELOG_DEV, state/requirement coverage и traceability добавленных tests; rollback только своего scoped delta.
 
 
@@ -1291,9 +1301,10 @@ backlog ID, version, commit, push or public deployment was created.
 
 ### BUG-024 — Ошибка и подписи полей счёта читаются в тёмном режиме
 
+- **WO3 accepted local checkpoint:** [Browser evidence](audit/evidence/stage3-wo3/README.md) для реального immersive Judge на 360/390/1440: текст ошибки 7.50:1, две подписи коррекции 15.47:1; Terra/root R2 review и финальный Stage 3 compiled browser 69/69 приняты локально.
 - **Type:** accessibility-contrast
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — WO3 R2, aggregate quality/PostgreSQL и финальный compiled browser 69/69 приняты локально; неохваченные будущие consumers остаются отдельными задачами.
 - **Evidence:** F-CMP-SUP-003 теперь runtime-confirmed: controlled point-write503, computed rgb(176,0,32) на rgb(15,17,21),14px,2.58:1. [Recheck](audits/2026-09-13-ux-ui/components-recheck/report.md), [Terra PASS и limits](audits/2026-09-13-ux-ui/components-recheck-review.json). Confidence high для пары; частота ошибок неизвестна.
 - **Expected:** Текст `.judge-error` сохраняет минимум4.5:1 на фактическом тёмном фоне; сообщение и восстановление не скрываются и не меняют семантику ошибки.
 - **Actual:** Общий `.error` задаёт тёмно-красный текст, не учитывающий immersive фон; runtime пара не достигает4.5:1.
@@ -1319,7 +1330,8 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** async-feedback
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — WO1 R2, aggregate quality/PostgreSQL и финальный compiled browser 69/69 приняты локально; physical device/WebKit/spoken AT ограничения указаны отдельно.
+- **WO1 evidence:** deferred GET/503/retry/stale actor/exclusion/focus tests, [tournament/team browser states](audit/evidence/stage3-wo1/picker.json) 390/desktop и [native judge handover browser](audit/evidence/stage3-wo1/judge.json) landscape/desktop. No public mutation.
 - **Evidence:** F-CMP-R-001, ADMIN-PICKER-PENDING/ERROR в [runtime recheck](audits/2026-09-13-ux-ui/components-recheck/report.md), controlled pending и503 по одному прогону; TerraPASS. UserPicker.tsx fetch effect и loadError. Confidence high по состоянию.
 - **Expected:** До готовности каталога статус понятен; ошибка предлагает явный повтор GET; готовый пустой каталог/нулевой поиск не похож на незагруженный список.
 - **Actual:** Pending picker enabled, options0 и нет role=status. После503 control остаётся enabled, retry отсутствует. Отдельный BUG023 покрывает порядок поиска и zero-query feedback.
@@ -1341,9 +1353,10 @@ backlog ID, version, commit, push or public deployment was created.
 
 ### BUG-026 — Отправленная конфигурация не расходится с редактируемой формой
 
+- **WO3 accepted local checkpoint:** [Red/Green и browser evidence](audit/evidence/stage3-wo3/README.md) для создания матча, ручного включения игрока и двухшагового Judge setup; неизвестный исход не повторяется автоматически. Terra/root R2 review, aggregate PostgreSQL 72/72 и финальный compiled browser 69/69 приняты локально; адресное доказательство failure-consistency через реальный PostgreSQL не выделялось отдельно.
 - **Type:** async-interaction
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — WO3 R2, aggregate quality/PostgreSQL и финальный compiled browser 69/69 приняты локально; неохваченные будущие consumers остаются отдельными задачами.
 - **Evidence:** F-CMP-R-002 MC-PENDING-1440 и ADMIN-OVERRIDE-PENDING: action disabled, creator/invite checkbox или targetpicker enabled после отправки payload. [Recheck](audits/2026-09-13-ux-ui/components-recheck/report.md), TerraPASS. High confidence для state mismatch; не заявляется duplicate-write bug.
 - **Expected:** Пока запрос создания/ручного включения выполняется, все controls, определяющие уже отправленный payload, недоступны для изменения и показывают отправленные значения.
 - **Actual:** Пользователь может поменять видимые creator/invite или selected person, хотя выполняется запрос с прежним значением; UI не показывает этот разрыв.
@@ -1367,7 +1380,8 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** bugfix
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — WO2 R2, aggregate quality/PostgreSQL и финальный compiled browser 69/69 приняты локально; physical iPhone/WebKit/spoken AT ограничения указаны отдельно.
+- **WO2 implementation evidence (2026-09-19):** [real API Red/Green](audit/evidence/stage3-wo2/README.md): in-memory PGlite attested by `/health`, old UI 0 logout POST and same `/auth/me` 200 after Back, new UI 1 POST and current `/auth/me` 401 after Back while a second session remains 200. Held logout/save, 401 and known failure are covered by focused tests and browser state evidence. No public mutation or release.
 - **Evidence:** F-AUTH-001; [Отчёт AUTH](audits/2026-09-13-ux-ui/auth/report.md), [находки](audits/2026-09-13-ux-ui/auth/findings.json), [точная спецификация](audits/2026-09-13-ux-ui/auth/target-spec.md), [схемы](audits/2026-09-13-ux-ui/auth/wireframes.html). Frozen45payloads проверены и приняты; [независимое review](audits/2026-09-13-ux-ui/auth-review.json). Частота в аудитории неизвестна.
 - **Expected:** Кнопка «Выйти» завершает текущую ограниченную сессию, после чего вход действительно требуется заново.
 - **Actual:** Кнопка выполняет только navigate: logout POST отсутствует, тот же browser context получает auth/me200; свежий context401. Ограничение mustChangePassword продолжает защищать продуктовые данные.
@@ -1388,7 +1402,9 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** accessibility-ux
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — WO2 R2, aggregate quality/PostgreSQL и финальный compiled browser 69/69 приняты локально; physical iPhone/WebKit/spoken AT ограничения указаны отдельно.
+- **WO2 implementation evidence (2026-09-19):** [auth state matrix](audit/evidence/stage3-wo2/README.md) covers named focused Alert, mismatch association with both fields, translated policy reasons, generic wrong-credential text, explicit edit recovery, integrated independent password toggles and 360/390/desktop plus CSS zoom reflow. App theme remains fixed light; physical-device zoom, OS autofill, WebKit and spoken AT remain unverified.
+- **WO2 R2 review correction:** [separate Red/Green](audit/evidence/stage3-wo2-r2/README.md) reproduces unchanged repeated mismatch leaving focus on Save, then one Alert focus per explicit failed submit without focus theft on edit or remount/value loss. R1 remained immutable; Terra/root R2 review and final Stage 3 compiled browser 69/69 were accepted locally.
 - **Evidence:** F-AUTH-002; [Отчёт AUTH](audits/2026-09-13-ux-ui/auth/report.md), [находки](audits/2026-09-13-ux-ui/auth/findings.json), [точная спецификация](audits/2026-09-13-ux-ui/auth/target-spec.md), [схемы](audits/2026-09-13-ux-ui/auth/wireframes.html). Frozen45payloads проверены и приняты; [независимое review](audits/2026-09-13-ux-ui/auth-review.json). Частота в аудитории неизвестна.
 - **Expected:** Человек понимает отказ формы и может исправить его с клавиатуры, не разбирая коды API.
 - **Actual:** После отказа фокус BODY/submit; mismatch не связан с полями через invalid/description; политика пароля показывается TOO_SHORT/MISSING_* .
@@ -2090,6 +2106,8 @@ backlog ID, version, commit, push or public deployment was created.
 - **Type:** mobile-runtime-finding
 - **Priority:** P2
 - **Status:** confirmed
+- **WO2 boundary (2026-09-19):** auth forms passed local Chromium 360/390 and 200% CSS zoom reflow without horizontal overflow; this is an approximation, not reproduction or closure of persistent iPhone zoom. Judge landscape gutters/rotation remain Stage 6. Autofill and physical keyboard/VisualViewport were not checked.
+- **WO2 R2 font diagnostic:** four-input Chromium measurement at 360 px supersedes R1 password-only sampling: Email 14 px and three password fields 16 px before scoped auth input minimum; all four 16 px afterward. This does not establish the reported physical iPhone root cause.
 - **Evidence:** AUTH-003 и U01-JUDGE-001, self-report с кадрами; CSS-причина не установлена. Visual receipt 44 кадров подтверждает отдельные видимые состояния, но не воспроизводит persistent zoom; оригиналы во внешнем ephemeral источнике.
 - **Expected:** auth focus/keyboard и judge rotation не оставляют навязанное приближение или белые поля; пользовательский zoom остаётся разрешён.
 - **Actual:** сообщённые физические состояния ещё не воспроизведены независимо.
@@ -2097,6 +2115,21 @@ backlog ID, version, commit, push or public deployment was created.
 - **Risk:** объявить эмуляцию подтверждением физического дефекта или запретить доступное масштабирование.
 - **Verification:** browser emulation для разработки и отдельный physical-iPhone gate после публикации; evidence явного device/OS/browser.
 - **Dependencies:** этап 3/6, GAP-030 body/safe-area restore; до повторения не повышать severity по предположению.
+
+### BUG-041 — Первое чтение турнира задерживается при dev StrictMode replay
+
+- **Type:** technical-debt / development-runtime
+- **Priority:** P3
+- **Status:** confirmed
+- **Evidence:** во время WO3 dev browser probe первый `GET` турнира был признан устаревшим после повторного effect, а новый запрос присоединился к старому in-flight Promise по тому же `refreshKey`; экран оставался в skeleton до явного Refresh или polling timer. Разбор последовательности сохранён в координаторском рабочем пакете; каноническая постановка находится здесь.
+- **Boundary:** код `useVisibleRefresh` и identity effect не менялся в WO3 относительно `550d3680`; собранное приложение открыло турнир без обходного Refresh. Аналогичный дефект обычной смены A→B или production-навигации не доказан.
+- **Expected:** первое открытие в dev StrictMode и обычная смена турнира запускают актуальное чтение без ожидания polling timer.
+- **Actual:** при наблюдаемом dev StrictMode replay первый ответ отбрасывается как устаревший, а повторное чтение ждёт polling timer; задача остаётся открытой.
+- **Repro:** открыть страницу турнира в dev StrictMode с отложенным первым `getTournament`, дождаться двух effect для того же `refreshKey` и ответа первого запроса; проверить, что skeleton не сменился актуальным турниром без Refresh.
+- **Risk:** исправление coalescing может создать лишний polling или принять поздний ответ прежнего турнира/пользователя.
+- **Plan / acceptance:** отдельный deterministic component Red с deferred первым `getTournament`; минимально согласовать invalidation с coalescing. Green: same-key StrictMode replay, A→B с обоими порядками ответов и первоначальное открытие production preview; без принудительного Refresh как обхода и без потери route/actor guards.
+- **Verification:** component tests с deferred GET для replay и A→B, production-preview initial load и точный GET count; PostgreSQL и публичная мутация не нужны.
+- **Dependencies:** отдельная задача после Stage 3; не входит в WO3 и исторические 38 экспертных задач или 236 атомов.
 
 ### GAP-033 — Упростить отдельный band матча за третье место
 
@@ -2115,11 +2148,12 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** cross-surface-ui-semantics
 - **Priority:** P2
-- **Status:** confirmed
+- **Status:** in_progress — common `StatusChip` sample verified_local; остальные доменные consumers сохраняют свои этапы.
 - **Evidence:** первичные U01-DETAIL-002 («любой из статусных чипов в системе» выглядит кнопкой с неясной иконкой) и U01-JUDGE-003 (иконка подающего и согласованность иконок сервиса); один автор, без доказанной частоты ошибки. Существующий визуальный baseline — опубликованный продукт по D22.
 - **Expected:** статусы читаются как данные, действия — как действия; иконка, если она нужна, означает одно и то же в родственных контекстах и дополняется понятным текстом/accessible name. Focus, selected, active, pending и error не смешиваются с доменным статусом. Никакого rebrand или новой художественной системы.
-- **Actual:** реакция на match status chip и serve icon зафиксирована в отзыве; поведение всех поверхностей и точный visual target ещё не инвентаризированы.
+- **Actual:** локальный Chromium подтвердил декоративный CaretDown и собственный pointer/hover у общего неинтерактивного `StatusChip` во всех семи прямых consumers. Реакция на serve icon остаётся качественным отзывом одного пользователя; локальные Judge/Team/Profile/bracket обозначения инвентаризированы, но их доменная переработка не выполнена.
 - **Repro:** на исходном SHA открыть match detail и judge serve setup с текущими статусами/иконкой, затем теми же ролями пройти Home, tournament, history, notifications, team и admin; записать rendered/DOM роль каждого chip/action без предположения о клике из кадра.
+- **WO4 accepted target / local sample (2026-09-19):** [первичный inventory и ограниченная реализация](audit/evidence/stage3-wo4/README.md). Принятый target — только убрать ложный caret и собственный hover у общего `StatusChip`, курсор наследуется от родительской карточки. Локальная проверка sample: 7 consumers × 360/390/1440, 108 статусных элементов, сохранены текст/tone/высота и действия ссылок, минимальный измеренный контраст на составном фоне 4.90:1. Aggregate quality/PostgreSQL и финальный compiled browser приняты локально. Локальные Chip Team/Profile, Judge, сетка, уведомления и доменные права остаются последующим этапам.
 - **Stage 3 bounded output / owner:** один writer сначала составляет inventory фактических chip/icon семейств и состояний по Home, match/judge, tournament/bracket, history, notifications, team и admin (только доступные роли и видимые по D37 данные). Для каждой семьи фиксирует источник значения, статический/интерактивный характер, label/icon/цвет/focus/selected/active/disabled/pending/error, responsive и screen-reader meaning; затем предлагает минимальный target и sample на текущих компонентах. `ready` только после принятия inventory/target; одна общая семантика без преждевременной замены всех consumers.
 - **Consumer sequence:** stage 3 — общий контракт и Home/common-control sample после Home shell; stage 6 — match/judge; stage 8 — tournament/bracket; stage 9 — team; stage 10 — history/notifications; stage 11 — admin. Каждый consumer применяет принятый контракт в своём bounded work order и не переписывает общий компонент параллельно с другим writer. GAP-017/GAP-032 сохраняют отдельную подачу/счёт и права; GAP-034 задаёт только общую status/icon грамматику.
 - **Given / When / Then:** Given non-actionable match/tournament/account/team/notification status, When он показан рядом с разрешённым действием, Then роль чипа, текст и focus не обещают click; keyboard/screen reader получают смысл без угадывания иконки или цвета. Given selected filter или active judge/action, Then это различимо от persisted domain status и интерактивность соответствует доступным правам. Given loading/pending/error, Then смысл состояния и достижимое следующее действие сохраняются на 360/390/desktop и в light/dark. Отсутствие скрытых D37 приглашений не превращается в фиктивный статус.

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "policy": "tab10-playwright-trace-minimal-v1",
+  "traceCount": 1,
+  "disposableTestOnly": true,
+  "traces": [
+    {
+      "file": "sanitized-trace-01-ca3fb0600aa0.zip",
+      "sha256": "2be5f4de85c852fe253de639696f92ff630c27d3a7e69e7fb336dad187852608",
+      "schemaVersion": 1,
+      "policy": "tab10-playwright-trace-minimal-v1",
+      "sourceSha256": "6e081dda2372fe9be37badf0c538efe8bbb9b9db9ece09897476eeebe8fca58c",
+      "sourceEntryCount": 255,
+      "retainedEntries": [
+        "test.trace"
+      ],
+      "droppedEntryClasses": [
+        "attachments",
+        "browser snapshots",
+        "network payloads",
+        "resources",
+        "screenshots and video"
+      ],
+      "retainedEvents": 169,
+      "timelineEvents": 166
+    }
+  ]
+}

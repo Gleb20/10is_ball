@@ -1,0 +1,117 @@
+TAP version 13
+# Subtest: verification entrypoints keep the explicit package-script contract
+ok 1 - verification entrypoints keep the explicit package-script contract
+  ---
+  duration_ms: 0.8725
+  type: 'test'
+  ...
+# Subtest: mise pnpm dispatcher maps only built-in command collisions
+ok 2 - mise pnpm dispatcher maps only built-in command collisions
+  ---
+  duration_ms: 0.18675
+  type: 'test'
+  ...
+# Subtest: development release metadata derives the root product version
+ok 3 - development release metadata derives the root product version
+  ---
+  duration_ms: 2.212208
+  type: 'test'
+  ...
+# Subtest: local development cannot inherit an absolute API origin or hosted credentials
+ok 4 - local development cannot inherit an absolute API origin or hosted credentials
+  ---
+  duration_ms: 0.26775
+  type: 'test'
+  ...
+# Subtest: PostgreSQL runners use the canonical compiled migration command
+ok 5 - PostgreSQL runners use the canonical compiled migration command
+  ---
+  duration_ms: 0.3705
+  type: 'test'
+  ...
+# Subtest: release builds compile workspace dependencies before clean-checkout consumers
+ok 6 - release builds compile workspace dependencies before clean-checkout consumers
+  ---
+  duration_ms: 0.049125
+  type: 'test'
+  ...
+# Subtest: relative CI evidence paths are anchored to the repository root
+ok 7 - relative CI evidence paths are anchored to the repository root
+  ---
+  duration_ms: 0.342
+  type: 'test'
+  ...
+# Subtest: production-like E2E replaces hosted CI SHA sources with its synthetic SHA
+ok 8 - production-like E2E replaces hosted CI SHA sources with its synthetic SHA
+  ---
+  duration_ms: 0.0715
+  type: 'test'
+  ...
+# Subtest: PGlite dev migration avoids pnpm's literal separator forwarding
+ok 9 - PGlite dev migration avoids pnpm's literal separator forwarding
+  ---
+  duration_ms: 0.075583
+  type: 'test'
+  ...
+# Subtest: verify:all lets Docker allocate an isolated loopback PostgreSQL port
+ok 10 - verify:all lets Docker allocate an isolated loopback PostgreSQL port
+  ---
+  duration_ms: 0.147208
+  type: 'test'
+  ...
+# Subtest: local PostgreSQL initialization matches the attested hosted role profile
+ok 11 - local PostgreSQL initialization matches the attested hosted role profile
+  ---
+  duration_ms: 0.139542
+  type: 'test'
+  ...
+# Subtest: local role policy target guard fails closed outside its two exact modes
+ok 12 - local role policy target guard fails closed outside its two exact modes
+  ---
+  duration_ms: 0.386958
+  type: 'test'
+  ...
+# Subtest: verify:all proves cleanup on success, failure and termination signals
+ok 13 - verify:all proves cleanup on success, failure and termination signals
+  ---
+  duration_ms: 0.151
+  type: 'test'
+  ...
+# Subtest: CI uploads only curated browser evidence and sanitized traces
+ok 14 - CI uploads only curated browser evidence and sanitized traces
+  ---
+  duration_ms: 0.07675
+  type: 'test'
+  ...
+# aggregate test summary/cleanup-foundation: 1 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+# aggregate test summary/quality: 1 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+# aggregate test summary/postgres: 1 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+# aggregate test summary/browser-prodlike: 1 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+# aggregate test summary: 4 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+# Subtest: verification report readers reject skipped and todo tests
+ok 15 - verification report readers reject skipped and todo tests
+  ---
+  duration_ms: 4.334792
+  type: 'test'
+  ...
+# Subtest: verify:all aggregate fails closed before printing success
+ok 16 - verify:all aggregate fails closed before printing success
+  ---
+  duration_ms: 0.569291
+  type: 'test'
+  ...
+# Subtest: prodlike artifact build overrides inherited test NODE_ENV
+ok 17 - prodlike artifact build overrides inherited test NODE_ENV
+  ---
+  duration_ms: 0.162708
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66.596083

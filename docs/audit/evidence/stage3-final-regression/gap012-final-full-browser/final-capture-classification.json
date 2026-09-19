@@ -1,0 +1,1257 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "aggregate": {
+    "browserPassed": 60,
+    "foundationPassed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "scenario": "real full-suite fixture, original fill then click order, passive capture only",
+  "classification": "Both desktop and mobile directory/suggestion DOM committed before focus. Focus opened the list and scrolled the field into bounds; input filtered the existing options; pointerdown and mousedown preceded normal option removal and aria-expanded true-to-false. Query and input node identity were retained. No blur, pre-click close, capture error or unexpected transition occurred.",
+  "residual": "The earlier isolated desktop timeout cause remains unresolved; this green run is not evidence that it was harmless, pre-existing or fixed.",
+  "projects": [
+    {
+      "project": "chromium-desktop",
+      "sourceFile": "gap012-passive-real-suite-original-order-chromium-desktop-repeat0-retry0.json",
+      "sha256": "a2a0cd411834261838d7da019743a124162d93ccc49ecddd78295644e70c8104",
+      "selectionFailed": false,
+      "pageErrors": [],
+      "captureHealth": {
+        "installationFailed": null,
+        "diagnosticErrors": 0,
+        "dropped": 0,
+        "eventCount": 24
+      },
+      "final": {
+        "queryRetained": true,
+        "inputToken": 1,
+        "inputActive": true,
+        "expanded": "false",
+        "shapeMatches": true,
+        "safeBottom": 0,
+        "groups": {
+          "frequentButtons": 2,
+          "recentButtons": 2,
+          "teamButtons": 2
+        },
+        "suggestionsHeight": 372,
+        "scrollY": 550
+      },
+      "firstUnexpectedTransition": null,
+      "criticalTransitions": [
+        {
+          "atMs": 34.9,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": false,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 54.2,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": false,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 56.6,
+          "type": "focus",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 58,
+          "type": "aria-expanded",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 11,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 58,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 11,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 58.1,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 11,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 58.3,
+          "type": "scroll",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 11,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 59.2,
+          "type": "beforeinput",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 11,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 59.5,
+          "type": "input",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 11,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 60.6,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 60.7,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 60.7,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 60.7,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 60.7,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 60.7,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 60.7,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 60.7,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 60.8,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 60.8,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 93,
+          "type": "pointerdown",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 93.2,
+          "type": "mousedown",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 94,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 94.2,
+          "type": "aria-expanded",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 35,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 2,
+            "recentButtons": 2,
+            "teamButtons": 2
+          },
+          "suggestionsHeight": 372,
+          "scrollY": 550,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        }
+      ]
+    },
+    {
+      "project": "chromium-mobile-390",
+      "sourceFile": "gap012-passive-real-suite-original-order-chromium-mobile-390-repeat0-retry0.json",
+      "sha256": "42ce6addda8d37dd15449cf7a941845d6afbe909c92fb7c8c902438a92b4bd77",
+      "selectionFailed": false,
+      "pageErrors": [],
+      "captureHealth": {
+        "installationFailed": null,
+        "diagnosticErrors": 0,
+        "dropped": 0,
+        "eventCount": 40
+      },
+      "final": {
+        "queryRetained": true,
+        "inputToken": 1,
+        "inputActive": true,
+        "expanded": "false",
+        "shapeMatches": true,
+        "safeBottom": 0,
+        "groups": {
+          "frequentButtons": 4,
+          "recentButtons": 4,
+          "teamButtons": 4
+        },
+        "suggestionsHeight": 736,
+        "scrollY": 888
+      },
+      "firstUnexpectedTransition": null,
+      "criticalTransitions": [
+        {
+          "atMs": 43.2,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": false,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 60.8,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": false,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 71.3,
+          "type": "focus",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 73,
+          "type": "aria-expanded",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 26,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 73.1,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 26,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 73.1,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 26,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 73.5,
+          "type": "beforeinput",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 26,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 73.8,
+          "type": "input",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 26,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 74.9,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 74.9,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 74.9,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 74.9,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.1,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.1,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.1,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.1,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.1,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.1,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.2,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.2,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.2,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.2,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.2,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.2,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.3,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.3,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.3,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.3,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.4,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.4,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.4,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.4,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.5,
+          "type": "scroll",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 75.6,
+          "type": "scroll",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 110.1,
+          "type": "pointerdown",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 110.2,
+          "type": "mousedown",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 111.1,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        },
+        {
+          "atMs": 111.4,
+          "type": "aria-expanded",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 38,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 4,
+            "recentButtons": 4,
+            "teamButtons": 4
+          },
+          "suggestionsHeight": 736,
+          "scrollY": 888,
+          "outsideMargin12": false,
+          "shapeMatches": true
+        }
+      ]
+    }
+  ]
+}

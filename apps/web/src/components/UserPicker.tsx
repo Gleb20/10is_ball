@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Autocomplete } from "../ui";
+import { useEffect, useId, useMemo, useState } from "react";
+import { Autocomplete, Button } from "../ui";
 import { api } from "../api";
 import { useAuth } from "../auth";
 
@@ -36,7 +36,11 @@ export function UserPicker({
   const [options, setOptions] = useState<
     Array<{ value: string; label: string }>
   >([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [directoryState, setDirectoryState] = useState<"loading" | "ready" | "error">("loading");
+  const [requestVersion, setRequestVersion] = useState(0);
+  const [focusAfterRetry, setFocusAfterRetry] = useState(false);
+  const fieldId = useId();
+  const retryId = useId();
   const [innerInput, setInnerInput] = useState("");
   const controlled = inputValueProp !== undefined;
   const inputValue = controlled ? inputValueProp : innerInput;
@@ -51,19 +55,31 @@ export function UserPicker({
   );
 
   useEffect(() => {
-    const exclude = new Set(excludeUserIds);
-    if (excludeSelf && user?.id) exclude.add(user.id);
+    let current = true;
+    const exclude = new Set(excludeKey.split(",").filter(Boolean));
+    setDirectoryState("loading");
     void api
       .directory()
-      .then((res) =>
+      .then((res) => {
+        if (!current) return;
         setOptions(
           res.users
             .filter((u) => !exclude.has(u.id))
             .map((u) => ({ value: u.id, label: u.displayName })),
-        ),
-      )
-      .catch(() => setLoadError("Не удалось загрузить список игроков"));
-  }, [excludeKey, excludeUserIds, excludeSelf, user?.id]);
+        );
+        setDirectoryState("ready");
+      })
+      .catch(() => {
+        if (current) setDirectoryState("error");
+      });
+    return () => { current = false; };
+  }, [excludeKey, requestVersion, user?.id]);
+
+  useEffect(() => {
+    if (!focusAfterRetry || (directoryState !== "ready" && directoryState !== "error")) return;
+    if (document.activeElement === document.body) document.getElementById(directoryState === "ready" ? fieldId : retryId)?.focus();
+    setFocusAfterRetry(false);
+  }, [directoryState, fieldId, focusAfterRetry, retryId]);
 
   // When parent clears value, also clear visible text if uncontrolled
   useEffect(() => {
@@ -71,8 +87,9 @@ export function UserPicker({
   }, [value, controlled]);
 
   return (
-    <div className="stack">
+    <div className="stack" aria-busy={directoryState === "loading"}>
       <Autocomplete
+        id={fieldId}
         label={label}
         placeholder={placeholder}
         options={options}
@@ -85,9 +102,17 @@ export function UserPicker({
         }}
         clearable
         fullWidth
-        disabled={disabled}
+        disabled={disabled || directoryState !== "ready"}
+        error={directoryState === "error"}
+        helperText={directoryState === "error" ? "Не удалось загрузить игроков" : undefined}
       />
-      {loadError ? <p className="muted" role="alert">{loadError}</p> : null}
+      {directoryState === "loading" ? <p className="muted" role="status" aria-live="polite">Загружаем игроков…</p> : null}
+      {directoryState === "ready" && options.length === 0 ? <p className="muted" role="status" aria-live="polite">Нет доступных игроков</p> : null}
+      {directoryState === "error" ? (
+        <div className="stack">
+          <Button id={retryId} variant="secondary" type="button" onClick={() => { setFocusAfterRetry(true); setDirectoryState("loading"); setRequestVersion((version) => version + 1); }}>Повторить загрузку</Button>
+        </div>
+      ) : null}
     </div>
   );
 }

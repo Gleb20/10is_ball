@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 2,
+  "stage": "stage3-aggregate",
+  "baseSha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+  "candidateVersion": "4.1.1",
+  "publishedBaseline": {
+    "version": "4.1.0",
+    "sha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0"
+  },
+  "fullCi": {
+    "command": "pnpm run ci",
+    "status": "infrastructure_interrupted",
+    "counts": {
+      "passed": 1273,
+      "failed": 60,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    "lanes": {
+      "cleanup": {
+        "passed": 4
+      },
+      "quality": {
+        "passed": 1188
+      },
+      "postgres": {
+        "passed": 72
+      },
+      "browser": {
+        "passed": 0,
+        "failed": 60,
+        "reason": "macOS sandbox denied Chromium Mach port rendezvous before every scenario"
+      }
+    },
+    "rerunPolicy": "full CI was not repeated"
+  },
+  "browserRecovery": [
+    {
+      "status": "red",
+      "browserTests": {
+        "passed": 8,
+        "failed": 52
+      },
+      "reason": "login password locator also matched the new show-password control; exact accessible label required"
+    },
+    {
+      "status": "red",
+      "browserTests": {
+        "passed": 57,
+        "failed": 3
+      },
+      "reason": "two existing dialog assertions expected retry after HTTP 503 despite the accepted unknown-outcome gate; one GAP-012 option timeout did not reproduce on mobile or the next fresh full run"
+    },
+    {
+      "status": "historical_green_pre_regression_correction",
+      "browserTests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "foundationChecks": 9,
+      "totalPassed": 69,
+      "database": "fresh disposable PostgreSQL 16.15",
+      "runtime": "compiled API and Vite preview, same-origin proxy",
+      "scope": "pre-final frontend tree"
+    },
+    {
+      "status": "final_corrected_tree_green",
+      "browserTests": {
+        "passed": 60,
+        "failed": 0,
+        "skipped": 0,
+        "todo": 0,
+        "interrupted": 0
+      },
+      "foundationChecks": 9,
+      "totalPassed": 69,
+      "database": "fresh disposable PostgreSQL 16.15",
+      "runtime": "compiled API and Vite preview, same-origin proxy",
+      "scope": "final corrected frontend tree; original suite order",
+      "residual": "earlier isolated desktop timeout cause remains unresolved and is not classified as harmless, pre-existing or fixed"
+    }
+  ],
+  "coverage": {
+    "rows": 236,
+    "resultCounts": {
+      "app_cause_unproven": 1,
+      "common_sample_verified_local_domain_consumers_pending": 2,
+      "concept_not_verified": 5,
+      "copy_and_order_pending": 3,
+      "date_future_unresolved": 1,
+      "explanation_retained": 2,
+      "geometry_requires_browser": 11,
+      "guest_identity_unresolved": 1,
+      "historical_target_reconciled_not_implemented": 25,
+      "immutable_result_preserved": 1,
+      "no_implementation_task": 10,
+      "pending_decision": 15,
+      "physical_device_pending": 2,
+      "preserve_behavior": 10,
+      "preset_ready_memory_unresolved": 1,
+      "reproduce_before_acceptance": 6,
+      "target_pending_implementation": 93,
+      "timing_unresolved": 1,
+      "verified_local": 45,
+      "verified_local_physical_device_pending": 1
+    },
+    "stage3ReconciledRows": 23,
+    "stage3VerifiedLocalOverlays": 19,
+    "stage3ResidualRows": 4,
+    "residuals": [
+      "BUG-019 physical device/safe-area verification",
+      "BUG-040 physical iPhone reproduction",
+      "BUG-022 decision Q-UX-001",
+      "GAP-034 domain consumers beyond common StatusChip sample"
+    ]
+  },
+  "limitations": [
+    "single full pnpm run ci remained infrastructure-interrupted in its browser lane and was not repeated",
+    "an earlier corrected-tree desktop GAP-012 timeout has no proven cause; the later green run does not classify it as harmless, pre-existing or fixed",
+    "no physical iPhone",
+    "no WebKit",
+    "no spoken assistive-technology pass",
+    "no commit, push, tag, deployment, or public mutation"
+  ],
+  "artifacts": {
+    "docs/audit/evidence/stage3-final/browser-contract-red-summary.json": {
+      "sha256": "d5586128d25b57eba6fda9c5697668bccb015d1592e1563b176ef2f16a230758",
+      "bytes": 775
+    },
+    "docs/audit/evidence/stage3-final/browser-contract-red.log": {
+      "sha256": "369501805e1cd9db54126021f96ffa75d52bb59920fe207b850db8210eb5849a",
+      "bytes": 807165
+    },
+    "docs/audit/evidence/stage3-final/browser-green-environment.json": {
+      "sha256": "2a44c02cac3ff8c0ff4de1b9754d402871067586233f28729390de4d42812da9",
+      "bytes": 1980
+    },
+    "docs/audit/evidence/stage3-final/browser-green-summary.json": {
+      "sha256": "2c156bcada33737c4309a0c5d12d1743c989cb315e458c86b1877ce30878bc03",
+      "bytes": 775
+    },
+    "docs/audit/evidence/stage3-final/browser-green.log": {
+      "sha256": "8c5c77c6d87bae3d97fa37c8b78701c64be420c79b115bceab62bae3710b410b",
+      "bytes": 798040
+    },
+    "docs/audit/evidence/stage3-final/browser-locator-red-summary.json": {
+      "sha256": "11b0dada5949ef6013ecb5414ebd21bf0365ee329c1da8ac13e516fe507e4c58",
+      "bytes": 776
+    },
+    "docs/audit/evidence/stage3-final/browser-locator-red.log": {
+      "sha256": "b92590ca9c53fedc915f40322ff533c8f01376142b17d09337054e350a09dbda",
+      "bytes": 478987
+    },
+    "docs/audit/evidence/stage3-final/browser-sandbox-summary.json": {
+      "sha256": "198a81d4e8981d3f733bd7fa9fe3fd77fd095c6ef23d7cd46c068e5a758f20ed",
+      "bytes": 775
+    },
+    "docs/audit/evidence/stage3-final/full-ci-environment.json": {
+      "sha256": "08608dce97344e17f9a78f7eb49cce8297d220079c039d4e9d4c6b3a31ddf056",
+      "bytes": 2057
+    },
+    "docs/audit/evidence/stage3-final/full-ci-summary.json": {
+      "sha256": "dae2dcfb35aa99edd2020cf6d8102a7a66a867c732a78599215c800bf0b7d748",
+      "bytes": 1032
+    },
+    "docs/audit/evidence/stage3-final/full-ci.log": {
+      "sha256": "b10b78f68dce8e0fda5bb2565afcc17c85cf83f927647d8da5508f64cceb90d5",
+      "bytes": 478154
+    },
+    "docs/audit/evidence/stage3-final/postgres-summary.json": {
+      "sha256": "7c8a06f86f4d8cd6ac6288a7bfc89983b0b4713740e30edfc6ed6d4b111a62d1",
+      "bytes": 999
+    },
+    "docs/audit/evidence/stage3-final/quality-summary.json": {
+      "sha256": "09a8e6b8ab335d7646809a2c87fe775cafd00e4ce20080ff7ee98cca4eb86991",
+      "bytes": 3778
+    },
+    "docs/audit/evidence/stage3-final/release-allowlist-ignored.txt": {
+      "sha256": "cf22b2e370b32e063e8d096b8ae6a0459c423c80594fc25ea465b3665c6f29e8",
+      "bytes": 1482
+    },
+    "docs/audit/evidence/stage3-final/rtl-query-hash-comparison.json": {
+      "sha256": "bba8b66227283ffba1735b56faf717e72f9931370ab1565f0a68c6d6cd1add9e",
+      "bytes": 1187
+    }
+  },
+  "finalRegressionOverlay": {
+    "status": "verified_local_with_explicit_residuals",
+    "productCorrection": "preserve typed player query across late directory options in MatchCreate and MatchDetail",
+    "focused": {
+      "passed": 32,
+      "failed": 0
+    },
+    "quality": {
+      "passed": 1193,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    "postgres": {
+      "passed": 72,
+      "scope": "aggregate pre-correction; frontend-only correction did not change API/schema/migrations"
+    },
+    "browserFull": {
+      "browserPassed": 60,
+      "browserFailed": 0,
+      "foundationPassed": 9,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0,
+      "status": "passed",
+      "environment": "fresh disposable PostgreSQL 16.15; compiled API and Vite preview; original suite order",
+      "passiveCapture": "desktop and mobile retained query, input identity and selection without blur, pre-click close, page error or unexpected transition",
+      "residual": "earlier isolated desktop GAP-012 timeout cause remains unresolved; green rerun does not prove it harmless, pre-existing or fixed"
+    },
+    "filledSuggestionMatrix": {
+      "browserPassed": 4,
+      "browserFailed": 0,
+      "foundationPassed": 9,
+      "suggestionsHeightPx": 476,
+      "status": "supporting_non_reproduction",
+      "limitation": "synthetic route-only UI payload; vendorDOMShapeMatches helper predicate invalid for editable field"
+    },
+    "sourceHashes": {
+      "apps/web/src/pages/MatchCreatePage.tsx": "41d5f41ff697f2c7c7aa07e60a1b554e74be47eaf4750b2c74c06a88f67a556f",
+      "apps/web/src/pages/MatchDetailPage.tsx": "42cec2c2cf508d61411c536b4a78410831c5be5167f678bf895040bac17ffbba",
+      "apps/web/src/pages/MatchCreatePage.test.tsx": "7e6050411edab1b0d020f3d7de17725d18f5fa10ba0c7c9dbf7b3e92694b30d5",
+      "apps/web/src/pages/MatchDetailPage.test.tsx": "12879b44f0106c4f8729f7d95d4d2c66164297864855d81382deb643b4d9233f"
+    },
+    "artifacts": {
+      "docs/audit/evidence/stage3-final-regression/base-comparison.json": {
+        "sha256": "76d28d38c8dd54370395668c90b302edc663adbd29fa30618b379ba330997457",
+        "bytes": 2808
+      },
+      "docs/audit/evidence/stage3-final-regression/quality-r2-final/fast-summary.json": {
+        "sha256": "24b7b3dafc51bae89724967db70545f5505068944aaa9ee194e100beee8a1efe",
+        "bytes": 3778
+      },
+      "docs/audit/evidence/stage3-final-regression/browser-r2-summary.json": {
+        "sha256": "6cb16d43b0f37ffe4ddfa82a76f27636636db6d3336f3d5b4ea4077e4f60c4e5",
+        "bytes": 775
+      },
+      "docs/audit/evidence/stage3-final-regression/gap012-filled-matrix/classification.json": {
+        "sha256": "1d8879132c211f6cd8c8d779d7c7e49c2a3df0a3dffb62f9e451411fbc5b0b4e",
+        "bytes": 39717
+      },
+      "docs/audit/evidence/stage3-final-regression/gap012-final-full-browser/browser-summary.json": {
+        "sha256": "2c156bcada33737c4309a0c5d12d1743c989cb315e458c86b1877ce30878bc03",
+        "bytes": 775
+      },
+      "docs/audit/evidence/stage3-final-regression/gap012-final-full-browser/final-capture-classification.json": {
+        "sha256": "c7d4798fae48f3f1dce82be35645f916d9306f6808403a2cc89415ec2cdad9e5",
+        "bytes": 34816
+      },
+      "docs/audit/evidence/stage3-final-regression/gap012-final-full-browser/passive-helper-r1.ts": {
+        "sha256": "16bdfac5c8ab704e53bad6d2e40ae599daefdb0f9d1a7aa443c710b1c89b1a35",
+        "bytes": 13282
+      },
+      "docs/audit/evidence/stage3-final-regression/gap012-final-full-browser/passive-helper-r2.ts": {
+        "sha256": "b5cdf0f660626a5c44078f265fe4cb8949edc9c8b7abd5bd53c70201ba0b7b82",
+        "bytes": 13692
+      },
+      "docs/audit/evidence/stage3-final-regression/gap012-final-full-browser/cleanup-receipt.json": {
+        "sha256": "6949d8261183004f0c360fb8b10c553f161af3a7a9d50cc413bb64c5ba10a323",
+        "bytes": 923
+      }
+    },
+    "earlierCorrectedFullBrowser": {
+      "browserPassed": 59,
+      "browserFailed": 1,
+      "foundationPassed": 9,
+      "remaining": "desktop GAP-012 first-option timeout; mobile passed; source cause unproven"
+    },
+    "testSourceHashes": {
+      "tests/e2e/wave-e-user.spec.ts": "1d6d4770c62c056c321169a1021da7e0cc3d7c27f911f8b3b333273e94896d1a",
+      "tests/e2e/wave-f-a11y.spec.ts": "4290239074f4d083eef566ab02b1197d43456b0d43c107e8cd7407f6e2aacedd"
+    }
+  }
+}

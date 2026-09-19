@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Alert, Autocomplete, Button, TextField } from "../ui";
 import { PageLayout } from "../layout";
@@ -39,6 +39,18 @@ function SlotEditor({
   options: Array<{ value: string; label: string }>;
   onChange: (next: SlotState) => void;
 }) {
+  const [inputText, setInputText] = useState(() => options.find((option) => option.value === slot.userId)?.label ?? "");
+  const inputDirtyRef = useRef(false);
+  const selectionIdentity = `${slot.mode}:${slot.userId}`;
+  const selectionIdentityRef = useRef(selectionIdentity);
+  const selectedLabel = options.find((option) => option.value === slot.userId)?.label;
+  useEffect(() => {
+    const selectionChanged = selectionIdentityRef.current !== selectionIdentity;
+    selectionIdentityRef.current = selectionIdentity;
+    if (!selectionChanged && (inputDirtyRef.current || !slot.userId || !selectedLabel)) return;
+    inputDirtyRef.current = false;
+    setInputText(selectedLabel ?? "");
+  }, [selectedLabel, selectionIdentity, slot.userId]);
   return (
     <fieldset className="match-create__slot stack">
       <legend>{label}</legend>
@@ -55,12 +67,12 @@ function SlotEditor({
       />
       {slot.mode === "user" ? (
         <Autocomplete
-          key={`${label}-${slot.userId}`}
           label={label}
           placeholder="Начните вводить имя"
           options={options}
           value={slot.userId}
-          defaultInputValue={options.find((option) => option.value === slot.userId)?.label ?? ""}
+          inputValue={inputText}
+          onInputChange={(value) => { inputDirtyRef.current = true; setInputText(value); }}
           onChange={(userId) => onChange({ ...slot, userId })}
           clearable
           fullWidth
@@ -229,6 +241,7 @@ export function MatchCreatePage() {
   return (
     <PageLayout title="Новый матч">
       <form className="card stack" onSubmit={create} aria-label="Создание матча">
+        <fieldset className="match-create__payload stack" disabled={pending} aria-busy={pending}>
         <TextField label="Название" value={title} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setTitle(event.target.value)} required />
         <FilterBar
           label="Формат"
@@ -320,6 +333,9 @@ export function MatchCreatePage() {
         {format === "2v2" ? <SlotEditor label="Соперник 2" slot={slots.opponent2} options={options} onChange={(value) => updateSlot("opponent2", value)} /> : null}
         <div className="stack stack--actions">
           <Button type="submit" disabled={pending}>{pending ? "Создание…" : "Создать матч"}</Button>
+        </div>
+        </fieldset>
+        <div className="stack stack--actions">
           <Button type="button" variant="secondary" onClick={() => navigate("/start")}>Отмена</Button>
         </div>
         {error ? <Alert type="error" variant="tonal" title="Ошибка" description={error} /> : null}

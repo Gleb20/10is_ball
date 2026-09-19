@@ -1,0 +1,11 @@
+{
+  "mode": "green",
+  "auditEphemeral": true,
+  "firstSessionBefore": 200,
+  "secondSessionBefore": 200,
+  "logoutPosts": 1,
+  "firstSessionAfter": 401,
+  "secondSessionAfter": 200,
+  "afterBackHeading": "Вход",
+  "credentialsPersisted": false
+}

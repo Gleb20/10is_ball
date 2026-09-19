@@ -169,6 +169,38 @@ describe("REQ_ui__judge_immersive", () => {
     expect(more).toHaveFocus(); expect(more).toHaveAttribute("aria-expanded", "false");
   });
 
+  it("BUG-025 keeps handover unavailable while directory loads and retries a failed GET", async () => {
+    const pending = deferred<{ users: Array<{ id: string; displayName: string }> }>();
+    directory.mockReturnValueOnce(pending.promise)
+      .mockResolvedValueOnce({ users: [{ id: "u2", displayName: "Новый Судья" }] });
+    const user = userEvent.setup();
+    renderJudge();
+    await user.click(await screen.findByRole("button", { name: "Ещё" }));
+    const select = screen.getByLabelText("Передать судейство");
+    expect(select).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Загружаем пользователей");
+    await act(async () => pending.reject(new Error("offline")));
+    expect(screen.getByRole("alert")).toHaveTextContent("Не удалось загрузить пользователей");
+    expect(select).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Повторить загрузку пользователей" }));
+    await waitFor(() => expect(select).toBeEnabled());
+    expect(select).toHaveFocus();
+    expect(directory).toHaveBeenCalledTimes(2);
+  });
+
+  it("BUG-025 keeps handover retry focused if its GET fails again", async () => {
+    directory.mockRejectedValueOnce(new Error("offline"));
+    directory.mockRejectedValueOnce(new Error("still offline"));
+    const user = userEvent.setup();
+    renderJudge();
+    await user.click(await screen.findByRole("button", { name: "Ещё" }));
+    await user.click(await screen.findByRole("button", { name: "Повторить загрузку пользователей" }));
+    const retry = await screen.findByRole("button", { name: "Повторить загрузку пользователей" });
+    await waitFor(() => expect(retry).toHaveFocus());
+    expect(screen.getByLabelText("Передать судейство")).toBeDisabled();
+    expect(directory).toHaveBeenCalledTimes(2);
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -412,6 +444,71 @@ describe("REQ_ui__judge_immersive", () => {
     expect(screen.getByTestId("serve-racket")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /начать матч/i }));
     expect(judgeSetup).toHaveBeenCalled();
+  });
+
+  it("BUG-026 keeps a confirmed start and immutable second-step payload through known setup failure", async () => {
+    const user = userEvent.setup();
+    const waiting = { ...matchBody, scoreA: 0, scoreB: 0, version: 0, status: "waiting", startedAt: null, firstServerMethod: "manual", currentServerParticipantId: null };
+    const started = { ...waiting, status: "in_progress", currentServerParticipantId: "p-b" };
+    const held = deferred<{ match: typeof started }>();
+    getMatch.mockResolvedValue({ match: waiting });
+    startMatch.mockResolvedValue({ match: started });
+    judgeSetup.mockReturnValueOnce(held.promise).mockResolvedValueOnce({ match: { ...started, currentServerParticipantId: "p-a" } });
+    renderJudge();
+    await screen.findByTestId("judge-setup");
+    await user.click(screen.getByRole("radio", { name: /борис/i }));
+    await user.click(screen.getByRole("button", { name: /начать матч/i }));
+    await waitFor(() => expect(judgeSetup).toHaveBeenCalledTimes(1));
+    expect(startMatch).toHaveBeenCalledTimes(1);
+    expect(judgeSetup).toHaveBeenCalledWith("m1", { firstServerParticipantId: "p-b", swapSides: false });
+    expect(screen.getByRole("radio", { name: /борис/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /поменять стороны/i })).toBeDisabled();
+    await act(async () => held.reject(Object.assign(new Error("Выберите подающего"), { status: 400, code: "VALIDATION" })));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Выберите подающего");
+    await user.click(screen.getByRole("radio", { name: /анна/i }));
+    await user.click(screen.getByRole("button", { name: /начать матч/i }));
+    await waitFor(() => expect(judgeSetup).toHaveBeenCalledTimes(2));
+    expect(judgeSetup).toHaveBeenLastCalledWith("m1", { firstServerParticipantId: "p-a", swapSides: false });
+    expect(startMatch).toHaveBeenCalledTimes(1);
+  });
+
+  it("BUG-026 never repeats an unknown judgeSetup after a GET", async () => {
+    const user = userEvent.setup();
+    const waiting = { ...matchBody, scoreA: 0, scoreB: 0, version: 0, status: "waiting", startedAt: null, firstServerMethod: "random", currentServerParticipantId: null };
+    const started = { ...waiting, status: "in_progress", currentServerParticipantId: "p-b" };
+    getMatch.mockResolvedValue({ match: waiting });
+    startMatch.mockResolvedValue({ match: started });
+    judgeSetup.mockRejectedValueOnce(Object.assign(new Error("Нет ответа"), { status: 503 }));
+    renderJudge();
+    await screen.findByTestId("judge-setup");
+    await user.click(screen.getByRole("button", { name: /начать матч/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/исход.*неизвестен/i);
+    const readsBefore = getMatch.mock.calls.length;
+    await act(async () => setDocumentVisibility("hidden"));
+    await act(async () => setDocumentVisibility("visible"));
+    await waitFor(() => expect(getMatch.mock.calls.length).toBeGreaterThan(readsBefore));
+    expect(screen.getByRole("button", { name: /начать матч/i })).toBeDisabled();
+    expect(startMatch).toHaveBeenCalledTimes(1);
+    expect(judgeSetup).toHaveBeenCalledTimes(1);
+  });
+
+  it("BUG-026 does not replay an unknown first start after an early waiting GET", async () => {
+    const waiting = { ...matchBody, scoreA: 0, scoreB: 0, status: "waiting", startedAt: null, firstServerMethod: "manual", currentServerParticipantId: null };
+    getMatch.mockResolvedValue({ match: waiting });
+    startMatch.mockRejectedValueOnce(Object.assign(new Error("Ответ потерян"), { status: 503 }));
+    const user = userEvent.setup();
+    renderJudge();
+    await screen.findByTestId("judge-setup");
+    await user.click(screen.getByRole("radio", { name: /борис/i }));
+    await user.click(screen.getByRole("button", { name: /начать матч/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/исход.*неизвестен/i);
+    const readsBefore = getMatch.mock.calls.length;
+    await act(async () => setDocumentVisibility("hidden"));
+    await act(async () => setDocumentVisibility("visible"));
+    await waitFor(() => expect(getMatch.mock.calls.length).toBeGreaterThan(readsBefore));
+    expect(screen.getByRole("button", { name: /начать матч/i })).toBeDisabled();
+    expect(startMatch).toHaveBeenCalledTimes(1);
+    expect(judgeSetup).not.toHaveBeenCalled();
   });
 
   it("AT-JUDGE-003 Cancel waits for release before navigation and reports success", async () => {
@@ -825,6 +922,13 @@ describe("REQ_ui__judge_immersive", () => {
     await screen.findByTestId("judge-screen");
     await user.click(screen.getByRole("button", { name: "Ещё" }));
     await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
+    const labelA = screen.getByText("Счёт стороны A", { selector: "label" });
+    const labelB = screen.getByText("Счёт стороны B", { selector: "label" });
+    expect(labelA).toHaveAttribute("for", screen.getByRole("spinbutton", { name: "Счёт стороны A" }).id);
+    expect(labelB).toHaveAttribute("for", screen.getByRole("spinbutton", { name: "Счёт стороны B" }).id);
+    expect(labelA.getAttribute("for")).not.toBe(labelB.getAttribute("for"));
+    await user.click(labelA);
+    expect(screen.getByRole("spinbutton", { name: "Счёт стороны A" })).toHaveFocus();
     await user.clear(screen.getByLabelText("Счёт стороны A"));
     await user.type(screen.getByLabelText("Счёт стороны A"), "4");
     await user.clear(screen.getByLabelText("Счёт стороны B"));

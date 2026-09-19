@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Alert, Button, Dialog, TextField } from "../ui";
 import { PageLayout } from "../layout";
@@ -51,6 +51,18 @@ type MatchRow = {
   tournamentSlotId?: string | null;
 };
 
+function definitiveBracketRejection(error: unknown): boolean {
+  const response = error as Error & { status?: number; code?: string };
+  return Boolean(response.status && response.status >= 400 && response.status < 500 &&
+    response.status !== 408 && response.status !== 429 &&
+    (response.code || response.status === 403 || response.status === 404));
+}
+
+function bracketRetryBlocked(error: unknown): boolean {
+  const response = error as Error & { status?: number; code?: string };
+  return !["BRACKET_ALGORITHM_MISMATCH", "LEGACY_BRACKET_ALGORITHM_REQUIRED", "INVALID_BRACKET_CONSTRUCTION_ALGORITHM"].includes(response.code ?? "");
+}
+
 export function TournamentDetailPage() {
   const { id } = useParams();
   const currentIdRef = useRef(id);
@@ -67,8 +79,15 @@ export function TournamentDetailPage() {
   const [actionHint, setActionHint] = useState<string | null>(null);
   const { pending: busy, run: runSingleFlight } = useSingleFlight();
   const [algoDialogOpen, setAlgoDialogOpen] = useState(false);
+  const algoReturnFocusRef = useRef<HTMLElement | null>(null);
   const [algoSelected, setAlgoSelected] =
     useState<BracketConstructionAlgorithm>("compact");
+  const [algoError, setAlgoError] = useState<string | null>(null);
+  const [algoErrorTitle, setAlgoErrorTitle] = useState("Не удалось построить сетку");
+  const [algoErrorRevision, setAlgoErrorRevision] = useState(0);
+  const [algoRetryBlocked, setAlgoRetryBlocked] = useState(false);
+  const algoNoRepeatRef = useRef(false);
+  const algoConfirmedReadbackRef = useRef<number | null>(null);
   const [editingSettings, setEditingSettings] = useState(false);
   const [settings, setSettings] = useState({
     title: "",
@@ -97,6 +116,11 @@ export function TournamentDetailPage() {
     setStopReason("");
     setActionError(null);
     setActionHint(null);
+    setAlgoError(null);
+    setAlgoErrorTitle("Не удалось построить сетку");
+    setAlgoRetryBlocked(false);
+    algoNoRepeatRef.current = false;
+    algoConfirmedReadbackRef.current = null;
   }, [id]);
 
   const load = useCallback(async (allowDuringMutation = false) => {
@@ -111,6 +135,7 @@ export function TournamentDetailPage() {
       (!requestedUserId || currentUserIdRef.current === requestedUserId)
     ) {
       setTournament(res.tournament);
+      return res.tournament;
     }
   }, [id]);
 
@@ -123,7 +148,7 @@ export function TournamentDetailPage() {
     error: loadError,
     refreshing,
     refreshNow,
-  } = useVisibleRefresh(load, {
+  } = useVisibleRefresh(async () => { await load(); }, {
     pollingEnabled: tournamentIsActive,
     refreshKey: id,
   });
@@ -241,17 +266,123 @@ export function TournamentDetailPage() {
             | undefined) ?? null,
         );
 
-  function openAlgorithmDialog() {
-    if (
+  useEffect(() => {
+    if (algoDialogOpen || !algoReturnFocusRef.current) return;
+    const trigger = algoReturnFocusRef.current;
+    algoReturnFocusRef.current = null;
+    if (trigger.isConnected) trigger.focus();
+  }, [algoDialogOpen]);
+
+  function openAlgorithmDialog(trigger: HTMLElement) {
+    algoReturnFocusRef.current = trigger;
+    if (!algoNoRepeatRef.current &&
       detectedAlgo.kind === "algorithm" &&
       (detectedAlgo.algorithm === "compact" ||
         detectedAlgo.algorithm === "power_of_two")
     ) {
       setAlgoSelected(detectedAlgo.algorithm);
-    } else {
+    } else if (!algoNoRepeatRef.current) {
       setAlgoSelected("compact");
     }
+    if (!algoNoRepeatRef.current) {
+      setAlgoError(null);
+      setAlgoErrorTitle("Не удалось построить сетку");
+      setAlgoRetryBlocked(false);
+    }
     setAlgoDialogOpen(true);
+  }
+
+  async function confirmAlgorithm() {
+    if (!id || algoNoRepeatRef.current || algoRetryBlocked) return;
+    const submittedAlgorithm = algoSelected;
+    const requestedId = id;
+    const requestedUserId = user?.id;
+    await runSingleFlight(async () => {
+      mutationPendingRef.current = true;
+      requestSequence.current += 1;
+      setActionError(null);
+      setAlgoError(null);
+      let writeConfirmed = false;
+      try {
+        const generated = await api.generateBracket(requestedId, { constructionAlgorithm: submittedAlgorithm }) as Tournament;
+        if (generated.status !== "bracket_generated" || !generated.bracketJson) {
+          throw new Error("Ответ построения не подтвердил состояние сетки");
+        }
+        writeConfirmed = true;
+        const generatedVersion = Number(generated.bracketStateVersion);
+        algoConfirmedReadbackRef.current = Number.isFinite(generatedVersion) && generatedVersion > 0 ? generatedVersion : 0;
+        const fresh = await load(true);
+        const freshVersion = Number(fresh?.bracketStateVersion);
+        if (!fresh || fresh.status !== "bracket_generated" || !fresh.bracketJson ||
+          (Number.isFinite(generatedVersion) && generatedVersion > 0 &&
+            (!Number.isFinite(freshVersion) || freshVersion < generatedVersion))) {
+          throw new Error("Не удалось подтвердить сохранённую сетку");
+        }
+        if (currentIdRef.current === requestedId && (!requestedUserId || currentUserIdRef.current === requestedUserId)) {
+          algoConfirmedReadbackRef.current = null;
+          algoNoRepeatRef.current = false;
+          setAlgoDialogOpen(false);
+          setActionHint("Сетка построена");
+        }
+      } catch (error) {
+        if (currentIdRef.current !== requestedId || (requestedUserId && currentUserIdRef.current !== requestedUserId)) return;
+        if (writeConfirmed) {
+          algoNoRepeatRef.current = true;
+          setAlgoRetryBlocked(true);
+          setAlgoErrorTitle("Сетка построена, состояние не загружено");
+          setAlgoError("Сетка построена, но обновлённое состояние пока недоступно. Проверьте его здесь; повторное построение заблокировано.");
+        } else if (!definitiveBracketRejection(error)) {
+          algoNoRepeatRef.current = true;
+          setAlgoRetryBlocked(true);
+          setAlgoErrorTitle("Исход построения неизвестен");
+          setAlgoError("Ответ не получен. Сетка могла быть построена и ещё может измениться. Проверьте её состояние; повторное построение в этом окне заблокировано.");
+        } else if (bracketRetryBlocked(error)) {
+          algoNoRepeatRef.current = true;
+          setAlgoRetryBlocked(true);
+          setAlgoErrorTitle("Построение сейчас недоступно");
+          setAlgoError(`Сетка сейчас недоступна для построения: ${(error as Error).message}. Проверьте состояние турнира или выйдите из окна.`);
+        } else {
+          setAlgoErrorTitle("Не удалось построить сетку");
+          setAlgoError((error as Error).message);
+        }
+        setAlgoErrorRevision((revision) => revision + 1);
+      } finally {
+        mutationPendingRef.current = false;
+      }
+    });
+  }
+
+  async function checkAlgorithmState() {
+    if (!id) return;
+    const requestedId = id;
+    const requestedUserId = user?.id;
+    await runSingleFlight(async () => {
+      try {
+        const fresh = await load(true);
+        if (currentIdRef.current !== requestedId || (requestedUserId && currentUserIdRef.current !== requestedUserId)) return;
+        const expectedVersion = algoConfirmedReadbackRef.current;
+        if (expectedVersion !== null) {
+          const freshVersion = Number(fresh?.bracketStateVersion);
+          if (fresh?.status === "bracket_generated" && fresh.bracketJson &&
+            (expectedVersion === 0 || (Number.isFinite(freshVersion) && freshVersion >= expectedVersion))) {
+            algoConfirmedReadbackRef.current = null;
+            algoNoRepeatRef.current = false;
+            setAlgoRetryBlocked(false);
+            setAlgoError(null);
+            setAlgoDialogOpen(false);
+            setActionHint("Сетка построена");
+          } else {
+            setAlgoErrorTitle("Сетка построена, состояние не подтверждено");
+            setAlgoError("Сетка построена, но актуальная сетка пока не отображается. Проверьте состояние ещё раз; повторное построение заблокировано.");
+            setAlgoErrorRevision((revision) => revision + 1);
+          }
+        }
+      } catch (error) {
+        if (currentIdRef.current !== requestedId || (requestedUserId && currentUserIdRef.current !== requestedUserId) || (error as { status?: number }).status === 401) return;
+        setAlgoError((message) => `${message ?? "Исход построения неизвестен."} Не удалось обновить состояние турнира.`);
+        setAlgoErrorRevision((revision) => revision + 1);
+      }
+    });
   }
 
   const liveMatches = matches.filter(
@@ -571,7 +702,7 @@ export function TournamentDetailPage() {
                 <Button
                   disabled={busy}
                   data-testid="tournament-build-bracket"
-                  onClick={() => openAlgorithmDialog()}
+                  onClick={(event: MouseEvent<HTMLButtonElement>) => openAlgorithmDialog(event.currentTarget)}
                 >
                   {hasBracket
                     ? BRACKET_ALGORITHM_DIALOG.changeAction
@@ -688,6 +819,7 @@ export function TournamentDetailPage() {
                 onChange={setPickUserId}
                 inputValue={pickInput}
                 onInputChange={setPickInput}
+                disabled={busy}
                 excludeUserIds={rosterUserIds}
                 excludeSelf={false}
               /> : null}
@@ -702,9 +834,10 @@ export function TournamentDetailPage() {
                     regeneratesBracket ? "и сразу перестроить уже созданную сетку" : null,
                   ].filter(Boolean).join(" ");
                   if (!window.confirm(`Добавить ${playerName} в турнир «${String(tournament.title)}»: ${consequence}?`)) return;
+                  const submittedUserId = pickUserId;
                   void runAction(async () => {
                     const response = await api.addTournamentParticipant(id!, {
-                      userId: pickUserId,
+                      userId: submittedUserId,
                       ...(requiresOverride ? { confirmManualOverride: true } : {}),
                       ...(regeneratesBracket ? { confirmBracketRegeneration: true } : {}),
                     }, crypto.randomUUID());
@@ -818,7 +951,7 @@ export function TournamentDetailPage() {
                     variant="secondary"
                     size="sm"
                     disabled={busy}
-                    onClick={() => openAlgorithmDialog()}
+                    onClick={(event: MouseEvent<HTMLButtonElement>) => openAlgorithmDialog(event.currentTarget)}
                   >
                     {BRACKET_ALGORITHM_DIALOG.changeAction}
                   </Button>
@@ -980,16 +1113,13 @@ export function TournamentDetailPage() {
         onSelect={setAlgoSelected}
         onCancel={() => setAlgoDialogOpen(false)}
         busy={busy}
+        error={algoError}
+        errorTitle={algoErrorTitle}
+        errorRevision={algoErrorRevision}
+        retryBlocked={algoRetryBlocked}
+        onCheckState={() => void checkAlgorithmState()}
         showRegenWarning={hasBracket}
-        onConfirm={() => {
-          void runAction(async () => {
-            await api.generateBracket(id!, {
-              constructionAlgorithm: algoSelected,
-            });
-            setAlgoDialogOpen(false);
-            await load(true);
-          }, "Сетка построена");
-        }}
+        onConfirm={() => void confirmAlgorithm()}
       />
     </PageLayout>
   );

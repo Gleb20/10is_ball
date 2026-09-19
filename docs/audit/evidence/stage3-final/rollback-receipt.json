@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "stage": "stage3-final-rollback",
+  "status": "passed",
+  "method": "reverse the tracked binary patch, remove only release-list paths absent from the base archive, compare every remaining file and symlink to git archive HEAD",
+  "baseSha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+  "patchCheck": "passed",
+  "patchReverse": "passed",
+  "releasePathsConsidered": 368,
+  "newPathsRemoved": 325,
+  "baseFilesCompared": 1239,
+  "missing": [],
+  "extra": [],
+  "changed": [],
+  "disposablePath": "/private/tmp/tab10-stage3-freeze-m04quj0f/rollback-opjwf2xr"
+}

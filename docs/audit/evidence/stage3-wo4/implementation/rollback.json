@@ -1,0 +1,19 @@
+{
+  "wo4OnlyReverseTrial": {
+    "directory": "/private/tmp/tab10-wo4-r2-rollback-6aHz1X",
+    "paths": 8,
+    "mismatchesAgainstBeforeSnapshot": []
+  },
+  "aggregateTrackedApplyAndReverseTrial": {
+    "directory": "/private/tmp/tab10-wo4-head-rollback-CeC2vf",
+    "trackedPathsApplied": 30,
+    "applyMismatchesAgainstCurrent": [],
+    "declaredUntrackedFilesCopiedAndRemoved": 219,
+    "headFilesExpected": 1239,
+    "headFilesRestored": 1239,
+    "missing": [],
+    "extra": [],
+    "hashMismatches": []
+  },
+  "note": "Disposable copies only; shared worktree was not reverted. Accepted WO3 R2 files return via the WO4-only reverse patch, and the aggregate tracked patch reverses to HEAD after declared untracked files are removed."
+}

@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-18T19:55:49.749970+00:00",
+  "status": "release_identity_and_hosted_gate_verified",
+  "version": "4.1.0",
+  "applicationCommit": "0279657b227bd6ca10116376bec0e2e11561ab4b",
+  "correctiveCommit": {
+    "sha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+    "parent": "0279657b227bd6ca10116376bec0e2e11561ab4b",
+    "message": "test: stabilize stage 2 home navigation verification",
+    "changedPaths": [
+      "docs/BACKLOG.md",
+      "docs/CAPABILITY_MATRIX.md",
+      "docs/CHANGELOG_DEV.md",
+      "docs/PROJECT_STATUS.md",
+      "docs/audit/evidence/stage2-ci-correction.json",
+      "docs/audit/evidence/stage2-public.json",
+      "docs/operations/DEPLOYMENT_AS_BUILT.md",
+      "tests/e2e/stage2-home.spec.ts"
+    ],
+    "reviewedFreezeManifest": "/private/tmp/tab10-stage2-ci-correction-freeze.json",
+    "reviewedFreezeSha256": "81cdf6486268e8e976a5845836edc737ee0836ba5934ebe7d1aede600ec19904"
+  },
+  "originMain": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+  "worktreeClean": true,
+  "localCorrection": {
+    "red": {
+      "passed": 67,
+      "failed": 2,
+      "projects": [
+        "chromium-desktop",
+        "chromium-mobile-390"
+      ]
+    },
+    "green": {
+      "passed": 69,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0,
+      "browser": 60,
+      "migrationFoundation": 9
+    },
+    "database": "separate disposable PostgreSQL 16.15 for each run"
+  },
+  "githubActions": {
+    "id": 35388043867,
+    "url": "https://github.com/Gleb20/10is_ball/actions/runs/35388043867",
+    "headSha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+    "status": "completed",
+    "conclusion": "success",
+    "runAttempt": 1,
+    "jobs": [
+      {
+        "id": 105739504715,
+        "name": "Quality",
+        "conclusion": "success"
+      },
+      {
+        "id": 105739504556,
+        "name": "PostgreSQL integration",
+        "conclusion": "success"
+      },
+      {
+        "id": 105739504396,
+        "name": "Compiled browser production-like",
+        "conclusion": "success"
+      },
+      {
+        "id": 105741136773,
+        "name": "Release gate",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "publicSmoke": {
+    "command": "pnpm run smoke:public",
+    "readOnly": true,
+    "ok": true,
+    "sha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+    "version": "4.1.0",
+    "attempts": 19,
+    "elapsedMs": 96188,
+    "sevenEndpointDetail": {
+      "ok": true,
+      "release": {
+        "sha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+        "version": "4.1.0",
+        "environment": "production",
+        "dirty": false
+      },
+      "checkedAt": "2026-09-18T19:51:28.389Z",
+      "checks": [
+        {
+          "name": "web-release",
+          "ok": true
+        },
+        {
+          "name": "web-health-proxy",
+          "ok": true
+        },
+        {
+          "name": "web-ready-proxy",
+          "ok": true
+        },
+        {
+          "name": "web-openapi-proxy",
+          "ok": true
+        },
+        {
+          "name": "api-health",
+          "ok": true
+        },
+        {
+          "name": "api-ready",
+          "ok": true
+        },
+        {
+          "name": "api-openapi",
+          "ok": true
+        }
+      ]
+    }
+  },
+  "renderReady": {
+    "status": "ready",
+    "database": "ok",
+    "release": {
+      "sha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+      "version": "4.1.0",
+      "environment": "production",
+      "dirty": false
+    }
+  },
+  "vercel": {
+    "commitStatus": "success",
+    "targetUrl": "https://vercel.com/its-adesign/tab-10/FWPAk71Dykq3foBzJo1K57em6U88"
+  },
+  "manualRemoteMigration": false,
+  "remoteSeed": false,
+  "mutatingPublicTests": false,
+  "remainingLimits": [
+    "Read-only public smoke verifies release identity and availability, not user journeys on public data",
+    "Browser Back from Judge can leave the judge slot active (GAP-030)",
+    "HOME-003 Maps/iPhone is not reproduced (GAP-031)",
+    "Physical iPhone, WebKit, spoken assistive technology and user acceptance were not conducted"
+  ],
+  "documentationNote": "Canonical docs in the corrective commit preserve the initial failed hosted run as historical evidence; this terminal result is external pending coordinator decision on one bounded docs receipt update."
+}

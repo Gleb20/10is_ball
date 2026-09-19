@@ -1,0 +1,52 @@
+TAP version 13
+# Subtest: backup rehearsal rejects remote and non-test database targets
+ok 1 - backup rehearsal rejects remote and non-test database targets
+  ---
+  duration_ms: 3.482709
+  type: 'test'
+  ...
+# Subtest: backup rehearsal requires confirmation and a bounded restore identifier
+ok 2 - backup rehearsal requires confirmation and a bounded restore identifier
+  ---
+  duration_ms: 0.468125
+  type: 'test'
+  ...
+# Subtest: backup rehearsal returns a redacted-safe local admin target
+ok 3 - backup rehearsal returns a redacted-safe local admin target
+  ---
+  duration_ms: 0.140625
+  type: 'test'
+  ...
+# Subtest: local player seed fails closed for production and remote API targets
+ok 4 - local player seed fails closed for production and remote API targets
+  ---
+  duration_ms: 1.8085
+  type: 'test'
+  ...
+# Subtest: backup shell uses a unique temp directory, quoted psql variables, and cleanup
+ok 5 - backup shell uses a unique temp directory, quoted psql variables, and cleanup
+  ---
+  duration_ms: 1208.676625
+  type: 'test'
+  ...
+# Subtest: backup shell rejects a remote source before invoking database tools
+ok 6 - backup shell rejects a remote source before invoking database tools
+  ---
+  duration_ms: 59.561709
+  type: 'test'
+  ...
+# Subtest: seed CLI rejects remote API_BASE before making a request
+ok 7 - seed CLI rejects remote API_BASE before making a request
+  ---
+  duration_ms: 33.459917
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1355.827625

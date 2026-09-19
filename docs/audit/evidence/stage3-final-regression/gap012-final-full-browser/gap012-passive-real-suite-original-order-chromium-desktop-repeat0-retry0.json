@@ -1,0 +1,2695 @@
+{
+  "version": 2,
+  "scenario": "real-suite-original-order",
+  "project": "chromium-desktop",
+  "selectionFailed": false,
+  "pageErrors": [],
+  "capture": {
+    "version": 1,
+    "timeOrigin": 1789781962555.4,
+    "cap": 400,
+    "dropped": 0,
+    "diagnosticErrors": 0,
+    "events": [
+      {
+        "at": 34.90000009536743,
+        "type": "target-dom-commit-observed",
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": false,
+          "active": {
+            "token": 2,
+            "tag": "body",
+            "role": null
+          },
+          "queryLength": 0,
+          "queryMatchesExpected": false,
+          "expanded": "false",
+          "inputRect": {
+            "x": 418.5,
+            "y": 956.390625,
+            "top": 956.390625,
+            "right": 861.5,
+            "bottom": 1000.390625,
+            "left": 418.5,
+            "width": 443,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 919.390625,
+              "top": 919.390625,
+              "right": 874.5,
+              "bottom": 1009.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": true,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 0
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": null,
+          "listRect": null,
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "exactOptionToken": null,
+          "exactOptionRect": null,
+          "optionStyle": null,
+          "directoryDOM": {
+            "loading": true,
+            "suggestionsPresent": false,
+            "suggestionsToken": null,
+            "suggestionsRect": null,
+            "groups": {
+              "frequentButtons": 0,
+              "recentButtons": 0,
+              "teamButtons": 0
+            }
+          }
+        },
+        "note": "MutationObserver delivery time, not the exact mutation instant"
+      },
+      {
+        "at": 52.30000019073486,
+        "type": "create-options-resource",
+        "startTime": 36.80000019073486,
+        "responseStart": 50.80000019073486,
+        "responseEnd": 51,
+        "duration": 14.199999809265137,
+        "responseStatus": 200
+      },
+      {
+        "at": 54.19999980926514,
+        "type": "target-dom-commit-observed",
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": false,
+          "active": {
+            "token": 3,
+            "tag": "input",
+            "role": null
+          },
+          "queryLength": 0,
+          "queryMatchesExpected": false,
+          "expanded": "false",
+          "inputRect": {
+            "x": 418.5,
+            "y": 1282.390625,
+            "top": 1282.390625,
+            "right": 861.5,
+            "bottom": 1326.390625,
+            "left": 418.5,
+            "width": 443,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 1245.390625,
+              "top": 1245.390625,
+              "right": 874.5,
+              "bottom": 1335.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": true,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 0
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": null,
+          "listRect": null,
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "exactOptionToken": null,
+          "exactOptionRect": null,
+          "optionStyle": null,
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 782.5,
+              "top": 782.5,
+              "right": 889,
+              "bottom": 1154.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        },
+        "note": "MutationObserver delivery time, not the exact mutation instant"
+      },
+      {
+        "at": 56.59999990463257,
+        "type": "focus",
+        "target": {
+          "token": 1,
+          "tag": "input",
+          "role": "combobox"
+        },
+        "eventTimeStamp": 56.59999990463257,
+        "targetIsInput": true,
+        "targetInsideControlRef": true,
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 0,
+          "queryMatchesExpected": false,
+          "expanded": "false",
+          "inputRect": {
+            "x": 418.5,
+            "y": 1282.390625,
+            "top": 1282.390625,
+            "right": 861.5,
+            "bottom": 1326.390625,
+            "left": 418.5,
+            "width": 443,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 1245.390625,
+              "top": 1245.390625,
+              "right": 874.5,
+              "bottom": 1335.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": true,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 0
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": null,
+          "listRect": null,
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "exactOptionToken": null,
+          "exactOptionRect": null,
+          "optionStyle": null,
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 782.5,
+              "top": 782.5,
+              "right": 889,
+              "bottom": 1154.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 58,
+        "type": "aria-expanded",
+        "node": {
+          "token": 1,
+          "tag": "input",
+          "role": "combobox"
+        },
+        "oldValue": "false",
+        "valueAfterMutation": "true",
+        "currentValueAtDelivery": "true",
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 0,
+          "queryMatchesExpected": false,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 861.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 443,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 707.390625,
+            "top": 707.390625,
+            "right": 862.5,
+            "bottom": 923.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 216
+          },
+          "optionCount": 11,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 1103.390625,
+            "top": 1103.390625,
+            "right": 862.5,
+            "bottom": 1139.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 58,
+        "type": "options-mutation",
+        "added": {
+          "listTokens": [
+            5
+          ],
+          "optionCount": 11,
+          "exactOptionTokens": [
+            6
+          ]
+        },
+        "removed": {
+          "listTokens": [],
+          "optionCount": 0,
+          "exactOptionTokens": []
+        },
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 0,
+          "queryMatchesExpected": false,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 861.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 443,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 707.390625,
+            "top": 707.390625,
+            "right": 862.5,
+            "bottom": 923.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 216
+          },
+          "optionCount": 11,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 1103.390625,
+            "top": 1103.390625,
+            "right": 862.5,
+            "bottom": 1139.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 58.09999990463257,
+        "type": "target-dom-commit-observed",
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 0,
+          "queryMatchesExpected": false,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 861.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 443,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 707.390625,
+            "top": 707.390625,
+            "right": 862.5,
+            "bottom": 923.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 216
+          },
+          "optionCount": 11,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 1103.390625,
+            "top": 1103.390625,
+            "right": 862.5,
+            "bottom": 1139.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        },
+        "note": "MutationObserver delivery time, not the exact mutation instant"
+      },
+      {
+        "at": 58.30000019073486,
+        "type": "scroll",
+        "target": {
+          "kind": "document"
+        },
+        "eventTimeStamp": 57.90000009536743,
+        "targetIsInput": false,
+        "targetInsideControlRef": false,
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 0,
+          "queryMatchesExpected": false,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 861.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 443,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 707.390625,
+            "top": 707.390625,
+            "right": 862.5,
+            "bottom": 923.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 216
+          },
+          "optionCount": 11,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 1103.390625,
+            "top": 1103.390625,
+            "right": 862.5,
+            "bottom": 1139.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 59.19999980926514,
+        "type": "beforeinput",
+        "target": {
+          "token": 1,
+          "tag": "input",
+          "role": "combobox"
+        },
+        "eventTimeStamp": 59.19999980926514,
+        "targetIsInput": true,
+        "targetInsideControlRef": true,
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 0,
+          "queryMatchesExpected": false,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 861.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 443,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 707.390625,
+            "top": 707.390625,
+            "right": 862.5,
+            "bottom": 923.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 216
+          },
+          "optionCount": 11,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 1103.390625,
+            "top": 1103.390625,
+            "right": 862.5,
+            "bottom": 1139.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 59.5,
+        "type": "input",
+        "target": {
+          "token": 1,
+          "tag": "input",
+          "role": "combobox"
+        },
+        "eventTimeStamp": 59.40000009536743,
+        "targetIsInput": true,
+        "targetInsideControlRef": true,
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 861.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 443,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 707.390625,
+            "top": 707.390625,
+            "right": 862.5,
+            "bottom": 923.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 216
+          },
+          "optionCount": 11,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 1103.390625,
+            "top": 1103.390625,
+            "right": 862.5,
+            "bottom": 1139.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 60.59999990463257,
+        "type": "options-mutation",
+        "added": {
+          "listTokens": [],
+          "optionCount": 0,
+          "exactOptionTokens": []
+        },
+        "removed": {
+          "listTokens": [],
+          "optionCount": 1,
+          "exactOptionTokens": []
+        },
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 60.69999980926514,
+        "type": "options-mutation",
+        "added": {
+          "listTokens": [],
+          "optionCount": 0,
+          "exactOptionTokens": []
+        },
+        "removed": {
+          "listTokens": [],
+          "optionCount": 1,
+          "exactOptionTokens": []
+        },
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 60.69999980926514,
+        "type": "options-mutation",
+        "added": {
+          "listTokens": [],
+          "optionCount": 0,
+          "exactOptionTokens": []
+        },
+        "removed": {
+          "listTokens": [],
+          "optionCount": 1,
+          "exactOptionTokens": []
+        },
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 60.69999980926514,
+        "type": "options-mutation",
+        "added": {
+          "listTokens": [],
+          "optionCount": 0,
+          "exactOptionTokens": []
+        },
+        "removed": {
+          "listTokens": [],
+          "optionCount": 1,
+          "exactOptionTokens": []
+        },
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 60.69999980926514,
+        "type": "options-mutation",
+        "added": {
+          "listTokens": [],
+          "optionCount": 0,
+          "exactOptionTokens": []
+        },
+        "removed": {
+          "listTokens": [],
+          "optionCount": 1,
+          "exactOptionTokens": []
+        },
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 60.69999980926514,
+        "type": "options-mutation",
+        "added": {
+          "listTokens": [],
+          "optionCount": 0,
+          "exactOptionTokens": []
+        },
+        "removed": {
+          "listTokens": [],
+          "optionCount": 1,
+          "exactOptionTokens": []
+        },
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 60.69999980926514,
+        "type": "options-mutation",
+        "added": {
+          "listTokens": [],
+          "optionCount": 0,
+          "exactOptionTokens": []
+        },
+        "removed": {
+          "listTokens": [],
+          "optionCount": 1,
+          "exactOptionTokens": []
+        },
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 60.69999980926514,
+        "type": "options-mutation",
+        "added": {
+          "listTokens": [],
+          "optionCount": 0,
+          "exactOptionTokens": []
+        },
+        "removed": {
+          "listTokens": [],
+          "optionCount": 1,
+          "exactOptionTokens": []
+        },
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 60.80000019073486,
+        "type": "options-mutation",
+        "added": {
+          "listTokens": [],
+          "optionCount": 0,
+          "exactOptionTokens": []
+        },
+        "removed": {
+          "listTokens": [],
+          "optionCount": 1,
+          "exactOptionTokens": []
+        },
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 60.80000019073486,
+        "type": "options-mutation",
+        "added": {
+          "listTokens": [],
+          "optionCount": 0,
+          "exactOptionTokens": []
+        },
+        "removed": {
+          "listTokens": [],
+          "optionCount": 1,
+          "exactOptionTokens": []
+        },
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 93,
+        "type": "pointerdown",
+        "target": {
+          "token": 6,
+          "tag": "li",
+          "role": "option"
+        },
+        "eventTimeStamp": 92.5,
+        "targetIsInput": false,
+        "targetInsideControlRef": true,
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 93.19999980926514,
+        "type": "mousedown",
+        "target": {
+          "token": 6,
+          "tag": "li",
+          "role": "option"
+        },
+        "eventTimeStamp": 92.5,
+        "targetIsInput": false,
+        "targetInsideControlRef": true,
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": 5,
+          "listRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "exactOptionToken": 6,
+          "exactOptionRect": {
+            "x": 417.5,
+            "y": 676.390625,
+            "top": 676.390625,
+            "right": 862.5,
+            "bottom": 712.390625,
+            "left": 417.5,
+            "width": 445,
+            "height": 36
+          },
+          "optionStyle": {
+            "display": "flex",
+            "visibility": "visible"
+          },
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 94,
+        "type": "options-mutation",
+        "added": {
+          "listTokens": [],
+          "optionCount": 0,
+          "exactOptionTokens": []
+        },
+        "removed": {
+          "listTokens": [
+            5
+          ],
+          "optionCount": 1,
+          "exactOptionTokens": [
+            6
+          ]
+        },
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "false",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": null,
+          "listRect": null,
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "exactOptionToken": null,
+          "exactOptionRect": null,
+          "optionStyle": null,
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      },
+      {
+        "at": 94.19999980926514,
+        "type": "aria-expanded",
+        "node": {
+          "token": 1,
+          "tag": "input",
+          "role": "combobox"
+        },
+        "oldValue": "true",
+        "valueAfterMutation": "false",
+        "currentValueAtDelivery": "false",
+        "state": {
+          "inputPresent": true,
+          "inputToken": 1,
+          "inputConnected": true,
+          "inputActive": true,
+          "active": {
+            "token": 1,
+            "tag": "input",
+            "role": "combobox"
+          },
+          "queryLength": 35,
+          "queryMatchesExpected": true,
+          "expanded": "false",
+          "inputRect": {
+            "x": 418.5,
+            "y": 732.390625,
+            "top": 732.390625,
+            "right": 837.5,
+            "bottom": 776.390625,
+            "left": 418.5,
+            "width": 419,
+            "height": 44
+          },
+          "geometry": {
+            "vendorDOMShapeMatches": true,
+            "safeBottom": 0,
+            "rootRect": {
+              "x": 405.5,
+              "y": 695.390625,
+              "top": 695.390625,
+              "right": 874.5,
+              "bottom": 785.390625,
+              "left": 405.5,
+              "width": 469,
+              "height": 90
+            },
+            "visualTop": 0,
+            "visualBottom": 800,
+            "clipTop": 0,
+            "clipBottom": 800,
+            "outsideMargin12": false,
+            "scrollTarget": {
+              "kind": "window"
+            },
+            "clipping": []
+          },
+          "scroll": {
+            "x": 0,
+            "y": 550
+          },
+          "viewport": {
+            "offsetTop": 0,
+            "offsetLeft": 0,
+            "width": 1280,
+            "height": 800
+          },
+          "listToken": null,
+          "listRect": null,
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "exactOptionToken": null,
+          "exactOptionRect": null,
+          "optionStyle": null,
+          "directoryDOM": {
+            "loading": false,
+            "suggestionsPresent": true,
+            "suggestionsToken": 4,
+            "suggestionsRect": {
+              "x": 391,
+              "y": 232.5,
+              "top": 232.5,
+              "right": 889,
+              "bottom": 604.5,
+              "left": 391,
+              "width": 498,
+              "height": 372
+            },
+            "groups": {
+              "frequentButtons": 2,
+              "recentButtons": 2,
+              "teamButtons": 2
+            }
+          }
+        }
+      }
+    ],
+    "finalState": {
+      "inputPresent": true,
+      "inputToken": 1,
+      "inputConnected": true,
+      "inputActive": true,
+      "active": {
+        "token": 1,
+        "tag": "input",
+        "role": "combobox"
+      },
+      "queryLength": 35,
+      "queryMatchesExpected": true,
+      "expanded": "false",
+      "inputRect": {
+        "x": 418.5,
+        "y": 732.390625,
+        "top": 732.390625,
+        "right": 837.5,
+        "bottom": 776.390625,
+        "left": 418.5,
+        "width": 419,
+        "height": 44
+      },
+      "geometry": {
+        "vendorDOMShapeMatches": true,
+        "safeBottom": 0,
+        "rootRect": {
+          "x": 405.5,
+          "y": 695.390625,
+          "top": 695.390625,
+          "right": 874.5,
+          "bottom": 785.390625,
+          "left": 405.5,
+          "width": 469,
+          "height": 90
+        },
+        "visualTop": 0,
+        "visualBottom": 800,
+        "clipTop": 0,
+        "clipBottom": 800,
+        "outsideMargin12": false,
+        "scrollTarget": {
+          "kind": "window"
+        },
+        "clipping": []
+      },
+      "scroll": {
+        "x": 0,
+        "y": 550
+      },
+      "viewport": {
+        "offsetTop": 0,
+        "offsetLeft": 0,
+        "width": 1280,
+        "height": 800
+      },
+      "listToken": null,
+      "listRect": null,
+      "optionCount": 0,
+      "exactOptionCount": 0,
+      "exactOptionToken": null,
+      "exactOptionRect": null,
+      "optionStyle": null,
+      "directoryDOM": {
+        "loading": false,
+        "suggestionsPresent": true,
+        "suggestionsToken": 4,
+        "suggestionsRect": {
+          "x": 391,
+          "y": 232.5,
+          "top": 232.5,
+          "right": 889,
+          "bottom": 604.5,
+          "left": 391,
+          "width": 498,
+          "height": 372
+        },
+        "groups": {
+          "frequentButtons": 2,
+          "recentButtons": 2,
+          "teamButtons": 2
+        }
+      }
+    }
+  }
+}

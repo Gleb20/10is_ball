@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "policy": "tab10-playwright-trace-minimal-v1",
+  "traceCount": 0,
+  "disposableTestOnly": true,
+  "traces": []
+}

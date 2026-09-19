@@ -1,0 +1,44 @@
+{
+  "mode": "red",
+  "viewport": "360x844",
+  "inputFonts": {
+    "loginEmail": {
+      "fontSize": "14px",
+      "lineHeight": "18px",
+      "width": 258,
+      "height": 44
+    },
+    "loginPassword": {
+      "fontSize": "16px",
+      "lineHeight": "18px",
+      "width": 258,
+      "height": 44
+    },
+    "newPassword": {
+      "fontSize": "16px",
+      "lineHeight": "18px",
+      "width": 258,
+      "height": 44
+    },
+    "confirmPassword": {
+      "fontSize": "16px",
+      "lineHeight": "18px",
+      "width": 258,
+      "height": 44
+    }
+  },
+  "firstFocused": true,
+  "secondFocused": false,
+  "alertCount": 1,
+  "associations": {
+    "newLinked": true,
+    "confirmLinked": true,
+    "newLength": 5,
+    "confirmLength": 4,
+    "sameNodes": true
+  },
+  "editKeepsFocus": true,
+  "staleErrorCleared": true,
+  "tabToToggle": true,
+  "shiftTabToConfirm": true
+}

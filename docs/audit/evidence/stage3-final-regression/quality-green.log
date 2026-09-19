@@ -1,0 +1,808 @@
+
+> 10is-ball@4.1.1 verify:fast /Users/liubavskii/.codex/worktrees/c870/tab10
+> node scripts/verify/doctor.mjs && pnpm --filter @tab10/shared --filter @tab10/test-utils run build && pnpm audit:check && pnpm lint && pnpm typecheck && pnpm build && pnpm test:fast
+
+Toolchain ready: Node 24.20.0, pnpm 9.15.0
+Scope: 2 of 6 workspace projects
+packages/test-utils build$ tsc -p tsconfig.json
+packages/shared build$ tsc -p tsconfig.json
+packages/test-utils build: Done
+packages/shared build: Done
+
+> 10is-ball@4.1.1 audit:check /Users/liubavskii/.codex/worktrees/c870/tab10
+> pnpm audit:docs && pnpm audit:routes && pnpm audit:secrets:self-test && pnpm audit:secrets && pnpm audit:reproduce-busy-bye
+
+
+> 10is-ball@4.1.1 audit:docs /Users/liubavskii/.codex/worktrees/c870/tab10
+> node scripts/audit/check-docs.mjs
+
+{
+  "checkedFiles": 174,
+  "brokenLinks": [],
+  "brokenAnchors": [],
+  "backlogDefinitionCount": 102,
+  "duplicateBacklogDefinitions": [],
+  "malformedBacklogHeadings": [],
+  "incompleteBacklogItems": [],
+  "invalidBacklogStatuses": [],
+  "unknownBacklogReferences": []
+}
+
+> 10is-ball@4.1.1 audit:routes /Users/liubavskii/.codex/worktrees/c870/tab10
+> node scripts/audit/route-openapi-inventory.mjs --baseline docs/audit/evidence/route-openapi-inventory.json
+
+{
+  "schemaVersion": 1,
+  "source": "apps/api/src/app.ts",
+  "openApiSource": "apps/api/src/openapi.ts",
+  "inventoryMethod": "direct literal app.<method>() registrations and openApiSpec paths across their source files",
+  "limitations": [
+    "Routes registered dynamically, through plugins, or outside apps/api/src/app.ts require a separate inventory update"
+  ],
+  "registeredCount": 84,
+  "documentedCount": 84,
+  "registeredPathCount": 75,
+  "documentedPathCount": 75,
+  "coveragePercent": 100,
+  "registered": [
+    "DELETE /api/v1/admin/matches/{matchId}",
+    "DELETE /api/v1/auth/sessions/{sessionId}",
+    "DELETE /api/v1/teams/{id}/members/{userId}",
+    "DELETE /api/v1/tournaments/{id}/invitations/{invitationId}",
+    "DELETE /api/v1/tournaments/{id}/participants/{participantId}",
+    "GET /api/v1/admin/users",
+    "GET /api/v1/auth/me",
+    "GET /api/v1/auth/sessions",
+    "GET /api/v1/faq",
+    "GET /api/v1/history",
+    "GET /api/v1/home",
+    "GET /api/v1/matches",
+    "GET /api/v1/matches/create-options",
+    "GET /api/v1/matches/{matchId}",
+    "GET /api/v1/notifications",
+    "GET /api/v1/openapi.json",
+    "GET /api/v1/players/{userId}",
+    "GET /api/v1/profile/me",
+    "GET /api/v1/rankings",
+    "GET /api/v1/teams",
+    "GET /api/v1/teams/{id}",
+    "GET /api/v1/tournaments",
+    "GET /api/v1/tournaments/{id}",
+    "GET /api/v1/users/directory",
+    "GET /health",
+    "GET /ready",
+    "PATCH /api/v1/admin/users/{userId}",
+    "PATCH /api/v1/matches/{matchId}",
+    "PATCH /api/v1/me/onboarding",
+    "PATCH /api/v1/me/profile",
+    "PATCH /api/v1/profile/me",
+    "PATCH /api/v1/teams/{id}",
+    "PATCH /api/v1/tournaments/{id}",
+    "PATCH /api/v1/tournaments/{id}/bracket",
+    "POST /api/v1/admin/matches/{matchId}/force-close",
+    "POST /api/v1/admin/users",
+    "POST /api/v1/admin/users/{userId}/block",
+    "POST /api/v1/admin/users/{userId}/reset-password",
+    "POST /api/v1/admin/users/{userId}/unblock",
+    "POST /api/v1/auth/login",
+    "POST /api/v1/auth/logout",
+    "POST /api/v1/auth/password/change",
+    "POST /api/v1/auth/password/first-change",
+    "POST /api/v1/feedback",
+    "POST /api/v1/match-invitations/{id}/accept",
+    "POST /api/v1/match-invitations/{id}/decline",
+    "POST /api/v1/matches",
+    "POST /api/v1/matches/tutorial",
+    "POST /api/v1/matches/{matchId}/cancel",
+    "POST /api/v1/matches/{matchId}/confirm-finish",
+    "POST /api/v1/matches/{matchId}/invitations",
+    "POST /api/v1/matches/{matchId}/judge/acquire",
+    "POST /api/v1/matches/{matchId}/judge/handover",
+    "POST /api/v1/matches/{matchId}/judge/heartbeat",
+    "POST /api/v1/matches/{matchId}/judge/release",
+    "POST /api/v1/matches/{matchId}/judge/setup",
+    "POST /api/v1/matches/{matchId}/manual-correction",
+    "POST /api/v1/matches/{matchId}/no-show",
+    "POST /api/v1/matches/{matchId}/points",
+    "POST /api/v1/matches/{matchId}/revert-finish",
+    "POST /api/v1/matches/{matchId}/start",
+    "POST /api/v1/matches/{matchId}/stop",
+    "POST /api/v1/matches/{matchId}/undo",
+    "POST /api/v1/matches/{matchId}/void",
+    "POST /api/v1/notifications/read-visible",
+    "POST /api/v1/notifications/{id}/read",
+    "POST /api/v1/team-invitations/{id}/accept",
+    "POST /api/v1/team-invitations/{id}/decline",
+    "POST /api/v1/team-invitations/{id}/respond",
+    "POST /api/v1/teams",
+    "POST /api/v1/teams/{id}/captain-transfer",
+    "POST /api/v1/teams/{id}/invitations",
+    "POST /api/v1/teams/{id}/invite",
+    "POST /api/v1/teams/{id}/leave",
+    "POST /api/v1/tournament-invitations/{id}/respond",
+    "POST /api/v1/tournaments",
+    "POST /api/v1/tournaments/{id}/bracket",
+    "POST /api/v1/tournaments/{id}/cancel",
+    "POST /api/v1/tournaments/{id}/dissolve-bracket",
+    "POST /api/v1/tournaments/{id}/invitations",
+    "POST /api/v1/tournaments/{id}/participants",
+    "POST /api/v1/tournaments/{id}/start",
+    "POST /api/v1/tournaments/{id}/stop",
+    "POST /api/v1/tournaments/{id}/withdraw"
+  ],
+  "documented": [
+    "DELETE /api/v1/admin/matches/{matchId}",
+    "DELETE /api/v1/auth/sessions/{sessionId}",
+    "DELETE /api/v1/teams/{id}/members/{userId}",
+    "DELETE /api/v1/tournaments/{id}/invitations/{invitationId}",
+    "DELETE /api/v1/tournaments/{id}/participants/{participantId}",
+    "GET /api/v1/admin/users",
+    "GET /api/v1/auth/me",
+    "GET /api/v1/auth/sessions",
+    "GET /api/v1/faq",
+    "GET /api/v1/history",
+    "GET /api/v1/home",
+    "GET /api/v1/matches",
+    "GET /api/v1/matches/create-options",
+    "GET /api/v1/matches/{matchId}",
+    "GET /api/v1/notifications",
+    "GET /api/v1/openapi.json",
+    "GET /api/v1/players/{userId}",
+    "GET /api/v1/profile/me",
+    "GET /api/v1/rankings",
+    "GET /api/v1/teams",
+    "GET /api/v1/teams/{id}",
+    "GET /api/v1/tournaments",
+    "GET /api/v1/tournaments/{id}",
+    "GET /api/v1/users/directory",
+    "GET /health",
+    "GET /ready",
+    "PATCH /api/v1/admin/users/{userId}",
+    "PATCH /api/v1/matches/{matchId}",
+    "PATCH /api/v1/me/onboarding",
+    "PATCH /api/v1/me/profile",
+    "PATCH /api/v1/profile/me",
+    "PATCH /api/v1/teams/{id}",
+    "PATCH /api/v1/tournaments/{id}",
+    "PATCH /api/v1/tournaments/{id}/bracket",
+    "POST /api/v1/admin/matches/{matchId}/force-close",
+    "POST /api/v1/admin/users",
+    "POST /api/v1/admin/users/{userId}/block",
+    "POST /api/v1/admin/users/{userId}/reset-password",
+    "POST /api/v1/admin/users/{userId}/unblock",
+    "POST /api/v1/auth/login",
+    "POST /api/v1/auth/logout",
+    "POST /api/v1/auth/password/change",
+    "POST /api/v1/auth/password/first-change",
+    "POST /api/v1/feedback",
+    "POST /api/v1/match-invitations/{id}/accept",
+    "POST /api/v1/match-invitations/{id}/decline",
+    "POST /api/v1/matches",
+    "POST /api/v1/matches/tutorial",
+    "POST /api/v1/matches/{matchId}/cancel",
+    "POST /api/v1/matches/{matchId}/confirm-finish",
+    "POST /api/v1/matches/{matchId}/invitations",
+    "POST /api/v1/matches/{matchId}/judge/acquire",
+    "POST /api/v1/matches/{matchId}/judge/handover",
+    "POST /api/v1/matches/{matchId}/judge/heartbeat",
+    "POST /api/v1/matches/{matchId}/judge/release",
+    "POST /api/v1/matches/{matchId}/judge/setup",
+    "POST /api/v1/matches/{matchId}/manual-correction",
+    "POST /api/v1/matches/{matchId}/no-show",
+    "POST /api/v1/matches/{matchId}/points",
+    "POST /api/v1/matches/{matchId}/revert-finish",
+    "POST /api/v1/matches/{matchId}/start",
+    "POST /api/v1/matches/{matchId}/stop",
+    "POST /api/v1/matches/{matchId}/undo",
+    "POST /api/v1/matches/{matchId}/void",
+    "POST /api/v1/notifications/read-visible",
+    "POST /api/v1/notifications/{id}/read",
+    "POST /api/v1/team-invitations/{id}/accept",
+    "POST /api/v1/team-invitations/{id}/decline",
+    "POST /api/v1/team-invitations/{id}/respond",
+    "POST /api/v1/teams",
+    "POST /api/v1/teams/{id}/captain-transfer",
+    "POST /api/v1/teams/{id}/invitations",
+    "POST /api/v1/teams/{id}/invite",
+    "POST /api/v1/teams/{id}/leave",
+    "POST /api/v1/tournament-invitations/{id}/respond",
+    "POST /api/v1/tournaments",
+    "POST /api/v1/tournaments/{id}/bracket",
+    "POST /api/v1/tournaments/{id}/cancel",
+    "POST /api/v1/tournaments/{id}/dissolve-bracket",
+    "POST /api/v1/tournaments/{id}/invitations",
+    "POST /api/v1/tournaments/{id}/participants",
+    "POST /api/v1/tournaments/{id}/start",
+    "POST /api/v1/tournaments/{id}/stop",
+    "POST /api/v1/tournaments/{id}/withdraw"
+  ],
+  "missingFromOpenApi": [],
+  "notRegistered": []
+}
+
+> 10is-ball@4.1.1 audit:secrets:self-test /Users/liubavskii/.codex/worktrees/c870/tab10
+> node scripts/audit/secret-scan.mjs --self-test
+
+{"status":"passed","cases":25}
+
+> 10is-ball@4.1.1 audit:secrets /Users/liubavskii/.codex/worktrees/c870/tab10
+> bash scripts/audit/secret-scan.sh
+
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-19T00:37:29.442Z",
+  "maxBlobBytes": 20000000,
+  "discoveredWorktreeFiles": 1476,
+  "discoveredIgnoredEnvFiles": 0,
+  "scannedWorktreeFiles": 1476,
+  "absentWorktreeFiles": 0,
+  "scannedRefObjects": 4535,
+  "scannedRefBlobs": 3166,
+  "discoveredIndexEntries": 1239,
+  "scannedIndexBlobs": 1012,
+  "indexBlobsCoveredByRefs": 227,
+  "skippedInputs": [],
+  "candidates": [],
+  "reviewedBenignFindings": [
+    {
+      "scope": "worktree",
+      "path": "docs/audits/2026-09-13-ux-ui/admin/evidence/safe-replay/run-admin-audit.mjs",
+      "kind": "credential-url",
+      "reason": "Frozen audit replay uses a loopback test database URL without a password"
+    },
+    {
+      "scope": "worktree",
+      "path": "docs/audits/2026-09-13-ux-ui/match/evidence/replay.mjs",
+      "kind": "credential-url",
+      "reason": "Frozen audit replay uses a loopback test database URL without a password"
+    },
+    {
+      "scope": "git-refs",
+      "object": "03e98c27321d96e2dd519d789488085478ff4dc9",
+      "path": "artifacts/ux-audit-2026-09-13/core-checkpoint-07/export/files/docs/audits/2026-09-13-ux-ui/match/evidence/replay.mjs",
+      "kind": "credential-url",
+      "reason": "Frozen audit replay uses a loopback test database URL without a password"
+    },
+    {
+      "scope": "git-refs",
+      "object": "59e876d8c3c4983268dc34ae57f19a270b133fa4",
+      "path": "artifacts/ux-audit-2026-09-13/expert-stage-08/export/files/docs/audits/2026-09-13-ux-ui/admin/evidence/safe-replay/run-admin-audit.mjs",
+      "kind": "credential-url",
+      "reason": "Frozen audit export carries the same reviewed loopback test database URL without a password"
+    },
+    {
+      "scope": "git-refs",
+      "object": "8ea18e9b9feb7b96c548f2a062b7d71cfa017473",
+      "path": "scripts/backup-rehearsal.sh",
+      "kind": "credential-url",
+      "reason": "Preserved Codex snapshot ref with a synthetic loopback-only database fixture"
+    },
+    {
+      "scope": "git-refs",
+      "object": "2d4a0b6f6eb89c0ad9ea09812e8af94e559c07f0",
+      "path": "scripts/ops-safety.test.mjs",
+      "kind": "credential-url",
+      "reason": "Preserved Codex snapshot ref with a synthetic loopback-only database fixture"
+    },
+    {
+      "scope": "git-refs",
+      "object": "2f65baa625b873786559be99c2c84325488a76c1",
+      "path": ".github/workflows/ci.yml",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "2f65baa625b873786559be99c2c84325488a76c1",
+      "path": ".github/workflows/ci.yml",
+      "kind": "secret-assignment",
+      "reason": "Historical loopback-only tab10 CI database password"
+    },
+    {
+      "scope": "git-refs",
+      "object": "7662a5224327e3c4da1336267a6f8f8481d152db",
+      "path": "README.md",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "6b38a04e1bc01dc9c940a15fa30067e62e3eaa61",
+      "path": "apps/api/drizzle.config.ts",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "e16323313aa8a3227a857db5bae6fb803bac51a2",
+      "path": "scripts/backup-rehearsal.sh",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "bdc0c1d1ba87a4fd2d63947a2bd9c2e890193357",
+      "path": ".github/workflows/ci.yml",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "bdc0c1d1ba87a4fd2d63947a2bd9c2e890193357",
+      "path": ".github/workflows/ci.yml",
+      "kind": "secret-assignment",
+      "reason": "Historical loopback-only tab10 CI database password"
+    },
+    {
+      "scope": "git-refs",
+      "object": "65891ce648b89167ed531b7ede01e64006c1f0fe",
+      "path": "README.md",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "479450ea26674a9dc49c3edb8ac9b34727af1d4f",
+      "path": "README.md",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "68f3fb9ff6311e252817d7843272afd7b2c4fd97",
+      "path": "README.md",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-refs",
+      "object": "698c4c2ce1b33bdb7080ad7956d68cdfa39407e8",
+      "path": "README.md",
+      "kind": "credential-url",
+      "reason": "Historical loopback-only tab10 development database example"
+    },
+    {
+      "scope": "git-index",
+      "object": "59e876d8c3c4983268dc34ae57f19a270b133fa4",
+      "path": "docs/audits/2026-09-13-ux-ui/admin/evidence/safe-replay/run-admin-audit.mjs",
+      "kind": "credential-url",
+      "reason": "Frozen audit replay uses a loopback test database URL without a password"
+    },
+    {
+      "scope": "git-index",
+      "object": "03e98c27321d96e2dd519d789488085478ff4dc9",
+      "path": "docs/audits/2026-09-13-ux-ui/match/evidence/replay.mjs",
+      "kind": "credential-url",
+      "reason": "Frozen audit replay uses a loopback test database URL without a password"
+    }
+  ]
+}
+
+> 10is-ball@4.1.1 audit:reproduce-busy-bye /Users/liubavskii/.codex/worktrees/c870/tab10
+> node scripts/audit/reproduce-tournament-busy-bye.mjs
+
+Verified the deterministic busy-player/bye tournament-start regression.
+The busy organizer receives a bye, start is rejected, and tournament state is unchanged.
+
+> 10is-ball@4.1.1 lint /Users/liubavskii/.codex/worktrees/c870/tab10
+> pnpm -r run lint
+
+Scope: 5 of 6 workspace projects
+packages/shared lint$ tsc -p tsconfig.json --noEmit
+packages/ic-kit lint$ echo 'ic-kit vendored; skip'
+packages/test-utils lint$ tsc -p tsconfig.json --noEmit
+packages/ic-kit lint: ic-kit vendored; skip
+packages/ic-kit lint: Done
+packages/test-utils lint: Done
+packages/shared lint: Done
+apps/api lint$ tsc -p tsconfig.json --noEmit
+apps/web lint$ tsc -b --noEmit
+apps/web lint: Done
+apps/api lint: Done
+
+> 10is-ball@4.1.1 typecheck /Users/liubavskii/.codex/worktrees/c870/tab10
+> pnpm -r run typecheck
+
+Scope: 5 of 6 workspace projects
+packages/ic-kit typecheck$ echo 'ic-kit vendored; skip'
+packages/shared typecheck$ tsc -p tsconfig.json --noEmit
+packages/test-utils typecheck$ tsc -p tsconfig.json --noEmit
+packages/ic-kit typecheck: ic-kit vendored; skip
+packages/ic-kit typecheck: Done
+packages/test-utils typecheck: Done
+packages/shared typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json --noEmit
+apps/web typecheck$ tsc -b --noEmit
+apps/web typecheck: Done
+apps/api typecheck: Done
+
+> 10is-ball@4.1.1 build /Users/liubavskii/.codex/worktrees/c870/tab10
+> pnpm -r run build
+
+Scope: 5 of 6 workspace projects
+packages/shared build$ tsc -p tsconfig.json
+packages/ic-kit build$ echo 'ic-kit vendored; no build'
+packages/test-utils build$ tsc -p tsconfig.json
+packages/ic-kit build: ic-kit vendored; no build
+packages/ic-kit build: Done
+packages/test-utils build: Done
+packages/shared build: Done
+apps/api build$ tsc -p tsconfig.json
+apps/web build$ tsc -b && vite build && node ../../scripts/release/write-web-release.mjs --output dist/release.json
+apps/web build: vite v6.4.3 building for production...
+apps/web build: transforming...
+apps/api build: Done
+apps/web build: ✓ 115 modules transformed.
+apps/web build: rendering chunks...
+apps/web build: computing gzip size...
+apps/web build: dist/index.html                     0.46 kB │ gzip:     0.30 kB
+apps/web build: dist/assets/index-DTlCYQWR.css    717.60 kB │ gzip:   306.36 kB
+apps/web build: dist/assets/index-BxFRXe-x.js   4,713.73 kB │ gzip: 1,350.97 kB
+apps/web build: ✓ built in 1.18s
+apps/web build: (!) Some chunks are larger than 500 kB after minification. Consider:
+apps/web build: - Using dynamic import() to code-split the application
+apps/web build: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+apps/web build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+apps/web build: {"written":"/Users/liubavskii/.codex/worktrees/c870/tab10/apps/web/dist/release.json","release":{"sha":"local","version":"4.1.1","environment":"local","dirty":false}}
+apps/web build: Done
+
+> 10is-ball@4.1.1 test:fast /Users/liubavskii/.codex/worktrees/c870/tab10
+> node scripts/verify/run-fast.mjs
+
+
+> Vitest fast suite: shared
+JSON report written to /Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/vitest-shared.json
+/Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/vitest-shared.json: 534 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+
+> Vitest fast suite: test-utils
+JSON report written to /Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/vitest-test-utils.json
+/Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/vitest-test-utils.json: 4 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+
+> Vitest fast suite: web
+JSON report written to /Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/vitest-web.json
+/Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/vitest-web.json: 290 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+
+> Vitest fast suite: api
+JSON report written to /Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/vitest-api.json
+/Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/vitest-api.json: 318 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+
+> Disposable operations safety
+TAP version 13
+# Subtest: backup rehearsal rejects remote and non-test database targets
+ok 1 - backup rehearsal rejects remote and non-test database targets
+  ---
+  duration_ms: 3.348625
+  type: 'test'
+  ...
+# Subtest: backup rehearsal requires confirmation and a bounded restore identifier
+ok 2 - backup rehearsal requires confirmation and a bounded restore identifier
+  ---
+  duration_ms: 0.536833
+  type: 'test'
+  ...
+# Subtest: backup rehearsal returns a redacted-safe local admin target
+ok 3 - backup rehearsal returns a redacted-safe local admin target
+  ---
+  duration_ms: 0.157625
+  type: 'test'
+  ...
+# Subtest: local player seed fails closed for production and remote API targets
+ok 4 - local player seed fails closed for production and remote API targets
+  ---
+  duration_ms: 1.989667
+  type: 'test'
+  ...
+# Subtest: backup shell uses a unique temp directory, quoted psql variables, and cleanup
+ok 5 - backup shell uses a unique temp directory, quoted psql variables, and cleanup
+  ---
+  duration_ms: 1251.069917
+  type: 'test'
+  ...
+# Subtest: backup shell rejects a remote source before invoking database tools
+ok 6 - backup shell rejects a remote source before invoking database tools
+  ---
+  duration_ms: 59.368917
+  type: 'test'
+  ...
+# Subtest: seed CLI rejects remote API_BASE before making a request
+ok 7 - seed CLI rejects remote API_BASE before making a request
+  ---
+  duration_ms: 36.110792
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1480.631416
+/Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/node-ops-safety.tap: 7 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+
+> Required release scripts Node test suite
+TAP version 13
+# Subtest: hosted release identity requires a full clean SHA
+ok 1 - hosted release identity requires a full clean SHA
+  ---
+  duration_ms: 0.848917
+  type: 'test'
+  ...
+# Subtest: public smoke resolves exact origin main SHA and root version
+ok 2 - public smoke resolves exact origin main SHA and root version
+  ---
+  duration_ms: 1.005833
+  type: 'test'
+  ...
+# Subtest: provider Git SHA sources resolve to the same canonical metadata
+ok 3 - provider Git SHA sources resolve to the same canonical metadata
+  ---
+  duration_ms: 2.910583
+  type: 'test'
+  ...
+# Subtest: exact checkout rejects arbitrary untracked source inputs
+ok 4 - exact checkout rejects arbitrary untracked source inputs
+  ---
+  duration_ms: 0.16675
+  type: 'test'
+  ...
+# Subtest: canonical migration launcher accepts exactly one command separator
+ok 5 - canonical migration launcher accepts exactly one command separator
+  ---
+  duration_ms: 0.118417
+  type: 'test'
+  ...
+# Subtest: web release writer emits the canonical metadata shape
+ok 6 - web release writer emits the canonical metadata shape
+  ---
+  duration_ms: 2.4625
+  type: 'test'
+  ...
+# Subtest: smoke validation requires the exact canonical shape and identity
+ok 7 - smoke validation requires the exact canonical shape and identity
+  ---
+  duration_ms: 0.282667
+  type: 'test'
+  ...
+# Subtest: public release wait retries and returns only redacted evidence
+ok 8 - public release wait retries and returns only redacted evidence
+  ---
+  duration_ms: 2.253
+  type: 'test'
+  ...
+# Subtest: public release wait is bounded and reports one generic failure
+ok 9 - public release wait is bounded and reports one generic failure
+  ---
+  duration_ms: 0.256833
+  type: 'test'
+  ...
+# Subtest: provider request errors expose only an opaque endpoint reference
+ok 10 - provider request errors expose only an opaque endpoint reference
+  ---
+  duration_ms: 0.265334
+  type: 'test'
+  ...
+# Subtest: CI actions are immutable and optional GitHub release remains passive
+ok 11 - CI actions are immutable and optional GitHub release remains passive
+  ---
+  duration_ms: 1.316333
+  type: 'test'
+  ...
+# Subtest: native provider configs deploy main and preserve same-origin routing
+ok 12 - native provider configs deploy main and preserve same-origin routing
+  ---
+  duration_ms: 1.486791
+  type: 'test'
+  ...
+# Subtest: release writer creates parent directories without leaking extra files
+ok 13 - release writer creates parent directories without leaking extra files
+  ---
+  duration_ms: 1.628834
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 74.8235
+/Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/node-release-scripts.tap: 13 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+
+> Verification command contract Node test suite
+TAP version 13
+# Subtest: verification entrypoints keep the explicit package-script contract
+ok 1 - verification entrypoints keep the explicit package-script contract
+  ---
+  duration_ms: 0.8725
+  type: 'test'
+  ...
+# Subtest: mise pnpm dispatcher maps only built-in command collisions
+ok 2 - mise pnpm dispatcher maps only built-in command collisions
+  ---
+  duration_ms: 0.18675
+  type: 'test'
+  ...
+# Subtest: development release metadata derives the root product version
+ok 3 - development release metadata derives the root product version
+  ---
+  duration_ms: 2.212208
+  type: 'test'
+  ...
+# Subtest: local development cannot inherit an absolute API origin or hosted credentials
+ok 4 - local development cannot inherit an absolute API origin or hosted credentials
+  ---
+  duration_ms: 0.26775
+  type: 'test'
+  ...
+# Subtest: PostgreSQL runners use the canonical compiled migration command
+ok 5 - PostgreSQL runners use the canonical compiled migration command
+  ---
+  duration_ms: 0.3705
+  type: 'test'
+  ...
+# Subtest: release builds compile workspace dependencies before clean-checkout consumers
+ok 6 - release builds compile workspace dependencies before clean-checkout consumers
+  ---
+  duration_ms: 0.049125
+  type: 'test'
+  ...
+# Subtest: relative CI evidence paths are anchored to the repository root
+ok 7 - relative CI evidence paths are anchored to the repository root
+  ---
+  duration_ms: 0.342
+  type: 'test'
+  ...
+# Subtest: production-like E2E replaces hosted CI SHA sources with its synthetic SHA
+ok 8 - production-like E2E replaces hosted CI SHA sources with its synthetic SHA
+  ---
+  duration_ms: 0.0715
+  type: 'test'
+  ...
+# Subtest: PGlite dev migration avoids pnpm's literal separator forwarding
+ok 9 - PGlite dev migration avoids pnpm's literal separator forwarding
+  ---
+  duration_ms: 0.075583
+  type: 'test'
+  ...
+# Subtest: verify:all lets Docker allocate an isolated loopback PostgreSQL port
+ok 10 - verify:all lets Docker allocate an isolated loopback PostgreSQL port
+  ---
+  duration_ms: 0.147208
+  type: 'test'
+  ...
+# Subtest: local PostgreSQL initialization matches the attested hosted role profile
+ok 11 - local PostgreSQL initialization matches the attested hosted role profile
+  ---
+  duration_ms: 0.139542
+  type: 'test'
+  ...
+# Subtest: local role policy target guard fails closed outside its two exact modes
+ok 12 - local role policy target guard fails closed outside its two exact modes
+  ---
+  duration_ms: 0.386958
+  type: 'test'
+  ...
+# Subtest: verify:all proves cleanup on success, failure and termination signals
+ok 13 - verify:all proves cleanup on success, failure and termination signals
+  ---
+  duration_ms: 0.151
+  type: 'test'
+  ...
+# Subtest: CI uploads only curated browser evidence and sanitized traces
+ok 14 - CI uploads only curated browser evidence and sanitized traces
+  ---
+  duration_ms: 0.07675
+  type: 'test'
+  ...
+# aggregate test summary/cleanup-foundation: 1 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+# aggregate test summary/quality: 1 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+# aggregate test summary/postgres: 1 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+# aggregate test summary/browser-prodlike: 1 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+# aggregate test summary: 4 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+# Subtest: verification report readers reject skipped and todo tests
+ok 15 - verification report readers reject skipped and todo tests
+  ---
+  duration_ms: 4.334792
+  type: 'test'
+  ...
+# Subtest: verify:all aggregate fails closed before printing success
+ok 16 - verify:all aggregate fails closed before printing success
+  ---
+  duration_ms: 0.569291
+  type: 'test'
+  ...
+# Subtest: prodlike artifact build overrides inherited test NODE_ENV
+ok 17 - prodlike artifact build overrides inherited test NODE_ENV
+  ---
+  duration_ms: 0.162708
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66.596083
+/Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/node-verify-scripts.tap: 17 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+
+> Sanitized Playwright trace Node test suite
+TAP version 13
+# Subtest: sanitized trace keeps a minimal timeline and removes credentials and payloads
+ok 1 - sanitized trace keeps a minimal timeline and removes credentials and payloads
+  ---
+  duration_ms: 43.264584
+  type: 'test'
+  ...
+# Subtest: sanitization fails closed and emits no directory when test.trace is absent
+ok 2 - sanitization fails closed and emits no directory when test.trace is absent
+  ---
+  duration_ms: 8.825167
+  type: 'test'
+  ...
+# Subtest: sanitized trace archives are byte-deterministic for identical input
+ok 3 - sanitized trace archives are byte-deterministic for identical input
+  ---
+  duration_ms: 41.061959
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 142.316084
+/Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/node-trace-sanitizer.tap: 3 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+
+> Release gate aggregation Node test suite
+TAP version 13
+# Subtest: release gate accepts exactly three successful verification lanes
+ok 1 - release gate accepts exactly three successful verification lanes
+  ---
+  duration_ms: 0.74125
+  type: 'test'
+  ...
+# Subtest: quality independently fails closed for failed, skipped and neutral
+ok 2 - quality independently fails closed for failed, skipped and neutral
+  ---
+  duration_ms: 0.139625
+  type: 'test'
+  ...
+# Subtest: postgres independently fails closed for failed, skipped and neutral
+ok 3 - postgres independently fails closed for failed, skipped and neutral
+  ---
+  duration_ms: 0.669334
+  type: 'test'
+  ...
+# Subtest: browser independently fails closed for failed, skipped and neutral
+ok 4 - browser independently fails closed for failed, skipped and neutral
+  ---
+  duration_ms: 0.083541
+  type: 'test'
+  ...
+# Subtest: release gate persists negative evidence before rejecting
+ok 5 - release gate persists negative evidence before rejecting
+  ---
+  duration_ms: 4.341375
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 55.250959
+/Users/liubavskii/.codex/worktrees/c870/tab10/docs/audit/evidence/stage3-final-regression/quality/node-release-gate.tap: 5 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted
+verify:fast tests: 1191 passed, 0 failed, 0 skipped, 0 todo, 0 interrupted

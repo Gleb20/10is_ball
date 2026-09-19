@@ -1,0 +1,11 @@
+{
+  "mode": "red",
+  "auditEphemeral": true,
+  "firstSessionBefore": 200,
+  "secondSessionBefore": 200,
+  "logoutPosts": 0,
+  "firstSessionAfter": 200,
+  "secondSessionAfter": 200,
+  "afterBackHeading": "Смена пароля",
+  "credentialsPersisted": false
+}

@@ -1,6 +1,6 @@
-import { useId } from "react";
+import { useId, useLayoutEffect, useRef } from "react";
 import type { BracketConstructionAlgorithm } from "@tab10/shared";
-import { Button, Dialog } from "../ui";
+import { Alert, Button, Dialog } from "../ui";
 import {
   BRACKET_ALGORITHM_DIALOG,
   BRACKET_ALGORITHM_OPTIONS,
@@ -15,6 +15,11 @@ export type BracketAlgorithmDialogProps = {
   onCancel: () => void;
   onConfirm: () => void;
   busy?: boolean;
+  error?: string | null;
+  errorTitle?: string;
+  errorRevision?: number;
+  retryBlocked?: boolean;
+  onCheckState?: () => void;
   showRegenWarning?: boolean;
 };
 
@@ -26,11 +31,21 @@ export function BracketAlgorithmDialog({
   onCancel,
   onConfirm,
   busy = false,
+  error = null,
+  errorTitle = "Состояние построения сетки",
+  errorRevision = 0,
+  retryBlocked = false,
+  onCheckState,
   showRegenWarning = false,
 }: BracketAlgorithmDialogProps) {
   const groupId = useId();
+  const errorFocusRef = useRef<HTMLDivElement>(null);
   void _format;
-  const canSubmit = !busy;
+  const canSubmit = !busy && !retryBlocked;
+
+  useLayoutEffect(() => {
+    if (open && error && errorRevision > 0) errorFocusRef.current?.focus();
+  }, [open, error, errorRevision]);
 
   return (
     <Dialog
@@ -78,7 +93,7 @@ export function BracketAlgorithmDialog({
                 name={`bracket-algo-${groupId}`}
                 value={key}
                 checked={checked}
-                disabled={busy}
+                disabled={busy || retryBlocked}
                 onChange={() => onSelect(key)}
               />
               <span className="bracket-algo-card__title">{opt.title}</span>
@@ -88,6 +103,12 @@ export function BracketAlgorithmDialog({
           );
         })}
       </div>
+      {error ? (
+        <div ref={errorFocusRef} tabIndex={-1} className="bracket-algo-dialog__error">
+          <Alert type="error" variant="tonal" title={errorTitle} description={error} />
+          {onCheckState ? <Button variant="secondary" disabled={busy} onClick={onCheckState}>Проверить состояние</Button> : null}
+        </div>
+      ) : null}
       <div className="row bracket-algo-dialog__actions">
         <Button variant="secondary" disabled={busy} onClick={onCancel}>{BRACKET_ALGORITHM_DIALOG.cancel}</Button>
         <Button disabled={!canSubmit} onClick={() => { if (canSubmit) onConfirm(); }}>{busy ? "…" : BRACKET_ALGORITHM_DIALOG.submit}</Button>

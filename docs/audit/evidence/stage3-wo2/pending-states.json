@@ -1,0 +1,19 @@
+[
+  {
+    "phase": "login",
+    "posts": 1,
+    "disabled": true,
+    "errorFocused": true
+  },
+  {
+    "phase": "first-password",
+    "logoutPosts": 1,
+    "savePosts": 0,
+    "disabled": true,
+    "errorFocused": true,
+    "retainedLengths": {
+      "newLength": 6,
+      "confirmLength": 6
+    }
+  }
+]

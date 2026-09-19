@@ -1,0 +1,423 @@
+{
+  "responseStatus": 200,
+  "playerPresent": true,
+  "selectionSucceeded": true,
+  "beforeOptions": {
+    "activeElement": {
+      "tag": "input",
+      "id": "_r_6_",
+      "role": "combobox",
+      "label": null
+    },
+    "input": {
+      "valueMatchesExpected": true,
+      "expanded": "true",
+      "controls": "_r_6_-listbox",
+      "rect": {
+        "x": 58.5,
+        "y": 776.390625,
+        "width": 249,
+        "height": 44
+      }
+    },
+    "listbox": {
+      "rect": {
+        "x": 57.5,
+        "y": 704.390625,
+        "width": 275,
+        "height": 52
+      },
+      "display": "flex",
+      "visibility": "visible"
+    },
+    "exactOptionCount": 1,
+    "option": {
+      "rect": {
+        "x": 57.5,
+        "y": 704.390625,
+        "width": 275,
+        "height": 52
+      },
+      "display": "flex",
+      "visibility": "visible"
+    },
+    "optionCenterHit": {
+      "tag": "li",
+      "id": "_r_6_-option-0",
+      "role": "option",
+      "label": null
+    },
+    "scroll": {
+      "x": 0,
+      "y": 888
+    },
+    "clippingAncestors": [
+      {
+        "element": {
+          "tag": "body",
+          "id": "",
+          "role": null,
+          "label": null
+        },
+        "overflow": "clip visible",
+        "overflowY": "visible",
+        "rect": {
+          "x": 0,
+          "y": -888,
+          "width": 390,
+          "height": 2062.78125
+        }
+      },
+      {
+        "element": {
+          "tag": "html",
+          "id": "",
+          "role": null,
+          "label": null
+        },
+        "overflow": "clip visible",
+        "overflowY": "visible",
+        "rect": {
+          "x": 0,
+          "y": -888,
+          "width": 390,
+          "height": 2062.78125
+        }
+      }
+    ],
+    "events": [
+      {
+        "at": 39.700000286102295,
+        "type": "focusin",
+        "target": {
+          "tag": "input",
+          "id": "_r_0_",
+          "role": null,
+          "label": null
+        },
+        "state": {
+          "inputConnected": true,
+          "inputActive": false,
+          "expanded": "false",
+          "inputRect": {
+            "x": 58.5,
+            "y": 974.390625,
+            "width": 273,
+            "height": 44
+          },
+          "listboxCount": 0,
+          "optionCount": 0,
+          "scrollX": 0,
+          "scrollY": 0
+        }
+      },
+      {
+        "at": 55.30000019073486,
+        "type": "focusout",
+        "target": {
+          "tag": "input",
+          "id": "_r_0_",
+          "role": null,
+          "label": null
+        },
+        "state": {
+          "inputConnected": true,
+          "inputActive": false,
+          "expanded": "false",
+          "inputRect": {
+            "x": 58.5,
+            "y": 1664.390625,
+            "width": 273,
+            "height": 44
+          },
+          "listboxCount": 0,
+          "optionCount": 0,
+          "scrollX": 0,
+          "scrollY": 0
+        }
+      },
+      {
+        "at": 55.5,
+        "type": "focusin",
+        "target": {
+          "tag": "input",
+          "id": "_r_6_",
+          "role": "combobox",
+          "label": null
+        },
+        "state": {
+          "inputConnected": true,
+          "inputActive": true,
+          "expanded": "false",
+          "inputRect": {
+            "x": 58.5,
+            "y": 1664.390625,
+            "width": 273,
+            "height": 44
+          },
+          "listboxCount": 0,
+          "optionCount": 0,
+          "scrollX": 0,
+          "scrollY": 0
+        }
+      },
+      {
+        "at": 58.700000286102295,
+        "type": "scroll",
+        "target": {
+          "tag": "document"
+        },
+        "state": {
+          "inputConnected": true,
+          "inputActive": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 58.5,
+            "y": 776.390625,
+            "width": 249,
+            "height": 44
+          },
+          "listboxCount": 1,
+          "optionCount": 1,
+          "scrollX": 0,
+          "scrollY": 888
+        }
+      },
+      {
+        "at": 58.700000286102295,
+        "type": "scroll",
+        "target": {
+          "tag": "input",
+          "id": "_r_6_",
+          "role": "combobox",
+          "label": null
+        },
+        "state": {
+          "inputConnected": true,
+          "inputActive": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 58.5,
+            "y": 776.390625,
+            "width": 249,
+            "height": 44
+          },
+          "listboxCount": 1,
+          "optionCount": 1,
+          "scrollX": 0,
+          "scrollY": 888
+        }
+      }
+    ]
+  },
+  "afterOptions": {
+    "activeElement": {
+      "tag": "input",
+      "id": "_r_6_",
+      "role": "combobox",
+      "label": null
+    },
+    "input": {
+      "valueMatchesExpected": true,
+      "expanded": "false",
+      "controls": "_r_6_-listbox",
+      "rect": {
+        "x": 58.5,
+        "y": 776.390625,
+        "width": 249,
+        "height": 44
+      }
+    },
+    "listbox": null,
+    "exactOptionCount": 0,
+    "option": null,
+    "optionCenterHit": null,
+    "scroll": {
+      "x": 0,
+      "y": 888
+    },
+    "clippingAncestors": [
+      {
+        "element": {
+          "tag": "body",
+          "id": "",
+          "role": null,
+          "label": null
+        },
+        "overflow": "clip visible",
+        "overflowY": "visible",
+        "rect": {
+          "x": 0,
+          "y": -888,
+          "width": 390,
+          "height": 2062.78125
+        }
+      },
+      {
+        "element": {
+          "tag": "html",
+          "id": "",
+          "role": null,
+          "label": null
+        },
+        "overflow": "clip visible",
+        "overflowY": "visible",
+        "rect": {
+          "x": 0,
+          "y": -888,
+          "width": 390,
+          "height": 2062.78125
+        }
+      }
+    ],
+    "events": [
+      {
+        "at": 39.700000286102295,
+        "type": "focusin",
+        "target": {
+          "tag": "input",
+          "id": "_r_0_",
+          "role": null,
+          "label": null
+        },
+        "state": {
+          "inputConnected": true,
+          "inputActive": false,
+          "expanded": "false",
+          "inputRect": {
+            "x": 58.5,
+            "y": 974.390625,
+            "width": 273,
+            "height": 44
+          },
+          "listboxCount": 0,
+          "optionCount": 0,
+          "scrollX": 0,
+          "scrollY": 0
+        }
+      },
+      {
+        "at": 55.30000019073486,
+        "type": "focusout",
+        "target": {
+          "tag": "input",
+          "id": "_r_0_",
+          "role": null,
+          "label": null
+        },
+        "state": {
+          "inputConnected": true,
+          "inputActive": false,
+          "expanded": "false",
+          "inputRect": {
+            "x": 58.5,
+            "y": 1664.390625,
+            "width": 273,
+            "height": 44
+          },
+          "listboxCount": 0,
+          "optionCount": 0,
+          "scrollX": 0,
+          "scrollY": 0
+        }
+      },
+      {
+        "at": 55.5,
+        "type": "focusin",
+        "target": {
+          "tag": "input",
+          "id": "_r_6_",
+          "role": "combobox",
+          "label": null
+        },
+        "state": {
+          "inputConnected": true,
+          "inputActive": true,
+          "expanded": "false",
+          "inputRect": {
+            "x": 58.5,
+            "y": 1664.390625,
+            "width": 273,
+            "height": 44
+          },
+          "listboxCount": 0,
+          "optionCount": 0,
+          "scrollX": 0,
+          "scrollY": 0
+        }
+      },
+      {
+        "at": 58.700000286102295,
+        "type": "scroll",
+        "target": {
+          "tag": "document"
+        },
+        "state": {
+          "inputConnected": true,
+          "inputActive": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 58.5,
+            "y": 776.390625,
+            "width": 249,
+            "height": 44
+          },
+          "listboxCount": 1,
+          "optionCount": 1,
+          "scrollX": 0,
+          "scrollY": 888
+        }
+      },
+      {
+        "at": 58.700000286102295,
+        "type": "scroll",
+        "target": {
+          "tag": "input",
+          "id": "_r_6_",
+          "role": "combobox",
+          "label": null
+        },
+        "state": {
+          "inputConnected": true,
+          "inputActive": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 58.5,
+            "y": 776.390625,
+            "width": 249,
+            "height": 44
+          },
+          "listboxCount": 1,
+          "optionCount": 1,
+          "scrollX": 0,
+          "scrollY": 888
+        }
+      },
+      {
+        "at": 109.30000019073486,
+        "type": "mousedown",
+        "target": {
+          "tag": "li",
+          "id": "_r_6_-option-0",
+          "role": "option",
+          "label": null
+        },
+        "state": {
+          "inputConnected": true,
+          "inputActive": true,
+          "expanded": "true",
+          "inputRect": {
+            "x": 58.5,
+            "y": 776.390625,
+            "width": 249,
+            "height": 44
+          },
+          "listboxCount": 1,
+          "optionCount": 1,
+          "scrollX": 0,
+          "scrollY": 888
+        }
+      }
+    ]
+  }
+}

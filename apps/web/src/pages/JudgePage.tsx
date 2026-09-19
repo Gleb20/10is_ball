@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
   type KeyboardEvent,
@@ -85,6 +86,12 @@ function isTerminalMatchStatus(status: unknown): boolean {
   return ["finished", "stopped", "cancelled", "voided"].includes(String(status));
 }
 
+function isDefinitiveSetupRejection(error: unknown): boolean {
+  const response = error as ApiError;
+  return Boolean(response.code && response.status && response.status >= 400 &&
+    response.status < 500 && response.status !== 408 && response.status !== 429);
+}
+
 function activeJudgeCanStart(match: MatchState): boolean {
   const activeJudgeUserId = String(
     (match.activeJudge as { userId?: unknown } | null)?.userId ?? "",
@@ -111,6 +118,8 @@ function ServeBadge({ active }: { active: boolean }) {
 
 export function JudgePage() {
   const { id } = useParams();
+  const currentMatchIdRef = useRef(id);
+  currentMatchIdRef.current = id;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const readonlyMode = searchParams.get("mode") === "readonly";
@@ -144,7 +153,13 @@ export function JudgePage() {
   const [swapSides, setSwapSides] = useState(false);
   const [setupPending, setSetupPending] = useState(false);
   const setupPendingRef = useRef(false);
+  const [setupUnknown, setSetupUnknown] = useState(false);
+  const setupUnknownRef = useRef(false);
+  const confirmedStartRef = useRef<MatchState | null>(null);
   const [directoryUsers, setDirectoryUsers] = useState<Array<{ id: string; displayName: string }>>([]);
+  const [directoryState, setDirectoryState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [directoryRequestVersion, setDirectoryRequestVersion] = useState(0);
+  const [focusHandoverAfterRetry, setFocusHandoverAfterRetry] = useState(false);
   const [handoverUserId, setHandoverUserId] = useState("");
   const [handoverPending, setHandoverPending] = useState(false);
   const [correctionOpen, setCorrectionOpen] = useState(false);
@@ -152,6 +167,8 @@ export function JudgePage() {
   const [correctionScoreB, setCorrectionScoreB] = useState(0);
   const [correctionServerId, setCorrectionServerId] = useState("");
   const [correctionPending, setCorrectionPending] = useState(false);
+  const correctionScoreAId = useId();
+  const correctionScoreBId = useId();
   const [terminalPending, setTerminalPending] = useState(false);
 
   const updateMatch = useCallback((nextMatch: MatchState) => {
@@ -161,9 +178,20 @@ export function JudgePage() {
 
   const load = useCallback(async () => {
     const res = await api.getMatch(id!);
-    updateMatch(res.match as MatchState);
-    return res.match as MatchState;
+    const fresh = res.match as MatchState;
+    const confirmed = confirmedStartRef.current;
+    if (confirmed && confirmed.id === id && fresh.status === "waiting") return confirmed;
+    updateMatch(fresh);
+    return fresh;
   }, [id, updateMatch]);
+
+  useEffect(() => {
+    confirmedStartRef.current = null;
+    setupUnknownRef.current = false;
+    setSetupUnknown(false);
+    setupPendingRef.current = false;
+    setSetupPending(false);
+  }, [id]);
 
   const exitAfterJudge = useCallback(
     (m: MatchState | null, notice?: JudgeExitNotice, destination?: "/") => {
@@ -310,16 +338,29 @@ export function JudgePage() {
   }, [initJudge]);
 
   useEffect(() => {
-    if (!menuOpen || readonlyMode || directoryUsers.length > 0) return;
+    if (!menuOpen || readonlyMode || directoryState === "ready" || directoryState === "error") return;
+    let current = true;
+    setDirectoryState("loading");
     void api.directory().then((result) => {
+      if (!current) return;
       setDirectoryUsers(
         (result.users as Array<{ id: string; displayName?: string; firstName?: string; lastName?: string }>).map((candidate) => ({
           id: candidate.id,
           displayName: candidate.displayName ?? `${candidate.lastName ?? ""} ${candidate.firstName ?? ""}`.trim(),
         })),
       );
-    }).catch((reason) => setError(`Не удалось загрузить пользователей: ${(reason as Error).message}`));
-  }, [directoryUsers.length, menuOpen, readonlyMode]);
+      setDirectoryState("ready");
+    }).catch(() => {
+      if (current) setDirectoryState("error");
+    });
+    return () => { current = false; };
+  }, [directoryRequestVersion, menuOpen, readonlyMode]);
+
+  useEffect(() => {
+    if (!focusHandoverAfterRetry || (directoryState !== "ready" && directoryState !== "error")) return;
+    if (document.activeElement === document.body) document.getElementById(directoryState === "ready" ? "judge-handover-user" : "judge-handover-retry")?.focus();
+    setFocusHandoverAfterRetry(false);
+  }, [directoryState, focusHandoverAfterRetry]);
 
   useEffect(() => {
     const onVisibilityChange = () =>
@@ -386,56 +427,68 @@ export function JudgePage() {
   }
 
   function pickServerForSide(side: "A" | "B", preview: JudgeMatchLike) {
+    if (setupPendingRef.current || setupUnknownRef.current) return;
     const p = (preview.participants ?? []).find((x) => x.side === side);
     if (p) setFirstServerId(p.id);
   }
 
   async function confirmSetup() {
-    if (!id || !match || setupPendingRef.current) return;
+    if (!id || !match || setupPendingRef.current || setupUnknownRef.current) return;
     const method = String(match.firstServerMethod ?? "manual");
     if (method !== "random" && !firstServerId) return;
+    const requestedId = id;
+    const attempt = { firstServerParticipantId: firstServerId, swapSides };
     setupPendingRef.current = true;
     setSetupPending(true);
     setError(null);
     try {
       if (match.status === "waiting" && !activeJudgeCanStart(match)) {
         if (method !== "random") {
-          const result = await api.judgeSetup(id, {
-            firstServerParticipantId: firstServerId,
-            swapSides,
-          });
+          const result = await api.judgeSetup(id, attempt);
+          if (currentMatchIdRef.current !== requestedId) return;
           updateMatch(result.match as MatchState);
         }
         setPhase("waiting_start");
         return;
       }
-      let started = match;
-      if (match?.status === "waiting") {
+      let started = confirmedStartRef.current ?? match;
+      if (started.status === "waiting") {
         const startResult = await api.startMatch(
           id,
-          method === "random" ? {} : { firstServerParticipantId: firstServerId },
+          method === "random" ? {} : { firstServerParticipantId: attempt.firstServerParticipantId },
         );
+        if (currentMatchIdRef.current !== requestedId) return;
         started = startResult.match as MatchState;
+        confirmedStartRef.current = started;
+        updateMatch(started);
       }
       const selectedServer = method === "random"
         ? String(started.currentServerParticipantId ?? "")
-        : firstServerId;
+        : attempt.firstServerParticipantId;
       if (!selectedServer) throw new Error("Не удалось определить первую подачу");
       const res = await api.judgeSetup(id, {
         firstServerParticipantId: selectedServer,
-        swapSides,
+        swapSides: attempt.swapSides,
       });
+      if (currentMatchIdRef.current !== requestedId) return;
       updateMatch(res.match as MatchState);
       setPhase("scoring");
     } catch (e) {
+      if (currentMatchIdRef.current !== requestedId) return;
       if (isLostJudgeError(e)) {
         await loseJudgeLock(e);
+      } else if (!isDefinitiveSetupRejection(e)) {
+        setupUnknownRef.current = true;
+        setSetupUnknown(true);
+        setError("Исход подготовки неизвестен. Не отправляйте её повторно: проверьте состояние матча перед продолжением.");
       } else {
         setError((e as Error).message);
       }
     } finally {
-      setupPendingRef.current = false;
-      setSetupPending(false);
+      if (currentMatchIdRef.current === requestedId) {
+        setupPendingRef.current = false;
+        setSetupPending(false);
+      }
     }
   }
 
@@ -798,6 +851,7 @@ export function JudgePage() {
 
   const isSetup = phase === "setup" || phase === "waiting_start";
   const awaitingCreator = phase === "waiting_start";
+  const setupInputLocked = setupPending || setupUnknown;
   const lostLock = phase === "lost_lock";
   const locked =
     lostLock ||
@@ -851,14 +905,15 @@ export function JudgePage() {
           .join(" ")}
         data-testid={`judge-side-${side}`}
         role={isSetup && !awaitingCreator ? "button" : undefined}
-        tabIndex={isSetup && !awaitingCreator ? 0 : undefined}
+        tabIndex={isSetup && !awaitingCreator ? setupInputLocked ? -1 : 0 : undefined}
+        aria-disabled={isSetup && !awaitingCreator ? setupInputLocked : undefined}
         onClick={
-          isSetup && !awaitingCreator
+          isSetup && !awaitingCreator && !setupInputLocked
             ? () => pickServerForSide(side, boardMatch)
             : undefined
         }
         onKeyDown={
-          isSetup && !awaitingCreator
+          isSetup && !awaitingCreator && !setupInputLocked
             ? (e: KeyboardEvent) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
@@ -964,7 +1019,7 @@ export function JudgePage() {
               variant="secondary"
               className="judge-touch"
               onClick={() => void releaseAndExit()}
-              disabled={exitPending || setupPending}
+            disabled={exitPending || setupPending}
             >
               {exitPending ? "Выходим…" : "Отмена"}
             </Button>
@@ -1041,7 +1096,7 @@ export function JudgePage() {
                 : "Выберите, кто подаёт первым. ↔ меняет стороны стола."}
           </p>}
           {!awaitingCreator && match.firstServerMethod !== "random" ? (
-            <fieldset className="judge-server-picker">
+            <fieldset className="judge-server-picker" disabled={setupPending || setupUnknown}>
               <legend>Первая подача</legend>
               {((boardMatch.participants ?? []) as JudgeParticipant[]).map((participant) => (
                 <label key={participant.id}>
@@ -1049,7 +1104,7 @@ export function JudgePage() {
                     type="radio"
                     name="first-server"
                     checked={firstServerId === participant.id}
-                    onChange={() => setFirstServerId(participant.id)}
+                    onChange={() => { if (!setupPendingRef.current && !setupUnknownRef.current) setFirstServerId(participant.id); }}
                   />
                   {participantDisplayName(participant)} · сторона {participant.side}
                 </label>
@@ -1090,11 +1145,14 @@ export function JudgePage() {
           >
             Исправить счёт и подачу
           </Button>
-          <div className="judge-handover stack">
+          <div className="judge-handover stack" aria-busy={directoryState === "loading"}>
             <label htmlFor="judge-handover-user">Передать судейство</label>
             <select
               id="judge-handover-user"
               value={handoverUserId}
+              disabled={directoryState !== "ready"}
+              aria-busy={directoryState === "loading"}
+              aria-describedby={directoryState === "error" ? "judge-handover-error" : undefined}
               onChange={(event) => setHandoverUserId(event.target.value)}
             >
               <option value="">Выберите пользователя</option>
@@ -1102,10 +1160,22 @@ export function JudgePage() {
                 <option key={candidate.id} value={candidate.id}>{candidate.displayName}</option>
               ))}
             </select>
+            {directoryState === "loading" ? <p role="status" aria-live="polite">Загружаем пользователей…</p> : null}
+            {directoryState === "ready" && directoryUsers.length === 0 ? <p role="status" aria-live="polite">Некому передать</p> : null}
+            {directoryState === "error" ? (
+              <>
+                <p id="judge-handover-error" role="alert">Не удалось загрузить пользователей</p>
+                <Button id="judge-handover-retry" variant="secondary" type="button" onClick={() => {
+                  setFocusHandoverAfterRetry(true);
+                  setDirectoryState("loading");
+                  setDirectoryRequestVersion((version) => version + 1);
+                }}>Повторить загрузку пользователей</Button>
+              </>
+            ) : null}
             <Button
               variant="secondary"
               className="judge-touch"
-              disabled={!handoverUserId || handoverPending || correctionOpen || correctionPending}
+              disabled={directoryState !== "ready" || !handoverUserId || handoverPending || correctionOpen || correctionPending}
               onClick={() => void submitHandover()}
             >
               {handoverPending ? "Передаём…" : "Передать слот"}
@@ -1158,15 +1228,17 @@ export function JudgePage() {
         <section className="judge-correction stack" aria-label="Ручная коррекция">
           <h2>Ручная коррекция</h2>
           <p>Изменение фиксируется как техническое событие и не становится игровым очком.</p>
+          <label className="judge-correction__label" htmlFor={correctionScoreAId}>Счёт стороны A</label>
           <TextField
-            label="Счёт стороны A"
+            id={correctionScoreAId}
             type="number"
             min={0}
             value={String(correctionScoreA)}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCorrectionScoreA(Number(event.target.value))}
           />
+          <label className="judge-correction__label" htmlFor={correctionScoreBId}>Счёт стороны B</label>
           <TextField
-            label="Счёт стороны B"
+            id={correctionScoreBId}
             type="number"
             min={0}
             value={String(correctionScoreB)}
@@ -1210,7 +1282,8 @@ export function JudgePage() {
             variant="secondary"
             className="judge-touch judge-setup__swap-btn"
             aria-label="Поменять стороны"
-            onClick={() => setSwapSides((v) => !v)}
+            disabled={setupPending || setupUnknown}
+            onClick={() => { if (!setupPendingRef.current && !setupUnknownRef.current) setSwapSides((v) => !v); }}
           >
             ↔
           </Button>
@@ -1224,6 +1297,7 @@ export function JudgePage() {
             className="judge-touch"
             disabled={
               setupPending ||
+              setupUnknown ||
               awaitingCreator ||
               (match.firstServerMethod !== "random" && !firstServerId)
             }

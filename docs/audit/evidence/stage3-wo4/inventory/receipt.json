@@ -1,0 +1,21 @@
+{
+  "status": "preliminary_inventory_target_only",
+  "baseWo3R2ManifestSha256": "54860798d7c0744a838e7d1b299a2f44ea34f03c7e6176f7663afe51adc030fd",
+  "frozenEntriesChecked": 124,
+  "frozenMissing": [],
+  "frozenMismatches": [],
+  "runtimeCases": 28,
+  "runtimeAllMarkersVisible": true,
+  "runtimePageErrors": 0,
+  "runtimeUnknownRequests": 0,
+  "runtimeHorizontalOverflowCases": 0,
+  "screenshots": 47,
+  "brokenReportLinks": [],
+  "files": {
+    "runtime.json": "794fbc6e7ff8ba9d0e39c99e85304971869fd11292673fa4b6ffd141ff853b8f",
+    "chip-contract.json": "528faa57ec287de92a11ced91b8f5a9097079def5019729e57d2c5d699fc337b",
+    "inventory-target.md": "5c4e5ff58adb408108e0a7b6b56476c548c8e633f189db9797e646e19abbbb62",
+    "status-chip-target.svg": "3b447d72fc89d40a81aca5b9adb154722f1cbdcd6f4f5f29956f010331476e7e",
+    "inventory-script": "bc98f54dc28d34c0d27653c9941d0b693f28f6d3b8845e11f31a01a1e051963b"
+  }
+}

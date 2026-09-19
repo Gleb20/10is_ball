@@ -8614,12 +8614,16 @@ function l2({
   activeIndex: e = -1,
   onSelect: t,
   footer: s,
-  id: o
+  id: o,
+  disabled: u,
+  menuStyle: p,
+  listStyle: m
 }) {
-  return /* @__PURE__ */ H("div", { className: L.menu, "data-name": "menu", children: [
-    /* @__PURE__ */ l("div", { className: L.menuBody, children: /* @__PURE__ */ l("ul", { className: L.menuList, role: "listbox", id: o, children: C.map((n, a) => /* @__PURE__ */ l(
+  return /* @__PURE__ */ H("div", { className: L.menu, style: p, "data-name": "menu", children: [
+    /* @__PURE__ */ l("div", { className: L.menuBody, children: /* @__PURE__ */ l("ul", { className: L.menuList, style: m, role: "listbox", id: o, children: C.map((n, a) => /* @__PURE__ */ l(
       "li",
       {
+        id: o ? `${o.replace(/-listbox$/, "")}-option-${a}` : void 0,
         role: "option",
         "aria-selected": n.value === i,
         "data-selected": n.value === i ? "true" : void 0,
@@ -8628,7 +8632,7 @@ function l2({
         className: L.menuItem,
         onMouseDown: (g) => g.preventDefault(),
         onClick: () => {
-          n.disabled || t(n);
+          n.disabled || u || t(n);
         },
         children: n.label
       },
@@ -8641,6 +8645,7 @@ function I1(C) {
   const [i, e] = G(!1), t = r1(null), s = Y(() => e(!1), []), o = Y(() => {
     C || e((n) => !n);
   }, [C]);
+  m1(() => { C && e(!1); }, [C]);
   return m1(() => {
     if (!i) return;
     const n = (g) => {
@@ -8803,9 +8808,12 @@ function h$({
   menuFooter: D,
   clearable: E = !0
 }) {
-  const { fieldId: j, labelId: X, helperId: q } = M1(f), { open: I, setOpen: R, close: Z, rootRef: S } = I1(d || v), [u, W] = G(c ?? ""), [p, M] = G(y), [z, O] = G(-1), s1 = _ !== void 0, d1 = V !== void 0, A = s1 ? _ : u, Q = d1 ? V : p, x = k1(() => {
-    const T = Q.trim().toLowerCase();
-    return T ? N.filter((i1) => i1.label.toLowerCase().includes(T)) : N;
+  const { fieldId: j, labelId: X, helperId: q } = M1(f), { open: I, setOpen: R, close: Z, rootRef: S } = I1(d || v), [u, W] = G(c ?? ""), [p, M] = G(y), [z, O] = G(-1), [placement, setPlacement] = G({ side: "down", available: 240, offset: 0 }), s1 = _ !== void 0, d1 = V !== void 0, A = s1 ? _ : u, Q = d1 ? V : p, x = k1(() => {
+    const T = Q.normalize("NFC").trim().toLocaleLowerCase().split(/\s+/u).filter(Boolean);
+    return T.length ? N.filter((i1) => {
+      const r = i1.label.normalize("NFC").toLocaleLowerCase();
+      return T.every((token) => r.includes(token));
+    }) : N;
   }, [Q, N]), F = Y(
     (T) => {
       s1 || W(T), P == null || P(T);
@@ -8828,14 +8836,94 @@ function h$({
     b(i1), R(!0), O(-1), B && F(i1);
   }, i2 = (T) => {
     if (!(d || v)) {
-      if ((T.key === "ArrowDown" || T.key === "ArrowUp") && (T.preventDefault(), I || R(!0)), T.key === "ArrowDown" && O((i1) => Math.min(i1 + 1, x.length - 1)), T.key === "ArrowUp" && O((i1) => Math.max(i1 - 1, 0)), T.key === "Enter" && z >= 0) {
+      if ((T.key === "ArrowDown" || T.key === "ArrowUp") && (T.preventDefault(), I || R(!0)), T.key === "ArrowDown" && O((i1) => Math.min(i1 + 1, x.length - 1)), T.key === "ArrowUp" && O((i1) => Math.max(i1 - 1, 0)), T.key === "Enter" && I && z >= 0) {
         T.preventDefault();
         const i1 = x[z];
         i1 && !i1.disabled && J(i1);
       }
-      T.key === "Escape" && Z();
+      T.key === "Escape" && (Z(), O(-1));
     }
   };
+  m1(() => {
+    if (!I) return;
+    const measure = () => {
+      const input = S.current?.querySelector('[role="combobox"]'), root = S.current?.parentElement;
+      if (!input || !root) return;
+      const inputRect = input.getBoundingClientRect(), rootRect = root.getBoundingClientRect(), viewport = window.visualViewport;
+      if (inputRect.width === 0 && inputRect.height === 0) return;
+      const probe = document.createElement("div");
+      probe.style.position = "fixed";
+      probe.style.visibility = "hidden";
+      probe.style.paddingBottom = "env(safe-area-inset-bottom)";
+      document.body.appendChild(probe);
+      const safeBottom = parseFloat(getComputedStyle(probe).paddingBottom) || 0;
+      probe.remove();
+      const visualTop = viewport?.offsetTop ?? 0, visualBottom = visualTop + (viewport?.height ?? window.innerHeight) - safeBottom;
+      let clipTop = visualTop, clipBottom = visualBottom, scrollContainer;
+      for (let ancestor = root.parentElement; ancestor; ancestor = ancestor.parentElement) {
+        const overflow = getComputedStyle(ancestor).overflowY;
+        if (!/(auto|scroll|hidden|clip)/.test(overflow)) continue;
+        const rect = ancestor.getBoundingClientRect();
+        clipTop = Math.max(clipTop, rect.top);
+        clipBottom = Math.min(clipBottom, rect.bottom);
+        if (!scrollContainer && /(auto|scroll)/.test(overflow) && ancestor.scrollHeight > ancestor.clientHeight) scrollContainer = ancestor;
+      }
+      return { inputRect, rootRect, visualTop, visualBottom, clipTop, clipBottom, scrollContainer };
+    };
+    const update = (event) => {
+      let geometry = measure();
+      if (!geometry) return;
+      const outside = () => geometry.inputRect.bottom > geometry.clipBottom - 12 || geometry.inputRect.top < geometry.clipTop + 12;
+      if (outside()) {
+        if (event?.type === "scroll") { Z(); return; }
+        const delta = geometry.inputRect.bottom > geometry.clipBottom - 12
+          ? geometry.inputRect.bottom - geometry.clipBottom + 24
+          : geometry.inputRect.top - geometry.clipTop - 24;
+        (geometry.scrollContainer ?? window).scrollBy(0, delta);
+        geometry = measure();
+        if (!geometry || outside()) { Z(); return; }
+      }
+      const { inputRect, rootRect, visualTop, visualBottom, clipTop, clipBottom } = geometry;
+      const below = clipBottom - inputRect.bottom - 8, above = inputRect.top - clipTop - 8;
+      let side, available, offset, left = 0, width = 0;
+      if (Math.max(below, above) < 60) {
+        const viewportBelow = visualBottom - inputRect.bottom - 8, viewportAbove = inputRect.top - visualTop - 8;
+        if (Math.max(viewportBelow, viewportAbove) < 60) { Z(); return; }
+        side = viewportBelow >= viewportAbove ? "fixed-down" : "fixed-up";
+        available = side === "fixed-down" ? viewportBelow : viewportAbove;
+        offset = Math.round(side === "fixed-down" ? inputRect.bottom + 8 : window.innerHeight - inputRect.top + 8);
+        width = Math.min(rootRect.width, (window.visualViewport?.width ?? window.innerWidth) - 16);
+        left = Math.max(8, Math.min(rootRect.left, window.innerWidth - width - 8));
+      } else {
+        side = below < 264 && above > below ? "up" : "down";
+        available = side === "up" ? above : below;
+        offset = Math.round(side === "up" ? rootRect.bottom - inputRect.top + 8 : inputRect.bottom - rootRect.top + 8);
+      }
+      setPlacement((old) => old.side === side && old.available === available && old.offset === offset && old.left === left && old.width === width ? old : { side, available, offset, left, width });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    window.visualViewport?.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("scroll", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+      window.visualViewport?.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("scroll", update);
+    };
+  }, [I, S, Z, x.length]);
+  m1(() => {
+    if (!I || z < 0) return;
+    const list = document.getElementById(`${j}-listbox`), option = document.getElementById(`${j}-option-${z}`);
+    if (!list || !option) return;
+    const listRect = list.getBoundingClientRect(), optionRect = option.getBoundingClientRect();
+    if (optionRect.bottom > listRect.bottom) list.scrollTop += optionRect.bottom - listRect.bottom;
+    else if (optionRect.top < listRect.top) list.scrollTop -= listRect.top - optionRect.top;
+  }, [I, j, placement, x.length, z]);
+  const menuStyle = placement.side === "fixed-up" ? { position: "fixed", top: "auto", bottom: placement.offset, left: placement.left, right: "auto", width: placement.width }
+    : placement.side === "fixed-down" ? { position: "fixed", top: placement.offset, bottom: "auto", left: placement.left, right: "auto", width: placement.width }
+    : placement.side === "up" ? { top: "auto", bottom: placement.offset } : { top: placement.offset, bottom: "auto" };
   return /* @__PURE__ */ H(
     y1,
     {
@@ -8885,12 +8973,13 @@ function h$({
                 "aria-autocomplete": "list",
                 "aria-expanded": I,
                 "aria-controls": `${j}-listbox`,
-                "aria-activedescendant": z >= 0 ? `${j}-option-${z}` : void 0,
+                "aria-activedescendant": I && z >= 0 && z < x.length ? `${j}-option-${z}` : void 0,
                 "aria-labelledby": C ? X : void 0,
                 "aria-describedby": t ? q : void 0,
                 "aria-invalid": s || void 0,
                 onChange: f1,
                 onFocus: () => !d && !v && R(!0),
+                onBlur: () => { Z(); O(-1); },
                 onKeyDown: i2
               }
             )
@@ -8903,10 +8992,20 @@ function h$({
             options: x,
             value: A,
             activeIndex: z,
+            disabled: d || v,
+            menuStyle,
+            listStyle: { maxHeight: Math.min(240, Math.max(36, placement.available - 24)) },
             onSelect: J,
             footer: D
           }
-        ) : null
+        ) : I && Q.trim() ? /* @__PURE__ */ l(l2, {
+          id: `${j}-listbox`,
+          options: [],
+          value: A,
+          onSelect: J,
+          menuStyle,
+          footer: /* @__PURE__ */ l("div", { role: "status", "aria-live": "polite", "aria-atomic": "true", children: "Ничего не найдено. Проверьте написание имени." })
+        }) : null
       ]
     }
   );

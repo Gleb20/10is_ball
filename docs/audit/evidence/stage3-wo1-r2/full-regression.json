@@ -1,0 +1,305 @@
+{
+  "rows": [
+    {
+      "mode": "page",
+      "viewport": {
+        "width": 360,
+        "height": 844
+      },
+      "active": {
+        "input": {
+          "x": 29,
+          "y": 737,
+          "width": 278,
+          "height": 44,
+          "top": 737,
+          "right": 307,
+          "bottom": 781,
+          "left": 29
+        },
+        "option": {
+          "x": 28,
+          "y": 681,
+          "width": 304,
+          "height": 36,
+          "top": 681,
+          "right": 332,
+          "bottom": 717,
+          "left": 28
+        },
+        "optionId": "r2-full-picker-option-19",
+        "clipped": false,
+        "onScreen": true,
+        "focusRetained": true,
+        "listScrollTop": 632
+      },
+      "selectedId": "u20",
+      "focusAfterEnter": true,
+      "empty": {
+        "listboxExists": true,
+        "activeIdref": null,
+        "statusText": "Ничего не найдено. Проверьте написание имени.",
+        "statusOnScreen": true
+      },
+      "expandedAfterManualScroll": "false"
+    },
+    {
+      "mode": "page",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "active": {
+        "input": {
+          "x": 29,
+          "y": 737,
+          "width": 308,
+          "height": 44,
+          "top": 737,
+          "right": 337,
+          "bottom": 781,
+          "left": 29
+        },
+        "option": {
+          "x": 28,
+          "y": 681,
+          "width": 334,
+          "height": 36,
+          "top": 681,
+          "right": 362,
+          "bottom": 717,
+          "left": 28
+        },
+        "optionId": "r2-full-picker-option-19",
+        "clipped": false,
+        "onScreen": true,
+        "focusRetained": true,
+        "listScrollTop": 632
+      },
+      "selectedId": "u20",
+      "focusAfterEnter": true,
+      "empty": {
+        "listboxExists": true,
+        "activeIdref": null,
+        "statusText": "Ничего не найдено. Проверьте написание имени.",
+        "statusOnScreen": true
+      },
+      "expandedAfterManualScroll": "false"
+    },
+    {
+      "mode": "page",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "active": {
+        "input": {
+          "x": 29,
+          "y": 737,
+          "width": 1198,
+          "height": 44,
+          "top": 737,
+          "right": 1227,
+          "bottom": 781,
+          "left": 29
+        },
+        "option": {
+          "x": 28,
+          "y": 681,
+          "width": 1224,
+          "height": 36,
+          "top": 681,
+          "right": 1252,
+          "bottom": 717,
+          "left": 28
+        },
+        "optionId": "r2-full-picker-option-19",
+        "clipped": false,
+        "onScreen": true,
+        "focusRetained": true,
+        "listScrollTop": 632
+      },
+      "selectedId": "u20",
+      "focusAfterEnter": true,
+      "empty": {
+        "listboxExists": true,
+        "activeIdref": null,
+        "statusText": "Ничего не найдено. Проверьте написание имени.",
+        "statusOnScreen": true
+      },
+      "expandedAfterManualScroll": "false"
+    },
+    {
+      "mode": "page",
+      "viewport": {
+        "width": 390,
+        "height": 500
+      },
+      "active": {
+        "input": {
+          "x": 29,
+          "y": 432,
+          "width": 308,
+          "height": 44,
+          "top": 432,
+          "right": 337,
+          "bottom": 476,
+          "left": 29
+        },
+        "option": {
+          "x": 28,
+          "y": 376,
+          "width": 334,
+          "height": 36,
+          "top": 376,
+          "right": 362,
+          "bottom": 412,
+          "left": 28
+        },
+        "optionId": "r2-full-picker-option-19",
+        "clipped": false,
+        "onScreen": true,
+        "focusRetained": true,
+        "listScrollTop": 632
+      },
+      "selectedId": "u20",
+      "focusAfterEnter": true,
+      "empty": {
+        "listboxExists": true,
+        "activeIdref": null,
+        "statusText": "Ничего не найдено. Проверьте написание имени.",
+        "statusOnScreen": true
+      },
+      "expandedAfterManualScroll": "false"
+    },
+    {
+      "mode": "dialog",
+      "viewport": {
+        "width": 360,
+        "height": 844
+      },
+      "active": {
+        "input": {
+          "x": 54,
+          "y": 591,
+          "width": 228,
+          "height": 44,
+          "top": 591,
+          "right": 282,
+          "bottom": 635,
+          "left": 54
+        },
+        "option": {
+          "x": 53,
+          "y": 535,
+          "width": 254,
+          "height": 36,
+          "top": 535,
+          "right": 307,
+          "bottom": 571,
+          "left": 53
+        },
+        "optionId": "r2-full-picker-option-19",
+        "clipped": false,
+        "onScreen": true,
+        "focusRetained": true,
+        "listScrollTop": 632
+      },
+      "selectedId": "u20",
+      "focusAfterEnter": true,
+      "empty": {
+        "listboxExists": true,
+        "activeIdref": null,
+        "statusText": "Ничего не найдено. Проверьте написание имени.",
+        "statusOnScreen": true
+      },
+      "expandedAfterManualScroll": "false"
+    },
+    {
+      "mode": "dialog",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "active": {
+        "input": {
+          "x": 54,
+          "y": 591,
+          "width": 258,
+          "height": 44,
+          "top": 591,
+          "right": 312,
+          "bottom": 635,
+          "left": 54
+        },
+        "option": {
+          "x": 53,
+          "y": 535,
+          "width": 284,
+          "height": 36,
+          "top": 535,
+          "right": 337,
+          "bottom": 571,
+          "left": 53
+        },
+        "optionId": "r2-full-picker-option-19",
+        "clipped": false,
+        "onScreen": true,
+        "focusRetained": true,
+        "listScrollTop": 632
+      },
+      "selectedId": "u20",
+      "focusAfterEnter": true,
+      "empty": {
+        "listboxExists": true,
+        "activeIdref": null,
+        "statusText": "Ничего не найдено. Проверьте написание имени.",
+        "statusOnScreen": true
+      },
+      "expandedAfterManualScroll": "false"
+    },
+    {
+      "mode": "dialog",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "active": {
+        "input": {
+          "x": 430,
+          "y": 591,
+          "width": 396,
+          "height": 44,
+          "top": 591,
+          "right": 826,
+          "bottom": 635,
+          "left": 430
+        },
+        "option": {
+          "x": 429,
+          "y": 535,
+          "width": 422,
+          "height": 36,
+          "top": 535,
+          "right": 851,
+          "bottom": 571,
+          "left": 429
+        },
+        "optionId": "r2-full-picker-option-19",
+        "clipped": false,
+        "onScreen": true,
+        "focusRetained": true,
+        "listScrollTop": 632
+      },
+      "selectedId": "u20",
+      "focusAfterEnter": true,
+      "empty": {
+        "listboxExists": true,
+        "activeIdref": null,
+        "statusText": "Ничего не найдено. Проверьте написание имени.",
+        "statusOnScreen": true
+      },
+      "expandedAfterManualScroll": "false"
+    }
+  ]
+}

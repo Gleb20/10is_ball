@@ -100,9 +100,38 @@ expected_stage2 = {
 }
 if len(expected_stage2) != 23:
     errors.append("stage 2 eligible atom count changed")
+table_source = "user-session-2026-09-16-table-01"
+expert_source = "expert-stage-08"
+expected_stage3 = {
+    (table_source, "AUTH-001", "main"): ("BUG-028", "target_pending_implementation", "verified_local"),
+    (table_source, "AUTH-001", "a01"): ("BUG-028", "target_pending_implementation", "verified_local"),
+    (table_source, "AUTH-001", "a02"): ("BUG-028", "target_pending_implementation", "verified_local"),
+    (table_source, "AUTH-002", "main"): ("BUG-028", "target_pending_implementation", "verified_local"),
+    (table_source, "AUTH-002", "a01"): ("BUG-028", "target_pending_implementation", "verified_local"),
+    (table_source, "AUTH-004", "main"): ("BUG-028", "target_pending_implementation", "verified_local"),
+    (table_source, "AUTH-004", "a01"): ("BUG-020", "target_pending_implementation", "verified_local"),
+    (table_source, "U01-DETAIL-002", "a01"): ("GAP-034", "target_pending_implementation", "common_sample_verified_local_domain_consumers_pending"),
+    (table_source, "U01-JUDGE-003", "a03"): ("GAP-034", "target_pending_implementation", "common_sample_verified_local_domain_consumers_pending"),
+    (expert_source, "BUG-018", "main"): ("BUG-018", "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-019", "main"): ("BUG-019", "historical_target_reconciled_not_implemented", "verified_local_physical_device_pending"),
+    (expert_source, "BUG-020", "main"): ("BUG-020", "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-021", "main"): ("BUG-021", "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-023", "main"): ("BUG-023", "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-024", "main"): ("BUG-024", "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-025", "main"): ("BUG-025", "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-026", "main"): ("BUG-026", "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-027", "main"): ("BUG-027", "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-028", "main"): ("BUG-028", "historical_target_reconciled_not_implemented", "verified_local"),
+}
+expected_stage3_pending = {
+    (table_source, "AUTH-003", "main"): "physical_device_pending",
+    (table_source, "AUTH-003", "a01"): "reproduce_before_acceptance",
+    (table_source, "U01-JUDGE-001", "main"): "physical_device_pending",
+    (expert_source, "BUG-022", "main"): "pending_decision",
+}
 overrides = {(r["source"], r["source_id"], r["atom_id"]): r for r in result_rows}
-if len(result_rows) != len(overrides) or set(overrides) != expected_stage1 | expected_stage2:
-    errors.append("stage 1 or 2 implementation result keys changed")
+if len(result_rows) != len(overrides) or set(overrides) != expected_stage1 | expected_stage2 | set(expected_stage3):
+    errors.append("stage 1, 2 or 3 implementation result keys changed")
 coverage_by_key = {(r["source"], r["source_id"], r["atom_id"]): r for r in coverage}
 home_role_key = ("user-session-2026-09-16-table-01", "HOME-004", "a01")
 if coverage_by_key.get(home_role_key, {}).get("acceptance") != "AT-HOME-001":
@@ -114,12 +143,18 @@ for key, result in overrides.items():
     elif key in expected_stage2:
         expected_task = "GAP-030" if key[1] in {"HOME-006", "U01-START-001"} else "GAP-031"
         expected_stage = 2
+        expected_previous, expected_result = "target_pending_implementation", "verified_local"
+    elif key in expected_stage3:
+        expected_task, expected_previous, expected_result = expected_stage3[key]
+        expected_stage = 3
     else:
         errors.append(f"unrecognized implementation result: {key}")
         continue
-    if (result.get("canonical_task"), result.get("stage"), result.get("previousResult"), result.get("result")) != (expected_task, expected_stage, "target_pending_implementation", "verified_local"):
+    if key in expected_stage1:
+        expected_previous, expected_result = "target_pending_implementation", "verified_local"
+    if (result.get("canonical_task"), result.get("stage"), result.get("previousResult"), result.get("result")) != (expected_task, expected_stage, expected_previous, expected_result):
         errors.append(f"invalid stage {expected_stage} result: {key}")
-    if not row or (row["canonical_task"], row["stage"], row["result"]) != (expected_task, str(expected_stage), "verified_local"):
+    if not row or (row["canonical_task"], row["stage"], row["result"]) != (expected_task, str(expected_stage), expected_result):
         errors.append(f"stage {expected_stage} coverage result mismatch: {key}")
     if key in expected_stage2 and row and row["disposition"] != "accepted_target":
         errors.append(f"stage 2 non-target marked verified: {key}")
@@ -136,6 +171,13 @@ for row in coverage:
         errors.append(f"unreproduced Maps atom marked verified: {key}")
     if row["source"] == "expert-stage-08" and row["source_id"] == "GAP-015" and row["disposition"] != "superseded_target":
         errors.append("historical GAP-015 target was restored")
+stage3_rows = {
+    (row["source"], row["source_id"], row["atom_id"]): row["result"]
+    for row in coverage if row["stage"] == "3"
+}
+expected_stage3_results = {key: detail[2] for key, detail in expected_stage3.items()} | expected_stage3_pending
+if stage3_rows != expected_stage3_results:
+    errors.append("stage 3 coverage results differ from the accepted 23-row reconciliation")
 
 required_fields = {
     "source", "source_id", "primary_turn_id", "atom_id", "atom_label", "evidence_kind",

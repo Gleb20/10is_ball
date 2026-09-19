@@ -43,6 +43,8 @@ export function StatusChip({
       variant="tonal"
       color={CHIP_COLOR[tone]}
       label={statusLabel(status, domain)}
+      startIcon={false}
+      className="status-chip"
     />
   );
 }

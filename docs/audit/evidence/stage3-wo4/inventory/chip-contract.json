@@ -1,0 +1,18 @@
+{
+  "default": {
+    "tag": "SPAN",
+    "text": "\n\n\nОжидание",
+    "role": null,
+    "tabIndex": -1,
+    "iconPresent": true,
+    "iconAriaHidden": "true"
+  },
+  "false": {
+    "tag": "SPAN",
+    "text": "Ожидание",
+    "role": null,
+    "tabIndex": -1,
+    "iconPresent": false,
+    "iconAriaHidden": null
+  }
+}

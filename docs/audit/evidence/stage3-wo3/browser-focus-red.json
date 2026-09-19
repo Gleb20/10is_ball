@@ -1,0 +1,13 @@
+{
+  "source": "WO3 production-preview Chromium probe before scoped TournamentDetailPage focus restoration",
+  "result": "failed",
+  "widths": [360, 390, 1440],
+  "observedAtEachWidth": {
+    "tabInside": true,
+    "shiftTabInside": true,
+    "escapeClosed": true,
+    "focusReturned": false,
+    "focusAfterEscape": { "tag": "BODY", "testId": null }
+  },
+  "correction": "Capture the actual bracket trigger and restore focus after this dialog closes; shared Dialog lifecycle unchanged."
+}

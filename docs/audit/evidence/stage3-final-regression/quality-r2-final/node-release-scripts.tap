@@ -1,0 +1,88 @@
+TAP version 13
+# Subtest: hosted release identity requires a full clean SHA
+ok 1 - hosted release identity requires a full clean SHA
+  ---
+  duration_ms: 0.688167
+  type: 'test'
+  ...
+# Subtest: public smoke resolves exact origin main SHA and root version
+ok 2 - public smoke resolves exact origin main SHA and root version
+  ---
+  duration_ms: 0.566625
+  type: 'test'
+  ...
+# Subtest: provider Git SHA sources resolve to the same canonical metadata
+ok 3 - provider Git SHA sources resolve to the same canonical metadata
+  ---
+  duration_ms: 2.322292
+  type: 'test'
+  ...
+# Subtest: exact checkout rejects arbitrary untracked source inputs
+ok 4 - exact checkout rejects arbitrary untracked source inputs
+  ---
+  duration_ms: 0.13225
+  type: 'test'
+  ...
+# Subtest: canonical migration launcher accepts exactly one command separator
+ok 5 - canonical migration launcher accepts exactly one command separator
+  ---
+  duration_ms: 0.115333
+  type: 'test'
+  ...
+# Subtest: web release writer emits the canonical metadata shape
+ok 6 - web release writer emits the canonical metadata shape
+  ---
+  duration_ms: 2.697084
+  type: 'test'
+  ...
+# Subtest: smoke validation requires the exact canonical shape and identity
+ok 7 - smoke validation requires the exact canonical shape and identity
+  ---
+  duration_ms: 0.310458
+  type: 'test'
+  ...
+# Subtest: public release wait retries and returns only redacted evidence
+ok 8 - public release wait retries and returns only redacted evidence
+  ---
+  duration_ms: 2.325458
+  type: 'test'
+  ...
+# Subtest: public release wait is bounded and reports one generic failure
+ok 9 - public release wait is bounded and reports one generic failure
+  ---
+  duration_ms: 0.287042
+  type: 'test'
+  ...
+# Subtest: provider request errors expose only an opaque endpoint reference
+ok 10 - provider request errors expose only an opaque endpoint reference
+  ---
+  duration_ms: 0.288959
+  type: 'test'
+  ...
+# Subtest: CI actions are immutable and optional GitHub release remains passive
+ok 11 - CI actions are immutable and optional GitHub release remains passive
+  ---
+  duration_ms: 1.915375
+  type: 'test'
+  ...
+# Subtest: native provider configs deploy main and preserve same-origin routing
+ok 12 - native provider configs deploy main and preserve same-origin routing
+  ---
+  duration_ms: 1.11875
+  type: 'test'
+  ...
+# Subtest: release writer creates parent directories without leaking extra files
+ok 13 - release writer creates parent directories without leaking extra files
+  ---
+  duration_ms: 1.679125
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66.868

@@ -50,7 +50,7 @@ async function fixture() {
  const api=await request.newContext({baseURL});expect((await (await api.get('/health')).json()).release.environment).toBe('test');
  await mutate(api,'/api/v1/auth/login',{email,password});await mutate(api,'/api/v1/me/onboarding',{action:'complete'},'PATCH');return api;
 }
-async function login(page:Page, destination = /\/$/) {await page.goto('/login');await page.getByLabel('Email').fill(email);await page.getByLabel('Пароль').fill(password);await page.getByRole('button',{name:'Войти',exact:true}).click();await expect(page).toHaveURL(destination);}
+async function login(page:Page, destination = /\/$/) {await page.goto('/login');await page.getByLabel('Email').fill(email);await page.getByLabel('Пароль', { exact: true }).fill(password);await page.getByRole('button',{name:'Войти',exact:true}).click();await expect(page).toHaveURL(destination);}
 
 test('Wave F auth geometry contrast and admin readable rows',async({page})=>{
  test.setTimeout(120000);
@@ -188,6 +188,7 @@ test('Wave F dialog review recovers hidden removed and busy focus', async ({ pag
   test.setTimeout(90000);
   const api = await fixture();
   let releaseRequest: (() => void) | undefined;
+  let bracketPostCount = 0;
   try {
     const { tournament } = await mutate(api, '/api/v1/tournaments', {
       title: `F dialog review ${test.info().project.name}`, organizerParticipates: false,
@@ -214,6 +215,11 @@ test('Wave F dialog review recovers hidden removed and busy focus', async ({ pag
     await expect.soft(close).toBeFocused({ timeout: 1000 });
     const heldRequest = new Promise<void>(resolve => { releaseRequest = resolve; });
     await page.route(`**/api/v1/tournaments/${tournament.id}/bracket`, async route => {
+      if (route.request().method() !== 'POST') {
+        await route.continue();
+        return;
+      }
+      bracketPostCount += 1;
       await heldRequest;
       await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ code: 'UNAVAILABLE', message: 'Синтетическая ошибка' }) });
     });
@@ -225,8 +231,17 @@ test('Wave F dialog review recovers hidden removed and busy focus', async ({ pag
     await page.keyboard.press('Escape'); await expect(dialog).toBeVisible();
     await capture(page, 'dialog-review-busy');
     releaseRequest();
-    await expect(submit).toBeEnabled(); await page.unrouteAll({ behavior: 'wait' });
+    await expect(dialog.getByText('Исход построения неизвестен', { exact: true })).toBeVisible();
+    await expect(submit).toBeDisabled();
     await close.press('Escape'); await expect(dialog).not.toBeVisible(); await expect(trigger).toBeFocused();
+    await trigger.click();
+    const reopenedDialog = page.getByRole('dialog');
+    await expect(reopenedDialog.getByText('Исход построения неизвестен', { exact: true })).toBeVisible();
+    await expect(reopenedDialog.getByRole('button', { name: 'Построить сетку', exact: true })).toBeDisabled();
+    expect(bracketPostCount).toBe(1);
+    await page.unrouteAll({ behavior: 'wait' });
+    await reopenedDialog.getByRole('button', { name: 'Закрыть', exact: true }).press('Escape');
+    await expect(reopenedDialog).not.toBeVisible(); await expect(trigger).toBeFocused();
   } finally {
     releaseRequest?.(); await page.unrouteAll({ behavior: 'wait' }); await api.dispose();
   }

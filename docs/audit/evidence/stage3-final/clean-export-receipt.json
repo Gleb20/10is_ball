@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "stage": "stage3-final-clean-export",
+  "baseSha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+  "candidateVersion": "4.1.1",
+  "exportPath": "/private/tmp/tab10-stage3-freeze-m04quj0f/candidate",
+  "checks": {
+    "documentation": {
+      "status": "passed",
+      "checkedFiles": 177,
+      "brokenLinks": 0,
+      "brokenAnchors": 0,
+      "duplicateBacklogDefinitions": 0,
+      "incompleteBacklogItems": 0,
+      "invalidBacklogStatuses": 0
+    },
+    "coverageBuild": {
+      "status": "passed",
+      "rows": 236,
+      "sessionIds": 82,
+      "expertIds": 38
+    },
+    "coverageCheck": {
+      "status": "passed",
+      "errors": 0
+    },
+    "jsonParse": {
+      "status": "passed",
+      "files": 399,
+      "errors": 0
+    },
+    "secretScan": {
+      "status": "passed",
+      "capturedAt": "2026-09-19T01:52:37.556Z",
+      "candidates": 0,
+      "scannedWorktreeFiles": 1535,
+      "scannedRefBlobs": 1454,
+      "reviewedBenignFindings": 4
+    }
+  },
+  "runtimeTestsRepeated": false,
+  "treeBeforeFreezeMetadata": {
+    "sha256": "2cf2c01d5f592f2d3ab610fc8700d7085825af219c73ff46efa294d97f26ef9b",
+    "files": 1561,
+    "bytes": 45023113
+  },
+  "note": "The clean export was assembled from git archive HEAD, the tracked binary patch, explicitly listed untracked evidence and the exact ignored-log allowlist.",
+  "finalMetadataValidation": {
+    "documentation": "passed: 177 files, zero link/anchor/status errors",
+    "allReleaseFilesByteMatched": 368
+  }
+}

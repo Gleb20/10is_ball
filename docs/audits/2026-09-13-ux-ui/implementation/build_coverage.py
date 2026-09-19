@@ -83,12 +83,12 @@ atoms: dict[str, list[tuple[str, str, int, str, str, str]]] = {
     "U01-FORM-007": [("hide game invite and optional judge invitation UI", "GAP-029", 1, "D37", "AT-UI-INV-001", "accepted_target"), ("automatic judge ownership requires separate decision", "GAP-032", 6, "Q-UX-006", "AT-JUDGE-001", "decision_gate"), ("history of people leading on shared phone", "GAP-032", 6, "Q-UX-009", "AT-JUDGE-002", "decision_gate")],
     "U01-FORM-008": [("reusable guest identity", "GAP-013", 5, "Q-UX-004", "AT-MATCH-013", "decision_gate"), ("future account link collision/history/privacy", "GAP-013", 5, "Q-UX-004", "AT-MATCH-013", "decision_gate")],
     "U01-DETAIL-001": [("create to judge without redundant step", "GAP-017", 6, "Q-UX-006", "AT-HOME-003", "decision_gate"), ("prestart player side serve rules edits and partial errors", "GAP-017", 6, "D35", "AT-MATCH-017", "needs_bounded_target"), ("suggested 1v1 11-point mercy-at-5 manual-server defaults need contract review", "GAP-013", 5, "D8", "AT-MATCH-016", "needs_bounded_target")],
-    "U01-DETAIL-002": [("all system status chips read as information, not false buttons; icon or text communicates meaning", "GAP-034", 3, "inventory_target_gate", "AT-UI-STATUS-001", "needs_bounded_target"), ("side and score association; first actual server", "GAP-017", 6, "D36", "AT-MATCH-003", "needs_bounded_target"), ("match detail applies shared status semantics after stage 3 target", "GAP-017", 6, "inventory_target_gate", "AT-UI-STATUS-001", "needs_bounded_target")],
+    "U01-DETAIL-002": [("all system status chips read as information, not false buttons; icon or text communicates meaning", "GAP-034", 3, "inventory_target_gate", "AT-UI-STATUS-001", "accepted_target"), ("side and score association; first actual server", "GAP-017", 6, "D36", "AT-MATCH-003", "needs_bounded_target"), ("match detail applies shared status semantics after stage 3 target", "GAP-017", 6, "inventory_target_gate", "AT-UI-STATUS-001", "needs_bounded_target")],
     "U01-DETAIL-003": [("primary next action and secondary controls", "GAP-017", 6, "D36", "AT-HOME-003", "accepted_target"), ("same roster/rules next match and replay", "GAP-032", 6, "Q-UX-007", "AT-MATCH-VOID-003", "decision_gate")],
     "U01-DETAIL-004": [("ten second Undo", "GAP-032", 6, "Q-UX-008", "AT-MATCH-VOID-003", "decision_gate"), ("archive versus immutable void", "GAP-032", 6, "Q-UX-008", "AT-MATCH-VOID-004", "decision_gate")],
     "U01-JUDGE-001": [("landscape white gutters", "BUG-040", 6, "reproduction_gate", "AT-HOME-003", "hypothesis_reproduce"), ("portrait rotation hint and animation", "GAP-032", 6, "D36", "AT-JUDGE-007", "needs_bounded_target"), ("dismissible rotation hint", "GAP-032", 6, "D36", "AT-JUDGE-007", "needs_bounded_target")],
     "U01-JUDGE-002": [("context prompt and timer", "GAP-032", 6, "D36", "AT-JUDGE-007", "needs_bounded_target"), ("scroll text blink and persistent instruction placement", "GAP-032", 6, "D36", "AT-JUDGE-007", "needs_bounded_target"), ("reduced motion", "GAP-032", 6, "D36", "AT-JUDGE-007", "accepted_target")],
-    "U01-JUDGE-003": [("tap serve and icon", "GAP-032", 6, "D36", "AT-MATCH-003", "needs_bounded_target"), ("small center swap and keyboard alternative to drag", "GAP-032", 6, "D36", "AT-JUDGE-007", "needs_bounded_target"), ("service-wide icon consistency inventory and semantic target", "GAP-034", 3, "inventory_target_gate", "AT-UI-STATUS-001", "needs_bounded_target")],
+    "U01-JUDGE-003": [("tap serve and icon", "GAP-032", 6, "D36", "AT-MATCH-003", "needs_bounded_target"), ("small center swap and keyboard alternative to drag", "GAP-032", 6, "D36", "AT-JUDGE-007", "needs_bounded_target"), ("service-wide icon consistency inventory and semantic target", "GAP-034", 3, "inventory_target_gate", "AT-UI-STATUS-001", "accepted_target")],
     "U01-JUDGE-004": [("whole player card scoring with scroll guard", "GAP-032", 6, "D36", "AT-JUDGE-007", "needs_bounded_target"), ("start overlay no geometry shift", "GAP-032", 6, "D36", "AT-JUDGE-007", "needs_bounded_target"), ("fast motion without bounce and visual separation", "GAP-032", 6, "D36", "AT-JUDGE-007", "needs_bounded_target")],
     "U01-JUDGE-005": [("blurred confirmation with explicit accept/continue", "GAP-032", 6, "D24", "AT-MATCH-008", "needs_bounded_target"), ("stable cards and prestart rules drawer", "GAP-032", 6, "D36", "AT-JUDGE-007", "needs_bounded_target"), ("active contextual menu", "GAP-032", 6, "D36", "AT-JUDGE-007", "needs_bounded_target")],
     "U01-JUDGE-006": [("timeline authoritative time/side/+1", "GAP-032", 6, "D24", "AT-JUDGE-007", "needs_bounded_target"), ("correction and Undo semantics", "GAP-032", 6, "D24", "AT-MATCH-005", "needs_bounded_target"), ("avoid unexplained long dash in log copy", "GAP-032", 6, "D36", "AT-JUDGE-007", "accepted_target")],
@@ -196,10 +196,15 @@ def main() -> None:
     outcomes = json.loads((HERE / "implementation-results.json").read_text())
     if outcomes.get("schemaVersion") != 1:
         raise ValueError("implementation result schema mismatch")
+    allowed_implementation_results = {
+        "verified_local",
+        "verified_local_physical_device_pending",
+        "common_sample_verified_local_domain_consumers_pending",
+    }
     by_key = {}
     for outcome in outcomes["results"]:
         key = (outcome["source"], outcome["source_id"], outcome["atom_id"])
-        if key in by_key or outcome["result"] != "verified_local":
+        if key in by_key or outcome["result"] not in allowed_implementation_results:
             raise ValueError(f"invalid or duplicate implementation outcome: {key}")
         evidence = ROOT / outcome["evidence"]
         if not evidence.is_file() or hashlib.sha256(evidence.read_bytes()).hexdigest() != outcome["evidenceSha256"]:

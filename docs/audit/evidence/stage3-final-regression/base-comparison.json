@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 3,
+  "baseSha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+  "regression": "late match directory options could overwrite an in-progress player query",
+  "baseResult": {
+    "isolatedCreateCase": {
+      "passed": 1,
+      "failed": 0
+    },
+    "interpretation": "the exact published base did not reproduce the Stage 3 controlled-input regression"
+  },
+  "preCorrectionStage3Result": {
+    "passed": 0,
+    "failed": 2,
+    "failedSeams": [
+      "MatchCreatePage SlotEditor",
+      "MatchDetailPage EditSlotField"
+    ]
+  },
+  "correctedResult": {
+    "focused": {
+      "passed": 32,
+      "failed": 0
+    },
+    "quality": {
+      "passed": 1193,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    "browserFull": {
+      "browserPassed": 60,
+      "browserFailed": 0,
+      "foundationPassed": 9,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0,
+      "status": "passed",
+      "environment": "fresh disposable PostgreSQL 16.15; compiled API and Vite preview; original suite order",
+      "passiveCapture": "desktop and mobile retained query, input identity and selection with no blur, pre-click close, page error or unexpected transition",
+      "residual": "the earlier isolated desktop timeout cause remains unresolved; the green run does not prove it harmless, pre-existing or fixed"
+    },
+    "filledSuggestionMatrix": {
+      "browserPassed": 4,
+      "browserFailed": 0,
+      "foundationPassed": 9,
+      "suggestionsHeightPx": 476,
+      "limitation": "synthetic route-only UI fixture and invalid vendorDOMShapeMatches helper predicate"
+    },
+    "firstFullBrowserRun": {
+      "browserPassed": 59,
+      "browserFailed": 1,
+      "foundationPassed": 9,
+      "status": "historical_corrected_tree_residual",
+      "remaining": "one desktop GAP-012 first-option timeout; mobile passed and source cause is unproven"
+    }
+  },
+  "sourceHashes": {
+    "apps/web/src/pages/MatchCreatePage.tsx": "41d5f41ff697f2c7c7aa07e60a1b554e74be47eaf4750b2c74c06a88f67a556f",
+    "apps/web/src/pages/MatchDetailPage.tsx": "42cec2c2cf508d61411c536b4a78410831c5be5167f678bf895040bac17ffbba",
+    "apps/web/src/pages/MatchCreatePage.test.tsx": "7e6050411edab1b0d020f3d7de17725d18f5fa10ba0c7c9dbf7b3e92694b30d5",
+    "apps/web/src/pages/MatchDetailPage.test.tsx": "12879b44f0106c4f8729f7d95d4d2c66164297864855d81382deb643b4d9233f"
+  },
+  "artifactHashes": {
+    "finalBrowserSummary": "2c156bcada33737c4309a0c5d12d1743c989cb315e458c86b1877ce30878bc03",
+    "finalCaptureClassification": "c7d4798fae48f3f1dce82be35645f916d9306f6808403a2cc89415ec2cdad9e5",
+    "passiveHelperR1": "16bdfac5c8ab704e53bad6d2e40ae599daefdb0f9d1a7aa443c710b1c89b1a35",
+    "passiveHelperR2": "b5cdf0f660626a5c44078f265fe4cb8949edc9c8b7abd5bd53c70201ba0b7b82"
+  }
+}

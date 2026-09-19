@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { Button } from "./ui";
+import { useState, type ComponentProps, type ReactNode } from "react";
+import { Button, TextField } from "./ui";
 import { copyText } from "./copyText";
 
 export function AuthLayout({
@@ -21,6 +21,40 @@ export function AuthLayout({
         {subtitle ? <p className="auth-layout__subtitle">{subtitle}</p> : null}
         {children}
       </div>
+    </div>
+  );
+}
+
+export function AuthPasswordField({
+  id,
+  label,
+  toggleLabel = label.toLowerCase(),
+  ...props
+}: Omit<ComponentProps<typeof TextField>, "type" | "endIcon"> & {
+  id: string;
+  label: string;
+  toggleLabel?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="auth-password-field">
+      <TextField id={id} label={label} type={visible ? "text" : "password"} fullWidth {...props} />
+      <button
+        className="auth-password-field__toggle"
+        type="button"
+        aria-label={`${visible ? "Скрыть" : "Показать"} ${toggleLabel}`}
+        aria-controls={id}
+        aria-pressed={visible}
+        disabled={props.disabled}
+        onPointerDown={(event) => event.preventDefault()}
+        onClick={() => setVisible((value) => !value)}
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+          <circle cx="12" cy="12" r="2.5" />
+          {visible ? <path d="M3 21 21 3" /> : null}
+        </svg>
+      </button>
     </div>
   );
 }

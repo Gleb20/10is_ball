@@ -1,0 +1,50 @@
+{
+  "baseSha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+  "browser": "Playwright Chromium",
+  "rows": [
+    {
+      "consumer": "tournament",
+      "width": 390,
+      "pendingDisabled": true,
+      "busy": "true",
+      "errorAlert": "Не удалось загрузить игроков",
+      "errorDescribedBy": true,
+      "retryGetCount": 2,
+      "selectedId": "u2",
+      "inputFocusedAfterSelect": true
+    },
+    {
+      "consumer": "tournament",
+      "width": 1280,
+      "pendingDisabled": true,
+      "busy": "true",
+      "errorAlert": "Не удалось загрузить игроков",
+      "errorDescribedBy": true,
+      "retryGetCount": 2,
+      "selectedId": "u2",
+      "inputFocusedAfterSelect": true
+    },
+    {
+      "consumer": "team",
+      "width": 390,
+      "pendingDisabled": true,
+      "busy": "true",
+      "errorAlert": "Не удалось загрузить игроков",
+      "errorDescribedBy": true,
+      "retryGetCount": 2,
+      "selectedId": "u2",
+      "inputFocusedAfterSelect": true
+    },
+    {
+      "consumer": "team",
+      "width": 1280,
+      "pendingDisabled": true,
+      "busy": "true",
+      "errorAlert": "Не удалось загрузить игроков",
+      "errorDescribedBy": true,
+      "retryGetCount": 2,
+      "selectedId": "u2",
+      "inputFocusedAfterSelect": true
+    }
+  ]
+}

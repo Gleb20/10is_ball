@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "stage": "stage3-final-original-order-browser",
+  "recordedAt": "2026-09-19T01:50:00Z",
+  "disposableRunDirectory": "/private/tmp/tab10-stage3-final-browser-evidence-mpDK2Y",
+  "composeProject": "tab10-stage3-final-browser",
+  "databaseContainer": {
+    "status": "absent_after_run",
+    "observation": "cleanup completed and container absence was confirmed after the run"
+  },
+  "temporaryHelper": {
+    "path": "tests/e2e/gap012-passive-helper.ts",
+    "present": false
+  },
+  "restoredFile": {
+    "path": "tests/e2e/wave-e-user.spec.ts",
+    "sha256": "1d6d4770c62c056c321169a1021da7e0cc3d7c27f911f8b3b333273e94896d1a",
+    "gitBlob": "8a30d060a7196da39d68d880c951fb3a32d3d953",
+    "headGitBlob": "8a30d060a7196da39d68d880c951fb3a32d3d953",
+    "matchesHead": true
+  },
+  "productSourceChangedAfterRun": false,
+  "note": "No commit, push, tag, deployment or public mutation was performed."
+}

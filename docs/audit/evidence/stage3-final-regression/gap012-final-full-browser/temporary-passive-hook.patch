@@ -1,0 +1,87 @@
+diff --git a/tests/e2e/wave-e-user.spec.ts b/tests/e2e/wave-e-user.spec.ts
+index 8a30d06..a9db686 100644
+--- a/tests/e2e/wave-e-user.spec.ts
++++ b/tests/e2e/wave-e-user.spec.ts
+@@ -1,4 +1,5 @@
+ import { randomUUID } from "node:crypto";
++import { writeFile } from "node:fs/promises";
+ import {
+   expect,
+   request,
+@@ -6,6 +7,7 @@ import {
+   type APIRequestContext,
+   type Page,
+ } from "@playwright/test";
++import { installTab10Gap012PassiveCapture } from "./gap012-passive-helper";
+ 
+ const baseURL = process.env.TAB10_E2E_BASE_URL ?? "http://localhost:4273";
+ const adminEmail = process.env.E2E_ADMIN_EMAIL ?? "delivery.admin@tab10.test";
+@@ -101,8 +103,17 @@ test("GAP-012 operator creates A-vs-B, edits it and starts without player consen
+   const judge = await createUser(fixture.api, `e-judge-${key}`, `Судья ${key}`);
+   const errors = collectPageErrors(page);
+   const title = `GAP-012 ${info.project.name}`;
++  const passiveCaptureDir = process.env.GAP012_PASSIVE_CAPTURE_DIR;
+   let createdMatchId: string | undefined;
+ 
++  if (passiveCaptureDir) {
++    await page.addInitScript(installTab10Gap012PassiveCapture, {
++      inputLabel: "Игрок A",
++      expectedOptionLabel: playerA.label,
++      maxEvents: 400,
++    });
++  }
++
+   try {
+     await login(page);
+     await expect(page).toHaveURL(/\/$/);
+@@ -110,8 +121,48 @@ test("GAP-012 operator creates A-vs-B, edits it and starts without player consen
+     await page.getByLabel("Название", { exact: true }).fill(title);
+     await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
+     await expect(page.getByLabel("Пригласить выбранных игроков", { exact: true })).toHaveCount(0);
+-    await page.getByRole("combobox", { name: "Игрок A", exact: true }).fill(playerA.label);
+-    await page.getByRole("option", { name: playerA.label, exact: true }).click();
++    const playerAInput = page.getByRole("combobox", { name: "Игрок A", exact: true });
++    const playerAOption = page.getByRole("option", { name: playerA.label, exact: true });
++    let selectionError: unknown;
++    let captureError: unknown;
++    try {
++      await playerAInput.fill(playerA.label);
++      await playerAOption.click();
++    } catch (error) {
++      selectionError = error;
++    } finally {
++      if (passiveCaptureDir) {
++        try {
++          const capture = await page.evaluate(() => {
++            const recorder = (window as unknown as {
++              __tab10Gap012Passive?: { stopAndRead: () => unknown };
++            }).__tab10Gap012Passive;
++            return recorder?.stopAndRead() ?? { captureUnavailable: true };
++          });
++          const project = info.project.name.replace(/[^a-z0-9_-]+/gi, "-").toLowerCase();
++          const filename = `gap012-passive-real-suite-original-order-${project}-repeat${info.repeatEachIndex}-retry${info.retry}.json`;
++          const diagnostic = {
++            version: 2,
++            scenario: "real-suite-original-order",
++            project,
++            selectionFailed: Boolean(selectionError),
++            pageErrors: [...errors],
++            capture,
++          };
++          const artifactPath = info.outputPath(filename);
++          await writeFile(artifactPath, `${JSON.stringify(diagnostic, null, 2)}\n`);
++          await info.attach(filename, { path: artifactPath, contentType: "application/json" });
++          await writeFile(`${passiveCaptureDir}/${filename}`, `${JSON.stringify(diagnostic, null, 2)}\n`);
++        } catch (error) {
++          captureError = error;
++        }
++      }
++    }
++    if (selectionError && captureError) {
++      throw new AggregateError([selectionError, captureError], "Selection and passive capture both failed");
++    }
++    if (selectionError) throw selectionError;
++    if (captureError) throw captureError;
+     await page.getByRole("combobox", { name: "Соперник", exact: true }).fill(playerB.label);
+     await page.getByRole("option", { name: playerB.label, exact: true }).click();
+     await expect(page.getByRole("combobox", { name: "Судья (необязательно)", exact: true })).toHaveCount(0);

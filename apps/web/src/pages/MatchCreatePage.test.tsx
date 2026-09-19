@@ -5,6 +5,13 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import { MatchCreatePage } from "./MatchCreatePage";
 import { AuthProvider } from "../auth";
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
+
 const matchCreateOptions = vi.fn();
 const createMatch = vi.fn();
 function LocationProbe() { const location = useLocation(); return <output data-testid="location">{location.pathname}{location.search}</output>; }
@@ -29,6 +36,7 @@ vi.mock("../api", () => ({
 describe("REQ_ui__match_create_autocomplete", () => {
   beforeEach(() => {
     cleanup();
+    createMatch.mockClear();
     matchCreateOptions.mockResolvedValue({
       users: [{ id: "u2", firstName: "B", lastName: "Rival", displayName: "Rival B" }],
       teams: [],
@@ -36,6 +44,33 @@ describe("REQ_ui__match_create_autocomplete", () => {
       frequentOpponentIds: [],
     });
     createMatch.mockResolvedValue({ match: { id: "m1" } });
+  });
+
+  it("BUG-026 freezes every visible match payload control while create is pending, then preserves a rejected attempt", async () => {
+    const held = deferred<{ match: { id: string } }>();
+    createMatch.mockReturnValueOnce(held.promise);
+    const user = userEvent.setup();
+    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
+    await screen.findByRole("form", { name: /создание матча/i });
+    await user.click(screen.getByLabelText("Создатель играет"));
+    const opponent = screen.getByRole("group", { name: "Соперник" });
+    await user.click(within(opponent).getByRole("button", { name: /^гость$/i }));
+    const guest = screen.getByRole("textbox", { name: /гость/i });
+    await user.type(guest, "Иван Иванов");
+    await user.click(screen.getByRole("button", { name: "Создать матч" }));
+    expect(createMatch).toHaveBeenCalledTimes(1);
+    expect(createMatch.mock.calls[0]?.[0]).toMatchObject({
+      format: "1v1", participants: [{ side: "A", userId: "u1" }, { side: "B", guestFirstName: "Иван", guestLastName: "Иванов" }],
+    });
+    expect(screen.getByLabelText("Создатель играет")).toBeDisabled();
+    expect(guest).toBeDisabled();
+    expect(screen.getByRole("textbox", { name: "Название" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "1 × 1" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Отмена" })).toBeEnabled();
+    held.reject(Object.assign(new Error("Проверка отклонила матч"), { status: 409, code: "VALIDATION" }));
+    expect(await screen.findByText("Проверка отклонила матч")).toBeInTheDocument();
+    expect(guest).toHaveValue("Иван Иванов");
+    expect(guest).toBeEnabled();
   });
 
   it("defaults to player mode with opponent autocomplete", async () => {
@@ -56,6 +91,55 @@ describe("REQ_ui__match_create_autocomplete", () => {
     expect(screen.getByRole("note", { name: "Подсказка о подаче" })).toHaveTextContent(
       /двух подач.*после достижения порога.*каждого очка/i,
     );
+  });
+
+  it("BUG-018 keeps the same focused player field after Enter selects a user", async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
+    const input = await screen.findByRole("combobox", { name: "Соперник" });
+    await user.type(input, "Rival");
+    await user.keyboard("{ArrowDown}{Enter}");
+    expect(screen.getByRole("combobox", { name: "Соперник" })).toBe(input);
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue("B Rival");
+  });
+
+  it("BUG-018 preserves a search typed before match options finish loading", async () => {
+    const held = deferred<{
+      users: Array<{ id: string; firstName: string; lastName: string }>;
+      teams: never[];
+      recentOpponentIds: never[];
+      frequentOpponentIds: never[];
+    }>();
+    matchCreateOptions.mockReturnValueOnce(held.promise);
+    const user = userEvent.setup();
+    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
+    const input = await screen.findByRole("combobox", { name: "Игрок A" });
+    await user.type(input, "Alpha");
+    held.resolve({
+      users: [{ id: "u2", firstName: "Alpha", lastName: "Player" }],
+      teams: [], recentOpponentIds: [], frequentOpponentIds: [],
+    });
+    const option = await screen.findByRole("option", { name: "Alpha Player" });
+    expect(option).toBeVisible();
+    expect(input).toHaveValue("Alpha");
+    await user.click(option);
+    expect(input).toHaveValue("Alpha Player");
+    expect(input).toHaveFocus();
+    await user.click(screen.getByRole("button", { name: "Очистить" }));
+    expect(input).toHaveValue("");
+    expect(input).toHaveFocus();
+  });
+
+  it("BUG-018 clears an unfinished player search after guest mode resets the slot", async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
+    const group = await screen.findByRole("group", { name: "Игрок A" });
+    const input = within(group).getByRole("combobox", { name: "Игрок A" });
+    await user.type(input, "Alpha");
+    await user.click(within(group).getByRole("button", { name: "Гость" }));
+    await user.click(within(group).getByRole("button", { name: "Игрок" }));
+    expect(within(group).getByRole("combobox", { name: "Игрок A" })).toHaveValue("");
   });
 
   it("offers guest and player modes", async () => {

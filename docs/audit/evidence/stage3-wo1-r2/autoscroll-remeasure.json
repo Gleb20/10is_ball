@@ -1,0 +1,54 @@
+{
+  "viewport": "390x500",
+  "method": "native focus({preventScroll:true}) while field starts below viewport",
+  "initial": {
+    "scrollY": 0,
+    "field": {
+      "x": 29,
+      "y": 737,
+      "width": 332,
+      "height": 44,
+      "top": 737,
+      "right": 361,
+      "bottom": 781,
+      "left": 29
+    }
+  },
+  "after": {
+    "scrollY": 305,
+    "field": {
+      "x": 29,
+      "y": 432,
+      "width": 332,
+      "height": 44,
+      "top": 432,
+      "right": 361,
+      "bottom": 476,
+      "left": 29
+    },
+    "menu": {
+      "x": 16,
+      "y": 160,
+      "width": 358,
+      "height": 264,
+      "top": 160,
+      "right": 374,
+      "bottom": 424,
+      "left": 16
+    },
+    "menuTopStyle": "auto",
+    "active": {
+      "x": 28,
+      "y": 376,
+      "width": 334,
+      "height": 36,
+      "top": 376,
+      "right": 362,
+      "bottom": 412,
+      "left": 28
+    },
+    "activeHitTest": true,
+    "focusRetained": true,
+    "expanded": "true"
+  }
+}

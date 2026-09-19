@@ -8,7 +8,7 @@ test("AT-HOME-003 Home keeps direct actions and all secondary routes at mobile a
   await page.goto("/history");
   await expect(page).toHaveURL(/\/login$/);
   await page.getByLabel("Email").fill(adminEmail);
-  await page.getByLabel("Пароль").fill(adminPassword);
+  await page.getByLabel("Пароль", { exact: true }).fill(adminPassword);
   await page.getByRole("button", { name: "Войти" }).click();
   await expect(page).toHaveURL(/\/history$/);
   await page.goto("/");
@@ -63,7 +63,7 @@ test("AT-HOME-003 Home keeps direct actions and all secondary routes at mobile a
 test("AT-HOME-003 Home keeps navigation after a fetch error", async ({ page }, info) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill(adminEmail);
-  await page.getByLabel("Пароль").fill(adminPassword);
+  await page.getByLabel("Пароль", { exact: true }).fill(adminPassword);
   await page.getByRole("button", { name: "Войти" }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.route(/\/api\/v1\/home\?/, (route) => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ code: "UNAVAILABLE", message: "Синтетическая ошибка" }) }));
@@ -83,7 +83,7 @@ test("AT-HOME-003 Home keeps navigation after a fetch error", async ({ page }, i
 test("HOME-007 finished match keeps sides and score first with a side-specific winner mark", async ({ page }, info) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill(adminEmail);
-  await page.getByLabel("Пароль").fill(adminPassword);
+  await page.getByLabel("Пароль", { exact: true }).fill(adminPassword);
   await page.getByRole("button", { name: "Войти" }).click();
   await expect(page).toHaveURL(/\/(?:onboarding)?$/);
   const csrf = (await page.context().cookies()).find((cookie) => cookie.name === "tab10_csrf");
@@ -139,7 +139,7 @@ test("HOME-007 finished match keeps sides and score first with a side-specific w
 test("GAP-031 keeps overflow tasks collapsed until requested", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill(adminEmail);
-  await page.getByLabel("Пароль").fill(adminPassword);
+  await page.getByLabel("Пароль", { exact: true }).fill(adminPassword);
   await page.getByRole("button", { name: "Войти" }).click();
   await expect(page).toHaveURL(/\/$/);
   const home = (await (await page.request.get("/api/v1/home?period=all_time&recentRole=all&notificationView=available")).json());
@@ -163,7 +163,7 @@ test("GAP-030 explicit Home releases judge slot; Browser Back is measured separa
   try {
     await page.goto("/login");
     await page.getByLabel("Email").fill(adminEmail);
-    await page.getByLabel("Пароль").fill(adminPassword);
+    await page.getByLabel("Пароль", { exact: true }).fill(adminPassword);
     await page.getByRole("button", { name: "Войти" }).click();
     await expect(page).toHaveURL(/\/$/);
     await page.goto("/matches/new");

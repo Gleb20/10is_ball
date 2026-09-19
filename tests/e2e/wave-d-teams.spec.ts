@@ -32,7 +32,7 @@ test("Wave D AT-TEAM-001..007 create, accept welcome, transfer, leave and automa
   const memberPage = await memberContext.newPage();
   const errors: string[] = []; for (const p of [page, memberPage]) p.on("pageerror", (e) => errors.push(e.message));
   try {
-    await page.goto("/login"); await page.getByLabel("Email").fill(email); await page.getByLabel("Пароль").fill(password);
+    await page.goto("/login"); await page.getByLabel("Email").fill(email); await page.getByLabel("Пароль", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Войти", exact: true }).click(); await expect(page).toHaveURL(/\/$/);
     await page.goto("/teams");
     await page.getByLabel("Название команды", { exact: true }).fill(name);

@@ -1,0 +1,245 @@
+{
+  "viewportCases": [
+    {
+      "width": 360,
+      "posts": 1,
+      "reads": 2,
+      "alertInDialog": true,
+      "alertFocusedInside": true,
+      "algorithmRetained": true,
+      "confirmDisabled": true,
+      "footerInitiallyVisible": false,
+      "horizontalOverflow": false,
+      "footerReachable": true,
+      "reopenDisabled": true,
+      "postsAfterReopen": 1,
+      "tabInside": true,
+      "shiftTabInside": true,
+      "escapeClosed": true,
+      "focusReturned": true,
+      "focusAfterEscape": {
+        "tag": "BUTTON",
+        "text": "Построить сетку",
+        "testId": "tournament-build-bracket"
+      }
+    },
+    {
+      "width": 390,
+      "posts": 1,
+      "reads": 2,
+      "alertInDialog": true,
+      "alertFocusedInside": true,
+      "algorithmRetained": true,
+      "confirmDisabled": true,
+      "footerInitiallyVisible": false,
+      "horizontalOverflow": false,
+      "footerReachable": true,
+      "reopenDisabled": true,
+      "postsAfterReopen": 1,
+      "tabInside": true,
+      "shiftTabInside": true,
+      "escapeClosed": true,
+      "focusReturned": true,
+      "focusAfterEscape": {
+        "tag": "BUTTON",
+        "text": "Построить сетку",
+        "testId": "tournament-build-bracket"
+      }
+    },
+    {
+      "width": 1440,
+      "posts": 1,
+      "reads": 2,
+      "alertInDialog": true,
+      "alertFocusedInside": true,
+      "algorithmRetained": true,
+      "confirmDisabled": true,
+      "footerInitiallyVisible": true,
+      "horizontalOverflow": false,
+      "footerReachable": true,
+      "reopenDisabled": true,
+      "postsAfterReopen": 1,
+      "tabInside": true,
+      "shiftTabInside": true,
+      "escapeClosed": true,
+      "focusReturned": true,
+      "focusAfterEscape": {
+        "tag": "BUTTON",
+        "text": "Построить сетку",
+        "testId": "tournament-build-bracket"
+      }
+    },
+    {
+      "width": 360,
+      "judgeError": {
+        "text": "rgb(245, 129, 129)",
+        "background": "rgb(15, 17, 21)",
+        "role": "alert",
+        "ratio": 7.504225682008821
+      },
+      "correctionLabels": [
+        {
+          "text": "Счёт стороны A",
+          "color": "rgb(245, 245, 245)",
+          "background": "rgb(26, 29, 36)",
+          "forId": "_r_0_",
+          "linked": true,
+          "ratio": 15.469683479736153
+        },
+        {
+          "text": "Счёт стороны B",
+          "color": "rgb(245, 245, 245)",
+          "background": "rgb(26, 29, 36)",
+          "forId": "_r_1_",
+          "linked": true,
+          "ratio": 15.469683479736153
+        }
+      ],
+      "clickFocus": true,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 390,
+      "judgeError": {
+        "text": "rgb(245, 129, 129)",
+        "background": "rgb(15, 17, 21)",
+        "role": "alert",
+        "ratio": 7.504225682008821
+      },
+      "correctionLabels": [
+        {
+          "text": "Счёт стороны A",
+          "color": "rgb(245, 245, 245)",
+          "background": "rgb(26, 29, 36)",
+          "forId": "_r_0_",
+          "linked": true,
+          "ratio": 15.469683479736153
+        },
+        {
+          "text": "Счёт стороны B",
+          "color": "rgb(245, 245, 245)",
+          "background": "rgb(26, 29, 36)",
+          "forId": "_r_1_",
+          "linked": true,
+          "ratio": 15.469683479736153
+        }
+      ],
+      "clickFocus": true,
+      "horizontalOverflow": false
+    },
+    {
+      "width": 1440,
+      "judgeError": {
+        "text": "rgb(245, 129, 129)",
+        "background": "rgb(15, 17, 21)",
+        "role": "alert",
+        "ratio": 7.504225682008821
+      },
+      "correctionLabels": [
+        {
+          "text": "Счёт стороны A",
+          "color": "rgb(245, 245, 245)",
+          "background": "rgb(26, 29, 36)",
+          "forId": "_r_0_",
+          "linked": true,
+          "ratio": 15.469683479736153
+        },
+        {
+          "text": "Счёт стороны B",
+          "color": "rgb(245, 245, 245)",
+          "background": "rgb(26, 29, 36)",
+          "forId": "_r_1_",
+          "linked": true,
+          "ratio": 15.469683479736153
+        }
+      ],
+      "clickFocus": true,
+      "horizontalOverflow": false
+    }
+  ],
+  "matchCreate": {
+    "pending": {
+      "posts": 1,
+      "payload": {
+        "title": "Матч 19.09, 02:01",
+        "format": "1v1",
+        "pointsToWin": 11,
+        "mercyEnabled": true,
+        "mercyPoints": 5,
+        "firstServerMethod": "manual",
+        "source": "manual",
+        "sendPlayerInvitations": false,
+        "participants": [
+          {
+            "side": "A",
+            "userId": "wo3-u1"
+          },
+          {
+            "side": "B",
+            "guestFirstName": "Иван",
+            "guestLastName": "Иванов"
+          }
+        ]
+      },
+      "creatorDisabled": true,
+      "guestDisabled": true,
+      "titleDisabled": true,
+      "formatDisabled": true,
+      "cancelEnabled": true
+    },
+    "rejection": {
+      "guest": "Иван Иванов",
+      "enabled": true,
+      "posts": 1
+    }
+  },
+  "manualRoster": {
+    "pending": {
+      "posts": 1,
+      "payload": {
+        "userId": "u4"
+      },
+      "value": "Галина Игрок",
+      "disabled": true
+    },
+    "rejected": {
+      "value": "Галина Игрок",
+      "enabled": true,
+      "posts": 1
+    },
+    "posts": 2,
+    "persistedPlayer": true,
+    "visiblePlayer": true
+  },
+  "judgeSetup": {
+    "pending": {
+      "start": 1,
+      "setup": 1,
+      "firstServerDisabled": true,
+      "swapDisabled": true,
+      "boardDisabled": "true",
+      "cancelDisabled": true,
+      "payload": {
+        "firstServerParticipantId": "p-b",
+        "swapSides": false
+      }
+    },
+    "afterRetry": {
+      "start": [
+        {
+          "firstServerParticipantId": "p-b"
+        }
+      ],
+      "setup": [
+        {
+          "firstServerParticipantId": "p-b",
+          "swapSides": false
+        },
+        {
+          "firstServerParticipantId": "p-a",
+          "swapSides": false
+        }
+      ]
+    }
+  }
+}

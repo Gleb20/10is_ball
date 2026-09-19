@@ -1,0 +1,110 @@
+{
+  "source": "Synthetic local Chromium, WO4 sample; no API rights/persistence/device claim",
+  "cases": 36,
+  "directConsumerCases": 21,
+  "directConsumerWidths": {
+    "home": [
+      360,
+      390,
+      1440
+    ],
+    "matches": [
+      360,
+      390,
+      1440
+    ],
+    "match-detail": [
+      360,
+      390,
+      1440
+    ],
+    "tournaments": [
+      360,
+      390,
+      1440
+    ],
+    "tournament-detail": [
+      360,
+      390,
+      1440
+    ],
+    "history": [
+      360,
+      390,
+      1440
+    ],
+    "admin": [
+      360,
+      390,
+      1440
+    ]
+  },
+  "chipCount": 108,
+  "hoverChecks": 108,
+  "comparedWithAcceptedInventory": 52,
+  "minContrast": 4.9,
+  "contrastPairs": [
+    {
+      "foreground": [
+        88,
+        20,
+        171
+      ],
+      "background": [
+        235,
+        222,
+        252
+      ],
+      "ratio": 7.79,
+      "example": "home-360:Ожидание"
+    },
+    {
+      "foreground": [
+        23,
+        23,
+        23
+      ],
+      "background": [
+        230,
+        230,
+        230
+      ],
+      "ratio": 14.44,
+      "example": "home-360:Идёт"
+    },
+    {
+      "foreground": [
+        170,
+        19,
+        19
+      ],
+      "background": [
+        253,
+        232,
+        232
+      ],
+      "ratio": 6.36,
+      "example": "home-360:Остановлен"
+    },
+    {
+      "foreground": [
+        3,
+        118,
+        14
+      ],
+      "background": [
+        216,
+        242,
+        218
+      ],
+      "ratio": 4.9,
+      "example": "home-360:Завершён"
+    }
+  ],
+  "keyboardChipTabStops": 0,
+  "unknownRequests": 0,
+  "pageErrors": 0,
+  "horizontalOverflowCases": 0,
+  "screenshots": 63,
+  "failures": []
+}

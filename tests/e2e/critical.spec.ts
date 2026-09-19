@@ -55,7 +55,7 @@ async function loginBrowser(page: Page) {
   await expectNoSeriousAxeViolations(page);
   await expectNoHorizontalOverflow(page);
   await page.getByLabel("Email").fill(ADMIN_EMAIL);
-  await page.getByLabel("Пароль").fill(ADMIN_PASSWORD);
+  await page.getByLabel("Пароль", { exact: true }).fill(ADMIN_PASSWORD);
   await page.getByRole("button", { name: "Войти" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(
@@ -210,7 +210,7 @@ test("E2E_runtime_session_recovery__AT-AUTH-009__preserves_route_and_draft_witho
   ).toBeFalsy();
 
   await page.getByLabel("Email").fill(ADMIN_EMAIL);
-  await page.getByLabel("Пароль").fill(ADMIN_PASSWORD);
+  await page.getByLabel("Пароль", { exact: true }).fill(ADMIN_PASSWORD);
   await page.getByRole("button", { name: "Войти" }).click();
   await expect(page).toHaveURL(/\/matches\/new$/);
   await expect(page.getByLabel("Название")).toHaveValue(

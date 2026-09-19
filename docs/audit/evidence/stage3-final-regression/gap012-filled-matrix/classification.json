@@ -1,0 +1,1405 @@
+{
+  "schemaVersion": 1,
+  "status": "accepted-with-instrumentation-limitation",
+  "run": "one disposable PostgreSQL 16.15 and compiled desktop Chromium matrix",
+  "fixture": "route-only synthetic UI payload; 3 frequent, 3 recent, and 1 team button; not database roster evidence",
+  "aggregate": {
+    "foundationPassed": 9,
+    "browserPassed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "classification": {
+    "beforeFocus": "groups committed before focus; selection succeeded",
+    "betweenFocusAndInput": "groups committed after focus and before beforeinput; selection succeeded",
+    "releaseRequestedOnInput": "request released by input listener; observed group/option commit after input, transient outsideMargin12 at scrollY 224, automatic scroll to 654, then pointerdown/mousedown and normal close; query retained",
+    "afterFill": "response withheld through fill; observed group/option commit after input, same transient outsideMargin12 and recovery scroll, then normal selection; query retained",
+    "conclusion": "The controlled 476px layout insertion reproduced the transient geometry boundary without reproducing selection loss. It does not establish that the race is absent and does not justify a new product change."
+  },
+  "instrumentationLimitation": {
+    "field": "vendorDOMShapeMatches",
+    "observed": false,
+    "cause": "The frozen helper required the editable control to have a data-readonly attribute. ic-kit emits data-readonly only when readOnly is true, so the predicate is false for this normal editable field.",
+    "effect": "The boolean shape gate is invalid for this capture. Raw parent-chain rectangles, safeBottom=0, scroll and event ordering remain recorded; no additional runtime run was performed."
+  },
+  "phases": [
+    {
+      "scenario": "before-focus",
+      "sourceFile": "before-focus.json",
+      "sha256": "ab2a4fb5602a17b1a84b5b06107482e593903f3d4799d9bcb5dfccb37c0acf62",
+      "outcome": {
+        "selectionFailed": false,
+        "httpStatus": 200,
+        "installationFailed": null,
+        "diagnosticErrors": 0,
+        "dropped": 0
+      },
+      "final": {
+        "queryRetained": true,
+        "inputToken": 1,
+        "inputActive": true,
+        "expanded": "false",
+        "groups": {
+          "frequentButtons": 3,
+          "recentButtons": 3,
+          "teamButtons": 1
+        },
+        "suggestionsHeight": 476,
+        "safeBottom": 0,
+        "vendorDOMShapeMatches": false,
+        "scrollY": 654
+      },
+      "criticalEvents": [
+        {
+          "atMs": 324.2,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": false,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 368.7,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": false,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 388.4,
+          "type": "focus",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 390.8,
+          "type": "aria-expanded",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 3,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": "false",
+          "valueAfterMutation": "true"
+        },
+        {
+          "atMs": 390.9,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 3,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 391,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 3,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 391.3,
+          "type": "beforeinput",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 3,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 391.6,
+          "type": "input",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 48,
+          "expanded": "true",
+          "optionCount": 3,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 393.7,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 48,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 393.8,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 48,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 393.9,
+          "type": "scroll",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 48,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 428.9,
+          "type": "pointerdown",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 48,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 429.1,
+          "type": "mousedown",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 48,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 430.1,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 48,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 430.3,
+          "type": "aria-expanded",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 48,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": "true",
+          "valueAfterMutation": "false"
+        }
+      ]
+    },
+    {
+      "scenario": "between-focus-input",
+      "sourceFile": "between-focus-input.json",
+      "sha256": "74d920adab7e6d80e1fec80e32b561068efaf07cbdd2ddbbe99eba5f9431685c",
+      "outcome": {
+        "selectionFailed": false,
+        "httpStatus": 200,
+        "installationFailed": null,
+        "diagnosticErrors": 0,
+        "dropped": 0
+      },
+      "final": {
+        "queryRetained": true,
+        "inputToken": 1,
+        "inputActive": true,
+        "expanded": "false",
+        "groups": {
+          "frequentButtons": 3,
+          "recentButtons": 3,
+          "teamButtons": 1
+        },
+        "suggestionsHeight": 476,
+        "safeBottom": 0,
+        "vendorDOMShapeMatches": false,
+        "scrollY": 985
+      },
+      "criticalEvents": [
+        {
+          "atMs": 326.3,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": false,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 355.1,
+          "type": "focus",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 555,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 355.9,
+          "type": "aria-expanded",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 555,
+          "outsideMargin12": false,
+          "oldValue": "false",
+          "valueAfterMutation": "true"
+        },
+        {
+          "atMs": 357.6,
+          "type": "scroll",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 555,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 370,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 6,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 371.3,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 6,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 391.5,
+          "type": "scroll",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 6,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 392.5,
+          "type": "beforeinput",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 6,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 392.9,
+          "type": "input",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 55,
+          "expanded": "true",
+          "optionCount": 6,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 394.2,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 55,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 394.2,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 55,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 394.2,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 55,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 394.2,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 55,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 394.3,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 55,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 426.6,
+          "type": "pointerdown",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 55,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 426.6,
+          "type": "mousedown",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 55,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 427.5,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 55,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 427.8,
+          "type": "aria-expanded",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 55,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 985,
+          "outsideMargin12": false,
+          "oldValue": "true",
+          "valueAfterMutation": "false"
+        }
+      ]
+    },
+    {
+      "scenario": "release-on-input",
+      "sourceFile": "release-on-input.json",
+      "sha256": "5599338a03920b4a45a0922c482700c8962b279a10dccab0836bf3f1c1f12887",
+      "outcome": {
+        "selectionFailed": false,
+        "httpStatus": 200,
+        "installationFailed": null,
+        "diagnosticErrors": 0,
+        "dropped": 0
+      },
+      "final": {
+        "queryRetained": true,
+        "inputToken": 1,
+        "inputActive": true,
+        "expanded": "false",
+        "groups": {
+          "frequentButtons": 3,
+          "recentButtons": 3,
+          "teamButtons": 1
+        },
+        "suggestionsHeight": 476,
+        "safeBottom": 0,
+        "vendorDOMShapeMatches": false,
+        "scrollY": 654
+      },
+      "criticalEvents": [
+        {
+          "atMs": 309.3,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": false,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 339.1,
+          "type": "focus",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 340,
+          "type": "aria-expanded",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 224,
+          "outsideMargin12": false,
+          "oldValue": "false",
+          "valueAfterMutation": "true"
+        },
+        {
+          "atMs": 340.5,
+          "type": "beforeinput",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 224,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 340.9,
+          "type": "input",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 52,
+          "expanded": "true",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 224,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 342,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 52,
+          "expanded": "true",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 224,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 342.6,
+          "type": "scroll",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 52,
+          "expanded": "true",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 224,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 346,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 52,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 224,
+          "outsideMargin12": true,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 347.2,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 52,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 224,
+          "outsideMargin12": true,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 348.2,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 52,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 357.7,
+          "type": "scroll",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 52,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 377.3,
+          "type": "pointerdown",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 52,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 377.4,
+          "type": "mousedown",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 52,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 378.3,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 52,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 378.5,
+          "type": "aria-expanded",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 52,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": "true",
+          "valueAfterMutation": "false"
+        }
+      ]
+    },
+    {
+      "scenario": "after-fill",
+      "sourceFile": "after-fill.json",
+      "sha256": "79a102d34c2f35a4b494e8fb7f5ba0f1f22ddda367479fc4d3fb2d3fb705a23c",
+      "outcome": {
+        "selectionFailed": false,
+        "httpStatus": 200,
+        "installationFailed": null,
+        "diagnosticErrors": 0,
+        "dropped": 0
+      },
+      "final": {
+        "queryRetained": true,
+        "inputToken": 1,
+        "inputActive": true,
+        "expanded": "false",
+        "groups": {
+          "frequentButtons": 3,
+          "recentButtons": 3,
+          "teamButtons": 1
+        },
+        "suggestionsHeight": 476,
+        "safeBottom": 0,
+        "vendorDOMShapeMatches": false,
+        "scrollY": 654
+      },
+      "criticalEvents": [
+        {
+          "atMs": 309.8,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": false,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 338.3,
+          "type": "focus",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 0,
+          "outsideMargin12": true,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 339.1,
+          "type": "aria-expanded",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 224,
+          "outsideMargin12": false,
+          "oldValue": "false",
+          "valueAfterMutation": "true"
+        },
+        {
+          "atMs": 339.5,
+          "type": "beforeinput",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 0,
+          "expanded": "true",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 224,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 339.8,
+          "type": "input",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 46,
+          "expanded": "true",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 224,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 340.6,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 46,
+          "expanded": "true",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 224,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 341,
+          "type": "scroll",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 46,
+          "expanded": "true",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 0,
+            "recentButtons": 0,
+            "teamButtons": 0
+          },
+          "suggestionsHeight": null,
+          "scrollY": 224,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 345.7,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 46,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 224,
+          "outsideMargin12": true,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 347.1,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 46,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 224,
+          "outsideMargin12": true,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 348.1,
+          "type": "target-dom-commit-observed",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 46,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 357,
+          "type": "scroll",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 46,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 376.2,
+          "type": "pointerdown",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 46,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 376.4,
+          "type": "mousedown",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 46,
+          "expanded": "true",
+          "optionCount": 1,
+          "exactOptionCount": 1,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 377.2,
+          "type": "options-mutation",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 46,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": null,
+          "valueAfterMutation": null
+        },
+        {
+          "atMs": 377.5,
+          "type": "aria-expanded",
+          "inputToken": 1,
+          "inputActive": true,
+          "queryLength": 46,
+          "expanded": "false",
+          "optionCount": 0,
+          "exactOptionCount": 0,
+          "groups": {
+            "frequentButtons": 3,
+            "recentButtons": 3,
+            "teamButtons": 1
+          },
+          "suggestionsHeight": 476,
+          "scrollY": 654,
+          "outsideMargin12": false,
+          "oldValue": "true",
+          "valueAfterMutation": "false"
+        }
+      ]
+    }
+  ]
+}

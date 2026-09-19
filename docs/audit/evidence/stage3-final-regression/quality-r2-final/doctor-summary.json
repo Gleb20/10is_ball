@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "requireDocker": false,
+  "requireBrowser": false,
+  "toolchain": [
+    "Node 24.20.0",
+    "pnpm 9.15.0"
+  ]
+}

@@ -1,0 +1,147 @@
+{
+  "mode": "dialog",
+  "viewport": "390x844",
+  "initial": {
+    "field": {
+      "x": 56,
+      "y": 505.5,
+      "width": 254,
+      "height": 44,
+      "top": 505.5,
+      "right": 310,
+      "bottom": 549.5,
+      "left": 56
+    },
+    "clip": {
+      "x": 43,
+      "y": 458.5,
+      "width": 304,
+      "height": 120,
+      "top": 458.5,
+      "right": 347,
+      "bottom": 578.5,
+      "left": 43
+    },
+    "menu": {
+      "x": 43,
+      "y": 233,
+      "width": 304,
+      "height": 264,
+      "top": 233,
+      "right": 347,
+      "bottom": 497,
+      "left": 43
+    },
+    "active": {
+      "x": 55,
+      "y": 449,
+      "width": 280,
+      "height": 36,
+      "top": 449,
+      "right": 335,
+      "bottom": 485,
+      "left": 55
+    },
+    "above": 39,
+    "below": 21,
+    "menuPosition": "fixed",
+    "menuStyleTop": "auto",
+    "outerScrollTop": 0,
+    "listScrollTop": 632,
+    "activeVisibleInClip": false,
+    "activeVisibleOnScreen": true,
+    "activeHitTest": true,
+    "scrollIntoViewCalls": 0,
+    "focusRetained": true,
+    "selectedId": "",
+    "selectedValue": "Игрок"
+  },
+  "afterManualScroll": {
+    "field": {
+      "x": 56,
+      "y": 475.5,
+      "width": 254,
+      "height": 44,
+      "top": 475.5,
+      "right": 310,
+      "bottom": 519.5,
+      "left": 56
+    },
+    "clip": {
+      "x": 43,
+      "y": 428.5,
+      "width": 304,
+      "height": 120,
+      "top": 428.5,
+      "right": 347,
+      "bottom": 548.5,
+      "left": 43
+    },
+    "menu": {
+      "x": 43,
+      "y": 203,
+      "width": 304,
+      "height": 264,
+      "top": 203,
+      "right": 347,
+      "bottom": 467,
+      "left": 43
+    },
+    "active": {
+      "x": 55,
+      "y": 419,
+      "width": 280,
+      "height": 36,
+      "top": 419,
+      "right": 335,
+      "bottom": 455,
+      "left": 55
+    },
+    "above": 39,
+    "below": 21,
+    "menuPosition": "fixed",
+    "menuStyleTop": "auto",
+    "outerScrollTop": 30,
+    "listScrollTop": 632,
+    "activeVisibleInClip": false,
+    "activeVisibleOnScreen": true,
+    "activeHitTest": true,
+    "scrollIntoViewCalls": 0,
+    "focusRetained": true,
+    "selectedId": "",
+    "selectedValue": "Игрок"
+  },
+  "afterEnter": {
+    "field": {
+      "x": 56,
+      "y": 475.5,
+      "width": 254,
+      "height": 44,
+      "top": 475.5,
+      "right": 310,
+      "bottom": 519.5,
+      "left": 56
+    },
+    "clip": {
+      "x": 43,
+      "y": 428.5,
+      "width": 304,
+      "height": 120,
+      "top": 428.5,
+      "right": 347,
+      "bottom": 548.5,
+      "left": 43
+    },
+    "above": 39,
+    "below": 21,
+    "menuPosition": null,
+    "outerScrollTop": 30,
+    "activeVisibleInClip": false,
+    "activeVisibleOnScreen": false,
+    "activeHitTest": false,
+    "scrollIntoViewCalls": 0,
+    "focusRetained": true,
+    "selectedId": "u20",
+    "selectedValue": "Игрок 20 Длинная фамилия"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "source_episodes": 82,
+  "expert_ids": 38,
+  "coverage_rows": 236,
+  "dispositions": {
+    "context_evidence": 11,
+    "accepted_target": 91,
+    "hypothesis_reproduce": 9,
+    "decision_gate": 20,
+    "preserve_existing": 7,
+    "needs_bounded_target": 58,
+    "preserve_positive": 5,
+    "reconciled_target": 27,
+    "superseded_target": 8
+  },
+  "errors": []
+}

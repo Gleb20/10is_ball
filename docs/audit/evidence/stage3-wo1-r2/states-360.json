@@ -1,0 +1,163 @@
+{
+  "browser": "Playwright Chromium",
+  "rows": [
+    {
+      "viewport": {
+        "width": 360,
+        "height": 844
+      },
+      "effectiveCssWidth": 360,
+      "method": "normal",
+      "zoom": 100,
+      "field": {
+        "focusVisible": true,
+        "inputOutlineStyle": "none",
+        "wrapperOutlineStyle": "solid",
+        "wrapperOutlineWidth": "3px",
+        "helperText": "Ошибка поля",
+        "helperRect": {
+          "x": 16,
+          "y": 122,
+          "width": 328,
+          "height": 16,
+          "top": 122,
+          "right": 344,
+          "bottom": 138,
+          "left": 16
+        },
+        "horizontalOverflow": false
+      },
+      "selection": {
+        "selectedId": "u2",
+        "pickerFocus": true,
+        "pickerRect": {
+          "x": 29,
+          "y": 199,
+          "width": 278,
+          "height": 44,
+          "top": 199,
+          "right": 307,
+          "bottom": 243,
+          "left": 29
+        },
+        "horizontalOverflow": false
+      }
+    },
+    {
+      "viewport": {
+        "width": 360,
+        "height": 844
+      },
+      "effectiveCssWidth": 360,
+      "method": "normal",
+      "zoom": 100,
+      "radio": {
+        "checked": true,
+        "cardSelected": true,
+        "cardOutlineStyle": "solid",
+        "cardOutlineWidth": "3px",
+        "inputOutlineStyle": "none",
+        "cardRect": {
+          "x": 41,
+          "y": 502.828125,
+          "width": 278,
+          "height": 231.0625,
+          "top": 502.828125,
+          "right": 319,
+          "bottom": 733.890625,
+          "left": 41
+        },
+        "panelRect": {
+          "x": 24,
+          "y": 25.109375,
+          "width": 312,
+          "height": 793.78125,
+          "top": 25.109375,
+          "right": 336,
+          "bottom": 818.890625,
+          "left": 24
+        },
+        "horizontalOverflow": false
+      }
+    },
+    {
+      "viewport": {
+        "width": 720,
+        "height": 844
+      },
+      "effectiveCssWidth": 360,
+      "method": "CSS zoom on documentElement at 720px viewport, not browser UI zoom",
+      "zoom": 200,
+      "field": {
+        "focusVisible": true,
+        "inputOutlineStyle": "none",
+        "wrapperOutlineStyle": "solid",
+        "wrapperOutlineWidth": "3px",
+        "helperText": "Ошибка поля",
+        "helperRect": {
+          "x": 32,
+          "y": 244,
+          "width": 656,
+          "height": 32,
+          "top": 244,
+          "right": 688,
+          "bottom": 276,
+          "left": 32
+        },
+        "horizontalOverflow": false
+      },
+      "selection": {
+        "selectedId": "u2",
+        "pickerFocus": true,
+        "pickerRect": {
+          "x": 58,
+          "y": 398,
+          "width": 556,
+          "height": 88,
+          "top": 398,
+          "right": 614,
+          "bottom": 486,
+          "left": 58
+        },
+        "horizontalOverflow": false
+      }
+    },
+    {
+      "viewport": {
+        "width": 720,
+        "height": 844
+      },
+      "effectiveCssWidth": 360,
+      "method": "CSS zoom on documentElement at 720px viewport, not browser UI zoom",
+      "zoom": 200,
+      "radio": {
+        "checked": true,
+        "cardSelected": true,
+        "cardOutlineStyle": "solid",
+        "cardOutlineWidth": "3px",
+        "inputOutlineStyle": "none",
+        "cardRect": {
+          "x": 372.375,
+          "y": -489.3125,
+          "width": 298.09375,
+          "height": 1115.65625,
+          "top": -489.3125,
+          "right": 670.46875,
+          "bottom": 626.34375,
+          "left": 372.375
+        },
+        "panelRect": {
+          "x": 48,
+          "y": 48,
+          "width": 624,
+          "height": 748,
+          "top": 48,
+          "right": 672,
+          "bottom": 796,
+          "left": 48
+        },
+        "horizontalOverflow": false
+      }
+    }
+  ]
+}

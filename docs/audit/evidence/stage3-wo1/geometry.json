@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "baseSha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+  "environment": "local Vite harness with actual ic-kit, app CSS, Dialog and Autocomplete; Playwright Chromium",
+  "bug019FreshRed": {
+    "viewports": ["360x844", "390x844", "1280x800"],
+    "inputTopBottom": [727, 771],
+    "menuTopBottom": [784, 1048],
+    "twentiethOptionTopBottom": [1632, 1668],
+    "listScrollTop": 0,
+    "activeOptionVisible": false,
+    "historicalBottomNavUsedAsEvidence": false
+  },
+  "bug019Green": {
+    "viewports": ["360x844", "390x844", "1280x800"],
+    "inputTopBottom": [727, 771],
+    "menuTopBottom": [455, 719],
+    "twentiethOptionTopBottom": [671, 707],
+    "listScrollTop": 632,
+    "activeOptionVisible": true,
+    "emptyStatusFinalStructure": {
+      "recheckedAfterEmptyListboxChange": true,
+      "viewports": ["360x844", "390x844", "1280x844"],
+      "statusTopBottomAt360": [681, 717],
+      "statusTopBottomAt390And1280": [699, 717],
+      "comboboxControlsExistingEmptyListbox": true,
+      "ariaActivedescendant": null,
+      "statusText": "Ничего не найдено. Проверьте написание имени."
+    },
+    "viewportResizeTo500": {
+      "viewports": ["360x500", "390x500"],
+      "documentScrollY": 295,
+      "inputTopBottom": [432, 476],
+      "activeOptionTopBottom": [376, 412]
+    },
+    "manualPageScroll": {
+      "scrollYSequence": [295, 545, 1028],
+      "popupExpandedAfterLeavingField": false,
+      "scrollTrap": false
+    }
+  },
+  "dialogFreshRed": {
+    "viewport": "390x844",
+    "activeOptionTopBottom": [793, 829],
+    "dialogBodyBottom": 819,
+    "activeOptionVisible": false
+  },
+  "dialogGreen": {
+    "viewports": ["360x844", "390x844", "1280x800"],
+    "mobileActiveOptionTopBottom": [469, 505],
+    "mobileDialogBodyTopBottom": [118, 819],
+    "activeOptionVisibleWithinAllClippingAncestors": true,
+    "keyboardEnterValue": "Игрок 20",
+    "touchOrPointerValue": "Игрок 25",
+    "inputFocusRetained": true,
+    "manualDialogScrollTop": [0, 600],
+    "popupClosesWhenFieldLeavesVisibleBody": true
+  },
+  "dialogOpenVisualRecheck": {
+    "screenshot": "dialog-open-active-390.png",
+    "viewport": "390x844",
+    "scenario": "Scrollable app Dialog, 30 options with long wrapping names, 20th option keyboard-active",
+    "inputTopBottom": [591, 635],
+    "listTopBottom": [331, 571],
+    "activeOptionTopBottom": [535, 571],
+    "listScrollTop": 632,
+    "activeIdrefResolves": true,
+    "inputFocusRetained": true
+  },
+  "bug020FreshRed": {
+    "compositeInputOutline": "3px square on inner input",
+    "compositeWrapperRadius": "10px with no outline",
+    "radioInputOutline": "3px square",
+    "selectedCardOutline": "2px",
+    "selectedCardShadow": "1px same-color shadow"
+  },
+  "bug020Green": {
+    "matrix": "matrix.json",
+    "screenshots": ["focus-light-390.png", "radio-light-390.png", "radio-dark-390.png"],
+    "focusRing": "3px on 10px text-control wrapper or 12px radio card; inner raw outline removed",
+    "selectedCardShadow": "none",
+    "readonlyNativeSelection": "Копируемый",
+    "disabledValuePreserved": "Сохранённое значение",
+    "darkTokenContrastDiagnostic": "matrix.json; dark-token labels and outlined button did not reach 4.5:1 on their actual surface, and no production dark pass is claimed"
+  },
+  "limitations": [
+    "The 500px resize is a VisualViewport approximation, not an OS software keyboard or physical safe area measurement.",
+    "No WebKit, physical iPhone, or spoken assistive technology pass is claimed.",
+    "The harness exercises real components and CSS locally; no public user journey or production mutation was run."
+  ]
+}

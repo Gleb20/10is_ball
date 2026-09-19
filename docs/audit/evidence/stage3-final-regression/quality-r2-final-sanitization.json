@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "sourceRun": "fresh verify:fast evidence staged outside the repository",
+  "reason": "Generated reporter evidence embeds a synthetic loopback database URL in API test titles; release copies remove the URL value.",
+  "artifacts": [
+    {
+      "artifact": "vitest-api.json",
+      "category": "credential-url",
+      "replacement": "[REDACTED_LOOPBACK_DATABASE_URL]",
+      "occurrences": 10,
+      "rawSha256": "994dd884fe066e49cdc4bae86412398fa14727dc76d22183690370401a9eb3e9",
+      "sanitizedSha256": "e02c4b4a111fa6270e79e7f05d28576b08371e5a46eaaeba127d157188a7fc99",
+      "rawExcludedFromRelease": true
+    }
+  ],
+  "rawArtifactsRetainedInRelease": false,
+  "testScenariosRemoved": false
+}

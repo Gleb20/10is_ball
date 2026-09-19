@@ -10,7 +10,7 @@ async function mutate(api: APIRequestContext, path: string, data: unknown = {}, 
   return response.json();
 }
 async function login(page: Page) {
-  await page.goto("/login"); await page.getByLabel("Email").fill(email); await page.getByLabel("Пароль").fill(password);
+  await page.goto("/login"); await page.getByLabel("Email").fill(email); await page.getByLabel("Пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Войти", exact: true }).click(); await expect(page).toHaveURL(/\/$/);
 }
 async function noOverflow(page: Page) { expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); }

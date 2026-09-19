@@ -1,0 +1,37 @@
+{
+  "baseSha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+  "browser": "Playwright Chromium",
+  "fixture": "Actual JudgePage inside AppShell at /matches/:id/judge with synthetic match, lock, heartbeat and directory API responses; not a public user journey.",
+  "shellRecheck": {
+    "className": "app-shell app-shell--immersive",
+    "background": "rgb(15, 17, 21)",
+    "textColor": "rgb(245, 245, 245)",
+    "screenshots": ["judge-handover-shell-844.png", "judge-handover-shell-1280.png"],
+    "readySelectEnabledAtBothViewports": true,
+    "oldWhiteBackgroundScreenshotsSuperseded": ["judge-handover-844.png", "judge-handover-1280.png"]
+  },
+  "rows": [
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "pendingDisabled": true,
+      "errorDisabled": true,
+      "retryGetCount": 2,
+      "focusAfterRetry": true,
+      "noPreselection": true
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "pendingDisabled": true,
+      "errorDisabled": true,
+      "retryGetCount": 2,
+      "focusAfterRetry": true,
+      "noPreselection": true
+    }
+  ]
+}

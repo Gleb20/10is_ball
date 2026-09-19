@@ -1,0 +1,352 @@
+{
+  "baseSha": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+  "browser": "Playwright Chromium",
+  "rows": [
+    {
+      "family": "fields-buttons-segments-checkbox",
+      "theme": "light",
+      "width": 390,
+      "focusField": {
+        "inputOutline": "none",
+        "wrapperOutline": "3px",
+        "wrapperRadius": "10px",
+        "focusVisible": true
+      },
+      "selection": {
+        "readOnly": true,
+        "selected": "Копируемый",
+        "value": "Копируемый текст"
+      },
+      "disabledState": {
+        "disabled": true,
+        "value": "Сохранённое значение"
+      },
+      "errorState": {
+        "describedBy": "_r_4_-helper",
+        "invalid": "true",
+        "wrapperOutline": "3px"
+      },
+      "active": {
+        "activeId": "_r_8_-option-0",
+        "inputFocus": true,
+        "selectedValue": "Анна",
+        "optionSelected": "false"
+      },
+      "selected": {
+        "value": "Анна А",
+        "inputFocus": true
+      },
+      "segmentBefore": "true",
+      "segmentAfter": "true",
+      "checkboxBefore": false,
+      "checkboxAfter": true,
+      "normal": {
+        "background": "rgba(0, 0, 0, 0)",
+        "outlineStyle": "none",
+        "outlineVisible": false,
+        "focus": false,
+        "focusVisible": false,
+        "height": 44
+      },
+      "hover": {
+        "hover": true,
+        "focus": false,
+        "focusVisible": false,
+        "background": "rgb(235, 222, 252)"
+      },
+      "pressed": {
+        "active": true,
+        "focus": true,
+        "focusVisible": false,
+        "background": "rgb(235, 222, 252)"
+      },
+      "focusButton": {
+        "focused": true,
+        "focusVisible": true,
+        "hover": false,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      },
+      "buttonMeasurementsContext": "2026-09-18 isolated rerun on token surface; pointer off for normal and keyboard focus"
+    },
+    {
+      "family": "fields-buttons-segments-checkbox",
+      "theme": "light",
+      "width": 1280,
+      "focusField": {
+        "inputOutline": "none",
+        "wrapperOutline": "3px",
+        "wrapperRadius": "10px",
+        "focusVisible": true
+      },
+      "selection": {
+        "readOnly": true,
+        "selected": "Копируемый",
+        "value": "Копируемый текст"
+      },
+      "disabledState": {
+        "disabled": true,
+        "value": "Сохранённое значение"
+      },
+      "errorState": {
+        "describedBy": "_r_4_-helper",
+        "invalid": "true",
+        "wrapperOutline": "3px"
+      },
+      "active": {
+        "activeId": "_r_8_-option-0",
+        "inputFocus": true,
+        "selectedValue": "Анна",
+        "optionSelected": "false"
+      },
+      "selected": {
+        "value": "Анна А",
+        "inputFocus": true
+      },
+      "segmentBefore": "true",
+      "segmentAfter": "true",
+      "checkboxBefore": false,
+      "checkboxAfter": true,
+      "normal": {
+        "background": "rgba(0, 0, 0, 0)",
+        "outlineStyle": "none",
+        "outlineVisible": false,
+        "focus": false,
+        "focusVisible": false,
+        "height": 44
+      },
+      "hover": {
+        "hover": true,
+        "focus": false,
+        "focusVisible": false,
+        "background": "rgb(235, 222, 252)"
+      },
+      "pressed": {
+        "active": true,
+        "focus": true,
+        "focusVisible": false,
+        "background": "rgb(235, 222, 252)"
+      },
+      "focusButton": {
+        "focused": true,
+        "focusVisible": true,
+        "hover": false,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      },
+      "buttonMeasurementsContext": "2026-09-18 isolated rerun on token surface; pointer off for normal and keyboard focus"
+    },
+    {
+      "family": "fields-buttons-segments-checkbox",
+      "theme": "dark",
+      "width": 390,
+      "focusField": {
+        "inputOutline": "none",
+        "wrapperOutline": "3px",
+        "wrapperRadius": "10px",
+        "focusVisible": true
+      },
+      "selection": {
+        "readOnly": true,
+        "selected": "Копируемый",
+        "value": "Копируемый текст"
+      },
+      "disabledState": {
+        "disabled": true,
+        "value": "Сохранённое значение"
+      },
+      "errorState": {
+        "describedBy": "_r_4_-helper",
+        "invalid": "true",
+        "wrapperOutline": "3px"
+      },
+      "active": {
+        "activeId": "_r_8_-option-0",
+        "inputFocus": true,
+        "selectedValue": "Анна",
+        "optionSelected": "false"
+      },
+      "selected": {
+        "value": "Анна А",
+        "inputFocus": true
+      },
+      "segmentBefore": "true",
+      "segmentAfter": "true",
+      "checkboxBefore": false,
+      "checkboxAfter": true,
+      "normal": {
+        "background": "rgba(0, 0, 0, 0)",
+        "outlineStyle": "none",
+        "outlineVisible": false,
+        "focus": false,
+        "focusVisible": false,
+        "height": 44
+      },
+      "hover": {
+        "hover": true,
+        "focus": false,
+        "focusVisible": false,
+        "background": "rgb(235, 222, 252)"
+      },
+      "pressed": {
+        "active": true,
+        "focus": true,
+        "focusVisible": false,
+        "background": "rgb(235, 222, 252)"
+      },
+      "focusButton": {
+        "focused": true,
+        "focusVisible": true,
+        "hover": false,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      },
+      "scope": "dark ic-kit token mechanics only; application theme is fixed light",
+      "visualContrastAccepted": false,
+      "buttonMeasurementsContext": "2026-09-18 isolated rerun on token surface; pointer off for normal and keyboard focus"
+    },
+    {
+      "family": "fields-buttons-segments-checkbox",
+      "theme": "dark",
+      "width": 1280,
+      "focusField": {
+        "inputOutline": "none",
+        "wrapperOutline": "3px",
+        "wrapperRadius": "10px",
+        "focusVisible": true
+      },
+      "selection": {
+        "readOnly": true,
+        "selected": "Копируемый",
+        "value": "Копируемый текст"
+      },
+      "disabledState": {
+        "disabled": true,
+        "value": "Сохранённое значение"
+      },
+      "errorState": {
+        "describedBy": "_r_4_-helper",
+        "invalid": "true",
+        "wrapperOutline": "3px"
+      },
+      "active": {
+        "activeId": "_r_8_-option-0",
+        "inputFocus": true,
+        "selectedValue": "Анна",
+        "optionSelected": "false"
+      },
+      "selected": {
+        "value": "Анна А",
+        "inputFocus": true
+      },
+      "segmentBefore": "true",
+      "segmentAfter": "true",
+      "checkboxBefore": false,
+      "checkboxAfter": true,
+      "normal": {
+        "background": "rgba(0, 0, 0, 0)",
+        "outlineStyle": "none",
+        "outlineVisible": false,
+        "focus": false,
+        "focusVisible": false,
+        "height": 44
+      },
+      "hover": {
+        "hover": true,
+        "focus": false,
+        "focusVisible": false,
+        "background": "rgb(235, 222, 252)"
+      },
+      "pressed": {
+        "active": true,
+        "focus": true,
+        "focusVisible": false,
+        "background": "rgb(235, 222, 252)"
+      },
+      "focusButton": {
+        "focused": true,
+        "focusVisible": true,
+        "hover": false,
+        "outlineStyle": "solid",
+        "outlineWidth": "3px"
+      },
+      "scope": "dark ic-kit token mechanics only; application theme is fixed light",
+      "visualContrastAccepted": false,
+      "buttonMeasurementsContext": "2026-09-18 isolated rerun on token surface; pointer off for normal and keyboard focus"
+    },
+    {
+      "family": "radio-card",
+      "theme": "light",
+      "width": 390,
+      "initial": [
+        true,
+        false
+      ],
+      "focus": {
+        "inputOutline": "none",
+        "cardOutline": "3px",
+        "cardRadius": "12px",
+        "selectedShadow": "none"
+      },
+      "changed": [
+        false,
+        true
+      ]
+    },
+    {
+      "family": "radio-card",
+      "theme": "dark",
+      "width": 390,
+      "initial": [
+        true,
+        false
+      ],
+      "focus": {
+        "inputOutline": "none",
+        "cardOutline": "3px",
+        "cardRadius": "12px",
+        "selectedShadow": "none"
+      },
+      "changed": [
+        false,
+        true
+      ],
+      "scope": "dark token dialog diagnostic, not a production app theme"
+    }
+  ],
+  "visualEvidenceCorrection": {
+    "productionTheme": "apps/web/src/main.tsx sets documentElement data-theme=light",
+    "supersededImages": [
+      "focus-dark-390.png",
+      "focus-dark-1280.png"
+    ],
+    "reason": "Those images had dark token controls on a white fixture background and cannot establish dark contrast.",
+    "darkTokenDiagnostic": {
+      "surface": "var(--surfaces-surface-1) = rgb(49, 44, 55)",
+      "fieldLabelContrast": 1.31,
+      "checkboxLabelContrast": 1.46,
+      "outlinedButtonTextContrast": 2.11,
+      "threshold": 4.5,
+      "passed": false,
+      "screenshots": [
+        "focus-dark-theme-390.png",
+        "focus-dark-theme-1280.png"
+      ],
+      "scope": "Unsupported dark component composition, not a production route or WO1 acceptance."
+    },
+    "judgeProductionShell": {
+      "className": "app-shell app-shell--immersive",
+      "background": "rgb(15, 17, 21)",
+      "color": "rgb(245, 245, 245)",
+      "screenshots": [
+        "judge-handover-shell-844.png",
+        "judge-handover-shell-1280.png"
+      ]
+    }
+  },
+  "limitations": [
+    "Production app fixes documentElement data-theme=light; dark-token surface is diagnostic and fails contrast for older kit labels/button.",
+    "Focused visual state matrix was captured at 390 and 1280 px; 360 px and zoom were not checked for every BUG-020 state.",
+    "No WebKit, physical device, or spoken AT pass is claimed."
+  ]
+}
