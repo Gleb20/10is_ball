@@ -1767,3 +1767,8 @@ Stage7/WaveD explicitly select Guest; GAP-012 asserts the current absent guest d
 ## 2026-10-03 — hosted geometry fixture correction
 
 Hosted CI37145555968:134/135 browser journeys passed; mobile390 measured menu and toolbar across the portrait-hint resize commit, yielding62px. Replaced separate protocol reads with one DOM snapshot and an unchanged <2px top/right invariant. Independent Terra diagnosis PASS; compiled focused12/12. All application/migration/configuration files remain byte-identical to6.0.0. Version remains6.0.0 per the documentation/test-only exception. [Evidence](audit/evidence/interface-completion-6/geometry-fixture-receipt.json); fresh hosted/public gates remain required.
+
+
+## 2026-10-03 — deterministic recovery response phases
+
+Hosted37146619700:134/135 journeys; the old one-response stale fixture was consumed by concurrent GET and recovery legitimately found the committed key. Stage4 now controls response phase after fetching, including reads already in flight; point and correction keep every existing key/score/one-POST/navigation/focus assertion. Fresh isolated onboarding is completed instead of depending on previous specs. Focused compiled18/18; no product change or version bump. [Receipt](audit/evidence/interface-completion-6/recovery-fixture-receipt.json).

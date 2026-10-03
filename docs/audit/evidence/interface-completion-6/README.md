@@ -16,3 +16,7 @@ This receipt does not assert physical iPhone, spoken assistive technology, WebKi
 ## Hosted geometry fixture follow-up
 
 The first published commit bdb28e7 passed public version/SHA and migration checks, but hosted CI had134/135 browser journeys pass: two sequential geometry reads straddled the React portrait-hint update. [Fixture receipt](geometry-fixture-receipt.json) records the test-only correction and12/12 focused compiled checks. Product source and other424 frozen files are unchanged; the original local1881 receipt remains historical proof for the initial candidate. The corrective commit requires fresh hosted CI and exact-SHA publication; its result is not preclaimed here.
+
+## Hosted recovery fixture follow-up
+
+The second hosted run37146619700 passed134/135 journeys, including the corrected geometry. One-shot stale GET mocking allowed another exact-key GET to correctly resolve unknown state before its assertion. [Recovery fixture receipt](recovery-fixture-receipt.json) records explicit stale/live response phases for points and correction, plus standalone onboarding setup. Focused Stage4 passed18/18 (nine journeys and nine foundation checks); product code remains unchanged. Original failed runs and local receipts remain historical; fresh hosted/public gates are mandatory.

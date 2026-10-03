@@ -28,12 +28,14 @@ async function login(page: Page) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Войти", exact: true }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/(?:onboarding)?$/);
   const onboarding = await page.request.patch("/api/v1/me/onboarding", {
     data: { action: "complete" },
     headers: await mutationHeaders(page),
   });
   expect(onboarding.status(), await onboarding.text()).toBe(200);
+  if (new URL(page.url()).pathname === "/onboarding") await page.goto("/");
+  await expect(page).toHaveURL(/\/$/);
 }
 
 async function createStartedMatch(page: Page, title: string) {
@@ -139,18 +141,38 @@ async function fulfillSnapshot(route: Route, payload: unknown) {
   });
 }
 
+// Install before launch so even bootstrap reads already in flight are controlled.
+// A held phase models an explicitly stale server view until the scenario releases it.
+async function controlMatchReadSnapshot(page: Page) {
+  let snapshot: { match: ServerMatch } | null = null;
+  await page.route(/\/api\/v1\/matches\/[0-9a-f-]+$/, async (route) => {
+    if (route.request().method() !== "GET") return route.continue();
+    const response = await route.fetch();
+    const held = snapshot;
+    if (held && new URL(route.request().url()).pathname.endsWith(`/matches/${held.match.id}`)) {
+      await fulfillSnapshot(route, held);
+    } else {
+      await route.fulfill({ response });
+    }
+  });
+  return {
+    hold(payload: { match: ServerMatch }) { snapshot = payload; },
+    release() { snapshot = null; },
+  };
+}
+
 test("Stage4 point recovery survives Home/return, proves the exact key, and sends one POST", async ({
   page,
 }, info) => {
   await login(page);
   const me = (await (await page.request.get("/api/v1/auth/me")).json()).user as { id: string };
+  const reads = await controlMatchReadSnapshot(page);
   const matchId = await createStartedMatch(page, `Stage4 point ${info.project.name}`);
   const prewriteResponse = await page.request.get(`/api/v1/matches/${matchId}`);
   const prewritePayload = await prewriteResponse.json();
   const prewrite = prewritePayload.match as ServerMatch;
   let pointPosts = 0;
   let releasePosts = 0;
-  let staleReadPending = false;
   let pointKey = "";
   page.on("request", (request) => {
     if (
@@ -159,20 +181,11 @@ test("Stage4 point recovery survives Home/return, proves the exact key, and send
     ) releasePosts += 1;
   });
 
-  await page.route(new RegExp(`/api/v1/matches/${matchId}$`), async (route) => {
-    if (route.request().method() === "GET" && staleReadPending) {
-      staleReadPending = false;
-      await fulfillSnapshot(route, prewritePayload);
-      return;
-    }
-    await route.continue();
-  });
   await page.route(new RegExp(`/api/v1/matches/${matchId}/points$`), async (route) => {
     pointPosts += 1;
     pointKey = route.request().headers()["idempotency-key"] ?? "";
     const committed = await route.fetch();
     expect(committed.status(), await committed.text()).toBe(200);
-    staleReadPending = true;
     await route.fulfill({
       status: 503,
       contentType: "application/json",
@@ -180,6 +193,7 @@ test("Stage4 point recovery survives Home/return, proves the exact key, and send
     });
   });
 
+  reads.hold(prewritePayload);
   await page.getByRole("button", { name: /\+1 очко: Stage4 Alpha/i }).click();
   const recovery = page.getByRole("region", { name: "Восстановление счёта", exact: true });
   await expect(recovery).toContainText("Сервер не подтвердил");
@@ -198,6 +212,7 @@ test("Stage4 point recovery survives Home/return, proves the exact key, and send
   expect(released.version).toBeGreaterThan(prewrite.version);
   expect(released.idempotencyKeys).toContain(pointKey);
 
+  reads.release();
   await page.goForward();
   await expect(page).toHaveURL(new RegExp(`/matches/${matchId}/judge$`));
   await expect(page.getByRole("group", { name: "Счёт матча", exact: true })).toBeVisible();
@@ -214,13 +229,13 @@ test("Stage4 correction recovery keeps keyboard focus and exact absolute readbac
   page,
 }, info) => {
   await login(page);
+  const reads = await controlMatchReadSnapshot(page);
   const matchId = await createStartedMatch(page, `Stage4 correction ${info.project.name}`);
   const prewriteResponse = await page.request.get(`/api/v1/matches/${matchId}`);
   const prewritePayload = await prewriteResponse.json();
   const prewrite = prewritePayload.match as ServerMatch;
   let correctionPosts = 0;
   let correctionKey = "";
-  let staleReadPending = false;
   let releaseLostResponse!: () => void;
   const lostResponseGate = new Promise<void>((resolve) => {
     releaseLostResponse = resolve;
@@ -230,20 +245,11 @@ test("Stage4 correction recovery keeps keyboard focus and exact absolute readbac
     committedCorrection = resolve;
   });
 
-  await page.route(new RegExp(`/api/v1/matches/${matchId}$`), async (route) => {
-    if (route.request().method() === "GET" && staleReadPending) {
-      staleReadPending = false;
-      await fulfillSnapshot(route, prewritePayload);
-      return;
-    }
-    await route.continue();
-  });
   await page.route(new RegExp(`/api/v1/matches/${matchId}/manual-correction$`), async (route) => {
     correctionPosts += 1;
     correctionKey = route.request().headers()["idempotency-key"] ?? "";
     const committed = await route.fetch();
     expect(committed.status(), await committed.text()).toBe(200);
-    staleReadPending = true;
     committedCorrection();
     await lostResponseGate;
     await route.fulfill({
@@ -279,6 +285,7 @@ test("Stage4 correction recovery keeps keyboard focus and exact absolute readbac
   await correctionTrigger.click();
   await scoreA.fill("4");
   await scoreB.fill("2");
+  reads.hold(prewritePayload);
   await save.click();
   await committedGate;
   expect(correctionPosts).toBe(1);
@@ -294,6 +301,7 @@ test("Stage4 correction recovery keeps keyboard focus and exact absolute readbac
   await expect(page.getByRole("button", { name: "Ещё", exact: true })).toBeDisabled();
   await checkRecoveryWidths(page);
 
+  reads.release();
   await recovery.getByRole("button", { name: "Проверить состояние", exact: true }).click();
   await expect(recovery).toHaveCount(0);
   await expect(page.getByTestId("judge-side-A").locator(".judge-side__score")).toHaveText("4");

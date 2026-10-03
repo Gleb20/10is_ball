@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "scope": "test-fixture-only",
+  "parentSha": "30dc3e25338c49b4f184067083cbb19b5e3b184f",
+  "changedRuntimeFiles": [],
+  "changedTest": "tests/e2e/stage4-score-recovery.spec.ts",
+  "testSha256": "b8e2a0878270a04c1eea721b9a7cf96f0b32dee82320c19c02bfaceeb870c2d1",
+  "hostedFailure": {
+    "run": 37146619700,
+    "passed": 134,
+    "failed": 1,
+    "reason": "One-shot stale GET was consumed by concurrent bootstrap/poll read; a fresh exact-key read legitimately resolved the operation before the fixture assertion."
+  },
+  "fix": "GET control installed before launch; after route.fetch every target response follows an explicit stale/live phase. Hold before mutation, release after Back or before explicit correction Check State. No sleeps and all assertions retained. Fresh onboarding is completed explicitly.",
+  "summary": "recovery-fixture-summary.json",
+  "summarySha256": "ce757af7c2f206f3ca42791c8036428c5206c0d21a4752cb8d89c20f941533df",
+  "limitations": "First isolated attempt failed before scenarios because bootstrap onboarding was not completed; preserved as diagnostics. Fresh hosted/public gates still required."
+}
