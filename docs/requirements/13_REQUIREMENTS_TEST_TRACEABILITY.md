@@ -1,5 +1,12 @@
 # Requirements ↔ Tests Traceability
 
+## 5.0.1 — синхронизация существующей проверки BUG-037
+
+`NotificationsPage.test.tsx` ожидает фактический `markNotificationsReadVisible`
+перед разрешением ответа. Семантика проверки сохранена: удаляются только
+подтверждённые неактуальные строки, команды/передача и перенос фокуса остаются.
+Новых REQ/AT нет; прежний AT-NOTIF-005 сохраняется.
+
 ## Stage 12 — correlated admin password reset, verified locally and held
 
 | Backlog / requirement | Deterministic regression | Runtime evidence and limit |

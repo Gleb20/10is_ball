@@ -1,0 +1,32 @@
+[
+  {
+    "name": "notifications-focused",
+    "exitCode": 0,
+    "seconds": 2.54,
+    "log": "/private/tmp/tab10-stage12-enable-checks-r2/notifications-focused.log"
+  },
+  {
+    "name": "web-tests",
+    "exitCode": 0,
+    "seconds": 18.28,
+    "log": "/private/tmp/tab10-stage12-enable-checks-r2/web-tests.log"
+  },
+  {
+    "name": "web-typecheck",
+    "exitCode": 0,
+    "seconds": 3.35,
+    "log": "/private/tmp/tab10-stage12-enable-checks-r2/web-typecheck.log"
+  },
+  {
+    "name": "web-build",
+    "exitCode": 0,
+    "seconds": 4.55,
+    "log": "/private/tmp/tab10-stage12-enable-checks-r2/web-build.log"
+  },
+  {
+    "name": "docs",
+    "exitCode": 0,
+    "seconds": 0.33,
+    "log": "/private/tmp/tab10-stage12-enable-checks-r2/docs.log"
+  }
+]

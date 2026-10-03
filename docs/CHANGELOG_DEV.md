@@ -1,4 +1,22 @@
+## 2026-10-03 — BUG-038: включение UI после server-first gate (5.0.1)
+
+- 5.0.0 опубликован с удерживаемым UI; hosted CI 4/4, public smoke 7/7,
+  schema 0007 и остановка старых серверов подтверждены read-only evidence.
+- В отдельном PATCH-кандидате source flag включён. API/schema/reset state
+  machine не изменены; enabled compiled сценарий уже проверен 3/3 на
+  1440/390/360 с PostgreSQL и 9 foundation checks. Повторная проверка флага,
+  web tests 452/452, typecheck/build и docs прошли. Исходный неуспешный
+  прогон сохранён в `/private/tmp/tab10-stage12-enable-checks`; итоговый —
+  `/private/tmp/tab10-stage12-enable-checks-r2`.
+- Полный web прогон обнаружил существовавшую гонку теста BUG-037:
+  DOM уже отрисован, а effect ещё не создал deferred resolver. Тест теперь
+  ожидает фактический batch-запрос перед его разрешением; проверка результата
+  и переноса фокуса сохранена. Product-код уведомлений не изменён.
+- Публичные пароли/аккаунты не использовались для мутационных проверок.
+
 ## 2026-10-03 — Stage 12 correlated password reset candidate 5.0.0
+
+Исторический снимок до server-first публикации; последующий release отмечен выше.
 
 - BUG-038 заменяет некоррелированный admin reset на UUID request/receipt
   contract. Повтор exact fingerprint идемпотентен, replacement и controlled

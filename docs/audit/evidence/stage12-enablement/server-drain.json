@@ -1,0 +1,29 @@
+{
+  "version": "5.0.0",
+  "sha": "fd199db464b0a291209f92f528ebcfbad3e7056b",
+  "readOnly": true,
+  "render": {
+    "newDeployment": "dep-db0fldnf3r2c73b0r3r0",
+    "newStatus": "live",
+    "finishedAt": "2026-10-03T12:54:39.67832Z",
+    "oldDeployment": "dep-db0dt5avcj2c7396tf0g",
+    "oldStatus": "deactivated",
+    "instances": 1
+  },
+  "maximumTerminationAllowanceSeconds": 420,
+  "providerRecheckedAt": "2026-10-03T13:01:43Z",
+  "neon": {
+    "project": "shiny-leaf-88815850",
+    "branch": "br-calm-scene-asc4ye20",
+    "database": "neondb",
+    "checkedAt": "2026-10-03T13:01:50.556Z",
+    "cutoff": "2026-10-03T12:53:10.317131Z",
+    "preReleaseClientConnections": 0,
+    "openClientTransactions": 0,
+    "preReleaseTransactions": 0,
+    "totalOtherClientConnections": 0,
+    "queryExcludedOwnSession": true
+  },
+  "drainGate": "passed",
+  "remainingEnablementGate": "hosted CI all jobs success"
+}

@@ -1,5 +1,23 @@
 # Deployment as-built
 
+## Stage 12 server-first release — 2026-10-03
+
+Тестовый прод Vercel + Render + Neon подтверждён на 5.0.0 /
+`fd199db464b0a291209f92f528ebcfbad3e7056b`. Все четыре hosted CI job успешны;
+read-only smoke 7/7. Legacy Render deployment deactivated, после окна
+60 + 300 + 60 секунд Neon показывает 0 старых client connections и 0 открытых
+client transactions. [Receipt](../audit/evidence/stage12-enablement/server-drain.json).
+
+Новый локальный 5.0.1 включает source-controlled UI-флаг после этих проверок.
+Публичная приёмка 5.0.1 ещё не заявляется. При необходимости откатить интерфейс
+следует новым forward release с flag=false; не возвращать unsafe legacy API
+и не удалять migration/receipts/audit. Исторические записи ниже сохранены.
+
+## Исторический снимок до server-first выпуска 5.0.0
+
+Этот блок описывает состояние до публикации 5.0.0. Его слова «текущий»,
+«локальный» и «не опубликован» относятся к тому моменту и заменены статусом выше.
+
 Текущий опубликованный тестовый прод Vercel + Render + Neon — версия 4.3.0,
 application SHA
 `43f4b2425cc0c79b5ad6cf192abb5802c3559e50`. GitHub Actions run

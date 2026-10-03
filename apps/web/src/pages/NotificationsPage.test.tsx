@@ -194,6 +194,7 @@ describe("AT-NOTIF-005 terminal invitation lifecycle", () => {
     ] });
     render(<MemoryRouter><NotificationsPage /></MemoryRouter>);
     const plainRead = await screen.findByRole("button", { name: "Отметить прочитанным" });
+    await waitFor(() => expect(markNotificationsReadVisible).toHaveBeenCalledWith(["plain", "team", "handover"]));
     plainRead.focus();
 
     resolveRead({

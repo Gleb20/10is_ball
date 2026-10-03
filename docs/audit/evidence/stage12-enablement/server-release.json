@@ -1,0 +1,87 @@
+{
+  "version": "5.0.0",
+  "sha": "fd199db464b0a291209f92f528ebcfbad3e7056b",
+  "localTotal": 1605,
+  "localPassed": 1605,
+  "githubRun": 37124327468,
+  "jobs": [
+    {
+      "name": "PostgreSQL integration",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Quality",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Compiled browser production-like",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Release gate",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "vercel": {
+    "id": "dpl_9zFTKGztb8dNBbLp1uTgauz3PWbh",
+    "state": "READY"
+  },
+  "render": {
+    "id": "dep-db0fldnf3r2c73b0r3r0",
+    "status": "live"
+  },
+  "publicSmoke": "oct3-release-5.0.0-public-smoke.json",
+  "migration": {
+    "ledger": [
+      {
+        "id": 1,
+        "hash": "59530aa0b893fda361dba3d12ce28a5f3ef2298a8e3d8041f620d28efe4a81d6",
+        "created_at": 1788728799411
+      },
+      {
+        "id": 2,
+        "hash": "f67002875a1b26299715285ecb3e919ead9a9ec71ed764f181a0e6af3964d09d",
+        "created_at": 1788733991772
+      },
+      {
+        "id": 3,
+        "hash": "bd74fa2644fc074d59b5ccfe494a72bfc39911be7a69188333e934f3a19f7545",
+        "created_at": 1788737309261
+      },
+      {
+        "id": 4,
+        "hash": "54bb1a8f1c1b8d5c43430a1b071e391471cc500de1a980ce2611b2baf91f1cdd",
+        "created_at": 1788745103349
+      },
+      {
+        "id": 5,
+        "hash": "93d6835de60a8e1787fa0e42fc2d5da1469fe41656762bb2821c3e98fbe82c4a",
+        "created_at": 1789260070249
+      },
+      {
+        "id": 6,
+        "hash": "b509acaa53fec7ebda1d3c77f4f883ca1ccf65a60eb36d6d494aab9f8d7d3139",
+        "created_at": 1789268518543
+      },
+      {
+        "id": 7,
+        "hash": "12790347b9faab039b399e623cf59123f0fb05f79af5ede516a05073a86e97e4",
+        "created_at": 1789330448398
+      },
+      {
+        "id": 8,
+        "hash": "2eb1d16f9de1ddcddd15d076dc063d670dee2dc5413009d7907907db882664d6",
+        "created_at": 1791019371192
+      }
+    ],
+    "checkedAt": "2026-10-03T12:56:40.964119+00:00",
+    "pointerPresent": true,
+    "receiptsPresent": true
+  },
+  "acceptedHeldRelease": true,
+  "enablement": false
+}
