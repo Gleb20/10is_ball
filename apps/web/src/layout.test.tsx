@@ -26,6 +26,102 @@ describe("REQ_shell__home_first_navigation_d36", () => {
     expect(screen.getByTestId("path")).toHaveTextContent("/tournaments");
   });
 
+  it("GAP-026 returns an active admin directly opened account to the user catalog", () => {
+    render(<MemoryRouter initialEntries={["/admin/users/u1"]}><TaskNavigation isAdmin /><Routes><Route path="*" element={<Path />} /></Routes></MemoryRouter>);
+    fireEvent.click(screen.getByRole("button", { name: "К пользователям" }));
+    expect(screen.getByTestId("path")).toHaveTextContent("/admin");
+  });
+
+  it("does not expose the admin catalog fallback to an ordinary active user", () => {
+    render(<MemoryRouter initialEntries={["/admin/users/u1"]}><TaskNavigation isAdmin={false} /><Routes><Route path="*" element={<Path />} /></Routes></MemoryRouter>);
+    expect(screen.queryByRole("button", { name: "К пользователям" })).toBeNull();
+    expect(screen.getByRole("button", { name: "На главную" })).toBeInTheDocument();
+  });
+
+  it("removes a stale admin catalog fallback after the actor is demoted", () => {
+    const entry = { pathname: "/admin/users/u1", state: { returnTo: "/admin", returnLabel: "К пользователям" } };
+    const view = render(<MemoryRouter initialEntries={[entry]}><TaskNavigation isAdmin /><Routes><Route path="*" element={<Path />} /></Routes></MemoryRouter>);
+    expect(screen.getByRole("button", { name: "К пользователям" })).toBeInTheDocument();
+    view.rerender(<MemoryRouter initialEntries={[entry]}><TaskNavigation isAdmin={false} /><Routes><Route path="*" element={<Path />} /></Routes></MemoryRouter>);
+    expect(screen.queryByRole("button", { name: "К пользователям" })).toBeNull();
+    expect(screen.getByRole("button", { name: "На главную" })).toBeInTheDocument();
+  });
+
+  it("discards list return context when the user explicitly goes Home", () => {
+    window.sessionStorage.setItem("tab10.history.return", JSON.stringify({
+      userId: "u1",
+      detailPath: "/matches/m1",
+    }));
+    window.sessionStorage.setItem("tab10.admin.return", JSON.stringify({
+      userId: "u1",
+      detailPath: "/admin/users/u2",
+    }));
+    render(
+      <MemoryRouter initialEntries={[{
+        pathname: "/matches/m1",
+        state: { returnTo: "/history", returnLabel: "К истории" },
+      }]}>
+        <TaskNavigation userId="u1" />
+        <Routes><Route path="*" element={<Path />} /></Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "На главную" }));
+
+    expect(screen.getByTestId("path")).toHaveTextContent("/");
+    expect(window.sessionStorage.getItem("tab10.history.return")).toBeNull();
+    expect(window.sessionStorage.getItem("tab10.admin.return")).not.toBeNull();
+    window.sessionStorage.clear();
+  });
+
+  it("discards the matching admin return context without exposing another actor's context", () => {
+    window.sessionStorage.setItem("tab10.admin.return", JSON.stringify({
+      userId: "u1",
+      detailPath: "/admin/users/u2",
+    }));
+    render(
+      <MemoryRouter initialEntries={[{
+        pathname: "/admin/users/u2",
+        state: { returnTo: "/admin", returnLabel: "К пользователям" },
+      }]}>
+        <TaskNavigation userId="u1" isAdmin />
+        <Routes><Route path="*" element={<Path />} /></Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "На главную" }));
+
+    expect(window.sessionStorage.getItem("tab10.admin.return")).toBeNull();
+  });
+
+  it("rejects stale list context when a different detail target is opened directly", () => {
+    window.sessionStorage.setItem("tab10.history.return", JSON.stringify({
+      userId: "u1",
+      detailPath: "/matches/a",
+    }));
+    window.sessionStorage.setItem("tab10.admin.return", JSON.stringify({
+      userId: "u1",
+      detailPath: "/admin/users/a",
+    }));
+    const view = render(
+      <MemoryRouter initialEntries={["/matches/b"]}>
+        <TaskNavigation userId="u1" />
+        <Routes><Route path="*" element={<Path />} /></Routes>
+      </MemoryRouter>,
+    );
+    expect(window.sessionStorage.getItem("tab10.history.return")).toBeNull();
+    expect(window.sessionStorage.getItem("tab10.admin.return")).not.toBeNull();
+
+    view.unmount();
+    render(
+      <MemoryRouter initialEntries={["/admin/users/b"]}>
+        <TaskNavigation userId="u1" isAdmin />
+        <Routes><Route path="*" element={<Path />} /></Routes>
+      </MemoryRouter>,
+    );
+    expect(window.sessionStorage.getItem("tab10.admin.return")).toBeNull();
+  });
+
   it("keeps the judge release result at the destination", () => {
     render(
       <MemoryRouter initialEntries={[{ pathname: "/matches/m1", state: { judgeExitNotice: { kind: "warning", message: "Не удалось подтвердить освобождение слота" } } }]}>

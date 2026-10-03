@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "status": "passed_local",
+  "preparedAt": "2026-10-03",
+  "baseCommit": "220c4df18ed31ad3e741a282513545c4ef987fbc",
+  "baseVersion": "4.1.2",
+  "candidateVersion": "4.2.0",
+  "scope": [
+    "GAP-022",
+    "BUG-034",
+    "BUG-035",
+    "GAP-024",
+    "GAP-026",
+    "GAP-027"
+  ],
+  "sourceFreeze": {
+    "pathCount": 36,
+    "manifest": "source-manifest.json",
+    "manifestSha256": "d7cfdc51d56c4784a810b2feb7ab3b83553d290d77fdbf57d8bf06bced058175",
+    "fullPatchSha256": "5bc3a545deb0cf4a9fd589df9aa91feade6968776fe6d96382208b276b1cf960",
+    "r1ToR2PatchSha256": "3b33d9c55300008da09ae5d37566a1da326bee0515ea27448df3ede2cf60edc0",
+    "freshBaseApplyCheck": "passed"
+  },
+  "checks": [
+    {
+      "name": "local-aggregate-before-lane-correction",
+      "status": "failed",
+      "summary": "failed-aggregate-summary.json",
+      "passed": 1282,
+      "failed": 1,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0,
+      "detail": "Cleanup passed 4/4; quality reported 1278/1279 because the PostgreSQL-only GAP-026 suite was incorrectly included without TEST_DATABASE_URL. The run stopped before PostgreSQL and browser lanes and is not accepted as a green aggregate."
+    },
+    {
+      "name": "root-final-exact-r2-aggregate",
+      "status": "passed",
+      "summary": "root-final-summary.json",
+      "passed": 1531,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0,
+      "lanes": {
+        "cleanup-foundation": 4,
+        "quality": 1323,
+        "postgres": 90,
+        "browser-prodlike": 114
+      },
+      "detail": "Final exact R2 pnpm run ci; browser lane contains 105 compiled journeys plus 9 foundation checks."
+    },
+    {
+      "name": "independent-r2-source-review",
+      "status": "passed",
+      "reviewer": "Terra",
+      "findings": {
+        "P1": 0,
+        "P2": 0
+      },
+      "detail": "Accepted PostgreSQL offset boundary ±15:59, rejection of +20:00/-16:00 and fast/PostgreSQL lane separation."
+    },
+    {
+      "name": "quality-after-lane-correction",
+      "status": "passed",
+      "summary": "quality-summary.json",
+      "passed": 1323,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "cleanup-foundation",
+      "status": "passed",
+      "summary": "cleanup-summary.json",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "r2-history-pglite-and-typecheck",
+      "status": "passed",
+      "passed": 8,
+      "failed": 0,
+      "detail": "Rejects impossible calendar dates and PostgreSQL-incompatible +20:00/-16:00 offsets; accepts leap day, millisecond ISO Z, six microseconds and +15:59/-15:59. API typecheck passed."
+    },
+    {
+      "name": "r2-postgresql-16",
+      "status": "passed",
+      "summary": "postgres-summary.json",
+      "passed": 90,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0,
+      "detail": "81 integration tests plus 9 migration foundation checks."
+    },
+    {
+      "name": "compiled-targeted-admin-history-teams",
+      "status": "passed",
+      "summary": "browser-targeted-summary.json",
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0,
+      "detail": "12 journeys plus 9 foundation checks on 1440/390/360. Captured before package-version synchronization; later R2 changed only server cursor validation, its tests and verification-lane configuration."
+    },
+    {
+      "name": "compiled-history-layout-correction",
+      "status": "passed",
+      "summary": "browser-history-layout-summary.json",
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0,
+      "detail": "3 journeys plus 9 foundation checks, including long 2x2 names and 360 CSS zoom 200%, on candidate version 4.2.0."
+    },
+    {
+      "name": "coverage-map",
+      "status": "passed",
+      "rows": 236,
+      "errors": 0,
+      "detail": "Seven prior 4.1.2 verified_local overlays are preserved and seven Stage 9/10/11 overlays are added."
+    },
+    {
+      "name": "documentation-consistency",
+      "status": "passed",
+      "checkedFiles": 184,
+      "brokenLinks": 0,
+      "brokenAnchors": 0,
+      "invalidBacklogStatuses": 0
+    },
+    {
+      "name": "route-openapi-inventory",
+      "status": "passed",
+      "registeredOperations": 86,
+      "documentedOperations": 86,
+      "registeredPaths": 76,
+      "documentedPaths": 76
+    },
+    {
+      "name": "coverage-generator-disposable-copy",
+      "status": "passed",
+      "rows": 236,
+      "sourceEpisodes": 82,
+      "expertIds": 38,
+      "priorAndCurrentOverlays": 14,
+      "outputSha256": "7a751fabc8becd8d84a4def3b8bf38a02941b2adc7398744173eb0838f71791c"
+    },
+    {
+      "name": "representative-screenshots",
+      "status": "passed",
+      "manifest": "screenshots.json",
+      "files": 4,
+      "detail": "History final 360 and CSS zoom 200%, archived team and admin account; visually inspected synthetic fixtures with no production secrets or personal data."
+    }
+  ],
+  "acceptance": {
+    "verifiedLocal": [
+      "GAP-022",
+      "BUG-034",
+      "BUG-035",
+      "GAP-024",
+      "GAP-026",
+      "GAP-027"
+    ],
+    "excluded": [
+      "Stage 6"
+    ],
+    "requiredBeforePublication": [
+      "exact-tree hosted CI"
+    ],
+    "requiredAfterPublication": [
+      "read-only exact SHA/version public parity smoke"
+    ]
+  },
+  "limits": [
+    "The earlier failed pre-correction aggregate remains historical evidence; the later exact R2 aggregate passed 1531/1531.",
+    "Physical iPhone, pinned WebKit, browser UI zoom and spoken assistive technology were not tested.",
+    "No commit, push, tag, deployment or public mutation was performed."
+  ],
+  "artifacts": {
+    "source-manifest.json": "d7cfdc51d56c4784a810b2feb7ab3b83553d290d77fdbf57d8bf06bced058175",
+    "quality-summary.json": "30c3ab90575d25cb8fb81b5bfb1629dc83426ca6026d6d0276ef79233a5a65bd",
+    "postgres-summary.json": "462855f9b5cb89e752e89bb5072abc0e7d582cedb1e615e0f8c40a7135f9bda6",
+    "browser-targeted-summary.json": "bc72e4cb8a27f23fe594654df52ae6bf42db96949a1cafc852b279719d30f073",
+    "browser-history-layout-summary.json": "73d1537de58e80ab04f5384c3d056c243957334c4317a26c7b8408e3e707e001",
+    "cleanup-summary.json": "afb042c3c36b6406714ff4590663517ce692a5c09b3599cfddf3aefe94a43a90",
+    "failed-aggregate-summary.json": "d572f0eddc193d3b4399461ead0662406a7011e2d5ce45b1da1652c072d0e884",
+    "root-final-summary.json": "068e9a00fa68e95956317a93ee98c98f817c01dd304615837fe241c6e52df2df",
+    "root-final-quality-summary.json": "30c3ab90575d25cb8fb81b5bfb1629dc83426ca6026d6d0276ef79233a5a65bd",
+    "root-final-postgres-summary.json": "462855f9b5cb89e752e89bb5072abc0e7d582cedb1e615e0f8c40a7135f9bda6",
+    "root-final-browser-summary.json": "d18cd4ece8847f6a75714101be7b7cc37fd07af57879c1481609eb6bfbd54e98",
+    "root-final-cleanup-summary.json": "afb042c3c36b6406714ff4590663517ce692a5c09b3599cfddf3aefe94a43a90",
+    "screenshots.json": "9af831818cadd8568d5d4d8c64fc228bc8275e88dd2b38874b9a23e09d615931"
+  },
+  "visualEvidence": "screenshots.json"
+}

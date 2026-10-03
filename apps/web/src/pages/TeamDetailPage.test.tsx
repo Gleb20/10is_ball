@@ -1,4 +1,5 @@
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { Activity, useState } from "react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
@@ -71,10 +72,12 @@ const captainTeam = {
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>((resolvePromise) => {
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
     resolve = resolvePromise;
+    reject = rejectPromise;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
 }
 
 function AuthControl() {
@@ -85,11 +88,12 @@ function AuthControl() {
       <button onClick={() => navigate("/teams/team-2")}>other-team</button>
       <button onClick={() => setUser(null)}>expire-session</button>
       <button onClick={() => setUser({ id: "u1", role: "user", mustChangePassword: false } as never)}>restore-session</button>
+      <button onClick={() => setUser({ id: "u2", role: "user", mustChangePassword: false } as never)}>switch-actor</button>
     </>
   );
 }
 
-function renderPage(path = "/teams/team-1") {
+function renderPage(path: string | { pathname: string; state?: unknown } = "/teams/team-1") {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <AuthProvider>
@@ -100,6 +104,21 @@ function renderPage(path = "/teams/team-1") {
         </Routes>
       </AuthProvider>
     </MemoryRouter>,
+  );
+}
+
+function ActivityTeamPage() {
+  const [mode, setMode] = useState<"visible" | "hidden">("visible");
+  return (
+    <>
+      <button onClick={() => setMode("hidden")}>hide-activity</button>
+      <button onClick={() => setMode("visible")}>show-activity</button>
+      <Activity mode={mode}>
+        <Routes>
+          <Route path="/teams/:id" element={<TeamDetailPage />} />
+        </Routes>
+      </Activity>
+    </>
   );
 }
 
@@ -114,7 +133,8 @@ describe("GAP-007 team detail", () => {
     expect(screen.queryByDisplayValue("Черновик первой")).not.toBeInTheDocument();
   });
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    window.sessionStorage.clear();
     me.mockResolvedValue({
       user: {
         id: "u1",
@@ -127,7 +147,87 @@ describe("GAP-007 team detail", () => {
     });
     getTeam.mockResolvedValue({ team: captainTeam });
   });
-  afterEach(() => cleanup());
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it("keeps an exact list origin across a reload-shaped remount", async () => {
+    const navigationToken = "valid-team-a-token";
+    window.sessionStorage.setItem("tab10.teams.return", JSON.stringify({
+      userId: "u1",
+      detailPath: "/teams/team-1",
+      teamId: "team-1",
+      scrollY: 320,
+      navigationToken,
+    }));
+    const entry = {
+      pathname: "/teams/team-1",
+      state: { returnTo: "/teams", returnLabel: "К списку команд", teamsReturnToken: navigationToken },
+    };
+
+    const first = renderPage(entry);
+    await screen.findByRole("heading", { name: "Ракетки" });
+    expect(window.sessionStorage.getItem("tab10.teams.return")).not.toBeNull();
+
+    first.unmount();
+    renderPage(entry);
+    await screen.findByRole("heading", { name: "Ракетки" });
+    expect(window.sessionStorage.getItem("tab10.teams.return")).not.toBeNull();
+  });
+
+  it("clears a saved origin when the same team is opened directly", async () => {
+    window.sessionStorage.setItem("tab10.teams.return", JSON.stringify({
+      userId: "u1",
+      detailPath: "/teams/team-1",
+      teamId: "team-1",
+      scrollY: 320,
+      navigationToken: "stale-team-a-token",
+    }));
+
+    renderPage("/teams/team-1");
+    await screen.findByRole("heading", { name: "Ракетки" });
+    await waitFor(() => expect(window.sessionStorage.getItem("tab10.teams.return")).toBeNull());
+  });
+
+  it("clears team A origin when team B is opened with mismatched history state", async () => {
+    const navigationToken = "team-a-token";
+    window.sessionStorage.setItem("tab10.teams.return", JSON.stringify({
+      userId: "u1",
+      detailPath: "/teams/team-1",
+      teamId: "team-1",
+      scrollY: 320,
+      navigationToken,
+    }));
+
+    renderPage({
+      pathname: "/teams/team-2",
+      state: { returnTo: "/teams", returnLabel: "К списку команд", teamsReturnToken: navigationToken },
+    });
+    await screen.findByRole("heading", { name: "Ракетки" });
+    await waitFor(() => expect(window.sessionStorage.getItem("tab10.teams.return")).toBeNull());
+  });
+
+  it("clears a valid saved origin when the actor changes", async () => {
+    const navigationToken = "actor-bound-token";
+    window.sessionStorage.setItem("tab10.teams.return", JSON.stringify({
+      userId: "u1",
+      detailPath: "/teams/team-1",
+      teamId: "team-1",
+      scrollY: 320,
+      navigationToken,
+    }));
+    const user = userEvent.setup();
+    renderPage({
+      pathname: "/teams/team-1",
+      state: { returnTo: "/teams", returnLabel: "К списку команд", teamsReturnToken: navigationToken },
+    });
+    await screen.findByRole("heading", { name: "Ракетки" });
+    expect(window.sessionStorage.getItem("tab10.teams.return")).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "switch-actor" }));
+    await waitFor(() => expect(window.sessionStorage.getItem("tab10.teams.return")).toBeNull());
+  });
 
   it("shows welcome copy and lets only the captain edit team text", async () => {
     updateTeam.mockResolvedValue({
@@ -150,7 +250,53 @@ describe("GAP-007 team detail", () => {
       welcomeText: "Рады видеть в команде!",
     });
     expect(await screen.findByRole("heading", { name: "Новые ракетки" })).toBeInTheDocument();
+    expect(within(form).getByRole("status").parentElement).toHaveFocus();
     expect(screen.queryByText(/загрузить аватар/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps the settings draft local and uses GET-only review after an unknown PATCH", async () => {
+    getTeam
+      .mockResolvedValueOnce({ team: captainTeam })
+      .mockResolvedValueOnce({ team: { ...captainTeam, slogan: "Серверный слоган" } });
+    updateTeam.mockRejectedValueOnce(new Error("Network lost"));
+    const user = userEvent.setup();
+    renderPage();
+
+    const form = await screen.findByRole("form", { name: "Редактирование команды" });
+    const name = within(form).getByLabelText("Название команды");
+    await user.clear(name);
+    await user.type(name, "Черновик капитана");
+    await user.click(within(form).getByRole("button", { name: "Сохранить" }));
+
+    expect(await within(form).findByRole("alert")).toHaveTextContent("Не удалось проверить сохранение");
+    expect(within(form).getByRole("alert").parentElement).toHaveFocus();
+    expect(name).toHaveValue("Черновик капитана");
+    expect(within(form).getByRole("button", { name: "Сохранить" })).toBeDisabled();
+    expect(updateTeam).toHaveBeenCalledTimes(1);
+    await user.click(within(form).getByRole("button", { name: "Обновить данные" }));
+    expect(getTeam).toHaveBeenCalledTimes(2);
+    expect(updateTeam).toHaveBeenCalledTimes(1);
+    expect(await within(form).findByText(/Сервер сейчас:.*Серверный слоган/)).toHaveTextContent("не подтверждение исхода");
+    expect(name).toHaveValue("Черновик капитана");
+    expect(within(form).getByRole("button", { name: "Сохранить ещё раз" })).toBeEnabled();
+  });
+
+  it("keeps a documented settings rejection beside save and preserves the draft", async () => {
+    updateTeam.mockRejectedValueOnce(Object.assign(new Error("Название занято"), { status: 400 }));
+    const user = userEvent.setup();
+    renderPage();
+
+    const form = await screen.findByRole("form", { name: "Редактирование команды" });
+    const name = within(form).getByLabelText("Название команды");
+    await user.clear(name);
+    await user.type(name, "Черновик капитана");
+    await user.click(within(form).getByRole("button", { name: "Сохранить" }));
+
+    expect(await within(form).findByRole("alert")).toHaveTextContent("Название занято");
+    expect(within(form).getByRole("alert").parentElement).toHaveFocus();
+    expect(name).toHaveValue("Черновик капитана");
+    expect(within(form).getByRole("button", { name: "Сохранить" })).toBeEnabled();
+    expect(updateTeam).toHaveBeenCalledTimes(1);
   });
 
   it("serializes captain roster actions and keeps loaded context on failure", async () => {
@@ -165,17 +311,27 @@ describe("GAP-007 team detail", () => {
     await user.dblClick(invite);
     expect(inviteTeamMember).toHaveBeenCalledTimes(1);
     expect(inviteTeamMember).toHaveBeenCalledWith("team-1", "u3");
-    expect(screen.getByRole("button", { name: /приглашаем/i })).toBeDisabled();
+    expect(within(screen.getByRole("region", { name: "Приглашение в команду" })).getByRole("button", { name: /приглашаем/i })).toBeDisabled();
     await act(async () => {
       pending.resolve({ invitation: { id: "invite-1" } });
       await pending.promise;
     });
+    await waitFor(() => expect(
+      screen.getByRole("button", { name: "Действия с Второй Игрок" }),
+    ).toBeEnabled());
 
-    removeTeamMember.mockRejectedValueOnce(new Error("Участник занят"));
-    await user.click(screen.getByRole("button", { name: "Исключить Второй Игрок" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Участник занят");
+    removeTeamMember.mockRejectedValueOnce(Object.assign(new Error("Участник занят"), { status: 409 }));
+    await user.click(screen.getByRole("button", { name: "Действия с Второй Игрок" }));
+    await user.click(screen.getByRole("button", { name: "Исключить участника" }));
+    const removeDialog = screen.getByRole("dialog");
+    expect(removeDialog).toHaveTextContent("Исключить Второй Игрок из команды?");
+    expect(within(removeDialog).getByRole("button", { name: "Отмена" })).toHaveFocus();
+    expect(removeTeamMember).not.toHaveBeenCalled();
+    await user.click(within(removeDialog).getByRole("button", { name: "Исключить участника" }));
+    expect(await within(removeDialog).findByRole("alert")).toHaveTextContent("Участник занят");
     expect(screen.getByRole("heading", { name: "Ракетки" })).toBeInTheDocument();
     expect(screen.getByText("Второй Игрок")).toBeInTheDocument();
+    await user.click(within(removeDialog).getByRole("button", { name: "Отмена" }));
 
     transferTeamCaptain.mockResolvedValueOnce({
       team: {
@@ -184,11 +340,10 @@ describe("GAP-007 team detail", () => {
         isCaptain: false,
       },
     });
-    await user.click(
-      screen.getByRole("button", {
-        name: "Передать капитанство Второй Игрок",
-      }),
-    );
+    await user.click(screen.getByRole("button", { name: "Передать капитанство" }));
+    const transferDialog = screen.getByRole("dialog");
+    expect(transferTeamCaptain).not.toHaveBeenCalled();
+    await user.click(within(transferDialog).getByRole("button", { name: "Передать капитанство" }));
     expect(transferTeamCaptain).toHaveBeenCalledWith("team-1", "u2");
     expect(
       await screen.findByText("Капитанство передано."),
@@ -196,6 +351,83 @@ describe("GAP-007 team detail", () => {
     expect(
       screen.queryByRole("form", { name: "Редактирование команды" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("uses named cancelable confirmations and blocks close/repeat while pending", async () => {
+    const transfer = deferred<{ team: typeof captainTeam }>();
+    transferTeamCaptain.mockReturnValueOnce(transfer.promise);
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByRole("heading", { name: "Ракетки" });
+
+    const actions = screen.getByRole("button", { name: "Действия с Второй Игрок" });
+    await user.click(actions);
+    await user.click(screen.getByRole("button", { name: "Исключить участника" }));
+    let dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent("Исторические матчи и турниры сохранятся");
+    await user.click(within(dialog).getByRole("button", { name: "Отмена" }));
+    expect(removeTeamMember).not.toHaveBeenCalled();
+    await waitFor(() => expect(actions).toHaveFocus());
+
+    await user.click(screen.getByRole("button", { name: "Исключить участника" }));
+    await user.keyboard("{Escape}");
+    expect(removeTeamMember).not.toHaveBeenCalled();
+    await waitFor(() => expect(actions).toHaveFocus());
+
+    await user.click(screen.getByRole("button", { name: "Передать капитанство" }));
+    dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent("Вы останетесь участником");
+    await user.click(within(dialog).getByRole("button", { name: "Передать капитанство" }));
+    expect(transferTeamCaptain).toHaveBeenCalledTimes(1);
+    expect(within(dialog).getByRole("button", { name: "Отмена" })).toBeDisabled();
+    expect(within(dialog).getByRole("button", { name: "Выполняем…" })).toBeDisabled();
+    await user.keyboard("{Escape}");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(transferTeamCaptain).toHaveBeenCalledTimes(1);
+
+    await act(async () => transfer.resolve({
+      team: { ...captainTeam, captainUserId: "u2", isCaptain: false },
+    }));
+    expect(await screen.findByRole("heading", { name: "Участники" })).toHaveFocus();
+    expect(screen.queryByRole("form", { name: "Редактирование команды" })).not.toBeInTheDocument();
+  });
+
+  it("uses GET-only roster review after an unknown member action", async () => {
+    getTeam
+      .mockResolvedValueOnce({ team: captainTeam })
+      .mockResolvedValueOnce({
+        team: { ...captainTeam, members: captainTeam.members.filter((member) => member.userId !== "u2") },
+      });
+    removeTeamMember.mockRejectedValueOnce(new Error("Network lost"));
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByRole("heading", { name: "Ракетки" });
+
+    await user.click(screen.getByRole("button", { name: "Действия с Второй Игрок" }));
+    await user.click(screen.getByRole("button", { name: "Исключить участника" }));
+    const dialog = screen.getByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Исключить участника" }));
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("Не удалось подтвердить изменение");
+    expect(within(dialog).getByRole("button", { name: "Исключить участника" })).toBeDisabled();
+    expect(removeTeamMember).toHaveBeenCalledTimes(1);
+    await user.click(within(dialog).getByRole("button", { name: "Обновить состав" }));
+    expect(getTeam).toHaveBeenCalledTimes(2);
+    expect(removeTeamMember).toHaveBeenCalledTimes(1);
+    expect(await screen.findByRole("heading", { name: "Участники" })).toHaveFocus();
+    expect(screen.queryByText("Второй Игрок")).not.toBeInTheDocument();
+  });
+
+  it("keeps invitees and former members read-only without captain controls", async () => {
+    getTeam.mockResolvedValue({
+      team: { ...captainTeam, isCaptain: false, isMember: false },
+    });
+    renderPage();
+    expect(await screen.findByRole("heading", { name: "Ракетки" })).toBeInTheDocument();
+    expect(screen.getByText("Второй Игрок")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /действия с/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("form", { name: "Редактирование команды" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Выйти из команды" })).not.toBeInTheDocument();
   });
 
   it("shows member leave, blocks captain leave, and hides captain controls from members", async () => {
@@ -266,7 +498,9 @@ describe("GAP-007 team detail", () => {
     renderPage();
     await screen.findByRole("heading", { name: "Ракетки" });
     await user.click(screen.getByRole("button", { name: "Обновить" }));
-    await user.click(screen.getByRole("button", { name: "Передать капитанство Второй Игрок" }));
+    await user.click(screen.getByRole("button", { name: "Действия с Второй Игрок" }));
+    await user.click(screen.getByRole("button", { name: "Передать капитанство" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Передать капитанство" }));
     const transferred = { ...captainTeam, captainUserId: "u2", isCaptain: false };
     await act(async () => transfer.resolve({ team: transferred }));
     await act(async () => staleRefresh.resolve({ team: captainTeam }));
@@ -327,5 +561,63 @@ describe("GAP-007 team detail", () => {
     await screen.findByText("Сервер обновился");
     expect(screen.getByLabelText("Название команды")).toHaveValue("Черновик капитана");
     expect(getTeam).toHaveBeenCalledTimes(2);
+  });
+
+  it("turns an interrupted same-user save into review without replaying it", async () => {
+    const pending = deferred<{ team: typeof captainTeam }>();
+    updateTeam.mockReturnValueOnce(pending.promise);
+    const user = userEvent.setup();
+    renderPage();
+    const name = await screen.findByLabelText("Название команды");
+    await user.clear(name);
+    await user.type(name, "Черновик после 401");
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+    await user.click(screen.getByRole("button", { name: "expire-session" }));
+    await user.click(screen.getByRole("button", { name: "restore-session" }));
+    const form = await screen.findByRole("form", { name: "Редактирование команды" });
+    expect(await within(form).findByRole("alert")).toHaveTextContent("Не удалось проверить сохранение");
+    expect(within(form).getByLabelText("Название команды")).toHaveValue("Черновик после 401");
+    expect(updateTeam).toHaveBeenCalledTimes(1);
+
+    await act(async () => pending.resolve({ team: { ...captainTeam, name: "Поздний ответ" } }));
+    expect(screen.queryByRole("heading", { name: "Поздний ответ" })).not.toBeInTheDocument();
+    expect(updateTeam).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not let a late Activity save clear or overwrite a newer save", async () => {
+    const first = deferred<{ team: typeof captainTeam }>();
+    const second = deferred<{ team: typeof captainTeam }>();
+    getTeam.mockResolvedValue({ team: captainTeam });
+    updateTeam.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/teams/team-1"]}>
+        <AuthProvider>
+          <ActivityTeamPage />
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+    const name = await screen.findByLabelText("Название команды");
+    await user.clear(name);
+    await user.type(name, "Первая попытка");
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+    await user.click(screen.getByRole("button", { name: "hide-activity" }));
+    await user.click(screen.getByRole("button", { name: "show-activity" }));
+
+    const form = await screen.findByRole("form", { name: "Редактирование команды" });
+    expect(await within(form).findByRole("alert")).toHaveTextContent("Не удалось проверить сохранение");
+    await waitFor(() => expect(within(form).getByRole("button", { name: "Сохранить ещё раз" })).toBeEnabled());
+    await user.clear(within(form).getByLabelText("Название команды"));
+    await user.type(within(form).getByLabelText("Название команды"), "Вторая попытка");
+    await user.click(within(form).getByRole("button", { name: "Сохранить ещё раз" }));
+    expect(updateTeam).toHaveBeenCalledTimes(2);
+    expect(within(form).getByLabelText("Название команды")).toBeDisabled();
+
+    await act(async () => first.resolve({ team: { ...captainTeam, name: "Старый ответ" } }));
+    expect(within(form).getByLabelText("Название команды")).toBeDisabled();
+    expect(screen.queryByRole("heading", { name: "Старый ответ" })).not.toBeInTheDocument();
+    await act(async () => second.resolve({ team: { ...captainTeam, name: "Вторая попытка" } }));
+    expect(await screen.findByRole("heading", { name: "Вторая попытка" })).toBeInTheDocument();
   });
 });

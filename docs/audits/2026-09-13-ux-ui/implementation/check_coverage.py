@@ -129,9 +129,26 @@ expected_stage3_pending = {
     (table_source, "U01-JUDGE-001", "main"): "physical_device_pending",
     (expert_source, "BUG-022", "main"): "pending_decision",
 }
+expected_later = {
+    (expert_source, "BUG-029", "main"): ("BUG-029", 4, "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-031", "main"): ("BUG-031", 4, "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-039", "main"): ("BUG-039", 4, "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "GAP-022", "main"): ("GAP-022", 9, "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-034", "main"): ("BUG-034", 9, "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-035", "main"): ("BUG-035", 9, "historical_target_reconciled_not_implemented", "verified_local"),
+    (table_source, "U01-FORM-001", "a04"): ("GAP-024", 10, "target_pending_implementation", "verified_local"),
+    (expert_source, "GAP-024", "main"): ("GAP-024", 10, "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-036", "main"): ("BUG-036", 10, "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "BUG-037", "main"): ("BUG-037", 10, "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "GAP-026", "main"): ("GAP-026", 11, "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "GAP-027", "main"): ("GAP-027", 11, "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "GAP-014", "main"): ("GAP-014", 13, "historical_target_reconciled_not_implemented", "verified_local"),
+    (expert_source, "GAP-016", "main"): ("GAP-016", 13, "historical_target_reconciled_not_implemented", "verified_local"),
+}
 overrides = {(r["source"], r["source_id"], r["atom_id"]): r for r in result_rows}
-if len(result_rows) != len(overrides) or set(overrides) != expected_stage1 | expected_stage2 | set(expected_stage3):
-    errors.append("stage 1, 2 or 3 implementation result keys changed")
+expected_result_keys = expected_stage1 | expected_stage2 | set(expected_stage3) | set(expected_later)
+if len(result_rows) != len(overrides) or set(overrides) != expected_result_keys:
+    errors.append("evidence-bound implementation result keys changed")
 coverage_by_key = {(r["source"], r["source_id"], r["atom_id"]): r for r in coverage}
 home_role_key = ("user-session-2026-09-16-table-01", "HOME-004", "a01")
 if coverage_by_key.get(home_role_key, {}).get("acceptance") != "AT-HOME-001":
@@ -147,6 +164,8 @@ for key, result in overrides.items():
     elif key in expected_stage3:
         expected_task, expected_previous, expected_result = expected_stage3[key]
         expected_stage = 3
+    elif key in expected_later:
+        expected_task, expected_stage, expected_previous, expected_result = expected_later[key]
     else:
         errors.append(f"unrecognized implementation result: {key}")
         continue

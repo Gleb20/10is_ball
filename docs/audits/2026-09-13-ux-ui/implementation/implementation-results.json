@@ -528,6 +528,160 @@
       "result": "verified_local",
       "evidence": "docs/audit/evidence/stage3-wo2-r2/README.md",
       "evidenceSha256": "51f8f0e09f353b321c7fecffdf68da83a2b85e25942c3f6443ba85eb1f986a7c"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-029",
+      "atom_id": "main",
+      "canonical_task": "BUG-029",
+      "stage": 4,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage4-final-candidate/local-summary.json",
+      "evidenceSha256": "e79a11b1adbb87051a7dfccbc9fa17d9dacfb108a0f6e54754835231a3805cf4"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-031",
+      "atom_id": "main",
+      "canonical_task": "BUG-031",
+      "stage": 4,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage4-final-candidate/local-summary.json",
+      "evidenceSha256": "e79a11b1adbb87051a7dfccbc9fa17d9dacfb108a0f6e54754835231a3805cf4"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-039",
+      "atom_id": "main",
+      "canonical_task": "BUG-039",
+      "stage": 4,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage4-final-candidate/local-summary.json",
+      "evidenceSha256": "e79a11b1adbb87051a7dfccbc9fa17d9dacfb108a0f6e54754835231a3805cf4"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-036",
+      "atom_id": "main",
+      "canonical_task": "BUG-036",
+      "stage": 10,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage4-final-candidate/local-summary.json",
+      "evidenceSha256": "e79a11b1adbb87051a7dfccbc9fa17d9dacfb108a0f6e54754835231a3805cf4"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-037",
+      "atom_id": "main",
+      "canonical_task": "BUG-037",
+      "stage": 10,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage4-final-candidate/local-summary.json",
+      "evidenceSha256": "e79a11b1adbb87051a7dfccbc9fa17d9dacfb108a0f6e54754835231a3805cf4"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "GAP-014",
+      "atom_id": "main",
+      "canonical_task": "GAP-014",
+      "stage": 13,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage4-final-candidate/local-summary.json",
+      "evidenceSha256": "e79a11b1adbb87051a7dfccbc9fa17d9dacfb108a0f6e54754835231a3805cf4"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "GAP-016",
+      "atom_id": "main",
+      "canonical_task": "GAP-016",
+      "stage": 13,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage4-final-candidate/local-summary.json",
+      "evidenceSha256": "e79a11b1adbb87051a7dfccbc9fa17d9dacfb108a0f6e54754835231a3805cf4"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "GAP-022",
+      "atom_id": "main",
+      "canonical_task": "GAP-022",
+      "stage": 9,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage14-source-acceptance.json",
+      "evidenceSha256": "4bc5ec9c27ad138e006aca7046172ef474b0b9447e8bbcb30e71854da8681a6d"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-034",
+      "atom_id": "main",
+      "canonical_task": "BUG-034",
+      "stage": 9,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage14-source-acceptance.json",
+      "evidenceSha256": "4bc5ec9c27ad138e006aca7046172ef474b0b9447e8bbcb30e71854da8681a6d"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-035",
+      "atom_id": "main",
+      "canonical_task": "BUG-035",
+      "stage": 9,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage14-source-acceptance.json",
+      "evidenceSha256": "4bc5ec9c27ad138e006aca7046172ef474b0b9447e8bbcb30e71854da8681a6d"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "GAP-024",
+      "atom_id": "main",
+      "canonical_task": "GAP-024",
+      "stage": 10,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage14-source-acceptance.json",
+      "evidenceSha256": "4bc5ec9c27ad138e006aca7046172ef474b0b9447e8bbcb30e71854da8681a6d"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "GAP-026",
+      "atom_id": "main",
+      "canonical_task": "GAP-026",
+      "stage": 11,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage14-source-acceptance.json",
+      "evidenceSha256": "4bc5ec9c27ad138e006aca7046172ef474b0b9447e8bbcb30e71854da8681a6d"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "GAP-027",
+      "atom_id": "main",
+      "canonical_task": "GAP-027",
+      "stage": 11,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage14-source-acceptance.json",
+      "evidenceSha256": "4bc5ec9c27ad138e006aca7046172ef474b0b9447e8bbcb30e71854da8681a6d"
+    },
+    {
+      "source": "user-session-2026-09-16-table-01",
+      "source_id": "U01-FORM-001",
+      "atom_id": "a04",
+      "canonical_task": "GAP-024",
+      "stage": 10,
+      "previousResult": "target_pending_implementation",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage14-source-acceptance.json",
+      "evidenceSha256": "4bc5ec9c27ad138e006aca7046172ef474b0b9447e8bbcb30e71854da8681a6d"
     }
   ]
 }

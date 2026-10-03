@@ -38,6 +38,33 @@ export type AdminUserUpdate = {
   role?: "admin" | "user";
 };
 
+export type AdminUserAuditItem = {
+  id: string;
+  createdAt: string;
+  actor: { id: string; displayName: string } | null;
+  action:
+    | "user.created"
+    | "user.updated"
+    | "user.role_changed"
+    | "user.blocked"
+    | "user.unblocked"
+    | "user.password_reset"
+    | "admin.bootstrap_provisioned";
+  changedFields: Array<
+    | "firstName"
+    | "lastName"
+    | "birthDate"
+    | "organizationText"
+    | "positionText"
+    | "role"
+  >;
+};
+
+export type AdminUserAuditFeed = {
+  items: AdminUserAuditItem[];
+  nextCursor: string | null;
+};
+
 export type ProfileIdentity = {
   id: string;
   firstName: string;
@@ -102,6 +129,8 @@ export type HistoryItem = {
   matchKind: string | null;
   scoreA: number | null;
   scoreB: number | null;
+  sideA?: string | null;
+  sideB?: string | null;
   format: string | null;
 };
 export type HistoryFilters = {
@@ -435,6 +464,21 @@ export const api = {
     if (status) query.set("status", status);
     const suffix = query.size > 0 ? `?${query.toString()}` : "";
     return request<{ users: AdminUser[] }>(`/api/v1/admin/users${suffix}`);
+  },
+  getAdminUser: (userId: string, options: { signal?: AbortSignal } = {}) =>
+    request<{ user: AdminUser }>(`/api/v1/admin/users/${userId}`, {
+      signal: options.signal,
+    }),
+  listAdminUserAudit: (
+    userId: string,
+    cursor?: string,
+    options: { signal?: AbortSignal } = {},
+  ) => {
+    const suffix = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
+    return request<AdminUserAuditFeed>(
+      `/api/v1/admin/users/${userId}/audit${suffix}`,
+      { signal: options.signal },
+    );
   },
   createUser: (payload: {
     email: string;

@@ -1,5 +1,18 @@
 # Requirements ↔ Tests Traceability
 
+## Stage 14 — teams, history and admin integrated candidate
+
+| Backlog / requirement | Deterministic regression | Runtime evidence and limit |
+|---|---|---|
+| GAP-022, BUG-034/035; TEAM-001/003/006/007, AT-TEAM-001/004/005 | [TeamsPage.test.tsx](../../apps/web/src/pages/TeamsPage.test.tsx), [TeamDetailPage.test.tsx](../../apps/web/src/pages/TeamDetailPage.test.tsx), [SubmissionGuards.test.tsx](../../apps/web/src/pages/SubmissionGuards.test.tsx): list-first disclosure, draft/pending guards, named confirmations, unknown-outcome GET-only review, actor/team/token-bound return | [wave-d-teams.spec.ts](../../tests/e2e/wave-d-teams.spec.ts) passed compiled 1440/390/360 with persisted captain/member readback. Public parity, physical device and spoken AT remain open. |
+| GAP-024; HISTORY-001–004, AT-VIS-001/003/004; U01-FORM-001/a04 | [history.integration.test.ts](../../apps/api/src/history.integration.test.ts), [history.postgres.integration.test.ts](../../apps/api/src/history.postgres.integration.test.ts), [openapi.contract.test.ts](../../apps/api/src/openapi.contract.test.ts), [HistoryPage.test.tsx](../../apps/web/src/pages/HistoryPage.test.tsx): all four 2×2 places, registered/guest/blocked snapshots, literal wildcards, pre-limit search, precise cursor and actor-bound fresh return | [wave-b.spec.ts](../../tests/e2e/wave-b.spec.ts) passed compiled 1440/390/360 plus 360 CSS zoom 200% with long 2×2 names, per-side scores and separate admin delete. CSS zoom is a reflow approximation, not browser UI zoom. |
+| GAP-026/027; ADM-001–008, AT-ADM-001/003/006 | [gap-026.integration.test.ts](../../apps/api/src/gap-026.integration.test.ts), [gap-026.postgres.integration.test.ts](../../apps/api/src/gap-026.postgres.integration.test.ts), [openapi.contract.test.ts](../../apps/api/src/openapi.contract.test.ts), [AdminPage.stage11.test.tsx](../../apps/web/src/pages/AdminPage.stage11.test.tsx), [AdminUserPage.test.tsx](../../apps/web/src/pages/AdminUserPage.test.tsx): allowlists, active-admin gate, target-bound microsecond cursor, stale generation suppression, catalog hierarchy and guarded actions | [wave-e-admin.spec.ts](../../tests/e2e/wave-e-admin.spec.ts) passed compiled 1440/390/360 with 20+2 audit pagination, role/lifecycle readback, safe fallback and direct-target invalidation. Published parity remains open. |
+
+Focused web passed 88/88, disposable PostgreSQL passed 90/90 and the initial
+three-surface compiled browser matrix passed 12/12 plus 9/9 foundation. The
+history layout correction then passed 3/3 journeys plus 9/9 foundation. Evidence:
+[stage14-source-acceptance.json](../audit/evidence/stage14-source-acceptance.json).
+
 ## Stage 4 — integrated candidate, verified locally
 
 | Backlog / requirement | Deterministic regression | Runtime evidence and limit |

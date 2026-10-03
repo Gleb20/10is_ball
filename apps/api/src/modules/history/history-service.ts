@@ -28,6 +28,8 @@ export type HistoryItem = {
   matchKind: string | null;
   scoreA: number | null;
   scoreB: number | null;
+  sideA: string | null;
+  sideB: string | null;
   format: string | null;
 };
 
@@ -51,22 +53,45 @@ type HistoryRow = {
   match_kind: string | null;
   score_a: number | null;
   score_b: number | null;
+  side_a: string | null;
+  side_b: string | null;
   format: string | null;
   search_text: string;
+  cursor_occurred_at: string;
 };
 
 function validationError(message: string) {
   return Object.assign(new Error(message), { code: "VALIDATION" });
 }
 
-function encodeCursor(item: HistoryItem): string {
+function encodeCursor(item: HistoryItem, occurredAt: string): string {
   const cursor: Cursor = {
     v: 1,
-    occurredAt: item.occurredAt,
+    occurredAt,
     type: item.type,
     id: item.id,
   };
   return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+function isValidCursorTimestamp(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?(Z|([+-])(\d{2}):(\d{2}))$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6]);
+  const offsetHour = match[10] === undefined ? 0 : Number(match[10]);
+  const offsetMinute = match[11] === undefined ? 0 : Number(match[11]);
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return year >= 1 && month >= 1 && month <= 12 &&
+    day >= 1 && day <= daysInMonth[month - 1]! &&
+    hour <= 23 && minute <= 59 && second <= 59 &&
+    offsetHour <= 15 && offsetMinute <= 59 &&
+    !Number.isNaN(new Date(value).getTime());
 }
 
 function decodeCursor(encoded?: string): Cursor | null {
@@ -75,7 +100,7 @@ function decodeCursor(encoded?: string): Cursor | null {
     const parsed = JSON.parse(
       Buffer.from(encoded, "base64url").toString("utf8"),
     ) as Partial<Cursor>;
-    const occurredAt = new Date(String(parsed.occurredAt));
+    const occurredAt = String(parsed.occurredAt);
     if (
       parsed.v !== 1 ||
       (parsed.type !== "match" && parsed.type !== "tournament") ||
@@ -83,13 +108,13 @@ function decodeCursor(encoded?: string): Cursor | null {
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         parsed.id,
       ) ||
-      Number.isNaN(occurredAt.getTime())
+      !isValidCursorTimestamp(occurredAt)
     ) {
       throw new Error("invalid cursor");
     }
     return {
       v: 1,
-      occurredAt: occurredAt.toISOString(),
+      occurredAt,
       type: parsed.type,
       id: parsed.id,
     };
@@ -151,31 +176,33 @@ export class HistoryService {
           m.kind::text as match_kind,
           m.score_a,
           m.score_b,
+          participant_sides.side_a,
+          participant_sides.side_b,
           m.format::text as format,
-          lower(concat_ws(' ', m.title, (
-            select string_agg(
-              coalesce(nullif(trim(concat_ws(' ', u.first_name, u.last_name)), ''),
-                nullif(trim(concat_ws(' ', opponent_mp.guest_first_name, opponent_mp.guest_last_name)), '')),
-              ' '
-            )
-            from match_participants opponent_mp
-            left join users u on u.id = opponent_mp.user_id
-            where opponent_mp.match_id = m.id
-              and (
-                not exists (
-                  select 1 from match_participants actor_side
-                  where actor_side.match_id = m.id
-                    and actor_side.user_id = ${actorUserId}::uuid
-                )
-                or opponent_mp.side <> (
-                  select actor_side.side from match_participants actor_side
-                  where actor_side.match_id = m.id
-                    and actor_side.user_id = ${actorUserId}::uuid
-                  limit 1
-                )
-              )
-          ))) as search_text
+          lower(concat_ws(' ', m.title, participant_sides.participant_search)) as search_text
         from matches m
+        left join lateral (
+          select
+            string_agg(display_name, ' / ' order by display_name, participant_id)
+              filter (where side = 'A') as side_a,
+            string_agg(display_name, ' / ' order by display_name, participant_id)
+              filter (where side = 'B') as side_b,
+            string_agg(display_name, ' ' order by side, display_name, participant_id)
+              as participant_search
+          from (
+            select
+              participant.id::text as participant_id,
+              participant.side,
+              coalesce(
+                nullif(trim(concat_ws(' ', registered.last_name, registered.first_name)), ''),
+                nullif(trim(concat_ws(' ', participant.guest_first_name, participant.guest_last_name)), '')
+              ) as display_name
+            from match_participants participant
+            left join users registered on registered.id = participant.user_id
+            where participant.match_id = m.id
+          ) named_participants
+          where display_name is not null
+        ) participant_sides on true
         where m.kind <> 'tutorial'
           and (
             m.status in ('finished', 'stopped', 'cancelled', 'voided')
@@ -233,6 +260,8 @@ export class HistoryService {
           null::text as match_kind,
           null::integer as score_a,
           null::integer as score_b,
+          null::text as side_a,
+          null::text as side_b,
           t.format::text as format,
           lower(t.title) as search_text
         from tournaments t
@@ -256,7 +285,13 @@ export class HistoryService {
           )
         )
       )
-      select * from history_events
+      select
+        history_events.*,
+        to_char(
+          occurred_at at time zone 'UTC',
+          'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'
+        ) as cursor_occurred_at
+      from history_events
       where (${query.eventType ?? null}::text is null or event_type = ${query.eventType ?? null})
         and (
           ${query.role ?? null}::text is null
@@ -298,12 +333,17 @@ export class HistoryService {
         matchKind: row.match_kind,
         scoreA: row.score_a,
         scoreB: row.score_b,
+        sideA: row.side_a,
+        sideB: row.side_b,
         format: row.format,
       };
     });
     return {
       items,
-      nextCursor: rows.length > query.limit ? encodeCursor(items.at(-1)!) : null,
+      nextCursor:
+        rows.length > query.limit
+          ? encodeCursor(items.at(-1)!, rows[query.limit - 1]!.cursor_occurred_at)
+          : null,
     };
   }
 }

@@ -8,6 +8,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { FirstPasswordPage } from "./pages/FirstPasswordPage";
 import { HomePage } from "./pages/HomePage";
 import { AdminPage } from "./pages/AdminPage";
+import { AdminUserPage } from "./pages/AdminUserPage";
 import { MatchesPage } from "./pages/MatchesPage";
 import { MatchCreatePage } from "./pages/MatchCreatePage";
 import { MatchDetailPage } from "./pages/MatchDetailPage";
@@ -112,7 +113,7 @@ function AppRoutes() {
   }
 
   return (
-    <AppShell showTaskNav={showTaskNav} userId={user?.id}>
+    <AppShell showTaskNav={showTaskNav} userId={user?.id} isAdmin={user?.role === "admin"}>
       {user ? <InvitationNotice userId={user.id} enabled={!user.mustChangePassword && !onboardingActive && !reauthRequired} /> : null}
       <Routes>
         <Route
@@ -155,6 +156,14 @@ function AppRoutes() {
           element={
             <Protected>
               <AdminPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/admin/users/:id"
+          element={
+            <Protected>
+              <AdminUserPage />
             </Protected>
           }
         />

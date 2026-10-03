@@ -82,7 +82,7 @@ read/playable по текущему коду/ADR, но для V1 DE извест
 
 ## Web routes
 
-Authenticated shell: `/`, `/history`, `/start`, `/admin`, `/matches`,
+Authenticated shell: `/`, `/history`, `/start`, `/admin`, `/admin/users/:id`, `/matches`,
 `/matches/new`, `/matches/:id`, `/rankings`, `/tournaments`, `/tournaments/new`,
 `/tournaments/:id`, `/teams`, `/profile`, `/help`, `/onboarding`,
 `/notifications`. Judge route `/matches/:id/judge` immersive. Вне shell:
@@ -105,6 +105,15 @@ Stage 2 candidate D36: shell без bottom tabs и общего меню; Home �
 При первом pending/error Home сохраняет именованные входы в историю и рейтинг;
 завершённая краткая карточка матча показывает победившую сторону по `winnerSide`
 без повтора имени. Турнирные сводки обходятся без полного match detail fanout.
+
+Stage 14 candidate добавляет account-card route и actor-bound return context для
+History, Teams и Admin detail. Восстановление принимается только при совпадающих
+actor, target, source и ephemeral token. Явный Home и прямой переход A→B удаляют
+устаревший context; scroll/focus восстанавливаются после свежего GET.
+AdminPage/AdminUserPage разделяют поколения actor, route, load и mutation, поэтому
+поздний ответ старого экрана не раскрывает secret/error и не снимает новый
+pending. Team settings сохраняют draft при неизвестном исходе и выполняют
+GET-only review; destructive membership/role actions требуют подтверждения.
 
 ## Delivery boundary
 

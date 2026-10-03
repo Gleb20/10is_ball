@@ -208,6 +208,13 @@ describe("AT-OPS-API-001 runtime OpenAPI contract", () => {
     expect(successSchema("/api/v1/history")).toEqual({
       $ref: "#/components/schemas/HistoryFeed",
     });
+    expect(spec.components?.schemas?.HistoryItem).toMatchObject({
+      required: expect.arrayContaining(["sideA", "sideB"]),
+      properties: {
+        sideA: { type: "string", nullable: true },
+        sideB: { type: "string", nullable: true },
+      },
+    });
     expect(successSchema("/api/v1/rankings")).toEqual({
       $ref: "#/components/schemas/RankingResponse",
     });
@@ -310,6 +317,26 @@ it("GAP-010 admin edit and catalog expose bounded profile fields without email e
   expect(spec.components.schemas.AdminUserUpdateRequest).toMatchObject({ additionalProperties: false, minProperties: 1, properties: { firstName: { maxLength: 100 }, birthDate: { nullable: true }, organizationText: { maxLength: 200 } } });
   expect(spec.components.schemas.AdminUserUpdateRequest.properties.email).toBeUndefined();
   expect(spec.components.schemas.AdminUser.properties).toMatchObject({ lastLoginAt: { nullable: true, format: "date-time" }, createdAt: { format: "date-time" }, birthDate: { nullable: true } });
+});
+
+it("GAP-026 documents safe admin account detail and target-bound audit history", () => {
+  const spec = openApiSpec() as any;
+  expect(spec.paths["/api/v1/admin/users/{userId}"].get.responses[200].content["application/json"].schema).toMatchObject({
+    required: ["user"],
+    properties: { user: { $ref: "#/components/schemas/AdminUser" } },
+  });
+  const audit = spec.paths["/api/v1/admin/users/{userId}/audit"].get;
+  expect(audit.parameters).toEqual(expect.arrayContaining([
+    expect.objectContaining({ name: "userId", in: "path", required: true }),
+    expect.objectContaining({ name: "cursor", in: "query", required: false }),
+  ]));
+  expect(audit.responses[200].content["application/json"].schema.$ref).toBe("#/components/schemas/AdminUserAuditFeed");
+  expect(spec.components.schemas.AdminUserAuditItem).toMatchObject({
+    additionalProperties: false,
+    required: ["id", "createdAt", "actor", "action", "changedFields"],
+  });
+  expect(spec.components.schemas.AdminUserAuditItem.properties).not.toHaveProperty("meta");
+  expect(spec.components.schemas.AdminUserAuditItem.properties).not.toHaveProperty("outcome");
 });
 
 it("GAP-008 documents consent, prestart editing and immutable invitation response", () => {

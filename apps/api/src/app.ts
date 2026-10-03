@@ -120,6 +120,9 @@ const AdminUsersQuerySchema = z
   })
   .strict();
 const AdminUserParamsSchema = z.object({ userId: z.string().uuid() }).strict();
+const AdminUserAuditQuerySchema = z
+  .object({ cursor: z.string().min(1).max(1000).optional() })
+  .strict();
 const AdminUserPatchSchema = ProfileUpdateSchema.extend({
   role: z.enum(["admin", "user"]).optional(),
 }).refine((value) => Object.keys(value).length > 0, {
@@ -635,6 +638,33 @@ export async function buildApp(opts: {
           });
         }
         throw e;
+      }
+    },
+  );
+
+  app.get(
+    "/api/v1/admin/users/:userId",
+    { preHandler: requireAdmin },
+    async (req, reply) => {
+      try {
+        const { userId } = parseBody(AdminUserParamsSchema, req.params);
+        return { user: await services.auth.getAdminUser(userId) };
+      } catch (error) {
+        return sendError(reply, error);
+      }
+    },
+  );
+
+  app.get(
+    "/api/v1/admin/users/:userId/audit",
+    { preHandler: requireAdmin },
+    async (req, reply) => {
+      try {
+        const { userId } = parseBody(AdminUserParamsSchema, req.params);
+        const { cursor } = parseBody(AdminUserAuditQuerySchema, req.query);
+        return await services.auth.listAdminUserAudit(userId, cursor);
+      } catch (error) {
+        return sendError(reply, error);
       }
     },
   );

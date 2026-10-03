@@ -1,4 +1,6 @@
 import { expect, request, test, type APIRequestContext, type Page } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
 
 const baseURL = process.env.TAB10_E2E_BASE_URL ?? "http://localhost:4273";
 const email = process.env.E2E_ADMIN_EMAIL ?? "delivery.admin@tab10.test";
@@ -124,16 +126,69 @@ test("Wave B AT-PROFILE-001..005 AT-RANK-005..006 own edit, revoke, team and pri
 test("Wave B AT-VIS-003 history pagination and detail return keep context", async ({ page }, info) => {
   const prefix = `history-${info.project.name}`;
   const { context: admin, user } = await adminContext(`wave-b-history-${info.project.name}`);
+  const matchIds: string[] = [];
   try {
+    const pairNeedle = `Редкий-${info.project.name}`;
+    const paired = await mutate(admin, "POST", "/api/v1/matches", {
+      title: `Парный поиск ${info.project.name}`,
+      format: "2v2",
+      pointsToWin: 11,
+      participants: [
+        { side: "A", userId: user.id },
+        { side: "A", guestFirstName: "Анна-Мария", guestLastName: "Очень-Длинная-Фамилия-Напарника" },
+        { side: "B", guestFirstName: "Борис-Станислав", guestLastName: "Сверхдлинный-Соперник" },
+        { side: "B", guestFirstName: pairNeedle, guestLastName: "Четвёртый-Длиннофамильный" },
+      ],
+    });
+    await mutate(admin, "POST", `/api/v1/matches/${paired.match.id}/cancel`, {
+      expectedVersion: paired.match.version,
+    });
     for (let index = 0; index < 21; index += 1) {
       const created = await mutate(admin, "POST", "/api/v1/matches", {
         title: `${prefix} ${index}`, format: "1v1", pointsToWin: 11,
         participants: [{ side: "A", userId: user.id }, { side: "B", guestFirstName: prefix, guestLastName: "Игрок" }],
       });
+      matchIds.push(created.match.id);
       await mutate(admin, "POST", `/api/v1/matches/${created.match.id}/cancel`, { expectedVersion: created.match.version });
     }
     await browserLogin(page);
     await page.goto("/history");
+    await page.getByRole("searchbox", { name: "Поиск", exact: true }).fill(pairNeedle);
+    await page.getByRole("button", { name: "Найти", exact: true }).click();
+    const pairedRow = page.getByRole("link", { name: new RegExp(`Парный поиск ${info.project.name}`) });
+    await expect(pairedRow).toContainText(pairNeedle);
+    const resetSearch = page.getByRole("button", { name: "Сбросить", exact: true });
+    await expect(resetSearch).toBeVisible();
+    expect(await resetSearch.evaluate((button) => button.scrollWidth <= button.clientWidth + 1)).toBe(true);
+    await expect(pairedRow.getByLabel(/Счёт стороны .*: 0/)).toHaveCount(2);
+    const deleteButton = pairedRow.locator("xpath=../..").getByRole("button", { name: "Удалить", exact: true });
+    await expect(deleteButton).toBeVisible();
+    if (info.project.name !== "chromium-desktop") {
+      const [linkBox, deleteBox] = await Promise.all([pairedRow.boundingBox(), deleteButton.boundingBox()]);
+      expect(linkBox).not.toBeNull();
+      expect(deleteBox).not.toBeNull();
+      expect(deleteBox!.y).toBeGreaterThanOrEqual(linkBox!.y + linkBox!.height - 1);
+    }
+    await noOverflow(page);
+    const evidenceDir = process.env.VERIFY_EVIDENCE_DIR;
+    if (evidenceDir) {
+      const screenshotDir = path.join(evidenceDir, "screenshots");
+      await mkdir(screenshotDir, { recursive: true });
+      await page.screenshot({
+        path: path.join(screenshotDir, `history-long-2v2-${info.project.name}.png`), fullPage: true,
+      });
+      if (info.project.name === "chromium-desktop") {
+        await page.setViewportSize({ width: 360, height: 844 });
+        await page.evaluate(() => { document.documentElement.style.zoom = "200%"; });
+        await noOverflow(page);
+        expect(await resetSearch.evaluate((button) => button.scrollWidth <= button.clientWidth + 1)).toBe(true);
+        await page.screenshot({
+          path: path.join(screenshotDir, "history-long-2v2-css-zoom-200.png"), fullPage: true,
+        });
+        await page.evaluate(() => { document.documentElement.style.zoom = ""; });
+        await page.setViewportSize({ width: 1440, height: 900 });
+      }
+    }
     await page.getByRole("searchbox", { name: "Поиск", exact: true }).fill(prefix);
     await page.getByRole("button", { name: "Найти", exact: true }).click();
     await page.getByRole("button", { name: /^Фильтры/ }).click();
@@ -144,12 +199,40 @@ test("Wave B AT-VIS-003 history pagination and detail return keep context", asyn
     await expect(cards).toHaveCount(20);
     await page.getByRole("button", { name: "Показать ещё" }).click();
     await expect(cards).toHaveCount(21);
-    await cards.first().click();
+    const selected = cards.nth(15);
+    await selected.scrollIntoViewIfNeeded();
+    const selectedHref = await selected.getAttribute("href");
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    await selected.click();
     await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+$/);
-    await page.goBack();
+    const freshHistory = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.pathname === "/api/v1/history" && url.searchParams.get("q") === prefix;
+    });
+    await page.getByRole("button", { name: "К истории", exact: true }).click();
+    expect((await freshHistory).status()).toBe(200);
     await expect(page.getByRole("searchbox", { name: "Поиск", exact: true })).toHaveValue(prefix);
     await expect(cards).toHaveCount(21);
     await expect(page.getByRole("button", { name: "Показать ещё" })).toHaveCount(0);
+    await expect(page.locator(`a[href="${selectedHref}"]`)).toBeFocused();
+    expect(Math.abs((await page.evaluate(() => window.scrollY)) - scrollBefore)).toBeLessThan(8);
     await noOverflow(page);
+
+    await cards.first().click();
+    const currentId = page.url().split("/").at(-1);
+    const directId = matchIds.find((id) => id !== currentId)!;
+    await page.goto(`/matches/${directId}`);
+    await expect(page.getByRole("button", { name: "К истории", exact: true })).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => sessionStorage.getItem("tab10.history.return"))).toBeNull();
+    await page.goto("/history");
+    await expect(page.getByRole("searchbox", { name: "Поиск", exact: true })).toHaveValue("");
+
+    if (evidenceDir) {
+      const screenshotDir = path.join(evidenceDir, "screenshots");
+      await mkdir(screenshotDir, { recursive: true });
+      await page.screenshot({
+        path: path.join(screenshotDir, `history-${info.project.name}.png`), fullPage: true,
+      });
+    }
   } finally { await admin.dispose(); }
 });

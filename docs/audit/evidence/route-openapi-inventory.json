@@ -6,10 +6,10 @@
   "limitations": [
     "Routes registered dynamically, through plugins, or outside apps/api/src/app.ts require a separate inventory update"
   ],
-  "registeredCount": 84,
-  "documentedCount": 84,
-  "registeredPathCount": 75,
-  "documentedPathCount": 75,
+  "registeredCount": 86,
+  "documentedCount": 86,
+  "registeredPathCount": 76,
+  "documentedPathCount": 76,
   "coveragePercent": 100,
   "registered": [
     "DELETE /api/v1/admin/matches/{matchId}",
@@ -18,6 +18,8 @@
     "DELETE /api/v1/tournaments/{id}/invitations/{invitationId}",
     "DELETE /api/v1/tournaments/{id}/participants/{participantId}",
     "GET /api/v1/admin/users",
+    "GET /api/v1/admin/users/{userId}",
+    "GET /api/v1/admin/users/{userId}/audit",
     "GET /api/v1/auth/me",
     "GET /api/v1/auth/sessions",
     "GET /api/v1/faq",
@@ -104,6 +106,8 @@
     "DELETE /api/v1/tournaments/{id}/invitations/{invitationId}",
     "DELETE /api/v1/tournaments/{id}/participants/{participantId}",
     "GET /api/v1/admin/users",
+    "GET /api/v1/admin/users/{userId}",
+    "GET /api/v1/admin/users/{userId}/audit",
     "GET /api/v1/auth/me",
     "GET /api/v1/auth/sessions",
     "GET /api/v1/faq",

@@ -155,8 +155,9 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
     const playerRow = screen
       .getByText("player@tab10.local · user")
       .closest(".list-row") as HTMLElement;
+    await user.click(within(playerRow).getByRole("button", { name: "Действия" }));
     await user.click(
-      within(playerRow).getByRole("button", { name: /^блок$/i }),
+      within(playerRow).getByRole("button", { name: /^заблокировать$/i }),
     );
     expect(
       await screen.findByText(/заблокировать пользователя/i),
@@ -164,9 +165,8 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
     await user.click(screen.getByRole("button", { name: /подтвердить/i }));
     expect(blockUser).toHaveBeenCalledWith("u2");
 
-    const resetButtons = screen.getAllByRole("button", { name: /^сброс$/i });
-    await user.click(resetButtons[1]!);
-    expect(await screen.findByText(/сбросить пароль/i)).toBeInTheDocument();
+    await user.click(within(playerRow).getByRole("button", { name: /^сбросить пароль$/i }));
+    expect(await screen.findByRole("heading", { name: /сбросить пароль/i })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /подтвердить/i }));
     expect(resetPassword).toHaveBeenCalledWith("u2");
     expect(
@@ -184,6 +184,7 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
       </MemoryRouter>,
     );
     expect(await screen.findByText(/player@tab10.local/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Добавить пользователя" }));
 
     const createForm = document.querySelector(
       'form[aria-label="Создание пользователя"]',
@@ -220,6 +221,7 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
         </AuthProvider>
       </MemoryRouter>,
     );
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Добавить пользователя" }));
     const form = (await screen.findByLabelText(
       "Создание пользователя",
     )) as HTMLFormElement;
@@ -235,7 +237,8 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
       user: { id: "u4", role: "user" },
       temporaryPassword: "CreatePass1!",
     });
-    await waitFor(() => expect(submit).not.toBeDisabled());
+    await waitFor(() => expect(screen.queryByLabelText("Создание пользователя")).toBeNull());
+    expect(await screen.findByText("CreatePass1!", { selector: "code" })).toBeInTheDocument();
   });
 
   it("confirms promote/demote and hides role buttons for self", async () => {
@@ -253,44 +256,38 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
     const playerRow = screen
       .getByText("player@tab10.local · user")
       .closest(".list-row") as HTMLElement;
-    expect(
-      within(playerRow).getByRole("button", { name: /^сделать админом$/i }),
-    ).toBeInTheDocument();
-
     const selfEmail = screen.getByText("admin@tab10.local · admin · вы");
-    const selfRow = selfEmail.closest(".list-row");
-    expect(selfRow).toBeTruthy();
+    const selfRow = selfEmail.closest(".list-row") as HTMLElement;
+    await user.click(within(selfRow).getByRole("button", { name: "Действия" }));
     expect(
-      within(selfRow as HTMLElement).queryByRole("button", {
-        name: /сделать админом|снять админа/i,
+      within(selfRow).queryByRole("button", {
+        name: /сделать администратором|снять права администратора/i,
       }),
     ).toBeNull();
+    await user.click(within(playerRow).getByRole("button", { name: "Действия" }));
 
     await user.click(
-      within(playerRow).getByRole("button", { name: /^сделать админом$/i }),
+      within(playerRow).getByRole("button", { name: /^сделать администратором$/i }),
     );
     expect(
-      await screen.findByText(/сделать администратором/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/сессии пользователя будут сброшены/i),
+      await screen.findByRole("heading", { name: /сделать администратором/i }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /отмена/i }));
     expect(updateUserRole).not.toHaveBeenCalled();
 
     const promoteBtn = within(playerRow).getByRole("button", {
-      name: /^сделать админом$/i,
+      name: /^сделать администратором$/i,
     });
     await user.click(promoteBtn);
     await user.click(screen.getByRole("button", { name: /подтвердить/i }));
     expect(updateUserRole).toHaveBeenCalledWith("u2", "admin");
 
-    const demoteBtn = screen.getAllByRole("button", {
-      name: /^снять админа$/i,
-    })[0]!;
+    const otherAdminRow = screen.getByText("other-admin@tab10.local · admin").closest(".list-row") as HTMLElement;
+    await user.click(within(otherAdminRow).getByRole("button", { name: "Действия" }));
+    const demoteBtn = within(otherAdminRow).getByRole("button", { name: /^снять права администратора$/i });
     await user.click(demoteBtn);
     expect(
-      await screen.findByText(/снять права администратора/i),
+      await screen.findByRole("heading", { name: /снять права администратора/i }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /подтвердить/i }));
     expect(updateUserRole).toHaveBeenCalledWith("u3", "user");
@@ -311,15 +308,17 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
     const selfRow = screen
       .getByText("admin@tab10.local · admin · вы")
       .closest(".list-row") as HTMLElement;
+    await user.click(within(selfRow).getByRole("button", { name: "Действия" }));
     expect(
-      within(selfRow).queryByRole("button", { name: /^блок$/i }),
+      within(selfRow).queryByRole("button", { name: /^заблокировать$/i }),
     ).toBeNull();
 
     const blockedRow = screen
       .getByText("blocked@tab10.local · user")
       .closest(".list-row") as HTMLElement;
+    await user.click(within(blockedRow).getByRole("button", { name: "Действия" }));
     expect(
-      within(blockedRow).queryByRole("button", { name: /^блок$/i }),
+      within(blockedRow).queryByRole("button", { name: /^заблокировать$/i }),
     ).toBeNull();
     await user.click(
       within(blockedRow).getByRole("button", { name: /^разблокировать$/i }),
@@ -351,6 +350,7 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
 
     const blockedRow = (await screen.findByText("blocked@tab10.local · user"))
       .closest(".list-row") as HTMLElement;
+    await user.click(within(blockedRow).getByRole("button", { name: "Действия" }));
     await user.click(
       within(blockedRow).getByRole("button", { name: /^разблокировать$/i }),
     );
@@ -363,7 +363,7 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
 
     rejectUnblock(new Error("Разблокировка не выполнена"));
     expect(
-      await screen.findByText("Разблокировка не выполнена"),
+      await screen.findByText(/Результат операции не подтверждён/),
     ).toBeInTheDocument();
     expect(screen.getByText("blocked@tab10.local · user")).toBeInTheDocument();
     expect(

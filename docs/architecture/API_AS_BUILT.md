@@ -20,12 +20,13 @@ login/OpenAPI, требуют session; state-changing routes вне test тре�
 | GET | `/api/v1/auth/sessions` |
 | DELETE | `/api/v1/auth/sessions/:sessionId` |
 
-## Admin и profile (13)
+## Admin и profile (15)
 
 | Method | Path |
 |---|---|
 | GET, POST | `/api/v1/admin/users` |
-| PATCH | `/api/v1/admin/users/:userId` |
+| GET, PATCH | `/api/v1/admin/users/:userId` |
+| GET | `/api/v1/admin/users/:userId/audit` |
 | POST | `/api/v1/admin/users/:userId/block` |
 | POST | `/api/v1/admin/users/:userId/unblock` |
 | POST | `/api/v1/admin/users/:userId/reset-password` |
@@ -41,6 +42,11 @@ stopped и voided sporting results не удаляются (`DATA-005/007`).
 Profile mutation теперь возвращает отдельный `OwnProfileUser` allowlist из 13
 полей и не сериализует password hash, auth timestamps или storage paths
 (`SEC-002`, local verification). Wave B добавляет канонический `/profile/me`; legacy `/me/profile` сохраняется для совместимости.
+Admin detail использует тот же `AdminUser` allowlist. Audit отдаёт только
+разрешённые action/changedFields и текущую подпись actor, страницами по 20;
+непрозрачный target-bound cursor сравнивается через исходный PostgreSQL
+`created_at`, поэтому микросекунды не теряются. Raw meta и значения не выходят из
+service. Оба route требуют активного admin на каждом запросе.
 
 ## Match, directory, ranking, history, home (20)
 
@@ -74,6 +80,9 @@ Counting `GET, POST` as two route registrations gives 20. Point/undo and
 cancel/void require an `Idempotency-Key`; core match payloads use shared Zod
 runtime schemas. Temporary-password authorization compares exact method plus
 matched router path.
+History сначала применяет authorization visibility, затем set-based participant
+aggregation, фильтры поиска и keyset pagination. `sideA/sideB` являются nullable
+display snapshots; поиск охватывает все места обеих сторон без N+1 detail reads.
 
 ## Tournament (16)
 

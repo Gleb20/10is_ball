@@ -113,6 +113,9 @@ describe("BUG-009 scoped critical form submission guards", () => {
     const request = deferred<Record<string, unknown>>();
     apiMock.mockReturnValue(request.promise);
     renderPage();
+    if (apiMock === createTeam) {
+      fireEvent.click(await screen.findByRole("button", { name: "Создать команду" }));
+    }
     const submit = await screen.findByRole("button", { name: buttonName });
     const form = submit.closest("form") as HTMLFormElement;
     if (apiMock === feedback) {
@@ -130,10 +133,26 @@ describe("BUG-009 scoped critical form submission guards", () => {
       apiMock === createTournament
         ? { tournament: { id: "t1" } }
         : apiMock === createTeam
-          ? { team: { id: "team1" } }
+          ? {
+              team: {
+                id: "team1",
+                name: "Команда",
+                slogan: null,
+                welcomeText: null,
+                captainUserId: "u1",
+                status: "active",
+                createdAt: "2026-10-03T00:00:00.000Z",
+                archivedAt: null,
+                members: [],
+                isMember: true,
+                isCaptain: true,
+              },
+            }
           : { ok: true },
     );
-    if (apiMock !== createTournament) {
+    if (apiMock === createTeam) {
+      await waitFor(() => expect(screen.queryByRole("form", { name: "Создание команды" })).not.toBeInTheDocument());
+    } else if (apiMock !== createTournament) {
       await waitFor(() => expect(submit).not.toBeDisabled());
     }
   });

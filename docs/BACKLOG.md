@@ -1753,7 +1753,7 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** ux-layout
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — интегрированный Stage 14 candidate прошёл focused web 88/88, PostgreSQL 90/90 и compiled browser 12/12 на 1440/390/360; public parity и device/AT остаются отдельными gates.
 - **Scenario / Epic / Story / Sprint:** SC-TE01/TE02 → EP-UX-TEAM → US-UX-TEAM-ORIENT «Участник быстро открывает нужную команду» → S4 candidate.
 - **Evidence:** F-TEAM-002, [пакет](audits/2026-09-13-ux-ui/team/report.md), TS-TEAM-01, [обязательная коррекция](audits/2026-09-13-ux-ui/team-correction.md). Экспертная гипотеза, частота и выигрыш времени не измерены.
 - **Expected:** возвращающийся участник видит свои команды, а создание остаётся явным и полным.
@@ -1774,7 +1774,7 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** async-feedback
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — unknown outcome сохраняет черновик и допускает только явный GET; focused web 88/88 и compiled browser 12/12 прошли, public parity/device/AT pending.
 - **Scenario / Epic / Story / Sprint:** SC-TE01 → EP-UX-SYSTEM → US-UX-CONTEXT-ERROR «Капитан понимает результат изменения» → S2 candidate.
 - **Evidence:** F-TEAM-003, PATCH500 на360, alertTop863.53 при viewport800; [origin screenshot](audits/2026-09-13-ux-ui/team/evidence/screenshots/te01-edit-error-origin-360.png), [runtime](audits/2026-09-13-ux-ui/team/evidence/runtime-states.json). Это page-card consumer принципа BUG-021; BUG-024 к нему не относится.
 - **Expected:** результат запроса и путь проверки находятся в карточке изменения, данные попытки не пропадают.
@@ -1795,7 +1795,7 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** ux-safety-confirmation
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — именованные подтверждения, server readback и смена прав проверены в component/browser gate; public parity/device/AT pending.
 - **Scenario / Epic / Story / Sprint:** SC-TE02 → EP-UX-TEAM → US-UX-CAPTAIN-CONTROL «Капитан понимает изменение состава и полномочий» → S4 candidate.
 - **Evidence:** F-TEAM-004, прямые onClick и persisted remove/transfer без промежуточного шага; [report](audits/2026-09-13-ux-ui/team/report.md), [source](audits/2026-09-13-ux-ui/team/evidence/source-review.md). P2 safety-gap; необратимая потеря данных не доказана.
 - **Expected:** конкретный человек и последствия названы до изменения; отмена безопасна.
@@ -1816,7 +1816,7 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** ux-result-discoverability
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — все четыре места 2×2, guest/blocked snapshots, literal wildcard, поиск до limit, cursor и fresh return проверены на PGlite/PostgreSQL и в compiled browser 1440/390/360; public parity pending.
 - **Primary-text addition 2026-09-18:** U01-FORM-001 относится также к поиску
   уже сыгранных матчей по фамилиям участников, не к BUG-023 picker. Given C
   создал/судил A-vs-B, When поиск по фамилии A/B, Then запись находится и
@@ -1910,7 +1910,7 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** existing-requirement-gap
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — safe allowlists, admin-only read, target-bound microsecond cursor 20+2 и account-card lifecycle прошли API/PostgreSQL/browser gates; public parity pending.
 - **Scenario / Epic / Story / Sprint:** SC-AD05 → EP-UX-ADMIN → US-UX-ACCOUNT-CONTEXT «Администратор проверяет аккаунт и видит, кто менял доступ» → S4 candidate.
 - **Evidence:** F-ADMIN-002, [отчёт](audits/2026-09-13-ux-ui/admin/report.md), A-RUN-002/003/005/006 и source-review: audit rows сохраняются, read endpoint/UI отсутствуют. Постоянный URL — предлагаемое решение, не существующее требование. GAP-010 исторически принимал slice без viewer; его статус не переносится на эту работу.
 - **Expected:** открываемая по ссылке карточка показывает разрешённые данные аккаунта и краткую историю, без секретов и неподтверждённых сведений.
@@ -1931,7 +1931,7 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** structural-ux-hypothesis
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — search/filter/count precede one collapsed create form, account links and guarded disclosures; component/browser 1440/390/360 gates passed, public parity pending.
 - **Scenario / Epic / Story / Sprint:** SC-AD04 → EP-UX-ADMIN → US-UX-ADMIN-DIRECTORY «Найти аккаунт и нужное действие» → S4 candidate.
 - **Evidence:** F-ADMIN-001: createTop63.5, users583.5, search617.5 на390×844; до четырёх равных row actions. Поиск уже виден, его полная недоступность не заявляется. [Отчёт](audits/2026-09-13-ux-ui/admin/report.md), [обязательная коррекция](audits/2026-09-13-ux-ui/admin-correction.md).
 - **Expected:** список/поиск основной, создание и изменения доступа обнаружимы вторым уровнем, каждая функция сохранена.

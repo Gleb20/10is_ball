@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "220c4df18ed31ad3e741a282513545c4ef987fbc",
+  "productVersion": "4.2.0",
+  "paths": {
+    "apps/api/package.json": {
+      "sha256": "8c4931a9ea64900e3299141a394ccc0b69410b8fa4fcaf7c0b9a51891b4a0efd",
+      "bytes": 3076
+    },
+    "apps/api/src/app.ts": {
+      "sha256": "4521f27d60906e06af897a89f212d268ab7636cc3553fb615d920702edba0fbd",
+      "bytes": 67779
+    },
+    "apps/api/src/gap-026.integration.test.ts": {
+      "sha256": "387b6af67e6c1d1cf97b07c4f37d16a28a895beff60cc32bdc1f4e6726354c40",
+      "bytes": 10282
+    },
+    "apps/api/src/gap-026.postgres.integration.test.ts": {
+      "sha256": "266b3a6e35df73877a49ed76014cf7a1c9e297d8bf59ff3b4438542f9d0266d7",
+      "bytes": 10890
+    },
+    "apps/api/src/history.integration.test.ts": {
+      "sha256": "e76af35e895d613bdff32a1589933206de2b8a39dd446a85847af741a7ffc6e0",
+      "bytes": 21397
+    },
+    "apps/api/src/history.postgres.integration.test.ts": {
+      "sha256": "35f17040d7ada47c79ae40286653122f444a879af9fef9c904b2116dd8f7cd65",
+      "bytes": 11581
+    },
+    "apps/api/src/modules/auth/auth-service.ts": {
+      "sha256": "717861a001147b8f69aa958888a19c87f6cde0b303e3b4ab7fa360b742d37374",
+      "bytes": 32559
+    },
+    "apps/api/src/modules/history/history-service.ts": {
+      "sha256": "e9ee1073267dcfb668b37439c4a28a86bd75234ab22dee98625fba4f8a34a012",
+      "bytes": 12634
+    },
+    "apps/api/src/openapi.contract.test.ts": {
+      "sha256": "79e9de391f1f419351cea4212265200ccd237d60cee325478273aef4b5cf2b1b",
+      "bytes": 15597
+    },
+    "apps/api/src/openapi.ts": {
+      "sha256": "8b035e75bdbe02a855155aaa145925e6812f5843895f76dbb4be7a51af7356be",
+      "bytes": 63349
+    },
+    "apps/web/src/App.tsx": {
+      "sha256": "8059dbae35c94c382d937d80eb95f2b4c1ba3a390614bdc57268e1877319e316",
+      "bytes": 8335
+    },
+    "apps/web/src/api.ts": {
+      "sha256": "058657ef1aa0b847a1a047bff4d432db4a8b44461a353e953f77712681f75ddf",
+      "bytes": 27700
+    },
+    "apps/web/src/layout.test.tsx": {
+      "sha256": "e8bd6257bbffba49befd2f25a997f46cc297da672cffb33ef83aa5082b8ffb55",
+      "bytes": 6979
+    },
+    "apps/web/src/layout.tsx": {
+      "sha256": "8d5b4b7e348fe55d89e220a911003528f3f7781a045d7897ff0bb12d0c0be3a3",
+      "bytes": 6015
+    },
+    "apps/web/src/pages/AdminPage.gap010.test.tsx": {
+      "sha256": "d4d52b18896f7b617062324e364ebef931d64d2975934d4a0236df541a383222",
+      "bytes": 5811
+    },
+    "apps/web/src/pages/AdminPage.stage11.test.tsx": {
+      "sha256": "3db4d6eff5200dbc250eccabb9704b5121e5b034c02432293aff30ee4d65686b",
+      "bytes": 11049
+    },
+    "apps/web/src/pages/AdminPage.test.tsx": {
+      "sha256": "6c3e1e88dbc7506b166e4bfb66add3ccefa0d996ac67073aa7ab4d559932e5ee",
+      "bytes": 13341
+    },
+    "apps/web/src/pages/AdminPage.tsx": {
+      "sha256": "baf5b9ae89a8f98816cc310af11a494cf272dfc456f3ed1f3e04fb3cdc9cd335",
+      "bytes": 19289
+    },
+    "apps/web/src/pages/AdminUserActions.tsx": {
+      "sha256": "66eba2f76e1214d76dacb37ae98ac54dc16ca2743ab30804cec1b561657a00c9",
+      "bytes": 2650
+    },
+    "apps/web/src/pages/AdminUserPage.test.tsx": {
+      "sha256": "aace47f2fa6f569e228748833c0978230c558e03872805bd406724bb25e51e07",
+      "bytes": 9132
+    },
+    "apps/web/src/pages/AdminUserPage.tsx": {
+      "sha256": "3b11f0ed3fef3240eacbf3f498b1b715f28bf0f45c93580e1d12d7e8250465cf",
+      "bytes": 17511
+    },
+    "apps/web/src/pages/HistoryPage.test.tsx": {
+      "sha256": "63aa65e280b8969c84f9ae5fa4b375224990fc65116328fbbbcce9b9c0ea598c",
+      "bytes": 21712
+    },
+    "apps/web/src/pages/HistoryPage.tsx": {
+      "sha256": "4bef078631c486936bf4308f754fdc28073a11ff575ba26e66410c296654b9c9",
+      "bytes": 20826
+    },
+    "apps/web/src/pages/SubmissionGuards.test.tsx": {
+      "sha256": "9bd54e81a36d0e22352f4ac9744b162a463d43496995706c3b6a3a93c741e31c",
+      "bytes": 7267
+    },
+    "apps/web/src/pages/TeamDetailPage.test.tsx": {
+      "sha256": "fb9cc9febefd9939a42b3f0605581c6e3ee7b83a2dd5daad9d0994dd7bf2910f",
+      "bytes": 30201
+    },
+    "apps/web/src/pages/TeamDetailPage.tsx": {
+      "sha256": "9560154a1c070699da274aceb7b4671fd6fae614a6024326bbdbfd41b602b59f",
+      "bytes": 36250
+    },
+    "apps/web/src/pages/TeamsPage.test.tsx": {
+      "sha256": "689e58095cce226b1daeacd62f9c0e59a8671ad5c6914d43f01642e4a8d13c6d",
+      "bytes": 22640
+    },
+    "apps/web/src/pages/TeamsPage.tsx": {
+      "sha256": "b4464cc7c3e8f2b87519746408c8a10fcbae6d0fd3f69b98b8a376da4430ad66",
+      "bytes": 15279
+    },
+    "apps/web/src/styles.css": {
+      "sha256": "4d19b59485fc11ad3ff6a19f49840961969ca1e2af30fe1807fb7bf0dd5fb7d0",
+      "bytes": 33220
+    },
+    "package.json": {
+      "sha256": "d6adf565dbda1c40cb425034fc38c8c9ca5f9863170b22d976e00be6ebfed91e",
+      "bytes": 3341
+    },
+    "playwright.prodlike.config.ts": {
+      "sha256": "49a59288e82fbc30e1a30908b26a3db6fc2e62d3ffa6308bf731407dcedccdda",
+      "bytes": 1961
+    },
+    "scripts/verify/run-fast.mjs": {
+      "sha256": "5c650a6209ee6495a3e5bc77f5d55c95926f56133de3b7143b775968971703eb",
+      "bytes": 7145
+    },
+    "scripts/verify/run-postgres.mjs": {
+      "sha256": "ff813b3d6971d53d549408ef1649332f765008f91ed09b4da9efa40b65187049",
+      "bytes": 4691
+    },
+    "tests/e2e/wave-b.spec.ts": {
+      "sha256": "c8ecc9be9ecec4cb70711bf343fb676b2fee5cf643ee69c6d4c978a73f5b1e54",
+      "bytes": 14805
+    },
+    "tests/e2e/wave-d-teams.spec.ts": {
+      "sha256": "6e5db227ccb3667ec17f4eec14b5f46ff9d4d9e3d532640ddb9b454517b9b2ac",
+      "bytes": 10213
+    },
+    "tests/e2e/wave-e-admin.spec.ts": {
+      "sha256": "7497333d4567ec76708637986b1dfd4f31289e17bf40cc085aea9ffd35dbcb0f",
+      "bytes": 9008
+    }
+  }
+}

@@ -1,5 +1,37 @@
 # Tab-10 — статус проекта
 
+## Этап 14 — интегрированный локальный кандидат 4.2.0, 2026-10-03
+
+На точной базе опубликованной версии 4.1.2
+`220c4df18ed31ad3e741a282513545c4ef987fbc` сведены принятые Stage 9/10/11:
+list-first Teams с безопасными настройками и подтверждениями, History с обеими
+сторонами и поиском по каждому участнику, admin catalog/account card с безопасной
+страничной историей действий. GAP-022/024/026/027 и BUG-034/035 получили
+`verified_local`; Stage 6 в этот кандидат не входит.
+
+Focused web прошёл 88/88. После исправления маршрутизации нового PostgreSQL-теста
+zero-skip quality lane прошёл 1323/1323, PGlite cursor regression — 8/8,
+disposable PostgreSQL — 90/90, cleanup foundation — 4/4. Compiled production-like
+browser прошёл исходную матрицу 12/12 плюс 9/9
+foundation на 1440/390/360; обязательная коррекция узкой History затем прошла
+3/3 плюс 9/9, включая длинные имена 2×2, отдельный счёт сторон, admin delete и
+360 CSS zoom 200%. Coverage остаётся ровно 236 атомов: сохранены семь ранее
+принятых строк 4.1.2 и добавлены семь evidence-bound результатов Stage 9/10/11.
+
+Первый локальный `pnpm run ci` до этой коррекции не считается зелёным:
+cleanup 4/4 прошёл, но quality формально завершился 1278/1279 из-за ошибочного
+включения `gap-026.postgres.integration.test.ts` без тестовой PostgreSQL; прогон
+остановился до PostgreSQL и browser lanes. Ошибка конфигурации исправлена, а
+финальный exact R2 `pnpm run ci` прошёл **1531/1531** без failed, skipped, todo
+или interrupted: cleanup 4/4, quality 1323/1323, PostgreSQL 90/90 и compiled
+browser 114/114 (105 сценариев + 9 foundation). Terra проверила frozen R2,
+включая границу PostgreSQL offset ±15:59 и разделение fast/PG lanes, и вернула
+PASS без P1/P2. Последовательность, source manifest и синтетические визуальные
+свидетельства зафиксированы в [Stage 14 receipt](audit/evidence/stage14-final-candidate/receipt.json).
+Exact-tree hosted CI остаётся обязательным gate выпуска.
+Physical iPhone, pinned WebKit, browser UI zoom, spoken AT и published parity не
+проверены. Commit, push, tag и deploy не выполнялись.
+
 ## Этап 4 — локальный кандидат 4.1.2, 2026-10-03
 
 Опубликованный тестовый прод Vercel + Render + Neon подтверждён read-only smoke

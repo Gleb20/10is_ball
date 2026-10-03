@@ -41,6 +41,36 @@ function toApiFilters(filters: FilterDraft, q: string): HistoryFilters {
   };
 }
 
+const HISTORY_DATE = new Intl.DateTimeFormat("ru-RU", {
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Europe/Moscow",
+});
+
+function roleLabel(role: HistoryItem["roles"][number]) {
+  return {
+    player: "Игрок",
+    judge: "Судья",
+    organizer: "Организатор",
+    viewer: "Зритель",
+  }[role];
+}
+
+function resultLabel(item: HistoryItem) {
+  if (item.result === "win") return "Победа";
+  if (item.result === "loss") return "Поражение";
+  if (item.status === "voided") return "Результат аннулирован";
+  return null;
+}
+
+function matchFormatLabel(format: string | null) {
+  if (format === "1v1") return "1×1";
+  if (format === "2v2") return "2×2";
+  return format ? formatLabel(format) : null;
+}
+
 function itemSubtitle(item: HistoryItem) {
   if (item.type === "match") {
     const score =
@@ -55,20 +85,53 @@ function itemSubtitle(item: HistoryItem) {
           : item.status === "voided"
             ? " · Результат аннулирован"
             : "";
-    return `Матч${score}${result}`;
+    if (!item.sideA || !item.sideB) return `Матч${score}${result}`;
+    const metadata = [
+      matchFormatLabel(item.format),
+      item.roles.map(roleLabel).join(", "),
+      HISTORY_DATE.format(new Date(item.occurredAt)),
+      resultLabel(item),
+    ].filter(Boolean).join(" · ");
+    return (
+      <span className="history-row__details">
+        <span className="history-row__sides">
+          <span className="history-row__side">
+            <span>{item.sideA}</span>
+            <strong aria-label={`Счёт стороны ${item.sideA}: ${item.scoreA ?? "не указан"}`}>
+              {item.scoreA ?? "—"}
+            </strong>
+          </span>
+          <span className="history-row__side">
+            <span>{item.sideB}</span>
+            <strong aria-label={`Счёт стороны ${item.sideB}: ${item.scoreB ?? "не указан"}`}>
+              {item.scoreB ?? "—"}
+            </strong>
+          </span>
+        </span>
+        <span>{metadata}</span>
+      </span>
+    );
   }
-  return `Турнир · ${formatLabel(item.format ?? "")}`;
+  return [
+    "Турнир",
+    formatLabel(item.format ?? ""),
+    item.roles.map(roleLabel).join(", "),
+    HISTORY_DATE.format(new Date(item.occurredAt)),
+    resultLabel(item),
+  ].filter(Boolean).join(" · ");
 }
 
 export function HistoryPage() {
-  const navigate = useNavigate();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const restoredRef = useRef<{
     userId: string;
     loadedCount: number;
     scrollY: number;
     search: string;
     filters: FilterDraft;
+    focusKey?: string;
+    focusIndex?: number;
   } | null>(null);
   if (restoredRef.current === null && typeof window !== "undefined") {
     try {
@@ -81,9 +144,17 @@ export function HistoryPage() {
     }
   }
   const restored = restoredRef.current;
-  const restoreScrollRef = useRef(restored?.scrollY ?? null);
+  const restorePositionRef = useRef(restored ? {
+    scrollY: restored.scrollY,
+    focusKey: restored.focusKey,
+    focusIndex: restored.focusIndex ?? 0,
+  } : null);
   const requestSequence = useRef(0);
+  const lifecycleGeneration = useRef(0);
+  const pageControllerRef = useRef<AbortController | null>(null);
+  const rowRefs = useRef(new Map<string, HTMLDivElement>());
   const [items, setItems] = useState<HistoryItem[] | null>(null);
+  const [itemsActorId, setItemsActorId] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [initialError, setInitialError] = useState<string | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
@@ -98,10 +169,22 @@ export function HistoryPage() {
   const [deletePending, setDeletePending] = useState(false);
 
   useEffect(() => {
+    lifecycleGeneration.current += 1;
+    return () => {
+      lifecycleGeneration.current += 1;
+      requestSequence.current += 1;
+      pageControllerRef.current?.abort();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
     const controller = new AbortController();
     const sequence = ++requestSequence.current;
+    const generation = lifecycleGeneration.current;
+    pageControllerRef.current?.abort();
     setItems(null);
+    setItemsActorId(null);
     setNextCursor(null);
     setInitialError(null);
     setPageError(null);
@@ -118,13 +201,14 @@ export function HistoryPage() {
       return { freshItems, nextCursor: response.nextCursor };
     })()
       .then((response) => {
-        if (sequence !== requestSequence.current) return;
+        if (sequence !== requestSequence.current || generation !== lifecycleGeneration.current) return;
         setItems(response.freshItems);
+        setItemsActorId(user.id);
         setNextCursor(response.nextCursor);
         restoredRef.current = null;
       })
       .catch((error: Error) => {
-        if (controller.signal.aborted || sequence !== requestSequence.current) {
+        if (controller.signal.aborted || sequence !== requestSequence.current || generation !== lifecycleGeneration.current) {
           return;
         }
         setInitialError(error.message);
@@ -133,19 +217,30 @@ export function HistoryPage() {
   }, [filters, appliedSearch, reloadToken, user?.id]);
 
   useEffect(() => {
-    if (items === null || restoreScrollRef.current === null) return;
-    const scrollY = restoreScrollRef.current;
-    restoreScrollRef.current = null;
-    window.requestAnimationFrame(() => window.scrollTo(0, scrollY));
-  }, [items]);
+    if (items === null || itemsActorId !== user?.id || restorePositionRef.current === null) return;
+    const position = restorePositionRef.current;
+    const generation = lifecycleGeneration.current;
+    const frame = window.requestAnimationFrame(() => {
+      if (generation !== lifecycleGeneration.current) return;
+      const exact = position.focusKey ? rowRefs.current.get(position.focusKey) : null;
+      const nearestItem = items[Math.min(position.focusIndex, Math.max(items.length - 1, 0))];
+      const nearest = nearestItem ? rowRefs.current.get(`${nearestItem.type}-${nearestItem.id}`) : null;
+      const link = (exact ?? nearest)?.querySelector<HTMLAnchorElement>("a");
+      const fallback = document.querySelector<HTMLInputElement>(".history-search input");
+      (link ?? fallback)?.focus({ preventScroll: true });
+      window.scrollTo(0, position.scrollY);
+      restorePositionRef.current = null;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [items, itemsActorId, user?.id]);
 
-  function rememberReturn(item: HistoryItem) {
+  function rememberReturn(item: HistoryItem, focusIndex: number) {
     if (!user || !items) return;
     const detailPath = item.type === "match" ? `/matches/${item.id}` : `/tournaments/${item.id}`;
     try {
       window.sessionStorage.setItem(
         "tab10.history.return",
-        JSON.stringify({ userId: user.id, detailPath, loadedCount: items.length, scrollY: window.scrollY, search: appliedSearch, filters }),
+        JSON.stringify({ userId: user.id, detailPath, loadedCount: items.length, scrollY: window.scrollY, search: appliedSearch, filters, focusKey: `${item.type}-${item.id}`, focusIndex }),
       );
     } catch { /* navigation still works without saved list position */ }
   }
@@ -153,22 +248,27 @@ export function HistoryPage() {
   async function loadNextPage() {
     if (!nextCursor || loadingMore) return;
     const sequence = ++requestSequence.current;
+    const generation = lifecycleGeneration.current;
+    const controller = new AbortController();
+    pageControllerRef.current?.abort();
+    pageControllerRef.current = controller;
     setLoadingMore(true);
     setPageError(null);
     try {
       const response = await api.history({
         ...toApiFilters(filters, appliedSearch),
         cursor: nextCursor,
+        signal: controller.signal,
       });
-      if (sequence !== requestSequence.current) return;
+      if (sequence !== requestSequence.current || generation !== lifecycleGeneration.current) return;
       setItems((current) => [...(current ?? []), ...response.items]);
       setNextCursor(response.nextCursor);
     } catch (error) {
-      if (sequence === requestSequence.current) {
+      if (!controller.signal.aborted && sequence === requestSequence.current && generation === lifecycleGeneration.current) {
         setPageError((error as Error).message);
       }
     } finally {
-      if (sequence === requestSequence.current) setLoadingMore(false);
+      if (sequence === requestSequence.current && generation === lifecycleGeneration.current) setLoadingMore(false);
     }
   }
 
@@ -204,6 +304,15 @@ export function HistoryPage() {
   const filterCount = Object.values(filters).filter(Boolean).length;
   const hasQuery = filterCount > 0 || Boolean(appliedSearch);
   const isAdmin = user?.role === "admin";
+  const visibleItems = itemsActorId === user?.id ? items : null;
+  const appliedConditions = [
+    appliedSearch ? `Поиск: «${appliedSearch}»` : null,
+    filters.role ? `Роль: ${filters.role === "player" ? "Игрок" : "Судья"}` : null,
+    filters.result ? `Результат: ${filters.result === "win" ? "Победа" : "Поражение"}` : null,
+    filters.eventType ? `Тип: ${filters.eventType === "match" ? "Матч" : "Турнир"}` : null,
+    filters.from ? `С даты: ${filters.from}` : null,
+    filters.to ? `По дату: ${filters.to}` : null,
+  ].filter(Boolean).join("; ");
 
   return (
     <PageLayout
@@ -231,7 +340,7 @@ export function HistoryPage() {
       >
         <TextField
           label="Поиск"
-          aria-label="Поиск по сопернику или турниру"
+          aria-label="Поиск по участнику или названию турнира"
           type="search"
           fullWidth
           value={searchInput}
@@ -244,7 +353,7 @@ export function HistoryPage() {
 
       {hasQuery ? (
         <div className="history-query-summary" aria-live="polite">
-          <span className="muted">Показаны результаты по выбранным условиям</span>
+          <span className="muted">{appliedConditions}</span>
           <Button size="sm" variant="secondary" onClick={resetFilters}>
             Сбросить
           </Button>
@@ -265,8 +374,8 @@ export function HistoryPage() {
         </div>
       ) : (
         <AsyncState
-          loading={items === null}
-          empty={items !== null && items.length === 0}
+          loading={visibleItems === null}
+          empty={visibleItems !== null && visibleItems.length === 0}
           emptyTitle={hasQuery ? "Пока ничего не найдено" : "Пока пусто"}
           emptyDescription={
             hasQuery
@@ -282,7 +391,7 @@ export function HistoryPage() {
           }
         >
           <div className="stack">
-            {(items ?? []).map((item) => {
+            {(visibleItems ?? []).map((item, index) => {
               const canDelete =
                 isAdmin &&
                 item.type === "match" &&
@@ -291,7 +400,16 @@ export function HistoryPage() {
                 item.status !== "stopped" &&
                 item.status !== "voided";
               return (
-                <div key={`${item.type}-${item.id}`} className="row history-row">
+                <div
+                  key={`${item.type}-${item.id}`}
+                  className="row history-row"
+                  data-history-key={`${item.type}-${item.id}`}
+                  ref={(node) => {
+                    const key = `${item.type}-${item.id}`;
+                    if (node) rowRefs.current.set(key, node);
+                    else rowRefs.current.delete(key);
+                  }}
+                >
                   <div className="history-row__link">
                     <ListRow
                       to={
@@ -301,7 +419,7 @@ export function HistoryPage() {
                       }
                       title={item.title}
                       state={{ returnTo: "/history", returnLabel: "К истории" }}
-                      onClick={() => rememberReturn(item)}
+                      onClick={() => rememberReturn(item, index)}
                       subtitle={itemSubtitle(item)}
                       trailing={
                         <StatusChip

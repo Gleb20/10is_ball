@@ -1,4 +1,6 @@
 import { expect, request, test, type APIRequestContext, type Page } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
 const baseURL = process.env.TAB10_E2E_BASE_URL ?? "http://localhost:4273";
 const email = process.env.E2E_ADMIN_EMAIL ?? "delivery.admin@tab10.test";
 const password = process.env.E2E_ADMIN_PASSWORD ?? "DeliveryVerify9!";
@@ -35,6 +37,7 @@ test("Wave D AT-TEAM-001..007 create, accept welcome, transfer, leave and automa
     await page.goto("/login"); await page.getByLabel("Email").fill(email); await page.getByLabel("Пароль", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Войти", exact: true }).click(); await expect(page).toHaveURL(/\/$/);
     await page.goto("/teams");
+    await page.getByRole("button", { name: "Создать команду", exact: true }).click();
     await page.getByLabel("Название команды", { exact: true }).fill(name);
     await page.getByLabel("Слоган", { exact: true }).fill("Играем вместе");
     await page.getByLabel("Текст приветствия", { exact: true }).fill("Добро пожаловать на синтетическую тренировку");
@@ -42,7 +45,21 @@ test("Wave D AT-TEAM-001..007 create, accept welcome, transfer, leave and automa
     await page.getByRole("link", { name: new RegExp(name) }).click();
     await expect(page).toHaveURL(/\/teams\/[0-9a-f-]+$/);
     const id = page.url().split("/").at(-1)!;
+    const other = await mutate(admin, "/api/v1/teams", { name: `Другая ${info.project.name}` });
     expect((await outsider.api.get(`/api/v1/teams/${id}`)).status()).toBe(403);
+    const freshTeams = page.waitForResponse((response) =>
+      new URL(response.url()).pathname === "/api/v1/teams" && response.request().method() === "GET");
+    const returnNavigation = page.getByRole("navigation", { name: "Возврат" });
+    await returnNavigation.getByRole("button", { name: "К списку команд", exact: true }).click();
+    expect((await freshTeams).status()).toBe(200);
+    const teamLink = page.getByRole("link", { name: new RegExp(name) });
+    await expect(teamLink).toBeFocused();
+    await teamLink.click();
+    await page.goto(`/teams/${other.team.id}`);
+    await expect(returnNavigation.getByRole("button", { name: "К списку команд", exact: true })).toHaveCount(0);
+    await returnNavigation.getByRole("button", { name: "К командам", exact: true }).click();
+    await expect(teamLink).not.toBeFocused();
+    await page.goto(`/teams/${id}`);
     await expect(page.getByRole("button", { name: "Выйти из команды", exact: true })).toBeDisabled();
     await page.getByRole("combobox", { name: "Пригласить пользователя", exact: true }).fill(member.displayName);
     await page.getByRole("option", { name: member.displayName, exact: true }).click();
@@ -64,11 +81,28 @@ test("Wave D AT-TEAM-001..007 create, accept welcome, transfer, leave and automa
     await expect(memberPage.getByRole("form", { name: "Редактирование команды", exact: true })).toHaveCount(0);
     await noOverflow(memberPage); await memberPage.screenshot({ path: info.outputPath("team-welcome-390.png"), fullPage: true });
     await page.reload();
+    let rejectedPatch = false;
+    await page.route(`**/api/v1/teams/${id}`, async (route) => {
+      if (!rejectedPatch && route.request().method() === "PATCH") {
+        rejectedPatch = true;
+        await route.abort("connectionfailed");
+        return;
+      }
+      await route.continue();
+    });
     await page.getByLabel("Слоган", { exact: true }).fill("Новый состав");
     await page.getByRole("button", { name: "Сохранить", exact: true }).click();
+    await expect(page.getByRole("alert")).toContainText("Не удалось проверить сохранение");
+    await page.unroute(`**/api/v1/teams/${id}`);
+    await page.getByRole("button", { name: "Обновить данные", exact: true }).click();
+    await expect(page.getByText(/Сервер сейчас:/)).toBeVisible();
+    await expect(page.getByLabel("Слоган", { exact: true })).toHaveValue("Новый состав");
+    await page.getByRole("button", { name: "Сохранить ещё раз", exact: true }).click();
     await expect(page.getByText("Изменения сохранены.", { exact: true })).toBeVisible();
     expect((await (await admin.get(`/api/v1/teams/${id}`)).json()).team.slogan).toBe("Новый состав");
-    await page.getByRole("button", { name: `Передать капитанство ${member.displayName}`, exact: true }).click();
+    await page.getByRole("button", { name: `Действия с ${member.displayName}`, exact: true }).click();
+    await page.getByRole("button", { name: "Передать капитанство", exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Передать капитанство", exact: true }).click();
     await expect(page.getByText("Капитанство передано.", { exact: true })).toBeVisible();
     const transferred = (await (await admin.get(`/api/v1/teams/${id}`)).json()).team;
     expect(transferred.captainUserId).toBe(member.user.id); expect(transferred.isCaptain).toBe(false);
@@ -85,6 +119,12 @@ test("Wave D AT-TEAM-001..007 create, accept welcome, transfer, leave and automa
     await page.reload(); await expect(page.getByText("Команда в архиве", { exact: true })).toBeVisible();
     await expect(page.getByRole("form", { name: "Редактирование команды", exact: true })).toHaveCount(0);
     await noOverflow(page); await page.screenshot({ path: info.outputPath("team-archived.png"), fullPage: true });
+    const evidenceDir = process.env.VERIFY_EVIDENCE_DIR;
+    if (evidenceDir) {
+      const screenshotDir = path.join(evidenceDir, "screenshots");
+      await mkdir(screenshotDir, { recursive: true });
+      await page.screenshot({ path: path.join(screenshotDir, `teams-${info.project.name}.png`), fullPage: true });
+    }
     expect(archived.captainUserId).not.toBe(actor.id); expect(errors).toEqual([]);
   } finally { await memberContext.close(); await Promise.all([admin.dispose(), member.api.dispose(), outsider.api.dispose()]); }
 });

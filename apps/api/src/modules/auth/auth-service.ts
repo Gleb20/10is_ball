@@ -1,5 +1,5 @@
 import { hash, verify } from "@node-rs/argon2";
-import { and, count, eq, gt, inArray, isNull, ne, or } from "drizzle-orm";
+import { and, count, desc, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import {
   generateTemporaryPassword,
   normalizeEmail,
@@ -81,6 +81,56 @@ export type AdminUser = OwnProfileUser & {
   createdAt: Date;
   lastLoginAt: Date | null;
 };
+
+const ADMIN_USER_AUDIT_ACTIONS = [
+  "user.created",
+  "user.updated",
+  "user.role_changed",
+  "user.blocked",
+  "user.unblocked",
+  "user.password_reset",
+  "admin.bootstrap_provisioned",
+] as const;
+
+const ADMIN_USER_AUDIT_FIELDS = new Set([
+  "firstName",
+  "lastName",
+  "birthDate",
+  "organizationText",
+  "positionText",
+  "role",
+]);
+
+type AdminUserAuditCursor = {
+  v: 2;
+  targetId: string;
+  id: string;
+};
+
+function invalidAuditCursor(): never {
+  throw Object.assign(new Error("VALIDATION"), { code: "VALIDATION" });
+}
+
+function encodeAdminUserAuditCursor(cursor: AdminUserAuditCursor): string {
+  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+function decodeAdminUserAuditCursor(value: string, targetId: string): AdminUserAuditCursor {
+  try {
+    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<AdminUserAuditCursor>;
+    if (
+      parsed.v !== 2 ||
+      parsed.targetId !== targetId ||
+      typeof parsed.id !== "string" ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed.id)
+    ) {
+      return invalidAuditCursor();
+    }
+    return parsed as AdminUserAuditCursor;
+  } catch {
+    return invalidAuditCursor();
+  }
+}
 
 type LoginAttemptReservation = {
   key: string;
@@ -771,6 +821,119 @@ export class AuthService {
             user.lastName.toLowerCase().includes(needle)),
       )
       .map(toAdminUser);
+  }
+
+  async getAdminUser(userId: string): Promise<AdminUser> {
+    const user = await this.db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+    if (!user) {
+      throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
+    }
+    return toAdminUser(user);
+  }
+
+  async listAdminUserAudit(
+    userId: string,
+    cursorValue?: string,
+  ): Promise<{
+    items: Array<{
+      id: string;
+      createdAt: Date;
+      actor: { id: string; displayName: string } | null;
+      action: (typeof ADMIN_USER_AUDIT_ACTIONS)[number];
+      changedFields: string[];
+    }>;
+    nextCursor: string | null;
+  }> {
+    await this.getAdminUser(userId);
+    const cursor = cursorValue
+      ? decodeAdminUserAuditCursor(cursorValue, userId)
+      : null;
+    if (cursor) {
+      const [cursorRow] = await this.db
+        .select({ id: auditLogs.id })
+        .from(auditLogs)
+        .where(
+          and(
+            eq(auditLogs.id, cursor.id),
+            eq(auditLogs.entityType, "user"),
+            eq(auditLogs.entityId, userId),
+            inArray(auditLogs.action, [...ADMIN_USER_AUDIT_ACTIONS]),
+          ),
+        )
+        .limit(1);
+      if (!cursorRow) invalidAuditCursor();
+    }
+    const rows = await this.db
+      .select({
+        id: auditLogs.id,
+        actorUserId: auditLogs.actorUserId,
+        action: auditLogs.action,
+        meta: auditLogs.meta,
+        createdAt: auditLogs.createdAt,
+      })
+      .from(auditLogs)
+      .where(
+        and(
+          eq(auditLogs.entityType, "user"),
+          eq(auditLogs.entityId, userId),
+          inArray(auditLogs.action, [...ADMIN_USER_AUDIT_ACTIONS]),
+          cursor
+            ? sql`(${auditLogs.createdAt}, ${auditLogs.id}) < (
+                select cursor_log.created_at, cursor_log.id
+                from audit_logs as cursor_log
+                where cursor_log.id = ${cursor.id}
+                  and cursor_log.entity_type = 'user'
+                  and cursor_log.entity_id = ${userId}
+                limit 1
+              )`
+            : undefined,
+        ),
+      )
+      .orderBy(desc(auditLogs.createdAt), desc(auditLogs.id))
+      .limit(21);
+
+    const page = rows.slice(0, 20);
+    const actorIds = [...new Set(page.flatMap((row) => row.actorUserId ? [row.actorUserId] : []))];
+    const actorRows = actorIds.length > 0
+      ? await this.db
+          .select({ id: users.id, firstName: users.firstName, lastName: users.lastName })
+          .from(users)
+          .where(inArray(users.id, actorIds))
+      : [];
+    const actors = new Map(actorRows.map((actor) => [
+      actor.id,
+      { id: actor.id, displayName: `${actor.lastName} ${actor.firstName}` },
+    ]));
+
+    const last = page.at(-1);
+    return {
+      items: page.map((row) => {
+        const meta = row.meta && typeof row.meta === "object" && !Array.isArray(row.meta)
+          ? row.meta as Record<string, unknown>
+          : {};
+        const changedFields = Array.isArray(meta.changedFields)
+          ? [...new Set(meta.changedFields.filter(
+              (field): field is string => typeof field === "string" && ADMIN_USER_AUDIT_FIELDS.has(field),
+            ))]
+          : [];
+        return {
+          id: row.id,
+          createdAt: row.createdAt,
+          actor: row.actorUserId ? actors.get(row.actorUserId) ?? null : null,
+          action: row.action as (typeof ADMIN_USER_AUDIT_ACTIONS)[number],
+          changedFields,
+        };
+      }),
+      nextCursor: rows.length > 20 && last
+        ? encodeAdminUserAuditCursor({
+            v: 2,
+            targetId: userId,
+            id: last.id,
+          })
+        : null,
+    };
   }
 
   /** Public directory for opponent/participant pickers (no email/admin fields). */

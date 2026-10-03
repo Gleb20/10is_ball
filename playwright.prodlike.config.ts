@@ -42,7 +42,7 @@ export default defineConfig({
       name: "chromium-desktop",
       use: {
         ...devices["Desktop Chrome"],
-        viewport: { width: 1280, height: 800 },
+        viewport: { width: 1440, height: 900 },
       },
     },
     {
@@ -50,6 +50,15 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 390, height: 844 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
+      name: "chromium-mobile-360",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 360, height: 800 },
         isMobile: true,
         hasTouch: true,
       },

@@ -52,6 +52,7 @@ Errors:
 - `GET /admin/users?q=&status=&cursor=`
 - `POST /admin/users`
 - `GET /admin/users/{userId}`
+- `GET /admin/users/{userId}/audit?cursor=`
 - `PATCH /admin/users/{userId}`
 - `POST /admin/users/{userId}/block`
 - `POST /admin/users/{userId}/unblock`
@@ -68,6 +69,18 @@ non-finished purge требуют явного подтверждения в к�
 сервер не считает этот dialog authorization boundary.
 
 Create response включает `temporaryPassword` только один раз.
+
+Оба новых чтения admin-only. `GET /admin/users/{userId}` возвращает только
+`AdminUser`: id, email, role, status, mustChangePassword, имя, фамилию,
+avatarKey, birthDate, organizationText, positionText, createdAt и lastLoginAt.
+Audit feed содержит до 20 записей в порядке `(createdAt DESC, id DESC)` и
+`nextCursor`. Запись разрешает только id, createdAt, текущую подпись actor либо
+null, действия `user.created|user.updated|user.role_changed|user.blocked|user.unblocked|user.password_reset|admin.bootstrap_provisioned`
+и changedFields `firstName|lastName|birthDate|organizationText|positionText|role`.
+Неизвестные действия исключаются; raw meta, значения до/после, пароли, токены,
+сессии, source и outcome не выдаются. Cursor непрозрачен, привязан к target id и
+сравнивается с исходным PostgreSQL timestamp строки, сохраняя микросекунды.
+Ошибки: 400 malformed/cross-target cursor, 401, 403, 404 и 500.
 
 Force-close body; `reasonText` optional:
 ```json
@@ -131,6 +144,13 @@ runtime alias `/api/v1/me/profile` остаётся contract drift в OPS-001 и
 
 - `GET /rankings?scope=all_time|calendar_week|calendar_month&teamId=`
 - `GET /history?role=&result=&eventType=&from=&to=&q=&cursor=`
+
+Каждый `HistoryItem` обязательно содержит `sideA` и `sideB` типа
+`string|null`: для матча это display snapshots обеих сторон, для турнира оба
+значения `null`. Поиск применяется после проверки видимости и до `limit`,
+сопоставляет tournament title и каждый participant snapshot обеих сторон;
+`%`, `_` и `\\` экранируются как литералы. Новые поля не содержат id/email и не
+требуют дополнительных detail-запросов.
 
 ## 6. Teams
 

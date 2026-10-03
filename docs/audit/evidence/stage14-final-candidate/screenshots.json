@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "status": "inspected",
+  "privacy": "synthetic test data only; no production secrets or personal data",
+  "files": [
+    {
+      "file": "screenshots/admin-account-mobile-360.png",
+      "sha256": "f19e236f8a1bda978b9d3426c6f4c7adf4e8998161abcd9e0d9712f6f2f153cf",
+      "bytes": 161309,
+      "width": 360,
+      "height": 2194,
+      "source": "targeted compiled admin account",
+      "data": "synthetic test fixture"
+    },
+    {
+      "file": "screenshots/teams-archived-mobile-390.png",
+      "sha256": "4622ff1aad4233dd7fdb7f8a4d6e4c58660f1a4e3b1172846c10088411b19231",
+      "bytes": 32579,
+      "width": 390,
+      "height": 844,
+      "source": "targeted compiled archived team",
+      "data": "synthetic test fixture"
+    },
+    {
+      "file": "screenshots/history-long-2v2-mobile-360.png",
+      "sha256": "bf136a12a7bdbd245250f6ceb01f4c15ea947f4a08d73f1842815f9981b16730",
+      "bytes": 35482,
+      "width": 360,
+      "height": 800,
+      "source": "post-review long 2x2 History",
+      "data": "synthetic test fixture"
+    },
+    {
+      "file": "screenshots/history-long-2v2-css-zoom-200.png",
+      "sha256": "2c031fdbf90adf556ecea6f7b2dd70925d2982d731fdc6b5ec9ad4bec9d978e7",
+      "bytes": 83547,
+      "width": 360,
+      "height": 2009,
+      "source": "post-review History at CSS zoom 200%",
+      "data": "synthetic test fixture"
+    }
+  ]
+}

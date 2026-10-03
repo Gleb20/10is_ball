@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { FakeClock } from "@tab10/test-utils";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { buildApp, type AppServices } from "./app.js";
 import { createMigratedPgliteDb, type Db } from "./db/client.js";
@@ -9,6 +9,7 @@ import {
   matches,
   tournamentParticipants,
   tournaments,
+  users,
 } from "./db/schema.js";
 
 type SessionUser = { id: string; cookie: string };
@@ -362,7 +363,7 @@ describe("AT-VIS-003 history filters and pagination", () => {
     expect(third.json().nextCursor).toBeNull();
   });
 
-  it("HISTORY-002: searches only the participating actor's opposing side in doubles", async () => {
+  it("GAP-024: searches every side in doubles and returns display-ready sides", async () => {
     const teammate = await createActiveUser("Тимофей", "Напарник");
     const [match] = await db
       .insert(matches)
@@ -396,7 +397,21 @@ describe("AT-VIS-003 history filters and pagination", () => {
       "?eventType=match&q=%D0%BD%D0%B0%D0%BF%D0%B0%D1%80%D0%BD%D0%B8%D0%BA",
     );
     expect(teammateSearch.statusCode).toBe(200);
-    expect(teammateSearch.json().items).toEqual([]);
+    expect(teammateSearch.json().items).toEqual([
+      expect.objectContaining({
+        id: match!.id,
+        sideA: "Игрок Анна / Напарник Тимофей",
+        sideB: "Григорий Гость / Соперник Борис",
+      }),
+    ]);
+
+    const ownNameSearch = await getHistory(
+      actor,
+      "?eventType=match&q=%D0%B8%D0%B3%D1%80%D0%BE%D0%BA",
+    );
+    expect(ownNameSearch.json().items).toEqual([
+      expect.objectContaining({ id: match!.id }),
+    ]);
 
     const registeredOpponent = await getHistory(
       actor,
@@ -421,6 +436,93 @@ describe("AT-VIS-003 history filters and pagination", () => {
     expect(viewerSearch.json().items).toEqual([
       expect.objectContaining({ id: match!.id, roles: ["viewer"] }),
     ]);
+  });
+
+  it("GAP-024: applies literal Unicode participant search before pagination for historical operators", async () => {
+    const blocked = await createActiveUser("Юникод", "Редкий%_\\Участник");
+    const targetAt = new Date("2026-09-01T10:00:00.000Z");
+    const [target] = await db
+      .insert(matches)
+      .values({
+        title: "Старая операторская встреча",
+        kind: "standalone",
+        status: "finished",
+        format: "1v1",
+        createdByUserId: actor.id,
+        scoreA: 9,
+        scoreB: 11,
+        winnerSide: "B",
+        finishedAt: targetAt,
+        updatedAt: targetAt,
+      })
+      .returning();
+    await db.insert(matchParticipants).values([
+      { matchId: target!.id, side: "A", userId: blocked.id },
+      {
+        matchId: target!.id,
+        side: "B",
+        guestFirstName: "Гость%_\\",
+        guestLastName: "Снимок",
+      },
+    ]);
+    await db.update(users).set({ status: "blocked" }).where(eq(users.id, blocked.id));
+
+    for (let index = 0; index < 23; index += 1) {
+      await createMatch({
+        title: `Новая встреча ${index}`,
+        status: "finished",
+        winnerSide: "A",
+        occurredAt: new Date(`2026-09-${String(index + 2).padStart(2, "0")}T10:00:00.000Z`),
+      });
+    }
+
+    const search = new URLSearchParams({
+      eventType: "match",
+      q: "Редкий%_\\Участник",
+    });
+    const response = await getHistory(actor, `?${search.toString()}`);
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      items: [
+        {
+          id: target!.id,
+          roles: ["organizer"],
+          sideA: "Редкий%_\\Участник Юникод",
+          sideB: "Гость%_\\ Снимок",
+        },
+      ],
+      nextCursor: null,
+    });
+  });
+
+  it("GAP-024: cursor keeps PostgreSQL timestamp precision within one millisecond", async () => {
+    const ids = await Promise.all(
+      ["123456", "123457", "123458"].map(async (micros, index) => {
+        const id = await createMatch({
+          title: `Точный курсор ${index}`,
+          status: "cancelled",
+          occurredAt: new Date("2026-09-06T10:00:00.123Z"),
+        });
+        await db.execute(
+          sql`update matches set updated_at = ${`2026-09-06T10:00:00.${micros}Z`}::timestamptz where id = ${id}::uuid`,
+        );
+        return id;
+      }),
+    );
+
+    const traversed: string[] = [];
+    let cursor: string | null = null;
+    do {
+      const query = new URLSearchParams({ eventType: "match", q: "Точный курсор", limit: "1" });
+      if (cursor) query.set("cursor", cursor);
+      const response = await getHistory(actor, `?${query.toString()}`);
+      expect(response.statusCode).toBe(200);
+      traversed.push(...response.json().items.map((item: { id: string }) => item.id));
+      cursor = response.json().nextCursor as string | null;
+    } while (cursor);
+
+    expect(traversed).toHaveLength(3);
+    expect(new Set(traversed)).toEqual(new Set(ids));
   });
 
   it("filters current and historical judging without granting outsider access", async () => {
@@ -468,6 +570,19 @@ describe("AT-VIS-003 history filters and pagination", () => {
     expect(historical.json().items).toEqual([
       expect.objectContaining({ id: judged!.id, status: "stopped" }),
     ]);
+
+    const participantSearch = await getHistory(
+      actor,
+      "?role=judge&eventType=match&q=%D1%81%D0%BE%D0%BF%D0%B5%D1%80%D0%BD%D0%B8%D0%BA",
+    );
+    expect(participantSearch.json().items).toEqual([
+      expect.objectContaining({
+        id: judged!.id,
+        roles: ["judge"],
+        sideA: "Соперник Борис",
+        sideB: "Зритель Олег",
+      }),
+    ]);
   });
 
   it("rejects invalid filters/cursors and requires an active authenticated session", async () => {
@@ -490,6 +605,41 @@ describe("AT-VIS-003 history filters and pagination", () => {
     );
     expect(invalidUuid.statusCode).toBe(400);
     expect(invalidUuid.json().code).toBe("VALIDATION");
+
+    const cursorFor = (occurredAt: string) => Buffer.from(
+      JSON.stringify({
+        v: 1,
+        occurredAt,
+        type: "match",
+        id: "00000000-0000-4000-8000-000000000001",
+      }),
+      "utf8",
+    ).toString("base64url");
+    for (const impossibleDate of [
+      "2026-02-30T00:00:00.123456Z",
+      "2025-02-29T00:00:00.123456Z",
+      "2026-09-06T10:00:00.123456+20:00",
+      "2026-09-06T10:00:00.123456-16:00",
+    ]) {
+      const response = await getHistory(
+        actor,
+        `?cursor=${encodeURIComponent(cursorFor(impossibleDate))}`,
+      );
+      expect(response.statusCode).toBe(400);
+      expect(response.json().code).toBe("VALIDATION");
+    }
+    for (const validDate of [
+      "2024-02-29T00:00:00.123456Z",
+      "2026-09-06T10:00:00.000Z",
+      "2026-09-06T10:00:00.123456+15:59",
+      "2026-09-06T10:00:00.123456-15:59",
+    ]) {
+      const response = await getHistory(
+        actor,
+        `?cursor=${encodeURIComponent(cursorFor(validDate))}`,
+      );
+      expect(response.statusCode, response.body).toBe(200);
+    }
 
     const anonymous = await app.inject({
       method: "GET",

@@ -1,3 +1,41 @@
+## 2026-10-03 — Stage 14 teams/history/admin candidate 4.2.0
+
+- Scope: GAP-022, BUG-034, BUG-035, GAP-024, GAP-026, GAP-027;
+  TEAM-001/003/006/007, HISTORY-001–004, ADM-001–008;
+  AT-TEAM-001/004/005, AT-VIS-001/003/004, AT-ADM-001/003/006.
+- Changed: integrated accepted Stage 9 R1/R2/R3, Stage 10 R1 and Stage 11
+  patches on exact 4.1.2 SHA `220c4df18ed31ad3e741a282513545c4ef987fbc`;
+  added real-PostgreSQL GAP-026/history coverage, compiled 360 viewport, explicit
+  History/Admin return invalidation and the root-owned acceptance browser cases.
+- History acceptance correction: on narrow screens the card uses full width,
+  each side owns its score, status/chevron no longer take columns from names and
+  admin Delete is a separate 44 px action. Cursor timestamps reject impossible
+  calendar dates and PostgreSQL-incompatible offsets beyond ±15:59 before SQL,
+  while preserving valid ±15:59, six-digit microseconds and legacy millisecond
+  ISO Z values.
+- Verified: focused web 88/88; History component 13/13; post-R2 History PGlite
+  8/8; web/API typecheck PASS; post-R2 disposable PostgreSQL 90/90 (81 integration + 9
+  foundation); compiled targeted admin/history/team 12/12 + 9/9 foundation;
+  post-review History layout 3/3 + 9/9 foundation at 1440/390/360 and 360 CSS
+  zoom 200%; representative screenshots reviewed; coverage generator/checker
+  236/236 and `git diff --check` PASS. After the new PostgreSQL-only test was
+  excluded from fast execution and bound to the PostgreSQL lane, quality passed
+  1323/1323 and cleanup foundation passed 4/4.
+- Aggregate history: the sole local `pnpm run ci` before that lane correction is
+  retained as failed evidence (1282/1283 overall; quality 1278/1279) and stopped
+  before PostgreSQL/browser. It is not reported as Green. The final exact R2
+  `pnpm run ci` passed 1531/1531: cleanup4, quality1323, PostgreSQL90 and compiled
+  browser114 (105 journeys + 9 foundation), with no failed/skipped/todo/interrupted.
+  Terra independently accepted the frozen R2 with no P1/P2. Both the historical
+  failure and final Green, source manifest and inspected synthetic screenshots
+  are recorded in the [Stage 14 receipt](audit/evidence/stage14-final-candidate/receipt.json).
+- Docs: BACKLOG, PROJECT_STATUS, PRD, UX_FLOWS, API_SPEC, acceptance,
+  traceability, API/architecture as-built, CAPABILITY_MATRIX, VERSIONING,
+  product changelog and evidence-bound coverage synchronized.
+- Remaining: exact-tree hosted CI, physical
+  iPhone, pinned WebKit, browser UI zoom, spoken AT and published parity. Stage 6
+  is excluded. No commit, push, tag or deploy performed.
+
 ## 2026-10-03 — Stage 4 integrated recovery candidate 4.1.2
 
 - На опубликованной базе `8b9d2650f7991e121052634ace758f5991ef25b5` /4.1.1 собран единый candidate BUG-029/031/039: durable point/correction correlation, exact-key GET proof, no automatic replay, sticky unsent queue, pinned reviewed version и absolute correction recovery.

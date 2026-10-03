@@ -207,7 +207,7 @@ const schemas: Record<string, JsonSchema> = {
   },
   HistoryItem: {
     type: "object",
-    required: ["type", "id", "title", "status", "occurredAt", "roles", "result", "matchKind", "scoreA", "scoreB", "format"],
+    required: ["type", "id", "title", "status", "occurredAt", "roles", "result", "matchKind", "scoreA", "scoreB", "sideA", "sideB", "format"],
     properties: {
       type: { type: "string", enum: ["match", "tournament"] },
       id: { type: "string", format: "uuid" },
@@ -224,6 +224,8 @@ const schemas: Record<string, JsonSchema> = {
       matchKind: { type: "string", nullable: true },
       scoreA: { type: "integer", nullable: true },
       scoreB: { type: "integer", nullable: true },
+      sideA: { type: "string", nullable: true },
+      sideB: { type: "string", nullable: true },
       format: { type: "string", nullable: true },
     },
     additionalProperties: false,
@@ -289,6 +291,54 @@ const schemas: Record<string, JsonSchema> = {
       positionText: { type: "string", maxLength: 200, nullable: true },
       role: { type: "string", enum: ["admin", "user"] },
     },
+  },
+  AdminUserAuditActor: {
+    type: "object",
+    required: ["id", "displayName"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+      displayName: { type: "string" },
+    },
+    additionalProperties: false,
+  },
+  AdminUserAuditItem: {
+    type: "object",
+    required: ["id", "createdAt", "actor", "action", "changedFields"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+      createdAt: { type: "string", format: "date-time" },
+      actor: { nullable: true, allOf: [ref("AdminUserAuditActor")] },
+      action: {
+        type: "string",
+        enum: [
+          "user.created",
+          "user.updated",
+          "user.role_changed",
+          "user.blocked",
+          "user.unblocked",
+          "user.password_reset",
+          "admin.bootstrap_provisioned",
+        ],
+      },
+      changedFields: {
+        type: "array",
+        uniqueItems: true,
+        items: {
+          type: "string",
+          enum: ["firstName", "lastName", "birthDate", "organizationText", "positionText", "role"],
+        },
+      },
+    },
+    additionalProperties: false,
+  },
+  AdminUserAuditFeed: {
+    type: "object",
+    required: ["items", "nextCursor"],
+    properties: {
+      items: { type: "array", items: ref("AdminUserAuditItem") },
+      nextCursor: { type: "string", nullable: true },
+    },
+    additionalProperties: false,
   },
   DirectoryUser: {
     type: "object",
@@ -957,7 +1007,11 @@ export function openApiSpec(releaseVersion = productVersion()) {
         post: operation({ operationId: "adminCreateUser", summary: "Create user and temporary password", tag: "Admin", mutation: true, request: "CreateAdminUserRequest", response: { type: "object", required: ["user", "temporaryPassword"], properties: { user: ref("User"), temporaryPassword: { type: "string" } } } }),
       },
       "/api/v1/admin/users/{userId}": {
+        get: operation({ operationId: "adminGetUser", summary: "Get one user as admin", tag: "Admin", parameters: pathParameters("userId"), response: objectRef("user", "AdminUser") }),
         patch: operation({ operationId: "adminUpdateUserRole", summary: "Update user profile and role", tag: "Admin", mutation: true, parameters: pathParameters("userId"), request: "AdminUserUpdateRequest", response: objectRef("user", "AdminUser") }),
+      },
+      "/api/v1/admin/users/{userId}/audit": {
+        get: operation({ operationId: "adminListUserAudit", summary: "List safe audit history for one user", tag: "Admin", parameters: [...pathParameters("userId"), queryParameter("cursor", { type: "string", minLength: 1, maxLength: 1000 })], response: ref("AdminUserAuditFeed"), errors: [400, 401, 403, 404, 500] }),
       },
       "/api/v1/admin/users/{userId}/block": {
         post: operation({ operationId: "adminBlockUser", summary: "Block user and revoke sessions", tag: "Admin", mutation: true, parameters: pathParameters("userId"), response: ref("Ok") }),

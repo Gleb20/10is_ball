@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "status": "failed",
+  "totals": {
+    "total": 1283,
+    "passed": 1282,
+    "failed": 1,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "lanes": [
+    {
+      "name": "cleanup-foundation",
+      "status": "passed",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "quality",
+      "status": "failed",
+      "total": 1279,
+      "passed": 1278,
+      "failed": 1,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    }
+  ],
+  "disposableComposeProject": "tab10-verify-61557",
+  "disposablePostgresPort": null
+}

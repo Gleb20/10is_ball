@@ -112,12 +112,12 @@ flowchart LR
 | 6 | GAP-017/023, GAP-032: judge/result/next; GAP-034 match/judge consumer | stable touch geometry, status/serve icon meaning, reduced motion, safe exit, D24/D33; Q-UX-007/008/009 перед replay/Undo/историей ведущих |
 | 7 | GAP-019 scope A + GAP-021: collecting/needs_regeneration, authoritative rules/roster до сетки | D35/D37, direct add, prestart edit/regeneration; reusable guest/future date — Q-UX-004/010 |
 | 8 | GAP-019 scope B + GAP-020/033, BUG-032/033: generated/active/terminal composition, сетка, lifecycle, итоги; GAP-034 tournament consumer | после принятого scope A; SE/DE/BYE/third place, bracket/current match first, full results secondary, stopped without champion |
-| 9 | GAP-022, BUG-034/035, GAP-025 gate: команды; GAP-034 team consumer | captain/team invitation rights и ясный status; avatar только после Q-UX-002 |
-| 10 | GAP-024, BUG-036/037: история, профиль, уведомления; GAP-034 history/notifications consumers | back/filter/scroll; read state, status и видимые counts; privacy |
-| 11 | GAP-026/027, GAP-028 gate: admin; GAP-034 admin consumer | active-admin access, session revocation, status/action distinction; exact-ID read после Q-UX-003 |
+| 9 | GAP-022, BUG-034/035 verified_local; GAP-025 gate: команды; GAP-034 team consumer | captain/team invitation rights и ясный status; avatar только после Q-UX-002 |
+| 10 | GAP-024 и BUG-036/037 verified_local; GAP-034 history/notifications consumers | back/filter/scroll; read state, status и видимые counts; privacy |
+| 11 | GAP-026/027 verified_local; GAP-028 gate: admin; GAP-034 admin consumer | active-admin access, session revocation, status/action distinction; exact-ID read после Q-UX-003 |
 | 12 | BUG-038: password-reset uncertainty отдельно | контракт + migration + PostgreSQL + browser; не смешивать с UI polish |
 | 13 | GAP-014/016, GAP-009: onboarding/help | новые anchors, tutorial isolation, explicit completion, контекстная помощь |
-| 14 | TECH-008 integration: полная карта и выпуск | `pnpm run verify:all` по риску, exact version/SHA, read-only public smoke, physical-iPhone gate отдельно |
+| 14 | TECH-008 integration: локальный кандидат 4.2.0 прошёл exact R2 gate1531/1531 и Terra review; hosted gate и выпуск ожидаются | [финальный local receipt](../audit/evidence/stage14-final-candidate/receipt.json), exact version/SHA, read-only public smoke, physical-iPhone gate отдельно |
 
 `verified_local` — canonical backlog status после local evidence. В плане
 `published_for_test` означает согласованные version/SHA на disposable stand, а
