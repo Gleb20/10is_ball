@@ -50,6 +50,13 @@
       "when": 1789330448398,
       "tag": "0006_gap_012_game_setup",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791019371192,
+      "tag": "0007_bug_038_correlated_password_reset",
+      "breakpoints": true
     }
   ]
 }

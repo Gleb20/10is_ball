@@ -65,6 +65,41 @@ export type AdminUserAuditFeed = {
   nextCursor: string | null;
 };
 
+export type AdminPasswordResetState = {
+  targetUserId: string;
+  lastAppliedRequestId: string | null;
+};
+
+export type AdminPasswordResetRequest = {
+  expectedLastAppliedRequestId: string | null;
+  supersedesRequestId?: string;
+  confirmReplacement?: true;
+};
+
+export type AdminPasswordResetResponse = {
+  requestId: string;
+  outcome: "applied";
+  secretAvailable: boolean;
+  current: boolean;
+  temporaryPassword?: string;
+};
+
+export type AdminPasswordResetReceipt =
+  | {
+      requestId: string;
+      targetUserId: string;
+      outcome: "unknown";
+      secretAvailable: false;
+    }
+  | {
+      requestId: string;
+      targetUserId: string;
+      outcome: "applied" | "rejected_state_changed";
+      secretAvailable: false;
+      current: boolean;
+      completedAt: string;
+    };
+
 export type ProfileIdentity = {
   id: string;
   firstName: string;
@@ -350,6 +385,10 @@ type ApiError = Error & {
   code?: string;
   status: number;
   details?: unknown;
+  requestId?: string;
+  outcome?: string;
+  secretAvailable?: boolean;
+  currentLastAppliedRequestId?: string | null;
 };
 
 let blockedByUnauthorized: ApiError | null = null;
@@ -361,6 +400,7 @@ function isAuthRecoveryRequest(path: string): boolean {
 
 function notifyUnauthorized(error: ApiError) {
   if (blockedByUnauthorized) return;
+  authGeneration += 1;
   blockedByUnauthorized = error;
   if (typeof window !== "undefined") {
     window.dispatchEvent(
@@ -401,6 +441,10 @@ async function request<T>(
       code: data.code,
       status: res.status,
       details: data.details,
+      requestId: data.requestId,
+      outcome: data.outcome,
+      secretAvailable: data.secretAvailable,
+      currentLastAppliedRequestId: data.currentLastAppliedRequestId,
     }) as ApiError;
     if (
       res.status === 401 &&
@@ -411,7 +455,10 @@ async function request<T>(
     }
     throw error;
   }
-  if (isAuthRecoveryRequest(path)) {
+  if (
+    isAuthRecoveryRequest(path) &&
+    requestAuthGeneration === authGeneration
+  ) {
     authGeneration += 1;
     blockedByUnauthorized = null;
   }
@@ -508,10 +555,26 @@ export const api = {
     request<{ ok: boolean }>(`/api/v1/admin/users/${userId}/unblock`, {
       method: "POST",
     }),
-  resetPassword: (userId: string) =>
-    request<{ temporaryPassword: string }>(
+  getAdminPasswordResetState: (userId: string) =>
+    request<AdminPasswordResetState>(
+      `/api/v1/admin/users/${userId}/reset-password/state`,
+    ),
+  resetAdminPassword: (
+    userId: string,
+    requestId: string,
+    payload: AdminPasswordResetRequest,
+  ) =>
+    request<AdminPasswordResetResponse>(
       `/api/v1/admin/users/${userId}/reset-password`,
-      { method: "POST" },
+      {
+        method: "POST",
+        headers: { "Idempotency-Key": requestId },
+        body: JSON.stringify(payload),
+      },
+    ),
+  getAdminPasswordResetReceipt: (userId: string, requestId: string) =>
+    request<AdminPasswordResetReceipt>(
+      `/api/v1/admin/users/${userId}/reset-password/requests/${requestId}`,
     ),
   adminForceCloseMatch: (
     matchId: string,

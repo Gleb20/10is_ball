@@ -128,6 +128,29 @@ const AdminUserPatchSchema = ProfileUpdateSchema.extend({
 }).refine((value) => Object.keys(value).length > 0, {
   message: "At least one field is required",
 });
+const AdminPasswordResetRequestSchema = z
+  .object({
+    expectedLastAppliedRequestId: z.string().uuid().nullable(),
+    supersedesRequestId: z.string().uuid().optional(),
+    confirmReplacement: z.literal(true).optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      (value.supersedesRequestId === undefined) !==
+      (value.confirmReplacement === undefined)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["supersedesRequestId"],
+        message:
+          "supersedesRequestId and confirmReplacement=true must be provided together",
+      });
+    }
+  });
+const AdminPasswordResetReceiptParamsSchema = z
+  .object({ userId: z.string().uuid(), requestId: z.string().uuid() })
+  .strict();
 
 const HistoryQuerySchema = z
   .object({
@@ -288,6 +311,13 @@ export async function buildApp(opts: {
   app.addHook("onRequest", async (req, reply) => {
     req.observabilityStartedAt = performance.now();
     reply.header("x-request-id", req.id);
+    if (
+      /^\/api\/v1\/admin\/users\/[^/]+\/reset-password(?:\/|$)/.test(
+        safeRequestPath(req.url),
+      )
+    ) {
+      reply.header("cache-control", "no-store");
+    }
   });
 
   app.addHook("preSerialization", async (req, reply, payload) => {
@@ -302,7 +332,13 @@ export async function buildApp(opts: {
         typeof errorPayload.code === "string" &&
         typeof errorPayload.message === "string"
       ) {
-        return { ...errorPayload, requestId: req.id };
+        return {
+          ...errorPayload,
+          requestId:
+            typeof errorPayload.requestId === "string"
+              ? errorPayload.requestId
+              : req.id,
+        };
       }
     }
     return payload;
@@ -528,7 +564,7 @@ export async function buildApp(opts: {
         newPassword: body.newPassword ?? "",
       });
       if (result.ok === false) {
-        return reply.code(400).send({
+        return reply.code(result.code === "UNAUTHORIZED" ? 401 : 400).send({
           code: result.code,
           message: messageFor(result.code),
           details: { errors: result.errors },
@@ -553,7 +589,7 @@ export async function buildApp(opts: {
         newPassword: body.newPassword ?? "",
       });
       if (result.ok === false) {
-        return reply.code(400).send({
+        return reply.code(result.code === "UNAUTHORIZED" ? 401 : 400).send({
           code: result.code,
           message: messageFor(result.code),
           details: { errors: result.errors },
@@ -750,16 +786,90 @@ export async function buildApp(opts: {
     },
   );
 
+  app.get(
+    "/api/v1/admin/users/:userId/reset-password/state",
+    { preHandler: requireAdmin },
+    async (req, reply) => {
+      reply.header("cache-control", "no-store");
+      try {
+        const { userId } = parseBody(AdminUserParamsSchema, req.params);
+        return await services.auth.getAdminPasswordResetState({
+          actorAdminId: req.authUser!.id,
+          actorSessionId: req.authSessionId!,
+          targetUserId: userId,
+        });
+      } catch (error) {
+        return sendError(reply, error);
+      }
+    },
+  );
+
+  app.get(
+    "/api/v1/admin/users/:userId/reset-password/requests/:requestId",
+    { preHandler: requireAdmin },
+    async (req, reply) => {
+      reply.header("cache-control", "no-store");
+      try {
+        const { userId, requestId } = parseBody(
+          AdminPasswordResetReceiptParamsSchema,
+          req.params,
+        );
+        return await services.auth.getAdminPasswordResetReceipt({
+          actorAdminId: req.authUser!.id,
+          actorSessionId: req.authSessionId!,
+          targetUserId: userId,
+          requestId,
+        });
+      } catch (error) {
+        return sendError(reply, error);
+      }
+    },
+  );
+
   app.post(
     "/api/v1/admin/users/:userId/reset-password",
     { preHandler: requireAdmin },
-    async (req) => {
-      const { userId } = req.params as { userId: string };
-      const result = await services.auth.resetPassword(
-        req.authUser!.id,
-        userId,
-      );
-      return { temporaryPassword: result.temporaryPassword };
+    async (req, reply) => {
+      reply.header("cache-control", "no-store");
+      try {
+        const { userId } = parseBody(AdminUserParamsSchema, req.params);
+        const requestId = parseIdempotencyKey(
+          req.headers["idempotency-key"],
+        );
+        const body = parseBody(AdminPasswordResetRequestSchema, req.body);
+        if (body.supersedesRequestId === requestId) {
+          throw Object.assign(new Error("VALIDATION"), {
+            code: "VALIDATION",
+            details: {
+              issues: [
+                {
+                  path: "supersedesRequestId",
+                  message: "must differ from Idempotency-Key",
+                },
+              ],
+            },
+          });
+        }
+        const result = await services.auth.resetPassword({
+          actorAdminId: req.authUser!.id,
+          actorSessionId: req.authSessionId!,
+          targetUserId: userId,
+          requestId,
+          expectedLastAppliedRequestId: body.expectedLastAppliedRequestId,
+          supersedesRequestId: body.supersedesRequestId ?? null,
+          confirmReplacement: body.confirmReplacement === true,
+        });
+        if (result.outcome === "rejected_state_changed") {
+          return reply.code(409).send({
+            code: "RESET_STATE_CHANGED",
+            message: "Состояние сброса пароля изменилось",
+            ...result,
+          });
+        }
+        return result;
+      } catch (error) {
+        return sendError(reply, error);
+      }
     },
   );
 
@@ -1823,6 +1933,8 @@ function messageFor(code: string): string {
     RATE_LIMITED: "Слишком много попыток",
     PASSWORD_POLICY: "Пароль не соответствует политике",
     PASSWORD_CHANGE_REQUIRED: "Необходимо сменить пароль",
+    UNAUTHORIZED: "Требуется вход",
+    USER_NOT_FOUND: "Пользователь не найден",
     LAST_ADMIN: "Нельзя заблокировать последнего администратора",
     SELF_BLOCK_FORBIDDEN: "Нельзя заблокировать собственный аккаунт",
     CURRENT_SESSION_FORBIDDEN: "Текущую сессию можно завершить только через выход",
@@ -1843,6 +1955,7 @@ function messageFor(code: string): string {
     IDEMPOTENCY_KEY_REQUIRED: "Нужен заголовок Idempotency-Key",
     IDEMPOTENCY_KEY_REUSED:
       "Этот Idempotency-Key уже использован для другого запроса",
+    RESET_STATE_CHANGED: "Состояние сброса пароля изменилось",
     VERSION_CONFLICT: "Конфликт версии",
     PLAYER_BUSY: "Игрок уже в активном матче",
     INVALID_STATUS: "Действие недоступно в текущем статусе",
@@ -2004,8 +2117,10 @@ function sendError(reply: FastifyReply, e: unknown) {
     "USER_NOT_ACTIVE",
   ]);
   const status =
-    code === "NOT_FOUND"
+    code === "NOT_FOUND" || code === "USER_NOT_FOUND"
       ? 404
+      : code === "UNAUTHORIZED"
+        ? 401
       : code === "FORBIDDEN"
         ? 403
         : code === "INTERNAL"
@@ -2020,6 +2135,7 @@ function sendError(reply: FastifyReply, e: unknown) {
               code === "BRACKET_REGEN_CONFIRMATION_REQUIRED" ||
               code === "MANUAL_OVERRIDE_CONFIRMATION_REQUIRED" ||
               code === "IDEMPOTENCY_KEY_REUSED" ||
+              code === "RESET_STATE_CHANGED" ||
               code === "CURRENT_SESSION_FORBIDDEN"
             ? 409
             : badRequestCodes.has(code)

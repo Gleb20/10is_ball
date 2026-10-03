@@ -1,5 +1,28 @@
 # Tab-10 — статус проекта
 
+## Этап 12 — локально проверенный server-first кандидат 5.0.0, 2026-10-03
+
+BUG-038 реализует коррелированный сброс пароля администратора: строгий UUID
+`Idempotency-Key`, compare-and-set по последнему применённому request, безопасные
+state/receipt GET без секрета, атомарные password/session/issue/audit/notification
+записи и детерминированный порядок с login/first-change/change-password. Старый
+POST без ключа теперь fail closed; поэтому первый выпуск имеет MAJOR-версию
+**5.0.0**.
+
+Включённый только для disposable local candidate UI прошёл compiled
+production-like сценарий на 1440/390/360: 3/3 browser tests плюс 9/9 migration
+foundation, реальный PostgreSQL, ровно один POST, HTTP 200 и последующий exact
+receipt GET. Снимки сохранены до выдачи временного пароля. После проверки
+source-controlled gate возвращён в `false`. Финальный удерживаемый кандидат
+прошёл `pnpm run ci`: **1605/1605** без failed/skipped/todo/interrupted
+(cleanup 4, quality 1376, PostgreSQL 96, browser 129). Evidence находится в
+[`stage12-final-candidate`](audit/evidence/stage12-final-candidate/README.md).
+
+Статус BUG-038 — `verified_local`. Публичный стенд не изменялся, migration 0007
+на Neon не применялась. Первый server-first release обязан сохранить reset UI
+disabled. Stage 12 остаётся незавершённым до доказанного вывода legacy fleet и
+отдельного 5.0.1 enablement с повторной проверкой exact SHA/public parity.
+
 ## Этапы 5–7 — интегрированный локальный кандидат 4.3.0, 2026-10-03
 
 Кандидат объединяет roster-first создание матча (GAP-013), безопасные Stage 6
@@ -29,15 +52,13 @@ hashes, exact forward/rollback и репрезентативные кадры. [
 закрытых атома этапов 5–7 в `verified_local`; реестр сохранил 236 строк, 82
 эпизода и 38 expert ID.
 
-Предыдущий выпуск 4.2.0 подтверждён на SHA
-`df807d508613b3226345813ff35080a9e1d1c288`: GitHub CI, Vercel READY, Render и
-read-only public smoke 7/7 сохранены в
-`artifacts/ux-implementation-2026-09-18/oct3-release-4.2.0-checkpoint.json` и
-`oct3-release-4.2.0-public-smoke.json`. Кандидат 4.3.0 локально принят в
-ограниченном Stage 5–7 scope, но не опубликован.
+Версия 4.3.0 опубликована на SHA
+`43f4b2425cc0c79b5ad6cf192abb5802c3559e50`: GitHub CI run `37117863589`
+прошёл все четыре jobs, Vercel вышел в READY, Render — в live, read-only public
+smoke прошёл 7/7 с одинаковыми version/SHA на web, API и proxy.
 Physical iPhone/touch, browser UI zoom, pinned WebKit, spoken AT и published
-parity для 4.3.0 не проверялись; synthetic pointer move/cancel не выдаётся за
-физический touch test.
+device parity для 4.3.0 не проверялись; synthetic pointer move/cancel не выдаётся
+за физический touch test.
 
 ## Этап 14 — интегрированный локальный кандидат 4.2.0, 2026-10-03
 

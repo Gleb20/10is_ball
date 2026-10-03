@@ -57,6 +57,8 @@ Errors:
 - `POST /admin/users/{userId}/block`
 - `POST /admin/users/{userId}/unblock`
 - `POST /admin/users/{userId}/reset-password`
+- `GET /admin/users/{userId}/reset-password/state`
+- `GET /admin/users/{userId}/reset-password/requests/{requestId}`
 - `POST /admin/matches/{matchId}/force-close` — admin-only alias для soft cancel
   active **standalone** match → `cancelled` (D23)
 - `DELETE /admin/matches/{matchId}` — admin-only hard purge только
@@ -69,6 +71,21 @@ non-finished purge требуют явного подтверждения в к�
 сервер не считает этот dialog authorization boundary.
 
 Create response включает `temporaryPassword` только один раз.
+
+Password reset POST требует UUID `Idempotency-Key`. Обычная попытка отправляет
+`{"expectedLastAppliedRequestId":null|"uuid"}`. Подтверждённая replacement
+попытка дополнительно отправляет другой `supersedesRequestId` и
+`confirmReplacement:true`. Совпадение request id с другим fingerprint даёт
+`409 IDEMPOTENCY_KEY_REUSED`; CAS conflict — `409 RESET_STATE_CHANGED` без
+credential/session/issue/audit/notification writes. Первый успешный ответ может
+содержать `temporaryPassword` и `secretAvailable:true`; exact replay и оба GET
+всегда возвращают `secretAvailable:false`.
+
+State GET возвращает только `targetUserId` и `lastAppliedRequestId`. Exact
+receipt GET возвращает `unknown` либо terminal `applied|rejected_state_changed`,
+`current` и `completedAt`; секрет не восстанавливается. Все три route admin-only,
+`Cache-Control: no-store`. Старый POST без ключа или без полного body получает
+400 до мутации.
 
 Оба новых чтения admin-only. `GET /admin/users/{userId}` возвращает только
 `AdminUser`: id, email, role, status, mustChangePassword, имя, фамилию,

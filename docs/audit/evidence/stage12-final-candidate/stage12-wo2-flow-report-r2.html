@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stage 12 BUG-038 WO2 — flow report</title>
+  <style>
+    :root { color-scheme: light; font: 16px/1.5 system-ui, sans-serif; color: #171717; background: #f5f5f3; }
+    body { max-width: 980px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1, h2 { line-height: 1.18; }
+    section { background: white; border: 1px solid #d8d8d4; border-radius: 14px; padding: 20px; margin: 16px 0; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid #e5e5e1; padding: 10px; text-align: left; vertical-align: top; }
+    th { background: #f7f7f4; }
+    code { background: #f0f0ed; padding: 2px 5px; border-radius: 4px; }
+    .pass { color: #176b37; font-weight: 700; }
+    .held { color: #8a4b08; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Stage 12 BUG-038 WO2: безопасный сброс пароля</h1>
+  <p>Отчёт фиксирует реализованный клиентский путь поверх принятого серверного WO1 R2.</p>
+
+  <section>
+    <h2>Основной путь</h2>
+    <ol>
+      <li>Администратор открывает действия пользователя на каталоге или карточке аккаунта.</li>
+      <li>Клиент получает свежий указатель состояния и показывает отдельное подтверждение.</li>
+      <li>До POST сохраняется только корреляция: actor, target, request и ожидаемый указатель.</li>
+      <li>Первый точный ответ может показать временный пароль только в памяти.</li>
+      <li>Копирование не закрывает пароль; закрытие, смена актора или явный выход уничтожают показ.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Восстановление и ошибки</h2>
+    <table>
+      <thead><tr><th>Состояние</th><th>Действие клиента</th></tr></thead>
+      <tbody>
+        <tr><td>Неизвестный результат POST</td><td>Только receipt GET; исходный POST не повторяется.</td></tr>
+        <tr><td>Receipt applied без секрета</td><td>Сообщает, что секрет восстановить нельзя; при <code>current=false</code> предупреждает о более позднем сбросе.</td></tr>
+        <tr><td>Новая выдача</td><td>Свежий state GET, отдельное подтверждение, новый UUID и <code>supersedesRequestId</code>.</td></tr>
+        <tr><td><code>RESET_STATE_CHANGED</code></td><td>Остановка без повтора и автоматического rebase.</td></tr>
+        <tr><td><code>IDEMPOTENCY_KEY_REUSED</code></td><td>Терминальная ошибка; требуется новое ручное действие.</td></tr>
+        <tr><td>401 / 403 / снятие роли</td><td>Аннулирует операцию и поздний ответ; собственный первый ответ self reset переживает только автоматический 401.</td></tr>
+        <tr><td>Недоступен sessionStorage</td><td>Операция продолжается в памяти с предупреждением об отсутствии восстановления после reload.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Rollout</h2>
+    <p class="held">Исходный флаг остаётся false.</p>
+    <p>Кнопка показывает удерживающий текст. Отдельный однострочный patch включает путь только после миграции и drain старого серверного fleet.</p>
+  </section>
+
+  <section>
+    <h2>Проверено</h2>
+    <ul>
+      <li class="pass">37/37 фокусных тестов, включая жизненный цикл уже показанного секрета.</li>
+      <li class="pass">432/432 теста web пакета.</li>
+      <li class="pass">Web TypeScript без ошибок.</li>
+      <li class="held">Compiled same-origin E2E зарегистрирован для desktop, 390 и 360. Held сборка проверяет disabled control и отсутствие reset POST; enabled сборка проверяет одноразовый секрет. Оба реальных прогона выполняет интегратор на свободном disposable стенде.</li>
+    </ul>
+  </section>
+</body>
+</html>

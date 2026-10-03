@@ -11,6 +11,7 @@ describe("DATA-001 match validation and invariants", () => {
   let sqlClient: { exec: (sql: string) => Promise<unknown> };
   let close: () => Promise<void>;
   let adminId: string;
+  let adminSessionId: string;
   let userAId: string;
   let userBId: string;
   let userCId: string;
@@ -30,6 +31,13 @@ describe("DATA-001 match validation and invariants", () => {
       "AdminPass1!",
     );
     adminId = seeded.user.id;
+    const adminLogin = await services.auth.login({
+      email: "admin@tab10.local",
+      password: "AdminPass1!",
+      ip: "127.0.0.1",
+    });
+    if (!adminLogin.ok) throw new Error("admin login failed");
+    adminSessionId = adminLogin.sessionId;
 
     const createUser = async (email: string) => {
       const created = await services.auth.createUser({
@@ -47,7 +55,18 @@ describe("DATA-001 match validation and invariants", () => {
     userCId = await createUser("c@tab10.local");
 
     const login = async (userId: string, email: string) => {
-      const reset = await services.auth.resetPassword(adminId, userId);
+      const reset = await services.auth.resetPassword({
+        actorAdminId: adminId,
+        actorSessionId: adminSessionId,
+        targetUserId: userId,
+        requestId: crypto.randomUUID(),
+        expectedLastAppliedRequestId: null,
+        supersedesRequestId: null,
+        confirmReplacement: false,
+      });
+      if (reset.outcome !== "applied" || !reset.secretAvailable) {
+        throw new Error("password reset failed");
+      }
       const first = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",

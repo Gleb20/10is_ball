@@ -10,6 +10,7 @@ import { createHash, randomBytes } from "node:crypto";
 import type { Clock } from "@tab10/test-utils";
 import type { Db } from "../../db/client.js";
 import {
+  adminPasswordResetRequests,
   authSessions,
   auditLogs,
   notifications,
@@ -81,6 +82,51 @@ export type AdminUser = OwnProfileUser & {
   createdAt: Date;
   lastLoginAt: Date | null;
 };
+
+export type AdminPasswordResetInput = {
+  actorAdminId: string;
+  actorSessionId: string;
+  targetUserId: string;
+  requestId: string;
+  expectedLastAppliedRequestId: string | null;
+  supersedesRequestId: string | null;
+  confirmReplacement: boolean;
+};
+
+export type AdminPasswordResetResult =
+  | {
+      requestId: string;
+      outcome: "applied";
+      secretAvailable: true;
+      temporaryPassword: string;
+      current: true;
+    }
+  | {
+      requestId: string;
+      outcome: "applied";
+      secretAvailable: false;
+      current: boolean;
+    }
+  | {
+      requestId: string;
+      outcome: "rejected_state_changed";
+      secretAvailable: false;
+      currentLastAppliedRequestId: string | null;
+    };
+
+function adminPasswordResetFingerprint(input: AdminPasswordResetInput): string {
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        actorAdminId: input.actorAdminId,
+        targetUserId: input.targetUserId,
+        expectedLastAppliedRequestId: input.expectedLastAppliedRequestId,
+        supersedesRequestId: input.supersedesRequestId,
+        confirmReplacement: input.confirmReplacement,
+      }),
+    )
+    .digest("hex");
+}
 
 const ADMIN_USER_AUDIT_ACTIONS = [
   "user.created",
@@ -318,32 +364,47 @@ export class AuthService {
 
       const token = randomBytes(32).toString("hex");
       const now = this.clock.now();
-      const [session] = await this.db
-        .insert(authSessions)
-        .values({
-          userId: user.id,
-          tokenHash: hashToken(token),
-          userAgent: input.userAgent,
-          ipFingerprint: createHash("sha256")
-            .update(input.ip)
-            .digest("hex")
-            .slice(0, 16),
-          lastSeenAt: now,
-          expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
-        })
-        .returning();
-
-      await this.db
-        .update(users)
-        .set({ lastLoginAt: now, updatedAt: now })
-        .where(eq(users.id, user.id));
+      const authenticated = await this.db.transaction(async (transaction) => {
+        const db = transaction as unknown as Db;
+        const [lockedUser] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, user.id))
+          .for("update");
+        if (!lockedUser || lockedUser.passwordHash !== user.passwordHash) {
+          return { ok: false as const, code: "INVALID_CREDENTIALS" };
+        }
+        if (lockedUser.status === "blocked") {
+          return { ok: false as const, code: "ACCOUNT_BLOCKED" };
+        }
+        const [session] = await db
+          .insert(authSessions)
+          .values({
+            userId: lockedUser.id,
+            tokenHash: hashToken(token),
+            userAgent: input.userAgent,
+            ipFingerprint: createHash("sha256")
+              .update(input.ip)
+              .digest("hex")
+              .slice(0, 16),
+            lastSeenAt: now,
+            expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
+          })
+          .returning();
+        await db
+          .update(users)
+          .set({ lastLoginAt: now, updatedAt: now })
+          .where(eq(users.id, lockedUser.id));
+        return { ok: true as const, user: lockedUser, session: session! };
+      });
+      if (!authenticated.ok) return authenticated;
 
       this.releaseSuccessfulLogin(reservation);
       return {
         ok: true,
-        user: toAuthUser(user),
+        user: toAuthUser(authenticated.user),
         sessionToken: token,
-        sessionId: session!.id,
+        sessionId: authenticated.session.id,
       };
     } catch (error) {
       this.releaseSuccessfulLogin(reservation);
@@ -397,39 +458,65 @@ export class AuthService {
       return { ok: false, code: "NOT_REQUIRED" };
     }
     const passwordHash = await hashPassword(input.newPassword);
-    const now = this.clock.now();
-    await this.db
-      .update(users)
-      .set({
-        passwordHash,
-        mustChangePassword: false,
-        updatedAt: now,
-      })
-      .where(eq(users.id, input.userId));
-
-    await this.db
-      .update(temporaryPasswordIssues)
-      .set({ consumedAt: now })
-      .where(
-        and(
-          eq(temporaryPasswordIssues.userId, input.userId),
-          isNull(temporaryPasswordIssues.consumedAt),
-        ),
-      );
-
-    // Rotate: revoke other sessions, keep current
-    await this.db
-      .update(authSessions)
-      .set({ revokedAt: now, revokeReason: "password_change" })
-      .where(
-        and(
-          eq(authSessions.userId, input.userId),
-          ne(authSessions.id, input.sessionId),
-          isNull(authSessions.revokedAt),
-        ),
-      );
-
-    return { ok: true };
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      const [lockedUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, input.userId))
+        .for("update");
+      if (!lockedUser || !lockedUser.mustChangePassword) {
+        return { ok: false as const, code: "NOT_REQUIRED" };
+      }
+      if (
+        lockedUser.status !== "active" ||
+        lockedUser.passwordHash !== user.passwordHash
+      ) {
+        return { ok: false as const, code: "UNAUTHORIZED" };
+      }
+      const [session] = await db
+        .select()
+        .from(authSessions)
+        .where(
+          and(
+            eq(authSessions.id, input.sessionId),
+            eq(authSessions.userId, input.userId),
+          ),
+        )
+        .for("update");
+      const now = this.clock.now();
+      if (
+        !session ||
+        session.revokedAt !== null ||
+        session.expiresAt.getTime() <= now.getTime()
+      ) {
+        return { ok: false as const, code: "UNAUTHORIZED" };
+      }
+      await db
+        .update(users)
+        .set({ passwordHash, mustChangePassword: false, updatedAt: now })
+        .where(eq(users.id, input.userId));
+      await db
+        .update(temporaryPasswordIssues)
+        .set({ consumedAt: now })
+        .where(
+          and(
+            eq(temporaryPasswordIssues.userId, input.userId),
+            isNull(temporaryPasswordIssues.consumedAt),
+          ),
+        );
+      await db
+        .update(authSessions)
+        .set({ revokedAt: now, revokeReason: "password_change" })
+        .where(
+          and(
+            eq(authSessions.userId, input.userId),
+            ne(authSessions.id, input.sessionId),
+            isNull(authSessions.revokedAt),
+          ),
+        );
+      return { ok: true as const };
+    });
   }
 
   async changePassword(input: {
@@ -449,22 +536,54 @@ export class AuthService {
       return { ok: false, code: "PASSWORD_POLICY", errors: policy.errors };
     }
     const passwordHash = await hashPassword(input.newPassword);
-    const now = this.clock.now();
-    await this.db
-      .update(users)
-      .set({ passwordHash, updatedAt: now })
-      .where(eq(users.id, input.userId));
-    await this.db
-      .update(authSessions)
-      .set({ revokedAt: now, revokeReason: "password_change" })
-      .where(
-        and(
-          eq(authSessions.userId, input.userId),
-          ne(authSessions.id, input.sessionId),
-          isNull(authSessions.revokedAt),
-        ),
-      );
-    return { ok: true };
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      const [lockedUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, input.userId))
+        .for("update");
+      if (!lockedUser) return { ok: false as const, code: "NOT_FOUND" };
+      if (lockedUser.status !== "active") {
+        return { ok: false as const, code: "UNAUTHORIZED" };
+      }
+      if (lockedUser.passwordHash !== user.passwordHash) {
+        return { ok: false as const, code: "INVALID_CREDENTIALS" };
+      }
+      const [session] = await db
+        .select()
+        .from(authSessions)
+        .where(
+          and(
+            eq(authSessions.id, input.sessionId),
+            eq(authSessions.userId, input.userId),
+          ),
+        )
+        .for("update");
+      const now = this.clock.now();
+      if (
+        !session ||
+        session.revokedAt !== null ||
+        session.expiresAt.getTime() <= now.getTime()
+      ) {
+        return { ok: false as const, code: "UNAUTHORIZED" };
+      }
+      await db
+        .update(users)
+        .set({ passwordHash, updatedAt: now })
+        .where(eq(users.id, input.userId));
+      await db
+        .update(authSessions)
+        .set({ revokedAt: now, revokeReason: "password_change" })
+        .where(
+          and(
+            eq(authSessions.userId, input.userId),
+            ne(authSessions.id, input.sessionId),
+            isNull(authSessions.revokedAt),
+          ),
+        );
+      return { ok: true as const };
+    });
   }
 
   async logout(sessionId: string): Promise<void> {
@@ -549,6 +668,59 @@ export class AuthService {
     };
   }
 
+  private async lockActiveAuthSession(
+    actorAdminId: string,
+    actorSessionId: string,
+    db: Db,
+  ): Promise<void> {
+    const [session] = await db
+      .select()
+      .from(authSessions)
+      .where(
+        and(
+          eq(authSessions.id, actorSessionId),
+          eq(authSessions.userId, actorAdminId),
+        ),
+      )
+      .for("update");
+    if (
+      !session ||
+      session.revokedAt !== null ||
+      session.expiresAt.getTime() <= this.clock.now().getTime()
+    ) {
+      throw Object.assign(new Error("UNAUTHORIZED"), { code: "UNAUTHORIZED" });
+    }
+  }
+
+  private async assertActiveAdminSession(input: {
+    actorAdminId: string;
+    actorSessionId: string;
+    targetUserId: string;
+  }): Promise<typeof users.$inferSelect> {
+    const [actor, target, session] = await Promise.all([
+      this.db.query.users.findFirst({ where: eq(users.id, input.actorAdminId) }),
+      this.db.query.users.findFirst({ where: eq(users.id, input.targetUserId) }),
+      this.db.query.authSessions.findFirst({
+        where: and(
+          eq(authSessions.id, input.actorSessionId),
+          eq(authSessions.userId, input.actorAdminId),
+          isNull(authSessions.revokedAt),
+          gt(authSessions.expiresAt, this.clock.now()),
+        ),
+      }),
+    ]);
+    if (!target) {
+      throw Object.assign(new Error("USER_NOT_FOUND"), { code: "USER_NOT_FOUND" });
+    }
+    if (!actor || actor.status !== "active" || actor.role !== "admin") {
+      throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
+    }
+    if (!session) {
+      throw Object.assign(new Error("UNAUTHORIZED"), { code: "UNAUTHORIZED" });
+    }
+    return target;
+  }
+
   async blockUser(adminId: string, userId: string): Promise<void> {
     await this.db.transaction(async (transaction) => {
       const db = transaction as unknown as Db;
@@ -618,56 +790,220 @@ export class AuthService {
     });
   }
 
+  async getAdminPasswordResetState(input: {
+    actorAdminId: string;
+    actorSessionId: string;
+    targetUserId: string;
+  }): Promise<{ targetUserId: string; lastAppliedRequestId: string | null }> {
+    const target = await this.assertActiveAdminSession(input);
+    return {
+      targetUserId: target.id,
+      lastAppliedRequestId: target.lastAdminPasswordResetRequestId ?? null,
+    };
+  }
+
+  async getAdminPasswordResetReceipt(input: {
+    actorAdminId: string;
+    actorSessionId: string;
+    targetUserId: string;
+    requestId: string;
+  }): Promise<
+    | {
+        requestId: string;
+        targetUserId: string;
+        outcome: "unknown";
+        secretAvailable: false;
+      }
+    | {
+        requestId: string;
+        targetUserId: string;
+        outcome: "applied" | "rejected_state_changed";
+        secretAvailable: false;
+        current: boolean;
+        completedAt: string;
+      }
+  > {
+    await this.assertActiveAdminSession(input);
+    // One statement gives receipt outcome and authoritative pointer from the
+    // same database snapshot. Separate reads could incorrectly label a newly
+    // committed applied receipt as non-current.
+    const [snapshot] = await this.db
+      .select({
+        lastAppliedRequestId: users.lastAdminPasswordResetRequestId,
+        receiptRequestId: adminPasswordResetRequests.requestId,
+        receiptTargetUserId: adminPasswordResetRequests.targetUserId,
+        receiptOutcome: adminPasswordResetRequests.outcome,
+        receiptCompletedAt: adminPasswordResetRequests.completedAt,
+      })
+      .from(users)
+      .leftJoin(
+        adminPasswordResetRequests,
+        and(
+          eq(adminPasswordResetRequests.requestId, input.requestId),
+          eq(adminPasswordResetRequests.targetUserId, input.targetUserId),
+        ),
+      )
+      .where(eq(users.id, input.targetUserId));
+    if (
+      !snapshot?.receiptRequestId ||
+      snapshot.receiptOutcome === "pending" ||
+      !snapshot.receiptCompletedAt
+    ) {
+      return {
+        requestId: input.requestId,
+        targetUserId: input.targetUserId,
+        outcome: "unknown",
+        secretAvailable: false,
+      };
+    }
+    return {
+      requestId: snapshot.receiptRequestId,
+      targetUserId: snapshot.receiptTargetUserId!,
+      outcome: snapshot.receiptOutcome as "applied" | "rejected_state_changed",
+      secretAvailable: false,
+      current: snapshot.lastAppliedRequestId === snapshot.receiptRequestId,
+      completedAt: snapshot.receiptCompletedAt.toISOString(),
+    };
+  }
+
   async resetPassword(
-    adminId: string,
-    userId: string,
-  ): Promise<{ temporaryPassword: string }> {
+    input: AdminPasswordResetInput,
+  ): Promise<AdminPasswordResetResult> {
     const temporaryPassword = generateTemporaryPassword(16, () =>
       randomBytes(1)[0]!,
     );
     const passwordHash = await hashPassword(temporaryPassword);
-    await this.db.transaction(async (transaction) => {
+    const fingerprint = adminPasswordResetFingerprint(input);
+    const result = await this.db.transaction(async (transaction) => {
       const db = transaction as unknown as Db;
-      const { actorIsActiveAdmin } = await this.lockAdminMutationUsers(
-        adminId,
-        userId,
+      const { actorIsActiveAdmin, target } = await this.lockAdminMutationUsers(
+        input.actorAdminId,
+        input.targetUserId,
         db,
       );
       if (!actorIsActiveAdmin) {
         throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
       }
+      await this.lockActiveAuthSession(
+        input.actorAdminId,
+        input.actorSessionId,
+        db,
+      );
+      await db
+        .insert(adminPasswordResetRequests)
+        .values({
+          requestId: input.requestId,
+          actorAdminId: input.actorAdminId,
+          actorAuthSessionId: input.actorSessionId,
+          targetUserId: input.targetUserId,
+          expectedLastAppliedRequestId: input.expectedLastAppliedRequestId,
+          supersedesRequestId: input.supersedesRequestId,
+          requestFingerprint: fingerprint,
+        })
+        .onConflictDoNothing({ target: adminPasswordResetRequests.requestId });
+      const [receipt] = await db
+        .select()
+        .from(adminPasswordResetRequests)
+        .where(eq(adminPasswordResetRequests.requestId, input.requestId))
+        .for("update");
+      if (!receipt) {
+        throw new Error("Password reset receipt disappeared");
+      }
+      if (receipt.requestFingerprint !== fingerprint) {
+        throw Object.assign(new Error("IDEMPOTENCY_KEY_REUSED"), {
+          code: "IDEMPOTENCY_KEY_REUSED",
+        });
+      }
+      if (receipt.outcome === "applied") {
+        return {
+          requestId: receipt.requestId,
+          outcome: "applied" as const,
+          secretAvailable: false as const,
+          current:
+            target.lastAdminPasswordResetRequestId === receipt.requestId,
+        };
+      }
+      if (receipt.outcome === "rejected_state_changed") {
+        return {
+          requestId: receipt.requestId,
+          outcome: "rejected_state_changed" as const,
+          secretAvailable: false as const,
+          currentLastAppliedRequestId:
+            target.lastAdminPasswordResetRequestId ?? null,
+        };
+      }
+
+      const current = target.lastAdminPasswordResetRequestId ?? null;
+      const expectedMatches =
+        current === input.expectedLastAppliedRequestId;
+      const confirmedReplacementMatches =
+        input.confirmReplacement &&
+        input.supersedesRequestId !== null &&
+        current === input.supersedesRequestId;
       const now = this.clock.now();
+      if (!expectedMatches && !confirmedReplacementMatches) {
+        await db
+          .update(adminPasswordResetRequests)
+          .set({ outcome: "rejected_state_changed", completedAt: now })
+          .where(eq(adminPasswordResetRequests.requestId, input.requestId));
+        return {
+          requestId: input.requestId,
+          outcome: "rejected_state_changed" as const,
+          secretAvailable: false as const,
+          currentLastAppliedRequestId: current,
+        };
+      }
       await db
         .update(users)
         .set({
           passwordHash,
           mustChangePassword: true,
+          lastAdminPasswordResetRequestId: input.requestId,
           updatedAt: now,
         })
-        .where(eq(users.id, userId));
+        .where(eq(users.id, input.targetUserId));
       await db
         .update(authSessions)
         .set({ revokedAt: now, revokeReason: "password_reset" })
-        .where(and(eq(authSessions.userId, userId), isNull(authSessions.revokedAt)));
+        .where(
+          and(
+            eq(authSessions.userId, input.targetUserId),
+            isNull(authSessions.revokedAt),
+          ),
+        );
       await db.insert(temporaryPasswordIssues).values({
-        userId,
-        issuedByAdminId: adminId,
+        userId: input.targetUserId,
+        issuedByAdminId: input.actorAdminId,
       });
       await db.insert(auditLogs).values({
-        actorUserId: adminId,
+        actorUserId: input.actorAdminId,
         action: "user.password_reset",
         entityType: "user",
-        entityId: userId,
+        entityId: input.targetUserId,
+        meta: { requestId: input.requestId },
       });
       await db.insert(notifications).values({
-        userId,
+        userId: input.targetUserId,
         type: "account_access_changed",
         title: "Доступ к аккаунту изменён",
         body: "Администратор сбросил пароль аккаунта",
         payload: { change: "password_reset" },
       });
+      await db
+        .update(adminPasswordResetRequests)
+        .set({ outcome: "applied", completedAt: now })
+        .where(eq(adminPasswordResetRequests.requestId, input.requestId));
+      return {
+        requestId: input.requestId,
+        outcome: "applied" as const,
+        secretAvailable: true as const,
+        current: true as const,
+      };
     });
-    return { temporaryPassword };
+    if (result.outcome === "applied" && result.secretAvailable) {
+      return { ...result, temporaryPassword };
+    }
+    return result;
   }
 
   async updateUserRole(

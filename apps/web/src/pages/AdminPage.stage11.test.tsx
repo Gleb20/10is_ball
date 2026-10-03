@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   blockUser: vi.fn(),
   unblockUser: vi.fn(),
   resetPassword: vi.fn(),
+  openPasswordReset: vi.fn(),
+  passwordResetEnabled: false,
   currentUser: {
     id: "00000000-0000-4000-8000-000000001101",
     email: "admin@example.test",
@@ -34,6 +36,12 @@ vi.mock("../api", () => ({
     unblockUser: (...args: unknown[]) => mocks.unblockUser(...args),
     resetPassword: (...args: unknown[]) => mocks.resetPassword(...args),
   },
+}));
+vi.mock("../adminPasswordReset", () => ({
+  useAdminPasswordReset: () => ({
+    enabled: mocks.passwordResetEnabled,
+    open: mocks.openPasswordReset,
+  }),
 }));
 
 const admin: AdminUser = {
@@ -82,9 +90,23 @@ describe("Stage 11 admin directory", () => {
       mustChangePassword: false,
     };
     mocks.reauthRequired = false;
+    mocks.passwordResetEnabled = false;
     mocks.listUsers.mockResolvedValue({ users: [admin, player] });
     mocks.createUser.mockResolvedValue({ user: player, temporaryPassword: "OneTime1!" });
     mocks.resetPassword.mockResolvedValue({ temporaryPassword: "Reset1!" });
+  });
+
+  it("routes an enabled password reset through the Stage 12 controller", async () => {
+    const user = userEvent.setup();
+    mocks.passwordResetEnabled = true;
+    render(page());
+    const triggers = await screen.findAllByRole("button", { name: "Действия" });
+    await user.click(triggers[1]!);
+    await user.click(screen.getByRole("button", { name: "Сбросить пароль" }));
+
+    expect(mocks.openPasswordReset).toHaveBeenCalledOnce();
+    expect(mocks.openPasswordReset).toHaveBeenCalledWith(player);
+    expect(screen.queryByRole("dialog", { name: "Сбросить пароль?" })).toBeNull();
   });
 
   it("starts with search, result count and rows while creation is secondary", async () => {
@@ -178,28 +200,28 @@ describe("Stage 11 admin directory", () => {
     await user.click(triggers[1]!);
     expect(screen.queryByRole("group", { name: `Действия: ${admin.lastName} ${admin.firstName}` })).toBeNull();
     const group = screen.getByRole("group", { name: `Действия: ${player.lastName} ${player.firstName}` });
-    const reset = within(group).getByRole("button", { name: "Сбросить пароль" });
-    reset.focus();
-    fireEvent.keyDown(reset, { key: "Escape" });
+    const block = within(group).getByRole("button", { name: "Заблокировать" });
+    block.focus();
+    fireEvent.keyDown(block, { key: "Escape" });
     expect(screen.queryByRole("group", { name: `Действия: ${player.lastName} ${player.firstName}` })).toBeNull();
     expect(triggers[1]).toHaveFocus();
   });
 
-  it("does not reveal a late mutation result after React Activity reauth invalidates the actor context", async () => {
+  it("does not apply a late mutation result after React Activity reauth invalidates the actor context", async () => {
     const user = userEvent.setup();
-    const pending = deferred<{ temporaryPassword: string }>();
-    mocks.resetPassword.mockImplementation(() => pending.promise);
+    const pending = deferred<{ ok: boolean }>();
+    mocks.blockUser.mockImplementation(() => pending.promise);
     const view = render(page());
     const triggers = await screen.findAllByRole("button", { name: "Действия" });
     await user.click(triggers[1]!);
-    await user.click(screen.getByRole("button", { name: "Сбросить пароль" }));
+    await user.click(screen.getByRole("button", { name: "Заблокировать" }));
     await user.click(screen.getByRole("button", { name: "Подтвердить" }));
 
     mocks.currentUser = null;
     mocks.reauthRequired = true;
     view.rerender(page());
-    pending.resolve({ temporaryPassword: "LateSecret1!" });
-    await waitFor(() => expect(mocks.resetPassword).toHaveBeenCalledTimes(1));
+    pending.resolve({ ok: true });
+    await waitFor(() => expect(mocks.blockUser).toHaveBeenCalledTimes(1));
 
     mocks.currentUser = {
       id: admin.id,
@@ -210,21 +232,20 @@ describe("Stage 11 admin directory", () => {
     mocks.reauthRequired = false;
     view.rerender(page());
     await screen.findByText("Найдено: 2");
-    expect(screen.queryByText("LateSecret1!")).toBeNull();
   });
 
   it("drops a late mutation error and finally after React Activity changes actor context", async () => {
     const user = userEvent.setup();
-    const pending = deferred<{ temporaryPassword: string }>();
-    mocks.resetPassword.mockImplementation(() => pending.promise);
+    const pending = deferred<{ ok: boolean }>();
+    mocks.blockUser.mockImplementation(() => pending.promise);
     const view = render(page());
     const triggers = await screen.findAllByRole("button", { name: "Действия" });
     await user.click(triggers[1]!);
-    await user.click(screen.getByRole("button", { name: "Сбросить пароль" }));
+    await user.click(screen.getByRole("button", { name: "Заблокировать" }));
     await user.click(screen.getByRole("button", { name: "Подтвердить" }));
     mocks.currentUser = null; mocks.reauthRequired = true; view.rerender(page());
     pending.reject(new Error("Старая ошибка мутации"));
-    await waitFor(() => expect(mocks.resetPassword).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mocks.blockUser).toHaveBeenCalledTimes(1));
     mocks.currentUser = { id: admin.id, email: admin.email, role: "admin", mustChangePassword: false };
     mocks.reauthRequired = false; view.rerender(page());
     await screen.findByText("Найдено: 2");

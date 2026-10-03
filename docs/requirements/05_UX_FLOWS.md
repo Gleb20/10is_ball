@@ -454,3 +454,22 @@ detail выполняет свежие авторизованные чтения
 - Успешный ответ и ожидаемый `401` продолжают обычный login/auth flow. Последующие
   warm-запросы экранов сохраняют свои loading/error состояния и не получают
   cold-start label или увеличенный timeout.
+
+## 18. Коррелированный admin password reset
+
+1. Reset доступен из каталога и detail только active admin и открывает именованное
+   подтверждение с последствиями для target, включая blocked/self состояния.
+2. Клиент создаёт UUID для `Idempotency-Key` до POST и сохраняет только metadata.
+   Во время request связанные действия disabled; второй POST не отправляется.
+3. Подтверждённый ответ показывает временный пароль один раз. Copy не закрывает
+   результат; Close, reload, logout, смена actor/role или новая операция
+   безвозвратно очищают секрет из памяти.
+4. При неизвестном исходе UI выполняет receipt GET. `applied/current`
+   подтверждает результат без повторного секрета; terminal conflict не
+   переигрывается. Отдельный явно подтверждённый replacement использует новый
+   request ID и связывается с предыдущим через `supersedesRequestId`/CAS.
+5. Self-reset допускает один ожидаемый automatic `401` после атомарного отзыва
+   своей сессии и сохраняет уже полученный secret ticket до Close/logout; после
+   отзыва сессии интерфейс не обещает self receipt recovery.
+6. Во время server-first rollout оба entry point видимы, но disabled; UI не
+   отправляет POST до отдельного выпуска enable-флага.

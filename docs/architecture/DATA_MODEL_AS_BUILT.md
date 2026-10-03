@@ -9,9 +9,10 @@ forward migrations на **2026-09-13**. Целевая модель в
 
 | Таблица | Назначение | Важные связи/заметки |
 |---|---|---|
-| `users` | аккаунт, роль/status, профиль, avatar, onboarding | unique email; `onboarding_step` bounded 0..6, nullable completion timestamp; содержит password hash и session-related flags |
+| `users` | аккаунт, роль/status, профиль, avatar, onboarding | unique email; `onboarding_step` bounded 0..6, nullable completion timestamp; содержит password hash, session-related flags и nullable pointer последнего admin reset |
 | `auth_sessions` | hashed session tokens | user FK, expiry/revocation |
 | `temporary_password_issues` | выдача/потребление временного пароля | user + issuing admin |
+| `admin_password_reset_requests` | non-secret receipt и CAS-корреляция сброса | UUID request, actor/session/target, immutable fingerprint, expected/supersedes, terminal outcome; plaintext отсутствует |
 | `matches` | правила, score snapshot, lifecycle | creator; optional tournament; JSON event log/idempotency keys; `first_server_method`, `source` |
 | `match_participants` | стороны A/B, user или guest | guest хранится в строке; constraints «ровно один тип» недостаточны |
 | `match_invitations` | voluntary player/judge invitation history | match/user/inviter FKs; historical participant UUID without FK, saved side, pending uniqueness and 10-minute TTL; start closes pending rows |
@@ -138,3 +139,13 @@ pending invitation, writes the audit and regenerates the bracket inside one
 transaction. Existing `seedOrder` is retained as a prefix and new participant IDs
 append. Real PostgreSQL ordered races cover both invite/add orders, start/add and
 two concurrent post-bracket adds; PGlite fault injection proves full rollback.
+
+### Stage 12 password reset persistence
+
+Migration `0007_bug_038_correlated_password_reset.sql` adds
+`admin_password_reset_requests` and
+`users.last_admin_password_reset_request_id`. It is additive and forward-only;
+the API writes receipt/pointer together with credential, revocation, issue,
+audit and notification changes in one transaction. `pending`/terminal completion
+checks and non-self-superseding are enforced in PostgreSQL. Rollback must not
+delete receipts or restore the unsafe uncorrelated legacy POST.

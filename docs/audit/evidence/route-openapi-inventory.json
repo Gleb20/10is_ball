@@ -6,10 +6,10 @@
   "limitations": [
     "Routes registered dynamically, through plugins, or outside apps/api/src/app.ts require a separate inventory update"
   ],
-  "registeredCount": 86,
-  "documentedCount": 86,
-  "registeredPathCount": 76,
-  "documentedPathCount": 76,
+  "registeredCount": 88,
+  "documentedCount": 88,
+  "registeredPathCount": 78,
+  "documentedPathCount": 78,
   "coveragePercent": 100,
   "registered": [
     "DELETE /api/v1/admin/matches/{matchId}",
@@ -20,6 +20,8 @@
     "GET /api/v1/admin/users",
     "GET /api/v1/admin/users/{userId}",
     "GET /api/v1/admin/users/{userId}/audit",
+    "GET /api/v1/admin/users/{userId}/reset-password/requests/{requestId}",
+    "GET /api/v1/admin/users/{userId}/reset-password/state",
     "GET /api/v1/auth/me",
     "GET /api/v1/auth/sessions",
     "GET /api/v1/faq",
@@ -108,6 +110,8 @@
     "GET /api/v1/admin/users",
     "GET /api/v1/admin/users/{userId}",
     "GET /api/v1/admin/users/{userId}/audit",
+    "GET /api/v1/admin/users/{userId}/reset-password/requests/{requestId}",
+    "GET /api/v1/admin/users/{userId}/reset-password/state",
     "GET /api/v1/auth/me",
     "GET /api/v1/auth/sessions",
     "GET /api/v1/faq",

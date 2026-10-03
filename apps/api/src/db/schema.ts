@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
 import {
+  type AnyPgColumn,
   boolean,
   check,
+  index,
   integer,
   foreignKey,
   jsonb,
@@ -54,6 +56,12 @@ export const users = pgTable(
       .defaultNow(),
     blockedAt: timestamp("blocked_at", { withTimezone: true }),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    lastAdminPasswordResetRequestId: uuid(
+      "last_admin_password_reset_request_id",
+    ).references(
+      (): AnyPgColumn => adminPasswordResetRequests.requestId,
+      { onDelete: "restrict" },
+    ),
   },
   (t) => [
     uniqueIndex("users_email_unique").on(t.email),
@@ -82,6 +90,45 @@ export const authSessions = pgTable("auth_sessions", {
   revokedAt: timestamp("revoked_at", { withTimezone: true }),
   revokeReason: text("revoke_reason"),
 });
+
+export const adminPasswordResetRequests = pgTable(
+  "admin_password_reset_requests",
+  {
+    requestId: uuid("request_id").primaryKey(),
+    actorAdminId: uuid("actor_admin_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    actorAuthSessionId: uuid("actor_auth_session_id")
+      .notNull()
+      .references(() => authSessions.id, { onDelete: "restrict" }),
+    targetUserId: uuid("target_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    expectedLastAppliedRequestId: uuid("expected_last_applied_request_id"),
+    supersedesRequestId: uuid("supersedes_request_id"),
+    requestFingerprint: text("request_fingerprint").notNull(),
+    outcome: text("outcome").notNull().default("pending"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("admin_password_reset_requests_target_idx").on(t.targetUserId),
+    check(
+      "admin_password_reset_requests_outcome_check",
+      sql`${t.outcome} = ANY (ARRAY['pending'::text, 'applied'::text, 'rejected_state_changed'::text])`,
+    ),
+    check(
+      "admin_password_reset_requests_completion_check",
+      sql`(${t.outcome} = 'pending' AND ${t.completedAt} IS NULL) OR (${t.outcome} <> 'pending' AND ${t.completedAt} IS NOT NULL)`,
+    ),
+    check(
+      "admin_password_reset_requests_not_self_superseding_check",
+      sql`${t.requestId} <> ${t.supersedesRequestId} OR ${t.supersedesRequestId} IS NULL`,
+    ),
+  ],
+);
 
 export const temporaryPasswordIssues = pgTable("temporary_password_issues", {
   id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),

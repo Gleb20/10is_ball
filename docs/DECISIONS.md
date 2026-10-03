@@ -44,6 +44,7 @@
 | D36 | Home-first navigation and role-aware dashboard | active; supersedes D5 navigation scope |
 | D37 | Temporary UI availability of game invitations and challenges | active overlay; D35 backend semantics retained |
 | D38 | Custom score lifetime | active; resolves Q-UX-005 |
+| D39 | Correlated password reset and server-first rollout | active; 5.0.0 held, 5.0.1 enable after drain |
 
 ## D16 — Documentation governance (2026-09-06)
 
@@ -643,3 +644,24 @@ source records are `artifacts/ux-implementation-2026-09-18/COORDINATION.md`
 (Stage 5 clarification) and `stage5-stage3-preservation-handoff.md` in the
 coordination checkout; they authorize this decision record, not Stage 5
 implementation.
+
+## D39 — Correlated password reset and server-first rollout (2026-10-03)
+
+**Decision:** admin password reset uses a client-generated UUID in
+`Idempotency-Key`, an
+immutable target/actor fingerprint and a durable receipt. The first successful
+POST may return the temporary password once; replay and both receipt GET routes
+return metadata only. All credential, session, temporary-password issue, audit,
+notification, receipt and authoritative-pointer changes are one transaction.
+Unknown outcomes are resolved by GET and never by automatic mutation replay.
+
+The UI ships held in 5.0.0 with both reset entry points disabled. It may be
+enabled only in a separate 5.0.1 release after hosted verification and confirmed
+legacy-fleet drain. The additive schema remains forward-compatible; rollback is
+a later forward release with the UI flag disabled, not a down-migration.
+
+**Why:** the former one-response secret flow could not distinguish response loss
+from a failed mutation and could race other credential changes. Correlation,
+receipt metadata and the authoritative pointer give deterministic recovery while
+keeping the secret non-readable. The two-release sequence prevents a new UI from
+calling mixed legacy API instances.

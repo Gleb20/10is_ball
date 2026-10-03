@@ -1,12 +1,27 @@
 # Deployment as-built
 
-Текущий опубликованный тестовый прод — версия 4.1.1, application SHA
-`8b9d2650f7991e121052634ace758f5991ef25b5`. Read-only smoke 2026-10-03
-подтвердил web, API, proxy и `/ready`; первичные `429`/timeout сохранены как
-недиагностированные transient observations без инфраструктурных изменений.
-Принятое [SemVer-правило](../WORKFLOW.md#product-versioning) применено к
-локальному PATCH-кандидату 4.1.2 этапа 4. Он ещё не commit, не push и не
-опубликован. Исторические release receipts ниже сохраняются без переписывания.
+Текущий опубликованный тестовый прод Vercel + Render + Neon — версия 4.3.0,
+application SHA
+`43f4b2425cc0c79b5ad6cf192abb5802c3559e50`. GitHub Actions run
+`37117863589` завершил все четыре job успешно; Vercel имеет статус READY,
+Render отвечает exact SHA, а read-only public smoke прошёл 7/7. Исторические
+release receipts ниже сохраняются без переписывания.
+
+Локальный Stage 12 server-first кандидат имеет версию 5.0.0 и добавляет
+миграцию `0007_bug_038_correlated_password_reset.sql`, receipt API и held UI.
+Финальный CI исходного кандидата прошёл 1605/1605; после него каноническая
+документация проверена отдельно. `ADMIN_PASSWORD_RESET_ENABLED`
+остаётся `false`. Кандидат не commit, не push и не опубликован.
+
+Rollout состоит из двух отдельных выпусков:
+
+1. 5.0.0 публикует миграцию/API при выключенном UI, затем проходит hosted CI,
+   exact-SHA public smoke и read-only проверку readiness/OpenAPI.
+2. После подтверждения, что legacy fleet завершила drain и все API instance
+   понимают receipt contract, отдельный PATCH 5.0.1 включает UI-флаг и повторяет
+   release gate. До этого оба reset entry point остаются disabled и не отправляют
+   POST. Rollback UI выполняется выключением флага новым forward release; schema
+   и receipt rows не откатываются down-migration.
 
 ## D36 stage 2 terminal gate observed — 2026-09-18
 

@@ -140,7 +140,7 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
     });
   });
 
-  it("asks confirm before block and shows temp password dialog on reset", async () => {
+  it("asks confirm before block and holds password reset during the server-first rollout", async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
@@ -165,13 +165,10 @@ describe("REQ_ui__admin_confirm_dialogs", () => {
     await user.click(screen.getByRole("button", { name: /подтвердить/i }));
     expect(blockUser).toHaveBeenCalledWith("u2");
 
-    await user.click(within(playerRow).getByRole("button", { name: /^сбросить пароль$/i }));
-    expect(await screen.findByRole("heading", { name: /сбросить пароль/i })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /подтвердить/i }));
-    expect(resetPassword).toHaveBeenCalledWith("u2");
-    expect(
-      await screen.findByText("ResetPass1!", { selector: "code" }),
-    ).toBeInTheDocument();
+    const reset = within(playerRow).getByRole("button", { name: /^сбросить пароль$/i });
+    expect(reset).toBeDisabled();
+    expect(within(playerRow).getByText(/временно недоступно во время безопасного обновления/i)).toBeInTheDocument();
+    expect(resetPassword).not.toHaveBeenCalled();
   });
 
   it("creates user with selected admin role", async () => {

@@ -25,6 +25,7 @@ import { HistoryPage } from "./pages/HistoryPage";
 import { StartPage } from "./pages/StartPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { AdminPasswordResetProvider } from "./adminPasswordReset";
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { user, loading, reauthRequired } = useAuth();
@@ -296,7 +297,9 @@ function AppRoutes() {
 export function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <AdminPasswordResetProvider>
+        <AppRoutes />
+      </AdminPasswordResetProvider>
     </AuthProvider>
   );
 }

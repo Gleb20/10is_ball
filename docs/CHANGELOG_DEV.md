@@ -1,3 +1,22 @@
+## 2026-10-03 — Stage 12 correlated password reset candidate 5.0.0
+
+- BUG-038 заменяет некоррелированный admin reset на UUID request/receipt
+  contract. Повтор exact fingerprint идемпотентен, replacement и controlled
+  credential races сходятся к одному authoritative pointer; credential, session
+  revocation, temporary issue, audit, notification и receipt атомарны.
+- Временный пароль существует только в памяти первого успешного POST. Receipt
+  GET возвращает metadata/current-state без секрета; unknown outcome не запускает
+  автоматический POST. UI очищает секрет на Close/reload/logout/actor/role
+  change и защищает self-reset от ровно одного ожидаемого automatic 401.
+- Enabled compiled browser прошёл 3/3 на 1440/390/360 плюс 9/9 foundation.
+  Финальный held source-candidate `pnpm run ci` прошёл 1605/1605: cleanup 4, quality
+  1376, PostgreSQL 96, compiled browser 129, без failed/skipped/todo/interrupted.
+  Held browser подтвердил два disabled entry point и ноль reset POST.
+- Версия повышена MAJOR с опубликованной 4.3.0 до локального 5.0.0. UI-флаг
+  остаётся false; commit/push/deploy/public mutation не выполнялись. После
+  server-first выпуска и подтверждённого legacy-fleet drain нужен отдельный
+  PATCH 5.0.1 для включения UI.
+
 ## 2026-10-03 — Stages 5–7 integrated candidate 4.3.0
 
 - Stage 5 переставляет ручное создание матча в порядок format/operator → roster → rules → title. Creator остаётся вне roster по умолчанию; quick choices появляются только при наличии вариантов и всегда показывают exact B1/B2 preview. Новая форма держит title disclosure закрытым, invalid collapsed rules раскрываются с фокусом, D38 custom `12` сохраняет вычисленный `6` и ручной mercy edit только в текущей форме. Pending/known rejection/unknown outcome/401 guards и authoritative persisted 2×2 readback сохранены.

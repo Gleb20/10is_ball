@@ -60,6 +60,7 @@ try {
         "run",
         "--no-file-parallelism",
         "src/db/migrations.postgres.integration.test.ts",
+        "src/bug-038.postgres.integration.test.ts",
         "src/postgres-date.integration.test.ts",
         "src/data-004.postgres.integration.test.ts",
         "src/history.postgres.integration.test.ts",
@@ -113,6 +114,7 @@ await writeJson(path.join(evidenceDir, "postgres-summary.json"), {
   interrupted,
   suites: [
     "apps/api/src/db/migrations.postgres.integration.test.ts",
+    "apps/api/src/bug-038.postgres.integration.test.ts",
     "apps/api/src/postgres-date.integration.test.ts",
     "apps/api/src/data-004.postgres.integration.test.ts",
     "apps/api/src/history.postgres.integration.test.ts",

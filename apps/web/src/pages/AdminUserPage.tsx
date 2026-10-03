@@ -3,10 +3,10 @@ import { Navigate, useParams } from "react-router-dom";
 import { Alert, Button, Dialog, TextField } from "../ui";
 import { PageLayout } from "../layout";
 import { StatusChip } from "../patterns";
-import { TempPasswordPanel } from "../authUi";
 import { api, type AdminUser, type AdminUserAuditFeed, type AdminUserAuditItem } from "../api";
 import { useAuth } from "../auth";
 import { AdminUserActions, type AdminUserAction } from "./AdminUserActions";
+import { useAdminPasswordReset } from "../adminPasswordReset";
 
 type Context = { key: string; generation: number; loadEffect: number; mutationEffect: number };
 type ProfileDraft = {
@@ -54,6 +54,7 @@ const mutationMessage = (error: unknown) => {
 export function AdminUserPage() {
   const { id = "" } = useParams();
   const { user, reauthRequired } = useAuth();
+  const passwordReset = useAdminPasswordReset();
   const actorKey = user?.role === "admin" ? user.id : reauthRequired ? "reauth" : "unauthorized";
   const routeKey = `/admin/users/${id}`;
   const key = `${actorKey}:${routeKey}`;
@@ -80,8 +81,6 @@ export function AdminUserPage() {
   const [editGeneration, setEditGeneration] = useState(0);
   const [draft, setDraft] = useState<ProfileDraft | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
-  const [tempPassword, setTempPassword] = useState<string | null>(null);
-  const [tempGeneration, setTempGeneration] = useState(0);
 
   const isCurrent = useCallback((token: { key: string; generation: number }) =>
     context.current.key === token.key && context.current.generation === token.generation, []);
@@ -114,7 +113,7 @@ export function AdminUserPage() {
     mutationActive.current = false;
     setTarget(null); setFeed(null); setDataGeneration(0); setLoadingGeneration(0);
     setLoadError(null); setAuditError(null); setMutationError(null); setMutationGeneration(0);
-    setActionsOpen(false); setConfirm(null); setEditOpen(false); setDraft(null); setTempPassword(null);
+    setActionsOpen(false); setConfirm(null); setEditOpen(false); setDraft(null);
     if (user?.role === "admin") void load();
   }, [key, load, user?.role]);
 
@@ -127,7 +126,6 @@ export function AdminUserPage() {
   const showActions = actionsGeneration === generation && actionsOpen;
   const visibleConfirm = confirmGeneration === generation ? confirm : null;
   const visibleEdit = editGeneration === generation && editOpen;
-  const visibleTempPassword = tempGeneration === generation ? tempPassword : null;
 
   async function runMutation(task: (valid: () => boolean) => Promise<void>) {
     if (mutationActive.current) return;
@@ -169,14 +167,10 @@ export function AdminUserPage() {
         else if (action === "unblock") await api.unblockUser(visibleTarget.id);
         else if (action === "promote") await api.updateUserRole(visibleTarget.id, "admin");
         else if (action === "demote") await api.updateUserRole(visibleTarget.id, "user");
-        else {
-          const response = await api.resetPassword(visibleTarget.id);
-          if (!valid()) return;
-          setTempPassword(response.temporaryPassword); setTempGeneration(generation);
-        }
+        else throw new Error("Сброс пароля временно недоступен во время безопасного обновления");
         if (!valid()) return;
         setConfirm(null);
-        if (action !== "reset") await load();
+        await load();
       } catch (error) {
         if (valid() && (error as { status?: number }).status !== 401) setMutationError(mutationMessage(error));
       }
@@ -243,10 +237,18 @@ export function AdminUserPage() {
       </dl>
       <Button size="sm" variant="secondary" disabled={pending} onClick={openEdit}>Редактировать</Button>
       <AdminUserActions actorId={user?.id ?? null} target={visibleTarget} open={showActions} pending={pending}
+        resetEnabled={passwordReset.enabled}
         groupLabel="Действия с аккаунтом"
         onToggle={() => { setActionsOpen(!showActions); setActionsGeneration(generation); }}
         onClose={() => setActionsOpen(false)}
-        onAction={(action) => { setConfirm(action); setConfirmGeneration(generation); }} />
+        onAction={(action) => {
+          if (action === "reset") {
+            setActionsOpen(false);
+            void passwordReset.open(visibleTarget);
+            return;
+          }
+          setConfirm(action); setConfirmGeneration(generation);
+        }} />
     </section>
     {mutationError ? <Alert type="error" variant="tonal" title="Результат действия" description={mutationError} /> : null}
     <section className="card stack" role="region" aria-label="История изменений">
@@ -276,10 +278,6 @@ export function AdminUserPage() {
         <TextField label="Должность" value={draft.positionText} maxLength={200} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDraft({ ...draft, positionText: event.target.value })} />
         {profileError ? <Alert type="error" variant="tonal" title="Профиль не сохранён" description={profileError} /> : null}
       </div> : null}
-    </Dialog>
-    <Dialog open={visibleTempPassword !== null} onClose={() => setTempPassword(null)} title="Временный пароль" width="sm"
-      mainButtonLabel="Готово" onMainButton={() => setTempPassword(null)}>
-      {visibleTempPassword ? <TempPasswordPanel password={visibleTempPassword} onDismiss={() => setTempPassword(null)} /> : null}
     </Dialog>
   </PageLayout>;
 }

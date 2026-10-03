@@ -204,6 +204,12 @@ describe("GAP-010 admin user catalog and edit", () => {
       const actor = await db.query.users.findFirst({
         where: eq(users.email, "admin@tab10.local"),
       });
+      const actorSession = await db.query.authSessions.findFirst({
+        where: and(
+          eq(authSessions.userId, actor!.id),
+          isNull(authSessions.revokedAt),
+        ),
+      });
       await db
         .update(users)
         .set({ role: "user" })
@@ -211,7 +217,15 @@ describe("GAP-010 admin user catalog and edit", () => {
 
       const call = operation === "unblock"
         ? services.auth.unblockUser(actor!.id, targetId)
-        : services.auth.resetPassword(actor!.id, targetId);
+        : services.auth.resetPassword({
+            actorAdminId: actor!.id,
+            actorSessionId: actorSession!.id,
+            targetUserId: targetId,
+            requestId: "00000000-0000-4000-8000-000000001019",
+            expectedLastAppliedRequestId: null,
+            supersedesRequestId: null,
+            confirmReplacement: false,
+          });
       await expect(call).rejects.toMatchObject({ code: "FORBIDDEN" });
 
       expect(

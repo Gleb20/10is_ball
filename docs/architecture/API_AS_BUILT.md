@@ -20,7 +20,7 @@ login/OpenAPI, требуют session; state-changing routes вне test тре�
 | GET | `/api/v1/auth/sessions` |
 | DELETE | `/api/v1/auth/sessions/:sessionId` |
 
-## Admin и profile (15)
+## Admin и profile (17)
 
 | Method | Path |
 |---|---|
@@ -30,6 +30,8 @@ login/OpenAPI, требуют session; state-changing routes вне test тре�
 | POST | `/api/v1/admin/users/:userId/block` |
 | POST | `/api/v1/admin/users/:userId/unblock` |
 | POST | `/api/v1/admin/users/:userId/reset-password` |
+| GET | `/api/v1/admin/users/:userId/reset-password/state` |
+| GET | `/api/v1/admin/users/:userId/reset-password/requests/:requestId` |
 | POST | `/api/v1/admin/matches/:matchId/force-close` |
 | DELETE | `/api/v1/admin/matches/:matchId` |
 | PATCH | `/api/v1/me/profile` |
@@ -47,6 +49,17 @@ Admin detail использует тот же `AdminUser` allowlist. Audit от�
 непрозрачный target-bound cursor сравнивается через исходный PostgreSQL
 `created_at`, поэтому микросекунды не теряются. Raw meta и значения не выходят из
 service. Оба route требуют активного admin на каждом запросе.
+
+Stage 12 заменяет прежнюю выдачу временного пароля в одном POST на коррелированный
+receipt. POST требует UUID в `Idempotency-Key`, атомарно создаёт reset и receipt,
+а точный replay возвращает только outcome metadata без второй смены пароля и без
+секрета. Два GET route возвращают только metadata/current-state: сам временный
+пароль остаётся только в памяти исходного POST и никогда не читается повторно.
+Unknown outcome разрешается GET; отдельный явно подтверждённый replacement
+использует новый request id, `supersedesRequestId` и compare-and-set pointer.
+Self-reset может сохранить уже полученный secret ticket через ровно один
+ожидаемый automatic `401`; чтение receipt после отзыва собственной сессии не
+обещается.
 
 ## Match, directory, ranking, history, home (20)
 

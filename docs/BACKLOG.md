@@ -1955,11 +1955,14 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** recovery-defect
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — strict server contract, migration, UI state machine and held rollout gate passed full local CI; production migration and post-drain enablement remain pending.
 - **Scenario / Epic / Story / Sprint:** SC-AD06 → EP-UX-ADMIN → US-UX-RESET-RECOVERY → S4d candidate с отдельным contract/migration gate.
 - **Evidence:** F-ADMIN-003, A-RUN-004: reset применён200, ответ abort, старые session/password401,1POST,0recoveryGET, Confirm снова enabled рядом с Failed to fetch. Повтор не выполнялся. [Коррекция](audits/2026-09-13-ux-ui/admin-correction.md) отзывает автоматическую приёмку P1 и небезопасный unchanged-marker retry.
 - **Expected:** UI честно показывает неизвестный результат; не повторяет reset автоматически и не обещает получить уже утраченный one-time secret.
-- **Actual:** после применённого reset и потери ответа Confirm доступен рядом с общей сетевой ошибкой; конкретный исход не согласуется.
+- **Actual:** API требует UUID key и CAS pointer, хранит non-secret receipt и
+  согласует unknown outcome через GET без повторного POST. UI реализует явный
+  replacement и одноразовый in-memory secret, но в первом 5.0.0 server-first
+  кандидате обе reset-кнопки намеренно disabled source flag `false`.
 - **Repro:** в disposable stand выполнить reset через route.fetch, после server200 abort client response; проверить1POST, старую session401 и enabled Confirm; не выполнять второй reset как часть исходного evidence.
 - **Inputs / REQ / AT / ADR:** ADM-007/008, AUTH-007, AT-AUTH-007; AuthService.resetPassword, temporaryPasswordIssues, AdminPage.runConfirm; existing actor locks/session revocation.
 - **Constraints / edges:** before/after commit response loss, delayed first request, другое reset/first-password между попытками, self-reset с отзывом собственной сессии, blocked/demoted actor, transactional rollback; прежний секрет не журналировать/не хранить для повторного получения.
@@ -1971,7 +1974,13 @@ backlog ID, version, commit, push or public deployment was created.
 - **Self-reset and recovery:** полученный secret хранится только in-memory вне Protected boundary; local auth очищен, private UI и authenticated requests закрыты, Copy сохраняет показ, Close/reload уничтожают secret. Lost self-reset не имеет unauth recovery; другой active admin может помочь. Единственный admin требует отдельного сопровождения, готовая bootstrap-rotation процедура не заявляется. Несекретная request correlation привязана к actor+target и очищается по mandatory overlay.
 - **Subtasks:** 1) Red contract + migration compatibility + PG ordering/races. 2) Receipt/CAS/allowlists and deterministic locks. 3) Client single-flight GET/explicit replacement/one-time display. 4) Full repository/PG/browser acceptance and source docs. Сначала server, безопасно отклоняющий missing key, затем web; старый cached client получает понятное обновление страницы, не unsafe legacy reset.
 - **Given / When / Then:** Given A applied response lost, Then exact receipt confirms A without secret or POST. Given no receipt, Then unknown. Given B explicitly supersedes A, Then B remains last reset in A→B and B→A; receipt/key fingerprints prevent different payload replay. Given A→C→B chain conflict, Then C may safely reject without writes and needs fresh confirmation. Given login/change races, Then revoked/pre-reset credentials cannot create or overwrite a later reset; verify both orders. Given reset × block/demote, Then no deadlock from FK-before-user-lock. Given self received/lost, Then one-time display/auth boundary and no unauth bypass as above.
-- **Verification:** repository-wide pnpm ci, migration/schema checks and disposable PostgreSQL all RST/PG-RST cases with corrected010, browser360/390/1440/error/focus/pending/auth/storage-disabled; response AND persisted state, no secrets in artifacts. Update PRD/AT, API_SPEC/API_AS_BUILT, DATA_MODEL/AS_BUILT, UX_FLOWS, traceability/BACKLOG/CHANGELOG_DEV. Runtime новой реализации не проводился. Rollback перед применением данных отдельно проверяется: не удалять receipts/audit и не возвращать unsafe uncorrelated reset; старый UI может временно показывать refresh-required.
+- **Verification:** enabled disposable compiled E2E 3/3 на 1440/390/360 плюс
+  foundation 9/9 подтвердил один POST, 200 и exact receipt GET; безопасные
+  screenshots сделаны до выдачи секрета. После возврата flag=false полный
+  `pnpm run ci` прошёл 1605/1605: cleanup4, quality1376, PostgreSQL96,
+  compiled browser129, без failed/skipped/todo/interrupted. Held browser branch
+  проверяет disabled directory/detail actions и zero POST. Public runtime не
+  менялся; enablement допускается только отдельным 5.0.1 после доказанного drain.
 - **Dependencies:** Independent Terra/root target review PASS; mandatory admin-reset-correction.md supersedes the original frozen proposal. Existing active-admin/session invariants remain required. No pending product decision for this bounded contract.
 - **Documentation / rollback:** Apply the documentation and safe compatibility rollback requirements stated above; no deployment or data mutation is authorized by target readiness.
 

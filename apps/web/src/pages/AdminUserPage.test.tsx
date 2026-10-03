@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   blockUser: vi.fn(),
   unblockUser: vi.fn(),
   resetPassword: vi.fn(),
+  openPasswordReset: vi.fn(),
+  passwordResetEnabled: false,
   currentUser: {
     id: "00000000-0000-4000-8000-000000001101",
     email: "admin@example.test",
@@ -35,6 +37,12 @@ vi.mock("../api", () => ({
     unblockUser: (...args: unknown[]) => mocks.unblockUser(...args),
     resetPassword: (...args: unknown[]) => mocks.resetPassword(...args),
   },
+}));
+vi.mock("../adminPasswordReset", () => ({
+  useAdminPasswordReset: () => ({
+    enabled: mocks.passwordResetEnabled,
+    open: mocks.openPasswordReset,
+  }),
 }));
 
 const targetId = "00000000-0000-4000-8000-000000001102";
@@ -101,9 +109,23 @@ describe("GAP-026 admin account card", () => {
       mustChangePassword: false,
     };
     mocks.reauthRequired = false;
+    mocks.passwordResetEnabled = false;
     mocks.getAdminUser.mockResolvedValue({ user: target });
     mocks.listAdminUserAudit.mockResolvedValue(feed);
     mocks.updateAdminUser.mockResolvedValue({ user: target });
+  });
+
+  it("routes an enabled password reset through the Stage 12 controller", async () => {
+    const user = userEvent.setup();
+    mocks.passwordResetEnabled = true;
+    render(page());
+    await screen.findByRole("heading", { name: "Игроков Борис" });
+    await user.click(screen.getByRole("button", { name: "Действия" }));
+    await user.click(screen.getByRole("button", { name: "Сбросить пароль" }));
+
+    expect(mocks.openPasswordReset).toHaveBeenCalledOnce();
+    expect(mocks.openPasswordReset).toHaveBeenCalledWith(target);
+    expect(screen.queryByRole("dialog", { name: "Сбросить пароль?" })).toBeNull();
   });
 
   it("shows allowlisted account context and a safe, human-readable audit timeline", async () => {
@@ -168,17 +190,17 @@ describe("GAP-026 admin account card", () => {
     const trigger = screen.getByRole("button", { name: "Действия" });
     await user.click(trigger);
     const group = screen.getByRole("group", { name: "Действия с аккаунтом" });
-    const reset = within(group).getByRole("button", { name: "Сбросить пароль" });
-    reset.focus();
-    fireEvent.keyDown(reset, { key: "Escape" });
+    const block = within(group).getByRole("button", { name: "Заблокировать" });
+    block.focus();
+    fireEvent.keyDown(block, { key: "Escape" });
     expect(screen.queryByRole("group", { name: "Действия с аккаунтом" })).toBeNull();
     expect(trigger).toHaveFocus();
   });
 
-  it("drops a late mutation secret after the route changes", async () => {
+  it("drops a late mutation result after the route changes", async () => {
     const user = userEvent.setup();
-    const reset = deferred<{ temporaryPassword: string }>();
-    mocks.resetPassword.mockImplementation(() => reset.promise);
+    const block = deferred<{ ok: boolean }>();
+    mocks.blockUser.mockImplementation(() => block.promise);
     mocks.getAdminUser.mockImplementation(async (id: string) => ({
       user: id === targetId ? target : { ...target, id: otherId, firstName: "Вера", lastName: "Новая" },
     }));
@@ -186,13 +208,12 @@ describe("GAP-026 admin account card", () => {
     render(page());
     await screen.findByRole("heading", { name: "Игроков Борис" });
     await user.click(screen.getByRole("button", { name: "Действия" }));
-    await user.click(screen.getByRole("button", { name: "Сбросить пароль" }));
+    await user.click(screen.getByRole("button", { name: "Заблокировать" }));
     await user.click(screen.getByRole("button", { name: "Подтвердить" }));
     await user.click(screen.getByRole("button", { name: "Вторая карточка" }));
     expect(await screen.findByRole("heading", { name: "Новая Вера" })).toBeInTheDocument();
-    reset.resolve({ temporaryPassword: "LateRouteSecret1!" });
-    await waitFor(() => expect(mocks.resetPassword).toHaveBeenCalledTimes(1));
-    expect(screen.queryByText("LateRouteSecret1!")).toBeNull();
+    block.resolve({ ok: true });
+    await waitFor(() => expect(mocks.blockUser).toHaveBeenCalledTimes(1));
     expect(screen.getByRole("button", { name: "Действия" })).not.toBeDisabled();
   });
 });

@@ -9,6 +9,7 @@ type Props = {
   target: AdminUser;
   open: boolean;
   pending: boolean;
+  resetEnabled?: boolean;
   groupLabel: string;
   onToggle: () => void;
   onClose: () => void;
@@ -23,6 +24,10 @@ function groupId(userId: string) {
   return `admin-user-actions-${userId}`;
 }
 
+function resetAvailabilityId(userId: string) {
+  return `admin-user-reset-availability-${userId}`;
+}
+
 export function focusAdminUserActionsTrigger(userId: string) {
   document.getElementById(triggerId(userId))?.focus();
 }
@@ -32,6 +37,7 @@ export function AdminUserActions({
   target,
   open,
   pending,
+  resetEnabled = false,
   groupLabel,
   onToggle,
   onClose,
@@ -77,7 +83,34 @@ export function AdminUserActions({
           ) : !isSelf ? (
             <Button size="sm" variant="secondary" disabled={pending} onClick={() => onAction("block")}>Заблокировать</Button>
           ) : null}
-          <Button size="sm" variant="secondary" disabled={pending} onClick={() => onAction("reset")}>Сбросить пароль</Button>
+          {resetEnabled ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={pending}
+              onClick={() => onAction("reset")}
+            >
+              Сбросить пароль
+            </Button>
+          ) : (
+            <>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled
+                aria-describedby={resetAvailabilityId(target.id)}
+              >
+                Сбросить пароль
+              </Button>
+              <span
+                id={resetAvailabilityId(target.id)}
+                className="muted"
+                role="status"
+              >
+                Временно недоступно во время безопасного обновления
+              </span>
+            </>
+          )}
         </div>
       ) : null}
     </div>

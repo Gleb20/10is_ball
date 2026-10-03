@@ -13,7 +13,9 @@ type OperationOptions = {
   requestRequired?: boolean;
   response?: JsonSchema;
   errors?: number[];
+  errorResponses?: Record<number, JsonSchema>;
   idempotency?: boolean;
+  noStore?: boolean;
 };
 
 const ref = (name: string): JsonSchema => ({ $ref: `#/components/schemas/${name}` });
@@ -32,7 +34,7 @@ const pathParameters = (...names: string[]) =>
     name,
     in: "path",
     required: true,
-    schema: { type: "string", minLength: 1 },
+    schema: { type: "string", format: "uuid" },
   }));
 const queryParameter = (
   name: string,
@@ -50,7 +52,7 @@ function operation(options: OperationOptions) {
       in: "header",
       required: true,
       description: "Unique mutation key. UUID where the runtime enforces UUID format.",
-      schema: { type: "string", minLength: 1 },
+      schema: { type: "string", format: "uuid" },
     });
   }
   return {
@@ -74,6 +76,15 @@ function operation(options: OperationOptions) {
     responses: {
       200: {
         description: "Success",
+        ...(options.noStore
+          ? {
+              headers: {
+                "Cache-Control": {
+                  schema: { type: "string", enum: ["no-store"] },
+                },
+              },
+            }
+          : {}),
         content: {
           "application/json": { schema: options.response ?? ref("GenericObject") },
         },
@@ -83,7 +94,20 @@ function operation(options: OperationOptions) {
           status,
           {
             description: status === 500 ? "Internal server error" : "Request rejected",
-            content: { "application/json": { schema: ref("ApiError") } },
+            ...(options.noStore
+              ? {
+                  headers: {
+                    "Cache-Control": {
+                      schema: { type: "string", enum: ["no-store"] },
+                    },
+                  },
+                }
+              : {}),
+            content: {
+              "application/json": {
+                schema: options.errorResponses?.[status] ?? ref("ApiError"),
+              },
+            },
           },
         ]),
       ),
@@ -291,6 +315,144 @@ const schemas: Record<string, JsonSchema> = {
       positionText: { type: "string", maxLength: 200, nullable: true },
       role: { type: "string", enum: ["admin", "user"] },
     },
+  },
+  AdminPasswordResetRequest: {
+    oneOf: [
+      {
+        type: "object",
+        required: ["expectedLastAppliedRequestId"],
+        additionalProperties: false,
+        properties: {
+          expectedLastAppliedRequestId: {
+            type: "string",
+            format: "uuid",
+            nullable: true,
+          },
+        },
+      },
+      {
+        type: "object",
+        required: ["expectedLastAppliedRequestId", "supersedesRequestId", "confirmReplacement"],
+        additionalProperties: false,
+        properties: {
+          expectedLastAppliedRequestId: {
+            type: "string",
+            format: "uuid",
+            nullable: true,
+          },
+          supersedesRequestId: { type: "string", format: "uuid" },
+          confirmReplacement: { type: "boolean", enum: [true] },
+        },
+      },
+    ],
+  },
+  AdminPasswordResetState: {
+    type: "object",
+    required: ["targetUserId", "lastAppliedRequestId"],
+    additionalProperties: false,
+    properties: {
+      targetUserId: { type: "string", format: "uuid" },
+      lastAppliedRequestId: {
+        type: "string",
+        format: "uuid",
+        nullable: true,
+      },
+    },
+  },
+  AdminPasswordResetResponse: {
+    oneOf: [
+      {
+        type: "object",
+        required: ["requestId", "outcome", "secretAvailable", "temporaryPassword", "current"],
+        additionalProperties: false,
+        properties: {
+          requestId: { type: "string", format: "uuid" },
+          outcome: { type: "string", enum: ["applied"] },
+          secretAvailable: { type: "boolean", enum: [true] },
+          temporaryPassword: { type: "string" },
+          current: { type: "boolean", enum: [true] },
+        },
+      },
+      {
+        type: "object",
+        required: ["requestId", "outcome", "secretAvailable", "current"],
+        additionalProperties: false,
+        properties: {
+          requestId: { type: "string", format: "uuid" },
+          outcome: { type: "string", enum: ["applied"] },
+          secretAvailable: { type: "boolean", enum: [false] },
+          current: { type: "boolean" },
+        },
+      },
+    ],
+  },
+  AdminPasswordResetReceipt: {
+    oneOf: [
+      {
+        type: "object",
+        required: ["requestId", "targetUserId", "outcome", "secretAvailable"],
+        additionalProperties: false,
+        properties: {
+          requestId: { type: "string", format: "uuid" },
+          targetUserId: { type: "string", format: "uuid" },
+          outcome: { type: "string", enum: ["unknown"] },
+          secretAvailable: { type: "boolean", enum: [false] },
+        },
+      },
+      {
+        type: "object",
+        required: ["requestId", "targetUserId", "outcome", "secretAvailable", "current", "completedAt"],
+        additionalProperties: false,
+        properties: {
+          requestId: { type: "string", format: "uuid" },
+          targetUserId: { type: "string", format: "uuid" },
+          outcome: { type: "string", enum: ["applied", "rejected_state_changed"] },
+          secretAvailable: { type: "boolean", enum: [false] },
+          current: { type: "boolean" },
+          completedAt: { type: "string", format: "date-time" },
+        },
+      },
+    ],
+  },
+  AdminPasswordResetConflict: {
+    type: "object",
+    required: [
+      "code",
+      "message",
+      "requestId",
+      "outcome",
+      "secretAvailable",
+      "currentLastAppliedRequestId",
+    ],
+    additionalProperties: false,
+    properties: {
+      code: { type: "string", enum: ["RESET_STATE_CHANGED"] },
+      message: { type: "string" },
+      requestId: { type: "string", format: "uuid" },
+      outcome: { type: "string", enum: ["rejected_state_changed"] },
+      secretAvailable: { type: "boolean", enum: [false] },
+      currentLastAppliedRequestId: {
+        type: "string",
+        format: "uuid",
+        nullable: true,
+      },
+    },
+  },
+  AdminPasswordResetIdempotencyConflict: {
+    type: "object",
+    required: ["code", "message", "requestId"],
+    additionalProperties: false,
+    properties: {
+      code: { type: "string", enum: ["IDEMPOTENCY_KEY_REUSED"] },
+      message: { type: "string" },
+      requestId: { type: "string" },
+    },
+  },
+  AdminPasswordResetPostConflict: {
+    oneOf: [
+      ref("AdminPasswordResetConflict"),
+      ref("AdminPasswordResetIdempotencyConflict"),
+    ],
   },
   AdminUserAuditActor: {
     type: "object",
@@ -1020,7 +1182,13 @@ export function openApiSpec(releaseVersion = productVersion()) {
         post: operation({ operationId: "adminUnblockUser", summary: "Unblock user", tag: "Admin", mutation: true, parameters: pathParameters("userId"), response: ref("Ok") }),
       },
       "/api/v1/admin/users/{userId}/reset-password": {
-        post: operation({ operationId: "adminResetUserPassword", summary: "Reset user password", tag: "Admin", mutation: true, parameters: pathParameters("userId"), response: { type: "object", required: ["temporaryPassword"], properties: { temporaryPassword: { type: "string" } } } }),
+        post: operation({ operationId: "adminResetUserPassword", summary: "Reset user password with a correlated compare-and-set request", tag: "Admin", mutation: true, parameters: pathParameters("userId"), request: "AdminPasswordResetRequest", response: ref("AdminPasswordResetResponse"), errorResponses: { 409: ref("AdminPasswordResetPostConflict") }, idempotency: true, noStore: true }),
+      },
+      "/api/v1/admin/users/{userId}/reset-password/state": {
+        get: operation({ operationId: "adminGetUserPasswordResetState", summary: "Read the authoritative password reset pointer", tag: "Admin", parameters: pathParameters("userId"), response: ref("AdminPasswordResetState"), noStore: true }),
+      },
+      "/api/v1/admin/users/{userId}/reset-password/requests/{requestId}": {
+        get: operation({ operationId: "adminGetUserPasswordResetReceipt", summary: "Read a password reset receipt without recovering a secret", tag: "Admin", parameters: pathParameters("userId", "requestId"), response: ref("AdminPasswordResetReceipt"), noStore: true }),
       },
       "/api/v1/admin/matches/{matchId}/force-close": {
         post: operation({ operationId: "adminForceCloseMatch", summary: "Force-close active standalone match", tag: "Admin", mutation: true, parameters: pathParameters("matchId"), request: "CancelMatchRequest", response: objectRef("match", "Match"), idempotency: true }),

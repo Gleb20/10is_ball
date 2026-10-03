@@ -1,5 +1,11 @@
 # Requirements ↔ Tests Traceability
 
+## Stage 12 — correlated admin password reset, verified locally and held
+
+| Backlog / requirement | Deterministic regression | Runtime evidence and limit |
+|---|---|---|
+| BUG-038; AUTH-003, ADM-007; AT-ADM-007..010 | [bug-038.integration.test.ts](../../apps/api/src/bug-038.integration.test.ts), [bug-038.postgres.integration.test.ts](../../apps/api/src/bug-038.postgres.integration.test.ts), [adminPasswordReset.stage12.test.tsx](../../apps/web/src/adminPasswordReset.stage12.test.tsx), [auth-epoch.stage12.test.tsx](../../apps/web/src/auth-epoch.stage12.test.tsx): strict UUID/fingerprint receipt, atomic rollback, controlled credential races, self-reset 401, secret lifetime and stale-response fencing | [stage12-admin-password-reset.spec.ts](../../tests/e2e/stage12-admin-password-reset.spec.ts) passed the enabled flow on 1440/390/360 plus 9 foundation checks. The final held source-candidate CI passed 1605/1605 and proves both entry points disabled with zero reset POST; synchronized docs passed their separate audit. The flag remains false; public 5.0.0 and later 5.0.1 enable are separate release gates. |
+
 ## Stages 5–7 — match setup, judge surface and tournament setup candidate
 
 | Backlog / requirement | Deterministic regression | Runtime evidence and limit |
@@ -124,7 +130,7 @@ Capability-level выводы находятся в [`../CAPABILITY_MATRIX.md`](
 | Requirement group | Acceptance / intended evidence | Current evidence | Coverage | Blocking backlog |
 |---|---|---|---|---|
 | AUTH-001..008 | AT-AUTH-001..008; API + browser first-login/session journeys | API integration включает exact method+router-path gate для temporary-password session; browser journey и часть session UX неполны | `partial` | BUG-007, TECH-003 |
-| ADM-001..008 | AT-ADM-001..005, AT-AUTH-008; admin role/user journeys and persisted audit | Wave E successful lanes1229/1229: quality1112, PostgreSQL66, browser47 including38 desktop/390 journeys, cleanup4. Consent PostgreSQL8/8 includes three reproduced cross-match40P01 regressions; admin/catalog/audit, consent/history, onboarding/tutorial return/Help actions pass. See wave-e-local.json; GAP-011 quality remains | `verified` | SEC-004, BUG-011, GAP-010 |
+| ADM-001..008 | AT-ADM-001..010, AT-AUTH-008; admin role/user journeys, correlated reset and persisted audit | Wave E baseline plus Stage 12 local candidate: strict receipt API, controlled PostgreSQL races/rollback, enabled 1440/390/360 browser 3/3 + 9 foundation and final held CI 1605/1605. Reset UI remains held false; published 5.0.0/5.0.1 parity is pending. | `verified_local` | SEC-004, BUG-011, GAP-010, BUG-038 |
 | ADM-MATCH / void | AT-ADM-MATCH-001..007; AT-MATCH-VOID-001..004 | BUG-002 cancel/force-close и DATA-005/007 void green локально: creator/active-admin actor matrix, stale/outsider rejection, one-time compensation, immutable audit, purge safeguard and tournament downstream preservation | `partial` | GAP-005 |
 | HOME-001..006 | AT-HOME-001/002; AT-EMPTY-001; active/recent/stats/rival states | Wave A UI covers active standalone+tournament, hero+rival, combined recent-5, all-time/month top-3 and actionable empty states; component 3/3 and API focused gates green, browser pending | `partial` | GAP-001 (`in_progress`) |
 | PROFILE-001..006 | AT-PROFILE-001..005; own/public/privacy/edit/avatar/session contracts | Wave B API 220/220 and web 148/148 cover nested DTO/privacy/blocked/current-session/strict mutation; browser own/public/blocked/profile-session/challenge passed at desktop and 390px; aggregate gate pending | `partial` | GAP-002 (`in_progress`) |

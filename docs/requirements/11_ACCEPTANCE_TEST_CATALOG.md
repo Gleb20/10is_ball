@@ -111,6 +111,49 @@ Self-block скрыт и прямой запрос получает `403 SELF_BL
 заблокировать последнего active admin получает `409 LAST_ADMIN`; active non-admin
 получает `403` на block и unblock.
 
+### AT-ADM-007 Коррелированный одноразовый сброс пароля
+**Given** active admin подтверждает reset для точного target и создаёт UUID для
+`Idempotency-Key` до отправки.
+
+**When** POST применяется или его ответ теряется.
+
+**Then** первый подтверждённый POST показывает временный пароль ровно один раз;
+повтор с тем же fingerprint идемпотентен и возвращает только outcome metadata,
+другой fingerprint получает terminal conflict, а восстановление неизвестного
+исхода выполняется только receipt GET и никогда не раскрывает пароль повторно.
+
+### AT-ADM-008 Конкурирующие reset и credential mutations
+**Given** reset A/B, login, first-change или ordinary change пересекаются.
+
+**When** операции коммитятся в любом контролируемом порядке.
+
+**Then** authoritative pointer указывает на последнюю допустимую операцию,
+устаревшая операция не перезаписывает credential, а receipt, password, session
+revocation, temporary issue, audit и notification коммитятся или откатываются
+атомарно.
+
+### AT-ADM-009 Жизненный цикл секрета в интерфейсе
+**Given** UI получил временный пароль в памяти.
+
+**When** admin копирует его, проходит обычный auth refresh того же valid actor,
+перезагружает вкладку, закрывает результат, меняет actor/role, выходит или
+получает поздний ответ старой операции.
+
+**Then** Copy и обычный auth refresh того же actor сохраняют видимый секрет;
+Close, page reload, logout, actor/role change и superseding operation уничтожают
+его, поздний ответ не восстанавливает его, а в persistent storage остаётся
+только correlation metadata.
+
+### AT-ADM-010 Self-reset и rollout hold
+**Given** admin сбрасывает собственный пароль или server-first rollout ещё held.
+
+**When** reset отзывает текущую сессию либо UI-флаг выключен.
+
+**Then** ровно один ожидаемый automatic `401` не уничтожает подтверждённый
+self-reset secret ticket до явного Close/logout; остальные `401` завершают
+сессию. При выключенном флаге оба reset entry point disabled и POST reset не
+отправляется.
+
 ### AT-ADM-MATCH-001 Non-admin
 Non-admin получает 403 на admin force-close/purge endpoint. Creator с ролью
 `user` использует общий cancel/void endpoint; его право выводится из ownership,

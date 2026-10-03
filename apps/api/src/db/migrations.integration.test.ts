@@ -77,10 +77,10 @@ describe("versioned migration foundation on disposable PGlite", () => {
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
       ORDER BY table_name
     `);
-    expect(tables.rows.map((row) => row.table_name)).toHaveLength(19);
+    expect(tables.rows.map((row) => row.table_name)).toHaveLength(20);
   });
 
-  it.each([1, 2, 3, 4, 5, 6])("upgrades a %i-migration released prefix without changing existing rows", async (prefixLength) => {
+  it.each([1, 2, 3, 4, 5, 6, 7])("upgrades a %i-migration released prefix without changing existing rows", async (prefixLength) => {
     const context = await freshContext();
     const baselineOnlyDirectory = await mkdtemp(
       join(tmpdir(), "tab10-baseline-only-"),
@@ -188,6 +188,50 @@ describe("versioned migration foundation on disposable PGlite", () => {
       WHERE id = '00000000-0000-4000-8000-000000000096'
     `);
     expect(row.rows).toEqual([{ title: "Rollback tournament", status: "collecting" }]);
+  });
+
+  it("rolls back the BUG-038 DDL and preserves pre-0007 users", async () => {
+    const context = await freshContext();
+    const prefixDirectory = await mkdtemp(join(tmpdir(), "tab10-bug038-rollback-"));
+    temporaryDirectories.push(prefixDirectory);
+    const artifactDirectory = fileURLToPath(new URL("../../drizzle/", import.meta.url));
+    const journal = JSON.parse(await readFile(join(artifactDirectory, "meta/_journal.json"), "utf8"));
+    journal.entries = journal.entries.slice(0, 7);
+    for (const entry of journal.entries) {
+      await writeFile(join(prefixDirectory, `${entry.tag}.sql`), await readFile(join(artifactDirectory, `${entry.tag}.sql`)));
+    }
+    await mkdir(join(prefixDirectory, "meta"));
+    await writeFile(join(prefixDirectory, "meta/_journal.json"), JSON.stringify(journal));
+    await applyPgliteMigrationFiles(context.db, prefixDirectory);
+    await context.client.exec(`
+      INSERT INTO users (id, email, password_hash, first_name, last_name)
+      VALUES ('00000000-0000-4000-8000-000000000097', 'bug038-rollback@tab10.test', 'synthetic', 'Rollback', 'BUG038');
+    `);
+    const migrationSql = (await readFile(
+      join(artifactDirectory, "0007_bug_038_correlated_password_reset.sql"),
+      "utf8",
+    )).replaceAll("--> statement-breakpoint", "\n");
+    await context.client.exec(`BEGIN;\n${migrationSql}\nROLLBACK;`);
+    const catalog = await context.client.query<{
+      receipt_table: boolean;
+      pointer_column: boolean;
+    }>(`
+      SELECT
+        to_regclass('public.admin_password_reset_requests') IS NOT NULL AS receipt_table,
+        EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'users'
+            AND column_name = 'last_admin_password_reset_request_id'
+        ) AS pointer_column
+    `);
+    expect(catalog.rows).toEqual([
+      { receipt_table: false, pointer_column: false },
+    ]);
+    const row = await context.client.query<{ email: string }>(`
+      SELECT email FROM users
+      WHERE id = '00000000-0000-4000-8000-000000000097'
+    `);
+    expect(row.rows).toEqual([{ email: "bug038-rollback@tab10.test" }]);
   });
 
   it("fails closed rather than withdrawing a participant already referenced by a bracket", async () => {
@@ -335,8 +379,8 @@ describe("versioned migration foundation on disposable PGlite", () => {
     const after = await context.client.query<{ count: number }>(`
       SELECT count(*)::integer AS count FROM drizzle.__drizzle_migrations
     `);
-    expect(before.rows[0]?.count).toBe(7);
-    expect(after.rows[0]?.count).toBe(7);
+    expect(before.rows[0]?.count).toBe(8);
+    expect(after.rows[0]?.count).toBe(8);
   });
 
   it("does not let adoption stand in for ordinary fresh apply", async () => {
@@ -519,6 +563,6 @@ describe("versioned migration foundation on disposable PGlite", () => {
       FROM information_schema.tables
       WHERE table_schema = 'public'
     `);
-    expect(tables.rows[0]?.count).toBe(19);
+    expect(tables.rows[0]?.count).toBe(20);
   });
 });

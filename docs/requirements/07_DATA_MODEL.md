@@ -32,6 +32,7 @@
 - `updated_at`
 - `blocked_at` nullable
 - `last_login_at` nullable
+- `last_admin_password_reset_request_id` nullable FK → `admin_password_reset_requests.request_id`
 
 Constraints:
 - lowercased unique email;
@@ -58,6 +59,24 @@ Constraints:
 - `consumed_at` nullable
 
 Не хранит открытый пароль; запись нужна только для аудита выпуска.
+
+### `admin_password_reset_requests`
+- `request_id` UUID primary key
+- `actor_admin_id`
+- `actor_auth_session_id`
+- `target_user_id`
+- `expected_last_applied_request_id` nullable
+- `supersedes_request_id` nullable
+- `request_fingerprint`
+- `outcome` enum `pending|applied|rejected_state_changed`
+- `completed_at` nullable
+- `created_at`
+
+Открытый пароль не хранится. Один request id нельзя переиспользовать с другим
+fingerprint. `pending` не имеет `completed_at`, terminal outcome обязан его
+иметь; request не может supersede сам себя. Target pointer и receipt меняются в
+той же транзакции, что password hash, отзыв сессий, temporary issue, audit и
+notification.
 
 ## 3. Команды
 

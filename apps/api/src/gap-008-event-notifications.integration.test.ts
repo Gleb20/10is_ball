@@ -25,6 +25,7 @@ describe("GAP-008 transactional event notifications", () => {
   const target = "00000000-0000-4000-8000-000000008203";
   const judge = "00000000-0000-4000-8000-000000008204";
   const handoverTarget = "00000000-0000-4000-8000-000000008205";
+  const adminSessionId = "00000000-0000-4000-8000-000000008206";
 
   beforeEach(async () => {
     const context = await createMigratedPgliteDb();
@@ -43,6 +44,12 @@ describe("GAP-008 transactional event notifications", () => {
       { id: judge, email: "judge@events.test", passwordHash: "x", firstName: "Judge", lastName: "Events", mustChangePassword: false },
       { id: handoverTarget, email: "handover@events.test", passwordHash: "x", firstName: "Next", lastName: "Judge", mustChangePassword: false },
     ]);
+    await db.insert(authSessions).values({
+      id: adminSessionId,
+      userId: admin,
+      tokenHash: "admin-reset-session",
+      expiresAt: new Date("2026-09-14T13:00:00Z"),
+    });
   });
 
   afterEach(async () => {
@@ -147,7 +154,15 @@ describe("GAP-008 transactional event notifications", () => {
 
   it("notifies the target for each effective account access change without secrets", async () => {
     await services.auth.updateUserRole(admin, target, "admin");
-    const reset = await services.auth.resetPassword(admin, target);
+    const reset = await services.auth.resetPassword({
+      actorAdminId: admin,
+      actorSessionId: adminSessionId,
+      targetUserId: target,
+      requestId: "00000000-0000-4000-8000-000000008207",
+      expectedLastAppliedRequestId: null,
+      supersedesRequestId: null,
+      confirmReplacement: false,
+    });
     await services.auth.blockUser(admin, target);
     await services.auth.unblockUser(admin, target);
     await services.auth.unblockUser(admin, target);
@@ -163,7 +178,11 @@ describe("GAP-008 transactional event notifications", () => {
       "role_changed",
       "unblocked",
     ]);
-    expect(JSON.stringify(rows)).not.toContain(reset.temporaryPassword);
+    expect(JSON.stringify(rows)).not.toContain(
+      reset.outcome === "applied" && reset.secretAvailable
+        ? reset.temporaryPassword
+        : "unavailable",
+    );
     expect(rows.flatMap((row) => Object.keys((row.payload ?? {}) as object))).not.toContain(
       "temporaryPassword",
     );

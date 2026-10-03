@@ -1,0 +1,447 @@
+{
+  "schemaVersion": 1,
+  "baseSha": "43f4b2425cc0c79b5ad6cf192abb5802c3559e50",
+  "publishedVersion": "4.3.0",
+  "candidateVersion": "5.0.0",
+  "heldFlag": {
+    "path": "apps/web/src/adminPasswordResetFeature.ts",
+    "export": "ADMIN_PASSWORD_RESET_ENABLED",
+    "value": false
+  },
+  "sourceInput": {
+    "patch": {
+      "path": "/private/tmp/tab10-stage12-wo2-r2-full-source.patch",
+      "sha256": "5bdf93b9e4a9deb6f1be32eb2e6db72892a501234dabeadb7b70b93871a6a868"
+    },
+    "manifest": {
+      "path": "/private/tmp/tab10-stage12-wo2-r2-manifest.json",
+      "sha256": "b46274944425528e9d81614d26fd7b906fd8096e45964908f6e3b77b79a76d03"
+    }
+  },
+  "verification": {
+    "enabledE2E": {
+      "status": "passed",
+      "browserScenarios": 3,
+      "foundationChecks": 9,
+      "viewports": [
+        1440,
+        390,
+        360
+      ]
+    },
+    "heldFullCI": {
+      "status": "passed",
+      "reportPath": "/private/tmp/tab10-stage12-held-ci-r2/local-summary.json",
+      "canonicalReportPath": "docs/audit/evidence/stage12-final-candidate/ci/local-summary.json",
+      "total": 1605,
+      "passed": 1605,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0,
+      "lanes": {
+        "cleanup-foundation": 4,
+        "quality": 1376,
+        "postgres": 96,
+        "browser-prodlike": 129
+      }
+    },
+    "documentation": {
+      "auditDocs": "passed, 186 files, zero broken links or anchors",
+      "auditRoutes": "passed, 88/88 registrations and 78/78 paths",
+      "diffCheck": "passed",
+      "appliesToBaseSha": "43f4b2425cc0c79b5ad6cf192abb5802c3559e50"
+    },
+    "patchIntegrity": {
+      "forwardApplyFromBase": "passed",
+      "reverseApplyFromCandidate": "passed",
+      "explicitReversePatchFromCandidate": "passed"
+    }
+  },
+  "candidateFileCount": 61,
+  "candidateFiles": [
+    {
+      "path": "apps/api/drizzle/0007_bug_038_correlated_password_reset.sql",
+      "status": "A",
+      "bytes": 2462,
+      "sha256": "2eb1d16f9de1ddcddd15d076dc063d670dee2dc5413009d7907907db882664d6"
+    },
+    {
+      "path": "apps/api/drizzle/meta/0007_snapshot.json",
+      "status": "A",
+      "bytes": 71370,
+      "sha256": "f064382fc04be36f8695de19629a0c8a41f7f492a3519f2f4a9bbe7119c4669e"
+    },
+    {
+      "path": "apps/api/drizzle/meta/_journal.json",
+      "status": "M",
+      "bytes": 1284,
+      "sha256": "687a7f96e3536c6bf0755811d2f58fd115a4e7c5e06604ac9f5d8d4794d67c34"
+    },
+    {
+      "path": "apps/api/package.json",
+      "status": "M",
+      "bytes": 3223,
+      "sha256": "7816fbde65546b83b92e6ff03f4ddd8ed8ff22e5cd3c8005fd1e1ca44729d244"
+    },
+    {
+      "path": "apps/api/src/app.ts",
+      "status": "M",
+      "bytes": 71718,
+      "sha256": "e303141414fbf11e401e5aad0bb6cd73bbd19200f6a5793a39fe2f33bc6d531b"
+    },
+    {
+      "path": "apps/api/src/bug-038.integration.test.ts",
+      "status": "A",
+      "bytes": 14573,
+      "sha256": "90d1695d72d534615de7a84ab062242c67b6ded0a648dcbe91b1be7bf6ebe6f2"
+    },
+    {
+      "path": "apps/api/src/bug-038.postgres.integration.test.ts",
+      "status": "A",
+      "bytes": 17025,
+      "sha256": "645acbae44fb2a6a9b587a9e5ec215e76c83cb51cc9d0f9084565adab97c4bc8"
+    },
+    {
+      "path": "apps/api/src/db/migrations.integration.test.ts",
+      "status": "M",
+      "bytes": 22164,
+      "sha256": "f028237677334c438fe313429c230be528577e41221435b9ec3c57e9d5f99f16"
+    },
+    {
+      "path": "apps/api/src/db/migrations.postgres.integration.test.ts",
+      "status": "M",
+      "bytes": 25745,
+      "sha256": "6a47ceb5af60bf44092994375d0c48e8c579e68ec3d2d8b441a8819b16f4cec3"
+    },
+    {
+      "path": "apps/api/src/db/migrations.ts",
+      "status": "M",
+      "bytes": 57829,
+      "sha256": "d9cb4fa4963a3209bae929b27dd18e2993532f57280e851111ac53b1f6e42f56"
+    },
+    {
+      "path": "apps/api/src/db/schema.ts",
+      "status": "M",
+      "bytes": 21470,
+      "sha256": "d3bb6ff7a8f2323b8b8ecfd7f51f88f72988cf078d41b1e4437a8c3a2fbf4926"
+    },
+    {
+      "path": "apps/api/src/gap-008-event-notifications.integration.test.ts",
+      "status": "M",
+      "bytes": 13567,
+      "sha256": "4b7f4afe1330e4bb8db7f64cf27648868a6ffe6721331b05b774b295da2b966f"
+    },
+    {
+      "path": "apps/api/src/gap-010.integration.test.ts",
+      "status": "M",
+      "bytes": 9219,
+      "sha256": "fd7cc79ce4f5e66f0b04771634f1ff18eefc9a60b698942c5e80fd09d4dd1076"
+    },
+    {
+      "path": "apps/api/src/match-validation.integration.test.ts",
+      "status": "M",
+      "bytes": 13304,
+      "sha256": "3e399fc98b0095c099b158e1536448a8acfb55e156f743115db623b10fd23cec"
+    },
+    {
+      "path": "apps/api/src/modules/auth/auth-service.ts",
+      "status": "M",
+      "bytes": 44146,
+      "sha256": "46417b6952ddb8a4a71f2ae4856dbcc0fe474c45a0874986ceb910c3f04241e4"
+    },
+    {
+      "path": "apps/api/src/openapi.contract.test.ts",
+      "status": "M",
+      "bytes": 20023,
+      "sha256": "5ee7e876974187ba97634b0ed12d06319e4549eb34bf1a6a2d52ce1053f65848"
+    },
+    {
+      "path": "apps/api/src/openapi.ts",
+      "status": "M",
+      "bytes": 69110,
+      "sha256": "354572d4339965369a72d5fcb3fab94de9f70dbc14d409ae9d832f231c4b6e24"
+    },
+    {
+      "path": "apps/web/src/App.tsx",
+      "status": "M",
+      "bytes": 8475,
+      "sha256": "a2893d4c75f6b3985ec63d91953e905877a0e6316ac73ca868166dc333f90201"
+    },
+    {
+      "path": "apps/web/src/adminPasswordReset.stage12.test.tsx",
+      "status": "A",
+      "bytes": 18311,
+      "sha256": "25675fd8c8ee88606aebcdf73cd23e27f2a72aace9be166934fe2bfe22399d04"
+    },
+    {
+      "path": "apps/web/src/adminPasswordReset.tsx",
+      "status": "A",
+      "bytes": 24478,
+      "sha256": "a2106a377aa4d5f80d24f1fe98a4efbcf5080d154c07a912bd981777ed689b9c"
+    },
+    {
+      "path": "apps/web/src/adminPasswordResetFeature.ts",
+      "status": "A",
+      "bytes": 204,
+      "sha256": "9d19f14467d994bd246af3efee96bfea7240ca2de37b7c5becbfe194a3d0db91"
+    },
+    {
+      "path": "apps/web/src/api.ts",
+      "status": "M",
+      "bytes": 29392,
+      "sha256": "ffb77619c1b7679f16d5b1592a68b67a1a7ba5e45891f9f3553901c89757f677"
+    },
+    {
+      "path": "apps/web/src/auth-epoch.stage12.test.tsx",
+      "status": "A",
+      "bytes": 3047,
+      "sha256": "1fca29f413ea21febc694c579120eb4c6474654be5dae1ffceb038b92c45138b"
+    },
+    {
+      "path": "apps/web/src/auth.tsx",
+      "status": "M",
+      "bytes": 5542,
+      "sha256": "05e72e240485ea714a858b15195e7fcd58c77cc0cba85f0badcf9ff9bf203e18"
+    },
+    {
+      "path": "apps/web/src/pages/AdminPage.stage11.test.tsx",
+      "status": "M",
+      "bytes": 11806,
+      "sha256": "8caaf558147543d37a654d313028948d47f100467601dff4d0c6f42aa337f98e"
+    },
+    {
+      "path": "apps/web/src/pages/AdminPage.test.tsx",
+      "status": "M",
+      "bytes": 13241,
+      "sha256": "f6b235f1dde01906ec8fdcb54a1e879c84e6cbdc7dedbe395d96dd93034ae4df"
+    },
+    {
+      "path": "apps/web/src/pages/AdminPage.tsx",
+      "status": "M",
+      "bytes": 19551,
+      "sha256": "855ab6a25a6c8b7cc5f27367d92363def402a0ef9482e6e33d3040e35053242b"
+    },
+    {
+      "path": "apps/web/src/pages/AdminUserActions.tsx",
+      "status": "M",
+      "bytes": 3538,
+      "sha256": "aa9512b9bf6a728893d6c043fdb83c4a553c01c497bbbe9ab2e72cb67fdd1290"
+    },
+    {
+      "path": "apps/web/src/pages/AdminUserPage.test.tsx",
+      "status": "M",
+      "bytes": 9939,
+      "sha256": "a192d3697f9c9dc878195426879594131b856773468d162dd718b0e442389ca0"
+    },
+    {
+      "path": "apps/web/src/pages/AdminUserPage.tsx",
+      "status": "M",
+      "bytes": 17112,
+      "sha256": "86a60a32e4241b541def2eabdb176899d578d5cf3b909e23b4c67e96770ff4d3"
+    },
+    {
+      "path": "docs/BACKLOG.md",
+      "status": "M",
+      "bytes": 423634,
+      "sha256": "82296412042bccfa9f53d60fa1e594200417b3c90251f4d561ac2b1add2de635"
+    },
+    {
+      "path": "docs/CHANGELOG_DEV.md",
+      "status": "M",
+      "bytes": 136447,
+      "sha256": "d7aefc65d3d6f9e1262829e6ce452a5056a4bc6e9be47dbde9fdcbf6f0aafd12"
+    },
+    {
+      "path": "docs/DECISIONS.md",
+      "status": "M",
+      "bytes": 45100,
+      "sha256": "7a06dc910af5f01735f3cd12e1fb53d6c4e805c4097a1fa3ca60e4c3510dbb8b"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "status": "M",
+      "bytes": 55941,
+      "sha256": "445da10684d5cb828eec2a97982ddbc5064629e928d4bcbb3cc79beec184e213"
+    },
+    {
+      "path": "docs/architecture/API_AS_BUILT.md",
+      "status": "M",
+      "bytes": 22047,
+      "sha256": "a0bf0e56be0de4782a0ba0ae4ab86667cfc6b3b28f4be1f4b2ce496362c304b6"
+    },
+    {
+      "path": "docs/architecture/DATA_MODEL_AS_BUILT.md",
+      "status": "M",
+      "bytes": 11319,
+      "sha256": "2355010b2cd07cf78c97dc58b7b0ac2558c2cc22d881af06d913e0e8d996d94e"
+    },
+    {
+      "path": "docs/audit/evidence/route-openapi-inventory.json",
+      "status": "M",
+      "bytes": 7958,
+      "sha256": "f030d84db76df05d07406cdf0d69e573a7930771281fa22bb495431cb1928e16"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/README.md",
+      "status": "A",
+      "bytes": 1987,
+      "sha256": "0c3320a0c40da2bd1315f1f2da69beaa7a305cd0da3d5164528529182d514b7e"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/ci/browser-prodlike/browser-summary.json",
+      "status": "A",
+      "bytes": 778,
+      "sha256": "236e85e770bc604972e71aae156c54fd6f949d41be886ac94c07d30cb0b09372"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/ci/cleanup-foundation/cleanup-summary.json",
+      "status": "A",
+      "bytes": 446,
+      "sha256": "afb042c3c36b6406714ff4590663517ce692a5c09b3599cfddf3aefe94a43a90"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/ci/local-summary.json",
+      "status": "A",
+      "bytes": 1033,
+      "sha256": "ebdca92cc60ae1eb2768b425c534477f9bf9302d1b5a821ddef6df20785f8a1d"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/ci/postgres/postgres-summary.json",
+      "status": "A",
+      "bytes": 1113,
+      "sha256": "27c6714ea2e8dfe391f5d822a2ffaf66799f295aa9b2b434f72f262e8532f1dc"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/ci/quality/fast-summary.json",
+      "status": "A",
+      "bytes": 4236,
+      "sha256": "29bcbb5e85989c0929613dc2a76f67b2082d7be5291130d92dc35f0e3a34ea1e"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/enabled-e2e/browser-summary.json",
+      "status": "A",
+      "bytes": 774,
+      "sha256": "03cd531be0f68d440361987d1c2c4d120deafaf232fc3c91028bc7f72c251b9a"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/enabled-e2e/environment.json",
+      "status": "A",
+      "bytes": 2153,
+      "sha256": "12c4c833915ac05056cc4bfa4a249202e7dffe57c50c980f7605b84e78814b8a"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/enabled-e2e/playwright-results.json",
+      "status": "A",
+      "bytes": 6683,
+      "sha256": "2b87810f6c0f3e9bb94905b66c6e7a64941678971ad281a6b39d9ed3d3d05530"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/screenshots/chromium-desktop-reset-confirmation.png",
+      "status": "A",
+      "bytes": 56739,
+      "sha256": "788734b971f974e646fd18d71ca6f0b9935f6c9d869bab6c0e04438e00864d66"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/screenshots/chromium-mobile-360-reset-confirmation.png",
+      "status": "A",
+      "bytes": 39896,
+      "sha256": "3cfa60be0eb2df2dc0c25bf041d0695e4bc7527c379e537e500076882017ede5"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/screenshots/chromium-mobile-390-reset-confirmation.png",
+      "status": "A",
+      "bytes": 39241,
+      "sha256": "06a57fb079718cb59df97d0a8303043bb55e43cab7739fca4ca46756d88eb8d7"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/stage12-wo2-flow-report-r2.html",
+      "status": "A",
+      "bytes": 4838,
+      "sha256": "ac6e93497299bddb3705e8f5ffadc78ccff675e241adc1e60cb03af6c9a11e0e"
+    },
+    {
+      "path": "docs/operations/DEPLOYMENT_AS_BUILT.md",
+      "status": "M",
+      "bytes": 25690,
+      "sha256": "eeaba57a30e365c0fb5d2d678f13481fee4f1b377af4562ca33ba5ac9be27b36"
+    },
+    {
+      "path": "docs/requirements/04_PRD.md",
+      "status": "M",
+      "bytes": 64111,
+      "sha256": "2364f42df995b54697a63aaab9c2ad2a84a321a138f1c0d0413c54568bd36d71"
+    },
+    {
+      "path": "docs/requirements/05_UX_FLOWS.md",
+      "status": "M",
+      "bytes": 43982,
+      "sha256": "d2256a4007db4bad10418fb46669c38e7a64455265d62d97c27d6a841bde537f"
+    },
+    {
+      "path": "docs/requirements/07_DATA_MODEL.md",
+      "status": "M",
+      "bytes": 15783,
+      "sha256": "1d90ee6b37b69f440c6bfd9f3f3a5ed6806d56f478d4677a286eb400cc819056"
+    },
+    {
+      "path": "docs/requirements/08_API_SPEC.md",
+      "status": "M",
+      "bytes": 31567,
+      "sha256": "8482cf74b22c5dff23f5c97660e2024370169f2ebccea19385d65503ae187088"
+    },
+    {
+      "path": "docs/requirements/11_ACCEPTANCE_TEST_CATALOG.md",
+      "status": "M",
+      "bytes": 79784,
+      "sha256": "be12ed7b2b4f8937a1ea9fec17a046f1b5b14140c1e409680cc623969e1d17f6"
+    },
+    {
+      "path": "docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md",
+      "status": "M",
+      "bytes": 45551,
+      "sha256": "23e940b6a252cf16a5ea56831b53a7a3bcb9acebdea1eca3bdf7ae53e004658d"
+    },
+    {
+      "path": "package.json",
+      "status": "M",
+      "bytes": 3341,
+      "sha256": "765a205697267b958234b78aae5a18625486e8ec986cbbbf373ffb5ba6a690cd"
+    },
+    {
+      "path": "scripts/verify/run-fast.mjs",
+      "status": "M",
+      "bytes": 7411,
+      "sha256": "ce70547b219651807b78bd4b371a4ce3b7af6f658e9070381c9f7563f73ba486"
+    },
+    {
+      "path": "scripts/verify/run-postgres.mjs",
+      "status": "M",
+      "bytes": 4800,
+      "sha256": "3b86a9a3fa2109db821208d5a5ee23c87cf968af6ddea8e1b523dfbd8f8a1605"
+    },
+    {
+      "path": "tests/e2e/stage12-admin-password-reset.spec.ts",
+      "status": "A",
+      "bytes": 6344,
+      "sha256": "da0d445615ae57b9d38839eb3aaad6af6ef485d6aedeeff79ae81ee72083f786"
+    }
+  ],
+  "patchArtifacts": [
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/full-forward.patch",
+      "bytes": 493044,
+      "sha256": "969a8f425e189970a5340683588600f870c58f2ca0e107261f775c422d2d8efe"
+    },
+    {
+      "path": "docs/audit/evidence/stage12-final-candidate/full-reverse.patch",
+      "bytes": 493132,
+      "sha256": "b2308312debab8b105aff201ae82bc606f19c15229a39c3a383b84e52dc06c6e"
+    }
+  ],
+  "exclusions": [
+    "This manifest excludes itself to avoid a self-referential hash.",
+    "Patch artifacts are listed separately because they encode candidateFiles and do not encode themselves."
+  ],
+  "releaseBoundary": "verified_local only; no commit, push, deploy, public mutation, or non-ephemeral database migration; publish 5.0.0 held before a separately gated 5.0.1 enablement after legacy-fleet drain."
+}

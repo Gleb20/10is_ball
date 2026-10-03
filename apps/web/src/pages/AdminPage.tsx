@@ -7,6 +7,7 @@ import { TempPasswordPanel } from "../authUi";
 import { api, type AdminUser } from "../api";
 import { useAuth } from "../auth";
 import { AdminUserActions, type AdminUserAction } from "./AdminUserActions";
+import { useAdminPasswordReset } from "../adminPasswordReset";
 
 type UserStatusFilter = "" | "active" | "blocked";
 type Context = { actorKey: string; generation: number; loadEffect: number; mutationEffect: number };
@@ -56,6 +57,7 @@ const mutationMessage = (error: unknown) => {
 
 export function AdminPage() {
   const { user, reauthRequired } = useAuth();
+  const passwordReset = useAdminPasswordReset();
   const restoredRef = useRef<AdminReturnContext | null | undefined>(undefined);
   if (restoredRef.current === undefined) {
     restoredRef.current = readAdminReturnContext(user?.role === "admin" ? user.id : undefined);
@@ -230,14 +232,10 @@ export function AdminPage() {
         else if (action === "unblock") await api.unblockUser(target.id);
         else if (action === "promote") await api.updateUserRole(target.id, "admin");
         else if (action === "demote") await api.updateUserRole(target.id, "user");
-        else {
-          const response = await api.resetPassword(target.id);
-          if (!valid()) return;
-          setTempPassword(response.temporaryPassword); setTempGeneration(generation);
-        }
+        else throw new Error("Сброс пароля временно недоступен во время безопасного обновления");
         if (!valid()) return;
         setConfirm(null);
-        if (action !== "reset") await load(filtersRef.current.query, filtersRef.current.status);
+        await load(filtersRef.current.query, filtersRef.current.status);
       } catch (error) {
         if (valid() && (error as { status?: number }).status !== 401) {
           setActionError(mutationMessage(error)); setActionErrorGeneration(generation);
@@ -305,10 +303,18 @@ export function AdminPage() {
         </div>
         <StatusChip status={entry.status} domain="user" />
         <AdminUserActions actorId={user?.id ?? null} target={entry} open={visibleOpenActions === entry.id} pending={mutationPending}
+          resetEnabled={passwordReset.enabled}
           groupLabel={`Действия: ${entry.lastName} ${entry.firstName}`}
           onToggle={() => { setOpenActions(visibleOpenActions === entry.id ? null : entry.id); setActionsGeneration(generation); }}
           onClose={() => setOpenActions(null)}
-          onAction={(action) => { setConfirm({ action, target: entry }); setConfirmGeneration(generation); }} />
+          onAction={(action) => {
+            if (action === "reset") {
+              setOpenActions(null);
+              void passwordReset.open(entry);
+              return;
+            }
+            setConfirm({ action, target: entry }); setConfirmGeneration(generation);
+          }} />
       </div>)}</div>
     </AsyncState>
     <Dialog open={visibleConfirm !== null} onClose={() => !mutationPending && setConfirm(null)} title={confirmTitle} width="sm"

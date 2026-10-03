@@ -20,6 +20,7 @@ type AuthState = {
   refresh: () => Promise<void>;
   retryStartup: () => void;
   setUser: (u: User | null) => void;
+  explicitAuthEpoch: number;
 };
 
 const COLD_START_HINT_MS = 1_500;
@@ -34,11 +35,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useState<AuthState["startupPhase"]>("checking");
   const [startupError, setStartupError] = useState<string | null>(null);
   const [reauthRequired, setReauthRequired] = useState(false);
+  const [explicitAuthEpoch, setExplicitAuthEpoch] = useState(0);
   const userRef = useRef<User | null>(null);
+  const authEpochRef = useRef(0);
   const startupAttemptRef = useRef(0);
   const startupControllerRef = useRef<AbortController | null>(null);
 
   const setUser = useCallback((nextUser: User | null) => {
+    const currentUser = userRef.current;
+    if (!nextUser || !currentUser || currentUser.id !== nextUser.id) {
+      authEpochRef.current += 1;
+      setExplicitAuthEpoch((epoch) => epoch + 1);
+    }
     if (!nextUser || (userRef.current && userRef.current.id !== nextUser.id)) {
       try {
         window.sessionStorage.removeItem("tab10.history.return");
@@ -51,10 +59,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refresh = useCallback(async () => {
+    const epoch = authEpochRef.current;
     try {
       const res = await api.me();
+      if (authEpochRef.current !== epoch) return;
       setUser(res.user);
     } catch (error) {
+      if (authEpochRef.current !== epoch) return;
       if ((error as { status?: number }).status !== 401) {
         setUser(null);
       }
@@ -117,6 +128,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const handleUnauthorized = () => {
+      authEpochRef.current += 1;
+      startupAttemptRef.current += 1;
+      startupControllerRef.current?.abort();
+      startupControllerRef.current = null;
       const hadAuthenticatedUser = userRef.current !== null;
       userRef.current = null;
       setUserState(null);
@@ -147,6 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refresh,
       retryStartup,
       setUser,
+      explicitAuthEpoch,
     }),
     [
       user,
@@ -157,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refresh,
       retryStartup,
       setUser,
+      explicitAuthEpoch,
     ],
   );
 

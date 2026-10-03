@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { FakeClock } from "@tab10/test-utils";
+import { buildApp } from "./app.js";
+import { createMigratedPgliteDb } from "./db/client.js";
 import { openApiSpec } from "./openapi.js";
 
 type OpenApiOperation = {
@@ -26,6 +29,15 @@ type OpenApiDocument = {
     schemas?: Record<string, unknown>;
     securitySchemes?: Record<string, unknown>;
   };
+};
+
+type ObjectSchema = {
+  required?: string[];
+  additionalProperties?: boolean;
+  properties?: Record<
+    string,
+    { type?: string; enum?: unknown[]; format?: string }
+  >;
 };
 
 const HTTP_METHODS = ["get", "post", "put", "patch", "delete"] as const;
@@ -111,6 +123,31 @@ function documentedOperations(spec: OpenApiDocument) {
     .sort((left, right) => (left.key < right.key ? -1 : left.key > right.key ? 1 : 0));
 }
 
+function expectRuntimeObjectToMatchSchema(
+  payload: Record<string, unknown>,
+  schema: ObjectSchema,
+) {
+  for (const key of schema.required ?? []) {
+    expect(payload, `required runtime property ${key}`).toHaveProperty(key);
+  }
+  if (schema.additionalProperties === false) {
+    expect(Object.keys(payload).sort()).toEqual(
+      Object.keys(schema.properties ?? {}).filter((key) => payload[key] !== undefined).sort(),
+    );
+  }
+  for (const [key, property] of Object.entries(schema.properties ?? {})) {
+    const value = payload[key];
+    if (value === undefined) continue;
+    if (property.type) expect(typeof value, `${key} runtime type`).toBe(property.type);
+    if (property.enum) expect(property.enum, `${key} documented enum`).toContain(value);
+    if (property.format === "uuid") {
+      expect(value, `${key} UUID format`).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+      );
+    }
+  }
+}
+
 describe("AT-OPS-API-001 runtime OpenAPI contract", () => {
   const spec = openApiSpec() as OpenApiDocument;
   const operations = documentedOperations(spec);
@@ -191,12 +228,92 @@ describe("AT-OPS-API-001 runtime OpenAPI contract", () => {
       }
       for (const [status, response] of Object.entries(responses)) {
         if (/^[45]\d\d$/.test(status)) {
+          const expectedSchema =
+            key ===
+              "POST /api/v1/admin/users/{userId}/reset-password" &&
+            status === "409"
+              ? "#/components/schemas/AdminPasswordResetPostConflict"
+              : "#/components/schemas/ApiError";
           expect(
             response.content?.["application/json"]?.schema?.$ref,
             `${key} ${status} error`,
-          ).toBe("#/components/schemas/ApiError");
+          ).toBe(expectedSchema);
         }
       }
+    }
+  });
+
+  it("documents both runtime reset-password 409 response shapes", async () => {
+    const context = await createMigratedPgliteDb();
+    const built = await buildApp({
+      db: context.db,
+      clock: new FakeClock(new Date("2026-10-03T12:00:00.000Z")),
+    });
+    const requestA = "00000000-0000-4000-8000-0000000000a1";
+    const requestB = "00000000-0000-4000-8000-0000000000b2";
+
+    try {
+      await built.services.auth.seedAdmin("admin@openapi-reset.test", "AdminPass1!");
+      const login = await built.app.inject({
+        method: "POST",
+        url: "/api/v1/auth/login",
+        payload: { email: "admin@openapi-reset.test", password: "AdminPass1!" },
+      });
+      const adminCookie = login.cookies.find(
+        (cookie) => cookie.name === "tab10_session",
+      )!.value;
+      const created = await built.app.inject({
+        method: "POST",
+        url: "/api/v1/admin/users",
+        cookies: { tab10_session: adminCookie },
+        payload: {
+          email: "target@openapi-reset.test",
+          firstName: "OpenAPI",
+          lastName: "Target",
+        },
+      });
+      const targetUserId = created.json().user.id as string;
+      const reset = (requestId: string, expectedLastAppliedRequestId: string | null) =>
+        built.app.inject({
+          method: "POST",
+          url: `/api/v1/admin/users/${targetUserId}/reset-password`,
+          cookies: { tab10_session: adminCookie },
+          headers: { "idempotency-key": requestId },
+          payload: { expectedLastAppliedRequestId },
+        });
+
+      expect((await reset(requestA, null)).statusCode).toBe(200);
+      const stateConflict = await reset(requestB, null);
+      const reusedRequestId = await reset(requestA, requestB);
+      expect(stateConflict.statusCode).toBe(409);
+      expect(reusedRequestId.statusCode).toBe(409);
+
+      const responseSchema = spec.paths[
+        "/api/v1/admin/users/{userId}/reset-password"
+      ]?.post?.responses?.["409"]?.content?.["application/json"]?.schema;
+      expect(responseSchema).toEqual({
+        $ref: "#/components/schemas/AdminPasswordResetPostConflict",
+      });
+      expect(spec.components?.schemas?.AdminPasswordResetPostConflict).toEqual({
+        oneOf: [
+          { $ref: "#/components/schemas/AdminPasswordResetConflict" },
+          { $ref: "#/components/schemas/AdminPasswordResetIdempotencyConflict" },
+        ],
+      });
+
+      const runtimeConflicts = [
+        [stateConflict.json(), "AdminPasswordResetConflict"],
+        [reusedRequestId.json(), "AdminPasswordResetIdempotencyConflict"],
+      ] as const;
+      for (const [payload, schemaName] of runtimeConflicts) {
+        expectRuntimeObjectToMatchSchema(
+          payload as Record<string, unknown>,
+          spec.components?.schemas?.[schemaName] as ObjectSchema,
+        );
+      }
+    } finally {
+      await built.app.close();
+      await context.close();
     }
   });
 
