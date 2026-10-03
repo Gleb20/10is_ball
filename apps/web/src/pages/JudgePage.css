@@ -1,0 +1,166 @@
+html:has(.app-shell--immersive .judge-screen),
+body:has(.app-shell--immersive .judge-screen) {
+  background: #0f1115;
+}
+
+.app-shell--immersive:has(.judge-screen) {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #0f1115;
+}
+
+.app-shell--immersive:has(.judge-screen) .app-main {
+  background: #0f1115;
+}
+
+.judge-screen button.judge-side--scoring {
+  width: 100%;
+  appearance: none;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.judge-screen button.judge-side--scoring:disabled {
+  cursor: default;
+  opacity: 0.62;
+}
+
+.judge-screen .judge-board:not(.judge-board--setup) {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+}
+
+.judge-screen .judge-board:not(.judge-board--setup) .judge-side {
+  display: grid;
+  grid-row: span 4;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: subgrid;
+}
+
+.judge-screen .judge-board:not(.judge-board--setup) .judge-point-btn,
+.judge-screen .judge-board:not(.judge-board--setup) .judge-point-spacer {
+  margin-top: 0;
+}
+
+.judge-screen .judge-side--scoring .judge-point-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: #cba5f8;
+  color: #241039;
+}
+
+.judge-screen .judge-side__name {
+  width: 100%;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.judge-screen .judge-side__label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.judge-screen .judge-side__score {
+  font-variant-numeric: tabular-nums;
+}
+
+.judge-screen div.judge-rotate-hint {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 12px;
+  text-align: left;
+}
+
+.judge-screen div.judge-rotate-hint p {
+  margin: 0;
+}
+
+.judge-screen .judge-rotate-hint__close {
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #ffd666;
+  font: inherit;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.judge-dialog {
+  --btn-primary-bg: #cba5f8;
+  --btn-primary-hover: #e5d1fc;
+  --btn-primary-fg: #241039;
+  --btn-focus-ring: #cba5f8;
+  --app-focus-ring: #cba5f8;
+  --surfaces-surface-1: #0f1115;
+  --text-main-on-surface: #f5f5f5;
+  --text-secondary-on-surface: #c9cbd1;
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #c9cbd1;
+  --outlines-border: #5f6470;
+  --divider: #454a55;
+  max-height: min(90dvh, 760px);
+  overflow-y: auto;
+  background: #0f1115;
+  color: #f5f5f5;
+}
+
+.judge-dialog .judge-more {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: transparent;
+}
+
+.judge-dialog .judge-handover,
+.judge-dialog .judge-correction {
+  min-width: 0;
+  background: #1a1d24;
+}
+
+.judge-dialog .judge-handover p,
+.judge-dialog .judge-correction p {
+  margin: 0;
+}
+
+.judge-dialog .judge-correction__field {
+  --tf-outlined-bg: #f7f7f8;
+  --tf-bg-hover: #fff;
+  --tf-border-default: #767b84;
+  --tf-border-hover: #4e3177;
+  --tf-border-focus-primary: #7a2fd0;
+  --tf-disabled-opacity: 1;
+  --color-text-primary: #15171b;
+  --color-text-secondary: #50545c;
+  --color-text-disabled: #50545c;
+  --color-error: #b42318;
+}
+
+.judge-dialog .judge-confirm-bar {
+  align-items: stretch;
+}
+
+@media (max-width: 300px) {
+  .judge-screen .judge-board:not(.judge-board--setup) {
+    grid-template-columns: 1fr;
+  }
+
+  .judge-screen .judge-side {
+    min-height: 200px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .judge-screen .judge-side--flash {
+    animation: none;
+  }
+}

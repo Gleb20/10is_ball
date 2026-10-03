@@ -1,0 +1,78 @@
+.tournament-setup__intro,
+.tournament-setup__hint {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.tournament-setup__heading-row {
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.tournament-setup__heading-row .section-title {
+  margin: 0;
+}
+
+.tournament-setup__choice {
+  border: 0;
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.tournament-setup__choice-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tournament-setup__rule-summary {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-inline-start: 20px;
+}
+
+.tournament-setup__roster {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tournament-setup__roster-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.tournament-setup__participant {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.tournament-setup__remove {
+  flex: 0 0 44px;
+  height: 44px;
+  min-height: 44px;
+  min-width: 44px;
+  width: 44px;
+}
+
+.tournament-setup__guest > button {
+  align-self: flex-start;
+}
+
+.tournament-setup__actions {
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.tournament-setup__actions > button {
+  flex: 1 1 180px;
+}

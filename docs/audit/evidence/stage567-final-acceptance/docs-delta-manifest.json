@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "baseline": "frozen Stage 5-7 candidate 4.3.0 reconstructed from base df807d508613b3226345813ff35080a9e1d1c288 plus immutable forward.patch",
+  "scope": "canonical coverage and acceptance documentation only",
+  "fileCount": 8,
+  "files": [
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "before": {
+        "sha256": "d84834be4185a0d3d1fa9dca07fb860a56f1bffd0de0fed3fb2c46fa0be32f4d",
+        "bytes": 53660
+      },
+      "after": {
+        "sha256": "a8c23523ffba38f26eea8cdd471908d46ad9e4e912fefacfbbe57e85a18f8874",
+        "bytes": 54131
+      }
+    },
+    {
+      "path": "docs/CHANGELOG_DEV.md",
+      "before": {
+        "sha256": "11224ddddfdb743179cb045b6b01a918190e6209a345bdabbb9a278f6d93c9dc",
+        "bytes": 134118
+      },
+      "after": {
+        "sha256": "09ae7324b048b15380356a4d0d52340d089886c549bf247f24c70308a0b82f0c",
+        "bytes": 134813
+      }
+    },
+    {
+      "path": "docs/BACKLOG.md",
+      "before": {
+        "sha256": "e6e2836f624dd70524652e15dd5f5a6695cf9d5f45382c5777ea0c1c12ecf52f",
+        "bytes": 423106
+      },
+      "after": {
+        "sha256": "b50efd86d2c618315eaa61155657a3219b5f4a227954c0678ca1f511cca34811",
+        "bytes": 423301
+      }
+    },
+    {
+      "path": "docs/test-plans/TECH-008-interface-programme.md",
+      "before": {
+        "sha256": "7ad1a1bcc9128d03ef7724f2bdc110b60d2b113cb41133ccbf22a012d36b5869",
+        "bytes": 16876
+      },
+      "after": {
+        "sha256": "92629a77afedd4d843a3fdc9791cf948f383931271e562016931e1d437953e50",
+        "bytes": 17006
+      }
+    },
+    {
+      "path": "docs/audits/2026-09-13-ux-ui/implementation/check_coverage.py",
+      "before": {
+        "sha256": "a92379da57b0682d84ebbe845f0ba53e62d3ba625af344a3149cce143f659a20",
+        "bytes": 19645
+      },
+      "after": {
+        "sha256": "f72572fb647ffea5fd7c671710a361230129e78252904dbd145dfb6a07c389bf",
+        "bytes": 24684
+      }
+    },
+    {
+      "path": "docs/audits/2026-09-13-ux-ui/implementation/implementation-results.json",
+      "before": {
+        "sha256": "c1ea971a892ebd57711435769501f769abc7f9050ede933a0398b7394fc7cc58",
+        "bytes": 27480
+      },
+      "after": {
+        "sha256": "02ba32c49c46ab6ee8708e8ecd7fabc8ef27c1bd072ba7ed83ff6c98143cdfb7",
+        "bytes": 46364
+      }
+    },
+    {
+      "path": "docs/audits/2026-09-13-ux-ui/implementation/coverage.csv",
+      "before": {
+        "sha256": "7a751fabc8becd8d84a4def3b8bf38a02941b2adc7398744173eb0838f71791c",
+        "bytes": 60397
+      },
+      "after": {
+        "sha256": "80a6d47af5242bb54d4749ae0777f874c84bc3b4d4443eab8b0aab37cfa53019",
+        "bytes": 59773
+      }
+    },
+    {
+      "path": "docs/audit/evidence/stage567-final-acceptance.json",
+      "before": null,
+      "after": {
+        "sha256": "b6b7ba1e972001728ea26482cce031d386c413c7374cc6933def555f467006ae",
+        "bytes": 3513
+      }
+    }
+  ],
+  "patches": {
+    "forward": {
+      "path": "docs-delta.patch",
+      "sha256": "64921bc30fe582da3f900d81672de5b852514f899b5d9f57f564f17d5493bd60",
+      "bytes": 86376
+    },
+    "rollback": {
+      "path": "docs-rollback.patch",
+      "sha256": "b13179b619a37f5d40065cd83513b3c282db9f716dc94c361472fa90b021aa77",
+      "bytes": 86380
+    }
+  },
+  "coverage": {
+    "rows": 236,
+    "sourceEpisodes": 82,
+    "expertIds": 38,
+    "newVerifiedLocalAtoms": 44,
+    "coverageSha256": "80a6d47af5242bb54d4749ae0777f874c84bc3b4d4443eab8b0aab37cfa53019",
+    "implementationResultsSha256": "02ba32c49c46ab6ee8708e8ecd7fabc8ef27c1bd072ba7ed83ff6c98143cdfb7"
+  },
+  "verification": {
+    "coverageBuildCheckRun1": "PASS 236 rows, 82 episodes, 38 expert IDs, errors=[]",
+    "coverageBuildCheckRun2": "PASS with identical coverage and implementation-result hashes",
+    "openDecisionGateSpotChecks": "PASS",
+    "docsAudit": "PASS 185 files, zero broken links, anchors, duplicates, incomplete items or invalid statuses",
+    "diffCheck": "PASS",
+    "forwardReverseCheck": "PASS",
+    "freshScratch": "PASS: frozen forward then docs delta verified all 8 after hashes; docs rollback restored all 7 prior files and removed the new receipt"
+  }
+}

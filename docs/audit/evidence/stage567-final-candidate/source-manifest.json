@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "baseSha": "df807d508613b3226345813ff35080a9e1d1c288",
+  "scope": "all modified and untracked candidate files outside this evidence directory",
+  "fileCount": 33,
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "e5f51fd9b3951b28a466c5cf11e2fee07f0a16ee07c30d1876902a18a4819670",
+      "bytes": 18665
+    },
+    {
+      "path": "apps/web/src/auth-recovery.test.tsx",
+      "sha256": "655d98ed460223cd50c979508b01fef56eeb619aad0b5bfabfdd88c616b21798",
+      "bytes": 10354
+    },
+    {
+      "path": "apps/web/src/pages/JudgePage.css",
+      "sha256": "9624650c967c3d358c6ce8cc38727f074a9e1d2676a4b06a9dd031a701dcf1de",
+      "bytes": 3530
+    },
+    {
+      "path": "apps/web/src/pages/JudgePage.test.tsx",
+      "sha256": "a56aa7b5d05eaca96bd5b0a9db0a64f086ce2ec5342e9b09393019aa6128ff27",
+      "bytes": 93336
+    },
+    {
+      "path": "apps/web/src/pages/JudgePage.tsx",
+      "sha256": "1965eebf44928a50933bd108139a843807dbfd2255df153d4133a8ac3e907b1f",
+      "bytes": 98920
+    },
+    {
+      "path": "apps/web/src/pages/MatchCreatePage.css",
+      "sha256": "d76b6b1b87ea7a216e70a9f27743283f4697c90cad6c227c1255d337bda6425e",
+      "bytes": 3071
+    },
+    {
+      "path": "apps/web/src/pages/MatchCreatePage.test.tsx",
+      "sha256": "75e3f3b1ba2c781e0eb07007b59c9bafed933f5b6e289d0d08b10c8a0685b37e",
+      "bytes": 29515
+    },
+    {
+      "path": "apps/web/src/pages/MatchCreatePage.tsx",
+      "sha256": "ed0491ef85bcd37fb712c247344c4699fe7b0435911a48e40617bc3e5a4637d9",
+      "bytes": 27936
+    },
+    {
+      "path": "apps/web/src/pages/TournamentDetailPage.gap006.test.tsx",
+      "sha256": "c9e64b76ed6e56ae4c9b95cf9b235d9f88c702395a19c6fcfc98015618fd5d95",
+      "bytes": 12003
+    },
+    {
+      "path": "apps/web/src/pages/TournamentDetailPage.tsx",
+      "sha256": "f62bed231edcd52085e6eb581e5dfa6af2f2b7951f69a9d600edab2ff343aa9c",
+      "bytes": 49241
+    },
+    {
+      "path": "apps/web/src/pages/TournamentSetup.css",
+      "sha256": "b0457b82b20f5a09911754e3513f0b688a608d1bf5b24f19a965af53783f6fc0",
+      "bytes": 1210
+    },
+    {
+      "path": "apps/web/src/pages/TournamentSetup.gap012.test.tsx",
+      "sha256": "1a77cb3228ad336938570fa067b439301bb9d29f2952e3541d1a1c928d0ea4f4",
+      "bytes": 17971
+    },
+    {
+      "path": "apps/web/src/pages/TournamentsPage.tsx",
+      "sha256": "75f956283af01fd4312592235bf6a77991aa1f4c4aff5eecaba8e49e4c7e92cd",
+      "bytes": 7212
+    },
+    {
+      "path": "docs/BACKLOG.md",
+      "sha256": "e6e2836f624dd70524652e15dd5f5a6695cf9d5f45382c5777ea0c1c12ecf52f",
+      "bytes": 423106
+    },
+    {
+      "path": "docs/CHANGELOG_DEV.md",
+      "sha256": "11224ddddfdb743179cb045b6b01a918190e6209a345bdabbb9a278f6d93c9dc",
+      "bytes": 134118
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "d84834be4185a0d3d1fa9dca07fb860a56f1bffd0de0fed3fb2c46fa0be32f4d",
+      "bytes": 53660
+    },
+    {
+      "path": "docs/VERSIONING.md",
+      "sha256": "831fd601ec5af219895d272b38963d313e049ada480452c5032461ed4f829b9b",
+      "bytes": 3872
+    },
+    {
+      "path": "docs/requirements/04_PRD.md",
+      "sha256": "86a24eb7575ef1cce41745dbfc6ed85d6a6ab19a824c0bc7d3ae04d3bce517d4",
+      "bytes": 62850
+    },
+    {
+      "path": "docs/requirements/05_UX_FLOWS.md",
+      "sha256": "34c419aed49ee648e581184bb1d663b1fe46888d86fc26f05063efb9e8359584",
+      "bytes": 42143
+    },
+    {
+      "path": "docs/requirements/11_ACCEPTANCE_TEST_CATALOG.md",
+      "sha256": "4bc78ceee3c6b9c42d6f71f5299a55d18d89543f512bca387f5e4c641ac31687",
+      "bytes": 76874
+    },
+    {
+      "path": "docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md",
+      "sha256": "520ee09f7f6754fdee26d776968ecb011c5e94db02254bcfef376166cb49a50e",
+      "bytes": 44471
+    },
+    {
+      "path": "docs/test-plans/TECH-008-interface-programme.md",
+      "sha256": "7ad1a1bcc9128d03ef7724f2bdc110b60d2b113cb41133ccbf22a012d36b5869",
+      "bytes": 16876
+    },
+    {
+      "path": "package.json",
+      "sha256": "f22e86fe429572ba80f7e033d2989f911a7c59acd74474751ebda4f5f854f812",
+      "bytes": 3341
+    },
+    {
+      "path": "tests/e2e/critical.spec.ts",
+      "sha256": "b004c9625af08753a385baa9c5eeed99a7b4ef393f11b04e99355c6085e598b7",
+      "bytes": 9013
+    },
+    {
+      "path": "tests/e2e/stage2-home.spec.ts",
+      "sha256": "78006af4489e54c90584519e8ad04832759dd7d765d6c745c7ab1fdbea6492fa",
+      "bytes": 14468
+    },
+    {
+      "path": "tests/e2e/stage4-score-recovery.spec.ts",
+      "sha256": "4ae92c0692d101ef631c08a23b732d3b469c3b5598745b9555df2d2bbabd7259",
+      "bytes": 17097
+    },
+    {
+      "path": "tests/e2e/stage5-match-create.spec.ts",
+      "sha256": "17465a75d275df8d72e0de0a3d2b70e0e90d05345e7273302a1551ef37755af7",
+      "bytes": 12537
+    },
+    {
+      "path": "tests/e2e/stage6-judge-layout.spec.ts",
+      "sha256": "5ab46e55da2128d81758ce3400099fe2cf6bdce1e8cdc4447179584e49cfaaaf",
+      "bytes": 15777
+    },
+    {
+      "path": "tests/e2e/stage7-tournament-setup.spec.ts",
+      "sha256": "288a99fb09df2aece375c345bf4f3c43b46bd9ad56c265d57f954770725ff0d6",
+      "bytes": 8387
+    },
+    {
+      "path": "tests/e2e/wave-c.spec.ts",
+      "sha256": "dbdc8aa5ae85fd70bc2327118404ef9d87621dca8feafe6334c543687597899e",
+      "bytes": 16352
+    },
+    {
+      "path": "tests/e2e/wave-d-tournaments.spec.ts",
+      "sha256": "c12b58524e9752d3157369d3a974049d1cb52cfc16825db5b421e899149bde0c",
+      "bytes": 11609
+    },
+    {
+      "path": "tests/e2e/wave-e-user.spec.ts",
+      "sha256": "14c848638acd5bc43f21e5a71a9846dafc6803e706193232d9f4e849e1484409",
+      "bytes": 13814
+    },
+    {
+      "path": "tests/e2e/wave-f-a11y.spec.ts",
+      "sha256": "3381282aca5d81687d416180aabe075427a51bbcc6942ecfd3d05e878ff60307",
+      "bytes": 21600
+    }
+  ]
+}

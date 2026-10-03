@@ -38,6 +38,7 @@ async function login(page: Page) {
 
 async function createStartedMatch(page: Page, title: string) {
   await page.goto("/matches/new");
+  await page.getByRole("button", { name: "Изменить название", exact: true }).click();
   await page.getByLabel("Название").fill(title);
   await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
   await page

@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "fileCount": 26,
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "1b64e3f0e0435de6abcb9d08ac7595efee7fbb91b5135355fb419000dd7b8368",
+      "bytes": 1036
+    },
+    {
+      "path": "ci/browser-summary.json",
+      "sha256": "979049c02ced92089ed71653ef9b00bd3495fbdb546d11a7d64c76dd580dadd9",
+      "bytes": 778
+    },
+    {
+      "path": "ci/cleanup-summary.json",
+      "sha256": "afb042c3c36b6406714ff4590663517ce692a5c09b3599cfddf3aefe94a43a90",
+      "bytes": 446
+    },
+    {
+      "path": "ci/fast-summary.json",
+      "sha256": "e275b0053b451ecc2068e2ce2282afb8e447ea03fc6350b3b51b62054f4e2ecf",
+      "bytes": 4009
+    },
+    {
+      "path": "ci/local-summary.json",
+      "sha256": "0449d46d34f89fb69e414166d606d1a78430366df46c66968910c1c7866d6254",
+      "bytes": 1033
+    },
+    {
+      "path": "ci/postgres-summary.json",
+      "sha256": "462855f9b5cb89e752e89bb5072abc0e7d582cedb1e615e0f8c40a7135f9bda6",
+      "bytes": 1056
+    },
+    {
+      "path": "contrast/stage5-selected-desktop.json",
+      "sha256": "5afa9d8b82074127343f70b80a15c8462c346116647e4f95b5bba12dfc2fae95",
+      "bytes": 108
+    },
+    {
+      "path": "contrast/stage5-selected-mobile-360.json",
+      "sha256": "5afa9d8b82074127343f70b80a15c8462c346116647e4f95b5bba12dfc2fae95",
+      "bytes": 108
+    },
+    {
+      "path": "contrast/stage5-selected-mobile-390.json",
+      "sha256": "5afa9d8b82074127343f70b80a15c8462c346116647e4f95b5bba12dfc2fae95",
+      "bytes": 108
+    },
+    {
+      "path": "contrast/stage6-correction-desktop.json",
+      "sha256": "0ade029eec1a61a3a158664bae3475975ee530f6e222f469f15b88b7b99b1a09",
+      "bytes": 1110
+    },
+    {
+      "path": "contrast/stage6-correction-mobile-360.json",
+      "sha256": "0ade029eec1a61a3a158664bae3475975ee530f6e222f469f15b88b7b99b1a09",
+      "bytes": 1110
+    },
+    {
+      "path": "contrast/stage6-correction-mobile-390.json",
+      "sha256": "0ade029eec1a61a3a158664bae3475975ee530f6e222f469f15b88b7b99b1a09",
+      "bytes": 1110
+    },
+    {
+      "path": "flow-report.html",
+      "sha256": "e7c98cedd988275428234350bd4214dba64b00de2ee674ad4db6e526ca822c08",
+      "bytes": 7234
+    },
+    {
+      "path": "forward.patch",
+      "sha256": "895d623ffc3d38653791d6beadc827af5e04a730c8bf26e678ddbbc406f71bb7",
+      "bytes": 269125
+    },
+    {
+      "path": "receipt.json",
+      "sha256": "4bcd679141b811ae722981b08081f4328bee4372bc7ef293bdd70d9234757ba8",
+      "bytes": 2975
+    },
+    {
+      "path": "rollback.patch",
+      "sha256": "263cf8d95a4d4adb537e8171217477e3d96e3b702abd70228370983c45cd59f1",
+      "bytes": 269149
+    },
+    {
+      "path": "screenshots/stage5-desktop.png",
+      "sha256": "0293f7ba4f318efb63fc2b8f7889072f4f5f985da7a717a81fcfd7851c398b62",
+      "bytes": 108497
+    },
+    {
+      "path": "screenshots/stage5-mobile-360.png",
+      "sha256": "3d4a22629574ea9b77193a72366587cb4d0ed0f901add14d253a4486eee32aeb",
+      "bytes": 121771
+    },
+    {
+      "path": "screenshots/stage5-mobile-390.png",
+      "sha256": "b320601bace6999ac30f367c4daa1517b26bfbc2f2d7fc4e619b57b101cb1cd2",
+      "bytes": 114225
+    },
+    {
+      "path": "screenshots/stage6-correction-390.png",
+      "sha256": "d83a9bee3feebc901947386cca754567b8bec2d75aea652e8452983876e17597",
+      "bytes": 43981
+    },
+    {
+      "path": "screenshots/stage6-css-zoom-200-360.png",
+      "sha256": "ddce066f743a6b098ff8764d1214f9e7ce550fa05872e811fb191b51987e21f1",
+      "bytes": 134482
+    },
+    {
+      "path": "screenshots/stage6-landscape-360.png",
+      "sha256": "f7914482685555784dff2b17326e5359bc8dc987be27f70059f5b465e6a4d7de",
+      "bytes": 46835
+    },
+    {
+      "path": "screenshots/stage7-desktop-1440.png",
+      "sha256": "412f6c0be1ab480db1b147141541af9db6309ba89af6113822952c3849432cef",
+      "bytes": 82111
+    },
+    {
+      "path": "screenshots/stage7-desktop-360.png",
+      "sha256": "4da779e4fb663c83a3e5efd6425378be5adc8e46e2a8e2c3e2bdc4cc5730146a",
+      "bytes": 70782
+    },
+    {
+      "path": "screenshots/stage7-desktop-390.png",
+      "sha256": "7cb2594f7d87aa7a752edcf7e5be254fcad7c4aee414206fbd85af6b4577a24e",
+      "bytes": 70486
+    },
+    {
+      "path": "source-manifest.json",
+      "sha256": "115d17ccda091e6f0b601c7f8e870aba90e0c72cbe52cc60dec3a0a68c729204",
+      "bytes": 5802
+    }
+  ]
+}

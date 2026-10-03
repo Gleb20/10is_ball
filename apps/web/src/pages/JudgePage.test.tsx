@@ -140,6 +140,22 @@ function renderJudge(path = "/matches/m1/judge") {
   );
 }
 
+function JudgeRouteControls() {
+  const navigate = useNavigate();
+  return <button type="button" onClick={() => navigate("/matches/m2/judge")}>Открыть m2</button>;
+}
+
+function renderRoutableJudge() {
+  return render(
+    <MemoryRouter initialEntries={["/matches/m1/judge"]}>
+      <JudgeRouteControls />
+      <Routes>
+        <Route path="/matches/:id/judge" element={<JudgePage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
 function activityJudge(mode: "visible" | "hidden") {
   return (
     <MemoryRouter initialEntries={["/matches/m1/judge"]}>
@@ -168,6 +184,16 @@ function setDocumentVisibility(state: DocumentVisibilityState) {
     value: state,
   });
   document.dispatchEvent(new Event("visibilitychange"));
+}
+
+function dispatchPointer(
+  target: Element,
+  type: "pointerdown" | "pointermove" | "pointerup" | "pointercancel",
+  init: MouseEventInit & { pointerId: number },
+) {
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true, ...init });
+  Object.defineProperty(event, "pointerId", { value: init.pointerId });
+  fireEvent(target, event);
 }
 
 describe("REQ_ui__judge_immersive", () => {
@@ -214,7 +240,7 @@ describe("REQ_ui__judge_immersive", () => {
     const user = userEvent.setup();
     renderJudge();
     await user.click(await screen.findByRole("button", { name: "Ещё" }));
-    const select = screen.getByLabelText("Передать судейство");
+    const select = screen.getByLabelText("Передать ведение на другое устройство");
     expect(select).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent("Загружаем пользователей");
     await act(async () => pending.reject(new Error("offline")));
@@ -235,7 +261,7 @@ describe("REQ_ui__judge_immersive", () => {
     await user.click(await screen.findByRole("button", { name: "Повторить загрузку пользователей" }));
     const retry = await screen.findByRole("button", { name: "Повторить загрузку пользователей" });
     await waitFor(() => expect(retry).toHaveFocus());
-    expect(screen.getByLabelText("Передать судейство")).toBeDisabled();
+    expect(screen.getByLabelText("Передать ведение на другое устройство")).toBeDisabled();
     expect(directory).toHaveBeenCalledTimes(2);
   });
 
@@ -253,13 +279,12 @@ describe("REQ_ui__judge_immersive", () => {
     expect(screen.getByText("Подача")).toBeInTheDocument();
     expect(screen.getByTestId("serve-racket")).toBeInTheDocument();
     expect(screen.getByRole("note", { name: "Подсказка судье" })).toHaveTextContent(
-      /активный судья.*undo.*последнее действующее очко/i,
+      /счёт меняет тот.*этом устройстве.*отмена снимает последнее действующее очко/i,
     );
     expect(screen.getByText(/0:00|:\d{2}/)).toBeInTheDocument();
-    const sideA = screen.getByTestId("judge-side-A");
-    expect(sideA).toContainElement(
-      screen.getByRole("button", { name: /\+1 очко: анна а/i }),
-    );
+    const sideA = screen.getByRole("button", { name: /\+1 очко: анна а.*счёт 3.*подаёт/i });
+    expect(sideA).toBe(screen.getByTestId("judge-side-A"));
+    expect(within(sideA).queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("shows landscape hint in portrait", async () => {
@@ -275,6 +300,39 @@ describe("REQ_ui__judge_immersive", () => {
     expect(
       await screen.findByText(/поверните устройство горизонтально/i),
     ).toBeInTheDocument();
+
+    const scoreBoard = screen.getByRole("group", { name: "Счёт матча" });
+    await userEvent.click(screen.getByRole("button", { name: "Закрыть подсказку" }));
+    expect(screen.queryByText(/поверните устройство горизонтально/i)).not.toBeInTheDocument();
+    expect(scoreBoard).toHaveFocus();
+  });
+
+  it("keeps the existing non-interactive portrait hint during pregame setup", async () => {
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: 390,
+    });
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      value: 844,
+    });
+    getMatch.mockResolvedValue({
+      match: {
+        ...matchBody,
+        status: "waiting",
+        scoreA: 0,
+        scoreB: 0,
+        version: 0,
+        startedAt: null,
+        firstServerMethod: "manual",
+        currentServerParticipantId: null,
+      },
+    });
+
+    renderJudge();
+    expect(await screen.findByTestId("judge-setup")).toBeInTheDocument();
+    expect(screen.getByText(/поверните устройство горизонтально/i)).toHaveAttribute("role", "status");
+    expect(screen.queryByRole("button", { name: "Закрыть подсказку" })).not.toBeInTheDocument();
   });
 
   it("shows blocked screen when acquire fails", async () => {
@@ -320,6 +378,59 @@ describe("REQ_ui__judge_immersive", () => {
     expect(acquireJudge).not.toHaveBeenCalled();
   });
 
+  it.each(["old-first", "new-first"] as const)(
+    "W0 ignores a pending acquire for the prior match when it resolves %s",
+    async (resolutionOrder) => {
+      const user = userEvent.setup();
+      const acquireM1 = deferred<{ ok: boolean }>();
+      const acquireM2 = deferred<{ ok: boolean }>();
+      const readIds: string[] = [];
+      getMatch.mockImplementation((matchId: string) => {
+        readIds.push(matchId);
+        if (matchId === "m1" && readIds.filter((candidate) => candidate === "m1").length === 1) {
+          return Promise.reject(Object.assign(new Error("Нет доступа к активному матчу"), {
+            code: "FORBIDDEN",
+            status: 403,
+          }));
+        }
+        return Promise.resolve({
+          match: matchId === "m2"
+            ? { ...matchBody, id: "m2", scoreA: 8, version: 9 }
+            : matchBody,
+        });
+      });
+      acquireJudge.mockImplementation((matchId: string) =>
+        matchId === "m1" ? acquireM1.promise : acquireM2.promise,
+      );
+
+      renderRoutableJudge();
+      await waitFor(() => expect(acquireJudge).toHaveBeenCalledWith("m1"));
+      await user.click(screen.getByRole("button", { name: "Открыть m2" }));
+      await waitFor(() => expect(acquireJudge).toHaveBeenCalledWith("m2"));
+
+      if (resolutionOrder === "old-first") {
+        acquireM1.resolve({ ok: true });
+        await act(async () => acquireM1.promise);
+        expect(readIds.filter((candidate) => candidate === "m1")).toHaveLength(1);
+        expect(screen.queryByRole("button", { name: /\+1 очко: анна а.*счёт 8/i })).not.toBeInTheDocument();
+        acquireM2.resolve({ ok: true });
+        await act(async () => acquireM2.promise);
+      } else {
+        acquireM2.resolve({ ok: true });
+        await act(async () => acquireM2.promise);
+        expect(await screen.findByRole("button", { name: /\+1 очко: анна а.*счёт 8/i })).toBeInTheDocument();
+        acquireM1.resolve({ ok: true });
+        await act(async () => acquireM1.promise);
+      }
+
+      expect(await screen.findByRole("button", { name: /\+1 очко: анна а.*счёт 8/i })).toBeInTheDocument();
+      expect(readIds.filter((candidate) => candidate === "m1")).toHaveLength(1);
+      expect(readIds.filter((candidate) => candidate === "m2").length).toBeGreaterThanOrEqual(2);
+      expect(acquireJudge.mock.calls.map(([matchId]) => matchId)).toEqual(["m1", "m2"]);
+      expect(releaseJudge).not.toHaveBeenCalled();
+    },
+  );
+
   it("awards point only via +1 button", async () => {
     const user = userEvent.setup();
     awardPoint.mockResolvedValue({
@@ -331,6 +442,47 @@ describe("REQ_ui__judge_immersive", () => {
     });
     await user.click(btn);
     expect(awardPoint).toHaveBeenCalledWith("m1", "A", 5, expect.any(String));
+  });
+
+  it("suppresses the browser click after drag or cancel, then preserves tap, keyboard and AT activation", async () => {
+    const user = userEvent.setup();
+    awardPoint
+      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 4, version: 6 } })
+      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 5, version: 7 } })
+      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 6, version: 8 } })
+      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 7, version: 9 } });
+    renderJudge();
+    const sideA = await screen.findByRole("button", {
+      name: /\+1 очко: анна а.*счёт 3/i,
+    });
+
+    dispatchPointer(sideA, "pointerdown", { pointerId: 1, clientX: 10, clientY: 10 });
+    dispatchPointer(sideA, "pointermove", { pointerId: 1, clientX: 30, clientY: 10 });
+    dispatchPointer(sideA, "pointerup", { pointerId: 1, clientX: 30, clientY: 10 });
+    fireEvent.click(sideA, { detail: 1 });
+    expect(awardPoint).not.toHaveBeenCalled();
+
+    dispatchPointer(sideA, "pointerdown", { pointerId: 2, clientX: 10, clientY: 10 });
+    dispatchPointer(sideA, "pointercancel", { pointerId: 2 });
+    fireEvent.click(sideA, { detail: 1 });
+    expect(awardPoint).not.toHaveBeenCalled();
+
+    dispatchPointer(sideA, "pointerdown", { pointerId: 3, clientX: 10, clientY: 10 });
+    dispatchPointer(sideA, "pointerup", { pointerId: 3, clientX: 10, clientY: 10 });
+    fireEvent.click(sideA, { detail: 1 });
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(1));
+
+    sideA.focus();
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(2));
+    await user.keyboard(" ");
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(3));
+    sideA.click();
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(4));
+    expect(awardPoint).toHaveBeenNthCalledWith(1, "m1", "A", 5, expect.any(String));
+    expect(awardPoint).toHaveBeenNthCalledWith(2, "m1", "A", 6, expect.any(String));
+    expect(awardPoint).toHaveBeenNthCalledWith(3, "m1", "A", 7, expect.any(String));
+    expect(awardPoint).toHaveBeenNthCalledWith(4, "m1", "A", 8, expect.any(String));
   });
 
   it("AT-JUDGE-007 serializes two rapid +1 intents with the authoritative version", async () => {
@@ -1139,7 +1291,7 @@ describe("REQ_ui__judge_immersive", () => {
     });
 
     expect(await screen.findByText("match-detail")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(/слот судьи освобождён/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/вы вышли из ведения.*другой пользователь может продолжить/i);
   });
 
   it("GAP-030 Home waits for judge release and reports success at Home", async () => {
@@ -1158,7 +1310,7 @@ describe("REQ_ui__judge_immersive", () => {
       await release.promise;
     });
     expect(await screen.findByText("home")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(/слот судьи освобождён/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/вы вышли из ведения.*другой пользователь может продолжить/i);
   });
 
   it("GAP-005 blocks setup cancellation while start is pending", async () => {
@@ -1214,13 +1366,13 @@ describe("REQ_ui__judge_immersive", () => {
     await screen.findByTestId("judge-screen");
     await user.click(screen.getByRole("button", { name: "Ещё" }));
     await user.click(
-      screen.getByRole("button", { name: /освободить слот и выйти/i }),
+      screen.getByRole("button", { name: /выйти из ведения/i }),
     );
 
     expect(releaseJudge).toHaveBeenCalledWith("m1");
     expect(await screen.findByText("match-detail")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent(
-      /не удалось подтвердить освобождение/i,
+      /не удалось проверить выход из ведения/i,
     );
   });
 
@@ -1283,7 +1435,7 @@ describe("REQ_ui__judge_immersive", () => {
     });
     await user.click(screen.getByRole("button", { name: "Ещё" }));
     const exitButton = screen.getByRole("button", {
-      name: /освободить слот и выйти/i,
+      name: /выйти из ведения/i,
     });
 
     fireEvent.click(pointButton);
@@ -1293,7 +1445,7 @@ describe("REQ_ui__judge_immersive", () => {
     expect(releaseJudge).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Назад" })).toBeDisabled();
     expect(
-      screen.queryByRole("button", { name: /освободить слот и выйти/i }),
+      screen.queryByRole("button", { name: /выйти из ведения/i }),
     ).not.toBeInTheDocument();
 
     await act(async () => {
@@ -1428,6 +1580,48 @@ describe("REQ_ui__judge_immersive", () => {
     );
   });
 
+  it("W0 ignores a stale live-sync continuation after the same component moves to another match", async () => {
+    const user = userEvent.setup();
+    const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
+    vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
+      timers.push({ callback, delay });
+      return timers.length as never;
+    });
+    vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
+
+    let staleM1Read = false;
+    getMatch.mockImplementation((matchId: string) => Promise.resolve({
+      match: matchId === "m2"
+        ? { ...matchBody, id: "m2", scoreA: 8, version: 9 }
+        : staleM1Read
+          ? { ...matchBody, status: "finished", scoreA: 11, scoreB: 7, version: 15 }
+          : matchBody,
+    }));
+
+    renderRoutableJudge();
+    await screen.findByRole("button", { name: /\+1 очко: анна а.*счёт 3/i });
+    await waitFor(() => expect(heartbeatJudge).toHaveBeenCalled());
+
+    const staleHeartbeat = deferred<{ ok: boolean }>();
+    heartbeatJudge.mockReturnValueOnce(staleHeartbeat.promise);
+    const liveTimer = timers.find(({ delay }) => delay === 30_000);
+    expect(liveTimer).toBeDefined();
+    act(() => {
+      void (liveTimer?.callback as () => Promise<void>)();
+    });
+    await waitFor(() => expect(heartbeatJudge).toHaveBeenCalledTimes(2));
+
+    await user.click(screen.getByRole("button", { name: "Открыть m2" }));
+    expect(await screen.findByRole("button", { name: /\+1 очко: анна а.*счёт 8/i })).toBeInTheDocument();
+
+    staleM1Read = true;
+    staleHeartbeat.resolve({ ok: true });
+    await act(async () => staleHeartbeat.promise);
+
+    expect(screen.getByRole("button", { name: /\+1 очко: анна а.*счёт 8/i })).toBeInTheDocument();
+    expect(screen.queryByText("Только просмотр")).not.toBeInTheDocument();
+  });
+
   it("exits to match detail after confirm finish", async () => {
     const user = userEvent.setup();
     getMatch.mockResolvedValue({
@@ -1553,6 +1747,8 @@ describe("REQ_ui__judge_immersive", () => {
     await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
 
     const heading = screen.getByRole("heading", { name: /ручная коррекция/i });
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(screen.queryByRole("group", { name: "Действия судьи" })).not.toBeInTheDocument();
     await waitFor(() => expect(heading).toHaveFocus());
     await user.tab();
     expect(screen.getByRole("spinbutton", { name: /счёт стороны a/i })).toHaveFocus();
@@ -1816,12 +2012,12 @@ describe("REQ_ui__judge_immersive", () => {
     renderJudge();
     await screen.findByTestId("judge-screen");
     await user.click(screen.getByRole("button", { name: "Ещё" }));
-    await user.selectOptions(await screen.findByLabelText("Передать судейство"), "u2");
-    await user.click(screen.getByRole("button", { name: /передать слот/i }));
+    await user.selectOptions(await screen.findByLabelText("Передать ведение на другое устройство"), "u2");
+    await user.click(screen.getByRole("button", { name: /^передать ведение$/i }));
 
     expect(handoverJudge).toHaveBeenCalledWith("m1", "u2");
     expect(await screen.findByText("match-detail")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent(/судейство передано/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/передача подготовлена.*получатель должен принять/i);
   });
 
   it("MATCH-008: a noncreator judge saves setup and waits for creator start", async () => {
@@ -1855,32 +2051,27 @@ describe("REQ_ui__judge_immersive", () => {
     expect(await screen.findByRole("status", { name: /ожидаем запуска/i })).toBeInTheDocument();
   });
 
-  it("blocks confirm, revert, undo and exit while handover is pending", async () => {
-    const user = userEvent.setup();
-    const pending = deferred<{ reservation: { userId: string; displayName: string } }>();
+  it("keeps pending confirmation in one non-dismissable overlay and blocks background actions", async () => {
     getMatch.mockResolvedValue({
       match: { ...matchBody, status: "pending_confirmation" },
     });
-    directory.mockResolvedValue({ users: [{ id: "u2", displayName: "Новый Судья" }] });
-    handoverJudge.mockReturnValueOnce(pending.promise);
     renderJudge();
     await screen.findByTestId("judge-screen");
-    await user.click(screen.getByRole("button", { name: "Ещё" }));
-    await user.selectOptions(await screen.findByLabelText("Передать судейство"), "u2");
-    await user.click(screen.getByRole("button", { name: /передать слот/i }));
 
-    for (const button of screen.getAllByRole("button", { name: /подтвердить результат/i })) {
-      expect(button).toBeDisabled();
-    }
-    expect(screen.getByRole("button", { name: /продолжить игру/i })).toBeDisabled();
+    const resultDialog = screen.getByRole("dialog", { name: "Подтвердить результат?" });
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(screen.queryByRole("group", { name: "Действия судьи" })).not.toBeInTheDocument();
+    expect(within(resultDialog).getByRole("button", { name: /подтвердить результат/i })).toBeEnabled();
+    expect(within(resultDialog).getByRole("button", { name: /продолжить/i })).toBeEnabled();
     expect(screen.getByRole("button", { name: /отменить последнее очко/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Назад" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Ещё" })).toBeDisabled();
+
+    fireEvent.keyDown(resultDialog, { key: "Escape" });
+    expect(screen.getByRole("dialog", { name: "Подтвердить результат?" })).toBeInTheDocument();
     expect(confirmFinish).not.toHaveBeenCalled();
     expect(revertFinish).not.toHaveBeenCalled();
     expect(undoPoint).not.toHaveBeenCalled();
     expect(releaseJudge).not.toHaveBeenCalled();
-
-    pending.resolve({ reservation: { userId: "u2", displayName: "Новый Судья" } });
-    expect(await screen.findByText("match-detail")).toBeInTheDocument();
   });
 });

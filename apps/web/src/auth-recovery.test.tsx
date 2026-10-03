@@ -32,6 +32,13 @@ function LocationProbe() {
   return <output data-testid="location">{location.pathname}{location.search}{location.hash}</output>;
 }
 
+async function openTitleEditor(user: ReturnType<typeof userEvent.setup>) {
+  const visibleTitle = screen.queryByLabelText("Название");
+  if (visibleTitle) return visibleTitle;
+  await user.click(await screen.findByRole("button", { name: "Изменить название" }));
+  return screen.getByLabelText("Название");
+}
+
 describe("AT-AUTH-009 runtime session recovery", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -82,7 +89,7 @@ describe("AT-AUTH-009 runtime session recovery", () => {
       </MemoryRouter>,
     );
 
-    const title = await screen.findByLabelText("Название");
+    const title = await openTitleEditor(user);
     await user.clear(title);
     await user.type(title, "Финал после обеда");
     await user.click(screen.getByLabelText("Создатель играет"));
@@ -108,7 +115,7 @@ describe("AT-AUTH-009 runtime session recovery", () => {
       ).not.toBeInTheDocument();
     });
     expect(screen.getByTestId("location")).toHaveTextContent("/matches/new?returnTo=home#draft");
-    expect(screen.getByLabelText("Название")).toHaveValue("Финал после обеда");
+    expect(await openTitleEditor(user)).toHaveValue("Финал после обеда");
     expect(screen.getByLabelText(/гость \(имя фамилия\)/i)).toHaveValue(
       "Анна Тестова",
     );
@@ -152,7 +159,7 @@ describe("AT-AUTH-009 runtime session recovery", () => {
         <App />
       </MemoryRouter>,
     );
-    const title = await screen.findByLabelText("Название");
+    const title = await openTitleEditor(user);
     await user.clear(title);
     await user.type(title, "Черновик другого пользователя");
     await user.click(screen.getByLabelText("Создатель играет"));
@@ -169,7 +176,7 @@ describe("AT-AUTH-009 runtime session recovery", () => {
     await waitFor(() =>
       expect(screen.queryByRole("heading", { name: "Вход" })).not.toBeInTheDocument(),
     );
-    expect(screen.getByLabelText("Название")).not.toHaveValue(
+    expect(await openTitleEditor(user)).not.toHaveValue(
       "Черновик другого пользователя",
     );
     expect(screen.queryByDisplayValue("Секретный соперник")).not.toBeInTheDocument();

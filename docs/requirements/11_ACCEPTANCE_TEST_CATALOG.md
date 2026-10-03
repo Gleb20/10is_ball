@@ -296,6 +296,10 @@ payload остаются согласованы. Given известный отк
 Given судья подтвердил start и setup получил известный отказ, When он исправляет
 выбор, Then повторяется только setup. Given исход start или setup неизвестен,
 Then ранний GET не запускает повторную мутацию.
+Given новая ручная форма, Then полный roster расположен до правил и title,
+title disclosure закрыт, а непустрый быстрый выбор показывает точные назначения
+B1/B2 до применения. Given неверный custom score в закрытых правилах, When
+отправить форму, Then правила раскрываются, неверное поле получает фокус и POST=0.
 
 ### AT-MATCH-018 Current-form custom score lifetime
 При выборе `11`, `21` или custom и повторном открытии цифровой панели текущая
@@ -399,6 +403,19 @@ participant ID подающего отдельно от draft. Потерянн�
 version. Старые/новые попытки не стирают друг друга. Storage prewrite failure даёт
 0 POST. Heading focus, Tab order A→B→server→Save→Cancel, Cancel/Escape return,
 success Actions focus и отсутствие refresh focus theft проверяются отдельно.
+
+### AT-JUDGE-011 Score-card gesture and responsive layout
+Given active judge scoring, When pointer move выходит за порог либо приходит
+`pointercancel`, Then следующий синтетический click не создаёт point POST. Given
+обычный tap/click, Enter, Space или AT click, Then сохраняются один intent, новый
+idempotency key и действующая FIFO/version семантика. Given асимметрично длинные
+2×2 имена, включая допустимую непрерывную строку без пробелов и реалистичное имя
+с пробелами, Then на 360/390/844 весь текст доступен внутри карточки, в двух
+колонках строки счёта совпадают с точностью до 1 px; при CSS zoom 200% карточки
+переходят в одну колонку, имена переносятся, а document не получает
+горизонтального overflow. Поля correction normal,
+focused, filled, validation-error и disabled-style probe имеют контраст не ниже
+4.5:1; probe disabled не выдаётся за runtime состояние компонента.
 
 ## TOURNAMENT
 
@@ -540,6 +557,11 @@ Given finished/stopped/cancelled, Then показаны только дейст�
 В обоих scopes keyboard 360/390/desktop, loading/empty/error/pending и
 role-specific visibility проходят без новых game/tournament invitation UI.
 Acceptance одного scope не переводит весь GAP-019 в `verified_local`.
+В scope A обычный organizer direct add в `collecting` при выключенном consent
+выполняет один POST без второго confirmation; `needs_regeneration`, consent и
+scoped admin сохраняют named confirmation. Create payload удерживает title,
+формат, участие организатора, points и mercy во время pending; известный отказ
+возвращает те же значения для явной повторной отправки.
 
 ## RANKING
 

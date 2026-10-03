@@ -115,6 +115,7 @@ test("E2E_auth_match_judge__AT-MATCH-001_005_008_AT-JUDGE-001_003_006_007__finis
 
   await page.goto("/matches/new");
   await expect(page.getByRole("heading", { name: "Новый матч" })).toBeVisible();
+  await page.getByRole("button", { name: "Изменить название", exact: true }).click();
   await page.getByLabel("Название").fill("TECH-002 critical journey");
   await page.getByLabel("Создатель играет", { exact: true }).check();
   await page
@@ -159,6 +160,7 @@ test("E2E_runtime_session_recovery__AT-AUTH-009__preserves_route_and_draft_witho
 }) => {
   await loginBrowser(page);
   await page.goto("/matches/new");
+  await page.getByRole("button", { name: "Изменить название", exact: true }).click();
   await page.getByLabel("Название").fill("TECH-002 revoked draft");
   await page.getByLabel("Создатель играет", { exact: true }).check();
   await page

@@ -1274,7 +1274,8 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** ux-layout
 - **Priority:** P2
-- **Status:** ready
+- **Status:** in_progress — ограниченный Stage 5 executable scope кандидата 4.3.0 принят `verified_local` после CI 1563/1563 и независимой проверки; Q-UX-004/006 и пользовательское измерение времени остаются открыты.
+- **Stage 5 checkpoint (2026-10-03):** roster-first 1×1/2×2, creator-outside-roster, точный B1/B2 preview, collapsed rules/title, D38 current-form custom score и error reveal/focus прошли compiled 1440/390/360 с authoritative match GET. Выбранный Guest измерен на фактическом фоне с contrast ≥4.5:1. Reusable guest, create/acquire/start и пользовательское измерение времени не добавлены.
 - **Target overlay D36/D37/D38:** direct Home → match setup, operator outside roster by default, composition before rare rules; invite controls/challenge prefill are unavailable. Custom score lives only in the current form; create/acquire/start still depends on Q-UX-006. Older invite steps below are superseded.
 - **Executable readiness boundary:** `ready` относится только к перестановке существующих полей ручного матча, доступным сводкам/ошибкам, сохранению 1v1/2v2 и нынешней guest selection. Reusable guest identity и объединённый create/acquire/start не исполнять до Q-UX-004/006; D38 запрещает сохранение custom score между формами. Старые invite/challenge сценарии ниже не входят в этот work order по D37.
 - **Current GWT / historical boundary:** Given C creates for A/B from Home, When C configures 1v1/2v2, Then roster comes before optional rules, C is not a player by default, registered selection sends no invite, and valid options remain reachable. AT-MATCH-016/017. Old invite and Start-hub instructions below are historical; Q-UX-004/006 gate new identity and combined mutation, while D38 fixes score memory to the current form.
@@ -1656,7 +1657,8 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** ux-layout
 - **Priority:** P2
-- **Status:** ready
+- **Status:** in_progress — Stage 7 scope A принят `verified_local` после CI 1563/1563 и независимой проверки; Stage 8 scope B остаётся открытым, поэтому весь GAP-019 не закрыт.
+- **Stage 7 checkpoint (2026-10-03):** создание и `collecting`/`needs_regeneration` показывают правила → состав → сетку, используют явные labels вместо Single/Double, сохраняют полный frozen payload, one-off guest и role guards. Обычный organizer direct add в collecting выполняется без второго confirmation; needs_regeneration/scoped-admin/consent guards сохранены. Compiled 1440/390/360 сверил POST и authoritative GET; весь GAP-019 не закрыт до Stage 8.
 - **Target overlay D36/D37:** rules and roster precede bracket; state prioritizes current match/bracket, with no new global nav or consent/invite UI. Preserve pre-start edit, regeneration, organizer/admin rights and existing read-only summaries. Older invite/navigation target below is superseded.
 - **Executable readiness boundary / staged ownership:** один canonical GAP-019 и один frontend writer на `TournamentDetailPage.tsx` в каждый момент. Этап 7 меняет только collecting/needs_regeneration и authoritative rules/roster/pre-generation: порядок, существующее редактирование, права, guest selection без новой identity. Этап 8 после принятого delta этапа 7 меняет bracket_generated/in_progress/terminal composition: сетка и рабочий матч впереди повторных summary, read-only сводки вторичны. Это последовательные subscopes одной задачи, не два параллельных writers; `ready` не открывает future scheduling (Q-UX-010), reusable guest (Q-UX-004), invitations (D37) или неизвестные mutation semantics. BUG-032/033 и GAP-020 координируются в этапе 8 на том же общем файле последовательно.
 - **Stage acceptance:** этап 7 — Given organizer в collecting/needs_regeneration, Then правила и состав до построения, prestart edit/regeneration и guards сохранены (AT-TRN-024 scope A, AT-TRN-022/023 для mutation). Этап 8 — Given generated/active/terminal, Then сетка/текущий матч либо действительный результат имеют первенство, полный read-only summary достижим вторично, stopped не получает чемпиона (AT-TRN-024 scope B и AT-TRN-012/013 для результата). Для каждого состояния отдельно проверить organizer/participant/scoped admin, empty/loading/error/pending, keyboard 360/390 и desktop, response + authoritative GET после mutation. Полный GAP-019 не `verified_local`, пока оба subscopes не приняты.
@@ -1708,7 +1710,7 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** ux-flow-friction
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — ordinary collecting branch принят после exact aggregate CI 1563/1563, Terra PASS и root integrity/visual review; guarded branches сохранены.
 - **Scenario / Epic / Story / Sprint:** SC-T01/T02/T03 → EP-UX-TOURNAMENT → US-UX-TOURNAMENT-ROSTER → S4 candidate.
 - **Evidence:** F-TOURNAMENT-005; T-RUN-001; expert hypothesis; [пакет](audits/2026-09-13-ux-ui/tournament/report.md), [обязательная коррекция и точный target](audits/2026-09-13-ux-ui/tournament-correction.md). Независимое [ревью принято](audits/2026-09-13-ux-ui/social-review.json); частота у реальных пользователей неизвестна.
 - **Expected:** Обычный прямой выбор добавляется явной кнопкой, а предупреждения об обходе согласия и изменении сетки сохраняются.
@@ -1730,7 +1732,8 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** ux-copy-and-discoverability
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — принятые строки и модальный action flow прошли exact aggregate CI 1563/1563, Terra PASS и root integrity/visual review; физическая проверка понимания и spoken AT остаются отдельной границей evidence.
+- **Stage 6 checkpoint (2026-10-03):** «Отменить очко», «Передать ведение», «Выйти из ведения», честные success/handover сообщения и device-context help покрыты component/browser regression. Физическая проверка понимания человеком и spoken AT не проводились.
 - **Scenario / Epic / Story / Sprint:** SC-J01/02/04 → EP-UX-CORE → US-UX-SCORE-LANGUAGE «Человек у телефона понимает управление счётом и передачу» → S3 candidate.
 - **Evidence:** F-JUDGE-003 и F-PILOT-006, [JUDGE report](audits/2026-09-13-ux-ui/judge/report.md), [pilot](audits/2026-09-13-ux-ui/pilot/report.md). Экспертная гипотеза непонимания; слова наблюдались в runtime, ошибки реального человека не измерены. Иерархия MatchDetail уже принадлежит GAP-017, здесь только JudgePage copy.
 - **Expected:** названия объясняют действие без терминов «слот», TTL и названия внутреннего события; передача одного телефона явно отличается от передачи ведения на другом устройстве.
@@ -2099,7 +2102,8 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** interaction-concept
 - **Priority:** P2
-- **Status:** confirmed
+- **Status:** in_progress — принятые безопасные seams Stage 6 получили bounded `verified_local`; decision-gated replay/таймер/история владельцев, непроверенные W3/W4 и MatchDetail остаются открыты.
+- **Stage 6 checkpoint (2026-10-03):** вся сторона является одной score-кнопкой; drag/pointercancel подавляют синтетический click, обычные pointer/keyboard/AT активации и rapid FIFO сохранены. Длинные 2×2 стороны, включая допустимое имя без пробелов, выравнивают счёт в 360/390/844 без горизонтальной обрезки; CSS zoom 200% reflow переходит в одну колонку. Correction values имеют измеренный contrast 7.09–17.79:1 в проверенных probes; exact aggregate CI прошёл 1563/1563, physical touch отдельно не воспроизводился.
 - **Evidence:** U01-DETAIL-001..004, U01-JUDGE-001..006, GAP-017/023; жесты и таймер — предложения, не verified runtime.
 - **Expected:** стабильные touch targets/счёт/подача/журнал, ясное подтверждение и следующий шаг; reduced motion и keyboard alternative.
 - **Actual:** детали и судейство требуют отдельной спецификации геометрии и recovery; white gutters и zoom нужно воспроизвести на физическом устройстве.
@@ -2115,6 +2119,7 @@ backlog ID, version, commit, push or public deployment was created.
 - **Status:** confirmed
 - **WO2 boundary (2026-09-19):** auth forms passed local Chromium 360/390 and 200% CSS zoom reflow without horizontal overflow; this is an approximation, not reproduction or closure of persistent iPhone zoom. Judge landscape gutters/rotation remain Stage 6. Autofill and physical keyboard/VisualViewport were not checked.
 - **WO2 R2 font diagnostic:** four-input Chromium measurement at 360 px supersedes R1 password-only sampling: Email 14 px and three password fields 16 px before scoped auth input minimum; all four 16 px afterward. This does not establish the reported physical iPhone root cause.
+- **Stage 6 boundary (2026-10-03):** compiled Chromium 360/390/844 and CSS zoom 200% confirmed dark-shell coverage, one-column reflow and no page overflow for Judge; это development evidence, не закрытие сообщения о physical iPhone/browser UI zoom.
 - **Evidence:** AUTH-003 и U01-JUDGE-001, self-report с кадрами; CSS-причина не установлена. Visual receipt 44 кадров подтверждает отдельные видимые состояния, но не воспроизводит persistent zoom; оригиналы во внешнем ephemeral источнике.
 - **Expected:** auth focus/keyboard и judge rotation не оставляют навязанное приближение или белые поля; пользовательский zoom остаётся разрешён.
 - **Actual:** сообщённые физические состояния ещё не воспроизведены независимо.

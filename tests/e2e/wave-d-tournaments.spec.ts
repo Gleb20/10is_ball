@@ -27,12 +27,15 @@ for (const format of ["single_elimination", "double_elimination"] as const) for 
     try {
       await login(page); await page.goto("/tournaments/new");
       await page.getByLabel("Название", { exact: true }).fill(title);
-      if (format === "double_elimination") await page.getByRole("button", { name: "Double", exact: true }).click();
+      if (format === "double_elimination") {
+        await page.getByRole("group", { name: "Сетка проигравших" }).getByRole("button", { name: "Включена", exact: true }).click();
+      }
       await page.getByRole("button", { name: "Создать", exact: true }).click();
       await expect(page).toHaveURL(/\/tournaments\/[0-9a-f-]+$/);
       const id = page.url().split("/").at(-1)!;
       // One roster addition through the UI; remaining synthetic fixtures use the same API.
-      await page.getByLabel("Добавить гостя (Имя Фамилия)").fill("Гость Первый");
+      await page.getByRole("button", { name: "Добавить разового гостя", exact: true }).click();
+      await page.getByLabel("Имя и фамилия разового гостя", { exact: true }).fill("Гость Первый");
       await page.getByRole("button", { name: "Добавить гостя", exact: true }).click();
       await expect(page.getByText("Гость добавлен", { exact: true })).toBeVisible();
       for (let n = 2; n < size; n++) await mutate(api, `/api/v1/tournaments/${id}/participants`, { guestFirstName: `Гость${n}`, guestLastName: "Синтетический" });

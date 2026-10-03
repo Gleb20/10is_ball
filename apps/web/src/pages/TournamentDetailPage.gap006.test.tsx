@@ -102,22 +102,27 @@ describe("GAP-006 tournament detail", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
-  it("shows rules, own current/next matches and the tournament summary", async () => {
+  it("shows player-language rules, own current/next matches and the tournament summary", async () => {
     renderPage();
     await screen.findByText("Кубок");
+    expect(screen.getByRole("heading", { name: "Правила" })).toBeInTheDocument();
+    expect(screen.getByText("Сетка проигравших: выключена")).toBeInTheDocument();
     expect(screen.getByText(/До 11 очков/)).toBeInTheDocument();
+    expect(screen.getByText("Сухая победа выключена")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Текущий матч: Полуфинал/ })).toHaveAttribute("href", "/matches/m1");
     expect(screen.getByRole("link", { name: /Следующий матч: Финал/ })).toHaveAttribute("href", "/matches/m2");
     expect(screen.getByText(/Длительность: 12 мин/)).toBeInTheDocument();
     expect(within(screen.getByRole("table")).getByText("11")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Обновить" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Проверить изменения состава" })).not.toBeInTheDocument();
   });
 
   it("saves the complete editable settings payload once", async () => {
     renderPage();
     await screen.findByText("Кубок");
-    fireEvent.click(screen.getByRole("button", { name: "Изменить" }));
+    fireEvent.click(screen.getByRole("button", { name: "Изменить правила" }));
     fireEvent.change(screen.getByLabelText("Название"), { target: { value: "Новый кубок" } });
-    fireEvent.change(screen.getByLabelText("Формат"), { target: { value: "double_elimination" } });
+    fireEvent.click(screen.getByRole("button", { name: "Включена" }));
     fireEvent.click(screen.getByRole("button", { name: "Сохранить" }));
     fireEvent.click(screen.getByRole("button", { name: "Сохранить" }));
     await waitFor(() => expect(patchTournament).toHaveBeenCalledTimes(1));
@@ -149,7 +154,7 @@ describe("GAP-006 tournament detail", () => {
     patchTournament.mockRejectedValueOnce(Object.assign(new Error("Требуется вход"), { status: 401 }));
     renderPage();
     await screen.findByText("Кубок");
-    fireEvent.click(screen.getByRole("button", { name: "Изменить" }));
+    fireEvent.click(screen.getByRole("button", { name: "Изменить правила" }));
     fireEvent.click(screen.getByRole("button", { name: "Сохранить" }));
     await waitFor(() => expect(patchTournament).toHaveBeenCalledTimes(1));
     expect(screen.queryByText("Требуется вход")).not.toBeInTheDocument();
@@ -164,7 +169,7 @@ describe("GAP-006 tournament detail", () => {
     fireEvent.click(screen.getByRole("button", { name: "Обновить" }));
     const updated = tournament("needs_regeneration"); updated.title = "Новый кубок";
     patchTournament.mockResolvedValueOnce({ tournament: updated });
-    fireEvent.click(screen.getByRole("button", { name: "Изменить" }));
+    fireEvent.click(screen.getByRole("button", { name: "Изменить правила" }));
     fireEvent.change(screen.getByLabelText("Название"), { target: { value: "Новый кубок" } });
     fireEvent.click(screen.getByRole("button", { name: "Сохранить" }));
     expect(await screen.findByText("Новый кубок")).toBeInTheDocument();
@@ -176,7 +181,7 @@ describe("GAP-006 tournament detail", () => {
     getTournament.mockImplementation((id: string) => ({ tournament: { ...tournament(), id, title: id === "t2" ? "Второй кубок" : "Кубок" } }));
     render(<MemoryRouter initialEntries={["/tournaments/t1"]}><AuthProvider><Controls /><Routes><Route path="/tournaments/:id" element={<TournamentDetailPage />} /></Routes></AuthProvider></MemoryRouter>);
     await screen.findByText("Кубок");
-    fireEvent.click(screen.getByRole("button", { name: "Изменить" }));
+    fireEvent.click(screen.getByRole("button", { name: "Изменить правила" }));
     fireEvent.change(screen.getByLabelText("Название"), { target: { value: "Черновик" } });
     window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT));
     fireEvent.click(screen.getByRole("button", { name: "Повторный вход" }));

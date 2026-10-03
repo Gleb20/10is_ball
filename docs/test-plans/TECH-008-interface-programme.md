@@ -108,16 +108,16 @@ flowchart LR
 | 2 | GAP-030/031 + GAP-015: Home-only shell и роль/задача на Home | AT-HOME-001..003, auth/404/403, bracket/history return, onboarding anchors в том же delta |
 | 3 | BUG-018..028 по применимости, BUG-040, GAP-034: controls и межэкранный status/icon inventory/target | keyboard/focus/visible option над клавиатурой и safe area; UI-001/AT-UI-STATUS-001 по всем семействам; physical zoom отдельно |
 | 4 | BUG-029/031/039: recovery счёта и ручной коррекции — local candidate 4.1.2, финальные gates ожидаются | authoritative GET exact key/version, intent queue, PG concurrency; unresolved не предлагает повтор |
-| 5 | GAP-013 и MATCH setup: состав перед редкими правилами | оператор не игрок; search/presets/serve; Q-UX-004/005/006 до зависимых механик |
-| 6 | GAP-017/023, GAP-032: judge/result/next; GAP-034 match/judge consumer | stable touch geometry, status/serve icon meaning, reduced motion, safe exit, D24/D33; Q-UX-007/008/009 перед replay/Undo/историей ведущих |
-| 7 | GAP-019 scope A + GAP-021: collecting/needs_regeneration, authoritative rules/roster до сетки | D35/D37, direct add, prestart edit/regeneration; reusable guest/future date — Q-UX-004/010 |
+| 5 | GAP-013 bounded MATCH setup: 4.3.0 `verified_local`, состав перед редкими правилами; общий gate 1563/1563 и independent PASS | compiled 1440/390/360, operator outside roster, exact shortcuts, current-form D38, mutation/readback; reusable guest и combined start остаются gated Q-UX-004/006 |
+| 6 | GAP-023 `verified_local` и ограниченный GAP-032 Judge scope bounded `verified_local`; общий gate 1563/1563 и independent PASS; GAP-017/MatchDetail остаётся впереди | synthetic gesture suppression, rapid FIFO, unspaced/realistic 2×2 alignment, correction contrast, 360/390/844 и CSS zoom 200%; physical touch/iPhone/WebKit/AT отдельно, Q-UX-007/008/009 и W3/W4 не закрыты |
+| 7 | GAP-019 scope A bounded `verified_local` + GAP-021 `verified_local`: collecting/needs_regeneration rules/roster до сетки; общий gate 1563/1563 и independent PASS | D35/D37, ordinary direct add + guarded confirmations, create/add authoritative readback, 360/390/1440; GAP-019 scope B, reusable guest/future date — Q-UX-004/010 |
 | 8 | GAP-019 scope B + GAP-020/033, BUG-032/033: generated/active/terminal composition, сетка, lifecycle, итоги; GAP-034 tournament consumer | после принятого scope A; SE/DE/BYE/third place, bracket/current match first, full results secondary, stopped without champion |
 | 9 | GAP-022, BUG-034/035 verified_local; GAP-025 gate: команды; GAP-034 team consumer | captain/team invitation rights и ясный status; avatar только после Q-UX-002 |
 | 10 | GAP-024 и BUG-036/037 verified_local; GAP-034 history/notifications consumers | back/filter/scroll; read state, status и видимые counts; privacy |
 | 11 | GAP-026/027 verified_local; GAP-028 gate: admin; GAP-034 admin consumer | active-admin access, session revocation, status/action distinction; exact-ID read после Q-UX-003 |
 | 12 | BUG-038: password-reset uncertainty отдельно | контракт + migration + PostgreSQL + browser; не смешивать с UI polish |
 | 13 | GAP-014/016, GAP-009: onboarding/help | новые anchors, tutorial isolation, explicit completion, контекстная помощь |
-| 14 | TECH-008 integration: локальный кандидат 4.2.0 прошёл exact R2 gate1531/1531 и Terra review; hosted gate и выпуск ожидаются | [финальный local receipt](../audit/evidence/stage14-final-candidate/receipt.json), exact version/SHA, read-only public smoke, physical-iPhone gate отдельно |
+| 14 | TECH-008 integration: 4.2.0 опубликован на exact SHA `df807d508613b3226345813ff35080a9e1d1c288` после local gate1531/1531 и Terra review | [финальный local receipt](../audit/evidence/stage14-final-candidate/receipt.json), `artifacts/ux-implementation-2026-09-18/oct3-release-4.2.0-checkpoint.json`, public smoke 7/7; physical-iPhone gate отдельно |
 
 `verified_local` — canonical backlog status после local evidence. В плане
 `published_for_test` означает согласованные version/SHA на disposable stand, а

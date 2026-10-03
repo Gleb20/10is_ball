@@ -8,11 +8,11 @@ import {
   ListRow,
   RefreshButton,
   StatusChip,
-  formatLabel,
 } from "../patterns";
 import { api } from "../api";
 import { useVisibleRefresh } from "../useVisibleRefresh";
 import { useSingleFlight } from "../useSingleFlight";
+import "./TournamentSetup.css";
 
 export function defaultTournamentTitle(d = new Date()) {
   return `Турнир ${d.toLocaleString("ru-RU", {
@@ -29,6 +29,9 @@ export function TournamentsPage({ createOnly = false }: { createOnly?: boolean }
     "single_elimination" | "double_elimination"
   >("single_elimination");
   const [organizerParticipates, setOrganizerParticipates] = useState(true);
+  const [pointsToWin, setPointsToWin] = useState(11);
+  const [mercyEnabled, setMercyEnabled] = useState(false);
+  const [mercyPoints, setMercyPoints] = useState(2);
   const submission = useSingleFlight();
 
   const load = useCallback(async () => {
@@ -40,15 +43,19 @@ export function TournamentsPage({ createOnly = false }: { createOnly?: boolean }
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
+    const payload = {
+      title,
+      format,
+      organizerParticipates,
+      pointsToWin,
+      mercyEnabled,
+      mercyPoints: mercyEnabled ? mercyPoints : null,
+      requireParticipantConsent: false,
+    };
     await submission.run(async () => {
       setFormError(null);
       try {
-        const result = await api.createTournament({
-          title,
-          format,
-          organizerParticipates,
-          requireParticipantConsent: false,
-        });
+        const result = await api.createTournament(payload);
         navigate(`/tournaments/${result.tournament.id}`);
       } catch (error) {
         setFormError((error as Error).message);
@@ -64,37 +71,85 @@ export function TournamentsPage({ createOnly = false }: { createOnly?: boolean }
       }
     >
       {createOnly ? <form
-        className="card stack"
+        className="card stack tournament-setup"
         onSubmit={create}
         aria-label="Создание турнира"
       >
+        <h2 className="section-title">Шаг 1 из 3 · Правила</h2>
+        <p className="muted tournament-setup__intro">
+          Задайте правила сейчас. Состав участников и сетка будут следующими шагами.
+        </p>
         <TextField
           label="Название"
+          disabled={submission.pending}
           value={title}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setTitle(e.target.value)
           }
         />
-        <FilterBar
-          label="Формат турнира"
-          value={format}
-          onChange={(v) =>
-            setFormat(v as "single_elimination" | "double_elimination")
+        <fieldset className="stack tournament-setup__choice" disabled={submission.pending} role="presentation">
+          <span className="tournament-setup__choice-label">Сетка проигравших</span>
+          <FilterBar
+            label="Сетка проигравших"
+            value={format}
+            onChange={(v) =>
+              setFormat(v as "single_elimination" | "double_elimination")
+            }
+            options={[
+              { value: "single_elimination", label: "Выключена" },
+              { value: "double_elimination", label: "Включена" },
+            ]}
+          />
+        </fieldset>
+        <TextField
+          label="Очков для победы"
+          disabled={submission.pending}
+          type="number"
+          min={1}
+          inputMode="numeric"
+          value={String(pointsToWin)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setPointsToWin(Number(e.target.value))
           }
-          options={[
-            { value: "single_elimination", label: "Single" },
-            { value: "double_elimination", label: "Double" },
-          ]}
         />
         <label className="match-create__check">
           <input
             type="checkbox"
+            disabled={submission.pending}
+            checked={mercyEnabled}
+            onChange={(e) => setMercyEnabled(e.target.checked)}
+          />
+          Завершать матч при сухом счёте
+        </label>
+        {mercyEnabled ? <>
+          <TextField
+            label="Очков для сухой победы"
+            disabled={submission.pending}
+            type="number"
+            min={1}
+            inputMode="numeric"
+            value={String(mercyPoints)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setMercyPoints(Number(e.target.value))
+            }
+          />
+          <p className="muted tournament-setup__hint">
+            Матч завершится, когда один игрок наберёт указанное число очков, а у соперника останется 0.
+          </p>
+        </> : null}
+        <label className="match-create__check">
+          <input
+            type="checkbox"
+            disabled={submission.pending}
             checked={organizerParticipates}
             onChange={(e) => setOrganizerParticipates(e.target.checked)}
           />
           Организатор участвует
         </label>
-        <Button type="submit" disabled={submission.pending}>
+        <Button
+          type="submit"
+          disabled={submission.pending || !title.trim() || pointsToWin < 1 || (mercyEnabled && mercyPoints < 1)}
+        >
           {submission.pending ? "Создание…" : "Создать"}
         </Button>
         {formError ? <p className="error" role="alert">{formError}</p> : null}
@@ -122,7 +177,7 @@ export function TournamentsPage({ createOnly = false }: { createOnly?: boolean }
               key={String(t.id)}
               to={`/tournaments/${t.id}`}
               title={String(t.title)}
-              subtitle={t.format ? formatLabel(String(t.format)) : undefined}
+              subtitle={t.format ? `Сетка проигравших ${String(t.format) === "double_elimination" ? "включена" : "выключена"}` : undefined}
               trailing={
                 <StatusChip status={String(t.status)} domain="tournament" />
               }

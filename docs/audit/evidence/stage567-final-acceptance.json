@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "candidate": "4.3.0",
+  "baseSha": "df807d508613b3226345813ff35080a9e1d1c288",
+  "acceptedAt": "2026-10-03",
+  "status": "verified_local",
+  "scope": "Accepted local source and documentation for the bounded Stage 5, Stage 6 and Stage 7 implementation; this does not close the whole interface programme or publish the candidate.",
+  "historicalFreeze": {
+    "receipt": "docs/audit/evidence/stage567-final-candidate/receipt.json",
+    "receiptSha256": "4bcd679141b811ae722981b08081f4328bee4372bc7ef293bdd70d9234757ba8",
+    "sourceManifest": "docs/audit/evidence/stage567-final-candidate/source-manifest.json",
+    "sourceManifestSha256": "115d17ccda091e6f0b601c7f8e870aba90e0c72cbe52cc60dec3a0a68c729204",
+    "evidenceManifest": "docs/audit/evidence/stage567-final-candidate/evidence-manifest.json",
+    "evidenceManifestSha256": "a6b360da7eb6b77c50af2072da997d976c7789fbdddd99b5cb771092154158c8",
+    "ci": "1563/1563 passed with zero failed, skipped, todo or interrupted"
+  },
+  "independentReview": {
+    "reviewer": "Terra",
+    "result": "PASS",
+    "findings": "No P1 or P2 findings"
+  },
+  "rootAcceptance": {
+    "sourceFiles": 33,
+    "evidenceFiles": 26,
+    "currentHashes": "PASS",
+    "forwardExact": "PASS",
+    "rollbackExact": "PASS",
+    "representativeVisualsReviewed": [
+      "stage5 mobile 360",
+      "stage6 correction 390",
+      "stage6 CSS zoom 200 percent",
+      "stage7 mobile 390"
+    ],
+    "externalReceipt": "/Users/liubavskii/Desktop/work/Codex/tab10/artifacts/ux-implementation-2026-09-18/oct3-stage567-root-integrity.json",
+    "externalReceiptSha256": "7b2bf63dd7798a617af3e84d3ec83201e37042cb0c98f16e6a3e2a50d4c1a1a0"
+  },
+  "verifiedCoverageKeys": {
+    "stage5": [
+      "U01-FORM-001/a01",
+      "U01-FORM-002/main",
+      "U01-FORM-002/a01",
+      "U01-FORM-002/a02",
+      "U01-FORM-003/a01",
+      "U01-FORM-003/a02",
+      "U01-FORM-003/a04",
+      "U01-FORM-004/a02",
+      "U01-FORM-006/main",
+      "U01-FORM-006/a01",
+      "U01-FORM-006/a02"
+    ],
+    "stage6": [
+      "U01-JUDGE-002/a03",
+      "U01-JUDGE-004/main",
+      "U01-JUDGE-004/a01",
+      "U01-JUDGE-005/a03",
+      "U01-JUDGE-006/a02",
+      "U01-JUDGE-006/a03",
+      "expert-stage-08/GAP-023/main"
+    ],
+    "stage7": [
+      "T01-01/main",
+      "T01-02/main",
+      "T01-03/a01",
+      "T01-04/main",
+      "T01-04/a01",
+      "T01-05/main",
+      "T01-05/a01",
+      "T01-07/main",
+      "T01-07/a01",
+      "T01-07/a02",
+      "T02-01/main",
+      "T02-02/main",
+      "T02-03/main",
+      "T02-04/main",
+      "T02-04/a01",
+      "T02-04/a02",
+      "T02-04/a03",
+      "T02-05/main",
+      "T02-06/main",
+      "T02-07/main",
+      "T02-08/main",
+      "T02-10/main",
+      "T02-10/a01",
+      "T02-10/a03",
+      "T02-10/a04",
+      "expert-stage-08/GAP-021/main"
+    ]
+  },
+  "retainedOpen": [
+    "Q-UX-004 reusable guest identity",
+    "Q-UX-006 combined create, acquire and start",
+    "Q-UX-007 replay",
+    "Q-UX-008 ten-second Undo and archive",
+    "Q-UX-009 history of people leading on one phone",
+    "Q-UX-010 future tournament scheduling",
+    "GAP-019 Stage 8 scope B and therefore full GAP-019",
+    "GAP-017 MatchDetail",
+    "unaccepted Stage 6 W3/W4 concepts",
+    "physical iPhone touch and browser UI zoom, pinned WebKit and spoken assistive technology",
+    "public release parity for candidate 4.3.0"
+  ],
+  "releaseBoundary": "No commit, push, deploy, public mutation or production verification is asserted by this acceptance receipt."
+}

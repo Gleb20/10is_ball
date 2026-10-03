@@ -1,0 +1,44 @@
+{
+  "label": {
+    "foreground": "rgb(245, 245, 245)",
+    "background": "rgb(26, 29, 36)",
+    "ratio": 15.469683479736153
+  },
+  "values": {
+    "normal": {
+      "foreground": "rgb(21, 23, 27)",
+      "background": "rgb(247, 247, 248)",
+      "ratio": 16.760736466039845
+    },
+    "focused": {
+      "foreground": "rgb(21, 23, 27)",
+      "background": "rgb(247, 247, 248)",
+      "ratio": 16.760736466039845
+    },
+    "filled": {
+      "foreground": "rgb(21, 23, 27)",
+      "background": "rgb(247, 247, 248)",
+      "ratio": 16.760736466039845
+    },
+    "nativeDisabledStyleProbe": {
+      "foreground": "rgb(80, 84, 92)",
+      "background": "rgb(247, 247, 248)",
+      "ratio": 7.09705616318638
+    },
+    "runtimeValidationErrorValue": {
+      "foreground": "rgb(21, 23, 27)",
+      "background": "rgb(254, 254, 254)",
+      "ratio": 17.792499999570285
+    }
+  },
+  "runtimeValidationErrorText": {
+    "foreground": "rgb(245, 245, 245)",
+    "background": "rgb(26, 29, 36)",
+    "ratio": 15.469683479736153
+  },
+  "probes": {
+    "nativeDisabled": {
+      "componentRuntimeState": false
+    }
+  }
+}

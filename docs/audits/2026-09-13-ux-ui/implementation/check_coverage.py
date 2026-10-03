@@ -101,6 +101,7 @@ expected_stage2 = {
 if len(expected_stage2) != 23:
     errors.append("stage 2 eligible atom count changed")
 table_source = "user-session-2026-09-16-table-01"
+tournament_source = "user-session-2026-09-17-tournament-01"
 expert_source = "expert-stage-08"
 expected_stage3 = {
     (table_source, "AUTH-001", "main"): ("BUG-028", "target_pending_implementation", "verified_local"),
@@ -145,8 +146,54 @@ expected_later = {
     (expert_source, "GAP-014", "main"): ("GAP-014", 13, "historical_target_reconciled_not_implemented", "verified_local"),
     (expert_source, "GAP-016", "main"): ("GAP-016", 13, "historical_target_reconciled_not_implemented", "verified_local"),
 }
+expected_stage567 = {
+    (table_source, "U01-FORM-001", "a01"): ("GAP-013", 5, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-FORM-002", "main"): ("GAP-013", 5, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-FORM-002", "a01"): ("GAP-013", 5, "preserve_behavior", "verified_local"),
+    (table_source, "U01-FORM-002", "a02"): ("GAP-013", 5, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-FORM-003", "a01"): ("GAP-013", 5, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-FORM-003", "a02"): ("GAP-013", 5, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-FORM-003", "a04"): ("GAP-013", 5, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-FORM-004", "a02"): ("GAP-013", 5, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-FORM-006", "main"): ("GAP-013", 5, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-FORM-006", "a01"): ("GAP-013", 5, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-FORM-006", "a02"): ("GAP-013", 5, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-JUDGE-002", "a03"): ("GAP-032", 6, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-JUDGE-004", "main"): ("GAP-032", 6, "concept_not_verified", "verified_local"),
+    (table_source, "U01-JUDGE-004", "a01"): ("GAP-032", 6, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-JUDGE-005", "a03"): ("GAP-032", 6, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-JUDGE-006", "a02"): ("GAP-032", 6, "target_pending_implementation", "verified_local"),
+    (table_source, "U01-JUDGE-006", "a03"): ("GAP-032", 6, "target_pending_implementation", "verified_local"),
+    (expert_source, "GAP-023", "main"): ("GAP-023", 6, "historical_target_reconciled_not_implemented", "verified_local"),
+    (tournament_source, "T01-01", "main"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T01-02", "main"): ("GAP-019", 7, "copy_and_order_pending", "verified_local"),
+    (tournament_source, "T01-03", "a01"): ("GAP-019", 7, "preserve_behavior", "verified_local"),
+    (tournament_source, "T01-04", "main"): ("GAP-019", 7, "copy_and_order_pending", "verified_local"),
+    (tournament_source, "T01-04", "a01"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T01-05", "main"): ("GAP-019", 7, "copy_and_order_pending", "verified_local"),
+    (tournament_source, "T01-05", "a01"): ("GAP-019", 7, "preserve_behavior", "verified_local"),
+    (tournament_source, "T01-07", "main"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T01-07", "a01"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T01-07", "a02"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-01", "main"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-02", "main"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-03", "main"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-04", "main"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-04", "a01"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-04", "a02"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-04", "a03"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-05", "main"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-06", "main"): ("GAP-021", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-07", "main"): ("GAP-021", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-08", "main"): ("GAP-021", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-10", "main"): ("GAP-021", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-10", "a01"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-10", "a03"): ("GAP-021", 7, "target_pending_implementation", "verified_local"),
+    (tournament_source, "T02-10", "a04"): ("GAP-019", 7, "target_pending_implementation", "verified_local"),
+    (expert_source, "GAP-021", "main"): ("GAP-021", 7, "historical_target_reconciled_not_implemented", "verified_local"),
+}
 overrides = {(r["source"], r["source_id"], r["atom_id"]): r for r in result_rows}
-expected_result_keys = expected_stage1 | expected_stage2 | set(expected_stage3) | set(expected_later)
+expected_result_keys = expected_stage1 | expected_stage2 | set(expected_stage3) | set(expected_later) | set(expected_stage567)
 if len(result_rows) != len(overrides) or set(overrides) != expected_result_keys:
     errors.append("evidence-bound implementation result keys changed")
 coverage_by_key = {(r["source"], r["source_id"], r["atom_id"]): r for r in coverage}
@@ -164,6 +211,8 @@ for key, result in overrides.items():
     elif key in expected_stage3:
         expected_task, expected_previous, expected_result = expected_stage3[key]
         expected_stage = 3
+    elif key in expected_stage567:
+        expected_task, expected_stage, expected_previous, expected_result = expected_stage567[key]
     elif key in expected_later:
         expected_task, expected_stage, expected_previous, expected_result = expected_later[key]
     else:

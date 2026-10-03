@@ -1,5 +1,44 @@
 # Tab-10 — статус проекта
 
+## Этапы 5–7 — интегрированный локальный кандидат 4.3.0, 2026-10-03
+
+Кандидат объединяет roster-first создание матча (GAP-013), безопасные Stage 6
+judge seams (GAP-023 и ограниченная часть GAP-032) и pre-generation scope A
+турнира (GAP-019/GAP-021). D38 сохранён: custom score и вручную изменённый
+порог сухой победы живут только в текущей форме; новый reusable guest,
+create/acquire/start, replay, ten-second Undo/archive и future scheduling не
+добавлены. Полный GAP-019 остаётся `in_progress` до Stage 8.
+
+До финальной заморозки focused component пакет прошёл 116/116. Exact compiled
+Stage 5–7 browser пакет прошёл 12/12 journeys плюс 9/9 migration foundation на
+1440/390/360, включая authoritative POST+GET, asymmetrical 2×2, 844 landscape и
+CSS zoom 200%. Correction value probes дали 7.09–17.79:1, выбранный Guest — не
+ниже 4.5:1. Финальная Stage 6 регрессия отдельно сохраняет полное отображение
+допустимого длинного имени без пробелов и реалистичного имени с пробелами,
+совпадение строк счёта и отсутствие горизонтальной обрезки. Один диагностический
+reflow запуск поймал измерение до стабилизации layout; после ожидания fonts/two
+animation frames одинаковый runtime прошёл во всех трёх проектах. Финальный
+exact-tree `pnpm run ci` прошёл **1563/1563** без failed, skipped, todo или
+interrupted: cleanup foundation 4/4, quality 1343/1343, disposable PostgreSQL
+90/90 и compiled production-like browser 126/126 (117 сценариев + 9 foundation).
+Результаты и визуальные свидетельства сохранены в [Stage 5–7 candidate
+evidence](audit/evidence/stage567-final-candidate/receipt.json). После заморозки
+Terra вернула PASS без P1/P2, а root повторно проверил 33 source и 26 evidence
+hashes, exact forward/rollback и репрезентативные кадры. [Финальная локальная
+приёмка](audit/evidence/stage567-final-acceptance.json) перевела 44 точно
+закрытых атома этапов 5–7 в `verified_local`; реестр сохранил 236 строк, 82
+эпизода и 38 expert ID.
+
+Предыдущий выпуск 4.2.0 подтверждён на SHA
+`df807d508613b3226345813ff35080a9e1d1c288`: GitHub CI, Vercel READY, Render и
+read-only public smoke 7/7 сохранены в
+`artifacts/ux-implementation-2026-09-18/oct3-release-4.2.0-checkpoint.json` и
+`oct3-release-4.2.0-public-smoke.json`. Кандидат 4.3.0 локально принят в
+ограниченном Stage 5–7 scope, но не опубликован.
+Physical iPhone/touch, browser UI zoom, pinned WebKit, spoken AT и published
+parity для 4.3.0 не проверялись; synthetic pointer move/cancel не выдаётся за
+физический touch test.
+
 ## Этап 14 — интегрированный локальный кандидат 4.2.0, 2026-10-03
 
 На точной базе опубликованной версии 4.1.2

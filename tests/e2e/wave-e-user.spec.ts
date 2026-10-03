@@ -107,6 +107,7 @@ test("GAP-012 operator creates A-vs-B, edits it and starts without player consen
     await login(page);
     await expect(page).toHaveURL(/\/$/);
     await page.goto("/matches/new");
+    await page.getByRole("button", { name: "Изменить название", exact: true }).click();
     await page.getByLabel("Название", { exact: true }).fill(title);
     await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
     await expect(page.getByLabel("Пригласить выбранных игроков", { exact: true })).toHaveCount(0);

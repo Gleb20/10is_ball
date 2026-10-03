@@ -1,5 +1,17 @@
 # Requirements ↔ Tests Traceability
 
+## Stages 5–7 — match setup, judge surface and tournament setup candidate
+
+| Backlog / requirement | Deterministic regression | Runtime evidence and limit |
+|---|---|---|
+| GAP-013; MATCH-001–005/015, AT-MATCH-016/017/018, D38 | [MatchCreatePage.test.tsx](../../apps/web/src/pages/MatchCreatePage.test.tsx): roster order, collapsed summaries/title, exact shortcuts, 1×1/2×2, custom/mercy lifetime, invalid reveal/focus, pending/known/unknown/401 guards | [stage5-match-create.spec.ts](../../tests/e2e/stage5-match-create.spec.ts) covers real 2×2/team setup, unknown then explicit retry, persisted DTO and creator outside roster on 1440/390/360. Selected Guest contrast is measured numerically. |
+| GAP-023/GAP-032 partial; JUDGE-002/004/007/009/011, AT-JUDGE-002/004/007/009/010/011 | [JudgePage.test.tsx](../../apps/web/src/pages/JudgePage.test.tsx): full-side semantics, drag/cancel suppression, pointer/keyboard/AT activation, route-generation fencing, single modal, honest handover/exit copy and result lock | [stage6-judge-layout.spec.ts](../../tests/e2e/stage6-judge-layout.spec.ts) covers rapid five taps, actual correction validation, 2×2 alignment, one unspaced long-name boundary plus a realistic spaced fixture, 844 landscape, 360/390 and CSS zoom 200%. It asserts full text access, equal score y and no horizontal crop. Pointer events are synthetic; physical touch/iPhone/WebKit/spoken AT remain open. |
+| GAP-019 scope A/GAP-021; TOURNAMENT-001/005/006/007/020, AT-TRN-022/023/024 | [TournamentSetup.gap012.test.tsx](../../apps/web/src/pages/TournamentSetup.gap012.test.tsx), [TournamentDetailPage.gap006.test.tsx](../../apps/web/src/pages/TournamentDetailPage.gap006.test.tsx): rules payload, frozen pending, known rejection, role-specific order, ordinary direct add and guarded confirmation | [stage7-tournament-setup.spec.ts](../../tests/e2e/stage7-tournament-setup.spec.ts) covers create/add POST plus authoritative GET and 360/390/1440 layout. Stage 8 scope B and full GAP-019 acceptance remain open. |
+
+Pre-freeze focused web passed 116/116. Exact compiled Stage 5–7 browser passed
+12/12 journeys plus 9/9 migration foundation checks; final aggregate CI and
+independent source review are recorded in the frozen receipt before acceptance.
+
 ## Stage 14 — teams, history and admin integrated candidate
 
 | Backlog / requirement | Deterministic regression | Runtime evidence and limit |

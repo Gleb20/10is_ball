@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tab-10 · Stages 5–7 · local candidate 4.3.0</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, system-ui, sans-serif; color: #17191f; background: #f4f2f7; }
+    body { margin: 0; }
+    main { width: min(1160px, calc(100% - 32px)); margin: 32px auto 64px; }
+    header, section { background: #fff; border: 1px solid #ded9e6; border-radius: 18px; padding: 24px; margin-bottom: 20px; }
+    h1, h2, h3 { margin-top: 0; }
+    h1 { font-size: clamp(28px, 5vw, 52px); line-height: 1.05; }
+    .status { display: inline-block; padding: 8px 12px; border-radius: 999px; background: #d9f4dd; color: #0a6f25; font-weight: 700; }
+    .numbers, .flows, .shots { display: grid; gap: 16px; }
+    .numbers { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-top: 20px; }
+    .number, .flow { border: 1px solid #e3ddec; border-radius: 14px; padding: 16px; }
+    .number strong { display: block; font-size: 28px; color: #6d20d6; }
+    .flows { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .shots { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    figure { margin: 0; border: 1px solid #e3ddec; border-radius: 14px; padding: 10px; background: #faf9fc; }
+    img { display: block; width: 100%; max-height: 760px; object-fit: contain; object-position: top; border-radius: 8px; background: #eee; }
+    figcaption { margin-top: 10px; color: #55515c; font-size: 14px; }
+    code { overflow-wrap: anywhere; }
+    li + li { margin-top: 8px; }
+    .limit { border-left: 5px solid #6d20d6; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <span class="status">Local CI passed</span>
+    <h1>Stages 5–7 · candidate 4.3.0</h1>
+    <p>Frozen local evidence for roster-first match creation, Judge interaction seams and tournament setup before bracket generation.</p>
+    <div class="numbers">
+      <div class="number"><strong>1563/1563</strong>full CI</div>
+      <div class="number"><strong>1343/1343</strong>quality</div>
+      <div class="number"><strong>90/90</strong>PostgreSQL</div>
+      <div class="number"><strong>126/126</strong>compiled browser</div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Проверенные потоки</h2>
+    <div class="flows">
+      <article class="flow">
+        <h3>Stage 5 · новый матч</h3>
+        <p>Формат и роль оператора → состав → редкие правила → название. Оператор остаётся вне состава по умолчанию; exact B1/B2 preview предшествует замене.</p>
+        <ul><li>1×1 и 2×2, игроки и разовые гости</li><li>D38: custom score и ручной mercy живут в текущей форме</li><li>POST подтверждён authoritative GET</li><li>unknown outcome, известный отказ и 401 разделены</li></ul>
+      </article>
+      <article class="flow">
+        <h3>Stage 6 · ведение матча</h3>
+        <p>Вся сторона является одной score-кнопкой. Pointer move/cancel подавляет последующий synthetic click, а обычный tap, keyboard, AT и rapid FIFO сохранены.</p>
+        <ul><li>Длинное допустимое имя без пробелов полностью переносится</li><li>Строки счёта совпадают по вертикали</li><li>360/390/844 и CSS zoom 200% без горизонтальной обрезки</li><li>Correction values: 7.09–17.79:1 в проверенных probes</li></ul>
+      </article>
+      <article class="flow">
+        <h3>Stage 7 · подготовка турнира</h3>
+        <p>Правила → состав → сетка. «Сетка проигравших» названа явно, one-off guest раскрывается отдельно, а обычное прямое добавление не требует второго подтверждения.</p>
+        <ul><li>Полный creation payload</li><li>collecting и needs_regeneration guards сохранены</li><li>Organizer и read-only participant layouts</li><li>POST/add подтверждены authoritative GET</li></ul>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Репрезентативные кадры</h2>
+    <div class="shots">
+      <figure><img src="screenshots/stage5-mobile-360.png" alt="Roster-first создание матча на 360 пикселях"><figcaption>Stage 5 · 360 px · состав до редких правил.</figcaption></figure>
+      <figure><img src="screenshots/stage6-landscape-360.png" alt="Судейство в landscape с длинными именами"><figcaption>Stage 6 · landscape · длинное имя без пробелов и совпадающие строки счёта.</figcaption></figure>
+      <figure><img src="screenshots/stage6-css-zoom-200-360.png" alt="Судейство при CSS zoom 200 процентов"><figcaption>Stage 6 · CSS zoom 200% · одна читаемая колонка.</figcaption></figure>
+      <figure><img src="screenshots/stage6-correction-390.png" alt="Диалог ручной коррекции на 390 пикселях"><figcaption>Stage 6 · correction modal · измеренные contrast states.</figcaption></figure>
+      <figure><img src="screenshots/stage7-desktop-360.png" alt="Подготовка турнира на ширине 360 пикселей"><figcaption>Stage 7 · 360 px · правила, состав, затем сетка.</figcaption></figure>
+      <figure><img src="screenshots/stage7-desktop-1440.png" alt="Подготовка турнира на ширине 1440 пикселей"><figcaption>Stage 7 · 1440 px · тот же порядок и доступные действия.</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Целостность и откат</h2>
+    <ul>
+      <li><code>source-manifest.json</code> фиксирует SHA-256 и размер 33 изменённых исходных, тестовых и канонических файлов.</li>
+      <li><code>forward.patch</code> воспроизводит candidate delta от base SHA.</li>
+      <li><code>rollback.patch</code> возвращает source tree к base; <code>git apply --check</code> прошёл.</li>
+      <li><code>ci/</code> содержит исходные JSON summaries полного финального прогона.</li>
+    </ul>
+  </section>
+
+  <section class="limit">
+    <h2>Границы вывода</h2>
+    <p>Independent source review ещё не выполнен. Synthetic pointer coverage не доказывает поведение физического touch. Не проверялись physical iPhone, browser UI zoom, pinned WebKit и spoken AT. Candidate 4.3.0 не committed, не pushed, не deployed и не сверялся с public stand. Полный GAP-019 остаётся открыт до Stage 8 scope B.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Alert, Button, Dialog, TextField } from "../ui";
+import { Alert, Button, Dialog, Icon, IconButton, TextField } from "../ui";
 import { PageLayout } from "../layout";
 import {
   AsyncState,
+  FilterBar,
   RefreshButton,
   StatusChip,
-  formatLabel,
 } from "../patterns";
 import { api, type Tournament } from "../api";
 import { useAuth } from "../auth";
@@ -30,6 +30,7 @@ import {
 import { statusLabel } from "../statusLabels";
 import { useVisibleRefresh } from "../useVisibleRefresh";
 import { useSingleFlight } from "../useSingleFlight";
+import "./TournamentSetup.css";
 
 type Participant = {
   id: string;
@@ -73,6 +74,7 @@ export function TournamentDetailPage() {
   currentUserIdRef.current = user?.id;
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [guest, setGuest] = useState("");
+  const [guestFormOpen, setGuestFormOpen] = useState(false);
   const [pickUserId, setPickUserId] = useState("");
   const [pickInput, setPickInput] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
@@ -109,6 +111,10 @@ export function TournamentDetailPage() {
   useEffect(() => {
     requestSequence.current += 1;
     setTournament(null);
+    setGuest("");
+    setGuestFormOpen(false);
+    setPickUserId("");
+    setPickInput("");
     setEditingSettings(false);
     setSwapA("seed:1");
     setSwapB("seed:2");
@@ -203,6 +209,7 @@ export function TournamentDetailPage() {
   const matches = (tournament?.matches as MatchRow[]) ?? [];
   const summary = tournament?.summary;
   const status = String(tournament?.status ?? "");
+  const setupStage = status === "collecting" || status === "needs_regeneration";
   const isOrganizer = Boolean(
     user?.id && tournament?.createdByUserId === user.id,
   );
@@ -510,11 +517,95 @@ export function TournamentDetailPage() {
     );
   }
 
+  const buildBracketAction = canBuildBracket && activeParticipants.length >= 3 ? (
+    <Button
+      disabled={busy}
+      data-testid="tournament-build-bracket"
+      onClick={(event: MouseEvent<HTMLButtonElement>) => openAlgorithmDialog(event.currentTarget)}
+    >
+      {hasBracket
+        ? BRACKET_ALGORITHM_DIALOG.changeAction
+        : BRACKET_ALGORITHM_DIALOG.buildAction}
+    </Button>
+  ) : null;
+
+  const dissolveAction = canDissolve ? (
+    <Button
+      variant="secondary"
+      disabled={busy}
+      onClick={() =>
+        void runAction(async () => {
+          await api.dissolveBracket(id!);
+          await load(true);
+        })
+      }
+    >
+      Распустить сетку
+    </Button>
+  ) : null;
+
+  const startAction = canStart ? (
+    <Button
+      disabled={busy}
+      onClick={() =>
+        void runAction(async () => {
+          const r = await api.startTournament(id!);
+          replaceTournamentIfCurrent(r.tournament);
+        }, "Турнир стартовал")
+      }
+    >
+      Старт
+    </Button>
+  ) : null;
+
+  const stopAction = canStop ? (
+    <Button
+      variant="secondary"
+      disabled={busy}
+      onClick={() => setStopDialogOpen(true)}
+    >
+      Остановить турнир
+    </Button>
+  ) : null;
+
+  const cancelAction = canCancel ? (
+    <Button
+      variant="secondary"
+      disabled={busy}
+      data-testid="tournament-cancel"
+      onClick={() =>
+        void runAction(async () => {
+          const r = await api.cancelTournament(id!);
+          replaceTournamentIfCurrent(r.tournament);
+        }, "Турнир отменён")
+      }
+    >
+      Отменить турнир
+    </Button>
+  ) : null;
+
+  const withdrawAction = canWithdraw ? (
+    <Button
+      variant="secondary"
+      disabled={busy}
+      onClick={() =>
+        void runAction(async () => {
+          const r = await api.withdrawTournament(id!);
+          replaceTournamentIfCurrent(
+            (r as { tournament: Tournament }).tournament,
+          );
+        })
+      }
+    >
+      Выйти из турнира
+    </Button>
+  ) : null;
+
   return (
     <PageLayout
       title={tournament ? String(tournament.title) : "Турнир"}
       action={
-        <RefreshButton refreshing={refreshing} onRefresh={refreshNow} />
+        setupStage ? undefined : <RefreshButton refreshing={refreshing} onRefresh={refreshNow} />
       }
     >
       <AsyncState
@@ -537,13 +628,15 @@ export function TournamentDetailPage() {
                 domain="tournament"
               />
               <span className="muted">
-                {formatLabel(String(tournament.format))}
+                Сетка проигравших {format === "double_elimination" ? "включена" : "выключена"}
               </span>
             </div>
 
-            {!isScopedAdminView ? <div className="card stack">
-              <div className="row">
-                <h2 className="section-title">Настройки и правила</h2>
+            {!isScopedAdminView ? <section className="card stack tournament-setup" aria-labelledby="tournament-rules-heading">
+              <div className="row tournament-setup__heading-row">
+                <h2 id="tournament-rules-heading" className="section-title">
+                  {setupStage ? "Шаг 1 из 3 · Правила" : "Правила"}
+                </h2>
                 {canEditSettings && !editingSettings ? (
                   <Button
                     size="sm"
@@ -561,7 +654,7 @@ export function TournamentDetailPage() {
                       setEditingSettings(true);
                     }}
                   >
-                    Изменить
+                    Изменить правила
                   </Button>
                 ) : null}
               </div>
@@ -577,25 +670,28 @@ export function TournamentDetailPage() {
                       }))
                     }
                   />
-                  <label>
-                    Формат
-                    <select
-                      aria-label="Формат"
+                  <div className="stack tournament-setup__choice">
+                    <span className="tournament-setup__choice-label">Сетка проигравших</span>
+                    <FilterBar
+                      label="Сетка проигравших"
                       value={settings.format}
-                      onChange={(event) =>
+                      onChange={(value) =>
                         setSettings((current) => ({
                           ...current,
-                          format: event.target.value as typeof current.format,
+                          format: value as typeof current.format,
                         }))
                       }
-                    >
-                      <option value="single_elimination">Single elimination</option>
-                      <option value="double_elimination">Double elimination</option>
-                    </select>
-                  </label>
+                      options={[
+                        { value: "single_elimination", label: "Выключена" },
+                        { value: "double_elimination", label: "Включена" },
+                      ]}
+                    />
+                  </div>
                   <TextField
                     label="Очков для победы"
                     type="number"
+                    min={1}
+                    inputMode="numeric"
                     value={String(settings.pointsToWin)}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                       setSettings((current) => ({
@@ -604,7 +700,7 @@ export function TournamentDetailPage() {
                       }))
                     }
                   />
-                  <label>
+                  <label className="match-create__check">
                     <input
                       type="checkbox"
                       checked={settings.organizerParticipates}
@@ -617,7 +713,7 @@ export function TournamentDetailPage() {
                     />{" "}
                     Организатор участвует
                   </label>
-                  <label>
+                  <label className="match-create__check">
                     <input
                       type="checkbox"
                       checked={settings.mercyEnabled}
@@ -628,12 +724,14 @@ export function TournamentDetailPage() {
                         }))
                       }
                     />{" "}
-                    Правило преимущества
+                    Завершать матч при сухом счёте
                   </label>
                   {settings.mercyEnabled ? (
                     <TextField
-                      label="Разница очков"
+                      label="Очков для сухой победы"
                       type="number"
+                      min={1}
+                      inputMode="numeric"
                       value={String(settings.mercyPoints)}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                         setSettings((current) => ({
@@ -643,9 +741,14 @@ export function TournamentDetailPage() {
                       }
                     />
                   ) : null}
+                  {settings.mercyEnabled ? (
+                    <p className="muted tournament-setup__hint">
+                      Матч завершится при счёте {settings.mercyPoints}:0 или выше у лидера, пока у соперника 0.
+                    </p>
+                  ) : null}
                   <div className="row">
                     <Button
-                      disabled={busy || !settings.title.trim()}
+                      disabled={busy || !settings.title.trim() || settings.pointsToWin < 1 || (settings.mercyEnabled && settings.mercyPoints < 1)}
                       onClick={() =>
                         void runAction(async () => {
                           const response = await api.patchTournament(id!, {
@@ -670,15 +773,18 @@ export function TournamentDetailPage() {
                   </div>
                 </>
               ) : (
-                <p className="muted">
-                  До {Number(tournament.pointsToWin ?? 11)} очков
-                  {tournament.mercyEnabled
-                    ? ` · преимущество ${Number(tournament.mercyPoints ?? 2)}`
-                    : " · без правила преимущества"}
-                  {` · ${tournament.organizerParticipates === false ? "организатор не играет" : "организатор играет"}`}
-                </p>
+                <ul className="tournament-setup__rule-summary">
+                  <li>Сетка проигравших: {format === "double_elimination" ? "включена" : "выключена"}</li>
+                  <li>До {Number(tournament.pointsToWin ?? 11)} очков</li>
+                  <li>
+                    {tournament.mercyEnabled
+                      ? `Сухая победа при ${Number(tournament.mercyPoints ?? 2)}:0`
+                      : "Сухая победа выключена"}
+                  </li>
+                  <li>{tournament.organizerParticipates === false ? "Организатор не участвует" : "Организатор участвует"}</li>
+                </ul>
               )}
-            </div> : null}
+            </section> : null}
 
             {actionError ? (
               <Alert
@@ -697,122 +803,22 @@ export function TournamentDetailPage() {
               />
             ) : null}
 
-            <div className="row">
-              {canBuildBracket && activeParticipants.length >= 3 ? (
-                <Button
-                  disabled={busy}
-                  data-testid="tournament-build-bracket"
-                  onClick={(event: MouseEvent<HTMLButtonElement>) => openAlgorithmDialog(event.currentTarget)}
-                >
-                  {hasBracket
-                    ? BRACKET_ALGORITHM_DIALOG.changeAction
-                    : BRACKET_ALGORITHM_DIALOG.buildAction}
-                </Button>
-              ) : null}
-              {canDissolve ? (
-                <Button
-                  variant="secondary"
-                  disabled={busy}
-                  onClick={() =>
-                    void runAction(async () => {
-                      await api.dissolveBracket(id!);
-                      await load(true);
-                    })
-                  }
-                >
-                  Распустить сетку
-                </Button>
-              ) : null}
-              {canStart ? (
-                <Button
-                  disabled={busy}
-                  onClick={() =>
-                    void runAction(async () => {
-                      const r = await api.startTournament(id!);
-                      replaceTournamentIfCurrent(r.tournament);
-                    }, "Турнир стартовал")
-                  }
-                >
-                  Старт
-                </Button>
-              ) : null}
-              {canStop ? (
-                <Button
-                  variant="secondary"
-                  disabled={busy}
-                  onClick={() => setStopDialogOpen(true)}
-                >
-                  Остановить турнир
-                </Button>
-              ) : null}
-              {canCancel ? (
-                <Button
-                  variant="secondary"
-                  disabled={busy}
-                  data-testid="tournament-cancel"
-                  onClick={() =>
-                    void runAction(async () => {
-                      const r = await api.cancelTournament(id!);
-                      replaceTournamentIfCurrent(r.tournament);
-                    }, "Турнир отменён")
-                  }
-                >
-                  Отменить турнир
-                </Button>
-              ) : null}
-              {canWithdraw ? (
-                <Button
-                  variant="secondary"
-                  disabled={busy}
-                  onClick={() =>
-                    void runAction(async () => {
-                      const r = await api.withdrawTournament(id!);
-                      replaceTournamentIfCurrent(
-                        (r as { tournament: Tournament }).tournament,
-                      );
-                    })
-                  }
-                >
-                  Выйти из турнира
-                </Button>
-              ) : null}
-            </div>
+            {!setupStage ? (
+              <div className="row tournament-setup__actions">
+                {buildBracketAction}
+                {dissolveAction}
+                {startAction}
+                {stopAction}
+                {cancelAction}
+                {withdrawAction}
+              </div>
+            ) : null}
 
-            {canAddRegistered || (canEditRoster && isOrganizer) ? (
-            <div className="card stack">
-              <h2 className="section-title">
-                Участники ({activeParticipants.length})
+            {setupStage || canAddRegistered || (canEditRoster && isOrganizer) ? (
+            <section className="card stack tournament-setup" aria-labelledby="tournament-roster-heading">
+              <h2 id="tournament-roster-heading" className="section-title">
+                {setupStage ? "Шаг 2 из 3 · Состав" : "Участники"} ({activeParticipants.length})
               </h2>
-              {activeParticipants.length === 0 ? (
-                <p className="muted">Пока никого нет</p>
-              ) : (
-                activeParticipants.map((p) => (
-                  <div key={p.id} className="row">
-                    <span>
-                      {participantLabel(p)}
-                      {p.seed ? (
-                        <span className="muted"> · seed {p.seed}</span>
-                      ) : null}
-                      {p.userId === user?.id ? (
-                        <span className="muted"> · вы</span>
-                      ) : null}
-                    </span>
-                    {isOrganizer && canEditRoster ? <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled={busy}
-                      onClick={() =>
-                        void runAction(async () => {
-                          await api.removeTournamentParticipant(id!, p.id);
-                          await load(true);
-                        })
-                      }
-                    >
-                      Удалить
-                    </Button> : null}
-                  </div>
-                ))
-              )}
               {canAddRegistered ? <UserPicker
                 label="Добавить игрока"
                 value={pickUserId}
@@ -829,11 +835,12 @@ export function TournamentDetailPage() {
                   const playerName = pickInput.trim() || "выбранного игрока";
                   const requiresOverride = Boolean(tournament.requireParticipantConsent) || !isOrganizer;
                   const regeneratesBracket = status === "bracket_generated";
+                  const ordinaryOrganizerAdd = isOrganizer && status === "collecting" && !tournament.requireParticipantConsent;
                   const consequence = [
                     requiresOverride ? "добавить без ответа на приглашение" : "добавить напрямую в состав",
                     regeneratesBracket ? "и сразу перестроить уже созданную сетку" : null,
                   ].filter(Boolean).join(" ");
-                  if (!window.confirm(`Добавить ${playerName} в турнир «${String(tournament.title)}»: ${consequence}?`)) return;
+                  if (!ordinaryOrganizerAdd && !window.confirm(`Добавить ${playerName} в турнир «${String(tournament.title)}»: ${consequence}?`)) return;
                   const submittedUserId = pickUserId;
                   void runAction(async () => {
                     const response = await api.addTournamentParticipant(id!, {
@@ -849,31 +856,104 @@ export function TournamentDetailPage() {
               >
                 Добавить в состав
               </Button> : null}
-              {isOrganizer && canEditRoster ? <TextField
-                label="Добавить гостя (Имя Фамилия)"
-                value={guest}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setGuest(e.target.value)
-                }
-              /> : null}
-              {isOrganizer && canEditRoster ? <Button
-                variant="secondary"
-                disabled={busy || !guest.trim()}
-                onClick={() => {
-                  const [first, ...rest] = guest.trim().split(/\s+/);
-                  void runAction(async () => {
-                    const response = await api.addTournamentParticipant(id!, {
-                      guestFirstName: first,
-                      guestLastName: rest.join(" ") || "Гость",
-                    }, crypto.randomUUID());
-                    setGuest("");
-                    replaceTournamentIfCurrent(response.tournament);
-                  }, "Гость добавлен");
-                }}
-              >
-                Добавить гостя
-              </Button> : null}
-            </div>
+              {isOrganizer && canEditRoster ? (
+                <div className="stack tournament-setup__guest">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    aria-expanded={guestFormOpen}
+                    aria-controls="tournament-one-off-guest"
+                    onClick={() => setGuestFormOpen((open) => !open)}
+                  >
+                    Добавить разового гостя
+                  </Button>
+                  {guestFormOpen ? <div id="tournament-one-off-guest" className="stack">
+                    <TextField
+                      label="Имя и фамилия разового гостя"
+                      value={guest}
+                      disabled={busy}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setGuest(e.target.value)
+                      }
+                    />
+                    <Button
+                      variant="secondary"
+                      disabled={busy || !guest.trim()}
+                      onClick={() => {
+                        const [first, ...rest] = guest.trim().split(/\s+/);
+                        void runAction(async () => {
+                          const response = await api.addTournamentParticipant(id!, {
+                            guestFirstName: first,
+                            guestLastName: rest.join(" ") || "Гость",
+                          }, crypto.randomUUID());
+                          setGuest("");
+                          replaceTournamentIfCurrent(response.tournament);
+                        }, "Гость добавлен");
+                      }}
+                    >
+                      Добавить гостя
+                    </Button>
+                  </div> : null}
+                </div>
+              ) : null}
+              {activeParticipants.length === 0 ? (
+                <p className="muted">Пока никого нет</p>
+              ) : (
+                <ul className="tournament-setup__roster">
+                  {activeParticipants.map((p) => (
+                  <li key={p.id} className="tournament-setup__roster-item">
+                    <span className="tournament-setup__participant">
+                      {participantLabel(p)}
+                      {p.seed ? (
+                        <span className="muted"> · посев {p.seed}</span>
+                      ) : null}
+                      {p.userId === user?.id ? (
+                        <span className="muted"> · вы</span>
+                      ) : null}
+                    </span>
+                    {isOrganizer && canEditRoster ? <IconButton
+                      variant="outlined"
+                      size="sm"
+                      className="tournament-setup__remove"
+                      aria-label={`Удалить ${participantLabel(p)} из состава`}
+                      disabled={busy}
+                      icon={<Icon path="Office & Editing/TrashSimple" size={20} />}
+                      onClick={() =>
+                        void runAction(async () => {
+                          await api.removeTournamentParticipant(id!, p.id);
+                          await load(true);
+                        })
+                      }
+                    /> : null}
+                  </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+            ) : null}
+
+            {setupStage && isOrganizer ? (
+              <section className="card stack tournament-setup" aria-labelledby="tournament-bracket-step-heading">
+                <h2 id="tournament-bracket-step-heading" className="section-title">Шаг 3 из 3 · Сетка</h2>
+                {buildBracketAction ?? (
+                  <p className="muted">Чтобы построить сетку, добавьте минимум трёх участников.</p>
+                )}
+              </section>
+            ) : null}
+
+            {setupStage ? (
+              <div className="row tournament-setup__actions" aria-label="Дополнительные действия турнира">
+                <Button
+                  variant="secondary"
+                  disabled={refreshing || busy}
+                  onClick={() => void refreshNow()}
+                >
+                  {refreshing ? "Проверяем изменения…" : "Проверить изменения состава"}
+                </Button>
+                {dissolveAction}
+                {cancelAction}
+                {withdrawAction}
+              </div>
             ) : null}
 
             {liveMatches.length > 0 ? (
@@ -1034,7 +1114,7 @@ export function TournamentDetailPage() {
                 ) : null}
               </div>
             ) : null}
-            {summary ? (
+            {summary && !setupStage ? (
               <div className="card stack">
                 <h2 className="section-title">Итоги</h2>
                 <p className="muted">

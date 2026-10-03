@@ -38,16 +38,40 @@ async function noOverflow(page: Page) { expect(await page.evaluate(() => documen
 test("Wave C AT-MATCH-013_016 2v2 team selection, rules, no-show and hidden revenge", async ({ page }, info) => {
   const name = `c-roster-${info.project.name}`;
   const { admin, actor, target, user } = await fixture(name);
+  const teammate = await request.newContext({ baseURL });
   try {
+    const createdTeammate = await mutate(admin, "POST", "/api/v1/admin/users", {
+      email: `${name}-teammate@tab10.test`,
+      firstName: "Партнёр",
+      lastName: name,
+    });
+    await mutate(teammate, "POST", "/api/v1/auth/login", {
+      email: createdTeammate.user.email,
+      password: createdTeammate.temporaryPassword,
+    });
+    await mutate(teammate, "POST", "/api/v1/auth/password/first-change", { newPassword: "WaveCFixture9!" });
+    await mutate(teammate, "PATCH", "/api/v1/me/onboarding", { action: "complete" });
     const { team } = await mutate(admin, "POST", "/api/v1/teams", { name });
-    const { invitation } = await mutate(admin, "POST", `/api/v1/teams/${team.id}/invite`, { userId: user.id });
-    await mutate(target, "POST", `/api/v1/team-invitations/${invitation.id}/respond`, { accept: true });
+    for (const member of [
+      { userId: user.id, context: target },
+      { userId: createdTeammate.user.id, context: teammate },
+    ]) {
+      const { invitation } = await mutate(admin, "POST", `/api/v1/teams/${team.id}/invite`, { userId: member.userId });
+      await mutate(member.context, "POST", `/api/v1/team-invitations/${invitation.id}/respond`, { accept: true });
+    }
     await login(page); await page.goto("/matches/new");
+    await page.getByRole("button", { name: "Изменить название", exact: true }).click();
     await page.getByLabel("Название", { exact: true }).fill(name);
     await page.getByLabel("Создатель играет", { exact: true }).check();
     await page.getByRole("button", { name: "2 × 2", exact: true }).click();
     await page.getByRole("button", { name, exact: true }).click();
-    await page.getByLabel("Очков до победы", { exact: true }).fill("7");
+    const preview = page.getByRole("region", { name: "Предпросмотр быстрого выбора" });
+    await expect(preview).toContainText("B1:");
+    await expect(preview).toContainText("B2:");
+    await preview.getByRole("button", { name: "Применить", exact: true }).click();
+    await page.getByRole("button", { name: "Изменить правила", exact: true }).click();
+    await page.getByRole("group", { name: "Очков до победы", exact: true }).getByRole("button", { name: "Своё", exact: true }).click();
+    await page.getByLabel("Своё значение", { exact: true }).fill("7");
     await page.getByRole("checkbox", { name: /Сухая победа/ }).uncheck();
     for (const label of ["Партнёр", "Соперник 2"]) {
       await page.getByRole("group", { name: label, exact: true }).getByRole("button", { name: "Гость", exact: true }).click();
@@ -60,7 +84,12 @@ test("Wave C AT-MATCH-013_016 2v2 team selection, rules, no-show and hidden reve
     const detail = (await (await admin.get(`/api/v1/matches/${id}`)).json()).match;
     expect(detail).toMatchObject({ format: "2v2", pointsToWin: 7, mercyEnabled: false, firstServerMethod: "manual" });
     expect(detail.participants).toHaveLength(4);
-    expect(detail.participants.filter((p: { userId?: string }) => p.userId).map((p: { userId: string }) => p.userId).sort()).toEqual([actor.id, user.id].sort());
+    const registeredIds = detail.participants
+      .filter((participant: { userId?: string }) => participant.userId)
+      .map((participant: { userId: string }) => participant.userId);
+    expect(registeredIds).toHaveLength(2);
+    expect(registeredIds).toContain(actor.id);
+    expect(registeredIds.some((id: string) => [user.id, createdTeammate.user.id].includes(id))).toBe(true);
     await page.getByRole("button", { name: "Зафиксировать неявку", exact: true }).click();
     await page.getByLabel("Комментарий (необязательно)", { exact: true }).fill("Синтетическая проверка неявки");
     await page.getByRole("button", { name: "Завершить по неявке", exact: true }).click();
@@ -70,10 +99,11 @@ test("Wave C AT-MATCH-013_016 2v2 team selection, rules, no-show and hidden reve
     await page.goto(`/matches/new?revengeOf=${id}&returnTo=match`);
     await expect(page).toHaveURL(/\/matches\/new\?returnTo=match$/);
     await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
-    await expect(page.getByLabel("Очков до победы", { exact: true })).toHaveValue("11");
+    await page.getByRole("button", { name: "Изменить правила", exact: true }).click();
+    await expect(page.getByRole("group", { name: "Очков до победы", exact: true }).getByRole("button", { name: "11", exact: true })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByLabel("Пригласить выбранных игроков", { exact: true })).toHaveCount(0);
     await noOverflow(page);
-  } finally { await Promise.all([admin.dispose(), target.dispose()]); }
+  } finally { await Promise.all([admin.dispose(), target.dispose(), teammate.dispose()]); }
 });
 
 test("Wave C AT-JUDGE-004_010 correction, undo and two-client handover preserve authority", async ({ page, browser }, info) => {
@@ -109,8 +139,8 @@ test("Wave C AT-JUDGE-004_010 correction, undo and two-client handover preserve 
     await expect(page.getByTestId("judge-side-A").locator(".judge-side__score")).toHaveText("4");
     await correct("10", "9");
     await page.getByRole("button", { name: "Ещё", exact: true }).click();
-    await page.getByRole("combobox", { name: "Передать судейство", exact: true }).selectOption(user.id);
-    await page.getByRole("button", { name: "Передать слот", exact: true }).click();
+    await page.getByRole("combobox", { name: "Передать ведение на другое устройство", exact: true }).selectOption(user.id);
+    await page.getByRole("button", { name: "Передать ведение", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/matches/${match.id}$`));
     const reserved = (await (await admin.get(`/api/v1/matches/${match.id}`)).json()).match;
     expect(reserved.activeJudge).toBeNull(); expect(reserved.judgeReservation.userId).toBe(user.id);

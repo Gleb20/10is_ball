@@ -167,6 +167,7 @@ test("GAP-030 explicit Home releases judge slot; Browser Back is measured separa
     await page.getByRole("button", { name: "Войти" }).click();
     await expect(page).toHaveURL(/\/$/);
     await page.goto("/matches/new");
+    await page.getByRole("button", { name: "Изменить название", exact: true }).click();
     await page.getByLabel("Название").fill(`Stage 2 exit ${info.project.name}`);
     await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
     await page.getByRole("group", { name: "Игрок A: тип участника", exact: true }).getByRole("button", { name: "Гость", exact: true }).click();
@@ -188,7 +189,9 @@ test("GAP-030 explicit Home releases judge slot; Browser Back is measured separa
     await expect(page.getByTestId("judge-setup")).toBeVisible();
     await page.getByRole("button", { name: "На главную" }).click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByText("Слот судьи освобождён. Другой пользователь может занять его сразу.")).toBeVisible();
+    const releaseNotice = page.getByRole("alert");
+    await expect(releaseNotice).toContainText("Судейство завершено");
+    await expect(releaseNotice).toContainText("Вы вышли из ведения. Другой пользователь может продолжить");
     await expect.poll(async () => (await (await page.request.get(`/api/v1${matchPath}`)).json()).match.activeJudge).toBeNull();
   } finally {
     if (matchPath) {

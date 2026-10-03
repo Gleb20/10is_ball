@@ -6,9 +6,10 @@ import {
   useState,
   type KeyboardEvent,
   type MouseEvent,
+  type PointerEvent,
 } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Button, Avatar, TextField } from "../ui";
+import { Button, Avatar, Dialog, TextField } from "../ui";
 import { api } from "../api";
 import { TableTennisRacketIcon } from "../icons/TableTennisRacketIcon";
 import {
@@ -64,6 +65,7 @@ import {
   type ReviewedScoreSnapshot,
   type ScoreRecoveryRecord,
 } from "./judgeScoreRecovery";
+import "./JudgePage.css";
 
 type MatchState = Record<string, unknown> & JudgeMatchLike;
 type Phase =
@@ -84,6 +86,15 @@ const LOST_JUDGE_CODES = new Set([
   "JUDGE_REQUIRED",
   "JUDGE_TAKEN",
 ]);
+const SCORE_POINTER_MOVE_THRESHOLD = 8;
+
+type ScorePointerGesture = {
+  side: "A" | "B";
+  pointerId: number;
+  startX: number;
+  startY: number;
+  moved: boolean;
+};
 
 const unavailableRecoveryStorage: Pick<Storage, "getItem" | "setItem" | "removeItem"> = {
   getItem() {
@@ -200,6 +211,8 @@ export function JudgePage() {
   const [error, setError] = useState<string | null>(null);
   const pointRecoveryErrorRef = useRef<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const returnFocusToMoreRef = useRef(false);
+  const [rotationHintDismissed, setRotationHintDismissed] = useState(false);
   const [flashSide, setFlashSide] = useState<"A" | "B" | null>(null);
   const [undoPending, setUndoPending] = useState(false);
   const [pointPendingCount, setPointPendingCount] = useState(0);
@@ -223,7 +236,10 @@ export function JudgePage() {
   const recoveryRegionRef = useRef<HTMLElement | null>(null);
   const recoveryWasVisibleRef = useRef(false);
   const judgeLockOwnedRef = useRef(false);
-  const liveSyncRunningRef = useRef(false);
+  const liveSyncOwnerRef = useRef<symbol | null>(null);
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const scorePointerGestureRef = useRef<ScorePointerGesture | null>(null);
+  const suppressScoreClickRef = useRef(false);
   const exitPendingRef = useRef(false);
   const exclusiveMutationRef = useRef(false);
   const flashTimeoutRef = useRef<number | null>(null);
@@ -269,7 +285,7 @@ export function JudgePage() {
   } | null>(null);
   const correctionScoreAId = useId();
   const correctionScoreBId = useId();
-  const correctionHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const correctionHeadingRef = useRef<HTMLSpanElement | null>(null);
   const correctionErrorRef = useRef<HTMLParagraphElement | null>(null);
   const correctionOpenRef = useRef(false);
   const [correctionFocusTarget, setCorrectionFocusTarget] = useState<
@@ -315,6 +331,7 @@ export function JudgePage() {
 
   useEffect(() => {
     if (!id || !actorUserId) return;
+    liveSyncOwnerRef.current = null;
     const generation = beginScoreRecoveryGeneration(actorUserId, id);
     recoveryGenerationRef.current = generation;
     const restored = readScoreRecoveryRecord(actorUserId, id, recoveryStorage());
@@ -336,6 +353,7 @@ export function JudgePage() {
       recoveryGenerationRef.current = 0;
       pointQueueOwnerRef.current = null;
       loadPromiseRef.current = null;
+      liveSyncOwnerRef.current = null;
       if (activeCorrectionAttemptIdRef.current !== null) {
         activeCorrectionAttemptIdRef.current = null;
         exclusiveMutationRef.current = false;
@@ -347,6 +365,10 @@ export function JudgePage() {
       }
     };
   }, [actorUserId, applyRecoveryRecord, id]);
+
+  useEffect(() => {
+    setRotationHintDismissed(false);
+  }, [id]);
 
   const load = useCallback(async (forceFresh = false): Promise<MatchState> => {
     if (!id || !actorUserId) throw new Error("Матч или пользователь не определён");
@@ -450,7 +472,13 @@ export function JudgePage() {
 
   useEffect(() => {
     correctionOpenRef.current = correctionOpen;
-    if (correctionOpen) correctionHeadingRef.current?.focus();
+    if (correctionOpen) {
+      const heading = correctionHeadingRef.current?.closest("h2");
+      if (heading instanceof HTMLElement) {
+        heading.tabIndex = -1;
+        heading.focus();
+      }
+    }
   }, [correctionOpen]);
 
   useEffect(() => {
@@ -465,6 +493,12 @@ export function JudgePage() {
     element.focus();
     setCorrectionFocusTarget(null);
   }, [correctionFocusTarget, correctionOpen, menuOpen]);
+
+  useEffect(() => {
+    if (menuOpen || !returnFocusToMoreRef.current) return;
+    returnFocusToMoreRef.current = false;
+    document.getElementById("judge-more-trigger")?.focus();
+  }, [menuOpen]);
 
   const exitAfterJudge = useCallback(
     (m: MatchState | null, notice?: JudgeExitNotice, destination?: "/") => {
@@ -489,6 +523,13 @@ export function JudgePage() {
 
   const loseJudgeLock = useCallback(
     async (error: ApiError) => {
+      if (!id || !actorUserId) return;
+      const requestedId = id;
+      const generation = recoveryGenerationRef.current;
+      if (
+        currentMatchIdRef.current !== requestedId ||
+        !isScoreRecoveryGenerationCurrent(actorUserId, requestedId, generation)
+      ) return;
       judgeLockOwnedRef.current = false;
       pointQueueRef.current = [];
       setPointPendingCount(0);
@@ -498,6 +539,10 @@ export function JudgePage() {
       setError(lostJudgeMessage(error));
       try {
         const fresh = await load(true);
+        if (
+          currentMatchIdRef.current !== requestedId ||
+          !isScoreRecoveryGenerationCurrent(actorUserId, requestedId, generation)
+        ) return;
         if (isTerminalMatchStatus(fresh.status)) {
           setPhase("readonly");
           setError(null);
@@ -506,16 +551,24 @@ export function JudgePage() {
         // Preserve the last authoritative screen when read access is also gone.
       }
     },
-    [load],
+    [actorUserId, id, load],
   );
 
   const syncLiveState = useCallback(
     async (ownsLock: boolean) => {
-      if (!id || liveSyncRunningRef.current) return;
-      liveSyncRunningRef.current = true;
+      if (!id || !actorUserId || liveSyncOwnerRef.current) return;
+      const requestedId = id;
+      const generation = recoveryGenerationRef.current;
+      const syncOwner = Symbol("judge-live-sync");
+      liveSyncOwnerRef.current = syncOwner;
+      const isCurrent = () =>
+        currentMatchIdRef.current === requestedId &&
+        isScoreRecoveryGenerationCurrent(actorUserId, requestedId, generation);
       try {
-        if (ownsLock) await api.heartbeatJudge(id);
+        if (ownsLock) await api.heartbeatJudge(requestedId);
+        if (!isCurrent()) return;
         const fresh = await load();
+        if (!isCurrent()) return;
         const status = String(fresh.status ?? "");
         if (ownsLock && status === "in_progress") {
           setPhase((current) =>
@@ -536,6 +589,7 @@ export function JudgePage() {
           setError(null);
         }
       } catch (error) {
+        if (!isCurrent()) return;
         if (ownsLock && isLostJudgeError(error, true)) {
           await loseJudgeLock(error);
         } else {
@@ -544,14 +598,22 @@ export function JudgePage() {
           );
         }
       } finally {
-        liveSyncRunningRef.current = false;
+        if (liveSyncOwnerRef.current === syncOwner) {
+          liveSyncOwnerRef.current = null;
+        }
       }
     },
-    [id, load, loseJudgeLock],
+    [actorUserId, id, load, loseJudgeLock],
   );
 
   const initJudge = useCallback(async () => {
-    if (!id) return;
+    if (!id || !actorUserId) return;
+    const requestedId = id;
+    const generation = recoveryGenerationRef.current;
+    const isCurrent = () =>
+      currentMatchIdRef.current === requestedId &&
+      isScoreRecoveryGenerationCurrent(actorUserId, requestedId, generation);
+    if (!isCurrent()) return;
     setPhase("loading");
     setError(null);
     try {
@@ -559,15 +621,21 @@ export function JudgePage() {
       let detail: MatchState;
       try {
         detail = await load();
+        if (!isCurrent()) return;
       } catch (loadError) {
+        if (!isCurrent()) return;
         if (readonlyMode || (loadError as ApiError).status !== 403) {
           throw loadError;
         }
-        await api.acquireJudge(id);
+        if (!isCurrent()) return;
+        await api.acquireJudge(requestedId);
+        if (!isCurrent()) return;
         acquiredDuringFallback = true;
         judgeLockOwnedRef.current = true;
         detail = await load();
+        if (!isCurrent()) return;
       }
+      if (!isCurrent()) return;
       const status = String(detail.status ?? "");
       if (
         readonlyMode ||
@@ -578,10 +646,14 @@ export function JudgePage() {
         return;
       }
       if (!acquiredDuringFallback) {
-        await api.acquireJudge(id);
+        if (!isCurrent()) return;
+        await api.acquireJudge(requestedId);
+        if (!isCurrent()) return;
         judgeLockOwnedRef.current = true;
       }
+      if (!isCurrent()) return;
       const refreshed = acquiredDuringFallback ? detail : await load();
+      if (!isCurrent()) return;
       if (needsJudgeSetup(refreshed)) {
         const firstServerMethod = String(refreshed.firstServerMethod ?? "manual");
         setFirstServerId(
@@ -597,6 +669,7 @@ export function JudgePage() {
         setPhase("scoring");
       }
     } catch (e) {
+      if (!isCurrent()) return;
       const err = e as Error & {
         code?: string;
         details?: { currentJudge?: { userId?: string; displayName: string } };
@@ -604,7 +677,7 @@ export function JudgePage() {
       setError(judgeAcquireErrorMessage(err));
       setPhase("blocked");
     }
-  }, [id, load, readonlyMode]);
+  }, [actorUserId, id, load, readonlyMode]);
 
   useEffect(() => {
     void initJudge();
@@ -631,7 +704,7 @@ export function JudgePage() {
 
   useEffect(() => {
     if (!focusHandoverAfterRetry || (directoryState !== "ready" && directoryState !== "error")) return;
-    if (document.activeElement === document.body) document.getElementById(directoryState === "ready" ? "judge-handover-user" : "judge-handover-retry")?.focus();
+    document.getElementById(directoryState === "ready" ? "judge-handover-user" : "judge-handover-retry")?.focus();
     setFocusHandoverAfterRetry(false);
   }, [directoryState, focusHandoverAfterRetry]);
 
@@ -1231,19 +1304,19 @@ export function JudgePage() {
         judgeLockOwnedRef.current = false;
         notice = {
           kind: "success",
-          message: "Слот судьи освобождён. Другой пользователь может занять его сразу.",
+          message: "Вы вышли из ведения. Другой пользователь может продолжить",
         };
       } else {
         notice = {
           kind: "warning",
-          message: "Слот судьи уже не был активен. Проверьте актуального судью в карточке матча.",
+          message: "Ведение на этом устройстве уже не активно. Проверьте текущее состояние матча",
         };
       }
     } catch (e) {
       judgeLockOwnedRef.current = false;
       notice = {
         kind: "warning",
-        message: `Не удалось подтвердить освобождение слота: ${(e as Error).message}. Он освободится по TTL, если запрос не дошёл.`,
+        message: "Не удалось проверить выход из ведения. Проверьте текущее состояние матча",
       };
     }
     exitPendingRef.current = false;
@@ -1548,7 +1621,7 @@ export function JudgePage() {
       judgeLockOwnedRef.current = false;
       exitAfterJudge(matchRef.current ?? match, {
         kind: "success",
-        message: `Судейство передано: ${String(result.reservation.displayName ?? "назначенный пользователь")} может занять слот.`,
+        message: `Передача подготовлена для ${String(result.reservation.displayName ?? "назначенный пользователь")}. Получатель должен принять её и открыть ведение на своём устройстве`,
       });
     } catch (reason) {
       if (isLostJudgeError(reason)) await loseJudgeLock(reason);
@@ -1586,6 +1659,12 @@ export function JudgePage() {
       recoveryWasVisibleRef.current = false;
     }
   }, [scoreRecoveryRenderable]);
+
+  useEffect(() => {
+    if (match?.status !== "pending_confirmation") return;
+    setMenuOpen(false);
+    if (!correctionPending) setCorrectionOpen(false);
+  }, [correctionPending, match?.status]);
 
   if (phase === "loading") {
     return (
@@ -1702,7 +1781,12 @@ export function JudgePage() {
         return p?.side === "A" || p?.side === "B" ? p.side : null;
       })()
     : servingSide(match);
-  const showHint = shouldShowLandscapeHint(viewport.w, viewport.h);
+  const rotateHintNeeded = shouldShowLandscapeHint(viewport.w, viewport.h);
+  const showDismissibleHint =
+    phase === "scoring" &&
+    !rotationHintDismissed &&
+    rotateHintNeeded;
+  const showLegacyHint = phase !== "scoring" && rotateHintNeeded;
   const { left, right } = boardSides(boardMatch);
   const duration = formatMatchDuration(
     elapsedMs(
@@ -1713,6 +1797,51 @@ export function JudgePage() {
     ),
   );
 
+  function startScorePointer(side: "A" | "B", event: PointerEvent<HTMLButtonElement>) {
+    suppressScoreClickRef.current = false;
+    scorePointerGestureRef.current = {
+      side,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false,
+    };
+  }
+
+  function moveScorePointer(side: "A" | "B", event: PointerEvent<HTMLButtonElement>) {
+    const gesture = scorePointerGestureRef.current;
+    if (!gesture || gesture.side !== side || gesture.pointerId !== event.pointerId) return;
+    const moved =
+      Math.abs(event.clientX - gesture.startX) > SCORE_POINTER_MOVE_THRESHOLD ||
+      Math.abs(event.clientY - gesture.startY) > SCORE_POINTER_MOVE_THRESHOLD;
+    if (moved) {
+      gesture.moved = true;
+      suppressScoreClickRef.current = true;
+    }
+  }
+
+  function finishScorePointer(side: "A" | "B", event: PointerEvent<HTMLButtonElement>) {
+    const gesture = scorePointerGestureRef.current;
+    if (!gesture || gesture.side !== side || gesture.pointerId !== event.pointerId) return;
+    suppressScoreClickRef.current = gesture.moved;
+    scorePointerGestureRef.current = null;
+  }
+
+  function cancelScorePointer(side: "A" | "B", event: PointerEvent<HTMLButtonElement>) {
+    const gesture = scorePointerGestureRef.current;
+    if (!gesture || gesture.side !== side || gesture.pointerId !== event.pointerId) return;
+    suppressScoreClickRef.current = true;
+    scorePointerGestureRef.current = null;
+  }
+
+  function activateScore(side: "A" | "B", event: MouseEvent<HTMLButtonElement>) {
+    const suppressPointerClick = event.detail > 0 && suppressScoreClickRef.current;
+    suppressScoreClickRef.current = false;
+    scorePointerGestureRef.current = null;
+    if (suppressPointerClick) return;
+    void point(side);
+  }
+
   function renderSide(side: "A" | "B", matchState: MatchState) {
     const label = sideDisplayName(boardMatch, side);
     const score = isSetup
@@ -1722,18 +1851,63 @@ export function JudgePage() {
         : String(matchState.scoreB);
     const serving = serve === side;
     const flash = !isSetup && flashSide === side;
+    const sideClassName = [
+      "judge-side",
+      serving ? "judge-side--serving" : "",
+      flash ? "judge-side--flash" : "",
+      isSetup ? "judge-side--setup" : "",
+      !isSetup && !readonly && !lostLock ? "judge-side--scoring" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const content = (
+      <>
+        <span className="judge-side__name">
+          <Avatar
+            size="sm"
+            variant="tonal"
+            className="judge-side__avatar"
+            src={avatarSrc(sideAvatarKey(boardMatch, side))}
+            initials={initialsFromName(label)}
+            alt=""
+            aria-hidden="true"
+          />
+          <span className="judge-side__label">{label}</span>
+        </span>
+        <span className="judge-side__score">{score}</span>
+        <ServeBadge active={Boolean(serving)} />
+        {!isSetup && !readonly && !lostLock ? (
+          <span className="judge-point-btn" aria-hidden="true">+1</span>
+        ) : (
+          <span className="judge-point-spacer" aria-hidden="true" />
+        )}
+      </>
+    );
+
+    if (!isSetup && !readonly && !lostLock) {
+      return (
+        <button
+          key={side}
+          type="button"
+          className={sideClassName}
+          data-testid={`judge-side-${side}`}
+          disabled={locked}
+          onPointerDown={(event) => startScorePointer(side, event)}
+          onPointerMove={(event) => moveScorePointer(side, event)}
+          onPointerUp={(event) => finishScorePointer(side, event)}
+          onPointerCancel={(event) => cancelScorePointer(side, event)}
+          onClick={(event) => activateScore(side, event)}
+          aria-label={`+1 очко: ${label}. Счёт ${score}.${serving ? " Подаёт." : ""}`}
+        >
+          {content}
+        </button>
+      );
+    }
 
     return (
       <div
         key={side}
-        className={[
-          "judge-side",
-          serving ? "judge-side--serving" : "",
-          flash ? "judge-side--flash" : "",
-          isSetup ? "judge-side--setup" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        className={sideClassName}
         data-testid={`judge-side-${side}`}
         role={isSetup && !awaitingCreator ? "button" : undefined}
         tabIndex={isSetup && !awaitingCreator ? setupInputLocked ? -1 : 0 : undefined}
@@ -1759,37 +1933,7 @@ export function JudgePage() {
             : undefined
         }
       >
-        <span className="judge-side__name">
-          <Avatar
-            size="sm"
-            variant="tonal"
-            className="judge-side__avatar"
-            src={avatarSrc(sideAvatarKey(boardMatch, side))}
-            initials={initialsFromName(label)}
-            alt=""
-            aria-hidden="true"
-          />
-          {label}
-        </span>
-        <span className="judge-side__score">{score}</span>
-        <ServeBadge active={Boolean(serving)} />
-        {isSetup ? (
-          <span className="judge-point-spacer" aria-hidden />
-        ) : !readonly && !lostLock ? (
-          <Button
-            className="judge-point-btn judge-touch"
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              void point(side);
-            }}
-            disabled={locked}
-            aria-label={`+1 очко: ${label}`}
-          >
-            +1
-          </Button>
-        ) : (
-          <span className="judge-point-spacer" aria-hidden />
-        )}
+        {content}
       </div>
     );
   }
@@ -1801,7 +1945,22 @@ export function JudgePage() {
         isSetup ? "judge-setup" : lostLock ? "judge-lost-lock" : "judge-screen"
       }
     >
-      {showHint ? (
+      {showDismissibleHint ? (
+        <div className="judge-rotate-hint">
+          <p role="status">Поверните устройство горизонтально для удобного судейства</p>
+          <button
+            type="button"
+            className="judge-rotate-hint__close"
+            aria-label="Закрыть подсказку"
+            onClick={() => {
+              setRotationHintDismissed(true);
+              boardRef.current?.focus();
+            }}
+          >
+            ×
+          </button>
+        </div>
+      ) : showLegacyHint ? (
         <p className="judge-rotate-hint" role="status">
           Поверните устройство горизонтально для удобного судейства
         </p>
@@ -1813,7 +1972,7 @@ export function JudgePage() {
             {isSetup
               ? "Перед стартом"
               : lostLock
-                ? "Слот судьи потерян"
+                ? "Ведение недоступно"
               : statusLabel(String(match.status), "match")}
           </span>
           {!isSetup && match.startedAt ? (
@@ -1843,7 +2002,7 @@ export function JudgePage() {
             variant="secondary"
             className="judge-touch"
             onClick={() => void releaseAndExit("/")}
-            disabled={exitPending || setupPending || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
+            disabled={exitPending || setupPending || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending || match.status === "pending_confirmation"}
           >На главную</Button> : null}
           {isSetup ? (
             <Button
@@ -1868,7 +2027,7 @@ export function JudgePage() {
                 variant="secondary"
                 className="judge-touch"
                 onClick={() => void releaseAndExit()}
-                disabled={exitPending || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
+                disabled={exitPending || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending || match.status === "pending_confirmation"}
               >
                 {exitPending ? "Выходим…" : "Назад"}
               </Button>
@@ -1878,14 +2037,18 @@ export function JudgePage() {
                 onClick={() => void undo()}
                 disabled={locked || undoPending || pointPendingCount > 0}
                 aria-label="Отменить последнее очко"
+                aria-describedby="judge-undo-description"
               >
-                Undo
+                Отменить очко
               </Button>
+              <span id="judge-undo-description" className="visually-hidden">
+                Отменяет последнее действующее очко. Ручную коррекцию не отменяет
+              </span>
               <Button
                 variant="secondary"
                 className="judge-touch"
                 onClick={() => setMenuOpen((v) => !v)}
-                disabled={scoreRecoveryVisible || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
+                disabled={scoreRecoveryVisible || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending || match.status === "pending_confirmation"}
                 aria-expanded={menuOpen}
                 aria-controls="judge-more-menu"
                 id="judge-more-trigger"
@@ -1910,7 +2073,7 @@ export function JudgePage() {
       </p>
 
       <p className="judge-screen__context-tip" role="note" aria-label="Подсказка судье">
-        Только активный судья этой сессии меняет счёт. Undo отменяет последнее действующее очко.
+        Счёт меняет тот, кто сейчас ведёт игру на этом устройстве. Отмена снимает последнее действующее очко
       </p>
 
       {scoreRecoveryVisible ? (
@@ -2136,18 +2299,23 @@ export function JudgePage() {
       ) : null}
 
       {menuOpen && !readonly && !lostLock && !isSetup ? (
-        <div
-          id="judge-more-menu"
-          className="judge-more"
-          role="group"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              event.preventDefault(); setMenuOpen(false);
-              document.getElementById("judge-more-trigger")?.focus();
-            }
+        <Dialog
+          open
+          onClose={() => {
+            returnFocusToMoreRef.current = true;
+            setMenuOpen(false);
           }}
-          aria-label="Действия судьи"
+          title="Действия судьи"
+          width="md"
+          icon={false}
+          className="judge-dialog"
         >
+          <div
+            id="judge-more-menu"
+            className="judge-more"
+            role="group"
+            aria-label="Действия судьи"
+          >
           <Button
             variant="secondary"
             className="judge-touch"
@@ -2168,7 +2336,8 @@ export function JudgePage() {
             Исправить счёт и подачу
           </Button>
           <div className="judge-handover stack" aria-busy={directoryState === "loading"}>
-            <label htmlFor="judge-handover-user">Передать судейство</label>
+            <p>Передаёте этот телефон? Можно продолжить без смены аккаунта. Записи останутся от текущего аккаунта. Для другого устройства выберите получателя</p>
+            <label htmlFor="judge-handover-user">Передать ведение на другое устройство</label>
             <select
               id="judge-handover-user"
               value={handoverUserId}
@@ -2200,67 +2369,39 @@ export function JudgePage() {
               disabled={directoryState !== "ready" || !handoverUserId || handoverPending || correctionOpen || correctionPending}
               onClick={() => void submitHandover()}
             >
-              {handoverPending ? "Передаём…" : "Передать слот"}
+              {handoverPending ? "Передаём…" : "Передать ведение"}
             </Button>
           </div>
-          {match.status === "pending_confirmation" ? (
-            <>
-              <Button
-                className="judge-touch"
-                disabled={
-                  handoverPending ||
-                  correctionPending ||
-                  terminalPending ||
-                  pointPendingCount > 0 ||
-                  scoreRecoveryBlocked
-                }
-                onClick={() => {
-                  setMenuOpen(false);
-                  void onConfirmFinish();
-                }}
-              >
-                Подтвердить результат
-              </Button>
-              <Button
-                variant="secondary"
-                className="judge-touch"
-                disabled={
-                  handoverPending ||
-                  correctionPending ||
-                  terminalPending ||
-                  pointPendingCount > 0 ||
-                  scoreRecoveryBlocked
-                }
-                onClick={() => void onRevertFinish()}
-              >
-                Продолжить игру
-              </Button>
-            </>
-          ) : null}
           <Button
             variant="secondary"
             className="judge-touch"
             onClick={() => void releaseAndExit()}
             disabled={exitPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
           >
-            {exitPending ? "Освобождаем…" : "Освободить слот и выйти"}
+            {exitPending ? "Выходим…" : "Выйти из ведения"}
           </Button>
-        </div>
+          </div>
+        </Dialog>
       ) : null}
 
       {correctionOpen && !readonly && !lostLock ? (
-        <section
-          className="judge-correction stack"
-          aria-label="Ручная коррекция"
-          onKeyDown={(event) => {
+        <Dialog
+          open
+          title={<span ref={correctionHeadingRef}>Ручная коррекция</span>}
+          width="sm"
+          icon={false}
+          closeOnEscape={false}
+          closeOnOverlayClick={false}
+          className="judge-dialog"
+          onKeyDownCapture={(event: KeyboardEvent<HTMLDivElement>) => {
             if (event.key === "Escape" && !correctionPending) {
               event.preventDefault();
               closeCorrection();
             }
           }}
         >
-          <h2 ref={correctionHeadingRef} tabIndex={-1}>Ручная коррекция</h2>
-          <p>Изменение фиксируется как техническое событие и не становится игровым очком.</p>
+          <section className="judge-correction stack" aria-label="Ручная коррекция">
+          <p>Коррекция меняет счёт и подачу. Она сохраняется отдельно от игровых очков</p>
           {correctionPriorAttempt ? (
             <p>
               Ранее отправляли {correctionPriorAttempt.scoreA}:{correctionPriorAttempt.scoreB}. Новая форма заполнена показанными сервером значениями.
@@ -2271,6 +2412,7 @@ export function JudgePage() {
           ) : null}
           <label className="judge-correction__label" htmlFor={correctionScoreAId}>Счёт стороны A</label>
           <TextField
+            className="judge-correction__field"
             id={correctionScoreAId}
             type="number"
             min={0}
@@ -2279,6 +2421,7 @@ export function JudgePage() {
           />
           <label className="judge-correction__label" htmlFor={correctionScoreBId}>Счёт стороны B</label>
           <TextField
+            className="judge-correction__field"
             id={correctionScoreBId}
             type="number"
             min={0}
@@ -2301,7 +2444,8 @@ export function JudgePage() {
             </Button>
             <Button variant="secondary" disabled={correctionPending} onClick={closeCorrection}>Отмена</Button>
           </div>
-        </section>
+          </section>
+        </Dialog>
       ) : null}
 
       {correctionAnnouncement ? (
@@ -2317,6 +2461,8 @@ export function JudgePage() {
       ) : null}
 
       <div
+        ref={boardRef}
+        tabIndex={-1}
         className={["judge-board", isSetup ? "judge-board--setup" : ""]
           .filter(Boolean)
           .join(" ")}
@@ -2363,9 +2509,19 @@ export function JudgePage() {
 
       {match.status === "pending_confirmation" &&
       !menuOpen &&
+      !correctionOpen &&
       !readonly &&
       !isSetup ? (
-        <div className="judge-confirm-bar">
+        <Dialog
+          open
+          title="Подтвердить результат?"
+          width="sm"
+          icon={false}
+          closeOnEscape={false}
+          closeOnOverlayClick={false}
+          className="judge-dialog"
+        >
+          <div className="judge-confirm-bar">
           <Button
             className="judge-touch"
             disabled={
@@ -2391,7 +2547,8 @@ export function JudgePage() {
           >
             Продолжить
           </Button>
-        </div>
+          </div>
+        </Dialog>
       ) : null}
     </div>
   );

@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "candidate": {
+    "version": "4.3.0",
+    "baseSha": "df807d508613b3226345813ff35080a9e1d1c288",
+    "baseVersion": "4.2.0",
+    "state": "uncommitted-local-candidate",
+    "date": "2026-10-03"
+  },
+  "scope": [
+    "Stage 5: GAP-013 roster-first match creation with D38 current-form rules",
+    "Stage 6: GAP-023 and bounded GAP-032 judge scoring, actions, correction and responsive layout",
+    "Stage 7: GAP-019 scope A and GAP-021 tournament rules, roster and pre-generation flow"
+  ],
+  "verification": {
+    "command": "pnpm run ci",
+    "node": "24.20.0",
+    "status": "passed",
+    "total": 1563,
+    "passed": 1563,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0,
+    "lanes": {
+      "cleanupFoundation": "4/4",
+      "quality": "1343/1343",
+      "postgres": "90/90",
+      "browserProdlike": "126/126 (117 browser scenarios plus 9 foundation)"
+    },
+    "summaries": [
+      "ci/local-summary.json",
+      "ci/cleanup-summary.json",
+      "ci/fast-summary.json",
+      "ci/postgres-summary.json",
+      "ci/browser-summary.json"
+    ]
+  },
+  "candidateIntegrity": {
+    "sourceManifest": "source-manifest.json",
+    "sourceFileCount": 33,
+    "sourceManifestSha256": "115d17ccda091e6f0b601c7f8e870aba90e0c72cbe52cc60dec3a0a68c729204",
+    "forwardPatch": "forward.patch",
+    "forwardPatchSha256": "895d623ffc3d38653791d6beadc827af5e04a730c8bf26e678ddbbc406f71bb7",
+    "rollbackPatch": "rollback.patch",
+    "rollbackPatchSha256": "263cf8d95a4d4adb537e8171217477e3d96e3b702abd70228370983c45cd59f1",
+    "rollbackCheck": "git apply --check rollback.patch passed on the frozen candidate"
+  },
+  "visualEvidence": {
+    "report": "flow-report.html",
+    "screenshots": "screenshots/",
+    "contrast": "contrast/",
+    "stage5SelectedMinimumObserved": 6.677404804850785,
+    "stage6CorrectionMinimumObserved": 7.09705616318638
+  },
+  "diagnosticHistory": [
+    "R2 stopped in fast tests after the new collapsed title changed auth-recovery fixture navigation; the fixture was corrected and the final fast lane passed 1343/1343.",
+    "R3 browser lane exposed stale Wave C and Wave D test interactions after the accepted UI change; affected tests were updated, targeted compiled scenarios passed, and the final browser lane passed 126/126.",
+    "A Stage 6 diagnostic measured layout before fonts and two animation frames settled; the stabilized regression passed in all three browser projects and remains in the final browser lane."
+  ],
+  "limits": [
+    "Independent source review is still required before local acceptance.",
+    "Physical iPhone touch, browser UI zoom, pinned WebKit and spoken assistive technology were not tested.",
+    "Synthetic pointer move and cancel coverage does not establish physical touch behavior.",
+    "Candidate 4.3.0 was not committed, pushed, deployed or checked on the public stand.",
+    "GAP-019 remains in progress until Stage 8 scope B is implemented and accepted."
+  ]
+}
