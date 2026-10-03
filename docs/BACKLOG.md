@@ -2237,3 +2237,24 @@ backlog ID, version, commit, push or public deployment was created.
 - **Dependencies:** D22/D36/D37, AT-UI-STATUS-001, BUG-020 focus и имеющиеся компоненты; конкретный visual target должен пройти review до реализации. Никаких новых API/data/permissions.
 
 - **Current acceptance (6.0.0):** [repository-wide receipt](audit/evidence/interface-completion-6/receipt.json). Предыдущие Actual/остатки ниже или выше являются историческими и заменены текущей реализацией; физические ограничения receipt сохраняются.
+
+### BUG-042 — Успешный вход отменяется сбоем повторного чтения аккаунта
+
+- **Type:** auth-navigation
+- **Priority:** P1
+- **Actual:** redundant post-login refresh may clear a successfully authenticated user on transport error.
+- **Repro:** deterministic deferred GET rejection in login-redirect.test.tsx after authoritative login200.
+- **Risk:** loss of first-password priority or safe return context; explicit regression checks cover both.
+- **Dependencies:** D36/D40 navigation and current AUTH-005 contract; no backend migration.
+- **Status:** verified_local — 6.0.1 full CI1884/1884 and independent review PASS; hosted/public gate separately.
+- **REQ / AT:** AUTH-003/005/006; AT-AUTH-003/009; ONB-001/005; AT-ONB-001/002.
+- **Evidence:** deterministic `login-redirect.test.tsx`: login succeeds, redundant authenticated GET fails, old client clears the account and returns to `/login`. The successful-response ordering passes old code and is not Red evidence.
+- **Expected:** authoritative login response commits the account and selects first-password, incomplete onboarding, or the safe return target once. A redundant read cannot undo successful login. Real later 401 still invokes ordinary session recovery.
+- **Scope:** LoginPage routing only; login/API/DB/auth policy unchanged. Keep single-flight, fields/error focus, same-actor draft, actor-switch reset and query/hash return protection. No new account permissions.
+- **Implementation:** remove post-login `refresh`, derive destination from `res.user`, apply account/navigation together. Regression and existing recovery suites cover mandatory password first, incomplete onboarding, internal return and external URL rejection.
+- **Given/When/Then:** Given successful credentials and incomplete onboarding, when the optional follow-up request would fail, then the user stays in onboarding; Given mandatory password change and a return target, Then password change wins; Given a completed account after session expiry, Then the previous safe route and unsaved same-actor draft survive.
+- **Verification:** focused login/recovery/onboarding/notifications tests; complete repository CI including disposable PostgreSQL and desktop/390/360 browser; independent review; exact version/SHA smoke after publication.
+- **Hosted diagnostic boundary:** run37147664633 independently failed Wave F onboarding on mobile (expected onboarding, observed Home after confirmed restart). Its exact timing was not reproduced locally: unchanged isolated3/3 and full WaveF15/15 passed. Do not present the network-failure Red as proof of that hosted failure's cause. Fresh full hosted acceptance remains mandatory, with persisted restart assertions retained.
+- **Rollback:** revert this LoginPage delta and regression with PATCH metadata, preserving prior programme and additive migrations; no data rollback.
+
+- **BUG-042 acceptance receipt:** [6.0.1 frozen full CI](audit/evidence/interface-completion-6-0-1/receipt.json); focused35/35 and full1884/1884, no skips.

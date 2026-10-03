@@ -1,5 +1,17 @@
 # Tab-10 — статус проекта
 
+## 6.0.1 — кандидат окончательной приёмки, 2026-10-03
+
+6.0.0/78ba3105ee5d20771b292a89229b4609c5e4e637 доступна на тестовом проде;
+read-only convergence подтвердил версию/SHA, но hosted37147664633 не принят:
+notification fixture и mobile onboarding. BUG-042 отдельно воспроизводит
+потерю успешного входа из-за повторного GET. В6.0.1 исправлены вход и fixture;
+Локальный CI1884/1884 прошёл, independent review PASS;
+[receipt](audit/evidence/interface-completion-6-0-1/receipt.json). Hosted/public
+acceptance проверяется после отправки этой версии. Исторический снимок ниже
+не является текущим утверждением о публикации5.0.1.
+
+
 ## Локально принятая программа интерфейса — 6.0.0
 
 Полный CI **1881/1881** прошёл без failed/skipped/todo/interrupted:

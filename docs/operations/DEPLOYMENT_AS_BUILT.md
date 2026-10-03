@@ -1,5 +1,13 @@
 # Deployment as-built
 
+## 6.0.1 — PATCH-кандидат завершения входа
+
+Публикуется через тот же main→Render→Vercel gate, без новой миграции. Neon
+остаётся на13 миграциях. Полный local/hosted gate, provider readiness, старые
+соединения и web/API/proxy exact version/SHA проверяются повторно. Откат —
+revert scoped client fix с новым PATCH, без сброса данных/изменения секретов.
+
+
 ## 6.0.0 — accepted locally, before publication
 
 CI1881/1881 and [frozen source evidence](../audit/evidence/interface-completion-6/receipt.json) passed. Five additive migrations0008–0012 use the existing Render startup; no destructive/down migration is required. The source Vercel gate waits for exact API version/SHA, readiness and continuous420 seconds before building web. Public acceptance remains separate: hosted4CI, Render live/deactivated, Neon13 migrations and old-transaction drain, Vercel READY,7/7 web/API/proxy. No infrastructure/secrets changes or public fixtures. Rollback uses a compatible forward release; preserve receipt/history and additive schema.

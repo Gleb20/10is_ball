@@ -198,7 +198,10 @@ test('Wave F onboarding heading and recovery states keep keyboard context', asyn
   test.setTimeout(90000);
   const api=await fixture();
   try {
-    await mutate(api,'/api/v1/me/onboarding',{action:'restart'},'PATCH');
+    const restarted = await mutate(api,'/api/v1/me/onboarding',{action:'restart'},'PATCH');
+    expect(restarted.user).toMatchObject({onboardingStep:0,onboardingCompletedAt:null});
+    const persisted = await (await api.get('/api/v1/auth/me')).json();
+    expect(persisted.user).toMatchObject({onboardingStep:0,onboardingCompletedAt:null});
     await login(page, /\/onboarding$/);
     await expect(page.getByRole('heading',{name:'Главная',exact:true})).toBeFocused();
     await page.getByRole('button',{name:'Далее',exact:true}).click();

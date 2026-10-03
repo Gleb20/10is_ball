@@ -1,3 +1,11 @@
+## 6.0.1 — BUG-042 и синхронизация deferred уведомлений
+
+- AUTH-003/005/006, AT-AUTH-003/009, ONB-001/005, AT-ONB-001/002 →
+  [login-redirect.test.tsx](../../apps/web/src/login-redirect.test.tsx): failed redundant read Red→Green, incomplete onboarding and first-password priority;
+  existing [auth-recovery.test.tsx](../../apps/web/src/auth-recovery.test.tsx): internal query/hash return, same-actor draft, actor switch, unsafe external target.
+- [Wave F](../../tests/e2e/wave-f-a11y.spec.ts): restart response plus persisted GET must both contain step0/completedAt=null before the unchanged onboarding/focus assertions.
+- [NotificationsPage.test.tsx](../../apps/web/src/pages/NotificationsPage.test.tsx): deferred resolvers are invoked after their exact batch request starts; Activity focus assertions unchanged. No product notification changes.
+
 # Requirements ↔ Tests Traceability
 
 ## 5.0.1 — синхронизация существующей проверки BUG-037

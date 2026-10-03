@@ -1,3 +1,9 @@
+## 2026-10-03 — 6.0.1 login completion correction (BUG-042)
+
+- Confirmed separate Red: successful login200 plus failed redundant GET caused a return to Login. LoginPage now commits the authoritative response and selects first-password/onboarding/safe return without the redundant refresh. Existing real401 recovery remains unchanged.
+- Hosted37147664633: Quality610/611 (notification resolver called before effect), PostgreSQL passed, browser133/135 (onboarding mobile route). Deferred batch waits fixed; restart now verifies response and persisted state. Browser failure cause is not falsely equated to the separate network-failure Red; unchanged focused WaveF15/15 passed locally.
+- Original1881 receipt remains historical. Fresh complete6.0.1 localCI1884/1884 PASS: quality1617, PostgreSQL119, compiled browser144, cleanup4; focused35/35 and independent Terra PASS. [Receipt](audit/evidence/interface-completion-6-0-1/receipt.json). Hosted/public gates remain separate. No API/schema/security-policy changes; PATCH bump follows authorized publication.
+
 ## 2026-10-03 — D40 принятые решения и завершённый выпуск 5.0.1
 
 - Зафиксировано явное уточнение пользователя: подготовка матча на игровом экране,

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "scope": "repository-wide",
+  "version": "6.0.1",
+  "baseSha": "78ba3105ee5d20771b292a89229b4609c5e4e637",
+  "sourceFreeze": {
+    "path": "source-freeze.json",
+    "sha256": "b5922e2ccc1174586f3461bc13843ab9993a7809924540dfd9df7e34ed1e7cad"
+  },
+  "summary": {
+    "path": "local-summary.json",
+    "sha256": "02eb4b20fe43ea5e3c3865e107ba3e9ae1b4372b25139755613a15a0bedcaa08"
+  },
+  "totals": {
+    "total": 1884,
+    "passed": 1884,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "limitations": [
+    "Hosted CI and public exact-SHA acceptance are separate gates.",
+    "Physical iPhone, native WebKit and spoken assistive technology unverified.",
+    "Google Maps cause unconfirmed; original programme limitations preserved."
+  ]
+}

@@ -905,6 +905,11 @@ membership/participant transition и notification effect.
 сохраняется server-side; reload или новый login открывает шаг 5. Complete/close
 записывает timestamp до перехода на Home и onboarding сам больше не открывается.
 
+После успешного login переход определяется его authoritative ответом;
+недоступность необязательного повторного чтения не возвращает пользователя
+на login. Обязательная смена пароля имеет приоритет перед обучением и
+сохранённым возвратом (BUG-042; AT-AUTH-003/009).
+
 ### AT-ONB-002 Restart
 Кнопка профиля выполняет authenticated restart mutation, очищает completion,
 сбрасывает step на 0 и только после success открывает первый шаг. Ошибка не

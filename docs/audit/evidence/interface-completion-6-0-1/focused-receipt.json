@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "scope": "6.0.1 login correction and test synchronization",
+  "baseSha": "78ba3105ee5d20771b292a89229b4609c5e4e637",
+  "focused": {
+    "command": "pnpm --filter @tab10/web exec vitest run src/login-redirect.test.tsx src/auth-recovery.test.tsx src/onboarding-resume.test.tsx src/pages/AuthFocus.wo2r2.test.tsx src/pages/AuthPages.wo2.test.tsx src/pages/NotificationsPage.test.tsx",
+    "passed": 35,
+    "failed": 0
+  },
+  "red": {
+    "test": "keeps unfinished onboarding when a redundant refresh is unavailable",
+    "before": "successful login followed by failed redundant GET returns to /login",
+    "after": "authoritative successful login opens /onboarding",
+    "successfulLateReadCase": "passed on old source; not Red evidence"
+  },
+  "notificationFixture": {
+    "fix": "await exact visible batch invocation before invoking its deferred resolver",
+    "fullWebBeforeLoginChange": {
+      "passed": 611,
+      "failed": 0
+    }
+  },
+  "hostedPriorFailure": {
+    "run": 37147664633,
+    "sha": "78ba3105ee5d20771b292a89229b4609c5e4e637",
+    "quality": {
+      "passed": 610,
+      "failed": 1,
+      "cause": "notification deferred resolver called before its effect"
+    },
+    "browser": {
+      "passed": 133,
+      "failed": 2,
+      "cause": "mobile onboarding URL Home instead of onboarding; exact timing unconfirmed"
+    },
+    "postgres": "passed"
+  },
+  "unchangedOnboardingDiagnostic": {
+    "isolatedBrowserPassed": 3,
+    "waveFBrowserPassed": 15,
+    "runtime": "unchanged 6.0.0 product; fresh disposable PostgreSQL",
+    "result": "not reproduced; diagnostic auth responses show incomplete user before the intended test completion"
+  },
+  "independentReview": {
+    "model": "Terra High",
+    "verdict": "PASS",
+    "scope": "frozen runtime/tests/canonical docs; excludes full CI and public receipt"
+  }
+}

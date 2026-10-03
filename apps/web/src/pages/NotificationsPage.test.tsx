@@ -246,6 +246,7 @@ describe("AT-NOTIF-005 terminal invitation lifecycle", () => {
     expect(screen.getByText("Обычное")).toBeInTheDocument();
     expect(screen.getByText("Новое")).toBeInTheDocument();
     expect(screen.getByText(/не удалось подтвердить чтение уведомления/i)).toBeInTheDocument();
+    await waitFor(() => expect(markNotificationsReadVisible).toHaveBeenCalledWith(["plain"]));
     resolveBatch({ updated: 0, notifications: [] });
   });
 
@@ -277,6 +278,7 @@ describe("AT-NOTIF-005 terminal invitation lifecycle", () => {
     ] });
     render(<MemoryRouter><ActivityNotifications /></MemoryRouter>);
     const plainRead = await screen.findByRole("button", { name: "Отметить прочитанным" });
+    await waitFor(() => expect(markNotificationsReadVisible).toHaveBeenCalledWith(["plain", "team"]));
     plainRead.focus();
     const scheduled: Array<() => void> = [];
     const queueSpy = vi.spyOn(globalThis, "queueMicrotask").mockImplementation((callback) => {

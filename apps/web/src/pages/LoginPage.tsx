@@ -30,7 +30,7 @@ export function LoginPage({
   const [invalidCredentials, setInvalidCredentials] = useState(false);
   const submission = useSingleFlight();
   const errorId = useId();
-  const { setUser, refresh } = useAuth();
+  const { setUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const routeState = location.state as { returnTo?: unknown } | null;
@@ -52,13 +52,15 @@ export function LoginPage({
       setInvalidCredentials(false);
       try {
         const res = await api.login(email, password);
+        const nextPath = res.user.mustChangePassword
+          ? "/first-password"
+          : res.user.onboardingCompletedAt === null
+            ? "/onboarding"
+            : destination;
+        // The login response already contains the authoritative routing state.
+        // Commit it with navigation; a second request must not undo a successful login.
         setUser(res.user);
-        if (res.user.mustChangePassword) {
-          navigate("/first-password");
-        } else {
-          await refresh();
-          navigate(destination, { replace: true, state: null });
-        }
+        navigate(nextPath, { replace: true, state: null });
       } catch (err) {
         const code = (err as { code?: string }).code;
         setInvalidCredentials(code === "INVALID_CREDENTIALS");
