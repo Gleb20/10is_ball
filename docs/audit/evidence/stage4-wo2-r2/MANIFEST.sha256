@@ -1,0 +1,16 @@
+7108b0e255ff590e3c533a53ee8fbed045939d04de0cdd8f355a91c17d62a0f6  ./FINAL_CHECKPOINT.md
+2078eafa68ab32d853b59b283cff2e1c3dff9d13f8adb153c9c5a79c453545f4  ./final-checkpoint/rollback-check.log
+7e2508fe765861dbbe382462445855c3042a7558306939206522557617b8816b  ./final-checkpoint/rollback.patch
+9c3eb8db6238834b6c747cafad41e076c35d61bd2e076dfbfd8e0c69b03df83f  ./final-checkpoint/source.sha256
+e81e1099e5b030e58a6f71e3a25189c972c42060abca60fc318737b4287d31fc  ./final-checkpoint/wo1-integrity.sha256
+40569c77a1d3dbadfd1bd5b1c4740a633a05be4367079a25b2fd311dfc5a94f4  ./final-checkpoint/worktree-status-before-freeze.txt
+6a5a4668ae1bd265f208a5e766f76402701c6f78069b89a4b0a5a0d61f7212c6  ./logs/diff-check.log
+ab9bc6f7d47d98c594e50f390245baac8f9e315d674df74f84d3e70f11163d37  ./logs/stage4-wo2-r2-focused-green.log
+c42a9bedbf0e7a1ace15fe470c98fd5a9449c8a1efddc4f785816cb073b863bf  ./logs/stage4-wo2-r2-full-web.log
+c1fbc2abc1bf80d6c64c91b5c849e31f08ddd7ac63903817b5a59dad5339e226  ./logs/stage4-wo2-r2-red.log
+221ce09bcf56f6b59216d992b830246446b0ebba7e8f90c73f2457340553d1c3  ./logs/stage4-wo2-r2-typecheck-red.log
+0968b35933ee718c1cc7886a0914afc9a477d3990542c5dcefc2f59005e892d3  ./logs/stage4-wo2-r2-typecheck.log
+96e62c8bf1d5f8d51d52635f2c0b578201c4ffaa624f5e4a0f3f1e328b19f28c  ./source/JudgePage.test.tsx
+72ca72692e834cdca32e9f9d73df60d2427ab5d053aa11cbe771050143b38543  ./source/JudgePage.tsx
+98f9d5c487c06c1f97a38ac0b72dd3e57a0b032c686975125ea51bfca5f49daa  ./source/judgeScoreRecovery.test.ts
+bbbe088e8f7b27132176a0462699e7375f329113de857a4c0fcb1f9ae0080b15  ./source/judgeScoreRecovery.ts

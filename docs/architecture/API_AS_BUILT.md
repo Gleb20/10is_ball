@@ -212,6 +212,14 @@ expected version; correction retains a technical baseline in the event log and
 Undo does not erase it. Handover reservation and active judge exclusivity are
 enforced in the service/DB boundary. Browser completion remains a separate gate.
 
+`GET /matches/{id}` exposes the persisted nondecreasing match `version` and the
+complete stored `idempotencyKeys` list. Point keys remain raw; manual correction
+keys use `manual-correction:<raw uuid>`. The bounded Judge client persists each
+point/correction payload before POST, treats only an exact known key as read proof,
+keeps absent-key outcomes unresolved, and never replays a restored mutation.
+This uses the existing read and mutation contracts; no recovery endpoint or
+server mutation protocol was added.
+
 ### Wave C review: judge and start authority
 
 Start is creator-owned and transactional, locking registered participants in

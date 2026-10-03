@@ -73,6 +73,8 @@ describe("BUG-012 onboarding resume flow", () => {
     ).toBeVisible();
     expect(screen.getByText("Шаг 4 из 7")).toBeVisible();
     expect(screen.getByText("Шаг 4 из 7")).toHaveAttribute("aria-live", "polite");
+    expect(screen.queryByRole("button", { name: /пропустить шаг/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Закрыть обучение" })).toBeVisible();
     expect(screen.getByRole("note", { name: "Где найти уведомления" })).toHaveTextContent(
       /главной.*профиле/i,
     );
@@ -128,12 +130,45 @@ describe("BUG-012 onboarding resume flow", () => {
     for (const label of ["Главная", "Рейтинг", "История"]) {
       const heading = await screen.findByRole("heading", { name: label });
       await waitFor(() => expect(heading).toHaveFocus());
+      expect(screen.getByRole("heading", { name: "Обучение", level: 1 })).toBeVisible();
+      expect(screen.queryByText(/вызывайте соперника/i)).not.toBeInTheDocument();
       expect(screen.queryByRole("navigation", { name: "Основная навигация" })).toBeNull();
       expect(screen.getByTestId("location")).toHaveTextContent("/onboarding");
-      await user.click(screen.getByRole("button", {
-        name: label === "Рейтинг" ? /пропустить шаг/i : /^далее$/i,
-      }));
+      await user.click(screen.getByRole("button", { name: /^далее$/i }));
     }
+  });
+
+  it("recovers a persisted next step with GET after a lost PATCH response without replay", async () => {
+    let serverUser: OnboardingUser = {
+      id: "u1",
+      email: "new@tab10.local",
+      role: "user",
+      mustChangePassword: false,
+      firstName: "Новый",
+      lastName: "Игрок",
+      onboardingStep: 3,
+      onboardingCompletedAt: null,
+    };
+    let patchRequests = 0;
+    vi.stubGlobal("fetch", vi.fn<typeof fetch>(async (input, init) => {
+      const path = new URL(String(input), "http://tab10.local").pathname;
+      const method = String(init?.method ?? "GET").toUpperCase();
+      if (path === "/api/v1/auth/me") return jsonResponse(200, { user: serverUser });
+      if (path === "/api/v1/me/onboarding" && method === "PATCH") {
+        patchRequests += 1;
+        serverUser = { ...serverUser, onboardingStep: 4 };
+        throw new TypeError("response lost");
+      }
+      throw new Error(`Unexpected request: ${method} ${path}`);
+    }));
+    const user = userEvent.setup();
+    render(<MemoryRouter initialEntries={["/"]}><App /></MemoryRouter>);
+
+    await user.click(await screen.findByRole("button", { name: "Далее" }));
+
+    expect(await screen.findByRole("heading", { name: "Профиль" })).toHaveFocus();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(patchRequests).toBe(1);
   });
 
   it("starts the tutorial without completing onboarding", async () => {
@@ -167,6 +202,80 @@ describe("BUG-012 onboarding resume flow", () => {
     expect(onboardingActions).toEqual(["set-step"]);
   });
 
+  it.each([
+    ["transport", new TypeError("connection lost")],
+    ["5xx", Object.assign(new Error("service unavailable"), { status: 503 })],
+  ])("keeps an unconfirmed tutorial creation explicit after %s failure", async (_label, failure) => {
+    const serverUser: OnboardingUser = {
+      id: "u1",
+      email: "new@tab10.local",
+      role: "user",
+      mustChangePassword: false,
+      firstName: "Новый",
+      lastName: "Игрок",
+      onboardingStep: 6,
+      onboardingCompletedAt: null,
+    };
+    let tutorialRequests = 0;
+    vi.stubGlobal("fetch", vi.fn<typeof fetch>(async (input, init) => {
+      const path = new URL(String(input), "http://tab10.local").pathname;
+      if (path === "/api/v1/auth/me") return jsonResponse(200, { user: serverUser });
+      if (path === "/api/v1/me/onboarding") return jsonResponse(200, { user: serverUser });
+      if (path === "/api/v1/matches/tutorial") {
+        tutorialRequests += 1;
+        throw failure;
+      }
+      throw new Error(`Unexpected request: ${String(init?.method ?? "GET")} ${path}`);
+    }));
+    const user = userEvent.setup();
+    render(<MemoryRouter initialEntries={["/"]}><App /></MemoryRouter>);
+
+    await user.click(await screen.findByRole("button", { name: /матч с призрачным олегом/i }));
+
+    expect(await screen.findByText(/матч мог быть создан/i)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Начать ещё один учебный матч" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Завершить обучение" })).toBeEnabled();
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+    expect(tutorialRequests).toBe(1);
+  });
+
+  it("never continues to tutorial POST after recovering a lost progress PATCH", async () => {
+    const serverUser: OnboardingUser = {
+      id: "u1",
+      email: "new@tab10.local",
+      role: "user",
+      mustChangePassword: false,
+      firstName: "Новый",
+      lastName: "Игрок",
+      onboardingStep: 6,
+      onboardingCompletedAt: null,
+    };
+    let patchRequests = 0;
+    let tutorialRequests = 0;
+    vi.stubGlobal("fetch", vi.fn<typeof fetch>(async (input) => {
+      const path = new URL(String(input), "http://tab10.local").pathname;
+      if (path === "/api/v1/auth/me") return jsonResponse(200, { user: serverUser });
+      if (path === "/api/v1/me/onboarding") {
+        patchRequests += 1;
+        throw new TypeError("response lost");
+      }
+      if (path === "/api/v1/matches/tutorial") {
+        tutorialRequests += 1;
+        return jsonResponse(200, { match: { id: "must-not-start" } });
+      }
+      throw new Error(`Unexpected request: ${path}`);
+    }));
+    const user = userEvent.setup();
+    render(<MemoryRouter initialEntries={["/"]}><App /></MemoryRouter>);
+
+    await user.click(await screen.findByRole("button", { name: /матч с призрачным олегом/i }));
+
+    expect(await screen.findByText("Прогресс сохранён")).toBeVisible();
+    expect(screen.getByText(/нажмите кнопку ещё раз/i)).toBeVisible();
+    expect(patchRequests).toBe(1);
+    expect(tutorialRequests).toBe(0);
+  });
+
   it("restarts completed onboarding from the Profile action", async () => {
     let serverUser: OnboardingUser = {
       id: "u1",
@@ -188,6 +297,45 @@ describe("BUG-012 onboarding resume flow", () => {
         }
         if (path === "/api/v1/auth/sessions") {
           return jsonResponse(200, { sessions: [] });
+        }
+        if (path === "/api/v1/profile/me") {
+          return jsonResponse(200, {
+            profile: {
+              isOwn: true,
+              canChallenge: false,
+              identity: {
+                id: serverUser.id,
+                firstName: serverUser.firstName,
+                lastName: serverUser.lastName,
+                displayName: `${serverUser.lastName} ${serverUser.firstName}`,
+                email: serverUser.email,
+                birthDate: null,
+                avatarKey: null,
+                organizationText: null,
+                positionText: null,
+              },
+              avatar: { key: null, editable: false },
+              stats: {
+                matchesPlayed: 0,
+                wins: 0,
+                losses: 0,
+                winRate: 0,
+                averagePoints: 0,
+                tournamentsPlayed: 0,
+                tournamentWins: 0,
+                tournamentsCreated: 0,
+                judgedMatches: 0,
+                rank: null,
+              },
+              facts: {
+                longestMatch: null,
+                bestWinningScore: null,
+                frequentOpponent: null,
+                rival: null,
+              },
+              teams: [],
+            },
+          });
         }
         if (path === "/api/v1/home") {
           return jsonResponse(200, { unreadCount: 0 });
@@ -214,7 +362,7 @@ describe("BUG-012 onboarding resume flow", () => {
       </MemoryRouter>,
     );
     await user.click(
-      await screen.findByRole("button", { name: /пройти онбординг заново/i }),
+      await screen.findByRole("button", { name: /пройти обучение заново/i }),
     );
 
     await waitFor(() => {

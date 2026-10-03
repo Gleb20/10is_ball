@@ -1275,9 +1275,9 @@ backlog ID, version, commit, push or public deployment was created.
 - **Type:** ux-layout
 - **Priority:** P2
 - **Status:** ready
-- **Target overlay D36/D37:** direct Home → match setup, operator outside roster by default, composition before rare rules; invite controls/challenge prefill are unavailable. Remembered custom values and create/acquire/start depend on Q-UX-005/006; older invite steps below are superseded.
-- **Executable readiness boundary:** `ready` относится только к перестановке существующих полей ручного матча, доступным сводкам/ошибкам, сохранению 1v1/2v2 и нынешней guest selection. Reusable guest identity, сохранение custom score между формами и объединённый create/acquire/start не исполнять до Q-UX-004/005/006; старые invite/challenge сценарии ниже не входят в этот work order по D37.
-- **Current GWT / historical boundary:** Given C creates for A/B from Home, When C configures 1v1/2v2, Then roster comes before optional rules, C is not a player by default, registered selection sends no invite, and valid options remain reachable. AT-MATCH-016/017. Old invite and Start-hub instructions below are historical; Q-UX-004/005/006 gate new identity/memory/combined mutation.
+- **Target overlay D36/D37/D38:** direct Home → match setup, operator outside roster by default, composition before rare rules; invite controls/challenge prefill are unavailable. Custom score lives only in the current form; create/acquire/start still depends on Q-UX-006. Older invite steps below are superseded.
+- **Executable readiness boundary:** `ready` относится только к перестановке существующих полей ручного матча, доступным сводкам/ошибкам, сохранению 1v1/2v2 и нынешней guest selection. Reusable guest identity и объединённый create/acquire/start не исполнять до Q-UX-004/006; D38 запрещает сохранение custom score между формами. Старые invite/challenge сценарии ниже не входят в этот work order по D37.
+- **Current GWT / historical boundary:** Given C creates for A/B from Home, When C configures 1v1/2v2, Then roster comes before optional rules, C is not a player by default, registered selection sends no invite, and valid options remain reachable. AT-MATCH-016/017. Old invite and Start-hub instructions below are historical; Q-UX-004/006 gate new identity and combined mutation, while D38 fixes score memory to the current form.
 - **Evidence:** F-PILOT-001, [пилот](audits/2026-09-13-ux-ui/pilot/report.md), [target T-PILOT-CREATE](audits/2026-09-13-ux-ui/pilot/target-spec.md#t-pilot-create--сначала-состав-затем-проверка-правил), [схемы390/1440](audits/2026-09-13-ux-ui/pilot/wireframes.html). Измерение390: первое игровое место y≈1060; частота проблем реальных пользователей неизвестна. Экспертная рекомендация, не доказанная потеря конверсии.
 - **Expected:** человек выбирает стороны раньше дополнительных настроек, видит применяемые правила и разрешённые D37 настройки через подписанные раскрываемые блоки.
 - **Actual:** название, правила, длинная справка, необязательный судья и приглашения предшествуют составу; пустой suggestions section сохраняет рамку при отсутствии вариантов.
@@ -1425,7 +1425,8 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** ux-copy
 - **Priority:** P3
-- **Status:** ready
+- **Status:** verified_local — Stage 13 R2 принят в составе frozen candidate 4.1.2; public parity и device/AT проверки остаются отдельными gates.
+- **Implementation checkpoint (2026-10-03):** шаги 1–6 получили одно продвижение «Далее», отдельное закрытие обучения и lifecycle-fencing для поздних ответов. Tutorial остаётся отдельным действием шага 7 и не завершает обучение автоматически. Focused интеграционный web-набор Stage 10/13, compiled browser и общий CI 1442/1442 пройдены; independent review PASS.
 - **Evidence:** F-AUTH-003; [Отчёт AUTH](audits/2026-09-13-ux-ui/auth/report.md), [находки](audits/2026-09-13-ux-ui/auth/findings.json), [точная спецификация](audits/2026-09-13-ux-ui/auth/target-spec.md), [схемы](audits/2026-09-13-ux-ui/auth/wireframes.html). Frozen45payloads проверены и приняты; [независимое review](audits/2026-09-13-ux-ui/auth-review.json). Частота в аудитории неизвестна.
 - **Expected:** На информационном шаге нет двух разных кнопок с одинаковым результатом; обучение можно закрыть и повторить.
 - **Actual:** На шагах1–6 «Далее» и «Пропустить шаг» вызывают одинаковый переход. Последствие для понимания — экспертная гипотеза, частота неизвестна.
@@ -1475,7 +1476,8 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** ux-control
 - **Priority:** P3
-- **Status:** ready
+- **Status:** verified_local — Stage 13 R2 принят в составе frozen candidate 4.1.2; public parity и device/AT проверки остаются отдельными gates.
+- **Implementation checkpoint (2026-10-03):** native textarea сохраняет label, required, `maxlength=4000`, многострочный черновик и single-flight. Начальная высота 5 строк, resize только вертикальный, max-height 40vh. API/Persistence readback подтвердил точное сохранение переносов строк; compiled browser и общий CI 1442/1442 пройдены; independent review PASS.
 - **Evidence:** F-AUTH-005; [Отчёт AUTH](audits/2026-09-13-ux-ui/auth/report.md), [находки](audits/2026-09-13-ux-ui/auth/findings.json), [точная спецификация](audits/2026-09-13-ux-ui/auth/target-spec.md), [схемы](audits/2026-09-13-ux-ui/auth/wireframes.html). Frozen45payloads проверены и приняты; [независимое review](audits/2026-09-13-ux-ui/auth-review.json). Частота в аудитории неизвестна.
 - **Expected:** Человек видит и редактирует длинное описание проблемы со ссылкой прямо в поле сообщения.
 - **Actual:** Контрол сообщения — однострочный input при maxlength4000. Неудобство длинного ввода — экспертная гипотеза; отправка/503retry работают.
@@ -1496,8 +1498,9 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** critical-journey-recovery
 - **Priority:** P1
-- **Status:** ready
+- **Status:** verified_local — frozen candidate 4.1.2 прошёл independent source review и единый CI 1442/1442; public parity и device/AT остаются pending.
 - **Evidence:** ROOT-JUDGE-OUTCOME-01, [личное воспроизведение](audits/2026-09-13-ux-ui/coordinator-rechecks/judge-outcome/README.md), [receipt](audits/2026-09-13-ux-ui/coordinator-rechecks/judge-outcome/receipt.json), исходное F-JUDGE-001. Собственный disposable stand, exact323 source hashes, Chromium390, два контролируемых POST и authoritative readback.
+- **Implementation checkpoint:** единый Stage 4 candidate сохраняет point intents до POST, разделяет sent/unsent, выполняет GET-only reconciliation и удерживает queue pause. Activity resume получает нового владельца drain, readback не опускается ниже сохранённой server version, exact-key proof снимает ложный unknown-alert. Final frozen source прошёл component/helper regressions, disposable PostgreSQL ordering, compiled browser Stage 4 6/6 и общий CI 1442/1442; independent source/manifest review PASS.
 - **Expected:** Система различает сохранённый запрос, окончательный отказ и неизвестный исход; повторное очко не предлагается, когда exact intent уже применён. Неотправленные быстрые нажатия видимы и восстанавливаются только явно.
 - **Actual:** Commit первого запроса → потеря ответа → GET и UI1:0 с exact key, но текст «проверьте счёт и повторите». Следование инструкции создаёт новый key и2:0. Автоматического двойного POST не наблюдалось; частота естественных сбоев неизвестна.
 - **Repro:** replay.mjs в linked evidence: новое обычное лицо создаёт/ведёт synthetic матч, route.fetch пропускает успешный points POST, затем route.abort теряет ответ; проверить UI/API, затем отдельно выполнить предлагаемый повтор.
@@ -1582,9 +1585,10 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** accessibility-interaction
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — frozen candidate 4.1.2 прошёл independent source review и единый CI 1442/1442; physical keyboard/iPhone/WebKit/spoken AT остаются pending.
 - **Scenario / Epic / Story / Sprint:** SC-J01 → EP-UX-SYSTEM → US-UX-CORRECTION «Исправляю счёт с клавиатуры и возвращаюсь к игре» → S2 candidate.
 - **Evidence:** F-JUDGE-002, J-RUN-CORRECTION; [snapshot1440](audits/2026-09-13-ux-ui/judge/evidence/j07-correction-open-focus-1440.json), [screenshot](audits/2026-09-13-ux-ui/judge/evidence/screenshots/j07-correction-open-focus-1440.png). Runtime focus BODY при открытии и cancel, correction persistence прошла.
+- **Implementation checkpoint:** heading/Tab/Cancel/Escape/success focus transitions и polite announcement реализованы и покрыты component tests; compiled Chromium keyboard matrix и independent source review приняты; physical keyboard/iPhone/WebKit/spoken AT остаются непроверенными.
 - **Expected:** открытие переводит фокус в коррекцию, закрытие возвращает к понятному действию; сохранение и ошибки доступны клавиатуре.
 - **Actual:** после открытия и отмены focus теряется на BODY; клавиатурному пользователю приходится искать текущую область.
 - **Repro:** current judge in_progress,1440; keyboard открыть Действия→коррекцию, проверить activeElement, отменить и проверить возврат.
@@ -1838,7 +1842,8 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** validation-and-recovery
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — Stage 10 R2 принят в составе frozen candidate 4.1.2; public parity и device/AT проверки остаются отдельными gates.
+- **Implementation checkpoint (2026-10-03):** локальные trim/length/calendar rules, field association/focus, сохранение draft, generic-400 summary и unknown-outcome GET-only review реализованы. Actor/route/reauth/unmount/React Activity late responses fenced; общий focused web-набор Stage 10/13, typecheck, compiled browser и общий CI 1442/1442 пройдены; independent review PASS.
 - **Scenario / Epic / Story / Sprint:** SC-R03 → EP-UX-SYSTEM → US-UX-PROFILE-EDIT «Пользователь исправляет конкретную ошибку» → S2 candidate.
 - **Evidence:** F-RESULTS-003;201 symbols organization→400, draft сохранён, generic page error и focus body; [screenshot](audits/2026-09-13-ux-ui/results/evidence/runtime/profile-validation-error-390.png), [report](audits/2026-09-13-ux-ui/results/report.md).
 - **Expected:** понятно, какое правило нарушено, где исправить и подтверждено ли сохранение.
@@ -1860,7 +1865,8 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** local-state-consistency
 - **Priority:** P3
-- **Status:** ready
+- **Status:** verified_local — Stage 10 R2 принят в составе frozen candidate 4.1.2; public parity и device/AT проверки остаются отдельными gates.
+- **Implementation checkpoint (2026-10-03):** фильтр применяет только подтверждённые сервером `id/readAt`, сохраняет omitted rows, actionable team/handover и terminal precedence, восстанавливает фокус после удаления строки и отбрасывает stale Activity callbacks. Focused web-набор, typecheck, compiled browser и общий CI 1442/1442 пройдены; independent review PASS. GAP-024 остаётся `ready` и этим изменением не закрывается.
 - **Target overlay D37:** actionable/read changes preserve team invitations, judge_handover/offered and reservations while suppressing hidden game/tournament invitations consistently in list, popup, first-five and unreadCount. A row-only filter is insufficient.
 - **Current GWT / historical boundary:** Given hidden game invitations mixed with team and judge-handover notices, When unread/actionable list or first-five loads, Then visible rows, badge/count and pagination agree, team/handover actions remain, and old pending rows are unchanged. AT-UI-INV-002. Conflicting old all-invite counter target below is historical only.
 - **Scenario / Epic / Story / Sprint:** SC-R04 → EP-UX-RESULTS → US-UX-NOTIFICATION-TRIAGE «Пользователь видит только требующие внимания события» → S4 candidate.
@@ -1990,9 +1996,10 @@ backlog ID, version, commit, push or public deployment was created.
 
 - **Type:** recovery-and-copy-defect
 - **Priority:** P2
-- **Status:** ready
+- **Status:** verified_local — frozen candidate 4.1.2 прошёл independent source review и единый CI 1442/1442; public parity и device/AT остаются pending.
 - **Scenario / Epic / Story / Sprint:** SC-J01/04 → EP-UX-CORE → US-UX-CORRECTION-RECOVERY «Ведущий понимает, сохранён ли исправленный счёт» → S2 candidate после BUG-029 state seam.
 - **Evidence:** OBS-JUDGE-001 теперь runtime, [дополнительный probe](audits/2026-09-13-ux-ui/judge-correction-probe/README.md): commit200 score4:2/version2, lost response board1:0; deliberate stale resend409 не создаёт второй event/key; early absence сменяется late commit. Desktop1440, mobile этой ветки не проверен.
+- **Implementation checkpoint:** immutable absolute correction record, exact prefixed-key proof, no-key confirmation0POST, pinned reviewed-version new correction and storage/remount guards реализованы в Stage 4 candidate. Real PostgreSQL order matrix, compiled browser и full CI 1442/1442 пройдены; independent review PASS.
 - **Expected:** коррекция сверяется по точному prefixed key, состояние/подпись честны, повтор не нужен для получения актуального счёта.
 - **Actual:** generic Failed to fetch, старое табло, enabled Save; после409 текст ошибочно приписывает собственную операцию другому устройству.
 - **Repro:** disposable owned judge, correction1:0→4:2, route.fetch200→abort; сравнить exact `manual-correction:<key>`/version/score/event с UI. Явный повтор staleversion409 оставить как negative control без утверждения двойных очков.

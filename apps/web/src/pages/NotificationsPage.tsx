@@ -35,6 +35,32 @@ type NotificationRow = {
 };
 
 const hiddenInvitationTypes = new Set(["match_invitation", "judge_invitation", "tournament_invitation"]);
+const terminalLifecycles = new Set(["accepted", "declined", "expired", "cancelled"]);
+
+function isTerminal(n: NotificationRow): boolean {
+  return terminalLifecycles.has(n.lifecycle ?? "");
+}
+
+function hasJudgeHandoverAction(n: NotificationRow): boolean {
+  return ["judge_handover", "judge_handover_offered"].includes(n.type) &&
+    Boolean(n.payload?.matchId) &&
+    !isTerminal(n);
+}
+
+function hasNotificationAction(n: NotificationRow): boolean {
+  if (isTerminal(n)) return false;
+  if (n.actionable === true || hasJudgeHandoverAction(n)) return true;
+  return n.type === "team_invitation" &&
+    n.actionable === undefined &&
+    (n.lifecycle ?? "new") === "new" &&
+    Boolean(n.payload?.invitationId);
+}
+
+function isActualNotification(n: NotificationRow): boolean {
+  if (isTerminal(n)) return false;
+  return hasNotificationAction(n) ||
+    (((n.lifecycle ?? "new") === "new") && !n.readAt);
+}
 
 function lifecycleLabel(n: NotificationRow): string {
   if ((n.lifecycle === "new" || !n.lifecycle) && n.readAt) {
@@ -97,35 +123,79 @@ export function NotificationsPage() {
 function ActorNotificationsPage({ userId }: { userId?: string }) {
   const navigate = useNavigate();
   const sequence = useRef(0);
-  const mounted = useRef(true);
+  const mounted = useRef(false);
+  const generation = useRef(0);
   const mutating = useRef(false);
   const [items, setItems] = useState<NotificationRow[] | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const action = useSingleFlight();
   const [onlyActual, setOnlyActual] = useState(true);
   const readRequests = useRef(new Set<string>());
+  const cardRefs = useRef(new Map<string, HTMLDivElement>());
+  const listHeadingRef = useRef<HTMLHeadingElement>(null);
+  const pendingFocus = useRef<{
+    target: string | "heading";
+    generation: number;
+  } | null>(null);
 
   const load = useCallback(async (force = false) => {
     if (!userId || (mutating.current && !force)) return;
     const current = ++sequence.current;
+    const operationGeneration = generation.current;
     const res = await api.notifications();
-    if (mounted.current && current === sequence.current) {
+    if (mounted.current &&
+        operationGeneration === generation.current &&
+        current === sequence.current) {
       setItems((res.notifications as NotificationRow[]).filter((row) => !hiddenInvitationTypes.has(row.type)));
     }
   }, [userId]);
-  const { error, refreshNow } = useVisibleRefresh(load, { refreshKey: userId });
   useEffect(() => {
+    const activeGeneration = ++generation.current;
     mounted.current = true;
-    return () => { mounted.current = false; };
+    return () => {
+      if (generation.current !== activeGeneration) return;
+      mounted.current = false;
+      generation.current += 1;
+      pendingFocus.current = null;
+    };
   }, []);
+  const { error, refreshNow } = useVisibleRefresh(load, { refreshKey: userId });
 
   const visible = useMemo(() => {
     const all = items ?? [];
     if (!onlyActual) return all;
-    return all.filter(
-      (n) => n.actionable || (n.lifecycle ?? "new") === "new",
-    );
+    return all.filter(isActualNotification);
   }, [items, onlyActual]);
+
+  useEffect(() => {
+    const pending = pendingFocus.current;
+    if (!pending) return;
+    pendingFocus.current = null;
+    queueMicrotask(() => {
+      if (!mounted.current || pending.generation !== generation.current) return;
+      if (pending.target === "heading") listHeadingRef.current?.focus();
+      else cardRefs.current.get(pending.target)?.focus();
+    });
+  }, [visible]);
+
+  function preserveFocusAfterRemoval(
+    before: NotificationRow[],
+    updated: NotificationRow[],
+    focusedCard?: string,
+  ) {
+    if (!onlyActual || !focusedCard) return;
+    const beforeVisible = before.filter(isActualNotification);
+    const afterVisible = updated.filter(isActualNotification);
+    if (!beforeVisible.some((row) => row.id === focusedCard) ||
+        afterVisible.some((row) => row.id === focusedCard)) return;
+    const removedIndex = beforeVisible.findIndex((row) => row.id === focusedCard);
+    pendingFocus.current = {
+      target: afterVisible[removedIndex]?.id ??
+        afterVisible[removedIndex - 1]?.id ??
+        "heading",
+      generation: generation.current,
+    };
+  }
 
   useEffect(() => {
     const ids = visible
@@ -133,51 +203,77 @@ function ActorNotificationsPage({ userId }: { userId?: string }) {
       .map((notification) => notification.id)
       .filter((id) => !readRequests.current.has(id));
     if (ids.length === 0) return;
-    sequence.current += 1;
+    const current = ++sequence.current;
+    const operationGeneration = generation.current;
     ids.forEach((id) => readRequests.current.add(id));
     void api
       .markNotificationsReadVisible(ids)
       .then((response) => {
-        if (!mounted.current) return;
+        if (!mounted.current ||
+            operationGeneration !== generation.current ||
+            current !== sequence.current) return;
         const readAtById = new Map(
-          response.notifications.map((notification) => [
-            notification.id,
-            notification.readAt,
-          ]),
+          response.notifications
+            .filter((notification) => Boolean(notification.id && notification.readAt))
+            .map((notification) => [notification.id, notification.readAt]),
         );
-        setItems((current) =>
-          (current ?? []).map((notification) => ({
+        const omitted = ids.filter((id) => !readAtById.has(id));
+        if (omitted.length > 0) {
+          setActionError("Не удалось подтвердить чтение части уведомлений. Обновите список.");
+        }
+        const focusedCard = document.activeElement?.closest<HTMLElement>("[data-notification-id]")?.dataset.notificationId;
+        setItems((current) => {
+          const before = current ?? [];
+          const updated = before.map((notification) => ({
             ...notification,
             readAt: readAtById.get(notification.id) ?? notification.readAt,
-          })),
-        );
+          }));
+          preserveFocusAfterRemoval(before, updated, focusedCard);
+          return updated;
+        });
       })
       .catch((caught: Error) => {
-        if (!mounted.current) return;
+        if (!mounted.current ||
+            operationGeneration !== generation.current ||
+            current !== sequence.current) return;
         ids.forEach((id) => readRequests.current.delete(id));
         if ((caught as Error & { status?: number }).status !== 401) setActionError(caught.message);
       });
   }, [visible]);
 
   async function markRead(id: string) {
+    const current = sequence.current;
+    const operationGeneration = generation.current;
     try {
-    await api.markNotificationRead(id);
-    if (!mounted.current) return;
-    setItems((prev) =>
-      (prev ?? []).map((n) =>
-        n.id === id
-          ? {
-              ...n,
-              readAt: new Date().toISOString(),
-              lifecycle:
-                n.lifecycle === "new" || !n.lifecycle ? "read" : n.lifecycle,
-            }
-          : n,
-      ),
-    );
+      const response = await api.markNotificationRead(id) as {
+        notification?: { id?: string; readAt?: string | null } | null;
+      };
+      if (!mounted.current ||
+          operationGeneration !== generation.current ||
+          current !== sequence.current) return;
+      const confirmed = response.notification;
+      if (confirmed?.id === id && confirmed.readAt) {
+        const focusedCard = document.activeElement?.closest<HTMLElement>("[data-notification-id]")?.dataset.notificationId;
+        setItems((prev) => {
+          const before = prev ?? [];
+          const updated = before.map((n) =>
+            n.id === id ? { ...n, readAt: confirmed.readAt } : n,
+          );
+          preserveFocusAfterRemoval(before, updated, focusedCard);
+          return updated;
+        });
+        return;
+      }
+      setActionError("Не удалось подтвердить чтение уведомления. Обновите список.");
+      await load(true);
     } catch (cause) {
-      if (!mounted.current) return;
-      if ((cause as Error & { status?: number }).status !== 401) setActionError((cause as Error).message);
+      if (!mounted.current ||
+          operationGeneration !== generation.current ||
+          current !== sequence.current) return;
+      if ((cause as Error & { status?: number }).status !== 401) {
+        setActionError((cause as Error).message);
+        await load(true).catch(() => undefined);
+      }
     }
   }
 
@@ -185,17 +281,19 @@ function ActorNotificationsPage({ userId }: { userId?: string }) {
     await action.run(async () => {
       mutating.current = true;
       sequence.current += 1;
+      const operationGeneration = generation.current;
       setActionError(null);
       try {
         const result = await api.respondTeamInvitation(invitationId, accept);
-        if (!mounted.current) return;
+        if (!mounted.current ||
+            operationGeneration !== generation.current) return;
         if (accept && result?.status === "accepted" && result.teamId) {
           navigate(`/teams/${result.teamId}?welcome=1`);
           return;
         }
         await load(true);
       } catch (e) {
-        if (!mounted.current) return;
+        if (!mounted.current || operationGeneration !== generation.current) return;
         if ((e as Error & { status?: number }).status !== 401) { setActionError((e as Error).message); await load(true); }
       } finally {
         mutating.current = false;
@@ -204,7 +302,8 @@ function ActorNotificationsPage({ userId }: { userId?: string }) {
   }
 
   const isInviteActionable = (n: NotificationRow) =>
-    (n.actionable ?? (n.lifecycle ?? "new") === "new") &&
+    n.type === "team_invitation" &&
+    hasNotificationAction(n) &&
     Boolean(n.payload?.invitationId);
 
   return (
@@ -226,6 +325,7 @@ function ActorNotificationsPage({ userId }: { userId?: string }) {
         <Alert type="error" variant="tonal" title="Ошибка" description={actionError} />
       ) : null}
       <Button variant="secondary" disabled={action.pending} onClick={() => void refreshNow()}>Обновить уведомления</Button>
+      <h2 ref={listHeadingRef} className="visually-hidden" tabIndex={-1}>Список уведомлений</h2>
       <AsyncState
         loading={items === null && !error}
         error={error}
@@ -244,7 +344,18 @@ function ActorNotificationsPage({ userId }: { userId?: string }) {
       >
         <div className="stack">
           {visible.map((n) => (
-            <div key={n.id} className="card stack">
+            <div
+              key={n.id}
+              className="card stack"
+              role="group"
+              aria-label={n.title}
+              tabIndex={-1}
+              data-notification-id={n.id}
+              ref={(node) => {
+                if (node) cardRefs.current.set(n.id, node);
+                else cardRefs.current.delete(n.id);
+              }}
+            >
               <ListRow
                 title={n.title}
                 subtitle={n.body}
@@ -299,7 +410,9 @@ function ActorNotificationsPage({ userId }: { userId?: string }) {
               n.type !== "match_invitation" && n.type !== "judge_invitation" &&
               n.type !== "team_invitation" &&
               n.type !== "tournament_invitation" &&
-              n.type !== "tournament_match_ready" ? (
+              n.type !== "tournament_match_ready" &&
+              !hasJudgeHandoverAction(n) &&
+              !n.readAt ? (
                 <Button
                   size="sm"
                   variant="secondary"

@@ -278,6 +278,14 @@ match, audit, stats или dependent tournament state.
 
 ## 9. Judge
 
+`GET /matches/{matchId}` возвращает полное authoritative состояние, включая
+неубывающую persisted `version` и полный, не усечённый массив `idempotencyKeys`
+для доступного матча. Raw point UUID и prefixed mutation keys сохраняются без
+проекции. Presence точного известного ключа доказывает применение соответствующей
+mutation; absence не доказывает отказ, пока запрос может выполняться. Порядок
+прихода HTTP responses не гарантирует монотонность, поэтому клиент не применяет
+ответ с версией ниже уже показанной.
+
 - `POST /matches/{matchId}/judge/acquire` — конфликт с активной judge session того же пользователя на другом устройстве: `409 JUDGE_OTHER_DEVICE`; первая сессия сохраняется.
 - `POST /matches/{matchId}/judge/heartbeat`
 - `POST /matches/{matchId}/judge/release`
@@ -297,6 +305,20 @@ Headers:
 `Idempotency-Key: <uuid>`
 
 Point response returns full authoritative match state.
+
+Manual correction request:
+```json
+{
+  "scoreA": 4,
+  "scoreB": 2,
+  "currentServerParticipantId": "participant-uuid",
+  "expectedVersion": 17
+}
+```
+Headers: `Idempotency-Key: <raw uuid>`. Успешная коррекция сохраняет в
+`idempotencyKeys` точное значение `manual-correction:<raw uuid>` и возвращает
+полное authoritative match state. Point и correction `400 VALIDATION` и
+`409 VERSION_CONFLICT` не выполняют mutation; transport/5xx не определяют исход.
 
 Errors:
 - `JUDGE_SLOT_OCCUPIED`

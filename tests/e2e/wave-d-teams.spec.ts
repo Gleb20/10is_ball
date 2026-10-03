@@ -49,6 +49,15 @@ test("Wave D AT-TEAM-001..007 create, accept welcome, transfer, leave and automa
     await page.getByRole("button", { name: "Пригласить", exact: true }).click();
     await expect(page.getByText("Приглашение отправлено.", { exact: true })).toBeVisible();
     await memberPage.goto("/notifications");
+    await expect(memberPage.getByRole("button", { name: "Принять", exact: true })).toBeVisible();
+    await expect.poll(async () => {
+      const response = await member.api.get("/api/v1/notifications");
+      const notifications = (await response.json()).notifications as Array<{
+        type: string;
+        readAt?: string | null;
+      }>;
+      return notifications.find((row) => row.type === "team_invitation")?.readAt ?? null;
+    }).toEqual(expect.any(String));
     await memberPage.getByRole("button", { name: "Принять", exact: true }).click();
     await expect(memberPage).toHaveURL(new RegExp(`/teams/${id}\\?welcome=1$`));
     await expect(memberPage.getByText(`Добро пожаловать в команду «${name}»`, { exact: true })).toBeVisible();

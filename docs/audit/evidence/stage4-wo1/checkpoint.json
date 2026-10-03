@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "status": "frozen_for_root_acceptance",
+  "workOrder": "Stage4 WO0/1 only",
+  "baseSha": "8b9d2650f7991e121052634ace758f5991ef25b5",
+  "baseVersion": "4.1.1",
+  "sourcePaths": [
+    "apps/api/src/gap-005.integration.test.ts",
+    "apps/api/src/openapi.contract.test.ts",
+    "apps/api/src/openapi.ts"
+  ],
+  "sourceFilesSha256": {
+    "apps/api/src/gap-005.integration.test.ts": "5dccc580d7a16d09c5b9d3d30f5608e78fdb31d3430e3234506f295ae5531edd",
+    "apps/api/src/openapi.contract.test.ts": "cb972a09c5e6d8a0c100c08e30bb5372099506b7d83d3aaba5ff42ada1b52f6f",
+    "apps/api/src/openapi.ts": "6f6624f9e5b89690c5d4d0394b738077e15104419014172721814e3d4557f3e6"
+  },
+  "patches": {
+    "acceptedR2": {
+      "path": "/private/tmp/stage4-api-read-contract-r2.patch",
+      "sha256": "6121c32a3ef989532863b38d32565f9e1754d8ca88e4fea36761a0589c4b7a3f"
+    },
+    "keyPreservation": {
+      "path": "docs/audit/evidence/stage4-wo1/key-preservation.patch",
+      "sha256": "37198ca351ca85c6c84e099207bdcba0fb8cabe36e1b67a9123da2c79b032d56"
+    },
+    "integratedSource": {
+      "path": "docs/audit/evidence/stage4-wo1/integrated-source.patch",
+      "sha256": "c301c58c7b9dfb512f6158786b9e5f27d5adb9b10e6286913e47dbf405de23be"
+    }
+  },
+  "verification": {
+    "openapiContract": {
+      "command": "pnpm --filter @tab10/api exec vitest run src/openapi.contract.test.ts",
+      "result": "PASS 10/10",
+      "log": "docs/audit/evidence/stage4-wo1/openapi-contract.log"
+    },
+    "gap005Integration": {
+      "command": "pnpm --filter @tab10/api exec vitest run src/gap-005.integration.test.ts",
+      "result": "PASS 13/13",
+      "log": "docs/audit/evidence/stage4-wo1/gap-005-integration.log"
+    },
+    "apiTypecheck": {
+      "command": "pnpm --filter @tab10/api run typecheck",
+      "result": "PASS",
+      "log": "docs/audit/evidence/stage4-wo1/api-typecheck.log"
+    },
+    "diffCheck": "PASS",
+    "scopedTrackedPaths": "PASS exactly three authorized API files",
+    "r2PreservedAfterAdvance": "PASS exact patch hash unchanged",
+    "disposableKeyPreservationApplyReverse": "PASS",
+    "disposableIntegratedApplyReverse": "PASS"
+  },
+  "rollback": {
+    "integratedSourcePatch": "docs/audit/evidence/stage4-wo1/integrated-source.patch",
+    "trialDirectory": "/private/tmp/stage4-wo1-rollback.THLoQ8",
+    "result": "forward matched frozen source; reverse matched release base"
+  },
+  "limitations": [
+    "No score UI or web source changes",
+    "No full Stage4 CI, PostgreSQL concurrency suite, browser acceptance, physical phone, WebKit or spoken AT",
+    "No version bump, commit, push or deployment"
+  ],
+  "receiptBridge": "Expected: frozen Stage3 source keeps its pre-publication PROJECT_STATUS snapshot; separate terminal receipts and live metadata establish public 8b9d2650 / 4.1.1. Carry to WO6 docs; not contract drift."
+}

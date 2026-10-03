@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "status": "frozen_for_root_acceptance",
+  "checkpointSha256": "bb96e37789159c5d3247ebad7877029e93e1536be0c8e699cd8df719044c0115",
+  "filesSha256": {
+    "preflight.json": "0206a7950920a4331597191a5a5f0305fc42b822702604bc815710f72e4ffe79",
+    "openapi-contract.log": "23a9f657e9cb8be76fb81e39267fa8b7a102052d56595aaef81ee8ae2e2aa09f",
+    "gap-005-integration.log": "6dd697a5b7ca01a2857753c5ff2ad6960a9b29f8b11eea648ecd52a5dcdd3a90",
+    "api-typecheck.log": "365b4c377e3afa769a92494829a6eba7b987ba7ab147b09568ba8876a38f659e",
+    "diff-check.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source-paths.txt": "579c2d9d31c8ddfb71f5a14f7a5ac40ac3a0274fd1838803894a4b4e2fc2651d",
+    "environment.txt": "afb27f2a41651392e78995b586f6d2c4a20221ca05736c378c655a94954a59f5",
+    "key-preservation.patch": "37198ca351ca85c6c84e099207bdcba0fb8cabe36e1b67a9123da2c79b032d56",
+    "integrated-source.patch": "c301c58c7b9dfb512f6158786b9e5f27d5adb9b10e6286913e47dbf405de23be",
+    "checkpoint.json": "bb96e37789159c5d3247ebad7877029e93e1536be0c8e699cd8df719044c0115",
+    "README.md": "8a97e1305dbc150cc06583e6af5bfdeab2217bdc65cc4c0bf37ffa1654a29e1c"
+  }
+}

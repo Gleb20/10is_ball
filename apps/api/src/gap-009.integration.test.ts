@@ -45,6 +45,18 @@ it("GAP-009 feedback API rejects invalid and unauthenticated submissions", async
   const [user]=await context.db.insert(users).values({email:"help-api@test.local",passwordHash:"x",firstName:"Help",lastName:"API",mustChangePassword:false}).returning();
   await context.db.insert(authSessions).values({userId:user!.id,tokenHash:hashToken("help-api-synthetic"),expiresAt:new Date("2026-09-20T10:00:00Z")});
   const cookies={tab10_session:"help-api-synthetic"};
+  const multilineMessage = "Первая строка\nВторая строка с деталями";
+  const submitted = await app.inject({
+    method:"POST",
+    url:"/api/v1/feedback",
+    cookies,
+    payload:{kind:"idea",message:multilineMessage},
+  });
+  expect(submitted.statusCode).toBe(200);
+  const persisted = await context.db.select().from(feedbackMessages);
+  expect(persisted).toEqual([
+    expect.objectContaining({userId:user!.id,kind:"idea",message:multilineMessage}),
+  ]);
   expect((await app.inject({method:"POST",url:"/api/v1/feedback",payload:{kind:"bug",message:"test"}})).statusCode).toBe(401);
   for(const payload of [{kind:"bad",message:"test"},{kind:"idea",message:" "},{kind:"bug",message:"ok",extra:true}]) expect((await app.inject({method:"POST",url:"/api/v1/feedback",cookies,payload})).statusCode).toBe(400);
 });

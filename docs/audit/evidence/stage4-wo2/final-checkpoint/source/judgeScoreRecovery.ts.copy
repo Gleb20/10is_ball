@@ -1,0 +1,325 @@
+export type ScoreSide = "A" | "B";
+
+export type PointIntent = {
+  id: string;
+  side: ScoreSide;
+  idempotencyKey: string;
+};
+
+export type PointAttempt = PointIntent & {
+  expectedVersion: number;
+  state: "sending" | "unknown" | "accepted-no-key";
+  reviewedVersion?: number;
+  fence?: boolean;
+};
+
+export type ScoreRecoveryRecord = {
+  schemaVersion: 1;
+  actorUserId: string;
+  matchId: string;
+  serverVersion: number;
+  attempts: PointAttempt[];
+  unsent: PointIntent[];
+  pausedAfterError: boolean;
+  storageSafe: boolean;
+  readState: "idle" | "checking" | "failed" | "no-key" | "exact";
+  reviewedVersion?: number;
+};
+
+type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+
+const records = new Map<string, ScoreRecoveryRecord>();
+const generations = new Map<string, number>();
+
+function recordKey(actorUserId: string, matchId: string) {
+  return `${actorUserId}\u0000${matchId}`;
+}
+
+function copyRecord(record: ScoreRecoveryRecord): ScoreRecoveryRecord {
+  return {
+    ...record,
+    attempts: record.attempts.map((attempt) => ({ ...attempt })),
+    unsent: record.unsent.map((intent) => ({ ...intent })),
+  };
+}
+
+export function scoreRecoveryStorageKey(actorUserId: string, matchId: string) {
+  return `tab10:judge-score-recovery:v1:${encodeURIComponent(actorUserId)}:${encodeURIComponent(matchId)}`;
+}
+
+export function beginScoreRecoveryGeneration(actorUserId: string, matchId: string) {
+  const key = recordKey(actorUserId, matchId);
+  const generation = (generations.get(key) ?? 0) + 1;
+  generations.set(key, generation);
+  return generation;
+}
+
+export function isScoreRecoveryGenerationCurrent(
+  actorUserId: string,
+  matchId: string,
+  generation: number,
+) {
+  return generations.get(recordKey(actorUserId, matchId)) === generation;
+}
+
+export function invalidateScoreRecoveryGeneration(actorUserId: string, matchId: string) {
+  beginScoreRecoveryGeneration(actorUserId, matchId);
+}
+
+export function createScoreRecoveryRecord(
+  actorUserId: string,
+  matchId: string,
+  serverVersion: number,
+): ScoreRecoveryRecord {
+  return {
+    schemaVersion: 1,
+    actorUserId,
+    matchId,
+    serverVersion,
+    attempts: [],
+    unsent: [],
+    pausedAfterError: false,
+    storageSafe: true,
+    readState: "idle",
+  };
+}
+
+export function appendPointIntent(record: ScoreRecoveryRecord, intent: PointIntent) {
+  return { ...record, unsent: [...record.unsent, { ...intent }] };
+}
+
+export function beginPointAttempt(
+  record: ScoreRecoveryRecord,
+  expectedVersion: number,
+  fence = false,
+) {
+  const [intent, ...unsent] = record.unsent;
+  if (!intent) return { record, attempt: null };
+  const attempt: PointAttempt = {
+    ...intent,
+    expectedVersion,
+    state: "sending",
+    ...(fence ? { fence: true } : {}),
+  };
+  return {
+    attempt,
+    record: {
+      ...record,
+      serverVersion: Math.max(record.serverVersion, expectedVersion),
+      attempts: [...record.attempts, attempt],
+      unsent,
+    },
+  };
+}
+
+export function markPointAttemptError(record: ScoreRecoveryRecord, attemptId: string) {
+  return {
+    ...record,
+    attempts: record.attempts.map((attempt) =>
+      attempt.id === attemptId ? { ...attempt, state: "unknown" as const } : attempt,
+    ),
+    pausedAfterError: true,
+  };
+}
+
+export function markPointAttemptApplied(
+  record: ScoreRecoveryRecord,
+  attemptId: string,
+  serverVersion: number,
+) {
+  const applied = record.attempts.find((attempt) => attempt.id === attemptId);
+  return {
+    ...record,
+    serverVersion: Math.max(record.serverVersion, serverVersion),
+    attempts: record.attempts.filter(
+      (attempt) =>
+        attempt.id !== attemptId &&
+        !(
+          applied?.fence &&
+          attempt.state === "accepted-no-key" &&
+          attempt.reviewedVersion === applied.expectedVersion
+        ),
+    ),
+    pausedAfterError: applied?.fence ? false : record.pausedAfterError,
+    readState: "exact" as const,
+    reviewedVersion: serverVersion,
+  };
+}
+
+export function restoreSendingAttemptsAsUnknown(record: ScoreRecoveryRecord): ScoreRecoveryRecord {
+  const copied = copyRecord(record);
+  return {
+    ...copied,
+    attempts: copied.attempts.map((attempt) => ({
+      ...attempt,
+      state:
+        attempt.state === "sending" || attempt.state === "accepted-no-key"
+          ? "unknown"
+          : attempt.state,
+      reviewedVersion: undefined,
+    })),
+    pausedAfterError: copied.attempts.length > 0 || copied.unsent.length > 0,
+    readState: "idle",
+    reviewedVersion: undefined,
+  };
+}
+
+export function reconcilePointAttempts(
+  record: ScoreRecoveryRecord,
+  serverVersion: number,
+  idempotencyKeys: string[],
+) {
+  const exact = new Set(idempotencyKeys);
+  const appliedAttemptIds = record.attempts
+    .filter((attempt) => exact.has(attempt.idempotencyKey))
+    .map((attempt) => attempt.id);
+  const attempts = record.attempts
+    .filter((attempt) => !exact.has(attempt.idempotencyKey))
+    .map((attempt) => ({ ...attempt, reviewedVersion: serverVersion }));
+  return {
+    appliedAttemptIds,
+    record: {
+      ...record,
+      serverVersion: Math.max(record.serverVersion, serverVersion),
+      attempts,
+      pausedAfterError:
+        attempts.length === 0 && record.unsent.length === 0
+          ? false
+          : record.pausedAfterError,
+      readState: attempts.length > 0 ? ("no-key" as const) : ("exact" as const),
+      reviewedVersion: serverVersion,
+    },
+  };
+}
+
+export function acceptReviewedPointScore(record: ScoreRecoveryRecord) {
+  if (record.readState !== "no-key" || record.reviewedVersion === undefined) return record;
+  return {
+    ...record,
+    attempts: record.attempts.map((attempt) =>
+      attempt.state === "unknown"
+        ? { ...attempt, state: "accepted-no-key" as const, reviewedVersion: record.reviewedVersion }
+        : attempt,
+    ),
+  };
+}
+
+export function discardUnsentPointIntents(record: ScoreRecoveryRecord) {
+  return {
+    ...record,
+    unsent: [],
+    pausedAfterError: record.attempts.length > 0 ? record.pausedAfterError : false,
+  };
+}
+
+export function resumeUnsentPointIntents(record: ScoreRecoveryRecord) {
+  return { ...record, pausedAfterError: false };
+}
+
+export function markRecoveryReadChecking(record: ScoreRecoveryRecord) {
+  return { ...record, readState: "checking" as const };
+}
+
+export function markRecoveryReadFailed(record: ScoreRecoveryRecord) {
+  return { ...record, readState: "failed" as const, pausedAfterError: true };
+}
+
+export function rememberScoreRecoveryRecord(record: ScoreRecoveryRecord) {
+  const copied = copyRecord(record);
+  records.set(recordKey(record.actorUserId, record.matchId), copied);
+  return copied;
+}
+
+export function persistScoreRecoveryRecord(record: ScoreRecoveryRecord, storage: StorageLike) {
+  const safeRecord = { ...copyRecord(record), storageSafe: true };
+  try {
+    storage.setItem(
+      scoreRecoveryStorageKey(record.actorUserId, record.matchId),
+      JSON.stringify(safeRecord),
+    );
+    rememberScoreRecoveryRecord(safeRecord);
+    return { ok: true as const, record: safeRecord };
+  } catch {
+    const unsafeRecord = { ...copyRecord(record), storageSafe: false };
+    rememberScoreRecoveryRecord(unsafeRecord);
+    return { ok: false as const, record: unsafeRecord };
+  }
+}
+
+function isPointIntent(value: unknown): value is PointIntent {
+  if (!value || typeof value !== "object") return false;
+  const intent = value as Record<string, unknown>;
+  return (
+    typeof intent.id === "string" &&
+    (intent.side === "A" || intent.side === "B") &&
+    typeof intent.idempotencyKey === "string"
+  );
+}
+
+function isPointAttempt(value: unknown): value is PointAttempt {
+  if (!isPointIntent(value)) return false;
+  const attempt = value as unknown as Record<string, unknown>;
+  return (
+    Number.isInteger(attempt.expectedVersion) &&
+    (attempt.state === "sending" ||
+      attempt.state === "unknown" ||
+      attempt.state === "accepted-no-key") &&
+    (attempt.reviewedVersion === undefined || Number.isInteger(attempt.reviewedVersion)) &&
+    (attempt.fence === undefined || typeof attempt.fence === "boolean")
+  );
+}
+
+function isScoreRecoveryRecord(value: unknown): value is ScoreRecoveryRecord {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return (
+    record.schemaVersion === 1 &&
+    typeof record.actorUserId === "string" &&
+    typeof record.matchId === "string" &&
+    Number.isInteger(record.serverVersion) &&
+    Array.isArray(record.attempts) &&
+    record.attempts.every(isPointAttempt) &&
+    Array.isArray(record.unsent) &&
+    record.unsent.every(isPointIntent) &&
+    typeof record.pausedAfterError === "boolean" &&
+    typeof record.storageSafe === "boolean" &&
+    ["idle", "checking", "failed", "no-key", "exact"].includes(String(record.readState)) &&
+    (record.reviewedVersion === undefined || Number.isInteger(record.reviewedVersion))
+  );
+}
+
+export function readScoreRecoveryRecord(
+  actorUserId: string,
+  matchId: string,
+  storage: StorageLike,
+): { record: ScoreRecoveryRecord | null; storageError: string | null } {
+  const memory = records.get(recordKey(actorUserId, matchId));
+  if (memory) return { record: copyRecord(memory), storageError: null };
+
+  let raw: string | null;
+  try {
+    raw = storage.getItem(scoreRecoveryStorageKey(actorUserId, matchId));
+  } catch {
+    return { record: null, storageError: "Не удалось прочитать сохранённое состояние счёта." };
+  }
+  if (raw === null) return { record: null, storageError: null };
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!isScoreRecoveryRecord(parsed)) {
+      return { record: null, storageError: "Сохранённое состояние счёта повреждено." };
+    }
+    if (parsed.actorUserId !== actorUserId || parsed.matchId !== matchId) {
+      return { record: null, storageError: "Сохранённое состояние счёта повреждено." };
+    }
+    const restored = rememberScoreRecoveryRecord(parsed);
+    return { record: restored, storageError: null };
+  } catch {
+    return { record: null, storageError: "Сохранённое состояние счёта повреждено." };
+  }
+}
+
+export function resetScoreRecoveryForTests() {
+  records.clear();
+  generations.clear();
+}

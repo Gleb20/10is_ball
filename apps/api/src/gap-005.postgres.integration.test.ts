@@ -13,7 +13,22 @@ const databaseUrl = resolveTestDatabaseUrl(process.env, { required: true });
 const clock = new FakeClock(new Date("2026-09-07T12:00:00.000Z"));
 
 type UserFixture = { id: string; cookie: string };
-type NamedConnection = { client: Sql; db: Db; service: MatchService };
+type NamedConnection = {
+  applicationName: string;
+  client: Sql;
+  db: Db;
+  service: MatchService;
+};
+
+type ScoreMutation =
+  | { kind: "point"; key: string; side: "A" | "B" }
+  | {
+      kind: "correction";
+      key: string;
+      scoreA: number;
+      scoreB: number;
+      serverIndex: number;
+    };
 
 function namedConnection(name: string): NamedConnection {
   const client = postgres(databaseUrl!, {
@@ -21,7 +36,12 @@ function namedConnection(name: string): NamedConnection {
     connection: { application_name: name },
   });
   const db = drizzle(client, { schema }) as unknown as Db;
-  return { client, db, service: new MatchService(db, clock) };
+  return {
+    applicationName: name,
+    client,
+    db,
+    service: new MatchService(db, clock),
+  };
 }
 
 async function acceptRequiredPlayerInvitations(service: MatchService, matchId: string) {
@@ -148,6 +168,96 @@ describe("GAP-005 PostgreSQL judge serialization", () => {
     return { match: (await services.matches.getMatch(match!.id))!, session: session! };
   }
 
+  async function runScoreMutation(
+    connection: NamedConnection,
+    fixture: Awaited<ReturnType<typeof createJudgedMatch>>,
+    expectedVersion: number,
+    mutation: ScoreMutation,
+  ) {
+    if (mutation.kind === "point") {
+      return connection.service.awardPoint({
+        matchId: fixture.match.id,
+        side: mutation.side,
+        idempotencyKey: mutation.key,
+        expectedVersion,
+        judgeUserId: userA.id,
+        authSessionId: fixture.session.authSessionId,
+      });
+    }
+    return connection.service.manualCorrection({
+      matchId: fixture.match.id,
+      scoreA: mutation.scoreA,
+      scoreB: mutation.scoreB,
+      currentServerParticipantId: fixture.match.participants[mutation.serverIndex]!.id,
+      idempotencyKey: mutation.key,
+      expectedVersion,
+      judgeUserId: userA.id,
+      authSessionId: fixture.session.authSessionId,
+    });
+  }
+
+  async function runOrderedMatchOperations<TFirst, TSecond>(
+    matchId: string,
+    first: { connection: NamedConnection; run: () => Promise<TFirst> },
+    second: { connection: NamedConnection; run: () => Promise<TSecond> },
+  ): Promise<[
+    PromiseSettledResult<TFirst>,
+    PromiseSettledResult<TSecond>,
+  ]> {
+    const blocker = postgres(databaseUrl!, { max: 1 });
+    const observer = postgres(databaseUrl!, { max: 1 });
+    extraClients.push(blocker, observer, first.connection.client, second.connection.client);
+
+    let releaseBlocker!: () => void;
+    const blockerGate = new Promise<void>((resolve) => { releaseBlocker = resolve; });
+    let rowLocked!: () => void;
+    const rowLockedGate = new Promise<void>((resolve) => { rowLocked = resolve; });
+    const blockerPromise = blocker.begin(async (transaction) => {
+      await transaction`select id from matches where id = ${matchId} for update`;
+      rowLocked();
+      await blockerGate;
+    });
+    void blockerPromise.catch(() => undefined);
+    await rowLockedGate;
+
+    let firstPromise: Promise<TFirst> | undefined;
+    let secondPromise: Promise<TSecond> | undefined;
+    let barrierError: unknown;
+    try {
+      firstPromise = first.run();
+      void firstPromise.catch(() => undefined);
+      await waitUntilBlocked(observer, first.connection.applicationName);
+      secondPromise = second.run();
+      void secondPromise.catch(() => undefined);
+      await waitUntilBlocked(observer, second.connection.applicationName);
+    } catch (error) {
+      barrierError = error;
+    } finally {
+      releaseBlocker();
+    }
+    const blockerResult = await Promise.allSettled([blockerPromise]);
+    const outcomes = await Promise.allSettled(
+      [firstPromise, secondPromise].filter((promise) => promise !== undefined),
+    );
+    if (barrierError) throw barrierError;
+    if (blockerResult[0]!.status === "rejected") throw blockerResult[0]!.reason;
+    if (!firstPromise || !secondPromise) {
+      throw new Error("both ordered operations must reach the PostgreSQL lock barrier");
+    }
+    return outcomes as [
+      PromiseSettledResult<TFirst>,
+      PromiseSettledResult<TSecond>,
+    ];
+  }
+
+  async function readPersistedMatch(matchId: string) {
+    const row = await db.query.matches.findFirst({
+      where: (match, { eq }) => eq(match.id, matchId),
+    });
+    expect(row).toBeDefined();
+    return row!;
+  }
+
   it("AT-MATCH-011 serializes starts for two matches sharing one player", async () => {
     const first = await services.matches.createMatch({
       createdByUserId: userA.id,
@@ -269,6 +379,252 @@ describe("GAP-005 PostgreSQL judge serialization", () => {
         version: before.version,
         activeJudge: null,
         judgeReservation: { userId: userC.id },
+      });
+    },
+  );
+
+  it.each([
+    { name: "original point before new point", kind: "point", first: "original" },
+    { name: "new point before original point", kind: "point", first: "new" },
+    { name: "original correction before new correction", kind: "correction", first: "original" },
+    { name: "new correction before original correction", kind: "correction", first: "new" },
+    { name: "correction before point", kind: "mixed", first: "original" },
+    { name: "point before correction", kind: "mixed", first: "new" },
+  ] as const)("serializes controlled CAS order: $name", async ({ kind, first }) => {
+    const fixture = await createJudgedMatch();
+    const expectedVersion = fixture.match.version;
+    const original: ScoreMutation = kind === "point"
+      ? { kind: "point", key: "stage4-point-original", side: "A" }
+      : {
+          kind: "correction",
+          key: "stage4-correction-original",
+          scoreA: 4,
+          scoreB: 2,
+          serverIndex: 1,
+        };
+    const newer: ScoreMutation = kind === "correction"
+      ? {
+          kind: "correction",
+          key: "stage4-correction-new",
+          scoreA: 6,
+          scoreB: 3,
+          serverIndex: 0,
+        }
+      : { kind: "point", key: "stage4-point-new", side: "B" };
+    const firstMutation = first === "original" ? original : newer;
+    const secondMutation = first === "original" ? newer : original;
+    const firstConnection = namedConnection(`stage4-cas-first-${kind}-${first}`);
+    const secondConnection = namedConnection(`stage4-cas-second-${kind}-${first}`);
+
+    const [firstResult, secondResult] = await runOrderedMatchOperations(
+      fixture.match.id,
+      {
+        connection: firstConnection,
+        run: () => runScoreMutation(firstConnection, fixture, expectedVersion, firstMutation),
+      },
+      {
+        connection: secondConnection,
+        run: () => runScoreMutation(secondConnection, fixture, expectedVersion, secondMutation),
+      },
+    );
+
+    if (firstResult.status !== "fulfilled") throw firstResult.reason;
+    expect(secondResult.status).toBe("rejected");
+    if (secondResult.status !== "rejected") throw new Error("second CAS mutation unexpectedly fulfilled");
+    const storedKey = firstMutation.kind === "correction"
+      ? `manual-correction:${firstMutation.key}`
+      : firstMutation.key;
+    const expectedScore = firstMutation.kind === "correction"
+      ? { scoreA: firstMutation.scoreA, scoreB: firstMutation.scoreB }
+      : {
+          scoreA: firstMutation.side === "A" ? 1 : 0,
+          scoreB: firstMutation.side === "B" ? 1 : 0,
+        };
+    const expectedEvent = firstMutation.kind === "correction"
+      ? { type: "manual_correction", idempotencyKey: storedKey }
+      : { type: "point_awarded", idempotencyKey: storedKey, side: firstMutation.side };
+    expect(secondResult.reason).toMatchObject({
+      code: "VERSION_CONFLICT",
+      state: {
+        ...expectedScore,
+        version: expectedVersion + 1,
+        idempotencyKeys: [storedKey],
+      },
+    });
+    expect(firstResult.value).toMatchObject({
+      ...expectedScore,
+      version: expectedVersion + 1,
+      idempotencyKeys: [storedKey],
+      eventLog: [expect.objectContaining(expectedEvent)],
+    });
+    expect(await readPersistedMatch(fixture.match.id)).toMatchObject({
+      ...expectedScore,
+      version: expectedVersion + 1,
+      idempotencyKeys: [storedKey],
+      eventLog: [expect.objectContaining(expectedEvent)],
+    });
+  });
+
+  it.each([
+    { name: "point waits before finish", first: "mutation", mutation: "point" },
+    { name: "correction waits before finish", first: "mutation", mutation: "correction" },
+    { name: "finish waits before point", first: "finish", mutation: "point" },
+    { name: "finish waits before correction", first: "finish", mutation: "correction" },
+  ] as const)("serializes scoring and finish: $name", async ({ first, mutation }) => {
+    const fixture = await createJudgedMatch();
+    const seedKey = "stage4-finish-seed";
+    const seeded = await services.matches.manualCorrection({
+      matchId: fixture.match.id,
+      scoreA: 11,
+      scoreB: 0,
+      currentServerParticipantId: fixture.match.participants[0]!.id,
+      idempotencyKey: seedKey,
+      expectedVersion: fixture.match.version,
+      judgeUserId: userA.id,
+      authSessionId: fixture.session.authSessionId,
+    });
+    expect(seeded).toMatchObject({ status: "pending_confirmation", version: 1 });
+    const scoring: ScoreMutation = mutation === "point"
+      ? { kind: "point", key: "stage4-finish-point", side: "B" }
+      : {
+          kind: "correction",
+          key: "stage4-finish-correction",
+          scoreA: 8,
+          scoreB: 6,
+          serverIndex: 1,
+        };
+    const scoringConnection = namedConnection(`stage4-finish-score-${first}-${mutation}`);
+    const finishConnection = namedConnection(`stage4-finish-confirm-${first}-${mutation}`);
+    const scoreOperation = {
+      connection: scoringConnection,
+      run: () => runScoreMutation(scoringConnection, fixture, 1, scoring),
+    };
+    const finishOperation = {
+      connection: finishConnection,
+      run: () => finishConnection.service.confirmFinish({
+        matchId: fixture.match.id,
+        judgeUserId: userA.id,
+        authSessionId: fixture.session.authSessionId,
+      }),
+    };
+
+    const [firstResult, secondResult] = first === "mutation"
+      ? await runOrderedMatchOperations(fixture.match.id, scoreOperation, finishOperation)
+      : await runOrderedMatchOperations(fixture.match.id, finishOperation, scoreOperation);
+    const scoreResult = first === "mutation" ? firstResult : secondResult;
+    const finishResult = first === "mutation" ? secondResult : firstResult;
+    const persisted = await readPersistedMatch(fixture.match.id);
+    const seedStoredKey = `manual-correction:${seedKey}`;
+
+    if (first === "mutation" && mutation === "correction") {
+      expect(scoreResult.status).toBe("fulfilled");
+      expect(finishResult.status).toBe("rejected");
+      if (scoreResult.status !== "fulfilled" || finishResult.status !== "rejected") {
+        throw new Error("correction-first finish ordering did not settle as expected");
+      }
+      expect(scoreResult.value).toMatchObject({ scoreA: 8, scoreB: 6, version: 2 });
+      expect(finishResult.reason).toMatchObject({ code: "INVALID_STATUS" });
+      expect(persisted).toMatchObject({
+        status: "in_progress",
+        scoreA: 8,
+        scoreB: 6,
+        version: 2,
+        idempotencyKeys: [seedStoredKey, "manual-correction:stage4-finish-correction"],
+        eventLog: [
+          expect.objectContaining({ type: "manual_correction", idempotencyKey: seedStoredKey }),
+          expect.objectContaining({
+            type: "manual_correction",
+            idempotencyKey: "manual-correction:stage4-finish-correction",
+          }),
+        ],
+      });
+      return;
+    }
+
+    expect(finishResult.status).toBe("fulfilled");
+    expect(scoreResult.status).toBe("rejected");
+    if (finishResult.status !== "fulfilled" || scoreResult.status !== "rejected") {
+      throw new Error("finish-winning ordering did not settle as expected");
+    }
+    expect(finishResult.value).toMatchObject({ status: "finished", version: 2 });
+    expect(scoreResult.reason).toMatchObject({
+      code: first === "finish" ? "JUDGE_REQUIRED" : "FINISH_PENDING",
+    });
+    expect(persisted).toMatchObject({
+      status: "finished",
+      scoreA: 11,
+      scoreB: 0,
+      version: 2,
+      eventLog: [
+        expect.objectContaining({ type: "manual_correction", idempotencyKey: seedStoredKey }),
+      ],
+    });
+    const persistedKeys = persisted.idempotencyKeys as string[];
+    expect(persistedKeys).toHaveLength(2);
+    expect(persistedKeys).toContain(seedStoredKey);
+    expect(persistedKeys.filter((key) => key.startsWith("finish-confirmed:"))).toHaveLength(1);
+    expect(persistedKeys).not.toContain(scoring.key);
+    expect(persistedKeys).not.toContain(`manual-correction:${scoring.key}`);
+  });
+
+  it.each(["point", "correction"] as const)(
+    "serializes an in-flight %s ahead of handover",
+    async (mutation) => {
+      const fixture = await createJudgedMatch();
+      const before = (await services.matches.getMatch(fixture.match.id))!;
+      const scoring = namedConnection(`stage4-${mutation}-before-handover`);
+      const handover = namedConnection(`stage4-handover-after-${mutation}`);
+      const scoreMutation: ScoreMutation = mutation === "point"
+        ? { kind: "point", key: "stage4-point-before-handover", side: "A" }
+        : {
+            kind: "correction",
+            key: "stage4-correction-before-handover",
+            scoreA: 4,
+            scoreB: 2,
+            serverIndex: 1,
+          };
+
+      const [scoreResult, handoverResult] = await runOrderedMatchOperations(
+        fixture.match.id,
+        {
+          connection: scoring,
+          run: () => runScoreMutation(scoring, fixture, before.version, scoreMutation),
+        },
+        {
+          connection: handover,
+          run: () => handover.service.handoverJudge({
+            matchId: fixture.match.id,
+            fromUserId: userA.id,
+            fromAuthSessionId: fixture.session.authSessionId,
+            toUserId: userC.id,
+          }),
+        },
+      );
+
+      if (scoreResult.status !== "fulfilled") throw scoreResult.reason;
+      if (handoverResult.status !== "fulfilled") throw handoverResult.reason;
+      const expectedScore = mutation === "point"
+        ? { scoreA: 1, scoreB: 0 }
+        : { scoreA: 4, scoreB: 2 };
+      const storedKey = mutation === "point"
+        ? scoreMutation.key
+        : `manual-correction:${scoreMutation.key}`;
+      const expectedEvent = mutation === "point"
+        ? { type: "point_awarded", idempotencyKey: storedKey, side: "A" }
+        : { type: "manual_correction", idempotencyKey: storedKey };
+      expect(scoreResult.value).toMatchObject({ ...expectedScore, version: 1 });
+      expect(handoverResult.value).toMatchObject({ userId: userC.id });
+      expect(await services.matches.getMatch(fixture.match.id)).toMatchObject({
+        ...expectedScore,
+        version: 1,
+        activeJudge: null,
+        judgeReservation: { userId: userC.id },
+      });
+      expect(await readPersistedMatch(fixture.match.id)).toMatchObject({
+        ...expectedScore,
+        version: 1,
+        idempotencyKeys: [storedKey],
+        eventLog: [expect.objectContaining(expectedEvent)],
       });
     },
   );

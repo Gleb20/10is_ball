@@ -380,7 +380,7 @@ const schemas: Record<string, JsonSchema> = {
   },
   Match: {
     type: "object",
-    required: ["id", "title", "kind", "status", "version"],
+    required: ["id", "title", "kind", "status", "version", "idempotencyKeys"],
     properties: {
       id: { type: "string" },
       title: { type: "string" },
@@ -389,7 +389,16 @@ const schemas: Record<string, JsonSchema> = {
         type: "string",
         enum: ["waiting", "in_progress", "pending_confirmation", "finished", "stopped", "cancelled", "voided"],
       },
-      version: { type: "integer", minimum: 0 },
+      version: {
+        type: "integer",
+        minimum: 0,
+        description: "The persisted version is nondecreasing within one match and reflects a point-in-time read for expectedVersion checks. HTTP responses may arrive out of order; a version does not pin an earlier submitted score as current.",
+      },
+      idempotencyKeys: {
+        type: "array",
+        items: { type: "string" },
+        description: "Complete, untruncated stored match idempotency keys, including raw point UUIDs and manual-correction:<UUID> keys. Exact key presence proves its write applied, but absence alone does not prove no write; later writes may change the score.",
+      },
       winnerSide: { type: "string", enum: ["A", "B"], nullable: true },
       participants: { type: "array", items: ref("Participant") },
       invitations: { type: "array", items: ref("MatchInvitation") },

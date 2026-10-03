@@ -1,0 +1,2220 @@
+diff --git a/apps/web/src/pages/JudgePage.test.tsx b/apps/web/src/pages/JudgePage.test.tsx
+index 5c4900d..23787e1 100644
+--- a/apps/web/src/pages/JudgePage.test.tsx
++++ b/apps/web/src/pages/JudgePage.test.tsx
+@@ -14,8 +14,20 @@ import {
+   Route,
+   Routes,
+   useLocation,
++  useNavigate,
+ } from "react-router-dom";
+ import { JudgePage } from "./JudgePage";
++import {
++  acceptReviewedPointScore,
++  appendPointIntent,
++  beginPointAttempt,
++  createScoreRecoveryRecord,
++  markPointAttemptError,
++  persistScoreRecoveryRecord,
++  reconcilePointAttempts,
++  resetScoreRecoveryForTests,
++  scoreRecoveryStorageKey,
++} from "./judgeScoreRecovery";
+ 
+ const getMatch = vi.fn();
+ const startMatch = vi.fn();
+@@ -49,6 +61,10 @@ vi.mock("../api", () => ({
+   },
+ }));
+ 
++vi.mock("../auth", () => ({
++  useAuth: () => ({ user: { id: "judge-user" }, reauthRequired: false }),
++}));
++
+ const matchBody = {
+   id: "m1",
+   status: "in_progress",
+@@ -76,6 +92,7 @@ const matchBody = {
+ 
+ function Destination({ label }: { label: string }) {
+   const location = useLocation();
++  const navigate = useNavigate();
+   const notice = (
+     location.state as
+       | { judgeExitNotice?: { kind: "success" | "warning"; message: string } }
+@@ -89,6 +106,9 @@ function Destination({ label }: { label: string }) {
+           {notice.message}
+         </p>
+       ) : null}
++      {label === "home" ? (
++        <button type="button" onClick={() => navigate("/matches/m1/judge")}>Вернуться к судейству</button>
++      ) : null}
+     </div>
+   );
+ }
+@@ -138,6 +158,8 @@ describe("REQ_ui__judge_immersive", () => {
+   beforeEach(() => {
+     cleanup();
+     vi.clearAllMocks();
++    resetScoreRecoveryForTests();
++    window.sessionStorage.clear();
+     getMatch.mockResolvedValue({ match: matchBody });
+     startMatch.mockResolvedValue({ match: matchBody });
+     acquireJudge.mockResolvedValue({ ok: true });
+@@ -361,7 +383,7 @@ describe("REQ_ui__judge_immersive", () => {
+     ).toBeEnabled();
+   });
+ 
+-  it("AT-JUDGE-007 stops the queue and shows authoritative score on version conflict", async () => {
++  it("AT-JUDGE-007 proves no-write on version conflict but keeps the old queue paused", async () => {
+     const user = userEvent.setup();
+     const pointRequest = deferred<{ match: typeof matchBody }>();
+     awardPoint.mockImplementationOnce(() => pointRequest.promise);
+@@ -371,6 +393,7 @@ describe("REQ_ui__judge_immersive", () => {
+     });
+ 
+     await user.click(btn);
++    fireEvent.click(screen.getByRole("button", { name: /\+1 очко: борис б/i }));
+     getMatch.mockResolvedValue({
+       match: { ...matchBody, scoreA: 4, version: 6 },
+     });
+@@ -385,15 +408,474 @@ describe("REQ_ui__judge_immersive", () => {
+     });
+ 
+     expect(await screen.findByRole("alert")).toHaveTextContent(
+-      /счёт изменился на другом устройстве/i,
++      /запрос не изменил счёт/i,
+     );
+     expect(
+       within(screen.getByTestId("judge-side-A")).getByText("4"),
+     ).toBeInTheDocument();
+-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
++    const recoveryRegion = screen.getByRole("region", { name: /восстановление счёта/i });
++    expect(recoveryRegion).toHaveTextContent(/не отправлено: 1/i);
++    await waitFor(() => expect(recoveryRegion).toHaveFocus());
+     expect(screen.queryByTestId("judge-lost-lock")).not.toBeInTheDocument();
+-    expect(btn).toBeEnabled();
++    expect(btn).toBeDisabled();
++    expect(screen.getByRole("button", { name: /отправить оставшиеся нажатия/i })).toBeEnabled();
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++  });
++
++  it("BUG-029 restores an interrupted send as unknown, checks GET first, and never replays it", async () => {
++    const user = userEvent.setup();
++    let record = appendPointIntent(
++      createScoreRecoveryRecord("judge-user", "m1", 5),
++      { id: "intent-a", side: "A", idempotencyKey: "point-a" },
++    );
++    record = beginPointAttempt(record, 5).record;
++    record = appendPointIntent(record, { id: "intent-b", side: "B", idempotencyKey: "point-b" });
++    persistScoreRecoveryRecord(record, window.sessionStorage);
++    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
++
++    renderJudge();
++
++    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /сервер не подтвердил/i,
++    );
++    expect(getMatch).toHaveBeenCalled();
++    expect(awardPoint).not.toHaveBeenCalled();
++    expect(screen.getByRole("button", { name: /принять показанный счёт/i })).toBeEnabled();
++    expect(screen.getByRole("button", { name: /отменить последнее очко/i })).toBeDisabled();
++
++    await user.click(screen.getByRole("button", { name: /принять показанный счёт/i }));
++    expect(awardPoint).not.toHaveBeenCalled();
++    expect(screen.getByRole("region", { name: /подтверждение показанного счёта/i })).toHaveTextContent(
++      /анна а: 3.*борис б: 2/i,
++    );
++    await user.click(screen.getByRole("button", { name: /отменить принятие/i }));
++    expect(awardPoint).not.toHaveBeenCalled();
++    await user.click(screen.getByRole("button", { name: /принять показанный счёт/i }));
++    await user.click(screen.getByRole("button", { name: /подтвердить показанный счёт/i }));
++    expect(awardPoint).not.toHaveBeenCalled();
++    awardPoint
++      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 4, version: 6 } })
++      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 4, scoreB: 3, version: 7 } });
++    await user.click(screen.getByRole("button", { name: /добавить новое очко: анна а/i }));
++    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(1));
++    expect(awardPoint).toHaveBeenCalledWith("m1", "A", 5, expect.any(String));
++    expect(awardPoint.mock.calls[0]?.[3]).not.toBe("point-a");
++    await new Promise((resolve) => window.setTimeout(resolve, 0));
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++    await user.click(screen.getByRole("button", { name: /отправить оставшиеся нажатия/i }));
++    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(2));
++    expect(awardPoint).toHaveBeenNthCalledWith(2, "m1", "B", 6, "point-b");
++  });
++
++  it("BUG-029 binds score acceptance to the reviewed snapshot and does not steal focus on a later GET", async () => {
++    const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
++    vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
++      timers.push({ callback, delay });
++      return timers.length as never;
++    });
++    vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
++    let record = appendPointIntent(
++      createScoreRecoveryRecord("judge-user", "m1", 5),
++      { id: "a", side: "A", idempotencyKey: "key-a" },
++    );
++    record = markPointAttemptError(beginPointAttempt(record, 5).record, "a");
++    persistScoreRecoveryRecord(record, window.sessionStorage);
++    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
++    const user = userEvent.setup();
++    renderJudge();
++    const recovery = await screen.findByRole("region", { name: /восстановление счёта/i });
++    await user.click(screen.getByRole("button", { name: /принять показанный счёт/i }));
++    const confirm = screen.getByRole("button", { name: /подтвердить показанный счёт/i });
++    confirm.focus();
++
++    getMatch.mockResolvedValue({
++      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: [] },
++    });
++    const liveTimer = timers.find(({ delay }) => delay === 30_000);
++    expect(liveTimer).toBeDefined();
++    await act(async () => {
++      await (liveTimer!.callback as () => Promise<void>)();
++    });
++    expect(recovery).not.toHaveFocus();
++    await user.click(confirm);
++
++    expect(await screen.findByRole("alert")).toHaveTextContent(/изменился во время подтверждения/i);
++    expect(screen.queryByRole("region", { name: /подтверждение показанного счёта/i })).not.toBeInTheDocument();
++    expect(awardPoint).not.toHaveBeenCalled();
++  });
++
++  it("BUG-029 keeps an explicit new point pinned to the confirmed reviewed version after a newer GET", async () => {
++    const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
++    vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
++      timers.push({ callback, delay });
++      return timers.length as never;
++    });
++    vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
++    let record = appendPointIntent(
++      createScoreRecoveryRecord("judge-user", "m1", 7),
++      { id: "a", side: "A", idempotencyKey: "key-a" },
++    );
++    record = markPointAttemptError(beginPointAttempt(record, 7).record, "a");
++    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
++    persistScoreRecoveryRecord(record, window.sessionStorage);
++    getMatch.mockResolvedValue({
++      match: { ...matchBody, scoreA: 5, version: 7, idempotencyKeys: [] },
++    });
++    const user = userEvent.setup();
++    renderJudge();
++    await user.click(await screen.findByRole("button", { name: /принять показанный счёт/i }));
++    await user.click(screen.getByRole("button", { name: /подтвердить показанный счёт/i }));
++    getMatch.mockResolvedValue({
++      match: { ...matchBody, scoreA: 6, version: 8, idempotencyKeys: [] },
++    });
++    const liveTimer = timers.find(({ delay }) => delay === 30_000);
++    await act(async () => {
++      await (liveTimer!.callback as () => Promise<void>)();
++    });
++    awardPoint.mockRejectedValueOnce(
++      Object.assign(new Error("stale"), { status: 409, code: "VERSION_CONFLICT" }),
++    );
++
++    await user.click(screen.getByRole("button", { name: /добавить новое очко: анна а/i }));
++
++    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(1));
++    expect(awardPoint).toHaveBeenCalledWith("m1", "A", 7, expect.any(String));
++    const recovery = await screen.findByRole("region", { name: /восстановление счёта/i });
++    expect(recovery).toHaveTextContent(/не отправлено: 1/i);
++    expect(screen.getByRole("button", { name: /отправить оставшиеся нажатия/i })).toBeEnabled();
++    expect(screen.queryByRole("button", { name: /добавить новое очко/i })).not.toBeInTheDocument();
++  });
++
++  it("BUG-029 keeps an unsaved tap visible and sends no POST when durable storage fails", async () => {
++    const storageWrite = vi
++      .spyOn(Storage.prototype, "setItem")
++      .mockImplementationOnce(() => {
++        throw new Error("quota");
++      });
++    const user = userEvent.setup();
++    const rendered = renderJudge();
++
++    await user.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
++
++    expect(awardPoint).not.toHaveBeenCalled();
++    expect(screen.getByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /сохранено только в этой вкладке/i,
++    );
++    expect(screen.getByRole("button", { name: /\+1 очко: анна а/i })).toBeDisabled();
++    expect(screen.queryByText(/отправка очка/i)).not.toBeInTheDocument();
++    storageWrite.mockRestore();
++
++    rendered.unmount();
++    renderJudge();
++    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /осталось нажатий: 1/i,
++    );
++    expect(awardPoint).not.toHaveBeenCalled();
++  });
++
++  it("BUG-029 does not retry storage or send a queued tap when its write failed during an active request", async () => {
++    const realSetItem = Storage.prototype.setItem;
++    let writeCount = 0;
++    const storageWrite = vi
++      .spyOn(Storage.prototype, "setItem")
++      .mockImplementation(function (this: Storage, key: string, value: string) {
++        writeCount += 1;
++        if (writeCount === 3) throw new Error("quota");
++        return realSetItem.call(this, key, value);
++      });
++    const firstPoint = deferred<{ match: typeof matchBody }>();
++    awardPoint
++      .mockImplementationOnce(() => firstPoint.promise)
++      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 4, scoreB: 3, version: 7 } });
++    renderJudge();
++    const pointA = await screen.findByRole("button", { name: /\+1 очко: анна а/i });
++    const pointB = screen.getByRole("button", { name: /\+1 очко: борис б/i });
++
++    fireEvent.click(pointA);
++    fireEvent.click(pointB);
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++    await act(async () => {
++      firstPoint.resolve({ match: { ...matchBody, scoreA: 4, version: 6 } });
++      await firstPoint.promise;
++    });
++
++    await waitFor(() => {
++      expect(screen.getByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++        /сохранено только в этой вкладке/i,
++      );
++    });
+     expect(awardPoint).toHaveBeenCalledTimes(1);
++    expect(screen.getByRole("button", { name: /повторить сохранение/i })).toBeEnabled();
++    storageWrite.mockRestore();
++    getMatch.mockResolvedValue({ match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: [] } });
++    await userEvent.setup().click(screen.getByRole("button", { name: /повторить сохранение/i }));
++    expect(await screen.findByRole("button", { name: /отправить оставшиеся нажатия/i })).toBeEnabled();
++    fireEvent.click(screen.getByRole("button", { name: /\+1 очко: анна а/i }));
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++    await userEvent.setup().click(screen.getByRole("button", { name: /отправить оставшиеся нажатия/i }));
++    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(2));
++    expect(awardPoint).toHaveBeenNthCalledWith(2, "m1", "B", 6, expect.any(String));
++  });
++
++  it("BUG-029 requires explicit continuation for queued taps after exact-key reconciliation", async () => {
++    const user = userEvent.setup();
++    const firstPoint = deferred<{ match: typeof matchBody }>();
++    awardPoint
++      .mockImplementationOnce(() => firstPoint.promise)
++      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 4, scoreB: 3, version: 7 } });
++    renderJudge();
++    const pointA = await screen.findByRole("button", { name: /\+1 очко: анна а/i });
++    const pointB = screen.getByRole("button", { name: /\+1 очко: борис б/i });
++
++    fireEvent.click(pointA);
++    fireEvent.click(pointB);
++    const firstKey = String(awardPoint.mock.calls[0]?.[3]);
++    getMatch.mockResolvedValue({
++      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: [firstKey] },
++    });
++    await act(async () => {
++      firstPoint.reject(Object.assign(new Error("network"), { code: "NETWORK" }));
++      await firstPoint.promise.catch(() => undefined);
++    });
++
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++    const continueButton = await screen.findByRole("button", {
++      name: /отправить оставшиеся нажатия/i,
++    });
++    await user.click(continueButton);
++
++    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(2));
++    expect(awardPoint).toHaveBeenNthCalledWith(2, "m1", "B", 6, expect.any(String));
++  });
++
++  it("BUG-029 exact-proves a lost explicit fence while B/C remain paused for Continue", async () => {
++    let record = appendPointIntent(
++      createScoreRecoveryRecord("judge-user", "m1", 5),
++      { id: "a", side: "A", idempotencyKey: "key-a" },
++    );
++    record = markPointAttemptError(beginPointAttempt(record, 5).record, "a");
++    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
++    record = appendPointIntent(record, { id: "c", side: "A", idempotencyKey: "key-c" });
++    persistScoreRecoveryRecord(record, window.sessionStorage);
++    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
++    const explicitPoint = deferred<{ match: typeof matchBody }>();
++    awardPoint.mockImplementationOnce(() => explicitPoint.promise);
++    const user = userEvent.setup();
++    renderJudge();
++    await user.click(await screen.findByRole("button", { name: /принять показанный счёт/i }));
++    await user.click(screen.getByRole("button", { name: /подтвердить показанный счёт/i }));
++    await user.click(screen.getByRole("button", { name: /добавить новое очко: анна а/i }));
++    const fenceKey = String(awardPoint.mock.calls[0]?.[3]);
++    getMatch.mockResolvedValue({
++      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: [fenceKey] },
++    });
++    await act(async () => {
++      explicitPoint.reject(new Error("network"));
++      await explicitPoint.promise.catch(() => undefined);
++    });
++
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++    const recovery = await screen.findByRole("region", { name: /восстановление счёта/i });
++    expect(recovery).toHaveTextContent(/не отправлено: 2/i);
++    expect(screen.getByRole("button", { name: /отправить оставшиеся нажатия/i })).toBeEnabled();
++  });
++
++  it("BUG-029 restores a sent attempt with B/C queued and performs zero automatic POSTs", async () => {
++    let record = appendPointIntent(
++      createScoreRecoveryRecord("judge-user", "m1", 5),
++      { id: "a", side: "A", idempotencyKey: "key-a" },
++    );
++    record = beginPointAttempt(record, 5).record;
++    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
++    record = appendPointIntent(record, { id: "c", side: "A", idempotencyKey: "key-c" });
++    persistScoreRecoveryRecord(record, window.sessionStorage);
++    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
++
++    renderJudge();
++
++    const recovery = await screen.findByRole("region", { name: /восстановление счёта/i });
++    expect(recovery).toHaveTextContent(/сервер не подтвердил/i);
++    expect(recovery).toHaveTextContent(/отправленные очки.*анна а/i);
++    expect(recovery).toHaveTextContent(/не отправлено.*2/i);
++    expect(recovery).toHaveTextContent(/не отправлять оставшиеся/i);
++    expect(awardPoint).not.toHaveBeenCalled();
++  });
++
++  it("BUG-029 keeps only the unresolved B attempt after exact proof for A", async () => {
++    let record = createScoreRecoveryRecord("judge-user", "m1", 5);
++    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
++    record = beginPointAttempt(record, 5).record;
++    record = markPointAttemptError(record, "a");
++    record = acceptReviewedPointScore(reconcilePointAttempts(record, 5, []).record);
++    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
++    record = beginPointAttempt(record, 5, true).record;
++    record = markPointAttemptError(record, "b");
++    persistScoreRecoveryRecord(record, window.sessionStorage);
++    getMatch.mockResolvedValue({
++      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: ["key-a"] },
++    });
++
++    renderJudge();
++
++    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /сервер не подтвердил/i,
++    );
++    expect(screen.getByRole("button", { name: /отменить последнее очко/i })).toBeDisabled();
++    await userEvent.setup().click(screen.getByRole("button", { name: "Ещё" }));
++    expect(screen.getByRole("button", { name: /исправить счёт и подачу/i })).toBeDisabled();
++    expect(awardPoint).not.toHaveBeenCalled();
++  });
++
++  it("BUG-029 retains informational correlation after judge ownership is lost", async () => {
++    awardPoint.mockRejectedValueOnce(
++      Object.assign(new Error("expired"), { status: 401, code: "UNAUTHORIZED" }),
++    );
++    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
++    const user = userEvent.setup();
++    renderJudge();
++
++    await user.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
++
++    expect(await screen.findByTestId("judge-lost-lock")).toBeInTheDocument();
++    expect(screen.getByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /требует заново занять слот судьи/i,
++    );
++    expect(screen.queryByRole("button", { name: /добавить новое очко/i })).not.toBeInTheDocument();
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++  });
++
++  it("BUG-029 returns Home and re-enters through GET and judge ownership with zero automatic POSTs", async () => {
++    let record = appendPointIntent(
++      createScoreRecoveryRecord("judge-user", "m1", 5),
++      { id: "a", side: "A", idempotencyKey: "key-a" },
++    );
++    record = markPointAttemptError(beginPointAttempt(record, 5).record, "a");
++    persistScoreRecoveryRecord(record, window.sessionStorage);
++    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
++    const user = userEvent.setup();
++    renderJudge();
++    await screen.findByRole("region", { name: /восстановление счёта/i });
++    const readsBeforeExit = getMatch.mock.calls.length;
++
++    await user.click(screen.getByRole("button", { name: "На главную" }));
++    expect(await screen.findByText("home")).toBeInTheDocument();
++    await user.click(screen.getByRole("button", { name: /вернуться к судейству/i }));
++
++    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toBeInTheDocument();
++    expect(getMatch.mock.calls.length).toBeGreaterThan(readsBeforeExit);
++    expect(acquireJudge).toHaveBeenCalledTimes(2);
++    expect(awardPoint).not.toHaveBeenCalled();
++  });
++
++  it("BUG-029 ignores a completed POST callback from an earlier mount", async () => {
++    const pendingPoint = deferred<{ match: typeof matchBody }>();
++    awardPoint.mockImplementationOnce(() => pendingPoint.promise);
++    const firstMount = renderJudge();
++    fireEvent.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++
++    firstMount.unmount();
++    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
++    renderJudge();
++    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toBeInTheDocument();
++    await act(async () => {
++      pendingPoint.resolve({ match: { ...matchBody, scoreA: 9, version: 6 } });
++      await pendingPoint.promise;
++    });
++
++    expect(within(screen.getByTestId("judge-side-A")).getByText("3")).toBeInTheDocument();
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++  });
++
++  it("BUG-029 never lets a late point response roll back a newer accepted server version", async () => {
++    const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
++    vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
++      timers.push({ callback, delay });
++      return timers.length as never;
++    });
++    vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
++    const pendingPoint = deferred<{ match: typeof matchBody }>();
++    awardPoint.mockImplementationOnce(() => pendingPoint.promise);
++    renderJudge();
++    fireEvent.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
++    getMatch.mockResolvedValue({
++      match: { ...matchBody, scoreA: 8, version: 7, idempotencyKeys: [] },
++    });
++    const liveTimer = timers.find(({ delay }) => delay === 30_000);
++    expect(liveTimer).toBeDefined();
++    await act(async () => {
++      await (liveTimer!.callback as () => Promise<void>)();
++    });
++    expect(within(screen.getByTestId("judge-side-A")).getByText("8")).toBeInTheDocument();
++
++    await act(async () => {
++      pendingPoint.resolve({ match: { ...matchBody, scoreA: 4, version: 6 } });
++      await pendingPoint.promise;
++    });
++
++    expect(within(screen.getByTestId("judge-side-A")).getByText("8")).toBeInTheDocument();
++  });
++
++  it("BUG-029 fails closed on a corrupt stored record without deleting it", async () => {
++    const key = scoreRecoveryStorageKey("judge-user", "m1");
++    window.sessionStorage.setItem(key, "{broken-json");
++    renderJudge();
++
++    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /повреждено/i,
++    );
++    expect(screen.getByRole("button", { name: /\+1 очко: анна а/i })).toBeDisabled();
++    expect(window.sessionStorage.getItem(key)).toBe("{broken-json");
++    expect(awardPoint).not.toHaveBeenCalled();
++  });
++
++  it("BUG-029 survives a sessionStorage getter failure and retains SPA-memory recovery", async () => {
++    const record = appendPointIntent(
++      createScoreRecoveryRecord("judge-user", "m1", 5),
++      { id: "a", side: "A", idempotencyKey: "key-a" },
++    );
++    persistScoreRecoveryRecord(record, {
++      getItem: () => null,
++      setItem: () => { throw new Error("storage unavailable"); },
++      removeItem: () => undefined,
++    });
++    vi.spyOn(window, "sessionStorage", "get").mockImplementation(() => {
++      throw new DOMException("denied", "SecurityError");
++    });
++
++    renderJudge();
++
++    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /сохранено только в этой вкладке/i,
++    );
++    expect(screen.getByRole("button", { name: /\+1 очко: анна а/i })).toBeDisabled();
++    expect(awardPoint).not.toHaveBeenCalled();
++  });
++
++  it("BUG-029 keeps Undo, correction and Finish closed after no-key acceptance", async () => {
++    let record = appendPointIntent(
++      createScoreRecoveryRecord("judge-user", "m1", 5),
++      { id: "a", side: "A", idempotencyKey: "key-a" },
++    );
++    record = beginPointAttempt(record, 5).record;
++    record = markPointAttemptError(record, "a");
++    persistScoreRecoveryRecord(record, window.sessionStorage);
++    getMatch.mockResolvedValue({
++      match: { ...matchBody, status: "pending_confirmation", idempotencyKeys: [] },
++    });
++    const user = userEvent.setup();
++    renderJudge();
++    await user.click(await screen.findByRole("button", { name: /принять показанный счёт/i }));
++    await user.click(screen.getByRole("button", { name: /подтвердить показанный счёт/i }));
++
++    expect(screen.getByRole("button", { name: /отменить последнее очко/i })).toBeDisabled();
++    await user.click(screen.getByRole("button", { name: "Ещё" }));
++    expect(screen.getByRole("button", { name: /исправить счёт и подачу/i })).toBeDisabled();
++    expect(screen.getByRole("button", { name: /подтвердить результат/i })).toBeDisabled();
++    expect(screen.getByRole("button", { name: /продолжить игру/i })).toBeDisabled();
++    expect(undoPoint).not.toHaveBeenCalled();
++    expect(confirmFinish).not.toHaveBeenCalled();
++    expect(revertFinish).not.toHaveBeenCalled();
+   });
+ 
+   it("shows setup as board with swap and start match", async () => {
+diff --git a/apps/web/src/pages/JudgePage.tsx b/apps/web/src/pages/JudgePage.tsx
+index dc19467..42aae6d 100644
+--- a/apps/web/src/pages/JudgePage.tsx
++++ b/apps/web/src/pages/JudgePage.tsx
+@@ -29,6 +29,30 @@ import { statusLabel } from "../statusLabels";
+ import { initialsFromName } from "../rankingUi";
+ import { avatarSrc } from "../avatarSrc";
+ import type { JudgeExitNotice } from "../layout";
++import { useAuth } from "../auth";
++import {
++  acceptReviewedPointScore,
++  appendPointIntent,
++  beginPointAttempt,
++  beginScoreRecoveryGeneration,
++  createScoreRecoveryRecord,
++  discardUnsentPointIntents,
++  invalidateScoreRecoveryGeneration,
++  isScoreRecoveryGenerationCurrent,
++  markPointAttemptApplied,
++  markPointAttemptError,
++  markPointAttemptNoWrite,
++  markRecoveryReadChecking,
++  markRecoveryReadFailed,
++  persistScoreRecoveryRecord,
++  readScoreRecoveryRecord,
++  reconcilePointAttempts,
++  rememberScoreRecoveryRecord,
++  restoreSendingAttemptsAsUnknown,
++  resumeUnsentPointIntents,
++  type PointIntent,
++  type ScoreRecoveryRecord,
++} from "./judgeScoreRecovery";
+ 
+ type MatchState = Record<string, unknown> & JudgeMatchLike;
+ type Phase =
+@@ -39,11 +63,6 @@ type Phase =
+   | "scoring"
+   | "lost_lock"
+   | "readonly";
+-type PointIntent = {
+-  side: "A" | "B";
+-  idempotencyKey: string;
+-};
+-
+ type ApiError = Error & { code?: string; status?: number };
+ 
+ const LOST_JUDGE_CODES = new Set([
+@@ -55,6 +74,26 @@ const LOST_JUDGE_CODES = new Set([
+   "JUDGE_TAKEN",
+ ]);
+ 
++const unavailableRecoveryStorage: Pick<Storage, "getItem" | "setItem" | "removeItem"> = {
++  getItem() {
++    throw new Error("session storage unavailable");
++  },
++  setItem() {
++    throw new Error("session storage unavailable");
++  },
++  removeItem() {
++    throw new Error("session storage unavailable");
++  },
++};
++
++function recoveryStorage() {
++  try {
++    return window.sessionStorage;
++  } catch {
++    return unavailableRecoveryStorage;
++  }
++}
++
+ function isLostJudgeError(
+   error: unknown,
+   heartbeatStatusFallback = false,
+@@ -68,6 +107,14 @@ function isLostJudgeError(
+   );
+ }
+ 
++function isKnownPointNoWrite(error: unknown) {
++  const candidate = error as ApiError;
++  return (
++    (candidate.status === 400 && candidate.code === "VALIDATION") ||
++    (candidate.status === 409 && candidate.code === "VERSION_CONFLICT")
++  );
++}
++
+ function lostJudgeMessage(error: ApiError): string {
+   if (error.status === 401 || error.code === "UNAUTHORIZED") {
+     return "Слот судьи потерян: сессия входа завершена. Счёт обновлён с сервера; начисление очков заблокировано.";
+@@ -118,6 +165,8 @@ function ServeBadge({ active }: { active: boolean }) {
+ 
+ export function JudgePage() {
+   const { id } = useParams();
++  const { user } = useAuth();
++  const actorUserId = String(user?.id ?? "");
+   const currentMatchIdRef = useRef(id);
+   currentMatchIdRef.current = id;
+   const navigate = useNavigate();
+@@ -134,6 +183,23 @@ export function JudgePage() {
+   const [pointPendingCount, setPointPendingCount] = useState(0);
+   const pointQueueRef = useRef<PointIntent[]>([]);
+   const pointQueueRunningRef = useRef(false);
++  const recoveryRecordRef = useRef<ScoreRecoveryRecord | null>(null);
++  const recoveryGenerationRef = useRef(0);
++  const loadPromiseRef = useRef<Promise<MatchState> | null>(null);
++  const [recoveryRecord, setRecoveryRecord] = useState<ScoreRecoveryRecord | null>(null);
++  const [recoveryStorageError, setRecoveryStorageError] = useState<string | null>(null);
++  const [discardRecoveryConfirm, setDiscardRecoveryConfirm] = useState(false);
++  const [acceptRecoverySnapshot, setAcceptRecoverySnapshot] = useState<{
++    version: number;
++    scoreA: number;
++    scoreB: number;
++    serverId: string;
++    sideA: string;
++    sideB: string;
++    serverName: string;
++  } | null>(null);
++  const recoveryRegionRef = useRef<HTMLElement | null>(null);
++  const recoveryWasVisibleRef = useRef(false);
+   const judgeLockOwnedRef = useRef(false);
+   const liveSyncRunningRef = useRef(false);
+   const exitPendingRef = useRef(false);
+@@ -176,14 +242,135 @@ export function JudgePage() {
+     setMatch(nextMatch);
+   }, []);
+ 
+-  const load = useCallback(async () => {
+-    const res = await api.getMatch(id!);
+-    const fresh = res.match as MatchState;
+-    const confirmed = confirmedStartRef.current;
+-    if (confirmed && confirmed.id === id && fresh.status === "waiting") return confirmed;
+-    updateMatch(fresh);
+-    return fresh;
+-  }, [id, updateMatch]);
++  const applyRecoveryRecord = useCallback((next: ScoreRecoveryRecord | null) => {
++    recoveryRecordRef.current = next;
++    pointQueueRef.current = next?.unsent ?? [];
++    setPointPendingCount(
++      (next?.unsent.length ?? 0) +
++        (next?.attempts.filter((attempt) => attempt.state === "sending").length ?? 0),
++    );
++    setRecoveryRecord(next);
++  }, []);
++
++  const saveRecoveryRecord = useCallback((next: ScoreRecoveryRecord) => {
++    const result = persistScoreRecoveryRecord(next, recoveryStorage());
++    applyRecoveryRecord(result.record);
++    if (!result.ok) {
++      setError("Не удалось надёжно сохранить состояние. Дальнейшая отправка очков заблокирована.");
++    }
++    return result;
++  }, [applyRecoveryRecord]);
++
++  useEffect(() => {
++    if (!id || !actorUserId) return;
++    const generation = beginScoreRecoveryGeneration(actorUserId, id);
++    recoveryGenerationRef.current = generation;
++    const restored = readScoreRecoveryRecord(actorUserId, id, recoveryStorage());
++    setRecoveryStorageError(restored.storageError);
++    if (restored.record) {
++      const safeRestore = restoreSendingAttemptsAsUnknown(restored.record);
++      if (restored.storageError) {
++        const unsafe = rememberScoreRecoveryRecord({ ...safeRestore, storageSafe: false });
++        applyRecoveryRecord(unsafe);
++      } else {
++        const persisted = persistScoreRecoveryRecord(safeRestore, recoveryStorage());
++        applyRecoveryRecord(persisted.record);
++      }
++    } else {
++      applyRecoveryRecord(null);
++    }
++    return () => {
++      invalidateScoreRecoveryGeneration(actorUserId, id);
++      recoveryGenerationRef.current = 0;
++      loadPromiseRef.current = null;
++    };
++  }, [actorUserId, applyRecoveryRecord, id]);
++
++  const load = useCallback(async (forceFresh = false): Promise<MatchState> => {
++    if (!id || !actorUserId) throw new Error("Матч или пользователь не определён");
++    if (loadPromiseRef.current) {
++      const activeRequest = loadPromiseRef.current;
++      if (!forceFresh) return activeRequest;
++      try {
++        await activeRequest;
++      } catch {
++        // A recovery read still has to start after the mutation outcome became unknown.
++      }
++      if (!isScoreRecoveryGenerationCurrent(actorUserId, id, recoveryGenerationRef.current)) {
++        throw new Error("Экран судьи уже закрыт");
++      }
++      return load(false);
++    }
++    const generation = recoveryGenerationRef.current;
++    const request = (async () => {
++      const activeRecovery = recoveryRecordRef.current;
++      if (
++        activeRecovery &&
++        (activeRecovery.attempts.length || activeRecovery.unsent.length || activeRecovery.pausedAfterError)
++      ) {
++        const checking = markRecoveryReadChecking(activeRecovery);
++        rememberScoreRecoveryRecord(checking);
++        applyRecoveryRecord(checking);
++      }
++      try {
++        const res = await api.getMatch(id);
++        const fresh = res.match as MatchState;
++        if (!isScoreRecoveryGenerationCurrent(actorUserId, id, generation)) {
++          return fresh;
++        }
++        const confirmed = confirmedStartRef.current;
++        if (confirmed && confirmed.id === id && fresh.status === "waiting") return confirmed;
++        const currentVersion = Number(matchRef.current?.version ?? -1);
++        if (Number(fresh.version ?? -1) < currentVersion) {
++          return matchRef.current ?? fresh;
++        }
++        updateMatch(fresh);
++        const currentRecovery = recoveryRecordRef.current;
++        if (
++          currentRecovery &&
++          (currentRecovery.attempts.length || currentRecovery.unsent.length || currentRecovery.pausedAfterError)
++        ) {
++          const reconciled = reconcilePointAttempts(
++            currentRecovery,
++            Number(fresh.version ?? currentRecovery.serverVersion),
++            Array.isArray(fresh.idempotencyKeys)
++              ? fresh.idempotencyKeys.map(String)
++              : [],
++          );
++          if (currentRecovery.storageSafe) {
++            saveRecoveryRecord(reconciled.record);
++          } else {
++            const unsafe = { ...reconciled.record, storageSafe: false };
++            rememberScoreRecoveryRecord(unsafe);
++            applyRecoveryRecord(unsafe);
++          }
++        }
++        return fresh;
++      } catch (reason) {
++        const currentRecovery = recoveryRecordRef.current;
++        if (
++          currentRecovery &&
++          (currentRecovery.attempts.length || currentRecovery.unsent.length || currentRecovery.pausedAfterError) &&
++          isScoreRecoveryGenerationCurrent(actorUserId, id, generation)
++        ) {
++          const failedRead = markRecoveryReadFailed(currentRecovery);
++          if (currentRecovery.storageSafe) saveRecoveryRecord(failedRead);
++          else {
++            const unsafe = { ...failedRead, storageSafe: false };
++            rememberScoreRecoveryRecord(unsafe);
++            applyRecoveryRecord(unsafe);
++          }
++        }
++        throw reason;
++      }
++    })();
++    loadPromiseRef.current = request;
++    try {
++      return await request;
++    } finally {
++      if (loadPromiseRef.current === request) loadPromiseRef.current = null;
++    }
++  }, [actorUserId, applyRecoveryRecord, id, saveRecoveryRecord, updateMatch]);
+ 
+   useEffect(() => {
+     confirmedStartRef.current = null;
+@@ -224,7 +411,7 @@ export function JudgePage() {
+       setPhase("lost_lock");
+       setError(lostJudgeMessage(error));
+       try {
+-        const fresh = await load();
++        const fresh = await load(true);
+         if (isTerminalMatchStatus(fresh.status)) {
+           setPhase("readonly");
+           setError(null);
+@@ -492,33 +679,58 @@ export function JudgePage() {
+     }
+   }
+ 
+-  async function drainPointQueue(initialMatch: MatchState) {
++  async function drainPointQueue(initialMatch: MatchState, fenceVersion?: number) {
+     if (!id || pointQueueRunningRef.current) return;
+     pointQueueRunningRef.current = true;
+     let authoritativeMatch = initialMatch;
++    let nextFenceVersion = fenceVersion;
++    const generation = recoveryGenerationRef.current;
+ 
+     try {
+-      while (pointQueueRef.current.length > 0) {
+-        const intent = pointQueueRef.current[0]!;
++      while (recoveryRecordRef.current?.unsent.length) {
++        const beforeAttempt = recoveryRecordRef.current;
++        if (
++          !beforeAttempt.storageSafe ||
++          beforeAttempt.pausedAfterError ||
++          !judgeLockOwnedRef.current ||
++          !isScoreRecoveryGenerationCurrent(actorUserId, id, generation)
++        ) break;
+         if (authoritativeMatch.status !== "in_progress") {
+-          pointQueueRef.current = [];
+-          setPointPendingCount(0);
++          const stopped = { ...beforeAttempt, pausedAfterError: true };
++          rememberScoreRecoveryRecord(stopped);
++          applyRecoveryRecord(stopped);
+           setError(
+             "Матч больше не принимает очки. Проверьте итоговый счёт перед продолжением.",
+           );
+           break;
+         }
+ 
++        const begun = beginPointAttempt(
++          beforeAttempt,
++          nextFenceVersion !== undefined
++            ? nextFenceVersion
++            : Number(authoritativeMatch.version),
++          nextFenceVersion !== undefined,
++        );
++        nextFenceVersion = undefined;
++        if (!begun.attempt) break;
++        const transition = saveRecoveryRecord(begun.record);
++        if (!transition.ok) {
++          const restoredIntent = { ...beforeAttempt, storageSafe: false };
++          rememberScoreRecoveryRecord(restoredIntent);
++          applyRecoveryRecord(restoredIntent);
++          break;
++        }
++        const intent = begun.attempt;
+         try {
+           const res = await api.awardPoint(
+             id,
+             intent.side,
+-            Number(authoritativeMatch.version),
++            intent.expectedVersion,
+             intent.idempotencyKey,
+           );
++          if (!isScoreRecoveryGenerationCurrent(actorUserId, id, generation)) break;
+           if (!judgeLockOwnedRef.current) {
+-            pointQueueRef.current = [];
+-            setPointPendingCount(0);
+             try {
+               await load();
+             } catch {
+@@ -526,9 +738,25 @@ export function JudgePage() {
+             }
+             break;
+           }
+-          authoritativeMatch = res.match as MatchState;
+-          pointQueueRef.current.shift();
+-          setPointPendingCount(pointQueueRef.current.length);
++          const responseMatch = res.match as MatchState;
++          authoritativeMatch =
++            Number(responseMatch.version ?? -1) >= Number(matchRef.current?.version ?? -1)
++              ? responseMatch
++              : (matchRef.current ?? responseMatch);
++          const currentRecovery = recoveryRecordRef.current;
++          if (!currentRecovery) break;
++          const applied = markPointAttemptApplied(
++            currentRecovery,
++            intent.id,
++            Number(authoritativeMatch.version),
++          );
++          const saved = currentRecovery.storageSafe
++            ? saveRecoveryRecord(applied)
++            : { ok: false as const, record: { ...applied, storageSafe: false } };
++          if (!currentRecovery.storageSafe) {
++            rememberScoreRecoveryRecord(saved.record);
++            applyRecoveryRecord(saved.record);
++          }
+           updateMatch(authoritativeMatch);
+           setError(null);
+           setFlashSide(intent.side);
+@@ -539,24 +767,41 @@ export function JudgePage() {
+             setFlashSide(null);
+             flashTimeoutRef.current = null;
+           }, 350);
++          if (!saved.ok) break;
+         } catch (e) {
+-          const err = e as Error & { code?: string };
+-          pointQueueRef.current = [];
+-          setPointPendingCount(0);
++          const err = e as ApiError;
++          if (!isScoreRecoveryGenerationCurrent(actorUserId, id, generation)) break;
++          const currentRecovery = recoveryRecordRef.current;
++          const knownNoWrite = isKnownPointNoWrite(e);
++          if (currentRecovery) {
++            const resolved = knownNoWrite
++              ? markPointAttemptNoWrite(
++                  currentRecovery,
++                  intent.id,
++                  err.status === 409 && err.code === "VERSION_CONFLICT",
++                )
++              : markPointAttemptError(currentRecovery, intent.id);
++            if (currentRecovery.storageSafe) saveRecoveryRecord(resolved);
++            else {
++              const unsafe = { ...resolved, storageSafe: false };
++              rememberScoreRecoveryRecord(unsafe);
++              applyRecoveryRecord(unsafe);
++            }
++          }
+           if (isLostJudgeError(e)) {
+             await loseJudgeLock(e);
+             break;
+           }
+           try {
+-            authoritativeMatch = await load();
++            authoritativeMatch = await load(true);
+           } catch {
+             // Preserve the mutation error; the existing screen remains usable.
+           }
++          if (!isScoreRecoveryGenerationCurrent(actorUserId, id, generation)) break;
+           setError(
+-            err.code === "VERSION_CONFLICT" ||
+-              err.code === "MATCH_VERSION_CONFLICT"
+-              ? "Счёт изменился на другом устройстве. Очередь остановлена: проверьте счёт и повторите неначисленное очко."
+-              : `Очко не подтверждено: ${err.message}. Очередь остановлена: проверьте счёт и повторите.`,
++            knownNoWrite
++              ? "Запрос не изменил счёт. Показано актуальное состояние; сохранённые нажатия остаются остановлены до вашего решения."
++              : `Не удалось подтвердить результат начисления: ${err.message}. Сохранённые нажатия остановлены до вашего решения.`,
+           );
+           break;
+         }
+@@ -567,31 +812,189 @@ export function JudgePage() {
+   }
+ 
+   function point(side: "A" | "B") {
++    const currentRecovery = recoveryRecordRef.current;
++    const outcomeBlocked = Boolean(
++      currentRecovery &&
++        (!currentRecovery.storageSafe ||
++          currentRecovery.pausedAfterError ||
++          currentRecovery.attempts.some((attempt) => attempt.state !== "sending")),
++    );
+     if (
+       !id ||
++      !actorUserId ||
+       !match ||
+       phase !== "scoring" ||
+       !judgeLockOwnedRef.current ||
+-      exclusiveMutationRef.current
++      exclusiveMutationRef.current ||
++      recoveryStorageError ||
++      outcomeBlocked
+     ) {
+       return;
+     }
+     setMenuOpen(false);
+-    pointQueueRef.current.push({
++    const base = currentRecovery ?? createScoreRecoveryRecord(
++      actorUserId,
++      id,
++      Number((matchRef.current ?? match).version),
++    );
++    const next = appendPointIntent(base, {
++      id: crypto.randomUUID(),
+       side,
+       idempotencyKey: crypto.randomUUID(),
+     });
+-    setPointPendingCount(pointQueueRef.current.length);
++    const saved = saveRecoveryRecord(next);
++    if (!saved.ok) return;
+     void drainPointQueue(matchRef.current ?? match);
+   }
+ 
++  function recoveryBlocksMutations() {
++    const record = recoveryRecordRef.current;
++    return Boolean(
++      recoveryStorageError ||
++        (record &&
++          (!record.storageSafe ||
++            record.pausedAfterError ||
++            record.attempts.length > 0 ||
++            record.unsent.length > 0)),
++    );
++  }
++
++  async function recheckScoreRecovery() {
++    if (!id || !actorUserId) return;
++    setRecoveryStorageError(null);
++    const current = recoveryRecordRef.current;
++    if (current && !current.storageSafe) {
++      const saved = saveRecoveryRecord(current);
++      if (!saved.ok) return;
++    } else if (!current) {
++      const restored = readScoreRecoveryRecord(actorUserId, id, recoveryStorage());
++      setRecoveryStorageError(restored.storageError);
++      if (restored.storageError) return;
++      if (restored.record) applyRecoveryRecord(restoreSendingAttemptsAsUnknown(restored.record));
++    }
++    try {
++      await load(true);
++    } catch (reason) {
++      setError(`Не удалось проверить счёт: ${(reason as Error).message}`);
++    }
++  }
++
++  function acceptCurrentScore() {
++    const current = recoveryRecordRef.current;
++    const authoritative = matchRef.current;
++    if (
++      !current ||
++      !authoritative ||
++      current.readState !== "no-key" ||
++      current.reviewedVersion === undefined ||
++      !current.storageSafe
++    ) return;
++    const serverId = String(authoritative.currentServerParticipantId ?? "");
++    const server = (authoritative.participants ?? []).find(
++      (participant) => participant.id === serverId,
++    );
++    setAcceptRecoverySnapshot({
++      version: current.reviewedVersion,
++      scoreA: Number(authoritative.scoreA ?? 0),
++      scoreB: Number(authoritative.scoreB ?? 0),
++      serverId,
++      sideA: sideDisplayName(authoritative, "A"),
++      sideB: sideDisplayName(authoritative, "B"),
++      serverName: server ? participantDisplayName(server) : "не определена",
++    });
++  }
++
++  function confirmCurrentScoreAcceptance() {
++    const current = recoveryRecordRef.current;
++    const authoritative = matchRef.current;
++    const snapshot = acceptRecoverySnapshot;
++    if (!current || !authoritative || !snapshot) return;
++    const stillCurrent =
++      current.readState === "no-key" &&
++      current.reviewedVersion === snapshot.version &&
++      Number(authoritative.version) === snapshot.version &&
++      Number(authoritative.scoreA ?? 0) === snapshot.scoreA &&
++      Number(authoritative.scoreB ?? 0) === snapshot.scoreB &&
++      String(authoritative.currentServerParticipantId ?? "") === snapshot.serverId &&
++      current.attempts.some((attempt) => attempt.state === "unknown");
++    if (!stillCurrent) {
++      setAcceptRecoverySnapshot(null);
++      setError("Счёт изменился во время подтверждения. Проверьте актуальное состояние ещё раз.");
++      return;
++    }
++    saveRecoveryRecord(acceptReviewedPointScore(current));
++    setAcceptRecoverySnapshot(null);
++    setError(null);
++  }
++
++  function continueQueuedPoints() {
++    const current = recoveryRecordRef.current;
++    const authoritative = matchRef.current;
++    if (
++      !current ||
++      !authoritative ||
++      !judgeLockOwnedRef.current ||
++      !current.storageSafe ||
++      current.attempts.length > 0 ||
++      current.unsent.length === 0 ||
++      current.readState !== "exact"
++    ) return;
++    const saved = saveRecoveryRecord(resumeUnsentPointIntents(current));
++    if (saved.ok) void drainPointQueue(authoritative);
++  }
++
++  function sendReviewedFencePoint(side: "A" | "B") {
++    const current = recoveryRecordRef.current;
++    const authoritative = matchRef.current;
++    const acceptedAttempt = current?.attempts.find(
++      (attempt) => attempt.state === "accepted-no-key" && attempt.reviewedVersion !== undefined,
++    );
++    if (
++      !id ||
++      !current ||
++      !authoritative ||
++      !judgeLockOwnedRef.current ||
++      !current.storageSafe ||
++      current.readState !== "no-key" ||
++      !acceptedAttempt ||
++      acceptedAttempt.reviewedVersion === undefined
++    ) return;
++    const fenced = resumeUnsentPointIntents({
++      ...current,
++      unsent: [
++        { id: crypto.randomUUID(), side, idempotencyKey: crypto.randomUUID() },
++        ...current.unsent,
++      ],
++    });
++    const saved = saveRecoveryRecord(fenced);
++    if (saved.ok) void drainPointQueue(authoritative, acceptedAttempt.reviewedVersion);
++  }
++
++  function discardQueuedPoints() {
++    const current = recoveryRecordRef.current;
++    if (!current?.unsent.length) return;
++    if (!discardRecoveryConfirm) {
++      setDiscardRecoveryConfirm(true);
++      return;
++    }
++    const discarded = discardUnsentPointIntents(current);
++    if (current.storageSafe) saveRecoveryRecord(discarded);
++    else {
++      const unsafe = { ...discarded, storageSafe: false };
++      rememberScoreRecoveryRecord(unsafe);
++      applyRecoveryRecord(unsafe);
++    }
++    setDiscardRecoveryConfirm(false);
++  }
++
+   async function undo() {
+     if (
+       !match ||
+       undoPending ||
+       exclusiveMutationRef.current ||
+       pointQueueRunningRef.current ||
+-      pointQueueRef.current.length > 0
++      pointQueueRef.current.length > 0 ||
++      recoveryBlocksMutations()
+     ) return;
+     exclusiveMutationRef.current = true;
+     setUndoPending(true);
+@@ -617,13 +1020,15 @@ export function JudgePage() {
+   }
+ 
+   async function releaseAndExit(destination?: "/") {
++    const scoreWriteInFlight = Boolean(
++      recoveryRecordRef.current?.attempts.some((attempt) => attempt.state === "sending"),
++    );
+     if (
+       !id ||
+       exitPendingRef.current ||
+       setupPendingRef.current ||
+       exclusiveMutationRef.current ||
+-      pointQueueRunningRef.current ||
+-      pointQueueRef.current.length > 0
++      scoreWriteInFlight
+     ) return;
+     exitPendingRef.current = true;
+     setExitPending(true);
+@@ -660,7 +1065,8 @@ export function JudgePage() {
+       terminalPending ||
+       exclusiveMutationRef.current ||
+       pointQueueRunningRef.current ||
+-      pointQueueRef.current.length > 0
++      pointQueueRef.current.length > 0 ||
++      recoveryBlocksMutations()
+     ) return;
+     exclusiveMutationRef.current = true;
+     setTerminalPending(true);
+@@ -688,7 +1094,8 @@ export function JudgePage() {
+       terminalPending ||
+       exclusiveMutationRef.current ||
+       pointQueueRunningRef.current ||
+-      pointQueueRef.current.length > 0
++      pointQueueRef.current.length > 0 ||
++      recoveryBlocksMutations()
+     ) return;
+     exclusiveMutationRef.current = true;
+     setTerminalPending(true);
+@@ -722,7 +1129,11 @@ export function JudgePage() {
+   }
+ 
+   function openCorrection() {
+-    if (exclusiveMutationRef.current || pointQueueRef.current.length > 0) return;
++    if (
++      exclusiveMutationRef.current ||
++      pointQueueRef.current.length > 0 ||
++      recoveryBlocksMutations()
++    ) return;
+     setCorrectionScoreA(Number(match?.scoreA ?? 0));
+     setCorrectionScoreB(Number(match?.scoreB ?? 0));
+     setCorrectionServerId(String(match?.currentServerParticipantId ?? ""));
+@@ -731,7 +1142,7 @@ export function JudgePage() {
+   }
+ 
+   async function submitCorrection() {
+-    if (!id || !match || !correctionServerId || correctionPending || exclusiveMutationRef.current) return;
++    if (!id || !match || !correctionServerId || correctionPending || exclusiveMutationRef.current || recoveryBlocksMutations()) return;
+     exclusiveMutationRef.current = true;
+     setCorrectionPending(true);
+     setError(null);
+@@ -787,6 +1198,29 @@ export function JudgePage() {
+     }
+   }
+ 
++  const scoreRecoveryVisible = Boolean(
++    recoveryStorageError ||
++      (recoveryRecord &&
++        (!recoveryRecord.storageSafe ||
++          recoveryRecord.attempts.some((attempt) => attempt.state !== "sending") ||
++          recoveryRecord.pausedAfterError)),
++  );
++  const scoreRecoveryRenderable = Boolean(
++    scoreRecoveryVisible &&
++      match &&
++      phase !== "loading" &&
++      phase !== "blocked",
++  );
++
++  useEffect(() => {
++    if (scoreRecoveryRenderable && !recoveryWasVisibleRef.current) {
++      recoveryRegionRef.current?.focus();
++      recoveryWasVisibleRef.current = true;
++    } else if (!scoreRecoveryRenderable) {
++      recoveryWasVisibleRef.current = false;
++    }
++  }, [scoreRecoveryRenderable]);
++
+   if (phase === "loading") {
+     return (
+       <div className="judge-screen judge-screen--loading">
+@@ -853,8 +1287,24 @@ export function JudgePage() {
+   const awaitingCreator = phase === "waiting_start";
+   const setupInputLocked = setupPending || setupUnknown;
+   const lostLock = phase === "lost_lock";
++  const scoreRecoveryBlocked = Boolean(
++    recoveryStorageError ||
++      (recoveryRecord &&
++        (!recoveryRecord.storageSafe ||
++          recoveryRecord.attempts.length > 0 ||
++          recoveryRecord.unsent.length > 0 ||
++          recoveryRecord.pausedAfterError)),
++  );
++  const scoreSendInFlight = Boolean(
++    recoveryRecord?.attempts.some((attempt) => attempt.state === "sending"),
++  );
++  const sendingPointCount =
++    recoveryRecord?.attempts.filter((attempt) => attempt.state === "sending").length ?? 0;
++  const unsentPointCount = recoveryRecord?.unsent.length ?? 0;
++  const activePointCount = sendingPointCount + unsentPointCount;
+   const locked =
+     lostLock ||
++    scoreRecoveryVisible ||
+     match.status === "pending_confirmation" ||
+     match.status === "finished" ||
+     correctionOpen ||
+@@ -999,11 +1449,11 @@ export function JudgePage() {
+           {lostLock ? (
+             <span className="judge-readonly-badge">Действия заблокированы</span>
+           ) : null}
+-          {pointPendingCount > 0 ? (
++          {sendingPointCount > 0 ? (
+             <span className="judge-pending-badge" role="status" aria-live="polite">
+-              {pointPendingCount === 1
++              {activePointCount === 1
+                 ? "Отправка очка…"
+-                : `В очереди: ${pointPendingCount}`}
++                : `В очереди: ${activePointCount}`}
+             </span>
+           ) : null}
+         </div>
+@@ -1012,7 +1462,7 @@ export function JudgePage() {
+             variant="secondary"
+             className="judge-touch"
+             onClick={() => void releaseAndExit("/")}
+-            disabled={exitPending || setupPending || undoPending || terminalPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
++            disabled={exitPending || setupPending || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
+           >На главную</Button> : null}
+           {isSetup ? (
+             <Button
+@@ -1037,7 +1487,7 @@ export function JudgePage() {
+                 variant="secondary"
+                 className="judge-touch"
+                 onClick={() => void releaseAndExit()}
+-                disabled={exitPending || undoPending || terminalPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
++                disabled={exitPending || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
+               >
+                 {exitPending ? "Выходим…" : "Назад"}
+               </Button>
+@@ -1054,7 +1504,7 @@ export function JudgePage() {
+                 variant="secondary"
+                 className="judge-touch"
+                 onClick={() => setMenuOpen((v) => !v)}
+-                disabled={undoPending || terminalPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
++                disabled={undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
+                 aria-expanded={menuOpen}
+                 aria-controls="judge-more-menu"
+                 id="judge-more-trigger"
+@@ -1082,6 +1532,118 @@ export function JudgePage() {
+         Только активный судья этой сессии меняет счёт. Undo отменяет последнее действующее очко.
+       </p>
+ 
++      {scoreRecoveryVisible ? (
++        <section
++          className="judge-screen__hint stack"
++          role="region"
++          aria-label="Восстановление счёта"
++          ref={recoveryRegionRef}
++          tabIndex={-1}
++        >
++          <h2>Проверьте последнее начисление</h2>
++          {recoveryStorageError ? (
++            <p role="alert">{recoveryStorageError} Изменение счёта заблокировано.</p>
++          ) : !recoveryRecord?.storageSafe ? (
++            <p role="alert">
++              Нажатие сохранено только в этой вкладке. Очко не отправляется, пока сохранение не подтверждено. Не перезагружайте вкладку: несохранённое нажатие может быть потеряно.
++            </p>
++          ) : recoveryRecord.readState === "checking" ? (
++            <p role="status">Проверяем сохранённые нажатия по данным матча…</p>
++          ) : recoveryRecord.readState === "failed" ? (
++            <p role="alert">Не удалось проверить результат отправки. Повторная отправка заблокирована.</p>
++          ) : recoveryRecord.attempts.some((attempt) => attempt.state === "unknown") ? (
++            <p role="status">
++              Сервер не подтвердил, было ли начислено отправленное очко. Показанный счёт сам по себе не определяет исход.
++            </p>
++          ) : recoveryRecord.attempts.some((attempt) => attempt.state === "accepted-no-key") ? (
++            <p role="status">
++              Показанный счёт принят. Чтобы безопасно начислить следующее очко, выберите его сторону.
++            </p>
++          ) : recoveryRecord.unsent.length > 0 ? (
++            <p role="status">
++              Предыдущее начисление подтверждено. Осталось нажатий: {recoveryRecord.unsent.length}.
++            </p>
++          ) : null}
++          {recoveryRecord?.attempts.length ? (
++            <div>
++              <p>Отправленные очки:</p>
++              <ul>
++                {recoveryRecord.attempts.map((attempt) => (
++                  <li key={attempt.id}>
++                    {sideDisplayName(match, attempt.side)} — {attempt.state === "sending"
++                      ? "отправляется"
++                      : attempt.state === "accepted-no-key"
++                        ? "принят показанный счёт"
++                        : "исход неизвестен"}
++                  </li>
++                ))}
++              </ul>
++            </div>
++          ) : null}
++          {recoveryRecord?.unsent.length ? (
++            <p>
++              Не отправлено: {recoveryRecord.unsent.length}. Сторона A: {recoveryRecord.unsent.filter((intent) => intent.side === "A").length}; сторона B: {recoveryRecord.unsent.filter((intent) => intent.side === "B").length}.
++            </p>
++          ) : null}
++          {readonly ? (
++            <p>Матч доступен только для просмотра. Сохранённые сведения остаются для проверки.</p>
++          ) : lostLock ? (
++            <p>Сохранённые сведения доступны для проверки, но изменение счёта требует заново занять слот судьи.</p>
++          ) : null}
++          {acceptRecoverySnapshot ? (
++            <section className="stack" role="region" aria-label="Подтверждение показанного счёта">
++              <h3>Подтвердите показанный счёт</h3>
++              <p>
++                {acceptRecoverySnapshot.sideA}: {acceptRecoverySnapshot.scoreA}. {acceptRecoverySnapshot.sideB}: {acceptRecoverySnapshot.scoreB}.
++              </p>
++              <p>Подаёт: {acceptRecoverySnapshot.serverName}.</p>
++              <div className="stack">
++                <Button onClick={confirmCurrentScoreAcceptance}>Подтвердить показанный счёт</Button>
++                <Button variant="secondary" onClick={() => setAcceptRecoverySnapshot(null)}>
++                  Отменить принятие
++                </Button>
++              </div>
++            </section>
++          ) : null}
++          <div className="stack">
++            <Button variant="secondary" onClick={() => void recheckScoreRecovery()}>
++              {recoveryRecord?.storageSafe === false ? "Повторить сохранение" : "Проверить состояние"}
++            </Button>
++            {recoveryRecord?.readState === "no-key" &&
++            recoveryRecord.attempts.some((attempt) => attempt.state === "unknown") &&
++            !acceptRecoverySnapshot ? (
++              <Button variant="secondary" onClick={acceptCurrentScore}>
++                Принять показанный счёт
++              </Button>
++            ) : null}
++            {recoveryRecord?.attempts.some((attempt) => attempt.state === "accepted-no-key") &&
++            !lostLock &&
++            !readonly ? (
++              <>
++                <Button onClick={() => sendReviewedFencePoint("A")}>
++                  Добавить новое очко: {sideDisplayName(match, "A")}
++                </Button>
++                <Button onClick={() => sendReviewedFencePoint("B")}>
++                  Добавить новое очко: {sideDisplayName(match, "B")}
++                </Button>
++              </>
++            ) : null}
++            {recoveryRecord?.unsent.length &&
++            recoveryRecord.attempts.length === 0 &&
++            recoveryRecord.storageSafe &&
++            !lostLock &&
++            !readonly ? (
++              <Button onClick={continueQueuedPoints}>Отправить оставшиеся нажатия</Button>
++            ) : null}
++            {recoveryRecord?.unsent.length ? (
++              <Button variant="secondary" onClick={discardQueuedPoints}>
++                {discardRecoveryConfirm ? "Подтвердить: не отправлять" : "Не отправлять оставшиеся"}
++              </Button>
++            ) : null}
++          </div>
++        </section>
++      ) : null}
++
+       {isSetup ? (
+         <div className="judge-screen__hint stack">
+           {awaitingCreator ? (
+@@ -1189,7 +1751,8 @@ export function JudgePage() {
+                   handoverPending ||
+                   correctionPending ||
+                   terminalPending ||
+-                  pointPendingCount > 0
++                  pointPendingCount > 0 ||
++                  scoreRecoveryBlocked
+                 }
+                 onClick={() => {
+                   setMenuOpen(false);
+@@ -1205,7 +1768,8 @@ export function JudgePage() {
+                   handoverPending ||
+                   correctionPending ||
+                   terminalPending ||
+-                  pointPendingCount > 0
++                  pointPendingCount > 0 ||
++                  scoreRecoveryBlocked
+                 }
+                 onClick={() => void onRevertFinish()}
+               >
+@@ -1217,7 +1781,7 @@ export function JudgePage() {
+             variant="secondary"
+             className="judge-touch"
+             onClick={() => void releaseAndExit()}
+-            disabled={exitPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
++            disabled={exitPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
+           >
+             {exitPending ? "Освобождаем…" : "Освободить слот и выйти"}
+           </Button>
+diff --git a/apps/web/src/pages/judgeScoreRecovery.ts b/apps/web/src/pages/judgeScoreRecovery.ts
+new file mode 100644
+index 0000000..84e850c
+--- /dev/null
++++ b/apps/web/src/pages/judgeScoreRecovery.ts
+@@ -0,0 +1,384 @@
++export type ScoreSide = "A" | "B";
++
++export type PointIntent = {
++  id: string;
++  side: ScoreSide;
++  idempotencyKey: string;
++};
++
++export type PointAttempt = PointIntent & {
++  expectedVersion: number;
++  state: "sending" | "unknown" | "accepted-no-key";
++  reviewedVersion?: number;
++  fence?: boolean;
++};
++
++export type ScoreRecoveryRecord = {
++  schemaVersion: 1;
++  actorUserId: string;
++  matchId: string;
++  serverVersion: number;
++  attempts: PointAttempt[];
++  unsent: PointIntent[];
++  pausedAfterError: boolean;
++  storageSafe: boolean;
++  readState: "idle" | "checking" | "failed" | "no-key" | "exact";
++  reviewedVersion?: number;
++};
++
++type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
++
++const records = new Map<string, ScoreRecoveryRecord>();
++const generations = new Map<string, number>();
++
++function recordKey(actorUserId: string, matchId: string) {
++  return `${actorUserId}\u0000${matchId}`;
++}
++
++function copyRecord(record: ScoreRecoveryRecord): ScoreRecoveryRecord {
++  return {
++    ...record,
++    attempts: record.attempts.map((attempt) => ({ ...attempt })),
++    unsent: record.unsent.map((intent) => ({ ...intent })),
++  };
++}
++
++export function scoreRecoveryStorageKey(actorUserId: string, matchId: string) {
++  return `tab10:judge-score-recovery:v1:${encodeURIComponent(actorUserId)}:${encodeURIComponent(matchId)}`;
++}
++
++export function beginScoreRecoveryGeneration(actorUserId: string, matchId: string) {
++  const key = recordKey(actorUserId, matchId);
++  const generation = (generations.get(key) ?? 0) + 1;
++  generations.set(key, generation);
++  return generation;
++}
++
++export function isScoreRecoveryGenerationCurrent(
++  actorUserId: string,
++  matchId: string,
++  generation: number,
++) {
++  return generations.get(recordKey(actorUserId, matchId)) === generation;
++}
++
++export function invalidateScoreRecoveryGeneration(actorUserId: string, matchId: string) {
++  beginScoreRecoveryGeneration(actorUserId, matchId);
++}
++
++export function createScoreRecoveryRecord(
++  actorUserId: string,
++  matchId: string,
++  serverVersion: number,
++): ScoreRecoveryRecord {
++  return {
++    schemaVersion: 1,
++    actorUserId,
++    matchId,
++    serverVersion,
++    attempts: [],
++    unsent: [],
++    pausedAfterError: false,
++    storageSafe: true,
++    readState: "idle",
++  };
++}
++
++export function appendPointIntent(record: ScoreRecoveryRecord, intent: PointIntent) {
++  return { ...record, unsent: [...record.unsent, { ...intent }] };
++}
++
++export function beginPointAttempt(
++  record: ScoreRecoveryRecord,
++  expectedVersion: number,
++  fence = false,
++) {
++  const [intent, ...unsent] = record.unsent;
++  if (!intent) return { record, attempt: null };
++  const attempt: PointAttempt = {
++    ...intent,
++    expectedVersion,
++    state: "sending",
++    ...(fence ? { fence: true } : {}),
++  };
++  return {
++    attempt,
++    record: {
++      ...record,
++      serverVersion: Math.max(record.serverVersion, expectedVersion),
++      attempts: [...record.attempts, attempt],
++      unsent,
++    },
++  };
++}
++
++export function markPointAttemptError(record: ScoreRecoveryRecord, attemptId: string) {
++  return {
++    ...record,
++    attempts: record.attempts.map((attempt) =>
++      attempt.id === attemptId ? { ...attempt, state: "unknown" as const } : attempt,
++    ),
++    pausedAfterError: true,
++  };
++}
++
++export function markPointAttemptNoWrite(
++  record: ScoreRecoveryRecord,
++  attemptId: string,
++  provesFenceConflict = false,
++) {
++  const resolvedAttempt = record.attempts.find((attempt) => attempt.id === attemptId);
++  const attempts = record.attempts.filter(
++    (attempt) =>
++      attempt.id !== attemptId &&
++      !(
++        provesFenceConflict &&
++        resolvedAttempt?.fence &&
++        attempt.state === "accepted-no-key" &&
++        attempt.expectedVersion <= resolvedAttempt.expectedVersion
++      ),
++  );
++  return {
++    ...record,
++    attempts,
++    pausedAfterError: attempts.length > 0 || record.unsent.length > 0,
++  };
++}
++
++export function markPointAttemptApplied(
++  record: ScoreRecoveryRecord,
++  attemptId: string,
++  serverVersion: number,
++) {
++  const applied = record.attempts.find((attempt) => attempt.id === attemptId);
++  return {
++    ...record,
++    serverVersion: Math.max(record.serverVersion, serverVersion),
++    attempts: record.attempts.filter(
++      (attempt) =>
++        attempt.id !== attemptId &&
++        !(
++          applied?.fence &&
++          attempt.state === "accepted-no-key" &&
++          attempt.expectedVersion <= applied.expectedVersion
++        ),
++    ),
++    pausedAfterError: applied?.fence
++      ? record.unsent.length > 0
++      : record.pausedAfterError,
++    readState: "exact" as const,
++    reviewedVersion: serverVersion,
++  };
++}
++
++export function restoreSendingAttemptsAsUnknown(record: ScoreRecoveryRecord): ScoreRecoveryRecord {
++  const copied = copyRecord(record);
++  return {
++    ...copied,
++    attempts: copied.attempts.map((attempt) => ({
++      ...attempt,
++      state:
++        attempt.state === "sending" || attempt.state === "accepted-no-key"
++          ? "unknown"
++          : attempt.state,
++      reviewedVersion: undefined,
++    })),
++    pausedAfterError: copied.attempts.length > 0 || copied.unsent.length > 0,
++    readState: "idle",
++    reviewedVersion: undefined,
++  };
++}
++
++export function reconcilePointAttempts(
++  record: ScoreRecoveryRecord,
++  serverVersion: number,
++  idempotencyKeys: string[],
++) {
++  const exact = new Set(idempotencyKeys);
++  const exactFenceAttempts = record.attempts.filter(
++    (attempt) =>
++      attempt.fence &&
++      exact.has(attempt.idempotencyKey) &&
++      serverVersion > attempt.expectedVersion,
++  );
++  const appliedAttemptIds = record.attempts
++    .filter((attempt) => exact.has(attempt.idempotencyKey))
++    .map((attempt) => attempt.id);
++  const fencedAttemptIds = record.attempts
++    .filter(
++      (attempt) =>
++        attempt.state === "accepted-no-key" &&
++        exactFenceAttempts.some(
++          (fence) => attempt.expectedVersion <= fence.expectedVersion,
++        ),
++    )
++    .map((attempt) => attempt.id);
++  const resolvedIds = new Set([...appliedAttemptIds, ...fencedAttemptIds]);
++  const attempts = record.attempts
++    .filter((attempt) => !resolvedIds.has(attempt.id))
++    .map((attempt) =>
++      attempt.state === "accepted-no-key"
++        ? { ...attempt }
++        : { ...attempt, reviewedVersion: serverVersion },
++    );
++  return {
++    appliedAttemptIds,
++    fencedAttemptIds,
++    record: {
++      ...record,
++      serverVersion: Math.max(record.serverVersion, serverVersion),
++      attempts,
++      pausedAfterError:
++        attempts.length === 0 && record.unsent.length === 0
++          ? false
++          : record.pausedAfterError,
++      readState: attempts.length > 0 ? ("no-key" as const) : ("exact" as const),
++      reviewedVersion: serverVersion,
++    },
++  };
++}
++
++export function acceptReviewedPointScore(record: ScoreRecoveryRecord) {
++  if (record.readState !== "no-key" || record.reviewedVersion === undefined) return record;
++  return {
++    ...record,
++    attempts: record.attempts.map((attempt) =>
++      attempt.state === "unknown"
++        ? { ...attempt, state: "accepted-no-key" as const, reviewedVersion: record.reviewedVersion }
++        : attempt,
++    ),
++  };
++}
++
++export function discardUnsentPointIntents(record: ScoreRecoveryRecord) {
++  return {
++    ...record,
++    unsent: [],
++    pausedAfterError: record.attempts.length > 0 ? record.pausedAfterError : false,
++  };
++}
++
++export function resumeUnsentPointIntents(record: ScoreRecoveryRecord) {
++  return { ...record, pausedAfterError: false };
++}
++
++export function markRecoveryReadChecking(record: ScoreRecoveryRecord) {
++  return { ...record, readState: "checking" as const };
++}
++
++export function markRecoveryReadFailed(record: ScoreRecoveryRecord) {
++  return { ...record, readState: "failed" as const, pausedAfterError: true };
++}
++
++export function rememberScoreRecoveryRecord(record: ScoreRecoveryRecord) {
++  const copied = copyRecord(record);
++  records.set(recordKey(record.actorUserId, record.matchId), copied);
++  return copied;
++}
++
++export function persistScoreRecoveryRecord(record: ScoreRecoveryRecord, storage: StorageLike) {
++  const safeRecord = { ...copyRecord(record), storageSafe: true };
++  try {
++    storage.setItem(
++      scoreRecoveryStorageKey(record.actorUserId, record.matchId),
++      JSON.stringify(safeRecord),
++    );
++    rememberScoreRecoveryRecord(safeRecord);
++    return { ok: true as const, record: safeRecord };
++  } catch {
++    const unsafeRecord = {
++      ...copyRecord(record),
++      pausedAfterError: true,
++      storageSafe: false,
++    };
++    rememberScoreRecoveryRecord(unsafeRecord);
++    return { ok: false as const, record: unsafeRecord };
++  }
++}
++
++function isPointIntent(value: unknown): value is PointIntent {
++  if (!value || typeof value !== "object") return false;
++  const intent = value as Record<string, unknown>;
++  return (
++    typeof intent.id === "string" &&
++    (intent.side === "A" || intent.side === "B") &&
++    typeof intent.idempotencyKey === "string"
++  );
++}
++
++function isPointAttempt(value: unknown): value is PointAttempt {
++  if (!isPointIntent(value)) return false;
++  const attempt = value as unknown as Record<string, unknown>;
++  return (
++    Number.isInteger(attempt.expectedVersion) &&
++    (attempt.state === "sending" ||
++      attempt.state === "unknown" ||
++      attempt.state === "accepted-no-key") &&
++    (attempt.reviewedVersion === undefined || Number.isInteger(attempt.reviewedVersion)) &&
++    (attempt.fence === undefined || typeof attempt.fence === "boolean")
++  );
++}
++
++function isScoreRecoveryRecord(value: unknown): value is ScoreRecoveryRecord {
++  if (!value || typeof value !== "object") return false;
++  const record = value as Record<string, unknown>;
++  return (
++    record.schemaVersion === 1 &&
++    typeof record.actorUserId === "string" &&
++    typeof record.matchId === "string" &&
++    Number.isInteger(record.serverVersion) &&
++    Array.isArray(record.attempts) &&
++    record.attempts.every(isPointAttempt) &&
++    Array.isArray(record.unsent) &&
++    record.unsent.every(isPointIntent) &&
++    typeof record.pausedAfterError === "boolean" &&
++    typeof record.storageSafe === "boolean" &&
++    ["idle", "checking", "failed", "no-key", "exact"].includes(String(record.readState)) &&
++    (record.reviewedVersion === undefined || Number.isInteger(record.reviewedVersion))
++  );
++}
++
++export function readScoreRecoveryRecord(
++  actorUserId: string,
++  matchId: string,
++  storage: StorageLike,
++): { record: ScoreRecoveryRecord | null; storageError: string | null } {
++  const memory = records.get(recordKey(actorUserId, matchId));
++  if (memory && !memory.storageSafe) {
++    return { record: copyRecord(memory), storageError: null };
++  }
++
++  let raw: string | null;
++  try {
++    raw = storage.getItem(scoreRecoveryStorageKey(actorUserId, matchId));
++  } catch {
++    return { record: null, storageError: "Не удалось прочитать сохранённое состояние счёта." };
++  }
++  if (raw === null) {
++    if (!memory) return { record: null, storageError: null };
++    const unsafe = rememberScoreRecoveryRecord({ ...memory, storageSafe: false });
++    return {
++      record: unsafe,
++      storageError: "Не удалось подтвердить сохранённое состояние счёта.",
++    };
++  }
++
++  try {
++    const parsed: unknown = JSON.parse(raw);
++    if (!isScoreRecoveryRecord(parsed)) {
++      return { record: null, storageError: "Сохранённое состояние счёта повреждено." };
++    }
++    if (parsed.actorUserId !== actorUserId || parsed.matchId !== matchId) {
++      return { record: null, storageError: "Сохранённое состояние счёта повреждено." };
++    }
++    const restored = rememberScoreRecoveryRecord(memory ?? parsed);
++    return { record: restored, storageError: null };
++  } catch {
++    return { record: null, storageError: "Сохранённое состояние счёта повреждено." };
++  }
++}
++
++export function resetScoreRecoveryForTests() {
++  records.clear();
++  generations.clear();
++}
+diff --git a/apps/web/src/pages/judgeScoreRecovery.test.ts b/apps/web/src/pages/judgeScoreRecovery.test.ts
+new file mode 100644
+index 0000000..7e7dc21
+--- /dev/null
++++ b/apps/web/src/pages/judgeScoreRecovery.test.ts
+@@ -0,0 +1,346 @@
++import { beforeEach, describe, expect, it } from "vitest";
++import {
++  acceptReviewedPointScore,
++  appendPointIntent,
++  beginPointAttempt,
++  beginScoreRecoveryGeneration,
++  createScoreRecoveryRecord,
++  discardUnsentPointIntents,
++  isScoreRecoveryGenerationCurrent,
++  markPointAttemptError,
++  markPointAttemptApplied,
++  markPointAttemptNoWrite,
++  persistScoreRecoveryRecord,
++  readScoreRecoveryRecord,
++  reconcilePointAttempts,
++  rememberScoreRecoveryRecord,
++  resetScoreRecoveryForTests,
++  restoreSendingAttemptsAsUnknown,
++  scoreRecoveryStorageKey,
++} from "./judgeScoreRecovery";
++
++class MemoryStorage implements Pick<Storage, "getItem" | "setItem" | "removeItem"> {
++  readonly values = new Map<string, string>();
++  failReads = false;
++  failWrites = false;
++
++  getItem(key: string) {
++    if (this.failReads) throw new Error("storage read failed");
++    return this.values.get(key) ?? null;
++  }
++
++  setItem(key: string, value: string) {
++    if (this.failWrites) throw new Error("storage write failed");
++    this.values.set(key, value);
++  }
++
++  removeItem(key: string) {
++    this.values.delete(key);
++  }
++}
++
++describe("judge score recovery store", () => {
++  beforeEach(() => resetScoreRecoveryForTests());
++
++  it("uses a fresh mount generation and never restores a persisted request epoch", () => {
++    const first = beginScoreRecoveryGeneration("u1", "m1");
++    const second = beginScoreRecoveryGeneration("u1", "m1");
++
++    expect(isScoreRecoveryGenerationCurrent("u1", "m1", first)).toBe(false);
++    expect(isScoreRecoveryGenerationCurrent("u1", "m1", second)).toBe(true);
++  });
++
++  it("restores sending as unknown and preserves ordered rapid intentions", () => {
++    let record = createScoreRecoveryRecord("u1", "m1", 5);
++    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
++    record = beginPointAttempt(record, 5).record;
++    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
++    record = appendPointIntent(record, { id: "c", side: "A", idempotencyKey: "key-c" });
++
++    const restored = restoreSendingAttemptsAsUnknown(record);
++
++    expect(restored.attempts).toEqual([
++      expect.objectContaining({ id: "a", state: "unknown", expectedVersion: 5 }),
++    ]);
++    expect(restored.unsent.map(({ id, side }) => ({ id, side }))).toEqual([
++      { id: "b", side: "B" },
++      { id: "c", side: "A" },
++    ]);
++    expect(restored.pausedAfterError).toBe(true);
++  });
++
++  it("invalidates a cached read decision and accepted no-key choice on every remount", () => {
++    let record = createScoreRecoveryRecord("u1", "m1", 5);
++    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
++    record = beginPointAttempt(record, 5).record;
++    record = markPointAttemptError(record, "a");
++    record = acceptReviewedPointScore(reconcilePointAttempts(record, 5, []).record);
++    expect(record.readState).toBe("no-key");
++    expect(record.attempts[0]?.state).toBe("accepted-no-key");
++
++    const restored = restoreSendingAttemptsAsUnknown(record);
++
++    expect(restored.readState).toBe("idle");
++    expect(restored.reviewedVersion).toBeUndefined();
++    expect(restored.attempts).toEqual([
++      expect.objectContaining({ id: "a", state: "unknown" }),
++    ]);
++    expect(restored.attempts[0]?.reviewedVersion).toBeUndefined();
++  });
++
++  it("keeps a failed durable write in SPA memory without sending or dropping the intent", () => {
++    const storage = new MemoryStorage();
++    storage.failWrites = true;
++    const record = appendPointIntent(
++      createScoreRecoveryRecord("u1", "m1", 5),
++      { id: "b", side: "B", idempotencyKey: "key-b" },
++    );
++
++    const saved = persistScoreRecoveryRecord(record, storage);
++    const restored = readScoreRecoveryRecord("u1", "m1", storage);
++
++    expect(saved.ok).toBe(false);
++    expect(saved.record.storageSafe).toBe(false);
++    expect(saved.record.pausedAfterError).toBe(true);
++    expect(restored).toMatchObject({
++      storageError: null,
++      record: { storageSafe: false, unsent: [{ id: "b", side: "B", idempotencyKey: "key-b" }] },
++    });
++  });
++
++  it("resolves only exact known keys and retains multiple other unknown attempts", () => {
++    let record = createScoreRecoveryRecord("u1", "m1", 5);
++    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
++    record = beginPointAttempt(record, 5).record;
++    record = markPointAttemptError(record, "a");
++    record = acceptReviewedPointScore(reconcilePointAttempts(record, 5, []).record);
++    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
++    record = beginPointAttempt(record, 5, true).record;
++    record = markPointAttemptError(record, "b");
++
++    const reconciled = reconcilePointAttempts(record, 6, ["key-a", "unfamiliar-key"]);
++
++    expect(reconciled.record.attempts).toEqual([
++      expect.objectContaining({ id: "b", idempotencyKey: "key-b", state: "unknown" }),
++    ]);
++    expect(reconciled.appliedAttemptIds).toEqual(["a"]);
++    expect(reconciled.record.readState).toBe("no-key");
++  });
++
++  it("known no-write resolves only its attempt and keeps unrelated work paused", () => {
++    let record = createScoreRecoveryRecord("u1", "m1", 5);
++    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
++    record = beginPointAttempt(record, 5).record;
++    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
++
++    const resolved = markPointAttemptNoWrite(record, "a");
++
++    expect(resolved.attempts).toEqual([]);
++    expect(resolved.unsent.map((intent) => intent.id)).toEqual(["b"]);
++    expect(resolved.pausedAfterError).toBe(true);
++  });
++
++  it("uses a fence version conflict to resolve only eligible accepted attempts", () => {
++    let record = createScoreRecoveryRecord("u1", "m1", 5);
++    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
++    record = beginPointAttempt(record, 5).record;
++    record = markPointAttemptError(record, "a");
++    record = acceptReviewedPointScore(reconcilePointAttempts(record, 5, []).record);
++    record = {
++      ...record,
++      attempts: [
++        ...record.attempts,
++        {
++          id: "later-a",
++          side: "A",
++          idempotencyKey: "key-later-a",
++          expectedVersion: 6,
++          state: "accepted-no-key",
++          reviewedVersion: 6,
++        },
++      ],
++      pausedAfterError: false,
++      unsent: [
++        { id: "fence", side: "A", idempotencyKey: "key-fence" },
++        { id: "b", side: "B", idempotencyKey: "key-b" },
++      ],
++    };
++    record = beginPointAttempt(record, 5, true).record;
++
++    const resolved = markPointAttemptNoWrite(record, "fence", true);
++
++    expect(resolved.attempts).toEqual([
++      expect.objectContaining({ id: "later-a", expectedVersion: 6 }),
++    ]);
++    expect(resolved.unsent).toEqual([{ id: "b", side: "B", idempotencyKey: "key-b" }]);
++    expect(resolved.pausedAfterError).toBe(true);
++  });
++
++  it("does not use a validation failure as proof for older accepted attempts", () => {
++    let record = createScoreRecoveryRecord("u1", "m1", 5);
++    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
++    record = beginPointAttempt(record, 5).record;
++    record = markPointAttemptError(record, "a");
++    record = acceptReviewedPointScore(reconcilePointAttempts(record, 5, []).record);
++    record = {
++      ...record,
++      pausedAfterError: false,
++      unsent: [{ id: "fence", side: "A", idempotencyKey: "key-fence" }],
++    };
++    record = beginPointAttempt(record, 5, true).record;
++
++    const resolved = markPointAttemptNoWrite(record, "fence", false);
++
++    expect(resolved.attempts).toEqual([
++      expect.objectContaining({ id: "a", state: "accepted-no-key", expectedVersion: 5 }),
++    ]);
++    expect(resolved.pausedAfterError).toBe(true);
++  });
++
++  it("uses a successful reviewed-version fence to resolve accepted unknowns and retain later queue order", () => {
++    let record = createScoreRecoveryRecord("u1", "m1", 5);
++    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
++    record = beginPointAttempt(record, 5).record;
++    record = markPointAttemptError(record, "a");
++    record = acceptReviewedPointScore(reconcilePointAttempts(record, 5, []).record);
++    record = {
++      ...record,
++      pausedAfterError: false,
++      unsent: [
++        { id: "fence", side: "A", idempotencyKey: "key-fence" },
++        { id: "b", side: "B", idempotencyKey: "key-b" },
++      ],
++    };
++    const begun = beginPointAttempt(record, 5, true);
++
++    const applied = markPointAttemptApplied(begun.record, "fence", 6);
++
++    expect(applied.attempts).toEqual([]);
++    expect(applied.unsent).toEqual([{ id: "b", side: "B", idempotencyKey: "key-b" }]);
++    expect(applied.pausedAfterError).toBe(true);
++  });
++
++  it("keeps an accepted decision version immutable across a later no-key read", () => {
++    let record = createScoreRecoveryRecord("u1", "m1", 5);
++    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
++    record = beginPointAttempt(record, 5).record;
++    record = markPointAttemptError(record, "a");
++    record = acceptReviewedPointScore(reconcilePointAttempts(record, 5, []).record);
++
++    const later = reconcilePointAttempts(record, 6, []).record;
++
++    expect(later.reviewedVersion).toBe(6);
++    expect(later.attempts[0]).toMatchObject({
++      id: "a",
++      state: "accepted-no-key",
++      reviewedVersion: 5,
++    });
++  });
++
++  it("uses exact proof of a lost fence to close older accepted attempts but keeps B/C paused", () => {
++    let record = createScoreRecoveryRecord("u1", "m1", 5);
++    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
++    record = beginPointAttempt(record, 5).record;
++    record = markPointAttemptError(record, "a");
++    record = acceptReviewedPointScore(reconcilePointAttempts(record, 5, []).record);
++    record = {
++      ...record,
++      pausedAfterError: false,
++      unsent: [
++        { id: "d", side: "A", idempotencyKey: "key-d" },
++        { id: "b", side: "B", idempotencyKey: "key-b" },
++        { id: "c", side: "A", idempotencyKey: "key-c" },
++      ],
++    };
++    record = beginPointAttempt(record, 5, true).record;
++    record = markPointAttemptError(record, "d");
++    record = {
++      ...record,
++      attempts: [
++        ...record.attempts,
++        {
++          id: "later-a",
++          side: "A",
++          idempotencyKey: "key-later-a",
++          expectedVersion: 6,
++          state: "accepted-no-key",
++          reviewedVersion: 5,
++        },
++      ],
++    };
++
++    const reconciled = reconcilePointAttempts(record, 6, ["key-d"]);
++
++    expect(reconciled.appliedAttemptIds).toEqual(["d"]);
++    expect(reconciled.fencedAttemptIds).toEqual(["a"]);
++    expect(reconciled.record.attempts).toEqual([
++      expect.objectContaining({ id: "later-a", expectedVersion: 6 }),
++    ]);
++    expect(reconciled.record.unsent.map((intent) => intent.id)).toEqual(["b", "c"]);
++    expect(reconciled.record.pausedAfterError).toBe(true);
++    expect(reconciled.record.readState).toBe("no-key");
++  });
++
++  it("discarding unsent intentions never clears an unknown attempt or unsafe storage", () => {
++    let record = createScoreRecoveryRecord("u1", "m1", 5);
++    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
++    record = beginPointAttempt(record, 5).record;
++    record = markPointAttemptError(record, "a");
++    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
++    record = { ...record, storageSafe: false };
++
++    const discarded = discardUnsentPointIntents(record);
++
++    expect(discarded.unsent).toEqual([]);
++    expect(discarded.attempts).toHaveLength(1);
++    expect(discarded.storageSafe).toBe(false);
++    expect(discarded.pausedAfterError).toBe(true);
++  });
++
++  it("preserves SPA memory across remount after storage failure", () => {
++    const storage = new MemoryStorage();
++    storage.failWrites = true;
++    const record = markPointAttemptError(
++      beginPointAttempt(
++        appendPointIntent(
++          createScoreRecoveryRecord("u1", "m1", 5),
++          { id: "a", side: "A", idempotencyKey: "key-a" },
++        ),
++        5,
++      ).record,
++      "a",
++    );
++    rememberScoreRecoveryRecord({ ...record, storageSafe: false });
++
++    expect(readScoreRecoveryRecord("u1", "m1", storage).record).toMatchObject({
++      attempts: [expect.objectContaining({ id: "a", state: "unknown" })],
++      storageSafe: false,
++    });
++  });
++
++  it("fails closed on corrupt storage without deleting or interpreting unfamiliar keys", () => {
++    const storage = new MemoryStorage();
++    const key = scoreRecoveryStorageKey("u1", "m1");
++    storage.values.set(key, "{broken-json");
++
++    const restored = readScoreRecoveryRecord("u1", "m1", storage);
++
++    expect(restored.record).toBeNull();
++    expect(restored.storageError).toMatch(/поврежден/i);
++    expect(storage.values.get(key)).toBe("{broken-json");
++  });
++
++  it("does not let safe SPA memory hide a later-corrupted durable record", () => {
++    const storage = new MemoryStorage();
++    const record = createScoreRecoveryRecord("u1", "m1", 5);
++    persistScoreRecoveryRecord(record, storage);
++    const key = scoreRecoveryStorageKey("u1", "m1");
++    storage.values.set(key, "{broken-json");
++
++    const restored = readScoreRecoveryRecord("u1", "m1", storage);
++
++    expect(restored.record).toBeNull();
++    expect(restored.storageError).toMatch(/поврежден/i);
++    expect(storage.values.get(key)).toBe("{broken-json");
++  });
++});

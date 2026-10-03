@@ -204,7 +204,7 @@ test("Wave E onboarding resume, tutorial return, restart and Help feedback", asy
     };
 
     await expectGuide("Главная");
-    await page.getByRole("button", { name: "Пропустить шаг", exact: true }).click();
+    await page.getByRole("button", { name: "Далее", exact: true }).click();
     await expectGuide("Рейтинг");
     await page.getByRole("button", { name: "Далее", exact: true }).click();
     await expectGuide("История");
@@ -228,23 +228,33 @@ test("Wave E onboarding resume, tutorial return, restart and Help feedback", asy
     await expectGuide("Учебный матч");
     const incomplete = (await (await page.request.get("/api/v1/auth/me")).json()).user;
     expect(incomplete.onboardingCompletedAt).toBeNull();
-    await page.getByRole("button", { name: "Завершить без учебного матча", exact: true }).click();
+    await page.getByRole("button", { name: "Завершить обучение", exact: true }).click();
     await expect(page).toHaveURL(/\/$/);
 
     await page.goto("/profile");
-    await page.getByText("Пройти онбординг заново", { exact: true }).click();
+    await page.getByText("Пройти обучение заново", { exact: true }).click();
     await expect(page).toHaveURL(/\/onboarding$/);
     await expectGuide("Главная");
-    await page.getByRole("button", { name: "Закрыть онбординг", exact: true }).click();
+    await page.getByRole("button", { name: "Закрыть обучение", exact: true }).click();
     await expect(page).toHaveURL(/\/$/);
 
     await page.goto("/help");
     for (const category of ["Матчи", "Турниры", "Подача", "Рейтинг", "Команды", "Уведомления"]) {
       await expect(page.getByText(category, { exact: true }).first()).toBeVisible();
     }
-    const feedbackMessage = `Идея Wave E ${info.project.name}: https://example.test/material`;
+    const feedbackMessage = [
+      `Идея Wave E ${info.project.name}: https://example.test/material`,
+      "Шаг 2: сохранить перенос строки без потери текста.",
+    ].join("\n");
     await page.getByLabel("Категория", { exact: true }).selectOption("idea");
     await page.getByLabel("Сообщение", { exact: true }).fill(feedbackMessage);
+    if (info.project.name.includes("mobile")) {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.screenshot({
+        path: info.outputPath("help-multiline-feedback-mobile-390.png"),
+        fullPage: true,
+      });
+    }
     const responsePromise = page.waitForResponse((response) =>
       response.url().endsWith("/api/v1/feedback") && response.request().method() === "POST",
     );

@@ -8,6 +8,7 @@ import { avatarSrc } from "../avatarSrc";
 import { api, type AuthSession, type PlayerProfile } from "../api";
 import { useAuth } from "../auth";
 import { useSingleFlight } from "../useSingleFlight";
+import { useLifecycleSingleFlight } from "./useLifecycleSingleFlight";
 
 function formatBirthDate(value?: string | null) {
   if (!value) return "Не указана";
@@ -30,13 +31,63 @@ function formatDuration(seconds: number) {
   return rest > 0 ? `${hours} ч ${rest} мин` : `${hours} ч`;
 }
 
-type EditDraft = {
+export type EditDraft = {
   firstName: string;
   lastName: string;
   birthDate: string;
   organizationText: string;
   positionText: string;
 };
+
+type ProfileFieldErrors = Partial<Record<keyof EditDraft, string>>;
+
+const PROFILE_FIELD_ORDER: Array<keyof EditDraft> = [
+  "firstName",
+  "lastName",
+  "birthDate",
+  "organizationText",
+  "positionText",
+];
+
+const PROFILE_FIELD_IDS: Record<keyof EditDraft, string> = {
+  firstName: "profile-first-name",
+  lastName: "profile-last-name",
+  birthDate: "profile-birth-date",
+  organizationText: "profile-organization",
+  positionText: "profile-position",
+};
+
+function isExactCalendarDate(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (year <= 0 || month < 1 || month > 12 || day < 1) return false;
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return day <= daysInMonth[month - 1];
+}
+
+export function validateProfileDraft(draft: EditDraft): ProfileFieldErrors {
+  const errors: ProfileFieldErrors = {};
+  const firstName = draft.firstName.trim();
+  const lastName = draft.lastName.trim();
+  if (firstName.length === 0) errors.firstName = "Введите имя.";
+  else if (firstName.length > 100) errors.firstName = "Не более 100 символов после удаления пробелов по краям.";
+  if (lastName.length === 0) errors.lastName = "Введите фамилию.";
+  else if (lastName.length > 100) errors.lastName = "Не более 100 символов после удаления пробелов по краям.";
+  if (draft.birthDate && !isExactCalendarDate(draft.birthDate)) {
+    errors.birthDate = "Введите существующую дату в формате ГГГГ-ММ-ДД.";
+  }
+  if (draft.organizationText.trim().length > 200) {
+    errors.organizationText = "Не более 200 символов после удаления пробелов по краям.";
+  }
+  if (draft.positionText.trim().length > 200) {
+    errors.positionText = "Не более 200 символов после удаления пробелов по краям.";
+  }
+  return errors;
+}
 
 export function ProfilePage() {
   const { user, setUser } = useAuth();
@@ -50,50 +101,103 @@ export function ProfilePage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
+  const [profileFieldErrors, setProfileFieldErrors] = useState<ProfileFieldErrors>({});
+  const [profileFormError, setProfileFormError] = useState<string | null>(null);
+  const [profileSaveUnknown, setProfileSaveUnknown] = useState(false);
+  const [profileReviewMessage, setProfileReviewMessage] = useState<string | null>(null);
+  const [profileReviewPending, setProfileReviewPending] = useState(false);
   const [sessionToRevoke, setSessionToRevoke] = useState<AuthSession | null>(null);
   const navigate = useNavigate();
   const onboardingRestart = useSingleFlight();
-  const profileSave = useSingleFlight();
+  const profileSave = useLifecycleSingleFlight();
   const sessionRevoke = useSingleFlight();
   const profileRequestSequence = useRef(0);
   const sessionRequestSequence = useRef(0);
+  const draftActorId = useRef<string | null>(null);
+  const interruptedProfileSave = useRef(false);
+  const interactionContextKey = `${user?.id ?? "anonymous"}:${userId ?? "own"}`;
+  const interactionContext = useRef({ key: interactionContextKey, generation: 0, active: false });
+  if (interactionContext.current.key !== interactionContextKey) {
+    interactionContext.current = {
+      key: interactionContextKey,
+      generation: interactionContext.current.generation + 1,
+      active: false,
+    };
+  }
+
+  useEffect(() => {
+    const activeContext = {
+      key: interactionContextKey,
+      generation: interactionContext.current.generation + 1,
+      active: true,
+    };
+    interactionContext.current = activeContext;
+    profileSave.resume();
+    if (interruptedProfileSave.current) {
+      interruptedProfileSave.current = false;
+      setProfileSaveUnknown(true);
+      setProfileFormError(null);
+      setProfileReviewMessage(null);
+    }
+    return () => {
+      if (profileSave.invalidate()) interruptedProfileSave.current = true;
+      if (interactionContext.current !== activeContext) return;
+      interactionContext.current = {
+        ...activeContext,
+        generation: activeContext.generation + 1,
+        active: false,
+      };
+    };
+  }, [interactionContextKey, profileSave.invalidate, profileSave.resume]);
+
+  const isCurrentInteraction = useCallback(
+    (context: typeof interactionContext.current) =>
+      context.active && interactionContext.current === context,
+    [],
+  );
 
   const loadProfile = useCallback(async () => {
     const sequence = ++profileRequestSequence.current;
+    const operationContext = interactionContext.current;
     try {
       const response = userId
         ? await api.playerProfile(userId)
         : await api.ownProfile();
-      if (sequence === profileRequestSequence.current) {
+      if (sequence === profileRequestSequence.current && isCurrentInteraction(operationContext)) {
         setProfile(response.profile);
       }
     } catch (loadError) {
-      if (sequence === profileRequestSequence.current) throw loadError;
+      if (sequence === profileRequestSequence.current && isCurrentInteraction(operationContext)) throw loadError;
     }
-  }, [userId]);
+  }, [isCurrentInteraction, userId]);
 
   const loadSessions = useCallback(async () => {
     const sequence = ++sessionRequestSequence.current;
+    const operationContext = interactionContext.current;
     setSessionError(null);
     try {
       const response = await api.sessions();
-      if (sequence === sessionRequestSequence.current) {
+      if (sequence === sessionRequestSequence.current && isCurrentInteraction(operationContext)) {
         setSessions(response.sessions);
       }
     } catch (loadError) {
-      if (sequence === sessionRequestSequence.current) throw loadError;
+      if (sequence === sessionRequestSequence.current && isCurrentInteraction(operationContext)) throw loadError;
     }
-  }, []);
+  }, [isCurrentInteraction]);
 
   function restartOnboarding() {
+    const operationContext = interactionContext.current;
     void onboardingRestart.run(async () => {
       setActionError(null);
       try {
         const result = await api.restartOnboarding();
+        if (!isCurrentInteraction(operationContext)) return;
         setUser(result.user);
         navigate("/onboarding");
       } catch (restartError) {
-        setActionError((restartError as Error).message);
+        if (isCurrentInteraction(operationContext)) {
+          setActionError((restartError as Error).message);
+        }
       }
     });
   }
@@ -119,8 +223,32 @@ export function ProfilePage() {
     return () => { active = false; };
   }, [loadProfile, loadSessions, publicProfile, user?.id]);
 
+  useEffect(() => {
+    if (!editDraft) return;
+    if (publicProfile || (user && draftActorId.current !== user.id)) {
+      setEditing(false);
+      setEditDraft(null);
+      setProfileFieldErrors({});
+      setProfileFormError(null);
+      setProfileSaveUnknown(false);
+      setProfileReviewMessage(null);
+      setProfileReviewPending(false);
+      draftActorId.current = null;
+    }
+  }, [editDraft, publicProfile, user]);
+
+  useEffect(() => {
+    setProfileReviewPending(false);
+  }, [interactionContextKey]);
+
   function beginEditing() {
     if (!profile?.isOwn) return;
+    draftActorId.current = user?.id ?? null;
+    setProfileFieldErrors({});
+    setProfileFormError(null);
+    setProfileSaveUnknown(false);
+    setProfileReviewMessage(null);
+    setProfileReviewPending(false);
     setEditDraft({
       firstName: profile.identity.firstName,
       lastName: profile.identity.lastName,
@@ -131,6 +259,27 @@ export function ProfilePage() {
     setEditing(true);
   }
 
+  function updateDraft(field: keyof EditDraft, value: string) {
+    setEditDraft((current) => current ? { ...current, [field]: value } : current);
+    setProfileFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function focusFirstInvalid(errors: ProfileFieldErrors) {
+    const first = PROFILE_FIELD_ORDER.find((field) => Boolean(errors[field]));
+    if (!first) return;
+    const operationContext = interactionContext.current;
+    queueMicrotask(() => {
+      if (isCurrentInteraction(operationContext)) {
+        document.getElementById(PROFILE_FIELD_IDS[first])?.focus();
+      }
+    });
+  }
+
   function saveProfile(event: React.FormEvent) {
     event.preventDefault();
     if (!editDraft) return;
@@ -139,24 +288,74 @@ export function ProfilePage() {
       const value = formData.get(name);
       return typeof value === "string" ? value : "";
     };
-    const payload = {
+    const attempt: EditDraft = {
       firstName: field("firstName"),
       lastName: field("lastName"),
-      birthDate: field("birthDate") || null,
-      organizationText: field("organizationText") || null,
-      positionText: field("positionText") || null,
+      birthDate: field("birthDate"),
+      organizationText: field("organizationText"),
+      positionText: field("positionText"),
     };
+    setEditDraft(attempt);
+    const validationErrors = validateProfileDraft(attempt);
+    if (Object.keys(validationErrors).length > 0) {
+      setProfileFieldErrors(validationErrors);
+      setProfileFormError(null);
+      setProfileSaveUnknown(false);
+      setProfileReviewMessage(null);
+      focusFirstInvalid(validationErrors);
+      return;
+    }
+    const payload = {
+      firstName: attempt.firstName,
+      lastName: attempt.lastName,
+      birthDate: attempt.birthDate || null,
+      organizationText: attempt.organizationText || null,
+      positionText: attempt.positionText || null,
+    };
+    const operationContext = interactionContext.current;
     void profileSave.run(async () => {
-      setActionError(null);
+      setProfileFieldErrors({});
+      setProfileFormError(null);
+      setProfileSaveUnknown(false);
+      setProfileReviewMessage(null);
       try {
         const response = await api.updateProfile(payload);
+        if (!isCurrentInteraction(operationContext)) return;
         setUser(response.user);
         await loadProfile();
+        if (!isCurrentInteraction(operationContext)) return;
         setEditing(false);
+        setEditDraft(null);
+        draftActorId.current = null;
       } catch (saveError) {
-        setActionError((saveError as Error).message);
+        if (!isCurrentInteraction(operationContext)) return;
+        const typedError = saveError as Error & { status?: number };
+        if (typedError.status === undefined || typedError.status >= 500) {
+          setProfileSaveUnknown(true);
+          setProfileFormError(null);
+        } else if (typedError.status !== 401) {
+          setProfileFormError(typedError.message);
+        }
       }
     });
+  }
+
+  async function reviewProfileAfterUnknownSave() {
+    const operationContext = interactionContext.current;
+    setProfileReviewPending(true);
+    setProfileFormError(null);
+    try {
+      await loadProfile();
+      if (!isCurrentInteraction(operationContext)) return;
+      setProfileReviewMessage(
+        "Текущие данные сервера обновлены. Это не подтверждает исход предыдущего сохранения и не исключает позднюю запись.",
+      );
+    } catch (reviewError) {
+      if (!isCurrentInteraction(operationContext)) return;
+      setProfileFormError((reviewError as Error).message);
+    } finally {
+      if (isCurrentInteraction(operationContext)) setProfileReviewPending(false);
+    }
   }
 
   function confirmSessionRevoke() {
@@ -263,31 +462,97 @@ export function ProfilePage() {
             ) : null}
 
             {editing && editDraft ? (
-              <form className="card stack" aria-label="Редактирование профиля" onSubmit={saveProfile}>
+              <form className="card stack" aria-label="Редактирование профиля" onSubmit={saveProfile} noValidate>
                 <h2 className="section-title">Редактирование профиля</h2>
-                <TextField name="firstName" label="Имя" required value={editDraft.firstName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditDraft({ ...editDraft, firstName: event.target.value })} />
-                <TextField name="lastName" label="Фамилия" required value={editDraft.lastName} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditDraft({ ...editDraft, lastName: event.target.value })} />
+                {profileSaveUnknown ? (
+                  <Alert
+                    type="warning"
+                    variant="tonal"
+                    title="Не удалось проверить сохранение"
+                    description="Ответ на сохранение не получен. Не повторяйте отправку: сначала обновите текущие данные с сервера."
+                  />
+                ) : null}
+                {profileFormError ? (
+                  <Alert type="error" variant="tonal" title="Профиль не сохранён" description={profileFormError} />
+                ) : null}
+                {profileReviewMessage ? (
+                  <Alert type="primary" variant="tonal" title="Данные обновлены" description={profileReviewMessage} />
+                ) : null}
                 <TextField
+                  id={PROFILE_FIELD_IDS.firstName}
+                  name="firstName"
+                  label="Имя"
+                  required
+                  value={editDraft.firstName}
+                  error={Boolean(profileFieldErrors.firstName)}
+                  helperText={profileFieldErrors.firstName}
+                  disabled={profileSave.pending}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateDraft("firstName", event.target.value)}
+                />
+                <TextField
+                  id={PROFILE_FIELD_IDS.lastName}
+                  name="lastName"
+                  label="Фамилия"
+                  required
+                  value={editDraft.lastName}
+                  error={Boolean(profileFieldErrors.lastName)}
+                  helperText={profileFieldErrors.lastName}
+                  disabled={profileSave.pending}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateDraft("lastName", event.target.value)}
+                />
+                <TextField
+                  id={PROFILE_FIELD_IDS.birthDate}
                   name="birthDate"
                   label="Дата рождения"
                   type="date"
                   value={editDraft.birthDate}
+                  error={Boolean(profileFieldErrors.birthDate)}
+                  helperText={profileFieldErrors.birthDate}
+                  disabled={profileSave.pending}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setEditDraft({ ...editDraft, birthDate: event.target.value })
+                    updateDraft("birthDate", event.target.value)
                   }
                   onInput={(event: React.FormEvent<HTMLInputElement>) =>
-                    setEditDraft({
-                      ...editDraft,
-                      birthDate: event.currentTarget.value,
-                    })
+                    updateDraft("birthDate", event.currentTarget.value)
                   }
                 />
-                <TextField name="organizationText" label="Организация" value={editDraft.organizationText} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditDraft({ ...editDraft, organizationText: event.target.value })} />
-                <TextField name="positionText" label="Должность" value={editDraft.positionText} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEditDraft({ ...editDraft, positionText: event.target.value })} />
+                <TextField
+                  id={PROFILE_FIELD_IDS.organizationText}
+                  name="organizationText"
+                  label="Организация"
+                  value={editDraft.organizationText}
+                  error={Boolean(profileFieldErrors.organizationText)}
+                  helperText={profileFieldErrors.organizationText}
+                  disabled={profileSave.pending}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateDraft("organizationText", event.target.value)}
+                />
+                <TextField
+                  id={PROFILE_FIELD_IDS.positionText}
+                  name="positionText"
+                  label="Должность"
+                  value={editDraft.positionText}
+                  error={Boolean(profileFieldErrors.positionText)}
+                  helperText={profileFieldErrors.positionText}
+                  disabled={profileSave.pending}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateDraft("positionText", event.target.value)}
+                />
                 <div className="row">
-                  <Button type="submit" disabled={profileSave.pending}>
+                  <Button
+                    type="submit"
+                    disabled={profileSave.pending || (profileSaveUnknown && !profileReviewMessage)}
+                  >
                     {profileSave.pending ? "Сохранение…" : "Сохранить"}
                   </Button>
+                  {profileSaveUnknown ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={profileReviewPending || profileSave.pending}
+                      onClick={() => void reviewProfileAfterUnknownSave()}
+                    >
+                      {profileReviewPending ? "Обновление…" : "Обновить данные"}
+                    </Button>
+                  ) : null}
                   <Button type="button" variant="secondary" onClick={() => setEditing(false)} disabled={profileSave.pending}>
                     Отмена
                   </Button>
@@ -336,7 +601,7 @@ export function ProfilePage() {
                   <ListRow to="/teams" title="Команды" subtitle="Создание и приглашения" />
                   <ListRow to="/notifications" title="Уведомления" subtitle="Приглашения и события" trailing={unreadCount > 0 ? <Chip size="sm" variant="tonal" color="primary" label={String(unreadCount)} /> : null} />
                   <ListRow to="/help" title="Помощь" subtitle="FAQ и обратная связь" />
-                  <ListRow onClick={restartOnboarding} title={onboardingRestart.pending ? "Запускаем онбординг…" : "Пройти онбординг заново"} subtitle="Начать с первого шага и при желании сыграть учебный матч" />
+                  <ListRow onClick={restartOnboarding} title={onboardingRestart.pending ? "Запускаем онбординг…" : "Пройти обучение заново"} subtitle="Начать с первого шага и при желании сыграть учебный матч" />
                   {user?.role === "admin" ? <ListRow to="/admin" title="Админка" subtitle="Пользователи и доступ" /> : null}
                 </div>
 
@@ -379,7 +644,7 @@ export function ProfilePage() {
             title={
               onboardingRestart.pending
                 ? "Запускаем онбординг…"
-                : "Пройти онбординг заново"
+                : "Пройти обучение заново"
             }
             subtitle="Начать с первого шага и при желании сыграть учебный матч"
           />

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useVisibleRefresh } from "./useVisibleRefresh";
 
@@ -12,10 +13,12 @@ function setDocumentVisibility(state: DocumentVisibilityState) {
 
 function deferred() {
   let resolve!: () => void;
-  const promise = new Promise<void>((resolvePromise) => {
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<void>((resolvePromise, rejectPromise) => {
     resolve = resolvePromise;
+    reject = rejectPromise;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
 }
 
 function Harness({
@@ -108,6 +111,75 @@ describe("useVisibleRefresh", () => {
     await act(async () => {
       pending.resolve();
       await pending.promise;
+    });
+    expect(screen.getByRole("button", { name: "Обновить" })).toBeEnabled();
+  });
+
+  it("starts a fresh request after StrictMode replays the effect lifecycle", async () => {
+    const first = deferred();
+    const load = vi.fn()
+      .mockReturnValueOnce(first.promise)
+      .mockResolvedValueOnce(undefined);
+    render(
+      <StrictMode>
+        <Harness load={load} pollingEnabled={false} refreshKey="strict" />
+      </StrictMode>,
+    );
+
+    await act(async () => Promise.resolve());
+    expect(load).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      first.resolve();
+      await first.promise;
+    });
+    expect(screen.getByRole("button", { name: "Обновить" })).toBeEnabled();
+  });
+
+  it("keeps the fresh lifecycle error when the stale request succeeds later", async () => {
+    const stale = deferred();
+    const load = vi.fn()
+      .mockReturnValueOnce(stale.promise)
+      .mockRejectedValueOnce(new Error("Ошибка нового lifecycle"));
+    render(
+      <StrictMode>
+        <Harness load={load} pollingEnabled={false} refreshKey="same" />
+      </StrictMode>,
+    );
+
+    await act(async () => Promise.resolve());
+    expect(screen.getByRole("alert")).toHaveTextContent("Ошибка нового lifecycle");
+    await act(async () => {
+      stale.resolve();
+      await stale.promise;
+    });
+    expect(screen.getByRole("alert")).toHaveTextContent("Ошибка нового lifecycle");
+  });
+
+  it("ignores a stale lifecycle rejection while the fresh request remains pending", async () => {
+    const stale = deferred();
+    const fresh = deferred();
+    const load = vi.fn()
+      .mockReturnValueOnce(stale.promise)
+      .mockReturnValueOnce(fresh.promise);
+    render(
+      <StrictMode>
+        <Harness load={load} pollingEnabled={false} refreshKey="same" />
+      </StrictMode>,
+    );
+
+    await act(async () => Promise.resolve());
+    expect(screen.getByRole("button", { name: "Обновление…" })).toBeDisabled();
+    await act(async () => {
+      stale.reject(new Error("Ошибка старого lifecycle"));
+      await stale.promise.catch(() => undefined);
+    });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Обновление…" })).toBeDisabled();
+
+    await act(async () => {
+      fresh.resolve();
+      await fresh.promise;
     });
     expect(screen.getByRole("button", { name: "Обновить" })).toBeEnabled();
   });

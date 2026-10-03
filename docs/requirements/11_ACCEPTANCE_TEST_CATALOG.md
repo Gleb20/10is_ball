@@ -157,6 +157,10 @@ tournament или tutorial отклоняется без изменения matc
 канонический PATCH. Email/avatar и неизвестные поля отклоняются без изменения
 данных; невозможная календарная дата также отклоняется. Ошибка сохраняет черновик.
 По D10 аватар отображается без upload/regenerate/edit.
+Клиентские границы совпадают с серверными trim/length/date правилами; отказ
+связан с полем и фокусирует первое нарушение без `PATCH`. При потерянном ответе
+нет автоматического повтора: явная проверка выполняет один `GET`, сохраняет
+черновик и не выдаёт readback за доказательство исхода предыдущей записи.
 
 ### AT-PROFILE-005 Активные сессии
 Список показывает текущую и другие активные сессии с датами. После подтверждения
@@ -283,6 +287,12 @@ Given судья подтвердил start и setup получил извест
 выбор, Then повторяется только setup. Given исход start или setup неизвестен,
 Then ранний GET не запускает повторную мутацию.
 
+### AT-MATCH-018 Current-form custom score lifetime
+При выборе `11`, `21` или custom и повторном открытии цифровой панели текущая
+форма показывает последнее выбранное значение. Смена 1v1/2v2 его не заменяет.
+После ухода с формы или открытия новой формы значение не восстанавливается из
+устройства, профиля, предыдущей сессии или другого пользователя.
+
 ### AT-MATCH-VOID-001 No hard delete
 После void finished standalone match исходный результат и event/audit facts остаются,
 физическое удаление недоступно, а повторный void идемпотентен.
@@ -331,6 +341,15 @@ audit row. `bracket_json`, `bracket_state_version`, downstream rows/results/stat
 Пользователь без активной judge session не может начислить очко.
 
 ### AT-JUDGE-007 Rapid score intent queue
+Обычные успешные POST последовательно отправляют быстрые намерения FIFO с
+актуальной версией. После любой mutation error отправленная попытка и
+неотправленный остаток показываются отдельно; ни exact-key GET, ни no-key choice,
+ни новый versioned запрос не отправляют остаток без явного Continue. Подтверждённый
+Discard удаляет только unsent. Unknown не получает автоматический retry.
+Точный ключ подтверждает только соответствующую попытку. `409 VERSION_CONFLICT`
+явного нового запроса доказывает no-write лишь этого запроса и не является fence
+для прежней unknown попытки; fence дают успешная versioned запись либо GET с
+точным ключом этой записи.
 Два быстрых намеренных нажатия `+1` до ответа первого request создают два разных
 idempotency key, но только один in-flight request. Второй request начинается после
 authoritative response первого с его новой version; итоговый счёт увеличивается
@@ -351,6 +370,9 @@ Visible setup/scoring выполняет heartbeat + authoritative refresh од�
 Heartbeat `401/403/409` или lost-session code немедленно очищает point queue,
 скрывает score/Undo/confirm/stop, показывает lost-lock и синхронизирует матч.
 Внешний terminal status становится read-only без reload.
+Readonly recovery summary сохраняет известные отправленные значения и ключевую
+correlation, но не возвращает mutation rights. Home → return сначала проверяет
+ownership и authoritative GET и выполняет 0 автоматических score/correction POST.
 
 ### AT-JUDGE-010 Technical correction baseline
 Active judge может выполнить versioned manual correction с idempotency key и
@@ -358,6 +380,15 @@ Active judge может выполнить versioned manual correction с idempo
 event log; последующий Undo не удаляет correction и возвращает состояние к
 предыдущей point event boundary. Повтор correction с тем же key идемпотентен,
 stale/unauthorized actor не меняет match, audit, score или version.
+Коррекция до POST сохраняет raw UUID, expectedVersion, абсолютные scoreA/scoreB и
+participant ID подающего отдельно от draft. Потерянный ответ сверяется GET-only:
+точный `manual-correction:<UUID>` закрывает только соответствующую попытку и
+показывает текущий authoritative state; отсутствие ключа оставляет unknown.
+Принятие показанного счёта требует подтверждения и даёт 0 POST. Новая коррекция
+начинается с показанных сервером значений, новым UUID и неизменяемой reviewed
+version. Старые/новые попытки не стирают друг друга. Storage prewrite failure даёт
+0 POST. Heading focus, Tab order A→B→server→Save→Cancel, Cancel/Escape return,
+success Actions focus и отсутствие refresh focus theft проверяются отдельно.
 
 ## TOURNAMENT
 
@@ -579,6 +610,10 @@ server-side время terminal перехода.
 Открытие видимой части списка одним owner-scoped batch помечает карточки
 прочитанными server clock-ом без создания новых событий. Retry сохраняет первый
 `readAt`; прочитанное pending invitation остаётся actionable, но badge очищается.
+Локально применяются только возвращённые `id/readAt`: подтверждённая обычная
+строка сразу покидает «Актуальные», пропущенная остаётся новой, terminal lifecycle
+не возвращается в `new`. После удаления сфокусированной строки фокус переходит к
+следующей, предыдущей или заголовку списка и не переживает actor/Activity lifecycle.
 
 ### AT-NOTIF-005 Terminal invitation lifecycle
 При достижении TTL или отмене source entity invitation и notification переходят
@@ -740,6 +775,8 @@ in-flight client request; связанные CTA disabled до settle. Concurren
 email create возвращает один success и один `409 EMAIL_ALREADY_EXISTS` с одной
 persisted user row; DATA-004 invite/respond retry сохраняет один invitation,
 membership/participant transition и notification effect.
+Многострочный feedback сохраняет переносы в точном API payload и persistence;
+ошибка сохраняет textarea draft, а успешный ответ очищает его без второго submit.
 
 ## EMPTY / ONBOARDING
 
@@ -754,8 +791,9 @@ membership/participant transition и notification effect.
 сбрасывает step на 0 и только после success открывает первый шаг. Ошибка не
 перенаправляет и доступна для retry.
 
-### AT-ONB-003 Skip and tutorial resume
-Каждый feature step можно пропустить с сохранением следующего шага. Запуск
+### AT-ONB-003 Informational progression and tutorial resume
+На шагах 1–6 доступно одно продвижение «Далее» и отдельное закрытие всего
+обучения; второго равнозначного перехода нет. Запуск
 tutorial сначала сохраняет последний step и создаёт не более одного match при
 double-click; выход/завершение tutorial возвращает на последний шаг. До решения
 Q-ONB-001 completion остаётся отдельным explicit действием.

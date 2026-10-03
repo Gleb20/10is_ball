@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "status": "wo0_preflight_pass_before_base_advance",
+  "startingHead": "550d3680a08a8faf4e1e4afbfcc373c942f155d0",
+  "targetReleaseSha": "8b9d2650f7991e121052634ace758f5991ef25b5",
+  "targetVersion": "4.1.1",
+  "remoteMain": "8b9d2650f7991e121052634ace758f5991ef25b5",
+  "liveWebRelease": {
+    "sha": "8b9d2650f7991e121052634ace758f5991ef25b5",
+    "version": "4.1.1",
+    "environment": "production",
+    "dirty": false
+  },
+  "liveApiHealthRelease": {
+    "sha": "8b9d2650f7991e121052634ace758f5991ef25b5",
+    "version": "4.1.1",
+    "environment": "production",
+    "dirty": false
+  },
+  "preservedR2Patch": {
+    "path": "/private/tmp/stage4-wo1-preserved-r2.patch",
+    "sha256": "6121c32a3ef989532863b38d32565f9e1754d8ca88e4fea36761a0589c4b7a3f"
+  },
+  "acceptedR2Patch": {
+    "path": "/private/tmp/stage4-api-read-contract-r2.patch",
+    "sha256": "6121c32a3ef989532863b38d32565f9e1754d8ca88e4fea36761a0589c4b7a3f"
+  },
+  "preparedFilesSha256": {
+    "apps/api/src/openapi.ts": "6f6624f9e5b89690c5d4d0394b738077e15104419014172721814e3d4557f3e6",
+    "apps/api/src/openapi.contract.test.ts": "cb972a09c5e6d8a0c100c08e30bb5372099506b7d83d3aaba5ff42ada1b52f6f",
+    "apps/api/src/gap-005.integration.test.ts": "605c08c7b550d7aea37bb5109a0ecac1266871ef3375c41cd10d1b80aafdab4a"
+  },
+  "targetBaseFilesSha256": {
+    "apps/api/src/openapi.ts": "2baa383eb2eea23e5318b26c8c5f29e80b3a81f5ae6719c0ff402e33bd09971a",
+    "apps/api/src/openapi.contract.test.ts": "e8354a27509a1359700fcbbc45f641b58bc4e44e2fc768239e1b84a96e101bec",
+    "apps/api/src/gap-005.integration.test.ts": "568e10525850e5c897fcf72758ee48da6e72132ac43039af02557cb53c02b54c"
+  },
+  "targetStage3WebFilesSha256": {
+    "apps/web/src/pages/JudgePage.tsx": "00f81dcf1eb1e2893f985c4296502eddaa1ff3f661711ba61d23dcf091faa67e",
+    "apps/web/src/pages/JudgePage.test.tsx": "4e5e9351b78254310364c138f9305fc9c375d20bc3f095ee2dc66a585ae1310e"
+  },
+  "drift": [],
+  "notes": [
+    "API base blobs unchanged from R2 base",
+    "Stage3 JudgePage and focused test hashes match accepted handoff",
+    "No score/correction/finish/ownership or mutation-service drift detected in bounded check"
+  ],
+  "receiptBridge": {
+    "kind": "expected_release_receipt_bridge",
+    "sourceSnapshot": "docs/PROJECT_STATUS.md intentionally describes the frozen pre-publication Stage3 candidate",
+    "terminalEvidence": "separate root/writer terminal receipts, origin/main and live metadata confirm 8b9d2650 / 4.1.1",
+    "reason": "avoids a self-SHA commit loop after release",
+    "impact": "known canonical documentation residual for Stage4 WO6; no API, behavior or contract drift",
+    "action": "preserve frozen Stage3 evidence and carry the fact to ordinary canonical-doc integration"
+  }
+}

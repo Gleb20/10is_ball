@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "candidateVersion": "4.1.2",
+  "baseSha": "8b9d2650f7991e121052634ace758f5991ef25b5",
+  "sourceFilesReviewed": 44,
+  "terraSourceReview": "passed",
+  "rootManifestReview": "passed",
+  "rootForwardReverseReview": "passed",
+  "disposition": "verified_local",
+  "remaining": [
+    "physical iPhone",
+    "pinned WebKit",
+    "spoken assistive technology",
+    "public exact-SHA and version parity"
+  ]
+}

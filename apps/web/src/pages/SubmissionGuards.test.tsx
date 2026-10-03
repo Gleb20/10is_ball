@@ -115,6 +115,11 @@ describe("BUG-009 scoped critical form submission guards", () => {
     renderPage();
     const submit = await screen.findByRole("button", { name: buttonName });
     const form = submit.closest("form") as HTMLFormElement;
+    if (apiMock === feedback) {
+      fireEvent.change(screen.getByLabelText("Сообщение"), {
+        target: { value: "Проверочное сообщение" },
+      });
+    }
 
     fireEvent.submit(form);
     fireEvent.submit(form);

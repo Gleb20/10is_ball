@@ -1,8 +1,10 @@
 import { FakeClock } from "@tab10/test-utils";
+import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp, type AppServices } from "./app.js";
 import { createMigratedPgliteDb, type Db } from "./db/client.js";
+import { matches } from "./db/schema.js";
 
 describe("GAP-005 match and judge completion slice", () => {
   let app: FastifyInstance;
@@ -790,5 +792,145 @@ describe("GAP-005 match and judge completion slice", () => {
     expect(secondUndo.json().match.eventLog.filter(
       (event: { type: string }) => event.type === "point_undone",
     )).toHaveLength(2);
+  });
+
+  it("BUG-029/039 GET returns every raw point and prefixed correction key at the current version only to visible actors", async () => {
+    const created = await createMatch({
+      title: "Outcome read contract",
+      format: "1v1",
+      pointsToWin: 99,
+      participants: [
+        { side: "A", userId: userA.id },
+        { side: "B", userId: userB.id },
+      ],
+    });
+    expect(created.statusCode, created.body).toBe(200);
+    const matchId = created.json().match.id as string;
+    const participants = created.json().match.participants as Array<{ id: string }>;
+    const started = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/start`,
+      cookies: { tab10_session: userA.cookie },
+      payload: { firstServerParticipantId: participants[0]!.id },
+    });
+    expect(started.statusCode, started.body).toBe(200);
+    const acquired = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/judge/acquire`,
+      cookies: { tab10_session: userA.cookie },
+    });
+    expect(acquired.statusCode, acquired.body).toBe(200);
+
+    let version = started.json().match.version as number;
+    let lastReadVersion = -1;
+    const storedKeys: string[] = [];
+    const readStoredMatch = async () => {
+      const read = await app.inject({
+        method: "GET",
+        url: `/api/v1/matches/${matchId}`,
+        cookies: { tab10_session: userA.cookie },
+      });
+      expect(read.statusCode, read.body).toBe(200);
+      const match = read.json().match as {
+        version: number;
+        scoreA: number;
+        scoreB: number;
+        idempotencyKeys: string[];
+      };
+      expect(match.version).toBeGreaterThanOrEqual(lastReadVersion);
+      lastReadVersion = match.version;
+      return match;
+    };
+    await readStoredMatch();
+    const point = async (index: number, side: "A" | "B") => {
+      const key = `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
+      const response = await app.inject({
+        method: "POST",
+        url: `/api/v1/matches/${matchId}/points`,
+        cookies: { tab10_session: userA.cookie },
+        headers: { "idempotency-key": key },
+        payload: { side, expectedVersion: version },
+      });
+      expect(response.statusCode, response.body).toBe(200);
+      version = response.json().match.version as number;
+      storedKeys.push(key);
+      const read = await readStoredMatch();
+      expect(read.version).toBe(version);
+      expect(read.idempotencyKeys).toEqual(storedKeys);
+    };
+    for (let index = 1; index <= 8; index += 1) await point(index, "A");
+
+    const correctionKey = "00000000-0000-4000-8000-000000000009";
+    const correction = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/manual-correction`,
+      cookies: { tab10_session: userA.cookie },
+      headers: { "idempotency-key": correctionKey },
+      payload: {
+        scoreA: 8,
+        scoreB: 2,
+        currentServerParticipantId: participants[1]!.id,
+        expectedVersion: version,
+      },
+    });
+    expect(correction.statusCode, correction.body).toBe(200);
+    version = correction.json().match.version as number;
+    storedKeys.push(`manual-correction:${correctionKey}`);
+    const correctedRead = await readStoredMatch();
+    expect(correctedRead.version).toBe(version);
+    expect(correctedRead.idempotencyKeys).toEqual(storedKeys);
+    for (let index = 10; index <= 13; index += 1) await point(index, "B");
+
+    const undonePointKey = storedKeys.at(-1)!;
+    const undoKey = "00000000-0000-4000-8000-000000000014";
+    const undo = await app.inject({
+      method: "POST",
+      url: `/api/v1/matches/${matchId}/undo`,
+      cookies: { tab10_session: userA.cookie },
+      headers: { "idempotency-key": undoKey },
+      payload: { expectedVersion: version },
+    });
+    expect(undo.statusCode, undo.body).toBe(200);
+    version = undo.json().match.version as number;
+    storedKeys.push(undoKey);
+    const afterUndoRead = await readStoredMatch();
+    expect(afterUndoRead).toMatchObject({ version, scoreA: 8, scoreB: 5 });
+    expect(afterUndoRead.idempotencyKeys).toEqual(storedKeys);
+    expect(afterUndoRead.idempotencyKeys).toContain(undonePointKey);
+    expect(afterUndoRead.idempotencyKeys).toContain(`manual-correction:${correctionKey}`);
+    const [persisted] = await db
+      .select({
+        version: matches.version,
+        scoreA: matches.scoreA,
+        scoreB: matches.scoreB,
+        idempotencyKeys: matches.idempotencyKeys,
+      })
+      .from(matches)
+      .where(eq(matches.id, matchId));
+    expect(persisted).toEqual({
+      version,
+      scoreA: 8,
+      scoreB: 5,
+      idempotencyKeys: storedKeys,
+    });
+
+    for (const cookie of [userA.cookie, userB.cookie]) {
+      const visible = await app.inject({
+        method: "GET",
+        url: `/api/v1/matches/${matchId}`,
+        cookies: { tab10_session: cookie },
+      });
+      expect(visible.statusCode, visible.body).toBe(200);
+      expect(visible.json().match).toMatchObject({ version, scoreA: 8, scoreB: 5 });
+      expect(visible.json().match.idempotencyKeys).toEqual(storedKeys);
+    }
+    const outsider = await app.inject({
+      method: "GET",
+      url: `/api/v1/matches/${matchId}`,
+      cookies: { tab10_session: userC.cookie },
+    });
+    expect(outsider.statusCode).toBe(403);
+    const unauthenticated = await app.inject({ method: "GET", url: `/api/v1/matches/${matchId}` });
+    expect(unauthenticated.statusCode).toBe(401);
   });
 });

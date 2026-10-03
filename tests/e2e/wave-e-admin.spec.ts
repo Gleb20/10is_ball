@@ -29,7 +29,7 @@ test("Wave E ADM catalog, first login, profile, role and block lifecycle",async(
   await memberPage.getByLabel("Новый пароль",{exact:true}).fill("WaveEAdmin9!");
   await memberPage.getByLabel("Повторите пароль",{exact:true}).fill("WaveEAdmin9!");
   await memberPage.getByRole("button",{name:/Сохранить/}).click();
-  await expect(memberPage).toHaveURL(/\/onboarding$/);await memberPage.getByRole("button",{name:"Закрыть онбординг",exact:true}).click();await expect(memberPage).toHaveURL(/\/$/);
+  await expect(memberPage).toHaveURL(/\/onboarding$/);await memberPage.getByRole("button",{name:"Закрыть обучение",exact:true}).click();await expect(memberPage).toHaveURL(/\/$/);
   expect((await member.request.get("/api/v1/admin/users")).status()).toBe(403);
   await row.getByRole("button",{name:"Редактировать",exact:true}).click();const edit=page.getByRole("dialog",{name:"Профиль пользователя"});
   await expect(edit.getByLabel("Email",{exact:true})).toHaveAttribute("readonly","");

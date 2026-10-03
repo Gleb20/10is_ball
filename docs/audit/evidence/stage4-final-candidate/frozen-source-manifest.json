@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-03T07:10:22.748977+00:00",
+  "base": "8b9d2650f7991e121052634ace758f5991ef25b5",
+  "version": "4.1.2",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "b6d7a6191bcc422c7c505d6142e9ce01390d7306ce40a7f3b6c84633af2650e9"
+    },
+    {
+      "path": "apps/api/src/gap-005.integration.test.ts",
+      "sha256": "5dccc580d7a16d09c5b9d3d30f5608e78fdb31d3430e3234506f295ae5531edd"
+    },
+    {
+      "path": "apps/api/src/gap-005.postgres.integration.test.ts",
+      "sha256": "3d8a02bb463a024c735d65ca9f7cd839e43729743980d0db0ba92014f77d6fa0"
+    },
+    {
+      "path": "apps/api/src/gap-009.integration.test.ts",
+      "sha256": "2e27ff1bfb3f15c8f4877f2535aea55f05935057f0768c479c733abccbe18387"
+    },
+    {
+      "path": "apps/api/src/openapi.contract.test.ts",
+      "sha256": "cb972a09c5e6d8a0c100c08e30bb5372099506b7d83d3aaba5ff42ada1b52f6f"
+    },
+    {
+      "path": "apps/api/src/openapi.ts",
+      "sha256": "6f6624f9e5b89690c5d4d0394b738077e15104419014172721814e3d4557f3e6"
+    },
+    {
+      "path": "apps/web/src/onboarding-resume.test.tsx",
+      "sha256": "bb5a92c2ceebcc58c21f004acc61b62d31b72731fba5cc0e21236254c6743097"
+    },
+    {
+      "path": "apps/web/src/pages/HelpPage.gap009.test.tsx",
+      "sha256": "43bbd4b29652a2230582cec9f1f2806b6bca984beab85d9a85011da7d445f6fb"
+    },
+    {
+      "path": "apps/web/src/pages/HelpPage.tsx",
+      "sha256": "9c1c1ddf95a27fe246846d10916ae627e2c4e27d6aa32ca291afafe41995f5b7"
+    },
+    {
+      "path": "apps/web/src/pages/JudgePage.test.tsx",
+      "sha256": "20b6d7ab96bd5502b8d5f2fe8770ab94986768876acc416aad6f65e5c2aeac21"
+    },
+    {
+      "path": "apps/web/src/pages/JudgePage.tsx",
+      "sha256": "cf7f40fa9f4e7b38a6dbace2d4f1ae31eebc5dbaab86bf7c334e4e1d2e6e28ee"
+    },
+    {
+      "path": "apps/web/src/pages/NotificationsPage.test.tsx",
+      "sha256": "f84df8e8e49bc0defa14cc75d52f9eda32c1793bc7e1c70f945174856393cea6"
+    },
+    {
+      "path": "apps/web/src/pages/NotificationsPage.tsx",
+      "sha256": "19d65ca20d3cc111920c1348c81e1e53145270e35f1075cb29b0dae836baa960"
+    },
+    {
+      "path": "apps/web/src/pages/OnboardingPage.stage13.test.tsx",
+      "sha256": "e42c309b5c62c5ab33bc44ac9064be3e81b7974dcdd41fd5b788b557810db4c9"
+    },
+    {
+      "path": "apps/web/src/pages/OnboardingPage.tsx",
+      "sha256": "48d51c01b2108ca9ed041e1253cbccd8ad98beaf9c26d7259eaabb0b57aeefbb"
+    },
+    {
+      "path": "apps/web/src/pages/ProfilePage.test.tsx",
+      "sha256": "6f9f9124255dca1cc12c7ae978e6946c7f2c18211b8e3c602c4613edbfbb3964"
+    },
+    {
+      "path": "apps/web/src/pages/ProfilePage.tsx",
+      "sha256": "1868a785cd77b675649ea27f9a8913874fbddc6961b106121068047153a13cae"
+    },
+    {
+      "path": "apps/web/src/pages/SubmissionGuards.test.tsx",
+      "sha256": "323ae941c4698fb340d219c9a940f93e3c155638a511b47e98b5f0d4519ceb21"
+    },
+    {
+      "path": "apps/web/src/pages/judgeScoreRecovery.test.ts",
+      "sha256": "1ebea660002c0a736c87a1e4545ac95de7176201a7ab79ce0e2c015a14f181ec"
+    },
+    {
+      "path": "apps/web/src/pages/judgeScoreRecovery.ts",
+      "sha256": "4d326481a1fe04f94baa17c495f5cd26010db43348d6543056ae2dd84e510c2b"
+    },
+    {
+      "path": "apps/web/src/pages/useLifecycleSingleFlight.ts",
+      "sha256": "195773fb4bf7b24e9619a24f1392de76ed9b6205c3043ee4e087117150c0742c"
+    },
+    {
+      "path": "apps/web/src/useVisibleRefresh.test.tsx",
+      "sha256": "c477fbbba17dd32a70ff074ae1646ecd108d73b3c57a8f5244cc71c23e77d6a5"
+    },
+    {
+      "path": "apps/web/src/useVisibleRefresh.ts",
+      "sha256": "4240158a5ef047ad9484c6fa3cffd9c8ea407d69998f12e233caa773de2ddd24"
+    },
+    {
+      "path": "docs/BACKLOG.md",
+      "sha256": "bb908093794365344d5cbd2ab0c08e9f998d33f8a13471f8f49b57dfe1955089"
+    },
+    {
+      "path": "docs/CHANGELOG_DEV.md",
+      "sha256": "1d1e98de5c7ebd8d1d3fcda7a4abaabf49c28a03b76cba2fd1761c7d87d78184"
+    },
+    {
+      "path": "docs/DECISIONS.md",
+      "sha256": "e038fb58cb480362d46b8f03d35db0fea0df12196059a0f857dbb5af22c5e7bb"
+    },
+    {
+      "path": "docs/OPEN_QUESTIONS.md",
+      "sha256": "2a5929f075d811600896c1a5f3f2da4fc21a549e05be325be6fdb58b72deb4d6"
+    },
+    {
+      "path": "docs/PROJECT_STATUS.md",
+      "sha256": "ab7649c12da6739fbda6c6830956824130c0b61c90ff61c4f19a1f21db9f6c75"
+    },
+    {
+      "path": "docs/VERSIONING.md",
+      "sha256": "ed3ed511ad146045338da70f446a3b7173a4cc85b5ea0d79e1ba1e140fd190fa"
+    },
+    {
+      "path": "docs/architecture/API_AS_BUILT.md",
+      "sha256": "96b19b66fd894312608e81431d51b1dfd1b6fb461dd7c3cafd6c521a2c3dccdd"
+    },
+    {
+      "path": "docs/audits/2026-09-13-ux-ui/implementation/coverage.csv",
+      "sha256": "6f1499f06ac4142c923b2cca0542fa0bcb1a332858a0e15cea822b138380757f"
+    },
+    {
+      "path": "docs/operations/DEPLOYMENT_AS_BUILT.md",
+      "sha256": "a90acfb5968c83d4cc00b7d1b89fef596155941aaa4c9993d0e8014f72c4fad5"
+    },
+    {
+      "path": "docs/requirements/04_PRD.md",
+      "sha256": "4eec1724196aec103ed6e91e7871cbc50342827ae55bf3e12662084ecf82bc68"
+    },
+    {
+      "path": "docs/requirements/05_UX_FLOWS.md",
+      "sha256": "8ef4880202ac0fd688c9af7337d6fc13f4f19b3976f7ba17a1c8fd130f011975"
+    },
+    {
+      "path": "docs/requirements/08_API_SPEC.md",
+      "sha256": "e10d19759e6daacfeab14bb5483510f6e28f64755ebd02ab61f3fc9984cf69ed"
+    },
+    {
+      "path": "docs/requirements/11_ACCEPTANCE_TEST_CATALOG.md",
+      "sha256": "b9e80548261405850bc300c75b27de3aac62b3a42b9766a91a6006961985cbc1"
+    },
+    {
+      "path": "docs/requirements/13_REQUIREMENTS_TEST_TRACEABILITY.md",
+      "sha256": "4419e3cc0e8435a979a6234b78935266eaca60460d82ea7cf39652c6103f3bc5"
+    },
+    {
+      "path": "docs/test-plans/TECH-008-interface-programme.md",
+      "sha256": "134ec3fa4354416c071a67a4c202758d8a097b46968ae22f3e2505f2d2d0f344"
+    },
+    {
+      "path": "package.json",
+      "sha256": "c36f5229f40d25c5004a3f4c94e366c58aa60376297ad581e600aa0da88f38f1"
+    },
+    {
+      "path": "tests/e2e/stage10-recovery.spec.ts",
+      "sha256": "c06db011737f0524d4864495c6adf6472455b6f9bada88e82acbad313afe785c"
+    },
+    {
+      "path": "tests/e2e/stage4-score-recovery.spec.ts",
+      "sha256": "7f6f63f20dd128ad784faf95db8f55fd077e1c8e6eac9a79b8caac1e33c19789"
+    },
+    {
+      "path": "tests/e2e/wave-d-teams.spec.ts",
+      "sha256": "8123676df426d8a08a6179b6021d26a93969a6b7b1732607429808d55d26fabc"
+    },
+    {
+      "path": "tests/e2e/wave-e-admin.spec.ts",
+      "sha256": "a7bd3d3bd5162633302694c920e9a7a550a49a772dab37449202423b55871359"
+    },
+    {
+      "path": "tests/e2e/wave-e-user.spec.ts",
+      "sha256": "46318fab7ba1999f9b3bafab50fac6dda14476ffc81a1d1ce13ee69d29f77b5c"
+    }
+  ],
+  "patchSha256": "20b4b27ef32a70f00b440c1ec216d5b7ff6d5e5102a2e553672a7b43bfda1cc0",
+  "preDocumentationIntegrity": {
+    "checked": 44,
+    "matched": 44,
+    "mismatches": []
+  },
+  "note": "Documentation and evidence were updated after this frozen source verification; application and test sources remain frozen."
+}

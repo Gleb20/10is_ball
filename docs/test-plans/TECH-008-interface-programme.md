@@ -107,7 +107,7 @@ flowchart LR
 | 1 | GAP-029: скрыть game/tournament invitations и challenges во всех UI seams | AT-UI-INV-001/002; старые links/query, `unreadCount` и первые пять, team/handover не регрессируют |
 | 2 | GAP-030/031 + GAP-015: Home-only shell и роль/задача на Home | AT-HOME-001..003, auth/404/403, bracket/history return, onboarding anchors в том же delta |
 | 3 | BUG-018..028 по применимости, BUG-040, GAP-034: controls и межэкранный status/icon inventory/target | keyboard/focus/visible option над клавиатурой и safe area; UI-001/AT-UI-STATUS-001 по всем семействам; physical zoom отдельно |
-| 4 | BUG-029/031/039: recovery счёта и ручной коррекции | authoritative GET exact key/version, intent queue, PG concurrency; unresolved не предлагает повтор |
+| 4 | BUG-029/031/039: recovery счёта и ручной коррекции — local candidate 4.1.2, финальные gates ожидаются | authoritative GET exact key/version, intent queue, PG concurrency; unresolved не предлагает повтор |
 | 5 | GAP-013 и MATCH setup: состав перед редкими правилами | оператор не игрок; search/presets/serve; Q-UX-004/005/006 до зависимых механик |
 | 6 | GAP-017/023, GAP-032: judge/result/next; GAP-034 match/judge consumer | stable touch geometry, status/serve icon meaning, reduced motion, safe exit, D24/D33; Q-UX-007/008/009 перед replay/Undo/историей ведущих |
 | 7 | GAP-019 scope A + GAP-021: collecting/needs_regeneration, authoritative rules/roster до сетки | D35/D37, direct add, prestart edit/regeneration; reusable guest/future date — Q-UX-004/010 |

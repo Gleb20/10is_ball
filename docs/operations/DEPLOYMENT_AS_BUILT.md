@@ -1,9 +1,12 @@
 # Deployment as-built
 
-Текущий публичный runtime — версия 4.1.0, D36 stage 2. Принятое
-[SemVer-правило](../WORKFLOW.md#product-versioning) применено к этому выпуску.
-Локально подготовлен PATCH-кандидат 4.1.1 этапа 3; он ещё не commit, не push и
-не опубликован, поэтому наблюдение публичной версии 4.1.0 ниже сохраняется.
+Текущий опубликованный тестовый прод — версия 4.1.1, application SHA
+`8b9d2650f7991e121052634ace758f5991ef25b5`. Read-only smoke 2026-10-03
+подтвердил web, API, proxy и `/ready`; первичные `429`/timeout сохранены как
+недиагностированные transient observations без инфраструктурных изменений.
+Принятое [SemVer-правило](../WORKFLOW.md#product-versioning) применено к
+локальному PATCH-кандидату 4.1.2 этапа 4. Он ещё не commit, не push и не
+опубликован. Исторические release receipts ниже сохраняются без переписывания.
 
 ## D36 stage 2 terminal gate observed — 2026-09-18
 

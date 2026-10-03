@@ -1,11 +1,37 @@
 # Tab-10 — статус проекта
 
-## Этап 3 — локальный aggregate candidate 4.1.1, 2026-09-19
+## Этап 4 — локальный кандидат 4.1.2, 2026-10-03
+
+Опубликованный тестовый прод Vercel + Render + Neon подтверждён read-only smoke
+как версия **4.1.1** на
+точном application SHA `8b9d2650f7991e121052634ace758f5991ef25b5`: web, API,
+proxy и readiness согласованы. Первичные `429`/timeout при проверке сохранены как
+transient observations без доказанной причины; инфраструктура не менялась.
+
+На этой опубликованной базе собран локальный PATCH-кандидат **4.1.2** для Stage 4:
+BUG-029 score recovery, BUG-031 correction focus и BUG-039 absolute correction
+recovery. В общий кандидат также встроены принятые R2 пакеты Stage 13
+(GAP-014/016) и Stage 10 (BUG-036/037); GAP-024 остаётся открытым.
+
+Единый финальный `pnpm run ci` прошёл **1442/1442** без failed, skipped, todo
+или interrupted: cleanup foundation 4/4, quality 1275/1275, disposable PostgreSQL
+84/84 и compiled production-like browser 79/79 (70 сценариев + 9 foundation).
+Все 44 файла frozen source совпали с manifest после gate; Terra проверила полный
+44-file delta и вернула PASS, root forward/reverse manifest review также PASS.
+BUG-029/031/039, BUG-036/037 и GAP-014/016 получили `verified_local`. GAP-024
+остаётся открытым. Локальная одноразовая БД удалена; данные опубликованного
+тестового прода не сбрасывались и не использовались как fixtures. Frozen R2 и
+диагностические evidence не переписывались. Физический iPhone, pinned WebKit и
+spoken AT не проверены. Commit, push, tag, deploy и публичные мутации не
+выполнялись; кандидат остаётся unreleased.
+
+## Исторический локальный aggregate candidate этапа 3, 2026-09-19
 
 WO1 R2, WO2 R2, WO3 R2, ограниченный WO4 common sample и последующая
 регрессия позднего каталога сведены на точной базе
-`550d3680a08a8faf4e1e4afbfcc373c942f155d0`. Версия локального кандидата —
-`4.1.1`; публичный стенд остаётся на `4.1.0` и том же base SHA. Финальная
+`550d3680a08a8faf4e1e4afbfcc373c942f155d0`. Версия локального кандидата была
+`4.1.1`; на момент этого исторического checkpoint публичный стенд оставался на
+`4.1.0` и том же base SHA. Финальная
 проверка качества исправленного дерева прошла 1193/1193. PostgreSQL 72/72 был
 проверен в агрегате до frontend-only коррекции; сервер, схема и миграции после
 него не менялись.

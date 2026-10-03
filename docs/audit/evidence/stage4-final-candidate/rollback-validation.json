@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "baseSha": "8b9d2650f7991e121052634ace758f5991ef25b5",
+  "scopeFiles": 44,
+  "forwardCheck": "passed",
+  "forwardApply": "passed",
+  "forwardMatchesLiveCandidate": 44,
+  "rollbackCheck": "passed",
+  "rollbackApply": "passed",
+  "rollbackMatchesBase": 44,
+  "workspace": "disposable archive extraction",
+  "note": "Historical CRLF rows in the base coverage CSV produce whitespace warnings inside the reverse patch; application and byte-for-byte base comparison both passed."
+}

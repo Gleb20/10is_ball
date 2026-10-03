@@ -1,5 +1,17 @@
 # Requirements ↔ Tests Traceability
 
+## Stage 4 — integrated candidate, verified locally
+
+| Backlog / requirement | Deterministic regression | Runtime evidence and limit |
+|---|---|---|
+| BUG-029; JUDGE-009, AT-JUDGE-007/009 | [JudgePage.test.tsx](../../apps/web/src/pages/JudgePage.test.tsx) and [judgeScoreRecovery.test.ts](../../apps/web/src/pages/judgeScoreRecovery.test.ts): pre-POST persistence, rapid FIFO, exact-key/no-key, sticky queue choice, fixed reviewed version, successful/exact fence, `409` only-current no-write, storage failure, Home/remount, real React Activity queue ownership, restored server-version floor and exact-proof alert cleanup | [stage4-score-recovery.spec.ts](../../tests/e2e/stage4-score-recovery.spec.ts) covers compiled 360/390/1440 response-loss/readback and POST counts. Final production-like browser lane passed 70/70 scenarios plus 9/9 foundation checks in the aggregate gate. |
+| BUG-031; JUDGE-011, AT-JUDGE-010 | [JudgePage.test.tsx](../../apps/web/src/pages/JudgePage.test.tsx): heading focus, A→B→server→Save→Cancel order, Cancel/Escape return, pending Escape guard, success focus/announcement and no background focus theft | Compiled browser spec covers real DOM focus and overflow; physical keyboard, iPhone, pinned WebKit and spoken AT remain explicit skips. |
+| BUG-039; JUDGE-009/011, AT-JUDGE-002/004/009/010 | Component/helper tests cover immutable absolute payload, `manual-correction:<UUID>` proof, early absence, GET failure, 0-POST acceptance, new UUID/pinned version, multiple attempts, storage failure and remount | [gap-005.postgres.integration.test.ts](../../apps/api/src/gap-005.postgres.integration.test.ts) adds controlled original/new and correction/point/finish/handover orders. The final disposable PostgreSQL lane passed 84/84, including the controlled ordering cases. |
+
+The frozen 44-file candidate passed independent source and forward/reverse manifest
+review plus the aggregate `pnpm run ci` 1442/1442. Physical iPhone, pinned WebKit,
+spoken AT and public release parity remain separate gates.
+
 ## Stage 3 WO4 — общий StatusChip sample, независимая приёмка ожидается
 
 | Backlog / requirement | Existing regression | Browser evidence and limit |
@@ -177,11 +189,30 @@ PostgreSQL consent (2), and transactional event producers (6). The relevant sour
 
 Admin coverage is `apps/api/src/gap-010.integration.test.ts` (4 service/API cases),
 `apps/web/src/pages/AdminPage.gap010.test.tsx` (6 web cases), plus existing auth
-integration coverage. Help coverage is `apps/api/src/gap-009.integration.test.ts`
-(3 service/API cases), `apps/web/src/pages/HelpPage.gap009.test.tsx` (2), and
-`apps/web/src/pages/SubmissionGuards.test.tsx` (5). Onboarding coverage is
-`apps/api/src/onboarding.integration.test.ts` (7 focused cases), with contextual-page
-focused coverage recorded at 54/54.
+integration coverage. Current Help coverage is `apps/api/src/gap-009.integration.test.ts`
+(4 service/API cases, including exact multiline persistence readback),
+`apps/web/src/pages/HelpPage.gap009.test.tsx` (10), and
+`apps/web/src/pages/SubmissionGuards.test.tsx` (5). Onboarding coverage includes
+`apps/api/src/onboarding.integration.test.ts` (7),
+`apps/web/src/onboarding-resume.test.tsx` (8) and
+`apps/web/src/pages/OnboardingPage.stage13.test.tsx` (5).
+
+### Stage 10 / Stage 13 integrated candidate — 2026-10-03
+
+GAP-014/AT-ONB-003 map to `OnboardingPage.stage13.test.tsx`,
+`onboarding-resume.test.tsx`, the lifecycle single-flight helper and the compiled
+Wave E journey. GAP-016/HELP-003/AT-UI-002 map to
+`HelpPage.gap009.test.tsx`, `SubmissionGuards.test.tsx`, the multiline API/DB
+readback in `gap-009.integration.test.ts` and Wave E browser feedback.
+
+BUG-036 maps `ProfilePage.test.tsx` and the Stage 10 compiled browser recovery
+scenario to PROFILE-001/003/004/006 and AT-PROFILE-001/004/005: field association,
+trimmed limits, exact dates, generic 400, retained draft, unknown save with one
+GET-only review, and actor/route/reauth/unmount/Activity fences. BUG-037 maps
+`NotificationsPage.test.tsx`, `stage10-recovery.spec.ts` and the real team-invite
+readback in `wave-d-teams.spec.ts` to NOTIF-001/003–006, AT-NOTIF-001/003–005 and
+AT-UI-INV-002: confirmed/partial readAt, actionable retention, terminal precedence
+and focus recovery. The focused web result, web typecheck and Help API/DB 4/4 result pass. The final compiled browser and aggregate CI passed within 1442/1442, and independent integrated review returned PASS. The four Stage 10/13 coverage rows are `verified_local`. GAP-024 is unchanged.
 
 The fixture-only reconciliation in `data-002.integration.test.ts`,
 `data-005.integration.test.ts`, `load.integration.test.ts`,

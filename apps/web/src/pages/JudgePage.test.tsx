@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { Activity } from "react";
 import {
   act,
   fireEvent,
@@ -14,8 +15,23 @@ import {
   Route,
   Routes,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { JudgePage } from "./JudgePage";
+import {
+  acceptReviewedPointScore,
+  appendCorrectionIntent,
+  appendPointIntent,
+  beginCorrectionAttempt,
+  beginPointAttempt,
+  createScoreRecoveryRecord,
+  markCorrectionAttemptError,
+  markPointAttemptError,
+  persistScoreRecoveryRecord,
+  reconcilePointAttempts,
+  resetScoreRecoveryForTests,
+  scoreRecoveryStorageKey,
+} from "./judgeScoreRecovery";
 
 const getMatch = vi.fn();
 const startMatch = vi.fn();
@@ -49,6 +65,10 @@ vi.mock("../api", () => ({
   },
 }));
 
+vi.mock("../auth", () => ({
+  useAuth: () => ({ user: { id: "judge-user" }, reauthRequired: false }),
+}));
+
 const matchBody = {
   id: "m1",
   status: "in_progress",
@@ -76,6 +96,7 @@ const matchBody = {
 
 function Destination({ label }: { label: string }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const notice = (
     location.state as
       | { judgeExitNotice?: { kind: "success" | "warning"; message: string } }
@@ -88,6 +109,9 @@ function Destination({ label }: { label: string }) {
         <p role={notice.kind === "warning" ? "alert" : "status"}>
           {notice.message}
         </p>
+      ) : null}
+      {label === "home" ? (
+        <button type="button" onClick={() => navigate("/matches/m1/judge")}>Вернуться к судейству</button>
       ) : null}
     </div>
   );
@@ -116,6 +140,18 @@ function renderJudge(path = "/matches/m1/judge") {
   );
 }
 
+function activityJudge(mode: "visible" | "hidden") {
+  return (
+    <MemoryRouter initialEntries={["/matches/m1/judge"]}>
+      <Activity mode={mode}>
+        <Routes>
+          <Route path="/matches/:id/judge" element={<JudgePage />} />
+        </Routes>
+      </Activity>
+    </MemoryRouter>
+  );
+}
+
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason?: unknown) => void;
@@ -138,6 +174,8 @@ describe("REQ_ui__judge_immersive", () => {
   beforeEach(() => {
     cleanup();
     vi.clearAllMocks();
+    resetScoreRecoveryForTests();
+    window.sessionStorage.clear();
     getMatch.mockResolvedValue({ match: matchBody });
     startMatch.mockResolvedValue({ match: matchBody });
     acquireJudge.mockResolvedValue({ ok: true });
@@ -361,7 +399,7 @@ describe("REQ_ui__judge_immersive", () => {
     ).toBeEnabled();
   });
 
-  it("AT-JUDGE-007 stops the queue and shows authoritative score on version conflict", async () => {
+  it("AT-JUDGE-007 proves no-write on version conflict but keeps the old queue paused", async () => {
     const user = userEvent.setup();
     const pointRequest = deferred<{ match: typeof matchBody }>();
     awardPoint.mockImplementationOnce(() => pointRequest.promise);
@@ -371,6 +409,7 @@ describe("REQ_ui__judge_immersive", () => {
     });
 
     await user.click(btn);
+    fireEvent.click(screen.getByRole("button", { name: /\+1 очко: борис б/i }));
     getMatch.mockResolvedValue({
       match: { ...matchBody, scoreA: 4, version: 6 },
     });
@@ -385,15 +424,576 @@ describe("REQ_ui__judge_immersive", () => {
     });
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      /счёт изменился на другом устройстве/i,
+      /запрос не изменил счёт/i,
     );
     expect(
       within(screen.getByTestId("judge-side-A")).getByText("4"),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    const recoveryRegion = screen.getByRole("region", { name: /восстановление счёта/i });
+    expect(recoveryRegion).toHaveTextContent(/не отправлено: 1/i);
+    await waitFor(() => expect(recoveryRegion).toHaveFocus());
     expect(screen.queryByTestId("judge-lost-lock")).not.toBeInTheDocument();
-    expect(btn).toBeEnabled();
+    expect(btn).toBeDisabled();
+    expect(screen.getByRole("button", { name: /отправить оставшиеся нажатия/i })).toBeEnabled();
     expect(awardPoint).toHaveBeenCalledTimes(1);
+  });
+
+  it("BUG-029 restores an interrupted send as unknown, checks GET first, and never replays it", async () => {
+    const user = userEvent.setup();
+    let record = appendPointIntent(
+      createScoreRecoveryRecord("judge-user", "m1", 5),
+      { id: "intent-a", side: "A", idempotencyKey: "point-a" },
+    );
+    record = beginPointAttempt(record, 5).record;
+    record = appendPointIntent(record, { id: "intent-b", side: "B", idempotencyKey: "point-b" });
+    persistScoreRecoveryRecord(record, window.sessionStorage);
+    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
+
+    renderJudge();
+
+    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
+      /сервер не подтвердил/i,
+    );
+    expect(getMatch).toHaveBeenCalled();
+    expect(awardPoint).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /принять показанный счёт/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /отменить последнее очко/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Ещё" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: /принять показанный счёт/i }));
+    expect(awardPoint).not.toHaveBeenCalled();
+    expect(screen.getByRole("region", { name: /подтверждение показанного счёта/i })).toHaveTextContent(
+      /анна а: 3.*борис б: 2/i,
+    );
+    await user.click(screen.getByRole("button", { name: /отменить принятие/i }));
+    expect(awardPoint).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: /принять показанный счёт/i }));
+    await user.click(screen.getByRole("button", { name: /подтвердить показанный счёт/i }));
+    expect(awardPoint).not.toHaveBeenCalled();
+    awardPoint
+      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 4, version: 6 } })
+      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 4, scoreB: 3, version: 7 } });
+    await user.click(screen.getByRole("button", { name: /добавить новое очко: анна а/i }));
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(1));
+    expect(awardPoint).toHaveBeenCalledWith("m1", "A", 5, expect.any(String));
+    expect(awardPoint.mock.calls[0]?.[3]).not.toBe("point-a");
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole("button", { name: /отправить оставшиеся нажатия/i }));
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(2));
+    expect(awardPoint).toHaveBeenNthCalledWith(2, "m1", "B", 6, "point-b");
+  });
+
+  it("BUG-029 binds score acceptance to the reviewed snapshot and does not steal focus on a later GET", async () => {
+    const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
+    vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
+      timers.push({ callback, delay });
+      return timers.length as never;
+    });
+    vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
+    let record = appendPointIntent(
+      createScoreRecoveryRecord("judge-user", "m1", 5),
+      { id: "a", side: "A", idempotencyKey: "key-a" },
+    );
+    record = markPointAttemptError(beginPointAttempt(record, 5).record, "a");
+    persistScoreRecoveryRecord(record, window.sessionStorage);
+    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
+    const user = userEvent.setup();
+    renderJudge();
+    const recovery = await screen.findByRole("region", { name: /восстановление счёта/i });
+    await user.click(screen.getByRole("button", { name: /принять показанный счёт/i }));
+    const confirm = screen.getByRole("button", { name: /подтвердить показанный счёт/i });
+    confirm.focus();
+
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: [] },
+    });
+    const liveTimer = timers.find(({ delay }) => delay === 30_000);
+    expect(liveTimer).toBeDefined();
+    await act(async () => {
+      await (liveTimer!.callback as () => Promise<void>)();
+    });
+    expect(recovery).not.toHaveFocus();
+    await user.click(confirm);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/изменился во время подтверждения/i);
+    expect(screen.queryByRole("region", { name: /подтверждение показанного счёта/i })).not.toBeInTheDocument();
+    expect(awardPoint).not.toHaveBeenCalled();
+  });
+
+  it("BUG-029 keeps an explicit new point pinned to the confirmed reviewed version after a newer GET", async () => {
+    const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
+    vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
+      timers.push({ callback, delay });
+      return timers.length as never;
+    });
+    vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
+    let record = appendPointIntent(
+      createScoreRecoveryRecord("judge-user", "m1", 7),
+      { id: "a", side: "A", idempotencyKey: "key-a" },
+    );
+    record = markPointAttemptError(beginPointAttempt(record, 7).record, "a");
+    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
+    record = appendPointIntent(record, { id: "c", side: "A", idempotencyKey: "key-c" });
+    persistScoreRecoveryRecord(record, window.sessionStorage);
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, scoreA: 5, version: 7, idempotencyKeys: [] },
+    });
+    const user = userEvent.setup();
+    renderJudge();
+    await user.click(await screen.findByRole("button", { name: /принять показанный счёт/i }));
+    await user.click(screen.getByRole("button", { name: /подтвердить показанный счёт/i }));
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, scoreA: 6, version: 8, idempotencyKeys: [] },
+    });
+    const liveTimer = timers.find(({ delay }) => delay === 30_000);
+    await act(async () => {
+      await (liveTimer!.callback as () => Promise<void>)();
+    });
+    awardPoint.mockRejectedValueOnce(
+      Object.assign(new Error("stale"), { status: 409, code: "VERSION_CONFLICT" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: /добавить новое очко: анна а/i }));
+
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(1));
+    expect(awardPoint).toHaveBeenCalledWith("m1", "A", 7, expect.any(String));
+    const recovery = await screen.findByRole("region", { name: /восстановление счёта/i });
+    expect(recovery).toHaveTextContent(/не отправлено: 2/i);
+    expect(screen.queryByRole("button", { name: /отправить оставшиеся нажатия/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /добавить новое очко: анна а/i })).toBeEnabled();
+    expect(recovery).toHaveTextContent(/принят показанный счёт/i);
+  });
+
+  it("BUG-029 keeps an unsaved tap visible and sends no POST when durable storage fails", async () => {
+    const storageWrite = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementationOnce(() => {
+        throw new Error("quota");
+      });
+    const user = userEvent.setup();
+    const rendered = renderJudge();
+
+    await user.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
+
+    expect(awardPoint).not.toHaveBeenCalled();
+    expect(screen.getByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
+      /сохранено только в этой вкладке/i,
+    );
+    expect(screen.getByRole("button", { name: /\+1 очко: анна а/i })).toBeDisabled();
+    expect(screen.queryByText(/отправка очка/i)).not.toBeInTheDocument();
+    storageWrite.mockRestore();
+
+    rendered.unmount();
+    renderJudge();
+    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
+      /осталось нажатий: 1/i,
+    );
+    expect(awardPoint).not.toHaveBeenCalled();
+  });
+
+  it("BUG-029 does not retry storage or send a queued tap when its write failed during an active request", async () => {
+    const realSetItem = Storage.prototype.setItem;
+    let writeCount = 0;
+    const storageWrite = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(function (this: Storage, key: string, value: string) {
+        writeCount += 1;
+        if (writeCount === 3) throw new Error("quota");
+        return realSetItem.call(this, key, value);
+      });
+    const firstPoint = deferred<{ match: typeof matchBody }>();
+    awardPoint
+      .mockImplementationOnce(() => firstPoint.promise)
+      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 4, scoreB: 3, version: 7 } });
+    renderJudge();
+    const pointA = await screen.findByRole("button", { name: /\+1 очко: анна а/i });
+    const pointB = screen.getByRole("button", { name: /\+1 очко: борис б/i });
+
+    fireEvent.click(pointA);
+    fireEvent.click(pointB);
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      firstPoint.resolve({ match: { ...matchBody, scoreA: 4, version: 6 } });
+      await firstPoint.promise;
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
+        /сохранено только в этой вкладке/i,
+      );
+    });
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: /повторить сохранение/i })).toBeEnabled();
+    storageWrite.mockRestore();
+    getMatch.mockResolvedValue({ match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: [] } });
+    await userEvent.setup().click(screen.getByRole("button", { name: /повторить сохранение/i }));
+    expect(await screen.findByRole("button", { name: /отправить оставшиеся нажатия/i })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: /\+1 очко: анна а/i }));
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+    await userEvent.setup().click(screen.getByRole("button", { name: /отправить оставшиеся нажатия/i }));
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(2));
+    expect(awardPoint).toHaveBeenNthCalledWith(2, "m1", "B", 6, expect.any(String));
+  });
+
+  it("BUG-029 requires explicit continuation for queued taps after exact-key reconciliation", async () => {
+    const user = userEvent.setup();
+    const firstPoint = deferred<{ match: typeof matchBody }>();
+    awardPoint
+      .mockImplementationOnce(() => firstPoint.promise)
+      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 4, scoreB: 3, version: 7 } });
+    renderJudge();
+    const pointA = await screen.findByRole("button", { name: /\+1 очко: анна а/i });
+    const pointB = screen.getByRole("button", { name: /\+1 очко: борис б/i });
+
+    fireEvent.click(pointA);
+    fireEvent.click(pointB);
+    const firstKey = String(awardPoint.mock.calls[0]?.[3]);
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: [firstKey] },
+    });
+    await act(async () => {
+      firstPoint.reject(Object.assign(new Error("network"), { code: "NETWORK" }));
+      await firstPoint.promise.catch(() => undefined);
+    });
+
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+    const continueButton = await screen.findByRole("button", {
+      name: /отправить оставшиеся нажатия/i,
+    });
+    await user.click(continueButton);
+
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(2));
+    expect(awardPoint).toHaveBeenNthCalledWith(2, "m1", "B", 6, expect.any(String));
+  });
+
+  it("BUG-029 clears a stale unknown-outcome alert after exact-key proof", async () => {
+    const pointRequest = deferred<{ match: typeof matchBody }>();
+    awardPoint.mockImplementationOnce(() => pointRequest.promise);
+    renderJudge();
+    fireEvent.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
+    const pointKey = String(awardPoint.mock.calls[0]?.[3]);
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: [pointKey] },
+    });
+
+    await act(async () => {
+      pointRequest.reject(new Error("network"));
+      await pointRequest.promise.catch(() => undefined);
+    });
+
+    expect(within(screen.getByTestId("judge-side-A")).getByText("4")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: /восстановление счёта/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/не удалось подтвердить результат начисления/i)).not.toBeInTheDocument();
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+  });
+
+  it("BUG-029 exact-proves a lost explicit fence while B/C remain paused for Continue", async () => {
+    let record = appendPointIntent(
+      createScoreRecoveryRecord("judge-user", "m1", 5),
+      { id: "a", side: "A", idempotencyKey: "key-a" },
+    );
+    record = markPointAttemptError(beginPointAttempt(record, 5).record, "a");
+    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
+    record = appendPointIntent(record, { id: "c", side: "A", idempotencyKey: "key-c" });
+    persistScoreRecoveryRecord(record, window.sessionStorage);
+    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
+    const explicitPoint = deferred<{ match: typeof matchBody }>();
+    awardPoint.mockImplementationOnce(() => explicitPoint.promise);
+    const user = userEvent.setup();
+    renderJudge();
+    await user.click(await screen.findByRole("button", { name: /принять показанный счёт/i }));
+    await user.click(screen.getByRole("button", { name: /подтвердить показанный счёт/i }));
+    await user.click(screen.getByRole("button", { name: /добавить новое очко: анна а/i }));
+    const fenceKey = String(awardPoint.mock.calls[0]?.[3]);
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: [fenceKey] },
+    });
+    await act(async () => {
+      explicitPoint.reject(new Error("network"));
+      await explicitPoint.promise.catch(() => undefined);
+    });
+
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+    const recovery = await screen.findByRole("region", { name: /восстановление счёта/i });
+    expect(recovery).toHaveTextContent(/не отправлено: 2/i);
+    expect(screen.getByRole("button", { name: /отправить оставшиеся нажатия/i })).toBeEnabled();
+  });
+
+  it("BUG-029 restores a sent attempt with B/C queued and performs zero automatic POSTs", async () => {
+    let record = appendPointIntent(
+      createScoreRecoveryRecord("judge-user", "m1", 5),
+      { id: "a", side: "A", idempotencyKey: "key-a" },
+    );
+    record = beginPointAttempt(record, 5).record;
+    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
+    record = appendPointIntent(record, { id: "c", side: "A", idempotencyKey: "key-c" });
+    persistScoreRecoveryRecord(record, window.sessionStorage);
+    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
+
+    renderJudge();
+
+    const recovery = await screen.findByRole("region", { name: /восстановление счёта/i });
+    expect(recovery).toHaveTextContent(/сервер не подтвердил/i);
+    expect(recovery).toHaveTextContent(/отправленные очки.*анна а/i);
+    expect(recovery).toHaveTextContent(/не отправлено.*2/i);
+    expect(recovery).toHaveTextContent(/не отправлять оставшиеся/i);
+    expect(awardPoint).not.toHaveBeenCalled();
+  });
+
+  it("BUG-029 keeps only the unresolved B attempt after exact proof for A", async () => {
+    let record = createScoreRecoveryRecord("judge-user", "m1", 5);
+    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
+    record = beginPointAttempt(record, 5).record;
+    record = markPointAttemptError(record, "a");
+    record = acceptReviewedPointScore(reconcilePointAttempts(record, 5, []).record);
+    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
+    record = beginPointAttempt(record, 5, true).record;
+    record = markPointAttemptError(record, "b");
+    persistScoreRecoveryRecord(record, window.sessionStorage);
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: ["key-a"] },
+    });
+
+    renderJudge();
+
+    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
+      /сервер не подтвердил/i,
+    );
+    expect(screen.getByRole("button", { name: /отменить последнее очко/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Ещё" })).toBeDisabled();
+    expect(awardPoint).not.toHaveBeenCalled();
+  });
+
+  it("BUG-029 retains informational correlation after judge ownership is lost", async () => {
+    awardPoint.mockRejectedValueOnce(
+      Object.assign(new Error("expired"), { status: 401, code: "UNAUTHORIZED" }),
+    );
+    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
+    const user = userEvent.setup();
+    renderJudge();
+
+    await user.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
+
+    expect(await screen.findByTestId("judge-lost-lock")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
+      /требует заново занять слот судьи/i,
+    );
+    expect(screen.queryByRole("button", { name: /добавить новое очко/i })).not.toBeInTheDocument();
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+  });
+
+  it("BUG-029 returns Home and re-enters through GET and judge ownership with zero automatic POSTs", async () => {
+    let record = appendPointIntent(
+      createScoreRecoveryRecord("judge-user", "m1", 5),
+      { id: "a", side: "A", idempotencyKey: "key-a" },
+    );
+    record = markPointAttemptError(beginPointAttempt(record, 5).record, "a");
+    persistScoreRecoveryRecord(record, window.sessionStorage);
+    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
+    const user = userEvent.setup();
+    renderJudge();
+    await screen.findByRole("region", { name: /восстановление счёта/i });
+    const readsBeforeExit = getMatch.mock.calls.length;
+
+    await user.click(screen.getByRole("button", { name: "На главную" }));
+    expect(await screen.findByText("home")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /вернуться к судейству/i }));
+
+    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toBeInTheDocument();
+    expect(getMatch.mock.calls.length).toBeGreaterThan(readsBeforeExit);
+    expect(acquireJudge).toHaveBeenCalledTimes(2);
+    expect(awardPoint).not.toHaveBeenCalled();
+  });
+
+  it("BUG-029 ignores a completed POST callback from an earlier mount", async () => {
+    const pendingPoint = deferred<{ match: typeof matchBody }>();
+    awardPoint.mockImplementationOnce(() => pendingPoint.promise);
+    const firstMount = renderJudge();
+    fireEvent.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+
+    firstMount.unmount();
+    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
+    renderJudge();
+    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toBeInTheDocument();
+    await act(async () => {
+      pendingPoint.resolve({ match: { ...matchBody, scoreA: 9, version: 6 } });
+      await pendingPoint.promise;
+    });
+
+    expect(within(screen.getByTestId("judge-side-A")).getByText("3")).toBeInTheDocument();
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+  });
+
+  it("BUG-029 gives a resumed Activity its own point-queue owner", async () => {
+    const oldPoint = deferred<{ match: typeof matchBody }>();
+    const resumedPoint = deferred<{ match: typeof matchBody }>();
+    const queuedPoint = deferred<{ match: typeof matchBody }>();
+    awardPoint
+      .mockImplementationOnce(() => oldPoint.promise)
+      .mockImplementationOnce(() => resumedPoint.promise)
+      .mockImplementationOnce(() => queuedPoint.promise);
+    const rendered = render(activityJudge("visible"));
+    const firstPointButton = await screen.findByRole("button", { name: /\+1 очко: анна а/i });
+    fireEvent.click(firstPointButton);
+    fireEvent.click(screen.getByRole("button", { name: /\+1 очко: борис б/i }));
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+    const firstKey = String(awardPoint.mock.calls[0]?.[3]);
+
+    rendered.rerender(activityJudge("hidden"));
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: [firstKey] },
+    });
+    rendered.rerender(activityJudge("visible"));
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: /отправить оставшиеся нажатия/i }));
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(2));
+
+    await act(async () => {
+      oldPoint.resolve({ match: { ...matchBody, scoreA: 4, version: 6 } });
+      await oldPoint.promise;
+    });
+    fireEvent.click(screen.getByRole("button", { name: /\+1 очко: анна а/i }));
+    expect(awardPoint).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      resumedPoint.resolve({ match: { ...matchBody, scoreA: 4, scoreB: 3, version: 7 } });
+      await resumedPoint.promise;
+    });
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(3));
+    expect(awardPoint).toHaveBeenNthCalledWith(3, "m1", "A", 7, expect.any(String));
+  });
+
+  it("BUG-029 does not display or review a GET below the restored recovery version", async () => {
+    let record = appendPointIntent(
+      createScoreRecoveryRecord("judge-user", "m1", 8),
+      { id: "a", side: "A", idempotencyKey: "key-a" },
+    );
+    record = markPointAttemptError(beginPointAttempt(record, 8).record, "a");
+    persistScoreRecoveryRecord(record, window.sessionStorage);
+    const acquired = deferred<{ ok: boolean }>();
+    acquireJudge.mockImplementationOnce(() => acquired.promise);
+    const freshRead = deferred<{
+      match: typeof matchBody & { idempotencyKeys: string[] };
+    }>();
+    getMatch
+      .mockResolvedValueOnce({
+        match: { ...matchBody, scoreA: 7, version: 7, idempotencyKeys: [] },
+      })
+      .mockImplementationOnce(() => freshRead.promise);
+
+    renderJudge();
+    await waitFor(() => expect(getMatch).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText("7")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /принять показанный счёт/i })).not.toBeInTheDocument();
+    const afterStaleRead = JSON.parse(
+      window.sessionStorage.getItem(scoreRecoveryStorageKey("judge-user", "m1")) ?? "null",
+    ) as { readState?: string; reviewedVersion?: number } | null;
+    expect(afterStaleRead?.readState).not.toBe("no-key");
+    expect(afterStaleRead?.reviewedVersion).toBeUndefined();
+
+    await act(async () => {
+      acquired.resolve({ ok: true });
+      await acquired.promise;
+    });
+    await waitFor(() => expect(getMatch).toHaveBeenCalledTimes(2));
+
+    await act(async () => {
+      freshRead.resolve({
+        match: { ...matchBody, scoreA: 8, version: 8, idempotencyKeys: [] },
+      });
+      await freshRead.promise;
+    });
+    expect(await within(screen.getByTestId("judge-side-A")).findByText("8")).toBeInTheDocument();
+  });
+
+  it("BUG-029 never lets a late point response roll back a newer accepted server version", async () => {
+    const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
+    vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
+      timers.push({ callback, delay });
+      return timers.length as never;
+    });
+    vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
+    const pendingPoint = deferred<{ match: typeof matchBody }>();
+    awardPoint.mockImplementationOnce(() => pendingPoint.promise);
+    renderJudge();
+    fireEvent.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, scoreA: 8, version: 7, idempotencyKeys: [] },
+    });
+    const liveTimer = timers.find(({ delay }) => delay === 30_000);
+    expect(liveTimer).toBeDefined();
+    await act(async () => {
+      await (liveTimer!.callback as () => Promise<void>)();
+    });
+    expect(within(screen.getByTestId("judge-side-A")).getByText("8")).toBeInTheDocument();
+
+    await act(async () => {
+      pendingPoint.resolve({ match: { ...matchBody, scoreA: 4, version: 6 } });
+      await pendingPoint.promise;
+    });
+
+    expect(within(screen.getByTestId("judge-side-A")).getByText("8")).toBeInTheDocument();
+  });
+
+  it("BUG-029 fails closed on a corrupt stored record without deleting it", async () => {
+    const key = scoreRecoveryStorageKey("judge-user", "m1");
+    window.sessionStorage.setItem(key, "{broken-json");
+    renderJudge();
+
+    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
+      /повреждено/i,
+    );
+    expect(screen.getByRole("button", { name: /\+1 очко: анна а/i })).toBeDisabled();
+    expect(window.sessionStorage.getItem(key)).toBe("{broken-json");
+    expect(awardPoint).not.toHaveBeenCalled();
+  });
+
+  it("BUG-029 survives a sessionStorage getter failure and retains SPA-memory recovery", async () => {
+    const record = appendPointIntent(
+      createScoreRecoveryRecord("judge-user", "m1", 5),
+      { id: "a", side: "A", idempotencyKey: "key-a" },
+    );
+    persistScoreRecoveryRecord(record, {
+      getItem: () => null,
+      setItem: () => { throw new Error("storage unavailable"); },
+      removeItem: () => undefined,
+    });
+    vi.spyOn(window, "sessionStorage", "get").mockImplementation(() => {
+      throw new DOMException("denied", "SecurityError");
+    });
+
+    renderJudge();
+
+    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
+      /сохранено только в этой вкладке/i,
+    );
+    expect(screen.getByRole("button", { name: /\+1 очко: анна а/i })).toBeDisabled();
+    expect(awardPoint).not.toHaveBeenCalled();
+  });
+
+  it("BUG-029 keeps Undo, correction and Finish closed after no-key acceptance", async () => {
+    let record = appendPointIntent(
+      createScoreRecoveryRecord("judge-user", "m1", 5),
+      { id: "a", side: "A", idempotencyKey: "key-a" },
+    );
+    record = beginPointAttempt(record, 5).record;
+    record = markPointAttemptError(record, "a");
+    persistScoreRecoveryRecord(record, window.sessionStorage);
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, status: "pending_confirmation", idempotencyKeys: [] },
+    });
+    const user = userEvent.setup();
+    renderJudge();
+    await user.click(await screen.findByRole("button", { name: /принять показанный счёт/i }));
+    await user.click(screen.getByRole("button", { name: /подтвердить показанный счёт/i }));
+
+    expect(screen.getByRole("button", { name: /отменить последнее очко/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Ещё" })).toBeDisabled();
+    expect(undoPoint).not.toHaveBeenCalled();
+    expect(confirmFinish).not.toHaveBeenCalled();
+    expect(revertFinish).not.toHaveBeenCalled();
   });
 
   it("shows setup as board with swap and start match", async () => {
@@ -941,6 +1541,239 @@ describe("REQ_ui__judge_immersive", () => {
       currentServerParticipantId: "p-a",
       expectedVersion: 5,
     }, expect.any(String));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Ещё" })).toHaveFocus());
+    expect(screen.getByRole("status")).toHaveTextContent(/коррекция сохранена/i);
+  });
+
+  it("BUG-031 focuses the correction heading and preserves the documented tab order", async () => {
+    const user = userEvent.setup();
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
+
+    const heading = screen.getByRole("heading", { name: /ручная коррекция/i });
+    await waitFor(() => expect(heading).toHaveFocus());
+    await user.tab();
+    expect(screen.getByRole("spinbutton", { name: /счёт стороны a/i })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("spinbutton", { name: /счёт стороны b/i })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("combobox", { name: /текущий подающий/i })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: /сохранить коррекцию/i })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: /отмена/i })).toHaveFocus();
+  });
+
+  it("BUG-031 restores the correction trigger after Cancel or Escape and ignores Escape while pending", async () => {
+    const user = userEvent.setup();
+    const pendingCorrection = deferred<{ match: typeof matchBody }>();
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
+    await user.click(screen.getByRole("button", { name: /отмена/i }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /исправить счёт и подачу/i })).toHaveFocus(),
+    );
+
+    await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
+    fireEvent.keyDown(screen.getByRole("region", { name: /ручная коррекция/i }), { key: "Escape" });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /исправить счёт и подачу/i })).toHaveFocus(),
+    );
+
+    manualCorrection.mockReturnValueOnce(pendingCorrection.promise);
+    await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
+    await user.click(screen.getByRole("button", { name: /сохранить коррекцию/i }));
+    fireEvent.keyDown(screen.getByRole("region", { name: /ручная коррекция/i }), { key: "Escape" });
+    expect(screen.getByRole("region", { name: /ручная коррекция/i })).toBeInTheDocument();
+
+    pendingCorrection.resolve({ match: { ...matchBody, version: 6 } });
+    await waitFor(() =>
+      expect(screen.queryByRole("region", { name: /ручная коррекция/i })).not.toBeInTheDocument(),
+    );
+  });
+
+  it("BUG-039 proves a lost correction by its exact prefixed key without a second POST", async () => {
+    const user = userEvent.setup();
+    const pendingCorrection = deferred<{ match: typeof matchBody }>();
+    manualCorrection.mockReturnValueOnce(pendingCorrection.promise);
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
+    await user.clear(screen.getByRole("spinbutton", { name: /счёт стороны a/i }));
+    await user.type(screen.getByRole("spinbutton", { name: /счёт стороны a/i }), "4");
+    await user.clear(screen.getByRole("spinbutton", { name: /счёт стороны b/i }));
+    await user.type(screen.getByRole("spinbutton", { name: /счёт стороны b/i }), "4");
+    await user.click(screen.getByRole("button", { name: /сохранить коррекцию/i }));
+    const correctionKey = String(manualCorrection.mock.calls[0]?.[2]);
+    getMatch.mockResolvedValue({
+      match: {
+        ...matchBody,
+        scoreA: 5,
+        scoreB: 4,
+        version: 7,
+        idempotencyKeys: [`manual-correction:${correctionKey}`, "later-point"],
+      },
+    });
+
+    await act(async () => {
+      pendingCorrection.reject(new Error("network"));
+      await pendingCorrection.promise.catch(() => undefined);
+    });
+
+    expect(manualCorrection).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(within(screen.getByTestId("judge-side-A")).getByText("5")).toBeInTheDocument());
+    expect(within(screen.getByTestId("judge-side-B")).getByText("4")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: /восстановление счёта/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/коррекция сохранена/i);
+  });
+
+  it("BUG-039 isolates a resumed Activity correction from the stale prior lifecycle", async () => {
+    const user = userEvent.setup();
+    const rejectedCorrection = deferred<{ match: typeof matchBody }>();
+    const staleRecoveryRead = deferred<{ match: typeof matchBody }>();
+    const resumedCorrection = deferred<{ match: typeof matchBody }>();
+    manualCorrection
+      .mockReturnValueOnce(rejectedCorrection.promise)
+      .mockReturnValueOnce(resumedCorrection.promise);
+    const view = render(activityJudge("visible"));
+    await screen.findByTestId("judge-screen");
+
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
+    await user.click(screen.getByRole("button", { name: /сохранить коррекцию/i }));
+    getMatch.mockReturnValueOnce(staleRecoveryRead.promise);
+    await act(async () => {
+      rejectedCorrection.reject(
+        Object.assign(new Error("stale"), { status: 409, code: "VERSION_CONFLICT" }),
+      );
+      await rejectedCorrection.promise.catch(() => undefined);
+    });
+    await waitFor(() => expect(getMatch).toHaveBeenCalledTimes(4));
+
+    view.rerender(activityJudge("hidden"));
+    view.rerender(activityJudge("visible"));
+    await screen.findByTestId("judge-screen");
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
+    const resumedScoreA = screen.getByRole("spinbutton", { name: /счёт стороны a/i });
+    await user.clear(resumedScoreA);
+    await user.type(resumedScoreA, "7");
+    await user.click(screen.getByRole("button", { name: /сохранить коррекцию/i }));
+    resumedScoreA.focus();
+
+    await act(async () => {
+      staleRecoveryRead.resolve({ match: { ...matchBody, version: 6 } });
+      await staleRecoveryRead.promise;
+    });
+
+    expect(screen.getByRole("region", { name: /ручная коррекция/i })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: /счёт стороны a/i })).toHaveValue(7);
+    expect(screen.getByRole("spinbutton", { name: /счёт стороны a/i })).toHaveFocus();
+    expect(screen.getByRole("button", { name: /сохраняем/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Ещё" })).toBeDisabled();
+    expect(manualCorrection).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText(/состояние матча изменилось/i)).not.toBeInTheDocument();
+
+    await act(async () => {
+      resumedCorrection.resolve({ match: { ...matchBody, scoreA: 7, version: 7 } });
+      await resumedCorrection.promise;
+    });
+    await waitFor(() =>
+      expect(screen.queryByRole("region", { name: /ручная коррекция/i })).not.toBeInTheDocument(),
+    );
+  });
+
+  it("BUG-039 accepts a no-key correction with zero POST and pins a new correction to the reviewed version", async () => {
+    let record = appendCorrectionIntent(createScoreRecoveryRecord("judge-user", "m1", 5), {
+      id: "correction-a",
+      idempotencyKey: "old-correction",
+      expectedVersion: 5,
+      scoreA: 8,
+      scoreB: 6,
+      currentServerParticipantId: "p-b",
+    });
+    record = markCorrectionAttemptError(beginCorrectionAttempt(record, "correction-a").record, "correction-a");
+    persistScoreRecoveryRecord(record, window.sessionStorage);
+    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
+    const user = userEvent.setup();
+    renderJudge();
+
+    await user.click(await screen.findByRole("button", { name: /принять показанный счёт после коррекции/i }));
+    expect(manualCorrection).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: /подтвердить показанный счёт/i }));
+    expect(manualCorrection).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: /задать другой счёт/i }));
+    expect(screen.getByRole("spinbutton", { name: /счёт стороны a/i })).toHaveValue(3);
+    expect(screen.getByRole("spinbutton", { name: /счёт стороны b/i })).toHaveValue(2);
+    expect(screen.getByText(/ранее отправляли 8:6/i)).toBeInTheDocument();
+
+    getMatch.mockResolvedValue({
+      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: [] },
+    });
+    await user.click(screen.getByRole("button", { name: /проверить состояние/i }));
+    expect(screen.getByRole("spinbutton", { name: /счёт стороны a/i })).toHaveValue(3);
+    manualCorrection.mockRejectedValueOnce(
+      Object.assign(new Error("stale"), { status: 409, code: "VERSION_CONFLICT" }),
+    );
+    await user.clear(screen.getByRole("spinbutton", { name: /счёт стороны a/i }));
+    await user.type(screen.getByRole("spinbutton", { name: /счёт стороны a/i }), "5");
+    await user.click(screen.getByRole("button", { name: /сохранить коррекцию/i }));
+
+    await waitFor(() => expect(manualCorrection).toHaveBeenCalledTimes(1));
+    expect(manualCorrection).toHaveBeenCalledWith(
+      "m1",
+      expect.objectContaining({ scoreA: 5, scoreB: 2, expectedVersion: 5 }),
+      expect.not.stringMatching(/^old-correction$/),
+    );
+    const recovery = await screen.findByRole("region", { name: /восстановление счёта/i });
+    expect(recovery).toHaveTextContent(/принят показанный счёт/i);
+    expect(screen.getByRole("button", { name: /задать другой счёт/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /отменить последнее очко/i })).toBeDisabled();
+  });
+
+  it("BUG-039 sends no correction when its durable prewrite fails", async () => {
+    const storageWrite = vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => {
+      throw new Error("quota");
+    });
+    const user = userEvent.setup();
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
+    await user.click(screen.getByRole("button", { name: /сохранить коррекцию/i }));
+
+    expect(manualCorrection).not.toHaveBeenCalled();
+    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
+      /не отправлена/i,
+    );
+    storageWrite.mockRestore();
+  });
+
+  it("BUG-039 restores an interrupted correction with GET first and zero automatic POST", async () => {
+    let record = appendCorrectionIntent(createScoreRecoveryRecord("judge-user", "m1", 5), {
+      id: "correction-a",
+      idempotencyKey: "old-correction",
+      expectedVersion: 5,
+      scoreA: 8,
+      scoreB: 6,
+      currentServerParticipantId: "p-b",
+    });
+    record = beginCorrectionAttempt(record, "correction-a").record;
+    persistScoreRecoveryRecord(record, window.sessionStorage);
+    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
+
+    renderJudge();
+
+    const recovery = await screen.findByRole("region", { name: /восстановление счёта/i });
+    expect(recovery).toHaveTextContent(/исход неизвестен/i);
+    expect(recovery).toHaveTextContent(/отправляли 8:6/i);
+    expect(getMatch).toHaveBeenCalled();
+    expect(manualCorrection).not.toHaveBeenCalled();
   });
 
   it("GAP-005 blocks scoring and every exit while a correction is open or pending", async () => {

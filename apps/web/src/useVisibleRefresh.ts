@@ -32,6 +32,7 @@ export function useVisibleRefresh(
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      inFlightRef.current = null;
     };
   }, []);
 
@@ -46,11 +47,19 @@ export function useVisibleRefresh(
     const request = (async () => {
       try {
         await refreshRef.current();
-        if (mountedRef.current && Object.is(refreshKeyRef.current, key)) {
+        if (
+          mountedRef.current &&
+          Object.is(refreshKeyRef.current, key) &&
+          inFlightRef.current?.token === token
+        ) {
           setError(null);
         }
       } catch (cause) {
-        if (mountedRef.current && Object.is(refreshKeyRef.current, key)) {
+        if (
+          mountedRef.current &&
+          Object.is(refreshKeyRef.current, key) &&
+          inFlightRef.current?.token === token
+        ) {
           setError(
             cause instanceof Error
               ? cause.message

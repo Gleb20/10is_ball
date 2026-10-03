@@ -43,6 +43,7 @@
 | D35 | Operator-first game setup and tournament consent policy | active |
 | D36 | Home-first navigation and role-aware dashboard | active; supersedes D5 navigation scope |
 | D37 | Temporary UI availability of game invitations and challenges | active overlay; D35 backend semantics retained |
+| D38 | Custom score lifetime | active; resolves Q-UX-005 |
 
 ## D16 — Documentation governance (2026-09-06)
 
@@ -627,3 +628,18 @@ feedback. Re-enabling these features requires a separate decision and acceptance
 plan. The stage 1 UI work must reconcile filtered notification list and
 `unreadCount` together, including pagination and the first-five-unread selection;
 it must not merely hide rows while leaving a misleading badge.
+
+## D38 — Custom score lifetime (2026-10-03)
+
+**Decision:** the last selected `11`/`21`/custom score value lives only in the
+currently open match setup form, including reopening its numeric panel. It is not
+retained between forms, routes, sessions, devices or users. Switching between
+1×1 and 2×2 does not implicitly replace the current score value.
+
+**Why:** the accepted Stage 5 coordination and preservation handoff resolve
+Q-UX-005 to the current-form-only option. This avoids shared-device leakage and
+adds no storage, profile field, synchronization rule or migration. The exact
+source records are `artifacts/ux-implementation-2026-09-18/COORDINATION.md`
+(Stage 5 clarification) and `stage5-stage3-preservation-handoff.md` in the
+coordination checkout; they authorize this decision record, not Stage 5
+implementation.

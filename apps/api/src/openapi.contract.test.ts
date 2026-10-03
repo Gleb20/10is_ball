@@ -243,6 +243,34 @@ describe("AT-OPS-API-001 runtime OpenAPI contract", () => {
 });
 
 describe("GAP-005 match/judge extension contracts", () => {
+  it("BUG-029/039 documents the complete match outcome read contract", () => {
+    const document = openApiSpec() as OpenApiDocument;
+    expect(document.paths["/api/v1/matches/{matchId}"]?.get?.responses?.["200"]?.content?.["application/json"]?.schema).toEqual({
+      type: "object",
+      required: ["match"],
+      properties: { match: { $ref: "#/components/schemas/Match" } },
+    });
+    expect(document.components?.schemas?.Match).toMatchObject({
+      required: expect.arrayContaining(["version", "idempotencyKeys"]),
+      properties: {
+        version: { type: "integer", minimum: 0, description: expect.stringContaining("expectedVersion") },
+        idempotencyKeys: {
+          type: "array",
+          items: { type: "string" },
+          description: expect.stringContaining("untruncated"),
+        },
+      },
+    });
+    expect(document.components?.schemas?.Match).not.toHaveProperty("properties.idempotencyKeys.maxItems");
+    const matchSchema = document.components?.schemas?.Match as {
+      properties: { version: { description: string }; idempotencyKeys: { description: string } };
+    };
+    expect(matchSchema.properties.version.description).toContain("nondecreasing");
+    expect(matchSchema.properties.version.description).toContain("point-in-time");
+    expect(matchSchema.properties.version.description).toContain("HTTP responses may arrive out of order");
+    expect(matchSchema.properties.idempotencyKeys.description).toContain("absence alone does not prove no write");
+  });
+
   it("documents options, reservation and versioned correction/no-show", () => {
     const document = openApiSpec() as OpenApiDocument;
     expect(document.paths["/api/v1/matches/create-options"]?.get).toBeDefined();

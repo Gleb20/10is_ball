@@ -1,0 +1,1049 @@
+diff --git a/apps/web/src/pages/JudgePage.test.tsx b/apps/web/src/pages/JudgePage.test.tsx
+index 5c4900d..1013087 100644
+--- a/apps/web/src/pages/JudgePage.test.tsx
++++ b/apps/web/src/pages/JudgePage.test.tsx
+@@ -16,6 +16,17 @@ import {
+   useLocation,
+ } from "react-router-dom";
+ import { JudgePage } from "./JudgePage";
++import {
++  acceptReviewedPointScore,
++  appendPointIntent,
++  beginPointAttempt,
++  createScoreRecoveryRecord,
++  markPointAttemptError,
++  persistScoreRecoveryRecord,
++  reconcilePointAttempts,
++  resetScoreRecoveryForTests,
++  scoreRecoveryStorageKey,
++} from "./judgeScoreRecovery";
+ 
+ const getMatch = vi.fn();
+ const startMatch = vi.fn();
+@@ -49,6 +60,10 @@ vi.mock("../api", () => ({
+   },
+ }));
+ 
++vi.mock("../auth", () => ({
++  useAuth: () => ({ user: { id: "judge-user" }, reauthRequired: false }),
++}));
++
+ const matchBody = {
+   id: "m1",
+   status: "in_progress",
+@@ -138,6 +153,8 @@ describe("REQ_ui__judge_immersive", () => {
+   beforeEach(() => {
+     cleanup();
+     vi.clearAllMocks();
++    resetScoreRecoveryForTests();
++    window.sessionStorage.clear();
+     getMatch.mockResolvedValue({ match: matchBody });
+     startMatch.mockResolvedValue({ match: matchBody });
+     acquireJudge.mockResolvedValue({ ok: true });
+@@ -390,10 +407,281 @@ describe("REQ_ui__judge_immersive", () => {
+     expect(
+       within(screen.getByTestId("judge-side-A")).getByText("4"),
+     ).toBeInTheDocument();
+-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
++    expect(screen.getByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /результат отправки неизвестен/i,
++    );
+     expect(screen.queryByTestId("judge-lost-lock")).not.toBeInTheDocument();
+-    expect(btn).toBeEnabled();
++    expect(btn).toBeDisabled();
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++  });
++
++  it("BUG-029 restores an interrupted send as unknown, checks GET first, and never replays it", async () => {
++    const user = userEvent.setup();
++    let record = appendPointIntent(
++      createScoreRecoveryRecord("judge-user", "m1", 5),
++      { id: "intent-a", side: "A", idempotencyKey: "point-a" },
++    );
++    record = beginPointAttempt(record, 5).record;
++    persistScoreRecoveryRecord(record, window.sessionStorage);
++    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
++
++    renderJudge();
++
++    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /результат отправки неизвестен/i,
++    );
++    expect(getMatch).toHaveBeenCalled();
++    expect(awardPoint).not.toHaveBeenCalled();
++    expect(screen.getByRole("button", { name: /принять показанный счёт/i })).toBeEnabled();
++    expect(screen.getByRole("button", { name: /отменить последнее очко/i })).toBeDisabled();
++
++    await user.click(screen.getByRole("button", { name: /принять показанный счёт/i }));
++    expect(awardPoint).not.toHaveBeenCalled();
++    awardPoint.mockResolvedValue({ match: { ...matchBody, scoreA: 4, version: 6 } });
++    await user.click(screen.getByRole("button", { name: /начислить последнее очко стороне A/i }));
++    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(1));
++    expect(awardPoint).toHaveBeenCalledWith("m1", "A", 5, expect.any(String));
++    expect(awardPoint.mock.calls[0]?.[3]).not.toBe("point-a");
++  });
++
++  it("BUG-029 keeps an unsaved tap visible and sends no POST when durable storage fails", async () => {
++    const storageWrite = vi
++      .spyOn(Storage.prototype, "setItem")
++      .mockImplementationOnce(() => {
++        throw new Error("quota");
++      });
++    const user = userEvent.setup();
++    const rendered = renderJudge();
++
++    await user.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
++
++    expect(awardPoint).not.toHaveBeenCalled();
++    expect(screen.getByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /сохранено только в этой вкладке/i,
++    );
++    expect(screen.getByRole("button", { name: /\+1 очко: анна а/i })).toBeDisabled();
++    storageWrite.mockRestore();
++
++    rendered.unmount();
++    renderJudge();
++    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /осталось нажатий: 1/i,
++    );
++    expect(awardPoint).not.toHaveBeenCalled();
++  });
++
++  it("BUG-029 does not retry storage or send a queued tap when its write failed during an active request", async () => {
++    const realSetItem = Storage.prototype.setItem;
++    let writeCount = 0;
++    const storageWrite = vi
++      .spyOn(Storage.prototype, "setItem")
++      .mockImplementation(function (this: Storage, key: string, value: string) {
++        writeCount += 1;
++        if (writeCount === 3) throw new Error("quota");
++        return realSetItem.call(this, key, value);
++      });
++    const firstPoint = deferred<{ match: typeof matchBody }>();
++    awardPoint.mockImplementationOnce(() => firstPoint.promise);
++    renderJudge();
++    const pointA = await screen.findByRole("button", { name: /\+1 очко: анна а/i });
++    const pointB = screen.getByRole("button", { name: /\+1 очко: борис б/i });
++
++    fireEvent.click(pointA);
++    fireEvent.click(pointB);
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++    await act(async () => {
++      firstPoint.resolve({ match: { ...matchBody, scoreA: 4, version: 6 } });
++      await firstPoint.promise;
++    });
++
++    await waitFor(() => {
++      expect(screen.getByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++        /сохранено только в этой вкладке/i,
++      );
++    });
+     expect(awardPoint).toHaveBeenCalledTimes(1);
++    expect(screen.getByRole("button", { name: /повторить сохранение/i })).toBeEnabled();
++    storageWrite.mockRestore();
++  });
++
++  it("BUG-029 requires explicit continuation for queued taps after exact-key reconciliation", async () => {
++    const user = userEvent.setup();
++    const firstPoint = deferred<{ match: typeof matchBody }>();
++    awardPoint
++      .mockImplementationOnce(() => firstPoint.promise)
++      .mockResolvedValueOnce({ match: { ...matchBody, scoreA: 4, scoreB: 3, version: 7 } });
++    renderJudge();
++    const pointA = await screen.findByRole("button", { name: /\+1 очко: анна а/i });
++    const pointB = screen.getByRole("button", { name: /\+1 очко: борис б/i });
++
++    fireEvent.click(pointA);
++    fireEvent.click(pointB);
++    const firstKey = String(awardPoint.mock.calls[0]?.[3]);
++    getMatch.mockResolvedValue({
++      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: [firstKey] },
++    });
++    await act(async () => {
++      firstPoint.reject(Object.assign(new Error("network"), { code: "NETWORK" }));
++      await firstPoint.promise.catch(() => undefined);
++    });
++
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++    const continueButton = await screen.findByRole("button", {
++      name: /отправить оставшиеся нажатия/i,
++    });
++    await user.click(continueButton);
++
++    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(2));
++    expect(awardPoint).toHaveBeenNthCalledWith(2, "m1", "B", 6, expect.any(String));
++  });
++
++  it("BUG-029 restores a sent attempt with B/C queued and performs zero automatic POSTs", async () => {
++    let record = appendPointIntent(
++      createScoreRecoveryRecord("judge-user", "m1", 5),
++      { id: "a", side: "A", idempotencyKey: "key-a" },
++    );
++    record = beginPointAttempt(record, 5).record;
++    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
++    record = appendPointIntent(record, { id: "c", side: "A", idempotencyKey: "key-c" });
++    persistScoreRecoveryRecord(record, window.sessionStorage);
++    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
++
++    renderJudge();
++
++    const recovery = await screen.findByRole("region", { name: /восстановление счёта/i });
++    expect(recovery).toHaveTextContent(/результат отправки неизвестен/i);
++    expect(recovery).toHaveTextContent(/не отправлять оставшиеся/i);
++    expect(awardPoint).not.toHaveBeenCalled();
++  });
++
++  it("BUG-029 keeps only the unresolved B attempt after exact proof for A", async () => {
++    let record = createScoreRecoveryRecord("judge-user", "m1", 5);
++    record = appendPointIntent(record, { id: "a", side: "A", idempotencyKey: "key-a" });
++    record = beginPointAttempt(record, 5).record;
++    record = markPointAttemptError(record, "a");
++    record = acceptReviewedPointScore(reconcilePointAttempts(record, 5, []).record);
++    record = appendPointIntent(record, { id: "b", side: "B", idempotencyKey: "key-b" });
++    record = beginPointAttempt(record, 5, true).record;
++    record = markPointAttemptError(record, "b");
++    persistScoreRecoveryRecord(record, window.sessionStorage);
++    getMatch.mockResolvedValue({
++      match: { ...matchBody, scoreA: 4, version: 6, idempotencyKeys: ["key-a"] },
++    });
++
++    renderJudge();
++
++    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /результат отправки неизвестен/i,
++    );
++    expect(screen.getByRole("button", { name: /отменить последнее очко/i })).toBeDisabled();
++    await userEvent.setup().click(screen.getByRole("button", { name: "Ещё" }));
++    expect(screen.getByRole("button", { name: /исправить счёт и подачу/i })).toBeDisabled();
++    expect(awardPoint).not.toHaveBeenCalled();
++  });
++
++  it("BUG-029 retains informational correlation after judge ownership is lost", async () => {
++    awardPoint.mockRejectedValueOnce(
++      Object.assign(new Error("expired"), { status: 401, code: "UNAUTHORIZED" }),
++    );
++    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
++    const user = userEvent.setup();
++    renderJudge();
++
++    await user.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
++
++    expect(await screen.findByTestId("judge-lost-lock")).toBeInTheDocument();
++    expect(screen.getByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /требует заново занять слот судьи/i,
++    );
++    expect(screen.queryByRole("button", { name: /начислить последнее очко/i })).not.toBeInTheDocument();
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++  });
++
++  it("BUG-029 ignores a completed POST callback from an earlier mount", async () => {
++    const pendingPoint = deferred<{ match: typeof matchBody }>();
++    awardPoint.mockImplementationOnce(() => pendingPoint.promise);
++    const firstMount = renderJudge();
++    fireEvent.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++
++    firstMount.unmount();
++    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
++    renderJudge();
++    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toBeInTheDocument();
++    await act(async () => {
++      pendingPoint.resolve({ match: { ...matchBody, scoreA: 9, version: 6 } });
++      await pendingPoint.promise;
++    });
++
++    expect(within(screen.getByTestId("judge-side-A")).getByText("3")).toBeInTheDocument();
++    expect(awardPoint).toHaveBeenCalledTimes(1);
++  });
++
++  it("BUG-029 never lets a late point response roll back a newer accepted server version", async () => {
++    const timers: Array<{ callback: TimerHandler; delay?: number }> = [];
++    vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
++      timers.push({ callback, delay });
++      return timers.length as never;
++    });
++    vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
++    const pendingPoint = deferred<{ match: typeof matchBody }>();
++    awardPoint.mockImplementationOnce(() => pendingPoint.promise);
++    renderJudge();
++    fireEvent.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
++    getMatch.mockResolvedValue({
++      match: { ...matchBody, scoreA: 8, version: 7, idempotencyKeys: [] },
++    });
++    const liveTimer = timers.find(({ delay }) => delay === 30_000);
++    expect(liveTimer).toBeDefined();
++    await act(async () => {
++      await (liveTimer!.callback as () => Promise<void>)();
++    });
++    expect(within(screen.getByTestId("judge-side-A")).getByText("8")).toBeInTheDocument();
++
++    await act(async () => {
++      pendingPoint.resolve({ match: { ...matchBody, scoreA: 4, version: 6 } });
++      await pendingPoint.promise;
++    });
++
++    expect(within(screen.getByTestId("judge-side-A")).getByText("8")).toBeInTheDocument();
++  });
++
++  it("BUG-029 fails closed on a corrupt stored record without deleting it", async () => {
++    const key = scoreRecoveryStorageKey("judge-user", "m1");
++    window.sessionStorage.setItem(key, "{broken-json");
++    renderJudge();
++
++    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toHaveTextContent(
++      /повреждено/i,
++    );
++    expect(screen.getByRole("button", { name: /\+1 очко: анна а/i })).toBeDisabled();
++    expect(window.sessionStorage.getItem(key)).toBe("{broken-json");
++    expect(awardPoint).not.toHaveBeenCalled();
++  });
++
++  it("BUG-029 keeps Undo, correction and Finish closed after no-key acceptance", async () => {
++    let record = appendPointIntent(
++      createScoreRecoveryRecord("judge-user", "m1", 5),
++      { id: "a", side: "A", idempotencyKey: "key-a" },
++    );
++    record = beginPointAttempt(record, 5).record;
++    record = markPointAttemptError(record, "a");
++    persistScoreRecoveryRecord(record, window.sessionStorage);
++    getMatch.mockResolvedValue({
++      match: { ...matchBody, status: "pending_confirmation", idempotencyKeys: [] },
++    });
++    const user = userEvent.setup();
++    renderJudge();
++    await user.click(await screen.findByRole("button", { name: /принять показанный счёт/i }));
++
++    expect(screen.getByRole("button", { name: /отменить последнее очко/i })).toBeDisabled();
++    await user.click(screen.getByRole("button", { name: "Ещё" }));
++    expect(screen.getByRole("button", { name: /исправить счёт и подачу/i })).toBeDisabled();
++    expect(screen.getByRole("button", { name: /подтвердить результат/i })).toBeDisabled();
++    expect(screen.getByRole("button", { name: /продолжить игру/i })).toBeDisabled();
++    expect(undoPoint).not.toHaveBeenCalled();
++    expect(confirmFinish).not.toHaveBeenCalled();
++    expect(revertFinish).not.toHaveBeenCalled();
+   });
+ 
+   it("shows setup as board with swap and start match", async () => {
+diff --git a/apps/web/src/pages/JudgePage.tsx b/apps/web/src/pages/JudgePage.tsx
+index dc19467..b704d0d 100644
+--- a/apps/web/src/pages/JudgePage.tsx
++++ b/apps/web/src/pages/JudgePage.tsx
+@@ -29,6 +29,29 @@ import { statusLabel } from "../statusLabels";
+ import { initialsFromName } from "../rankingUi";
+ import { avatarSrc } from "../avatarSrc";
+ import type { JudgeExitNotice } from "../layout";
++import { useAuth } from "../auth";
++import {
++  acceptReviewedPointScore,
++  appendPointIntent,
++  beginPointAttempt,
++  beginScoreRecoveryGeneration,
++  createScoreRecoveryRecord,
++  discardUnsentPointIntents,
++  invalidateScoreRecoveryGeneration,
++  isScoreRecoveryGenerationCurrent,
++  markPointAttemptApplied,
++  markPointAttemptError,
++  markRecoveryReadChecking,
++  markRecoveryReadFailed,
++  persistScoreRecoveryRecord,
++  readScoreRecoveryRecord,
++  reconcilePointAttempts,
++  rememberScoreRecoveryRecord,
++  restoreSendingAttemptsAsUnknown,
++  resumeUnsentPointIntents,
++  type PointIntent,
++  type ScoreRecoveryRecord,
++} from "./judgeScoreRecovery";
+ 
+ type MatchState = Record<string, unknown> & JudgeMatchLike;
+ type Phase =
+@@ -39,11 +62,6 @@ type Phase =
+   | "scoring"
+   | "lost_lock"
+   | "readonly";
+-type PointIntent = {
+-  side: "A" | "B";
+-  idempotencyKey: string;
+-};
+-
+ type ApiError = Error & { code?: string; status?: number };
+ 
+ const LOST_JUDGE_CODES = new Set([
+@@ -118,6 +136,8 @@ function ServeBadge({ active }: { active: boolean }) {
+ 
+ export function JudgePage() {
+   const { id } = useParams();
++  const { user } = useAuth();
++  const actorUserId = String(user?.id ?? "");
+   const currentMatchIdRef = useRef(id);
+   currentMatchIdRef.current = id;
+   const navigate = useNavigate();
+@@ -134,6 +154,12 @@ export function JudgePage() {
+   const [pointPendingCount, setPointPendingCount] = useState(0);
+   const pointQueueRef = useRef<PointIntent[]>([]);
+   const pointQueueRunningRef = useRef(false);
++  const recoveryRecordRef = useRef<ScoreRecoveryRecord | null>(null);
++  const recoveryGenerationRef = useRef(0);
++  const loadPromiseRef = useRef<Promise<MatchState> | null>(null);
++  const [recoveryRecord, setRecoveryRecord] = useState<ScoreRecoveryRecord | null>(null);
++  const [recoveryStorageError, setRecoveryStorageError] = useState<string | null>(null);
++  const [discardRecoveryConfirm, setDiscardRecoveryConfirm] = useState(false);
+   const judgeLockOwnedRef = useRef(false);
+   const liveSyncRunningRef = useRef(false);
+   const exitPendingRef = useRef(false);
+@@ -176,14 +202,135 @@ export function JudgePage() {
+     setMatch(nextMatch);
+   }, []);
+ 
+-  const load = useCallback(async () => {
+-    const res = await api.getMatch(id!);
+-    const fresh = res.match as MatchState;
+-    const confirmed = confirmedStartRef.current;
+-    if (confirmed && confirmed.id === id && fresh.status === "waiting") return confirmed;
+-    updateMatch(fresh);
+-    return fresh;
+-  }, [id, updateMatch]);
++  const applyRecoveryRecord = useCallback((next: ScoreRecoveryRecord | null) => {
++    recoveryRecordRef.current = next;
++    pointQueueRef.current = next?.unsent ?? [];
++    setPointPendingCount(
++      (next?.unsent.length ?? 0) +
++        (next?.attempts.filter((attempt) => attempt.state === "sending").length ?? 0),
++    );
++    setRecoveryRecord(next);
++  }, []);
++
++  const saveRecoveryRecord = useCallback((next: ScoreRecoveryRecord) => {
++    const result = persistScoreRecoveryRecord(next, window.sessionStorage);
++    applyRecoveryRecord(result.record);
++    if (!result.ok) {
++      setError("Не удалось надёжно сохранить состояние. Дальнейшая отправка очков заблокирована.");
++    }
++    return result;
++  }, [applyRecoveryRecord]);
++
++  useEffect(() => {
++    if (!id || !actorUserId) return;
++    const generation = beginScoreRecoveryGeneration(actorUserId, id);
++    recoveryGenerationRef.current = generation;
++    const restored = readScoreRecoveryRecord(actorUserId, id, window.sessionStorage);
++    setRecoveryStorageError(restored.storageError);
++    if (restored.record) {
++      const safeRestore = restoreSendingAttemptsAsUnknown(restored.record);
++      if (restored.storageError) {
++        const unsafe = rememberScoreRecoveryRecord({ ...safeRestore, storageSafe: false });
++        applyRecoveryRecord(unsafe);
++      } else {
++        const persisted = persistScoreRecoveryRecord(safeRestore, window.sessionStorage);
++        applyRecoveryRecord(persisted.record);
++      }
++    } else {
++      applyRecoveryRecord(null);
++    }
++    return () => {
++      invalidateScoreRecoveryGeneration(actorUserId, id);
++      recoveryGenerationRef.current = 0;
++      loadPromiseRef.current = null;
++    };
++  }, [actorUserId, applyRecoveryRecord, id]);
++
++  const load = useCallback(async (forceFresh = false): Promise<MatchState> => {
++    if (!id || !actorUserId) throw new Error("Матч или пользователь не определён");
++    if (loadPromiseRef.current) {
++      const activeRequest = loadPromiseRef.current;
++      if (!forceFresh) return activeRequest;
++      try {
++        await activeRequest;
++      } catch {
++        // A recovery read still has to start after the mutation outcome became unknown.
++      }
++      if (!isScoreRecoveryGenerationCurrent(actorUserId, id, recoveryGenerationRef.current)) {
++        throw new Error("Экран судьи уже закрыт");
++      }
++      return load(false);
++    }
++    const generation = recoveryGenerationRef.current;
++    const request = (async () => {
++      const activeRecovery = recoveryRecordRef.current;
++      if (
++        activeRecovery &&
++        (activeRecovery.attempts.length || activeRecovery.unsent.length || activeRecovery.pausedAfterError)
++      ) {
++        const checking = markRecoveryReadChecking(activeRecovery);
++        rememberScoreRecoveryRecord(checking);
++        applyRecoveryRecord(checking);
++      }
++      try {
++        const res = await api.getMatch(id);
++        const fresh = res.match as MatchState;
++        if (!isScoreRecoveryGenerationCurrent(actorUserId, id, generation)) {
++          return fresh;
++        }
++        const confirmed = confirmedStartRef.current;
++        if (confirmed && confirmed.id === id && fresh.status === "waiting") return confirmed;
++        const currentVersion = Number(matchRef.current?.version ?? -1);
++        if (Number(fresh.version ?? -1) < currentVersion) {
++          return matchRef.current ?? fresh;
++        }
++        updateMatch(fresh);
++        const currentRecovery = recoveryRecordRef.current;
++        if (
++          currentRecovery &&
++          (currentRecovery.attempts.length || currentRecovery.unsent.length || currentRecovery.pausedAfterError)
++        ) {
++          const reconciled = reconcilePointAttempts(
++            currentRecovery,
++            Number(fresh.version ?? currentRecovery.serverVersion),
++            Array.isArray(fresh.idempotencyKeys)
++              ? fresh.idempotencyKeys.map(String)
++              : [],
++          );
++          if (currentRecovery.storageSafe) {
++            saveRecoveryRecord(reconciled.record);
++          } else {
++            const unsafe = { ...reconciled.record, storageSafe: false };
++            rememberScoreRecoveryRecord(unsafe);
++            applyRecoveryRecord(unsafe);
++          }
++        }
++        return fresh;
++      } catch (reason) {
++        const currentRecovery = recoveryRecordRef.current;
++        if (
++          currentRecovery &&
++          (currentRecovery.attempts.length || currentRecovery.unsent.length || currentRecovery.pausedAfterError) &&
++          isScoreRecoveryGenerationCurrent(actorUserId, id, generation)
++        ) {
++          const failedRead = markRecoveryReadFailed(currentRecovery);
++          if (currentRecovery.storageSafe) saveRecoveryRecord(failedRead);
++          else {
++            const unsafe = { ...failedRead, storageSafe: false };
++            rememberScoreRecoveryRecord(unsafe);
++            applyRecoveryRecord(unsafe);
++          }
++        }
++        throw reason;
++      }
++    })();
++    loadPromiseRef.current = request;
++    try {
++      return await request;
++    } finally {
++      if (loadPromiseRef.current === request) loadPromiseRef.current = null;
++    }
++  }, [actorUserId, applyRecoveryRecord, id, saveRecoveryRecord, updateMatch]);
+ 
+   useEffect(() => {
+     confirmedStartRef.current = null;
+@@ -224,7 +371,7 @@ export function JudgePage() {
+       setPhase("lost_lock");
+       setError(lostJudgeMessage(error));
+       try {
+-        const fresh = await load();
++        const fresh = await load(true);
+         if (isTerminalMatchStatus(fresh.status)) {
+           setPhase("readonly");
+           setError(null);
+@@ -492,33 +639,58 @@ export function JudgePage() {
+     }
+   }
+ 
+-  async function drainPointQueue(initialMatch: MatchState) {
++  async function drainPointQueue(initialMatch: MatchState, fenceFirst = false) {
+     if (!id || pointQueueRunningRef.current) return;
+     pointQueueRunningRef.current = true;
+     let authoritativeMatch = initialMatch;
++    let useFence = fenceFirst;
++    const generation = recoveryGenerationRef.current;
+ 
+     try {
+-      while (pointQueueRef.current.length > 0) {
+-        const intent = pointQueueRef.current[0]!;
++      while (recoveryRecordRef.current?.unsent.length) {
++        const beforeAttempt = recoveryRecordRef.current;
++        if (
++          !beforeAttempt.storageSafe ||
++          beforeAttempt.pausedAfterError ||
++          !judgeLockOwnedRef.current ||
++          !isScoreRecoveryGenerationCurrent(actorUserId, id, generation)
++        ) break;
+         if (authoritativeMatch.status !== "in_progress") {
+-          pointQueueRef.current = [];
+-          setPointPendingCount(0);
++          const stopped = { ...beforeAttempt, pausedAfterError: true };
++          rememberScoreRecoveryRecord(stopped);
++          applyRecoveryRecord(stopped);
+           setError(
+             "Матч больше не принимает очки. Проверьте итоговый счёт перед продолжением.",
+           );
+           break;
+         }
+ 
++        const begun = beginPointAttempt(
++          beforeAttempt,
++          useFence
++            ? Number(beforeAttempt.reviewedVersion ?? authoritativeMatch.version)
++            : Number(authoritativeMatch.version),
++          useFence,
++        );
++        useFence = false;
++        if (!begun.attempt) break;
++        const transition = saveRecoveryRecord(begun.record);
++        if (!transition.ok) {
++          const restoredIntent = { ...beforeAttempt, storageSafe: false };
++          rememberScoreRecoveryRecord(restoredIntent);
++          applyRecoveryRecord(restoredIntent);
++          break;
++        }
++        const intent = begun.attempt;
+         try {
+           const res = await api.awardPoint(
+             id,
+             intent.side,
+-            Number(authoritativeMatch.version),
++            intent.expectedVersion,
+             intent.idempotencyKey,
+           );
++          if (!isScoreRecoveryGenerationCurrent(actorUserId, id, generation)) break;
+           if (!judgeLockOwnedRef.current) {
+-            pointQueueRef.current = [];
+-            setPointPendingCount(0);
+             try {
+               await load();
+             } catch {
+@@ -526,9 +698,25 @@ export function JudgePage() {
+             }
+             break;
+           }
+-          authoritativeMatch = res.match as MatchState;
+-          pointQueueRef.current.shift();
+-          setPointPendingCount(pointQueueRef.current.length);
++          const responseMatch = res.match as MatchState;
++          authoritativeMatch =
++            Number(responseMatch.version ?? -1) >= Number(matchRef.current?.version ?? -1)
++              ? responseMatch
++              : (matchRef.current ?? responseMatch);
++          const currentRecovery = recoveryRecordRef.current;
++          if (!currentRecovery) break;
++          const applied = markPointAttemptApplied(
++            currentRecovery,
++            intent.id,
++            Number(authoritativeMatch.version),
++          );
++          const saved = currentRecovery.storageSafe
++            ? saveRecoveryRecord(applied)
++            : { ok: false as const, record: { ...applied, storageSafe: false } };
++          if (!currentRecovery.storageSafe) {
++            rememberScoreRecoveryRecord(saved.record);
++            applyRecoveryRecord(saved.record);
++          }
+           updateMatch(authoritativeMatch);
+           setError(null);
+           setFlashSide(intent.side);
+@@ -539,19 +727,30 @@ export function JudgePage() {
+             setFlashSide(null);
+             flashTimeoutRef.current = null;
+           }, 350);
++          if (!saved.ok) break;
+         } catch (e) {
+           const err = e as Error & { code?: string };
+-          pointQueueRef.current = [];
+-          setPointPendingCount(0);
++          if (!isScoreRecoveryGenerationCurrent(actorUserId, id, generation)) break;
++          const currentRecovery = recoveryRecordRef.current;
++          if (currentRecovery) {
++            const unknown = markPointAttemptError(currentRecovery, intent.id);
++            if (currentRecovery.storageSafe) saveRecoveryRecord(unknown);
++            else {
++              const unsafe = { ...unknown, storageSafe: false };
++              rememberScoreRecoveryRecord(unsafe);
++              applyRecoveryRecord(unsafe);
++            }
++          }
+           if (isLostJudgeError(e)) {
+             await loseJudgeLock(e);
+             break;
+           }
+           try {
+-            authoritativeMatch = await load();
++            authoritativeMatch = await load(true);
+           } catch {
+             // Preserve the mutation error; the existing screen remains usable.
+           }
++          if (!isScoreRecoveryGenerationCurrent(actorUserId, id, generation)) break;
+           setError(
+             err.code === "VERSION_CONFLICT" ||
+               err.code === "MATCH_VERSION_CONFLICT"
+@@ -567,31 +766,145 @@ export function JudgePage() {
+   }
+ 
+   function point(side: "A" | "B") {
++    const currentRecovery = recoveryRecordRef.current;
++    const outcomeBlocked = Boolean(
++      currentRecovery &&
++        (!currentRecovery.storageSafe ||
++          currentRecovery.pausedAfterError ||
++          currentRecovery.attempts.some((attempt) => attempt.state !== "sending")),
++    );
+     if (
+       !id ||
++      !actorUserId ||
+       !match ||
+       phase !== "scoring" ||
+       !judgeLockOwnedRef.current ||
+-      exclusiveMutationRef.current
++      exclusiveMutationRef.current ||
++      recoveryStorageError ||
++      outcomeBlocked
+     ) {
+       return;
+     }
+     setMenuOpen(false);
+-    pointQueueRef.current.push({
++    const base = currentRecovery ?? createScoreRecoveryRecord(
++      actorUserId,
++      id,
++      Number((matchRef.current ?? match).version),
++    );
++    const next = appendPointIntent(base, {
++      id: crypto.randomUUID(),
+       side,
+       idempotencyKey: crypto.randomUUID(),
+     });
+-    setPointPendingCount(pointQueueRef.current.length);
++    const saved = saveRecoveryRecord(next);
++    if (!saved.ok) return;
+     void drainPointQueue(matchRef.current ?? match);
+   }
+ 
++  function recoveryBlocksMutations() {
++    const record = recoveryRecordRef.current;
++    return Boolean(
++      recoveryStorageError ||
++        (record &&
++          (!record.storageSafe ||
++            record.pausedAfterError ||
++            record.attempts.length > 0 ||
++            record.unsent.length > 0)),
++    );
++  }
++
++  async function recheckScoreRecovery() {
++    if (!id || !actorUserId) return;
++    setRecoveryStorageError(null);
++    const current = recoveryRecordRef.current;
++    if (current && !current.storageSafe) {
++      const saved = saveRecoveryRecord(current);
++      if (!saved.ok) return;
++    } else if (!current) {
++      const restored = readScoreRecoveryRecord(actorUserId, id, window.sessionStorage);
++      setRecoveryStorageError(restored.storageError);
++      if (restored.storageError) return;
++      if (restored.record) applyRecoveryRecord(restoreSendingAttemptsAsUnknown(restored.record));
++    }
++    try {
++      await load(true);
++    } catch (reason) {
++      setError(`Не удалось проверить счёт: ${(reason as Error).message}`);
++    }
++  }
++
++  function acceptCurrentScore() {
++    const current = recoveryRecordRef.current;
++    if (!current || current.readState !== "no-key" || !current.storageSafe) return;
++    saveRecoveryRecord(acceptReviewedPointScore(current));
++    setError(null);
++  }
++
++  function continueQueuedPoints() {
++    const current = recoveryRecordRef.current;
++    const authoritative = matchRef.current;
++    if (
++      !current ||
++      !authoritative ||
++      !judgeLockOwnedRef.current ||
++      !current.storageSafe ||
++      current.attempts.length > 0 ||
++      current.unsent.length === 0 ||
++      current.readState !== "exact"
++    ) return;
++    const saved = saveRecoveryRecord(resumeUnsentPointIntents(current));
++    if (saved.ok) void drainPointQueue(authoritative);
++  }
++
++  function sendReviewedFencePoint(side: "A" | "B") {
++    const current = recoveryRecordRef.current;
++    const authoritative = matchRef.current;
++    if (
++      !id ||
++      !current ||
++      !authoritative ||
++      !judgeLockOwnedRef.current ||
++      !current.storageSafe ||
++      current.readState !== "no-key" ||
++      current.reviewedVersion === undefined ||
++      !current.attempts.some((attempt) => attempt.state === "accepted-no-key")
++    ) return;
++    const fenced = resumeUnsentPointIntents({
++      ...current,
++      unsent: [
++        { id: crypto.randomUUID(), side, idempotencyKey: crypto.randomUUID() },
++        ...current.unsent,
++      ],
++    });
++    const saved = saveRecoveryRecord(fenced);
++    if (saved.ok) void drainPointQueue(authoritative, true);
++  }
++
++  function discardQueuedPoints() {
++    const current = recoveryRecordRef.current;
++    if (!current?.unsent.length) return;
++    if (!discardRecoveryConfirm) {
++      setDiscardRecoveryConfirm(true);
++      return;
++    }
++    const discarded = discardUnsentPointIntents(current);
++    if (current.storageSafe) saveRecoveryRecord(discarded);
++    else {
++      const unsafe = { ...discarded, storageSafe: false };
++      rememberScoreRecoveryRecord(unsafe);
++      applyRecoveryRecord(unsafe);
++    }
++    setDiscardRecoveryConfirm(false);
++  }
++
+   async function undo() {
+     if (
+       !match ||
+       undoPending ||
+       exclusiveMutationRef.current ||
+       pointQueueRunningRef.current ||
+-      pointQueueRef.current.length > 0
++      pointQueueRef.current.length > 0 ||
++      recoveryBlocksMutations()
+     ) return;
+     exclusiveMutationRef.current = true;
+     setUndoPending(true);
+@@ -617,13 +930,15 @@ export function JudgePage() {
+   }
+ 
+   async function releaseAndExit(destination?: "/") {
++    const scoreWriteInFlight = Boolean(
++      recoveryRecordRef.current?.attempts.some((attempt) => attempt.state === "sending"),
++    );
+     if (
+       !id ||
+       exitPendingRef.current ||
+       setupPendingRef.current ||
+       exclusiveMutationRef.current ||
+-      pointQueueRunningRef.current ||
+-      pointQueueRef.current.length > 0
++      scoreWriteInFlight
+     ) return;
+     exitPendingRef.current = true;
+     setExitPending(true);
+@@ -660,7 +975,8 @@ export function JudgePage() {
+       terminalPending ||
+       exclusiveMutationRef.current ||
+       pointQueueRunningRef.current ||
+-      pointQueueRef.current.length > 0
++      pointQueueRef.current.length > 0 ||
++      recoveryBlocksMutations()
+     ) return;
+     exclusiveMutationRef.current = true;
+     setTerminalPending(true);
+@@ -688,7 +1004,8 @@ export function JudgePage() {
+       terminalPending ||
+       exclusiveMutationRef.current ||
+       pointQueueRunningRef.current ||
+-      pointQueueRef.current.length > 0
++      pointQueueRef.current.length > 0 ||
++      recoveryBlocksMutations()
+     ) return;
+     exclusiveMutationRef.current = true;
+     setTerminalPending(true);
+@@ -722,7 +1039,11 @@ export function JudgePage() {
+   }
+ 
+   function openCorrection() {
+-    if (exclusiveMutationRef.current || pointQueueRef.current.length > 0) return;
++    if (
++      exclusiveMutationRef.current ||
++      pointQueueRef.current.length > 0 ||
++      recoveryBlocksMutations()
++    ) return;
+     setCorrectionScoreA(Number(match?.scoreA ?? 0));
+     setCorrectionScoreB(Number(match?.scoreB ?? 0));
+     setCorrectionServerId(String(match?.currentServerParticipantId ?? ""));
+@@ -731,7 +1052,7 @@ export function JudgePage() {
+   }
+ 
+   async function submitCorrection() {
+-    if (!id || !match || !correctionServerId || correctionPending || exclusiveMutationRef.current) return;
++    if (!id || !match || !correctionServerId || correctionPending || exclusiveMutationRef.current || recoveryBlocksMutations()) return;
+     exclusiveMutationRef.current = true;
+     setCorrectionPending(true);
+     setError(null);
+@@ -853,8 +1174,27 @@ export function JudgePage() {
+   const awaitingCreator = phase === "waiting_start";
+   const setupInputLocked = setupPending || setupUnknown;
+   const lostLock = phase === "lost_lock";
++  const scoreRecoveryVisible = Boolean(
++    recoveryStorageError ||
++      (recoveryRecord &&
++        (!recoveryRecord.storageSafe ||
++          recoveryRecord.attempts.some((attempt) => attempt.state !== "sending") ||
++          recoveryRecord.pausedAfterError)),
++  );
++  const scoreRecoveryBlocked = Boolean(
++    recoveryStorageError ||
++      (recoveryRecord &&
++        (!recoveryRecord.storageSafe ||
++          recoveryRecord.attempts.length > 0 ||
++          recoveryRecord.unsent.length > 0 ||
++          recoveryRecord.pausedAfterError)),
++  );
++  const scoreSendInFlight = Boolean(
++    recoveryRecord?.attempts.some((attempt) => attempt.state === "sending"),
++  );
+   const locked =
+     lostLock ||
++    scoreRecoveryVisible ||
+     match.status === "pending_confirmation" ||
+     match.status === "finished" ||
+     correctionOpen ||
+@@ -1012,7 +1352,7 @@ export function JudgePage() {
+             variant="secondary"
+             className="judge-touch"
+             onClick={() => void releaseAndExit("/")}
+-            disabled={exitPending || setupPending || undoPending || terminalPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
++            disabled={exitPending || setupPending || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
+           >На главную</Button> : null}
+           {isSetup ? (
+             <Button
+@@ -1037,7 +1377,7 @@ export function JudgePage() {
+                 variant="secondary"
+                 className="judge-touch"
+                 onClick={() => void releaseAndExit()}
+-                disabled={exitPending || undoPending || terminalPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
++                disabled={exitPending || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
+               >
+                 {exitPending ? "Выходим…" : "Назад"}
+               </Button>
+@@ -1054,7 +1394,7 @@ export function JudgePage() {
+                 variant="secondary"
+                 className="judge-touch"
+                 onClick={() => setMenuOpen((v) => !v)}
+-                disabled={undoPending || terminalPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
++                disabled={undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
+                 aria-expanded={menuOpen}
+                 aria-controls="judge-more-menu"
+                 id="judge-more-trigger"
+@@ -1082,6 +1422,77 @@ export function JudgePage() {
+         Только активный судья этой сессии меняет счёт. Undo отменяет последнее действующее очко.
+       </p>
+ 
++      {scoreRecoveryVisible ? (
++        <section
++          className="judge-screen__hint stack"
++          role="region"
++          aria-label="Восстановление счёта"
++        >
++          <h2>Проверьте последнее начисление</h2>
++          {recoveryStorageError ? (
++            <p role="alert">{recoveryStorageError} Изменение счёта заблокировано.</p>
++          ) : !recoveryRecord?.storageSafe ? (
++            <p role="alert">
++              Нажатие сохранено только в этой вкладке. Очко не отправляется, пока сохранение не подтверждено. Не перезагружайте вкладку: несохранённое нажатие может быть потеряно.
++            </p>
++          ) : recoveryRecord.readState === "checking" ? (
++            <p role="status">Проверяем сохранённые нажатия по данным матча…</p>
++          ) : recoveryRecord.readState === "failed" ? (
++            <p role="alert">Не удалось проверить результат отправки. Повторная отправка заблокирована.</p>
++          ) : recoveryRecord.attempts.some((attempt) => attempt.state === "unknown") ? (
++            <p role="status">
++              Результат отправки неизвестен. Показанный счёт и отсутствие ключа не доказывают, что очко не было начислено.
++            </p>
++          ) : recoveryRecord.attempts.some((attempt) => attempt.state === "accepted-no-key") ? (
++            <p role="status">
++              Показанный счёт принят. Чтобы безопасно начислить следующее очко, выберите его сторону.
++            </p>
++          ) : recoveryRecord.unsent.length > 0 ? (
++            <p role="status">
++              Предыдущее начисление подтверждено. Осталось нажатий: {recoveryRecord.unsent.length}.
++            </p>
++          ) : null}
++          {lostLock || readonly ? (
++            <p>Сохранённые сведения доступны для проверки, но изменение счёта требует заново занять слот судьи.</p>
++          ) : null}
++          <div className="stack">
++            <Button variant="secondary" onClick={() => void recheckScoreRecovery()}>
++              {recoveryRecord?.storageSafe === false ? "Повторить сохранение" : "Проверить состояние"}
++            </Button>
++            {recoveryRecord?.readState === "no-key" &&
++            recoveryRecord.attempts.some((attempt) => attempt.state === "unknown") ? (
++              <Button variant="secondary" onClick={acceptCurrentScore}>
++                Принять показанный счёт
++              </Button>
++            ) : null}
++            {recoveryRecord?.attempts.some((attempt) => attempt.state === "accepted-no-key") &&
++            !lostLock &&
++            !readonly ? (
++              <>
++                <Button onClick={() => sendReviewedFencePoint("A")}>
++                  Начислить последнее очко стороне A
++                </Button>
++                <Button onClick={() => sendReviewedFencePoint("B")}>
++                  Начислить последнее очко стороне B
++                </Button>
++              </>
++            ) : null}
++            {recoveryRecord?.unsent.length &&
++            recoveryRecord.attempts.length === 0 &&
++            recoveryRecord.storageSafe &&
++            !lostLock &&
++            !readonly ? (
++              <Button onClick={continueQueuedPoints}>Отправить оставшиеся нажатия</Button>
++            ) : null}
++            {recoveryRecord?.unsent.length ? (
++              <Button variant="secondary" onClick={discardQueuedPoints}>
++                {discardRecoveryConfirm ? "Подтвердить: не отправлять" : "Не отправлять оставшиеся"}
++              </Button>
++            ) : null}
++          </div>
++        </section>
++      ) : null}
++
+       {isSetup ? (
+         <div className="judge-screen__hint stack">
+           {awaitingCreator ? (
+@@ -1189,7 +1600,8 @@ export function JudgePage() {
+                   handoverPending ||
+                   correctionPending ||
+                   terminalPending ||
+-                  pointPendingCount > 0
++                  pointPendingCount > 0 ||
++                  scoreRecoveryBlocked
+                 }
+                 onClick={() => {
+                   setMenuOpen(false);
+@@ -1205,7 +1617,8 @@ export function JudgePage() {
+                   handoverPending ||
+                   correctionPending ||
+                   terminalPending ||
+-                  pointPendingCount > 0
++                  pointPendingCount > 0 ||
++                  scoreRecoveryBlocked
+                 }
+                 onClick={() => void onRevertFinish()}
+               >
+@@ -1217,7 +1630,7 @@ export function JudgePage() {
+             variant="secondary"
+             className="judge-touch"
+             onClick={() => void releaseAndExit()}
+-            disabled={exitPending || pointPendingCount > 0 || correctionOpen || correctionPending || handoverPending}
++            disabled={exitPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
+           >
+             {exitPending ? "Освобождаем…" : "Освободить слот и выйти"}
+           </Button>
