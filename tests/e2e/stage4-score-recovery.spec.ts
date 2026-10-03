@@ -37,10 +37,17 @@ async function login(page: Page) {
 }
 
 async function createStartedMatch(page: Page, title: string) {
-  await page.goto("/matches/new");
-  await page.getByRole("button", { name: "Изменить название", exact: true }).click();
-  await page.getByLabel("Название").fill(title);
-  await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
+  // Follow the actual SPA entry: goto would make Back cross a document boundary.
+  const documentKey = randomUUID();
+  await page.evaluate((key) => {
+    (window as Window & { stage4DocumentKey?: string }).stage4DocumentKey = key;
+  }, documentKey);
+  await page.getByRole("link", { name: "Начать матч", exact: true }).first().click();
+  await page.getByRole("button", { name: "Настройки", exact: true }).click();
+  const settings = page.getByRole("dialog", { name: "Настройки матча", exact: true });
+  await settings.getByLabel("Название").fill(title);
+  await expect(settings.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
+  await settings.getByRole("button", { name: "Готово", exact: true }).click();
   await page
     .getByRole("group", { name: "Игрок A: тип участника", exact: true })
     .getByRole("button", { name: "Гость", exact: true })
@@ -50,15 +57,14 @@ async function createStartedMatch(page: Page, title: string) {
     .getByRole("group", { name: "Соперник: тип участника", exact: true })
     .getByRole("button", { name: "Гость", exact: true })
     .click();
-  await page.getByLabel("Гость (Имя Фамилия)", { exact: true }).fill("Stage4 Beta");
-  await page.getByRole("button", { name: "Создать матч", exact: true }).click();
-  await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+$/);
-  const matchId = page.url().split("/").at(-1)!;
+  await page.getByLabel("Соперник — гость (Имя Фамилия)", { exact: true }).fill("Stage4 Beta");
+  await page.getByRole("button", { name: "Начать", exact: true }).click();
+  await page.getByRole("button", { name: /Stage4 Alpha.*Подаёт первым/ }).click();
+  await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+\/judge$/);
+  const matchId = page.url().split("/").at(-2)!;
   ownedMatches.set(page, matchId);
-  await page.getByRole("button", { name: "Судить", exact: true }).click();
-  await expect(page.getByTestId("judge-setup")).toBeVisible();
-  await page.getByRole("radio", { name: /Stage4 Alpha/ }).check();
-  await page.getByRole("button", { name: "Начать матч", exact: true }).click();
+  expect(await page.evaluate(() => (window as Window & { stage4DocumentKey?: string }).stage4DocumentKey)).toBe(documentKey);
+  await expect(page.getByTestId("judge-setup")).toHaveCount(0);
   await expect(page.getByRole("group", { name: "Счёт матча", exact: true })).toBeVisible();
   return matchId;
 }
@@ -143,8 +149,15 @@ test("Stage4 point recovery survives Home/return, proves the exact key, and send
   const prewritePayload = await prewriteResponse.json();
   const prewrite = prewritePayload.match as ServerMatch;
   let pointPosts = 0;
+  let releasePosts = 0;
   let staleReadPending = false;
   let pointKey = "";
+  page.on("request", (request) => {
+    if (
+      request.method() === "POST" &&
+      new URL(request.url()).pathname.endsWith(`/matches/${matchId}/judge/release`)
+    ) releasePosts += 1;
+  });
 
   await page.route(new RegExp(`/api/v1/matches/${matchId}$`), async (route) => {
     if (route.request().method() === "GET" && staleReadPending) {
@@ -176,18 +189,21 @@ test("Stage4 point recovery survives Home/return, proves the exact key, and send
   await expect(page.getByTestId("judge-side-A").locator(".judge-side__score")).toHaveText("0");
   await checkRecoveryWidths(page);
 
-  await page.getByRole("button", { name: "На главную", exact: true }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await page.goBack();
+  await expect(page).not.toHaveURL(new RegExp(`/matches/${matchId}/judge$`));
+  expect(releasePosts).toBe(1);
   const released = await readMatch(page, matchId);
   expect(released.activeJudge).toBeNull();
   expect(released.scoreA).toBe(1);
   expect(released.version).toBeGreaterThan(prewrite.version);
   expect(released.idempotencyKeys).toContain(pointKey);
 
-  await page.goto(`/matches/${matchId}/judge`);
+  await page.goForward();
+  await expect(page).toHaveURL(new RegExp(`/matches/${matchId}/judge$`));
   await expect(page.getByRole("group", { name: "Счёт матча", exact: true })).toBeVisible();
   await expect(recovery).toHaveCount(0);
   expect(pointPosts).toBe(1);
+  expect(releasePosts).toBe(1);
   const reacquired = await readMatch(page, matchId);
   expect(reacquired.activeJudge?.userId).toBe(me.id);
   expect(reacquired.scoreA).toBe(1);

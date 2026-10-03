@@ -1,5 +1,16 @@
 # Deployment as-built
 
+## 6.0.0 — accepted locally, before publication
+
+CI1881/1881 and [frozen source evidence](../audit/evidence/interface-completion-6/receipt.json) passed. Five additive migrations0008–0012 use the existing Render startup; no destructive/down migration is required. The source Vercel gate waits for exact API version/SHA, readiness and continuous420 seconds before building web. Public acceptance remains separate: hosted4CI, Render live/deactivated, Neon13 migrations and old-transaction drain, Vercel READY,7/7 web/API/proxy. No infrastructure/secrets changes or public fixtures. Rollback uses a compatible forward release; preserve receipt/history and additive schema.
+
+## Stage12 enablement published — 2026-10-03
+
+5.0.1 / `ed7fc113948387a6953b3a50cc7776248506051d`: hosted CI37126838079
+4/4 success, Vercel READY, Render live, web/API/proxy exact-version/SHA smoke7/7.
+[Client release](../audit/evidence/stage12-enablement/client-release.json).
+Ниже сохранён исторический server-first снимок до enablement.
+
 ## Stage 12 server-first release — 2026-10-03
 
 Тестовый прод Vercel + Render + Neon подтверждён на 5.0.0 /
@@ -342,3 +353,11 @@ foundation passed9/9 and exposed old consent fixtures in subsequent concurrency 
 which are being reconciled. Migration/deployment remains pending the release gate; this
 entry is not evidence of production schema change. Preserve the same owner/runtime-role
 separation and exact-SHA read-only public smoke required by the delivery checklist.
+
+## Локальный source gate D40 — ещё не опубликован
+
+Vercel buildCommand кандидата вызывает wait-api-before-web.mjs перед build:web.
+Поведение и ограничения описаны в WORKFLOW §8. Детерминированные Node проверки
+release/verify/gate прошли40/40; независимое source review Terra — PASS.
+Фактическая проверка этого guard на hosted выпуске остаётся частью release gate.
+Текущая подтверждённая публичная версия на момент записи — 5.0.1.

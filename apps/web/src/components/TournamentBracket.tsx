@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useId,
   useRef,
@@ -14,7 +15,9 @@ import {
   buildBracketViewModelV2,
   type BracketBand,
   type BracketCard,
+  type BracketEdge,
   type BracketMatchLike,
+  type BracketViewModel,
   type PlayerFate,
 } from "../bracketViewModel";
 import { Avatar, Button } from "../ui";
@@ -37,6 +40,15 @@ type Props = {
 type ConnectorPath = {
   key: string;
   d: string;
+  outcome: BracketEdge["outcome"];
+  sourceSide: BracketEdge["resolvedSourceSide"];
+  sourceCardKey: string;
+  destinationCardKey: string;
+  destinationSide: BracketEdge["destinationSide"];
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
 };
 
 function FateBadge({ fate }: { fate: PlayerFate }) {
@@ -62,7 +74,12 @@ function FateBadge({ fate }: { fate: PlayerFate }) {
       </span>
     );
   }
-  return null;
+  return (
+    <span
+      className="tournament-bracket__fate tournament-bracket__fate--empty"
+      aria-hidden="true"
+    />
+  );
 }
 
 function PlayerRow({
@@ -122,11 +139,13 @@ function PlayerRow({
 
 function MatchCard({
   card,
+  layoutSlot,
   registerCard,
   highlightedParticipantIds,
   onOpen,
 }: {
   card: BracketCard;
+  layoutSlot: number;
   registerCard: (key: string, el: HTMLElement | null) => void;
   highlightedParticipantIds?: ReadonlySet<string>;
   onOpen: (matchId: string, judge: boolean, cardKey: string) => void;
@@ -149,6 +168,7 @@ function MatchCard({
         {
           "--pair-index": card.pairIndex,
           "--pairs-in-round": card.pairsInRound,
+          "--bracket-grid-row": layoutSlot + 2,
         } as CSSProperties
       }
     >
@@ -199,80 +219,141 @@ function MatchCard({
   );
 }
 
-function BandConnectors({
-  band,
+function BracketConnectors({
+  edges,
   containerRef,
   cardEls,
   revision,
+  layoutZoom,
 }: {
-  band: BracketBand;
+  edges: BracketEdge[];
   containerRef: RefObject<HTMLDivElement | null>;
   cardEls: Map<string, HTMLElement>;
   revision: number;
+  layoutZoom: number;
 }) {
   const [paths, setPaths] = useState<ConnectorPath[]>([]);
   const [size, setSize] = useState({ w: 0, h: 0 });
+  const svgRef = useRef<SVGSVGElement>(null);
 
   useLayoutEffect(() => {
-    const root = containerRef.current;
-    if (!root) {
-      setPaths([]);
-      return;
-    }
-    const rootBox = root.getBoundingClientRect();
-    setSize({ w: root.scrollWidth, h: root.scrollHeight });
-
-    const next: ConnectorPath[] = [];
-    for (const col of band.columns) {
-      for (const card of col.cards) {
-        if (!card.feedsToCardKey || !card.winnerSide) continue;
-        const fromCard = cardEls.get(card.key);
-        const toCard = cardEls.get(card.feedsToCardKey);
-        if (!fromCard || !toCard) continue;
-
-        const winnerEl = fromCard.querySelector(
-          `[data-bracket-player="${card.key}:${card.winnerSide}"]`,
-        ) as HTMLElement | null;
-        if (!winnerEl) continue;
-
-        const fromBox = winnerEl.getBoundingClientRect();
-        const toBox = toCard.getBoundingClientRect();
-
-        const x1 = fromBox.right - rootBox.left + root.scrollLeft;
-        const y1 =
-          fromBox.top +
-          fromBox.height / 2 -
-          rootBox.top +
-          root.scrollTop;
-        const x2 = toBox.left - rootBox.left + root.scrollLeft;
-        const y2 =
-          toBox.top + toBox.height / 2 - rootBox.top + root.scrollTop;
-
-        // Horizontal-ish cubic: leave winner row, curve into next card mid
-        const dx = Math.max(24, (x2 - x1) * 0.55);
-        const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
-        next.push({ key: `${card.key}->${card.feedsToCardKey}`, d });
+    // Keep the last complete connections while the browser settles its SVG viewport.
+    // Clearing them here produces empty frames on resize and background refresh.
+    let measureFrame = 0;
+    const frame = window.requestAnimationFrame(() => {
+      measureFrame = window.requestAnimationFrame(() => {
+      const root = containerRef.current;
+      if (!root) return;
+      const svg = svgRef.current;
+      const screenMatrix = svg?.getScreenCTM();
+      const scaleX = screenMatrix ? Math.hypot(screenMatrix.a, screenMatrix.b) : 0;
+      const scaleY = screenMatrix ? Math.hypot(screenMatrix.c, screenMatrix.d) : 0;
+      const rootBox = root.getBoundingClientRect();
+      const nextSize = scaleX > 0 && scaleY > 0
+        ? { w: rootBox.width / scaleX, h: rootBox.height / scaleY }
+        : { w: root.clientWidth, h: root.clientHeight };
+      if (Math.abs(size.w - nextSize.w) > 0.001 || Math.abs(size.h - nextSize.h) > 0.001) {
+        setSize(nextSize);
+        return;
       }
-    }
-    setPaths(next);
-  }, [band, containerRef, cardEls, revision]);
+      if (!svg || !screenMatrix) return;
+      const screenToSvg = screenMatrix.inverse();
+      const toSvgPoint = (x: number, y: number) =>
+        new DOMPoint(x, y).matrixTransform(screenToSvg);
 
-  if (paths.length === 0 || size.w === 0) return null;
+      const next: ConnectorPath[] = [];
+      const renderedCards = Array.from(
+        root.querySelectorAll<HTMLElement>("[data-bracket-card]"),
+      );
+      const renderedCardByKey = new Map(
+        renderedCards.map((card) => [card.dataset.bracketCard, card]),
+      );
+      for (const edge of edges) {
+        const fromCard = cardEls.get(edge.sourceCardKey) ?? renderedCardByKey.get(edge.sourceCardKey);
+        const toCard = cardEls.get(edge.destinationCardKey) ?? renderedCardByKey.get(edge.destinationCardKey);
+        if (!fromCard || !toCard) continue;
+        const resolvedSource = edge.resolvedSourceSide
+          ? fromCard.querySelector<HTMLElement>(
+              `[data-bracket-player="${edge.sourceCardKey}:${edge.resolvedSourceSide}"]`,
+            )
+          : null;
+        const destination = toCard.querySelector<HTMLElement>(
+          `[data-bracket-player="${edge.destinationCardKey}:${edge.destinationSide}"]`,
+        );
+        if (!destination) continue;
+
+        const sourceBox = (resolvedSource ?? fromCard).getBoundingClientRect();
+        const destinationBox = destination.getBoundingClientRect();
+        const sourcePoint = toSvgPoint(
+          sourceBox.right,
+          resolvedSource
+            ? sourceBox.top + sourceBox.height / 2
+            : sourceBox.top + sourceBox.height * (edge.outcome === "winner" ? 0.36 : 0.64),
+        );
+        const destinationPoint = toSvgPoint(
+          destinationBox.left,
+          destinationBox.top + destinationBox.height / 2,
+        );
+        const x1 = sourcePoint.x;
+        const y1 = sourcePoint.y;
+        const x2 = destinationPoint.x;
+        const y2 = destinationPoint.y;
+        const turnX = x2 > x1 + 48
+          ? x1 + (x2 - x1) / 2
+          : Math.max(x1, x2) + 32;
+        const d = `M ${x1} ${y1} C ${turnX} ${y1}, ${turnX} ${y2}, ${x2} ${y2}`;
+        next.push({
+          key: edge.key,
+          d,
+          outcome: edge.outcome,
+          sourceSide: edge.resolvedSourceSide,
+          sourceCardKey: edge.sourceCardKey,
+          destinationCardKey: edge.destinationCardKey,
+          destinationSide: edge.destinationSide,
+          x1,
+          y1,
+          x2,
+          y2,
+        });
+      }
+      setPaths(next);
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.cancelAnimationFrame(measureFrame);
+    };
+  }, [edges, containerRef, cardEls, layoutZoom, revision, size.h, size.w]);
+
+  if (size.w === 0 || size.h === 0) return null;
 
   return (
     <svg
+      ref={svgRef}
       className="tournament-bracket__connectors"
+      data-layout-zoom={layoutZoom}
       width={size.w}
       height={size.h}
       viewBox={`0 0 ${size.w} ${size.h}`}
+      style={{ width: size.w, height: size.h }}
       aria-hidden="true"
     >
       {paths.map((p) => (
         <path
           key={p.key}
-          className="tournament-bracket__connector-path"
+          className={`tournament-bracket__connector-path tournament-bracket__connector-path--${p.outcome}`}
           d={p.d}
           fill="none"
+          data-edge-key={p.key}
+          data-edge-outcome={p.outcome}
+          data-source-side={p.sourceSide ?? ""}
+          data-source-card={p.sourceCardKey}
+          data-destination-card={p.destinationCardKey}
+          data-destination-side={p.destinationSide}
+          data-x1={p.x1}
+          data-y1={p.y1}
+          data-x2={p.x2}
+          data-y2={p.y2}
         />
       ))}
     </svg>
@@ -281,43 +362,148 @@ function BandConnectors({
 
 function BracketBandView({
   band,
+  registerCard,
+  highlightedParticipantIds,
+  onOpen,
+}: {
+  band: BracketBand;
+  registerCard: (key: string, el: HTMLElement | null) => void;
+  highlightedParticipantIds?: ReadonlySet<string>;
+  onOpen: (matchId: string, judge: boolean, cardKey: string) => void;
+}) {
+  const headingId = useId();
+  const slotCount = Math.max(
+    1,
+    ...band.columns.map((column) => column.cards.length),
+  );
+
+  return (
+    <section
+      className={`tournament-bracket__band tournament-bracket__band--${band.id}`}
+      aria-labelledby={headingId}
+    >
+      <h3 id={headingId} className="tournament-bracket__band-title">{band.title}</h3>
+      <div
+        className="tournament-bracket__columns"
+        style={{
+          "--bracket-column-count": band.columns.length,
+          "--bracket-slot-count": slotCount,
+        } as CSSProperties}
+      >
+        {band.columns.map((col, columnIndex) => (
+          <div
+            key={col.key}
+            className="tournament-bracket__column"
+            style={{
+              "--bracket-column": columnIndex + 1,
+              "--bracket-grid-span": slotCount + 1,
+            } as CSSProperties}
+          >
+            <h4 className="tournament-bracket__round-title">{col.label}</h4>
+            <div className="tournament-bracket__cards">
+              {col.cards.map((card, cardIndex) => (
+                <MatchCard
+                  key={card.key}
+                  card={card}
+                  layoutSlot={Math.floor(cardIndex * slotCount / Math.max(1, col.cards.length))}
+                  registerCard={registerCard}
+                  highlightedParticipantIds={highlightedParticipantIds}
+                  onOpen={onOpen}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+type ReturnState = {
+  tournamentId: string;
+  userId: string;
+  bandId: BracketBand["id"];
+  zoom: number;
+  scrollLeft: number;
+  scrollTop: number;
+  windowY: number;
+  cardKey: string;
+};
+
+function BracketView({
+  vm,
   highlightedParticipantIds,
   tournamentId,
   userId,
 }: {
-  band: BracketBand;
+  vm: BracketViewModel;
   highlightedParticipantIds?: ReadonlySet<string>;
   tournamentId?: string;
   userId?: string;
 }) {
   const navigate = useNavigate();
-  const [returnState] = useState(() => {
+  const headingId = useId();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const fullscreenButtonRef = useRef<HTMLButtonElement>(null);
+  const initialViewportApplied = useRef(false);
+  const cardEls = useRef(new Map<string, HTMLElement>()).current;
+  const [revision, setRevision] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [returnState] = useState<ReturnState | null>(() => {
     if (!tournamentId || !userId) return null;
     try {
       const raw = window.sessionStorage.getItem("tab10.bracket.return");
-      const saved = raw ? JSON.parse(raw) as { tournamentId: string; userId: string; bandId: string; zoom: number; scrollLeft: number; scrollTop: number; windowY: number; cardKey: string } : null;
-      return saved?.tournamentId === tournamentId && saved.userId === userId && saved.bandId === band.id ? saved : null;
-    } catch { return null; }
+      const saved = raw ? JSON.parse(raw) as ReturnState : null;
+      return saved?.tournamentId === tournamentId && saved.userId === userId ? saved : null;
+    } catch {
+      return null;
+    }
   });
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const headingId = useId();
-  const [zoom, setZoom] = useState(returnState?.zoom ?? 100);
-  const [edges, setEdges] = useState({ start: true, end: false });
-  const updateEdges = useCallback(() => {
+  const initialZoom = returnState && [75, 100, 125, 150].includes(returnState.zoom)
+    ? returnState.zoom
+    : 100;
+  const [zoom, setZoom] = useState(initialZoom);
+  const [scrollEdges, setScrollEdges] = useState({ start: true, end: false });
+  const columnWidth = 220 * zoom / 100;
+
+  const updateScrollEdges = useCallback(() => {
     const scroll = scrollRef.current;
-    if (scroll) setEdges({ start: scroll.scrollLeft <= 1, end: scroll.scrollLeft + scroll.clientWidth >= scroll.scrollWidth - 1 });
+    if (!scroll) return;
+    setScrollEdges({
+      start: scroll.scrollLeft <= 1,
+      end: scroll.scrollLeft + scroll.clientWidth >= scroll.scrollWidth - 1,
+    });
   }, []);
-  function scrollRound(direction: number) {
-    const scroll = scrollRef.current;
-    scroll?.scrollBy({ left: direction * (220 * zoom / 100 + 48), behavior: "auto" });
-  }
-  const columnsRef = useRef<HTMLDivElement>(null);
-  const cardEls = useRef(new Map<string, HTMLElement>()).current;
-  const [revision, setRevision] = useState(0);
+  const registerCard = useCallback((key: string, el: HTMLElement | null) => {
+    if (el) cardEls.set(key, el);
+    else cardEls.delete(key);
+  }, [cardEls]);
+  const scrollRound = useCallback((direction: number) => {
+    scrollRef.current?.scrollBy({ left: direction * (columnWidth + 48), behavior: "auto" });
+  }, [columnWidth]);
+
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const bump = () => {
+      setRevision((value) => value + 1);
+      updateScrollEdges();
+    };
+    bump();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(bump);
+    observer?.observe(canvas);
+    for (const card of cardEls.values()) observer?.observe(card);
+    window.addEventListener("resize", bump);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", bump);
+    };
+  }, [cardEls, updateScrollEdges, vm]);
 
   useLayoutEffect(() => {
     if (!returnState) return;
-    try { window.sessionStorage.removeItem("tab10.bracket.return"); } catch { /* return context is optional */ }
+    try { window.sessionStorage.removeItem("tab10.bracket.return"); } catch { /* optional return context */ }
     const frame = window.requestAnimationFrame(() => {
       const scroll = scrollRef.current;
       if (scroll) {
@@ -325,128 +511,138 @@ function BracketBandView({
         scroll.scrollTop = returnState.scrollTop;
       }
       window.scrollTo(0, returnState.windowY);
-      const card = cardEls.get(returnState.cardKey);
-      card?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
+      cardEls.get(returnState.cardKey)?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
+      updateScrollEdges();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [returnState, cardEls]);
+  }, [cardEls, returnState, updateScrollEdges]);
+
+  useLayoutEffect(() => {
+    if (initialViewportApplied.current || returnState) return;
+    const scroll = scrollRef.current;
+    const canvas = canvasRef.current;
+    if (!scroll || !canvas) return;
+    const cardKey = vm.workingMatchCardKey;
+    if (!cardKey) {
+      initialViewportApplied.current = true;
+      return;
+    }
+    const card = cardEls.get(cardKey) ?? Array.from(
+      canvas.querySelectorAll<HTMLElement>("[data-bracket-card]"),
+    ).find((item) => item.dataset.bracketCard === cardKey);
+    if (!card) return;
+    const scrollBox = scroll.getBoundingClientRect();
+    const cardBox = card.getBoundingClientRect();
+    const left = Math.max(
+      0,
+      scroll.scrollLeft + cardBox.left - scrollBox.left - (scroll.clientWidth - cardBox.width) / 2,
+    );
+    const top = Math.max(0, scroll.scrollTop + cardBox.top - scrollBox.top - 16);
+    if (typeof scroll.scrollTo === "function") {
+      scroll.scrollTo({ left, top, behavior: "auto" });
+    } else {
+      scroll.scrollLeft = left;
+      scroll.scrollTop = top;
+    }
+    initialViewportApplied.current = true;
+    updateScrollEdges();
+  }, [cardEls, returnState, revision, updateScrollEdges, vm.workingMatchCardKey]);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const exit = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setIsFullscreen(false);
+      window.requestAnimationFrame(() => fullscreenButtonRef.current?.focus());
+    };
+    window.addEventListener("keydown", exit);
+    return () => window.removeEventListener("keydown", exit);
+  }, [isFullscreen]);
 
   function openMatch(matchId: string, judge: boolean, cardKey: string) {
     if (tournamentId && userId) {
       const scroll = scrollRef.current;
+      const bandId = vm.bands.find((band) => band.columns.some((column) => column.cards.some((card) => card.key === cardKey)))?.id ?? "winners";
       try {
         window.sessionStorage.setItem("tab10.bracket.return", JSON.stringify({
-          tournamentId, userId, bandId: band.id, zoom,
-          scrollLeft: scroll?.scrollLeft ?? 0, scrollTop: scroll?.scrollTop ?? 0,
-          windowY: window.scrollY, cardKey, matchId,
+          tournamentId,
+          userId,
+          bandId,
+          zoom,
+          scrollLeft: scroll?.scrollLeft ?? 0,
+          scrollTop: scroll?.scrollTop ?? 0,
+          windowY: window.scrollY,
+          cardKey,
+          matchId,
         }));
-      } catch { /* opening the match does not depend on saved scroll position */ }
+      } catch { /* navigation does not depend on saved position */ }
     }
-    navigate(`/matches/${matchId}${judge ? "/judge" : ""}`, { state: tournamentId ? { returnTo: `/tournaments/${tournamentId}`, returnLabel: "К сетке" } : undefined });
+    navigate(`/matches/${matchId}${judge ? "/judge" : ""}`, {
+      state: tournamentId ? { returnTo: `/tournaments/${tournamentId}`, returnLabel: "К сетке" } : undefined,
+    });
   }
 
-  const registerCard = useCallback(
-    (key: string, el: HTMLElement | null) => {
-      if (el) cardEls.set(key, el);
-      else cardEls.delete(key);
-    },
-    [cardEls],
-  );
-
-  useLayoutEffect(() => {
-    const root = columnsRef.current;
-    if (!root) return;
-    const bump = () => { setRevision((n) => n + 1); updateEdges(); };
-    bump();
-    const ro = new ResizeObserver(bump);
-    ro.observe(root);
-    for (const el of cardEls.values()) ro.observe(el);
-    const scroll = scrollRef.current;
-    scroll?.addEventListener("scroll", bump, { passive: true });
-    window.addEventListener("resize", bump);
-    return () => {
-      ro.disconnect();
-      scroll?.removeEventListener("scroll", bump);
-      window.removeEventListener("resize", bump);
-    };
-  }, [band, cardEls, updateEdges, zoom]);
-
   return (
-    <section
-      className={`tournament-bracket__band tournament-bracket__band--${band.id}`}
-    >
-      <h3 id={headingId} className="tournament-bracket__band-title">{band.title}</h3>
-      <div className="row tournament-bracket__navigation" role="group" aria-label={`Навигация: ${band.title}`}>
-        <Button variant="secondary" disabled={edges.start} onClick={() => scrollRound(-1)} aria-label={`Предыдущий раунд: ${band.title}`}>←</Button>
-        <Button variant="secondary" disabled={edges.end} onClick={() => scrollRound(1)} aria-label={`Следующий раунд: ${band.title}`}>→</Button>
-        <Button variant="secondary" disabled={zoom === 100} onClick={() => setZoom((value) => Math.max(100, value - 25))} aria-label={`Уменьшить сетку: ${band.title}`}>−</Button>
-        <output aria-label={`Масштаб: ${band.title}`}>{zoom}%</output>
-        <Button variant="secondary" disabled={zoom === 150} onClick={() => setZoom((value) => Math.min(150, value + 25))} aria-label={`Увеличить сетку: ${band.title}`}>+</Button>
+    <div className={`tournament-bracket__viewport${isFullscreen ? " tournament-bracket__viewport--fullscreen" : ""}`}>
+      <h2 id={headingId} className="visually-hidden">Турнирная сетка</h2>
+      <div className="row tournament-bracket__navigation" role="group" aria-label="Навигация по турнирной сетке">
+        <Button variant="secondary" disabled={scrollEdges.start} onClick={() => scrollRound(-1)} aria-label="Предыдущий раунд">←</Button>
+        <Button variant="secondary" disabled={scrollEdges.end} onClick={() => scrollRound(1)} aria-label="Следующий раунд">→</Button>
+        <Button variant="secondary" disabled={zoom === 75} onClick={() => setZoom((value) => Math.max(75, value - 25))} aria-label="Уменьшить сетку">−</Button>
+        <output aria-label="Масштаб сетки">{zoom}%</output>
+        <Button variant="secondary" disabled={zoom === 150} onClick={() => setZoom((value) => Math.min(150, value + 25))} aria-label="Увеличить сетку">+</Button>
+        <Button
+          ref={fullscreenButtonRef}
+          variant="secondary"
+          aria-pressed={isFullscreen}
+          onClick={() => setIsFullscreen((value) => !value)}
+        >
+          {isFullscreen ? "Закрыть полный экран" : "На весь экран"}
+        </Button>
       </div>
-      <div className="tournament-bracket__scroll" ref={scrollRef} role="region" aria-labelledby={headingId} tabIndex={0}
-        style={{ "--bracket-scale": zoom / 100 } as CSSProperties}
+      <div className="tournament-bracket__legend" aria-label="Обозначения переходов">
+        <span><i className="tournament-bracket__legend-line" aria-hidden="true" />Победитель</span>
+        <span><i className="tournament-bracket__legend-line tournament-bracket__legend-line--loser" aria-hidden="true" />Проигравший</span>
+      </div>
+      <div
+        className="tournament-bracket__scroll"
+        ref={scrollRef}
+        role="region"
+        aria-labelledby={headingId}
+        tabIndex={0}
+        style={{ "--bracket-column-width": `${columnWidth}px` } as CSSProperties}
+        onScroll={updateScrollEdges}
         onKeyDown={(event) => {
           if (event.target !== event.currentTarget) return;
           if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
-            event.preventDefault(); scrollRound(event.key === "ArrowRight" ? 1 : -1);
+            event.preventDefault();
+            scrollRound(event.key === "ArrowRight" ? 1 : -1);
           } else if (event.key === "Home" || event.key === "End") {
-            event.preventDefault(); event.currentTarget.scrollLeft = event.key === "Home" ? 0 : event.currentTarget.scrollWidth;
+            event.preventDefault();
+            event.currentTarget.scrollLeft = event.key === "Home" ? 0 : event.currentTarget.scrollWidth;
           }
         }}
       >
-        <div className="tournament-bracket__columns" ref={columnsRef}>
-          <BandConnectors
-            band={band}
-            containerRef={columnsRef}
+        <div className="tournament-bracket__canvas" ref={canvasRef}>
+          <BracketConnectors
+            edges={vm.edges}
+            containerRef={canvasRef}
             cardEls={cardEls}
             revision={revision}
+            layoutZoom={zoom}
           />
-          {band.columns.map((col) => {
-            const unit = 118;
-            const gap = 28;
-            const padTop =
-              col.round === 0
-                ? 0
-                : ((2 ** col.round - 1) / 2) * (unit + gap);
-            return (
-              <div
-                key={col.key}
-                className="tournament-bracket__column"
-                style={
-                  {
-                    "--round": col.round,
-                    "--pairs": col.cards.length,
-                  } as CSSProperties
-                }
-              >
-                <h4 className="tournament-bracket__round-title">
-                  {col.label}
-                </h4>
-                <div
-                  className="tournament-bracket__cards"
-                  style={
-                    {
-                      "--card-gap": `${gap + col.round * 8}px`,
-                      paddingTop: padTop,
-                    } as CSSProperties
-                  }
-                >
-                  {col.cards.map((card) => (
-                    <MatchCard
-                      key={card.key}
-                      card={card}
-                      registerCard={registerCard}
-                      highlightedParticipantIds={highlightedParticipantIds}
-                      onOpen={openMatch}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+          {vm.bands.map((band) => (
+            <BracketBandView
+              key={band.id}
+              band={band}
+              registerCard={registerCard}
+              highlightedParticipantIds={highlightedParticipantIds}
+              onOpen={openMatch}
+            />
+          ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -482,15 +678,12 @@ export function TournamentBracket(props: Props) {
         </div>
       ) : null}
 
-      {vm.bands.map((band) => (
-        <BracketBandView
-          key={band.id}
-          band={band}
-          highlightedParticipantIds={highlightedParticipantIds}
-          tournamentId={tournamentId}
-          userId={userId}
-        />
-      ))}
+      <BracketView
+        vm={vm}
+        highlightedParticipantIds={highlightedParticipantIds}
+        tournamentId={tournamentId}
+        userId={userId}
+      />
     </div>
   );
 }

@@ -421,6 +421,8 @@ export function ProfilePage() {
                 <div className="row profile-hero__chips">
                   {stats.rank ? (
                     <Chip
+                      startIcon={false}
+                      className="status-chip"
                       size="sm"
                       variant="tonal"
                       color="primary"
@@ -429,6 +431,8 @@ export function ProfilePage() {
                   ) : null}
                   {profile.isOwn ? (
                     <Chip
+                      startIcon={false}
+                      className="status-chip"
                       size="sm"
                       variant="tonal"
                       color={user?.role === "admin" ? "primary" : "neutral"}
@@ -599,7 +603,7 @@ export function ProfilePage() {
                 <h2 className="section-title">Разделы</h2>
                 <div className="stack">
                   <ListRow to="/teams" title="Команды" subtitle="Создание и приглашения" />
-                  <ListRow to="/notifications" title="Уведомления" subtitle="Приглашения и события" trailing={unreadCount > 0 ? <Chip size="sm" variant="tonal" color="primary" label={String(unreadCount)} /> : null} />
+                  <ListRow to="/notifications" title="Уведомления" subtitle="Приглашения и события" trailing={unreadCount > 0 ? <Chip size="sm" variant="tonal" color="primary" label={String(unreadCount)} startIcon={false} className="status-chip" /> : null} />
                   <ListRow to="/help" title="Помощь" subtitle="FAQ и обратная связь" />
                   <ListRow onClick={restartOnboarding} title={onboardingRestart.pending ? "Запускаем онбординг…" : "Пройти обучение заново"} subtitle="Начать с первого шага и при желании сыграть учебный матч" />
                   {user?.role === "admin" ? <ListRow to="/admin" title="Админка" subtitle="Пользователи и доступ" /> : null}
@@ -613,7 +617,7 @@ export function ProfilePage() {
                         key={session.id}
                         title={session.userAgent ?? "Неизвестное устройство"}
                         subtitle={`Последняя активность: ${formatDateTime(session.lastSeenAt)}`}
-                        trailing={session.current ? <Chip size="sm" variant="tonal" color="success" label="Текущая" /> : <Button size="sm" variant="secondary" onClick={() => setSessionToRevoke(session)}>Завершить</Button>}
+                        trailing={session.current ? <Chip size="sm" variant="tonal" color="success" label="Текущая" startIcon={false} className="status-chip" /> : <Button size="sm" variant="secondary" onClick={() => setSessionToRevoke(session)}>Завершить</Button>}
                       />
                     ))}
                   </div>

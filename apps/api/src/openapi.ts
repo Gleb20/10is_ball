@@ -1,4 +1,5 @@
 import { productVersion } from "./release-metadata.js";
+import { AVATAR_PRESET_COUNT } from "@tab10/shared";
 
 type JsonSchema = Record<string, unknown>;
 
@@ -19,6 +20,14 @@ type OperationOptions = {
 };
 
 const ref = (name: string): JsonSchema => ({ $ref: `#/components/schemas/${name}` });
+const avatarKeySchema: JsonSchema = {
+  type: "string",
+  enum: Array.from(
+    { length: AVATAR_PRESET_COUNT },
+    (_, index) => `avatar_${index + 1}`,
+  ),
+  nullable: true,
+};
 const objectRef = (property: string, name: string): JsonSchema => ({
   type: "object",
   required: [property],
@@ -40,6 +49,12 @@ const queryParameter = (
   name: string,
   schema: JsonSchema = { type: "string" },
 ) => ({ name, in: "query", required: false, schema });
+const adminMatchRecoveryErrors = Object.fromEntries(
+  [400, 401, 403, 404, 409, 500].map((status) => [
+    status,
+    ref("AdminMatchRecoveryError"),
+  ]),
+) as Record<number, JsonSchema>;
 
 function operation(options: OperationOptions) {
   const errors =
@@ -127,6 +142,73 @@ const schemas: Record<string, JsonSchema> = {
     },
   },
   GenericObject: { type: "object", additionalProperties: true },
+  AdminMatchRecovery: {
+    type: "object",
+    required: [
+      "id",
+      "kind",
+      "status",
+      "version",
+      "allowedEmergencyAction",
+    ],
+    additionalProperties: false,
+    properties: {
+      id: { type: "string", format: "uuid" },
+      kind: {
+        type: "string",
+        enum: ["standalone", "tournament", "tutorial"],
+      },
+      status: {
+        type: "string",
+        enum: [
+          "waiting",
+          "in_progress",
+          "pending_confirmation",
+          "finished",
+          "stopped",
+          "cancelled",
+          "voided",
+        ],
+      },
+      version: { type: "integer", minimum: 0 },
+      allowedEmergencyAction: {
+        type: "string",
+        enum: ["force_close", null],
+        nullable: true,
+      },
+    },
+  },
+  AdminMatchRecoveryResponse: {
+    type: "object",
+    required: ["recovery"],
+    additionalProperties: false,
+    properties: { recovery: ref("AdminMatchRecovery") },
+  },
+  AdminMatchRecoveryError: {
+    type: "object",
+    required: ["code", "message", "requestId"],
+    additionalProperties: false,
+    properties: {
+      code: {
+        type: "string",
+        enum: [
+          "CSRF_INVALID",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "INTERNAL",
+          "MATCH_NOT_ACTIVE",
+          "NOT_FOUND",
+          "PASSWORD_CHANGE_REQUIRED",
+          "TOURNAMENT_MATCH_FORBIDDEN",
+          "UNAUTHORIZED",
+          "VALIDATION",
+          "VERSION_CONFLICT",
+        ],
+      },
+      message: { type: "string" },
+      requestId: { type: "string" },
+    },
+  },
   Ok: {
     type: "object",
     required: ["ok"],
@@ -621,12 +703,99 @@ const schemas: Record<string, JsonSchema> = {
     },
     additionalProperties: true,
   },
+  MatchFacts: {
+    type: "object",
+    required: ["initialServer", "playingClock", "judgeHistory"],
+    properties: {
+      initialServer: {
+        oneOf: [
+          {
+            type: "object",
+            required: ["state", "participantId"],
+            properties: {
+              state: { type: "string", enum: ["known"] },
+              participantId: { type: "string", format: "uuid" },
+            },
+            additionalProperties: false,
+          },
+          {
+            type: "object",
+            required: ["state"],
+            properties: { state: { type: "string", enum: ["not_selected"] } },
+            additionalProperties: false,
+          },
+          {
+            type: "object",
+            required: ["state"],
+            properties: { state: { type: "string", enum: ["unavailable"] } },
+            additionalProperties: false,
+          },
+        ],
+      },
+      playingClock: {
+        oneOf: [
+          {
+            type: "object",
+            required: ["state", "elapsedMs", "running", "asOf"],
+            properties: {
+              state: { type: "string", enum: ["available"] },
+              elapsedMs: { type: "integer", minimum: 0 },
+              running: { type: "boolean" },
+              asOf: { type: "string", format: "date-time" },
+            },
+            additionalProperties: false,
+          },
+          {
+            type: "object",
+            required: ["state"],
+            properties: { state: { type: "string", enum: ["unavailable"] } },
+            additionalProperties: false,
+          },
+        ],
+      },
+      judgeHistory: {
+        type: "object",
+        required: ["state", "sessions"],
+        properties: {
+          state: { type: "string", enum: ["complete", "partial", "unavailable"] },
+          sessions: {
+            type: "array",
+            items: {
+              type: "object",
+              required: ["id", "userId", "displayName", "startedAt", "endedAt"],
+              properties: {
+                id: { type: "string", format: "uuid" },
+                userId: { type: "string", format: "uuid" },
+                displayName: { type: "string" },
+                startedAt: { type: "string", format: "date-time" },
+                endedAt: { type: "string", format: "date-time", nullable: true },
+              },
+              additionalProperties: false,
+            },
+          },
+        },
+        additionalProperties: false,
+      },
+    },
+    additionalProperties: false,
+  },
+  MatchDetail: {
+    allOf: [
+      ref("Match"),
+      {
+        type: "object",
+        required: ["matchFacts"],
+        properties: { matchFacts: ref("MatchFacts") },
+      },
+    ],
+  },
   Participant: {
     type: "object",
     required: ["id"],
     properties: {
       id: { type: "string" },
       userId: { type: "string", nullable: true },
+      guestIdentityId: { type: "string", format: "uuid", nullable: true },
       displayName: { type: "string" },
       side: { type: "string", enum: ["A", "B"] },
       status: { type: "string" },
@@ -649,6 +818,7 @@ const schemas: Record<string, JsonSchema> = {
     type: "object",
     required: ["id", "title", "format", "status"],
     properties: {
+      plannedDate: { type: "string", format: "date", nullable: true, description: "Planned calendar date only; does not schedule or start the tournament" },
       id: { type: "string" },
       title: { type: "string" },
       format: { type: "string", enum: ["single_elimination", "double_elimination"] },
@@ -675,6 +845,18 @@ const schemas: Record<string, JsonSchema> = {
     },
     additionalProperties: true,
   },
+  BracketGenerationTournament: {
+    allOf: [
+      ref("Tournament"),
+      {
+        type: "object",
+        required: ["bracketStateVersion"],
+        properties: {
+          bracketStateVersion: { type: "integer", minimum: 0 },
+        },
+      },
+    ],
+  },
   TournamentListItem: {
     type: "object",
     required: ["id", "title", "status"],
@@ -687,11 +869,12 @@ const schemas: Record<string, JsonSchema> = {
     additionalProperties: true,
   },
   Team: {
-    type: "object", required: ["id", "name", "captainUserId"], additionalProperties: true,
+    type: "object", required: ["id", "name", "captainUserId", "avatarKey"], additionalProperties: true,
     properties: {
       id: { type: "string", format: "uuid" }, name: { type: "string" },
       captainUserId: { type: "string", format: "uuid" }, status: { type: "string", enum: ["active", "archived"] },
       slogan: { type: "string", nullable: true }, welcomeText: { type: "string", nullable: true },
+      avatarKey: avatarKeySchema,
       createdAt: { type: "string", format: "date-time" }, archivedAt: { type: "string", format: "date-time", nullable: true },
       isMember: { type: "boolean" }, isCaptain: { type: "boolean" },
       members: { type: "array", items: { type: "object", properties: {
@@ -897,6 +1080,118 @@ const schemas: Record<string, JsonSchema> = {
     },
     additionalProperties: false,
   },
+  MatchLaunchParticipant: {
+    type: "object",
+    properties: {
+      userId: { type: "string", format: "uuid" },
+      guestIdentityId: { type: "string", format: "uuid" },
+      guestFirstName: { type: "string", minLength: 1, maxLength: 100 },
+      guestLastName: { type: "string", minLength: 1, maxLength: 100 },
+    },
+    additionalProperties: false,
+  },
+  MatchLaunchRequest: {
+    type: "object",
+    required: ["requestId", "format", "firstServerMethod", "roster"],
+    properties: {
+      requestId: { type: "string", format: "uuid" },
+      title: { type: "string", minLength: 1, maxLength: 200 },
+      format: { type: "string", enum: ["1v1", "2v2"] },
+      pointsToWin: { type: "integer", minimum: 1, default: 11 },
+      mercyEnabled: { type: "boolean", default: false },
+      mercyPoints: { type: "integer", minimum: 1, nullable: true },
+      firstServerMethod: { type: "string", enum: ["random", "manual", "rally"] },
+      firstServerSlot: { type: "string", enum: ["A1", "A2", "B1", "B2"] },
+      roster: {
+        type: "object",
+        required: ["A1", "B1"],
+        properties: {
+          A1: ref("MatchLaunchParticipant"),
+          A2: ref("MatchLaunchParticipant"),
+          B1: ref("MatchLaunchParticipant"),
+          B2: ref("MatchLaunchParticipant"),
+        },
+        additionalProperties: false,
+      },
+    },
+    additionalProperties: false,
+  },
+  MatchLaunchResponse: {
+    type: "object",
+    required: ["requestId", "matchId"],
+    properties: {
+      requestId: { type: "string", format: "uuid" },
+      matchId: { type: "string", format: "uuid" },
+    },
+    additionalProperties: false,
+  },
+  MatchLaunchOutcome: {
+    oneOf: [
+      {
+        type: "object",
+        required: ["outcome"],
+        properties: { outcome: { type: "string", enum: ["unknown"] } },
+        additionalProperties: false,
+      },
+      {
+        type: "object",
+        required: ["outcome", "matchId"],
+        properties: {
+          outcome: { type: "string", enum: ["committed"] },
+          matchId: { type: "string", format: "uuid" },
+        },
+        additionalProperties: false,
+      },
+    ],
+  },
+  GuestIdentity: {
+    type: "object",
+    required: ["id", "firstName", "lastName", "displayName", "avatarKey", "version", "canRename", "createdAt", "updatedAt"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+      firstName: { type: "string", minLength: 1, maxLength: 100 },
+      lastName: { type: "string", minLength: 1, maxLength: 100 },
+      displayName: { type: "string" },
+      avatarKey: { type: "string", pattern: "^avatar_([1-9]|10)$" },
+      version: { type: "integer", minimum: 0 },
+      canRename: { type: "boolean" },
+      createdAt: { type: "string", format: "date-time" },
+      updatedAt: { type: "string", format: "date-time" },
+    },
+    additionalProperties: false,
+  },
+  CreateGuestIdentityRequest: {
+    type: "object",
+    required: ["requestId", "firstName", "lastName"],
+    properties: {
+      requestId: { type: "string", format: "uuid" },
+      firstName: { type: "string", minLength: 1, maxLength: 100 },
+      lastName: { type: "string", minLength: 1, maxLength: 100 },
+    },
+    additionalProperties: false,
+  },
+  RenameGuestIdentityRequest: {
+    type: "object",
+    required: ["requestId", "expectedVersion", "firstName", "lastName"],
+    properties: {
+      requestId: { type: "string", format: "uuid" },
+      expectedVersion: { type: "integer", minimum: 0 },
+      firstName: { type: "string", minLength: 1, maxLength: 100 },
+      lastName: { type: "string", minLength: 1, maxLength: 100 },
+    },
+    additionalProperties: false,
+  },
+  GuestIdentityMutationOutcome: {
+    oneOf: [
+      { type: "object", required: ["outcome"], properties: { outcome: { type: "string", enum: ["unknown"] } }, additionalProperties: false },
+      { type: "object", required: ["outcome", "operation", "guestId", "resultingVersion"], properties: {
+        outcome: { type: "string", enum: ["committed"] },
+        operation: { type: "string", enum: ["create", "rename"] },
+        guestId: { type: "string", format: "uuid" },
+        resultingVersion: { type: "integer", minimum: 0 },
+      }, additionalProperties: false },
+    ],
+  },
   JudgeHandoverRequest: {
     type: "object", required: ["toUserId"], additionalProperties: false,
     properties: { toUserId: { type: "string", format: "uuid" } },
@@ -1014,6 +1309,7 @@ const schemas: Record<string, JsonSchema> = {
     type: "object",
     required: ["title"],
     properties: {
+      plannedDate: { type: "string", format: "date", nullable: true, description: "Planned calendar date only; does not schedule or start the tournament" },
       title: { type: "string", minLength: 1, maxLength: 200 },
       format: { type: "string", enum: ["single_elimination", "double_elimination"] },
       organizerParticipates: { type: "boolean" },
@@ -1027,6 +1323,7 @@ const schemas: Record<string, JsonSchema> = {
   TournamentPatchRequest: {
     type: "object", minProperties: 1,
     properties: {
+      plannedDate: { type: "string", format: "date", nullable: true, description: "Planned calendar date only; does not schedule or start the tournament" },
       title: { type: "string", minLength: 1, maxLength: 200 },
       format: { type: "string", enum: ["single_elimination", "double_elimination"] },
       organizerParticipates: { type: "boolean" },
@@ -1040,6 +1337,7 @@ const schemas: Record<string, JsonSchema> = {
     type: "object",
     properties: {
       userId: { type: "string" },
+      guestIdentityId: { type: "string", format: "uuid" },
       guestFirstName: { type: "string" },
       guestLastName: { type: "string" },
       confirmManualOverride: { type: "boolean" },
@@ -1077,6 +1375,15 @@ const schemas: Record<string, JsonSchema> = {
     properties: { constructionAlgorithm: { type: "string", enum: ["compact", "power_of_two"] } },
     additionalProperties: false,
   },
+  BracketGenerationRequest: {
+    type: "object",
+    required: ["expectedVersion"],
+    properties: {
+      expectedVersion: { type: "integer", minimum: 0 },
+      constructionAlgorithm: { type: "string", enum: ["compact", "power_of_two"] },
+    },
+    additionalProperties: false,
+  },
   BracketPatchRequest: {
     type: "object",
     properties: {
@@ -1100,11 +1407,11 @@ const schemas: Record<string, JsonSchema> = {
   },
   CreateTeamRequest: {
     type: "object", required: ["name"], additionalProperties: false,
-    properties: { name: { type: "string", minLength: 1, maxLength: 200 }, slogan: { type: "string", maxLength: 300 }, welcomeText: { type: "string", maxLength: 2000 } },
+    properties: { name: { type: "string", minLength: 1, maxLength: 200 }, slogan: { type: "string", maxLength: 300 }, welcomeText: { type: "string", maxLength: 2000 }, avatarKey: avatarKeySchema },
   },
   UpdateTeamRequest: {
     type: "object", minProperties: 1, additionalProperties: false,
-    properties: { name: { type: "string", minLength: 1, maxLength: 200 }, slogan: { type: "string", maxLength: 300 }, welcomeText: { type: "string", maxLength: 2000 } },
+    properties: { name: { type: "string", minLength: 1, maxLength: 200 }, slogan: { type: "string", maxLength: 300 }, welcomeText: { type: "string", maxLength: 2000 }, avatarKey: avatarKeySchema },
   },
   TeamInvitationResponse: {
     type: "object", required: ["status", "teamId"], additionalProperties: false,
@@ -1193,6 +1500,12 @@ export function openApiSpec(releaseVersion = productVersion()) {
       "/api/v1/admin/matches/{matchId}/force-close": {
         post: operation({ operationId: "adminForceCloseMatch", summary: "Force-close active standalone match", tag: "Admin", mutation: true, parameters: pathParameters("matchId"), request: "CancelMatchRequest", response: objectRef("match", "Match"), idempotency: true }),
       },
+      "/api/v1/admin/matches/{matchId}/recovery": {
+        get: operation({ operationId: "adminGetMatchRecovery", summary: "Read the minimal emergency projection for one exact match id", tag: "Admin", parameters: pathParameters("matchId"), response: ref("AdminMatchRecoveryResponse"), errors: [400, 401, 403, 404, 500], errorResponses: adminMatchRecoveryErrors, noStore: true }),
+      },
+      "/api/v1/admin/matches/{matchId}/recovery/force-close": {
+        post: operation({ operationId: "adminForceCloseMatchRecovery", summary: "Force-close through the minimal exact-id recovery surface", tag: "Admin", mutation: true, parameters: pathParameters("matchId"), request: "CancelMatchRequest", response: ref("AdminMatchRecoveryResponse"), errorResponses: adminMatchRecoveryErrors, idempotency: true, noStore: true }),
+      },
       "/api/v1/admin/matches/{matchId}": {
         delete: operation({ operationId: "adminDeleteMatch", summary: "Purge eligible standalone match", tag: "Admin", mutation: true, parameters: pathParameters("matchId"), response: ref("GenericObject") }),
       },
@@ -1208,6 +1521,20 @@ export function openApiSpec(releaseVersion = productVersion()) {
       },
       "/api/v1/me/onboarding": {
         patch: operation({ operationId: "updateOwnOnboarding", summary: "Update onboarding progress (runtime name)", tag: "Profile", mutation: true, request: "OnboardingMutationRequest", response: objectRef("user", "User") }),
+      },
+      "/api/v1/guests": {
+        get: operation({ operationId: "listGuestIdentities", summary: "List reusable guest identities", tag: "Guests", parameters: [queryParameter("q", { type: "string", maxLength: 100 }), queryParameter("cursor", { type: "string", maxLength: 1000 }), queryParameter("limit", { type: "integer", minimum: 1, maximum: 50, default: 20 })], response: { type: "object", required: ["guests", "nextCursor"], properties: { guests: { type: "array", items: ref("GuestIdentity") }, nextCursor: { type: "string", nullable: true } }, additionalProperties: false }, errors: [400, 401, 403, 500] }),
+        post: operation({ operationId: "createGuestIdentity", summary: "Create a reusable guest identity", tag: "Guests", mutation: true, idempotency: true, request: "CreateGuestIdentityRequest", response: objectRef("guest", "GuestIdentity") }),
+      },
+      "/api/v1/guests/requests/{requestId}": {
+        get: operation({ operationId: "getGuestIdentityMutationOutcome", summary: "Reconcile an actor-bound guest mutation", tag: "Guests", parameters: pathParameters("requestId"), response: ref("GuestIdentityMutationOutcome"), noStore: true }),
+      },
+      "/api/v1/guests/{guestId}": {
+        get: operation({ operationId: "getGuestIdentity", summary: "Read a reusable guest identity", tag: "Guests", parameters: pathParameters("guestId"), response: objectRef("guest", "GuestIdentity") }),
+        patch: operation({ operationId: "renameGuestIdentity", summary: "Rename a reusable guest identity with version fencing", tag: "Guests", mutation: true, idempotency: true, parameters: pathParameters("guestId"), request: "RenameGuestIdentityRequest", response: objectRef("guest", "GuestIdentity") }),
+      },
+      "/api/v1/guests/{guestId}/history": {
+        get: operation({ operationId: "getGuestIdentityHistory", summary: "List terminal match and tournament history for a reusable guest", tag: "Guests", parameters: [...pathParameters("guestId"), queryParameter("cursor", { type: "string", maxLength: 1000 })], response: { type: "object", required: ["guest", "items", "nextCursor"], properties: { guest: ref("GuestIdentity"), items: { type: "array", items: ref("HistoryItem") }, nextCursor: { type: "string", nullable: true } }, additionalProperties: false }, errors: [400, 401, 403, 404, 500] }),
       },
       "/api/v1/history": {
         get: operation({
@@ -1231,6 +1558,12 @@ export function openApiSpec(releaseVersion = productVersion()) {
       "/api/v1/matches": {
         get: operation({ operationId: "listMatches", summary: "List visible matches", tag: "Matches", response: arrayRef("matches", "Match") }),
         post: operation({ operationId: "createMatch", summary: "Create standalone match", tag: "Matches", mutation: true, request: "CreateMatchRequest", response: objectRef("match", "Match") }),
+      },
+      "/api/v1/matches/launches": {
+        post: operation({ operationId: "launchMatch", summary: "Atomically create, acquire and start a standalone match", tag: "Matches", mutation: true, request: "MatchLaunchRequest", response: ref("MatchLaunchResponse"), idempotency: true }),
+      },
+      "/api/v1/matches/launches/{requestId}": {
+        get: operation({ operationId: "getMatchLaunchOutcome", summary: "Reconcile an actor-bound launch outcome", tag: "Matches", parameters: pathParameters("requestId"), response: ref("MatchLaunchOutcome"), noStore: true }),
       },
       "/api/v1/matches/create-options": {
         get: operation({ operationId: "matchCreateOptions", summary: "Own team and opponent selection groups", tag: "Matches", response: ref("MatchCreateOptions") }),
@@ -1258,7 +1591,7 @@ export function openApiSpec(releaseVersion = productVersion()) {
       },
       "/api/v1/matches/{matchId}": {
         patch: operation({ operationId: "updateWaitingMatch", summary: "Edit an unstarted standalone match and reconcile player consent", tag: "Matches", mutation: true, parameters: pathParameters("matchId"), request: "UpdateMatchRequest", response: objectRef("match", "Match") }),
-        get: operation({ operationId: "getMatch", summary: "Get visible match", tag: "Matches", parameters: pathParameters("matchId"), response: objectRef("match", "Match") }),
+        get: operation({ operationId: "getMatch", summary: "Get visible match", tag: "Matches", parameters: pathParameters("matchId"), response: objectRef("match", "MatchDetail") }),
       },
       "/api/v1/matches/{matchId}/start": {
         post: operation({ operationId: "startMatch", summary: "Start match", tag: "Matches", mutation: true, parameters: pathParameters("matchId"), request: "StartMatchRequest", requestRequired: false, response: objectRef("match", "Match") }),
@@ -1329,8 +1662,14 @@ export function openApiSpec(releaseVersion = productVersion()) {
         post: operation({ operationId: "respondTournamentInvitation", summary: "Accept or decline tournament invitation", tag: "Tournaments", mutation: true, parameters: pathParameters("id"), request: "InvitationResponseRequest", response: ref("GenericObject") }),
       },
       "/api/v1/tournaments/{id}/bracket": {
-        post: operation({ operationId: "generateTournamentBracket", summary: "Generate or regenerate bracket", tag: "Tournaments", mutation: true, parameters: pathParameters("id"), request: "BracketGenerateRequest", requestRequired: false, response: ref("GenericObject") }),
+        post: operation({ operationId: "rejectUnversionedTournamentBracketGeneration", summary: "Reject obsolete unversioned bracket generation clients", tag: "Tournaments", mutation: true, parameters: pathParameters("id"), request: "BracketGenerateRequest", requestRequired: false, response: ref("GenericObject") }),
         patch: operation({ operationId: "patchTournamentBracket", summary: "Swap editable bracket slots", tag: "Tournaments", mutation: true, parameters: pathParameters("id"), request: "BracketPatchRequest", response: ref("GenericObject") }),
+      },
+      "/api/v1/tournaments/{id}/bracket-generation-context": {
+        get: operation({ operationId: "getTournamentBracketGenerationContext", summary: "Get an organizer-only consistent bracket generation snapshot", tag: "Tournaments", parameters: pathParameters("id"), response: objectRef("tournament", "BracketGenerationTournament") }),
+      },
+      "/api/v1/tournaments/{id}/bracket-generations": {
+        post: operation({ operationId: "generateVersionedTournamentBracket", summary: "Generate a bracket when its input version still matches", tag: "Tournaments", mutation: true, parameters: pathParameters("id"), request: "BracketGenerationRequest", response: objectRef("tournament", "BracketGenerationTournament") }),
       },
       "/api/v1/tournaments/{id}/dissolve-bracket": {
         post: operation({ operationId: "dissolveTournamentBracket", summary: "Dissolve bracket draft", tag: "Tournaments", mutation: true, parameters: pathParameters("id"), response: objectRef("tournament", "Tournament") }),

@@ -11,17 +11,38 @@ import {
 import { api, type MatchParticipantInput } from "../api";
 import { useAuth } from "../auth";
 import {
-  elapsedMs,
   formatMatchDuration,
   type ActiveJudge,
 } from "../judgeUi";
+import {
+  acceptMatchFacts,
+  eventProvenance,
+  firstServerLabel,
+  formatFactDateTime,
+  freezeMatchFacts,
+  monotonicNow,
+  playingClockView,
+  type MatchFactsSnapshot,
+} from "../matchFactsUi";
 import { initialsFromName } from "../rankingUi";
 import { avatarSrc } from "../avatarSrc";
 import { useVisibleRefresh } from "../useVisibleRefresh";
-import { useSingleFlight } from "../useSingleFlight";
+import { useLifecycleSingleFlight } from "./useLifecycleSingleFlight";
+import { createReplaySeed } from "./matchPreparation";
+import "./MatchDetailPage.css";
 
 type AdminConfirm = "force-close" | "delete" | null;
-type MatchEvent = { type: string; side?: "A" | "B" };
+type ScoreSnapshot = { scoreA?: number; scoreB?: number };
+type MatchEvent = {
+  type: string;
+  side?: "A" | "B";
+  undonePoint?: { type?: string; side?: "A" | "B" };
+  from?: ScoreSnapshot;
+  to?: ScoreSnapshot;
+  occurredAt?: string;
+  actorUserId?: string;
+  judgeSessionId?: string;
+};
 type MatchFormat = "1v1" | "2v2";
 type FirstServerMethod = "random" | "manual" | "rally";
 type EditorParticipant = {
@@ -136,13 +157,12 @@ function EditSlotField({
   );
 }
 
-function cleanPointLog(events: MatchEvent[]): Array<"A" | "B"> {
-  const points: Array<"A" | "B"> = [];
-  for (const event of events) {
-    if (event.type === "manual_correction") points.length = 0;
-    else if (event.type === "point_awarded" && event.side) points.push(event.side);
-  }
-  return points;
+function scoreSnapshotLabel(snapshot?: ScoreSnapshot): string | null {
+  if (
+    typeof snapshot?.scoreA !== "number" ||
+    typeof snapshot.scoreB !== "number"
+  ) return null;
+  return `${snapshot.scoreA}:${snapshot.scoreB}`;
 }
 
 export function MatchDetailPage() {
@@ -152,6 +172,10 @@ export function MatchDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [match, setMatch] = useState<Record<string, unknown> | null>(null);
+  const matchRef = useRef<Record<string, unknown> | null>(null);
+  const [factsSnapshot, setFactsSnapshot] = useState<MatchFactsSnapshot | null>(null);
+  const factsSnapshotRef = useRef<MatchFactsSnapshot | null>(null);
+  const [factsNow, setFactsNow] = useState(monotonicNow);
   const [actionError, setActionError] = useState<string | null>(null);
   const [startOpen, setStartOpen] = useState(false);
   const [startServerId, setStartServerId] = useState("");
@@ -162,6 +186,7 @@ export function MatchDetailPage() {
   const [absentSide, setAbsentSide] = useState<"A" | "B">("B");
   const [noShowReason, setNoShowReason] = useState("");
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const [voidOpen, setVoidOpen] = useState(false);
   const [voidReason, setVoidReason] = useState("");
   const [adminConfirm, setAdminConfirm] = useState<AdminConfirm>(null);
@@ -177,25 +202,108 @@ export function MatchDetailPage() {
   });
   const [directoryOptions, setDirectoryOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [editError, setEditError] = useState<string | null>(null);
-  const action = useSingleFlight();
-  const [now, setNow] = useState(() => new Date());
+  const action = useLifecycleSingleFlight();
   const responseSequence = useRef(0);
-  const mutationInFlight = useRef(false);
+  const interactionContextKey = `${id ?? "none"}:${user?.id ?? "anonymous"}`;
+  const interactionContext = useRef({
+    key: interactionContextKey,
+    actorId: user?.id ?? null,
+    generation: 0,
+    active: false,
+  });
+  if (interactionContext.current.key !== interactionContextKey) {
+    interactionContext.current = {
+      key: interactionContextKey,
+      actorId: user?.id ?? null,
+      generation: interactionContext.current.generation + 1,
+      active: false,
+    };
+  }
+  const mutationContextRef = useRef<typeof interactionContext.current | null>(null);
+
+  const isCurrentInteraction = useCallback(
+    (context: typeof interactionContext.current) =>
+      context.active && interactionContext.current === context,
+    [],
+  );
+
+  const applyFreshFacts = useCallback((nextMatch: Record<string, unknown>) => {
+    const next = acceptMatchFacts(
+      factsSnapshotRef.current,
+      nextMatch.matchFacts as MatchFactsSnapshot["facts"] | undefined,
+      Number(nextMatch.version ?? -1),
+      String(nextMatch.status ?? "unknown"),
+    );
+    factsSnapshotRef.current = next;
+    setFactsSnapshot(next);
+    setFactsNow(next.receivedAtPerformanceMs);
+  }, []);
+
+  const freezeFacts = useCallback(() => {
+    const next = freezeMatchFacts(factsSnapshotRef.current);
+    factsSnapshotRef.current = next;
+    setFactsSnapshot(next);
+    if (next) setFactsNow(next.receivedAtPerformanceMs);
+  }, []);
 
   const load = useCallback(async () => {
-    const requestedId = id;
-    if (!requestedId || mutationInFlight.current) return;
+    const requestedId = currentIdRef.current;
+    const operationContext = interactionContext.current;
+    if (!requestedId || !operationContext.actorId || !operationContext.active || mutationContextRef.current === operationContext) return;
     const sequence = ++responseSequence.current;
     const res = await api.getMatch(requestedId);
-    if (currentIdRef.current === requestedId && sequence === responseSequence.current) setMatch(res.match);
-  }, [id]);
+    if (currentIdRef.current === requestedId && sequence === responseSequence.current && isCurrentInteraction(operationContext)) {
+      const currentVersion = Number(matchRef.current?.version ?? -1);
+      const incomingVersion = Number(res.match.version ?? -1);
+      if (incomingVersion < currentVersion) return;
+      matchRef.current = res.match;
+      setMatch(res.match);
+      applyFreshFacts(res.match);
+    }
+  }, [applyFreshFacts, isCurrentInteraction]);
 
   useEffect(() => {
+    const activeContext = {
+      ...interactionContext.current,
+      generation: interactionContext.current.generation + 1,
+      active: true,
+    };
+    interactionContext.current = activeContext;
+    action.resume();
     responseSequence.current += 1;
+    mutationContextRef.current = null;
+    matchRef.current = null;
     setMatch(null);
+    factsSnapshotRef.current = null;
+    setFactsSnapshot(null);
+    setActionError(null);
+    setStartOpen(false);
+    setStopOpen(false);
+    setNoShowOpen(false);
+    setCancelOpen(false);
+    setCancelReason("");
+    setVoidOpen(false);
+    setVoidReason("");
+    setAdminConfirm(null);
     setEditOpen(false);
     setEditError(null);
-  }, [id]);
+    return () => {
+      action.invalidate();
+      if (interactionContext.current !== activeContext) return;
+      interactionContext.current = {
+        ...activeContext,
+        generation: activeContext.generation + 1,
+        active: false,
+      };
+    };
+  }, [action.invalidate, action.resume, interactionContextKey]);
+
+  useEffect(() => {
+    const clock = factsSnapshot?.facts.playingClock;
+    if (factsSnapshot?.certainty !== "fresh" || clock?.state !== "available" || !clock.running) return;
+    const tick = window.setInterval(() => setFactsNow(monotonicNow()), 1_000);
+    return () => window.clearInterval(tick);
+  }, [factsSnapshot]);
 
   const pollingEnabled =
     match === null ||
@@ -206,13 +314,7 @@ export function MatchDetailPage() {
     error: refreshError,
     refreshing,
     refreshNow,
-  } = useVisibleRefresh(load, { pollingEnabled, refreshKey: id });
-
-  useEffect(() => {
-    if (match?.status !== "in_progress") return;
-    const tick = window.setInterval(() => setNow(new Date()), 1000);
-    return () => window.clearInterval(tick);
-  }, [match?.status]);
+  } = useVisibleRefresh(load, { pollingEnabled, refreshKey: interactionContextKey });
 
   const participants = (match?.participants as EditorParticipant[] | undefined) ?? [];
 
@@ -243,7 +345,33 @@ export function MatchDetailPage() {
       .filter((participant) => participant.side === side)
       .map((participant) => participant.displayName ?? `Сторона ${side}`)
       .join(" + ") || `Сторона ${side}`;
-  const pointLog = cleanPointLog((match?.eventLog as MatchEvent[] | undefined) ?? []);
+  const journal = ((match?.eventLog as MatchEvent[] | undefined) ?? []).flatMap(
+    (event, index) => {
+      if (event.type === "point_awarded" && event.side) {
+        return [{ key: `${index}-point`, kind: "point", label: `+1 · ${sideName(event.side)}`, event }];
+      }
+      if (event.type === "manual_correction") {
+        const from = scoreSnapshotLabel(event.from);
+        const to = scoreSnapshotLabel(event.to);
+        return [{
+          key: `${index}-correction`,
+          kind: "correction",
+          label: from && to ? `Коррекция счёта: ${from} → ${to}` : "Коррекция счёта",
+          event,
+        }];
+      }
+      if (event.type === "point_undone") {
+        const side = event.undonePoint?.side;
+        return [{
+          key: `${index}-undo`,
+          kind: "undo",
+          label: side ? `Отменено: +1 · ${sideName(side)}` : "Отменено последнее очко",
+          event,
+        }];
+      }
+      return [];
+    },
+  );
 
   const canCancel =
     match?.kind === "standalone" &&
@@ -263,17 +391,23 @@ export function MatchDetailPage() {
     match?.status !== "stopped" &&
     match?.status !== "voided";
 
-  const durationLabel =
-    match?.startedAt != null
-      ? formatMatchDuration(
-          elapsedMs(
-            String(match.startedAt),
-            now,
-            match.finishedAt ? String(match.finishedAt) : null,
-            String(match.status),
-          ),
-        )
-      : null;
+  const isTerminalStatus =
+    match?.status === "finished" ||
+    match?.status === "stopped" ||
+    match?.status === "cancelled" ||
+    match?.status === "voided";
+  const replaySeed = match && user?.id ? createReplaySeed(match, user.id) : null;
+  const hasContextActions =
+    canStop || canNoShow || canCancel || canVoid || canForceClose || canAdminPurge;
+
+  const clockView = playingClockView(factsSnapshot, factsNow);
+  const durationLabel = clockView.state === "available"
+    ? formatMatchDuration(clockView.elapsedMs)
+    : "Недоступно";
+  const initialServer = firstServerLabel(
+    factsSnapshot?.facts.initialServer ?? { state: "unavailable" },
+    participants,
+  );
 
   useEffect(() => {
     if (!editOpen) return;
@@ -287,22 +421,38 @@ export function MatchDetailPage() {
     return () => { current = false; };
   }, [editOpen]);
 
-  async function runMutation(task: (sequence: number, requestedId: string) => Promise<void>) {
+  async function runMutation(task: (sequence: number, requestedId: string, operationContext: typeof interactionContext.current) => Promise<void>) {
     if (!id) return;
     const requestedId = id;
+    const operationContext = interactionContext.current;
+    if (!operationContext.active || !operationContext.actorId) return;
     await action.run(async () => {
-      mutationInFlight.current = true;
+      if (!isCurrentInteraction(operationContext)) return;
+      freezeFacts();
+      mutationContextRef.current = operationContext;
       const sequence = ++responseSequence.current;
       try {
-        await task(sequence, requestedId);
+        await task(sequence, requestedId, operationContext);
       } finally {
-        mutationInFlight.current = false;
+        if (mutationContextRef.current === operationContext) {
+          mutationContextRef.current = null;
+        }
+        if (isCurrentInteraction(operationContext) && currentIdRef.current === requestedId) {
+          void load();
+        }
       }
     });
   }
 
-  function applyMatch(sequence: number, requestedId: string, nextMatch: Record<string, unknown>) {
-    if (sequence === responseSequence.current && requestedId === currentIdRef.current) setMatch(nextMatch);
+  function applyMatch(sequence: number, requestedId: string, operationContext: typeof interactionContext.current, nextMatch: Record<string, unknown>) {
+    if (isCurrentMutation(sequence, requestedId, operationContext)) {
+      matchRef.current = nextMatch;
+      setMatch(nextMatch);
+    }
+  }
+
+  function isCurrentMutation(sequence: number, requestedId: string, operationContext: typeof interactionContext.current) {
+    return sequence === responseSequence.current && requestedId === currentIdRef.current && isCurrentInteraction(operationContext);
   }
 
   function openEditor() {
@@ -353,8 +503,8 @@ export function MatchDetailPage() {
           ];
       const registeredIds = nextParticipants.flatMap((participant) => participant.userId ? [participant.userId] : []);
       if (new Set(registeredIds).size !== registeredIds.length) throw new Error("Один игрок не может занимать несколько мест");
-      await runMutation(async (sequence, requestedId) => {
-        setEditError(null);
+      await runMutation(async (sequence, requestedId, operationContext) => {
+        if (isCurrentMutation(sequence, requestedId, operationContext)) setEditError(null);
         try {
           const response = await api.updateMatch(requestedId, {
             title: editTitle.trim(),
@@ -365,10 +515,10 @@ export function MatchDetailPage() {
             firstServerMethod: editFirstServer,
             participants: nextParticipants,
           });
-          applyMatch(sequence, requestedId, response.match);
-          if (sequence === responseSequence.current && requestedId === currentIdRef.current) setEditOpen(false);
+          applyMatch(sequence, requestedId, operationContext, response.match);
+          if (isCurrentMutation(sequence, requestedId, operationContext)) setEditOpen(false);
         } catch (error) {
-          if ((error as Error & { status?: number }).status !== 401) setEditError((error as Error).message);
+          if ((error as Error & { status?: number }).status !== 401 && isCurrentMutation(sequence, requestedId, operationContext)) setEditError((error as Error).message);
         }
       });
     } catch (error) {
@@ -380,46 +530,46 @@ export function MatchDetailPage() {
     if (!id || !match) return;
     const method = String(match.firstServerMethod ?? "manual");
     if (method !== "random" && !startServerId) return;
-    await runMutation(async (sequence, requestedId) => {
-      setActionError(null);
+    await runMutation(async (sequence, requestedId, operationContext) => {
+      if (isCurrentMutation(sequence, requestedId, operationContext)) setActionError(null);
       try {
         const result = await api.startMatch(
-          id,
+          requestedId,
           method === "random"
             ? {}
             : { firstServerParticipantId: startServerId },
         );
-        applyMatch(sequence, requestedId, result.match);
-        setStartOpen(false);
+        applyMatch(sequence, requestedId, operationContext, result.match);
+        if (isCurrentMutation(sequence, requestedId, operationContext)) setStartOpen(false);
       } catch (error) {
-        setActionError((error as Error).message);
+        if (isCurrentMutation(sequence, requestedId, operationContext)) setActionError((error as Error).message);
       }
     });
   }
 
   async function onStop() {
-    await runMutation(async (sequence, requestedId) => {
-      setActionError(null);
+    await runMutation(async (sequence, requestedId, operationContext) => {
+      if (isCurrentMutation(sequence, requestedId, operationContext)) setActionError(null);
       try {
-        const res = await api.stopMatch(id!, {
+        const res = await api.stopMatch(requestedId, {
           winnerSide: stopSide,
           reasonCode: stopReason,
         });
-        applyMatch(sequence, requestedId, res.match);
-        setStopOpen(false);
+        applyMatch(sequence, requestedId, operationContext, res.match);
+        if (isCurrentMutation(sequence, requestedId, operationContext)) setStopOpen(false);
       } catch (e) {
-        setActionError((e as Error).message);
+        if (isCurrentMutation(sequence, requestedId, operationContext)) setActionError((e as Error).message);
       }
     });
   }
 
   async function onNoShow() {
     if (!id) return;
-    await runMutation(async (sequence, requestedId) => {
-      setActionError(null);
+    await runMutation(async (sequence, requestedId, operationContext) => {
+      if (isCurrentMutation(sequence, requestedId, operationContext)) setActionError(null);
       try {
         const result = await api.noShowMatch(
-          id,
+          requestedId,
           {
             expectedVersion: Number(match?.version),
             absentSide,
@@ -427,75 +577,97 @@ export function MatchDetailPage() {
           },
           crypto.randomUUID(),
         );
-        applyMatch(sequence, requestedId, result.match);
-        setNoShowOpen(false);
+        applyMatch(sequence, requestedId, operationContext, result.match);
+        if (isCurrentMutation(sequence, requestedId, operationContext)) setNoShowOpen(false);
       } catch (error) {
-        setActionError((error as Error).message);
+        if (isCurrentMutation(sequence, requestedId, operationContext)) setActionError((error as Error).message);
       }
     });
   }
 
   async function onCancelConfirm() {
-    if (!id) return;
-    await runMutation(async (sequence, requestedId) => {
-      setActionError(null);
+    if (!id || !match) return;
+    const payload = {
+      expectedVersion: Number(match.version),
+      idempotencyKey: crypto.randomUUID(),
+      reasonText: cancelReason.trim() || undefined,
+    };
+    await runMutation(async (sequence, requestedId, operationContext) => {
+      if (isCurrentMutation(sequence, requestedId, operationContext)) setActionError(null);
       try {
         const res = await api.cancelMatch(
-          id,
-          Number(match?.version),
-          crypto.randomUUID(),
+          requestedId,
+          payload.expectedVersion,
+          payload.idempotencyKey,
+          payload.reasonText,
         );
-        applyMatch(sequence, requestedId, res.match);
-        setCancelOpen(false);
+        applyMatch(sequence, requestedId, operationContext, res.match);
+        if (isCurrentMutation(sequence, requestedId, operationContext)) {
+          setCancelOpen(false);
+          setCancelReason("");
+        }
       } catch (e) {
-        setActionError((e as Error).message);
-        setCancelOpen(false);
+        if (!isCurrentMutation(sequence, requestedId, operationContext)) return;
+        const error = e as Error & { status?: number };
+        setActionError(
+          typeof error.status === "number"
+            ? error.message
+            : "Не удалось проверить, был ли матч отменён. Обновите матч перед новым действием; повтор автоматически не отправлен.",
+        );
       }
     });
   }
 
   async function onVoidConfirm() {
     if (!id) return;
-    await runMutation(async (sequence, requestedId) => {
-      setActionError(null);
+    await runMutation(async (sequence, requestedId, operationContext) => {
+      if (isCurrentMutation(sequence, requestedId, operationContext)) setActionError(null);
       try {
         const res = await api.voidMatch(
-          id,
+          requestedId,
           Number(match?.version),
           crypto.randomUUID(),
           voidReason.trim() || undefined,
         );
-        applyMatch(sequence, requestedId, res.match);
-        setVoidOpen(false);
-        setVoidReason("");
+        applyMatch(sequence, requestedId, operationContext, res.match);
+        if (isCurrentMutation(sequence, requestedId, operationContext)) {
+          setVoidOpen(false);
+          setVoidReason("");
+        }
       } catch (e) {
-        setActionError((e as Error).message);
-        setVoidOpen(false);
+        if (isCurrentMutation(sequence, requestedId, operationContext)) {
+          setActionError((e as Error).message);
+          setVoidOpen(false);
+        }
       }
     });
   }
 
   async function onAdminConfirm() {
     if (!adminConfirm || !id) return;
-    await runMutation(async (sequence, requestedId) => {
-      setActionError(null);
+    const operation = adminConfirm;
+    await runMutation(async (sequence, requestedId, operationContext) => {
+      if (isCurrentMutation(sequence, requestedId, operationContext)) setActionError(null);
       try {
-        if (adminConfirm === "force-close") {
+        if (operation === "force-close") {
           const res = await api.adminForceCloseMatch(
-            id,
+            requestedId,
             Number(match?.version),
             crypto.randomUUID(),
           );
-          applyMatch(sequence, requestedId, res.match);
-          setAdminConfirm(null);
+          applyMatch(sequence, requestedId, operationContext, res.match);
+          if (isCurrentMutation(sequence, requestedId, operationContext)) setAdminConfirm(null);
         } else {
-          await api.adminDeleteMatch(id);
+          await api.adminDeleteMatch(requestedId);
+          if (!isCurrentMutation(sequence, requestedId, operationContext)) return;
           setAdminConfirm(null);
           navigate("/history");
         }
       } catch (e) {
-        setActionError((e as Error).message);
-        setAdminConfirm(null);
+        if (isCurrentMutation(sequence, requestedId, operationContext)) {
+          setActionError((e as Error).message);
+          setAdminConfirm(null);
+        }
       }
     });
   }
@@ -521,27 +693,75 @@ export function MatchDetailPage() {
                 description={refreshError}
               />
             ) : null}
-            <div className="card stack">
-              <div className="row">
+            <div className="card stack match-detail__summary">
+              <div className="match-detail__status">
                 <StatusChip status={String(match.status)} />
               </div>
-              <p className="score-display">
-                {String(match.scoreA)} : {String(match.scoreB)}
-              </p>
-              <div className="match-rules" aria-label="Правила матча">
-                <strong>{match.format === "2v2" ? "2 × 2" : "1 × 1"}</strong>
-                <span>до {String(match.pointsToWin)} очков</span>
-                <span>
-                  {match.mercyEnabled
-                    ? `сухая победа при ${String(match.mercyPoints)}:0`
-                    : "без правила сухой победы"}
+              <div className="match-detail__scoreboard" aria-label="Счёт матча">
+                <span className="visually-hidden" aria-hidden="true">
+                  {`${String(match.scoreA ?? 0)} : ${String(match.scoreB ?? 0)}`}
                 </span>
-                <span>
-                  первая подача: {match.firstServerMethod === "random" ? "случайно" : match.firstServerMethod === "rally" ? "розыгрыш" : "вручную"}
-                </span>
+                {(["A", "B"] as const).map((side) => {
+                  const sideParticipants = participants.filter((participant) => participant.side === side);
+                  const winner = match.winnerSide === side;
+                  return (
+                    <section
+                      key={side}
+                      className={`match-detail__side${winner ? " match-detail__side--winner" : ""}`}
+                      role="group"
+                      aria-label={`Сторона ${side}${winner ? ", победитель" : ""}`}
+                    >
+                      <div className="match-detail__side-copy">
+                        <span className="match-detail__side-label">Сторона {side}</span>
+                        <div className="match-detail__players">
+                          {sideParticipants.length > 0 ? sideParticipants.map((participant) => (
+                            <div className="match-detail__player" key={String(participant.id ?? `${side}-${participant.displayName}`)}>
+                              <Avatar
+                                size="sm"
+                                variant="tonal"
+                                src={avatarSrc(participant.avatarKey)}
+                                initials={initialsFromName(participant.displayName ?? side)}
+                                alt={participant.displayName}
+                              />
+                              <span>{participant.displayName ?? `Сторона ${side}`}</span>
+                            </div>
+                          )) : <span>Состав не указан</span>}
+                        </div>
+                      </div>
+                      <strong
+                        className="match-detail__score"
+                        aria-label={`Счёт стороны ${side}: ${String(match[`score${side}`] ?? 0)}`}
+                      >
+                        {String(match[`score${side}`] ?? 0)}
+                      </strong>
+                    </section>
+                  );
+                })}
+                <span className="match-detail__score-divider" aria-hidden="true">:</span>
               </div>
-              {durationLabel ? (
-                <p className="muted">Длительность: {durationLabel}</p>
+              <dl className="match-detail__rules" role="group" aria-label="Правила матча">
+                <div><dt>Формат</dt><dd>{match.format === "2v2" ? "2 × 2" : "1 × 1"}</dd></div>
+                <div><dt>Победа</dt><dd>{match.pointsToWin == null ? "Не указано" : `до ${String(match.pointsToWin)} очков`}</dd></div>
+                <div><dt>Сухая победа</dt><dd>{match.mercyEnabled ? `при ${String(match.mercyPoints)}:0` : "выключена"}</dd></div>
+                <div>
+                  <dt>Выбор первой подачи</dt>
+                  <dd>{match.firstServerMethod === "random" ? "случайно" : match.firstServerMethod === "rally" ? "розыгрыш" : "вручную"}</dd>
+                </div>
+              </dl>
+              <dl className="match-detail__facts" role="group" aria-label="Факты матча">
+                <div>
+                  <dt>Первым подавал</dt>
+                  <dd>{initialServer}</dd>
+                </div>
+                <div>
+                  <dt>Игровое время</dt>
+                  <dd className="match-detail__clock" aria-live="off">{durationLabel}</dd>
+                </div>
+              </dl>
+              {clockView.certainty === "checking" ? (
+                <p className="muted match-detail__facts-status" role="status" aria-live="polite">
+                  Проверяем игровое время…
+                </p>
               ) : null}
               {activeJudge ? (
                 <p className="muted">Судит: {activeJudge.displayName}</p>
@@ -552,27 +772,6 @@ export function MatchDetailPage() {
               ) : (
                 <p className="muted">Судья не назначен</p>
               )}
-              {participants.length > 0 ? (
-                <div className="stack">
-                  {participants.map((p) => (
-                    <div
-                      key={`${p.side}-${p.displayName}`}
-                      className="row"
-                    >
-                      <Avatar
-                        size="sm"
-                        variant="tonal"
-                        src={avatarSrc(p.avatarKey)}
-                        initials={initialsFromName(p.displayName ?? p.side)}
-                        alt={p.displayName}
-                      />
-                      <span>
-                        {p.side}: {p.displayName ?? "—"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
               {match.finishReason === "no_show" ? (
                 <Alert
                   type="warning"
@@ -582,113 +781,129 @@ export function MatchDetailPage() {
                 />
               ) : null}
             </div>
-            <div className="card stack" aria-label="Журнал очков">
-              <h2>Журнал очков</h2>
-              {pointLog.length > 0 ? (
-                <ol className="match-point-log">
-                  {pointLog.map((side, index) => (
-                    <li key={`${index}-${side}`}>{sideName(side)} — очко</li>
-                  ))}
+            <div className="card stack">
+              <h2>Журнал изменений счёта</h2>
+              {journal.length > 0 ? (
+                <ol className="match-detail__journal" aria-label="Журнал изменений счёта">
+                  {journal.map((entry) => {
+                    const provenance = eventProvenance(entry.event, factsSnapshot);
+                    return (
+                      <li key={entry.key} data-kind={entry.kind}>
+                        <span>{entry.label}</span>
+                        <span className="match-detail__journal-meta">
+                          {entry.event.occurredAt ? (
+                            <time dateTime={entry.event.occurredAt}>{formatFactDateTime(entry.event.occurredAt)}</time>
+                          ) : "Время недоступно"}
+                          <span aria-hidden="true"> · </span>
+                          {provenance.state === "known"
+                            ? provenance.displayName
+                            : "Судейская сессия недоступна"}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ol>
               ) : (
-                <p className="muted">Подтверждённых очков после последней коррекции нет.</p>
+                <p className="muted">Изменений счёта пока нет.</p>
               )}
-              {(match.eventLog as MatchEvent[] | undefined)?.some((event) => event.type === "manual_correction") ? (
-                <p className="muted">Техническая коррекция учтена в текущем счёте и не показана как игровое очко.</p>
-              ) : null}
             </div>
-            <div className="stack stack--actions">
+            <section className="card stack" aria-labelledby="match-judge-history-heading">
+              <h2 id="match-judge-history-heading">История судейства</h2>
+              {factsSnapshot?.facts.judgeHistory.state === "unavailable" || !factsSnapshot ? (
+                <p className="muted">История судейства недоступна.</p>
+              ) : (
+                <>
+                  {factsSnapshot.facts.judgeHistory.state === "partial" ? (
+                    <Alert
+                      type="warning"
+                      variant="tonal"
+                      title="История может быть неполной"
+                      description="Показаны только подтверждённые судейские сессии."
+                    />
+                  ) : null}
+                  {factsSnapshot.facts.judgeHistory.sessions.length > 0 ? (
+                    <ol className="match-detail__judge-history">
+                      {factsSnapshot.facts.judgeHistory.sessions.map((session) => (
+                        <li key={session.id}>
+                          <strong>{session.displayName}</strong>
+                          <span className="muted">
+                            <time dateTime={session.startedAt}>{formatFactDateTime(session.startedAt)}</time>
+                            <span aria-hidden="true"> — </span>
+                            {session.endedAt ? (
+                              <time dateTime={session.endedAt}>{formatFactDateTime(session.endedAt)}</time>
+                            ) : "сейчас"}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="muted">Подтверждённых судейских сессий пока нет.</p>
+                  )}
+                </>
+              )}
+            </section>
+            <div className="match-detail__actions">
+              <div className="match-detail__primary" role="group" aria-label="Основное действие">
+                {canStart ? (
+                  <Button
+                    disabled={action.pending}
+                    onClick={() => {
+                      setStartServerId("");
+                      setStartOpen(true);
+                    }}
+                  >
+                    Старт
+                  </Button>
+                ) : isActiveStatus ? (
+                  judgeTakenByOther ? (
+                    <Button onClick={() => navigate(`/matches/${id}/judge?mode=readonly`)}>
+                      Открыть счёт
+                    </Button>
+                  ) : (
+                    <Button onClick={() => navigate(`/matches/${id}/judge`)}>
+                      Судить
+                    </Button>
+                  )
+                ) : isTerminalStatus ? (
+                  replaySeed ? (
+                    <Button onClick={() => navigate("/matches/new", { state: { matchReplaySeed: replaySeed } })}>
+                      Сыграть снова
+                    </Button>
+                  ) : (
+                    <Button onClick={() => navigate("/matches/new")}>Новый матч</Button>
+                  )
+                ) : null}
+              </div>
+              <div className="match-detail__quick-actions">
               {match.status === "waiting" && isCreator ? (
                 <Button variant="secondary" disabled={action.pending} onClick={openEditor}>Изменить матч</Button>
               ) : null}
-              {canStart && (
-                <Button
-                  disabled={action.pending}
-                  onClick={() => {
-                    setStartServerId("");
-                    setStartOpen(true);
-                  }}
-                >
-                  Старт
-                </Button>
-              )}
-              {(match.status === "in_progress" ||
-                match.status === "pending_confirmation" ||
-                match.status === "waiting") && (
+              {isActiveStatus ? (
                 <>
-                  <Button
-                    disabled={judgeTakenByOther}
-                    onClick={() => navigate(`/matches/${id}/judge`)}
-                  >
-                    Судить
-                  </Button>
+                  {(canStart || judgeTakenByOther) ? (
+                    <Button
+                      variant="secondary"
+                      disabled={judgeTakenByOther}
+                      onClick={() => navigate(`/matches/${id}/judge`)}
+                    >
+                      Судить
+                    </Button>
+                  ) : null}
+                  {(!judgeTakenByOther || canStart) ? (
+                    <Button
+                      variant="secondary"
+                      onClick={() => navigate(`/matches/${id}/judge?mode=readonly`)}
+                    >
+                      Открыть счёт
+                    </Button>
+                  ) : null}
                   {judgeTakenByOther ? (
                     <p className="muted">
                       Матч уже судит {activeJudge?.displayName}. Можно открыть
                       счёт в режиме просмотра.
                     </p>
                   ) : null}
-                  <Button
-                    variant="secondary"
-                    onClick={() => navigate(`/matches/${id}/judge?mode=readonly`)}
-                  >
-                    Открыть счёт
-                  </Button>
                 </>
-              )}
-              {canStop && (
-                <Button
-                  variant="secondary"
-                  disabled={action.pending}
-                  onClick={() => setStopOpen((v) => !v)}
-                >
-                  {stopOpen ? "Скрыть остановку" : "Остановить матч"}
-                </Button>
-              )}
-              {canNoShow ? (
-                <Button
-                  variant="secondary"
-                  disabled={action.pending}
-                  onClick={() => setNoShowOpen(true)}
-                >
-                  Зафиксировать неявку
-                </Button>
-              ) : null}
-              {canCancel ? (
-                <Button
-                  variant="secondary"
-                  disabled={action.pending}
-                  onClick={() => setCancelOpen(true)}
-                >
-                  Отменить матч
-                </Button>
-              ) : null}
-              {canVoid ? (
-                <Button
-                  variant="secondary"
-                  disabled={action.pending}
-                  onClick={() => setVoidOpen(true)}
-                >
-                  Аннулировать результат
-                </Button>
-              ) : null}
-              {canForceClose ? (
-                <Button
-                  variant="secondary"
-                  disabled={action.pending}
-                  onClick={() => setAdminConfirm("force-close")}
-                >
-                  Принудительно закрыть
-                </Button>
-              ) : null}
-              {canAdminPurge ? (
-                <Button
-                  variant="secondary"
-                  disabled={action.pending}
-                  onClick={() => setAdminConfirm("delete")}
-                >
-                  Удалить из истории
-                </Button>
               ) : null}
               {match.tournamentId ? (
                 <Button
@@ -700,9 +915,52 @@ export function MatchDetailPage() {
                   К турниру
                 </Button>
               ) : null}
-              <Button variant="secondary" onClick={() => navigate(-1)}>
-                Назад
-              </Button>
+              </div>
+              {hasContextActions ? (
+                <details className="match-detail__context-actions">
+                  <summary>Другие действия</summary>
+                  <div className="match-detail__context-buttons" role="group" aria-label="Другие действия с матчем">
+                    {canStop ? (
+                      <Button variant="secondary" disabled={action.pending} onClick={() => setStopOpen((value) => !value)}>
+                        {stopOpen ? "Скрыть остановку" : "Остановить матч"}
+                      </Button>
+                    ) : null}
+                    {canNoShow ? (
+                      <Button variant="secondary" disabled={action.pending} onClick={() => setNoShowOpen(true)}>
+                        Зафиксировать неявку
+                      </Button>
+                    ) : null}
+                    {canCancel ? (
+                      <Button
+                        variant="secondary"
+                        disabled={action.pending}
+                        onClick={() => {
+                          setActionError(null);
+                          setCancelReason("");
+                          setCancelOpen(true);
+                        }}
+                      >
+                        Отменить матч
+                      </Button>
+                    ) : null}
+                    {canVoid ? (
+                      <Button variant="secondary" disabled={action.pending} onClick={() => setVoidOpen(true)}>
+                        Аннулировать результат
+                      </Button>
+                    ) : null}
+                    {canForceClose ? (
+                      <Button variant="secondary" disabled={action.pending} onClick={() => setAdminConfirm("force-close")}>
+                        Принудительно закрыть
+                      </Button>
+                    ) : null}
+                    {canAdminPurge ? (
+                      <Button variant="secondary" disabled={action.pending} onClick={() => setAdminConfirm("delete")}>
+                        Удалить из истории
+                      </Button>
+                    ) : null}
+                  </div>
+                </details>
+              ) : null}
             </div>
             <Dialog
               open={editOpen}
@@ -788,7 +1046,7 @@ export function MatchDetailPage() {
                 </fieldset>
               )}
             </Dialog>
-            {actionError ? (
+            {actionError && !cancelOpen ? (
               <Alert
                 type="error"
                 variant="tonal"
@@ -865,21 +1123,41 @@ export function MatchDetailPage() {
             </Dialog>
             <Dialog
               open={cancelOpen}
-              onClose={() => (!action.pending ? setCancelOpen(false) : undefined)}
+              onClose={() => {
+                if (!action.pending) {
+                  setCancelOpen(false);
+                  setCancelReason("");
+                }
+              }}
               title="Отменить матч?"
               width="sm"
-              secondaryButtonLabel="Нет"
-              onSecondaryButton={() =>
-                !action.pending ? setCancelOpen(false) : undefined
-              }
-              mainButtonLabel={action.pending ? "…" : "Отменить матч"}
+              secondaryButtonLabel="Не отменять"
+              onSecondaryButton={() => {
+                if (!action.pending) {
+                  setCancelOpen(false);
+                  setCancelReason("");
+                }
+              }}
+              mainButtonLabel={action.pending ? "Отменяем…" : "Отменить матч"}
               onMainButton={() => void onCancelConfirm()}
             >
-              <p>
-                Матч «{String(match.title)}» будет аннулирован без победителя и
-                без влияния на рейтинг.
-                Участники снова смогут играть в других матчах и турнирах.
-              </p>
+              <div className="stack">
+                <p><strong>{String(match.title)}</strong></p>
+                <p>
+                  Матч будет отменён без победителя и влияния на статистику.
+                  Ведение счёта завершится, игроки освободятся для других матчей.
+                </p>
+                <TextField
+                  label="Причина (необязательно)"
+                  value={cancelReason}
+                  maxLength={500}
+                  disabled={action.pending}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCancelReason(event.target.value)}
+                />
+                {actionError ? (
+                  <Alert type="error" variant="tonal" title="Матч не отменён" description={actionError} />
+                ) : null}
+              </div>
             </Dialog>
             <Dialog
               open={voidOpen}

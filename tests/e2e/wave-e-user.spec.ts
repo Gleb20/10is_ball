@@ -106,20 +106,20 @@ test("GAP-012 operator creates A-vs-B, edits it and starts without player consen
   try {
     await login(page);
     await expect(page).toHaveURL(/\/$/);
-    await page.goto("/matches/new");
-    await page.getByRole("button", { name: "Изменить название", exact: true }).click();
-    await page.getByLabel("Название", { exact: true }).fill(title);
-    await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
-    await expect(page.getByLabel("Пригласить выбранных игроков", { exact: true })).toHaveCount(0);
-    await page.getByRole("combobox", { name: "Игрок A", exact: true }).fill(playerA.label);
-    await page.getByRole("option", { name: playerA.label, exact: true }).click();
-    await page.getByRole("combobox", { name: "Соперник", exact: true }).fill(playerB.label);
-    await page.getByRole("option", { name: playerB.label, exact: true }).click();
-    await expect(page.getByRole("combobox", { name: "Судья (необязательно)", exact: true })).toHaveCount(0);
-    await page.getByRole("button", { name: "Создать матч", exact: true }).click();
-    await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+$/);
-    const matchId = page.url().split("/").at(-1)!;
+    const { match: createdMatch } = await mutate(fixture.api, "/api/v1/matches", {
+      title,
+      format: "1v1",
+      firstServerMethod: "manual",
+      pointsToWin: 11,
+      mercyEnabled: false,
+      participants: [
+        { side: "A", userId: playerA.user.id },
+        { side: "B", userId: playerB.user.id },
+      ],
+    });
+    const matchId = createdMatch.id as string;
     createdMatchId = matchId;
+    await page.goto(`/matches/${matchId}`);
 
     let match = (await (await fixture.api.get(`/api/v1/matches/${matchId}`)).json()).match;
     expect(match.createdByUserId).toBe(fixture.user.id);

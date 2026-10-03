@@ -171,6 +171,9 @@ describe("GAP-008 match consent and prestart editing", () => {
 
   it("sends the full roster, retains unchanged participant ids, and drops the id for a replacement", async () => {
     const updated = waitingMatch({ title: "Edited match", invitations: [] });
+    getMatch
+      .mockResolvedValueOnce({ match: waitingMatch() })
+      .mockResolvedValue({ match: updated });
     updateMatch.mockResolvedValue({ match: updated });
     const user = userEvent.setup();
     renderPage();
@@ -232,7 +235,9 @@ describe("GAP-008 match consent and prestart editing", () => {
     renderPage();
 
     await screen.findByText("Consent match");
-    getMatch.mockReturnValueOnce(oldRefresh.promise);
+    getMatch
+      .mockReturnValueOnce(oldRefresh.promise)
+      .mockResolvedValue({ match: fresh });
     await user.click(screen.getByRole("button", { name: "Обновить" }));
     await user.click(screen.getByRole("button", { name: "Изменить матч" }));
     const dialog = screen.getByRole("dialog", { name: "Изменить матч" });
@@ -247,9 +252,14 @@ describe("GAP-008 match consent and prestart editing", () => {
   });
 
   it("keeps the loaded match and typed draft after a failed save, then allows a retry", async () => {
+    const retryMatch = waitingMatch({ title: "Retry title", invitations: [] });
+    getMatch
+      .mockResolvedValueOnce({ match: waitingMatch() })
+      .mockResolvedValueOnce({ match: waitingMatch() })
+      .mockResolvedValue({ match: retryMatch });
     updateMatch
       .mockRejectedValueOnce(new Error("Сохранение временно недоступно"))
-      .mockResolvedValueOnce({ match: waitingMatch({ title: "Retry title", invitations: [] }) });
+      .mockResolvedValueOnce({ match: retryMatch });
     const user = userEvent.setup();
     renderPage();
 

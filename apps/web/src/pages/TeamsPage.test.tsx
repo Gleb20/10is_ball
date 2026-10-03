@@ -220,6 +220,7 @@ describe("GAP-022 teams list and creation", () => {
     await openCreate(user);
 
     await user.type(screen.getByLabelText("Название команды"), "Подача");
+    await user.click(screen.getByRole("radio", { name: "Аватар 4" }));
     await user.type(screen.getByLabelText("Слоган"), "Вместе сильнее");
     await user.type(screen.getByLabelText("Текст приветствия"), "Добро пожаловать!");
     await user.dblClick(screen.getByRole("button", { name: "Создать" }));
@@ -229,6 +230,7 @@ describe("GAP-022 teams list and creation", () => {
       name: "Подача",
       slogan: "Вместе сильнее",
       welcomeText: "Добро пожаловать!",
+      avatarKey: "avatar_4",
     });
     expect(screen.getByLabelText("Название команды")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Скрыть форму" })).toBeDisabled();
@@ -252,6 +254,7 @@ describe("GAP-022 teams list and creation", () => {
     await screen.findByText("Нет команд");
     await openCreate(user);
     await user.type(screen.getByLabelText("Название команды"), "Подача");
+    await user.click(screen.getByRole("radio", { name: "Аватар 6" }));
     await user.click(screen.getByRole("button", { name: "Создать" }));
 
     const form = screen.getByRole("form", { name: "Создание команды" });
@@ -269,14 +272,17 @@ describe("GAP-022 teams list and creation", () => {
     await screen.findByText("Нет команд");
     await openCreate(user);
     await user.type(screen.getByLabelText("Название команды"), "Подача");
+    await user.click(screen.getByRole("radio", { name: "Аватар 6" }));
     await user.click(screen.getByRole("button", { name: "Создать" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Не удалось подтвердить создание");
     expect(screen.getByRole("button", { name: "Создать" })).toBeDisabled();
+    expect(screen.getByRole("radio", { name: "Аватар 6" })).toBeChecked();
     expect(createTeam).toHaveBeenCalledTimes(1);
     await user.click(screen.getByRole("button", { name: "Обновить список" }));
     expect(listTeams).toHaveBeenCalledTimes(2);
     expect(createTeam).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("radio", { name: "Аватар 6" })).toBeChecked();
     expect(screen.getByRole("button", { name: "Создать ещё раз" })).toBeEnabled();
   });
 

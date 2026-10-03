@@ -57,6 +57,41 @@
       "when": 1791019371192,
       "tag": "0007_bug_038_correlated_password_reset",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791033576192,
+      "tag": "0008_gap_013_atomic_match_launch",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791037121330,
+      "tag": "0009_gap_032_match_facts",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791039068622,
+      "tag": "0010_gap_019_planned_date",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791041620263,
+      "tag": "0011_gap_040_reusable_guest_identities",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791043057612,
+      "tag": "0012_gap_025_team_avatar",
+      "breakpoints": true
     }
   ]
 }

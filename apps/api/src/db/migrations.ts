@@ -19,7 +19,7 @@ const BASELINE_SNAPSHOT_PATH = fileURLToPath(
   new URL("../../drizzle/meta/0000_snapshot.json", import.meta.url),
 );
 const CURRENT_SNAPSHOT_PATH = fileURLToPath(
-  new URL("../../drizzle/meta/0007_snapshot.json", import.meta.url),
+  new URL("../../drizzle/meta/0012_snapshot.json", import.meta.url),
 );
 
 const MIGRATION_ADVISORY_LOCK = "7247010010001";
@@ -143,7 +143,7 @@ const currentSnapshot = JSON.parse(
   readFileSync(CURRENT_SNAPSHOT_PATH, "utf8"),
 ) as BaselineSnapshot;
 
-const intermediateSnapshots = ["0001", "0002", "0003", "0004", "0005", "0006"].map((prefix) =>
+const intermediateSnapshots = ["0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "0010", "0011"].map((prefix) =>
   JSON.parse(readFileSync(fileURLToPath(new URL(`../../drizzle/meta/${prefix}_snapshot.json`, import.meta.url)), "utf8")) as BaselineSnapshot,
 );
 const snapshotsByAppliedCount = [baselineSnapshot, ...intermediateSnapshots, currentSnapshot];
@@ -294,6 +294,8 @@ function expectedBtreeOperatorClass(column: SnapshotColumn): string {
       return "pg_catalog.text_ops";
     case "uuid":
       return "pg_catalog.uuid_ops";
+    case "timestamp with time zone":
+      return "pg_catalog.timestamptz_ops";
     default:
       throw new Error(
         `Baseline catalog profile is missing the btree operator class for ${column.type}`,
@@ -494,9 +496,12 @@ function expectedConstraintSignatures(snapshot: BaselineSnapshot): string[] {
           tableName: table.name,
           constraintName: check.name || snapshotName,
           constraintType: "c",
-          columns: Object.keys(table.columns).filter((column) =>
-            new RegExp(`\\b${column}\\b`).test(check.value),
-          ),
+          columns: Object.keys(table.columns)
+            .filter((column) => new RegExp(`\\b${column}\\b`).test(check.value))
+            .sort(
+              (left, right) =>
+                check.value.indexOf(left) - check.value.indexOf(right),
+            ),
           definition: normalizeCheck(check.value, table.name),
           snapshot,
         }),
@@ -756,6 +761,7 @@ async function readAdoptionBackfillRows(
         to_jsonb(tournaments)
         - 'bracket_construction_algorithm'
         - 'require_participant_consent'
+        - 'planned_date'
       )::text
         AS protected_payload,
       bracket_construction_algorithm AS current_value,

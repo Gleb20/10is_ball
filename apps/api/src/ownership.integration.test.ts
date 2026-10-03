@@ -146,6 +146,28 @@ describe("API ownership boundaries", () => {
     });
   }
 
+  async function generateTournamentBracket(tournamentId: string) {
+    const context = await app.inject({
+      method: "GET",
+      url: `/api/v1/tournaments/${tournamentId}/bracket-generation-context`,
+      cookies: { tab10_session: organizer.cookie },
+    });
+    expect(context.statusCode).toBe(200);
+    const generated = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tournamentId}/bracket-generations`,
+      cookies: { tab10_session: organizer.cookie },
+      payload: {
+        expectedVersion: context.json().tournament.bracketStateVersion,
+      },
+    });
+    const body = generated.json();
+    return {
+      statusCode: generated.statusCode,
+      json: () => body.tournament ?? body,
+    };
+  }
+
   it("AT-MATCH-START-001: only creator starts a valid match", async () => {
     const matchId = await createStandaloneMatch();
     const acquired = await app.inject({
@@ -269,12 +291,7 @@ describe("API ownership boundaries", () => {
       expect(detail.json().tournament.status, role).toBe("collecting");
     }
 
-    const generated = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${tournament.id}/bracket`,
-      cookies: { tab10_session: organizer.cookie },
-      payload: {},
-    });
+    const generated = await generateTournamentBracket(tournament.id);
     expect(generated.statusCode).toBe(200);
     const generatedVersion = generated.json().bracketStateVersion as number;
 
@@ -360,12 +377,7 @@ describe("API ownership boundaries", () => {
         })
       ).statusCode,
     ).toBe(200);
-    const generated = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${routeTournament.id}/bracket`,
-      cookies: { tab10_session: organizer.cookie },
-      payload: {},
-    });
+    const generated = await generateTournamentBracket(routeTournament.id);
     expect(generated.statusCode).toBe(200);
 
     const otherTournament = await createTournament(participant);

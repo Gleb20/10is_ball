@@ -128,9 +128,10 @@ expected_stage3_pending = {
     (table_source, "AUTH-003", "main"): "physical_device_pending",
     (table_source, "AUTH-003", "a01"): "reproduce_before_acceptance",
     (table_source, "U01-JUDGE-001", "main"): "physical_device_pending",
-    (expert_source, "BUG-022", "main"): "pending_decision",
+    (expert_source, "BUG-022", "main"): "decision_accepted_implementation_pending",
 }
 expected_later = {
+    (expert_source, "BUG-038", "main"): ("BUG-038", 12, "historical_target_reconciled_not_implemented", "verified_local"),
     (expert_source, "BUG-029", "main"): ("BUG-029", 4, "historical_target_reconciled_not_implemented", "verified_local"),
     (expert_source, "BUG-031", "main"): ("BUG-031", 4, "historical_target_reconciled_not_implemented", "verified_local"),
     (expert_source, "BUG-039", "main"): ("BUG-039", 4, "historical_target_reconciled_not_implemented", "verified_local"),
@@ -294,6 +295,10 @@ for row in coverage:
         errors.append(f"invalid decision/gate: {ident}")
     if not row["stage"].isdigit() or not 0 <= int(row["stage"]) <= 14:
         errors.append(f"invalid stage: {ident}")
+    if row["decision_or_gate"] in {f"Q-UX-{n:03d}" for n in range(1, 11)}:
+        errors.append(f"accepted D38/D40 decision still shown as open: {ident}")
+    if row["source_id"] == "U01-DETAIL-004" and (row["decision_or_gate"], row["disposition"], row["result"]) != ("D40", "superseded_target", "superseded_by_D40_explicit_annulment"):
+        errors.append(f"D40 annulment choice drift: {ident}")
     if row["disposition"] == "decision_gate" and row["result"] not in {"pending_decision", "guest_identity_unresolved", "preset_ready_memory_unresolved", "timing_unresolved", "date_future_unresolved", "immutable_result_preserved"}:
         errors.append(f"decision gate silently closed: {ident}")
     for at in row["acceptance"].split(";"):

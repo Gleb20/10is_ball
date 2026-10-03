@@ -290,6 +290,7 @@ describe("DATA-005/007 result void", () => {
   it("AT-MATCH-VOID-002: an audit write failure rolls back status and stats compensation", async () => {
     const finished = await finishStandalone();
     const matchId = String(finished.id);
+    const finishedDetail = await getMatch(matchId);
     await client.query(`
       create function reject_data_005_insert() returns trigger language plpgsql as $$
       begin
@@ -312,7 +313,7 @@ describe("DATA-005/007 result void", () => {
     });
 
     expect(failed.statusCode).toBe(500);
-    expect(await getMatch(matchId)).toEqual(finished);
+    expect(await getMatch(matchId)).toEqual(finishedDetail);
     const ranking = await app.inject({
       method: "GET",
       url: "/api/v1/rankings",
@@ -470,12 +471,20 @@ describe("DATA-005/007 result void", () => {
       });
       expect(added.statusCode).toBe(200);
     }
+    const generationContext = await app.inject({
+      method: "GET",
+      url: `/api/v1/tournaments/${tournamentId}/bracket-generation-context`,
+      cookies: { tab10_session: creatorCookie },
+    });
     expect(
       (
         await app.inject({
           method: "POST",
-          url: `/api/v1/tournaments/${tournamentId}/bracket`,
+          url: `/api/v1/tournaments/${tournamentId}/bracket-generations`,
           cookies: { tab10_session: creatorCookie },
+          payload: {
+            expectedVersion: generationContext.json().tournament.bracketStateVersion,
+          },
         })
       ).statusCode,
     ).toBe(200);

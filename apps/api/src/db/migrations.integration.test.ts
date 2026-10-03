@@ -77,10 +77,10 @@ describe("versioned migration foundation on disposable PGlite", () => {
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
       ORDER BY table_name
     `);
-    expect(tables.rows.map((row) => row.table_name)).toHaveLength(20);
+    expect(tables.rows.map((row) => row.table_name)).toHaveLength(23);
   });
 
-  it.each([1, 2, 3, 4, 5, 6, 7])("upgrades a %i-migration released prefix without changing existing rows", async (prefixLength) => {
+  it.each([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])("upgrades a %i-migration released prefix without changing existing rows", async (prefixLength) => {
     const context = await freshContext();
     const baselineOnlyDirectory = await mkdtemp(
       join(tmpdir(), "tab10-baseline-only-"),
@@ -104,6 +104,23 @@ describe("versioned migration foundation on disposable PGlite", () => {
         'upgrade@tab10.test', 'synthetic-hash', 'Upgrade', 'Owner'
       )
     `);
+    if (prefixLength === 12) {
+      await context.client.exec(`INSERT INTO teams (id, name, slug, captain_user_id)
+        VALUES ('00000000-0000-4000-8000-000000000097', 'Legacy team', 'legacy-team', '00000000-0000-4000-8000-000000000091')`);
+    }
+    if (prefixLength === 11) {
+      await context.client.exec(`
+        INSERT INTO tournaments (id, title, created_by_user_id, status)
+        VALUES ('00000000-0000-4000-8000-000000000098', 'Legacy guest tournament', '00000000-0000-4000-8000-000000000091', 'collecting');
+        INSERT INTO tournament_participants (
+          id, tournament_id, guest_first_name, guest_last_name, guest_avatar_key
+        ) VALUES (
+          '00000000-0000-4000-8000-000000000099',
+          '00000000-0000-4000-8000-000000000098',
+          'Legacy', 'Guest', 'avatar_1'
+        );
+      `);
+    }
     if (prefixLength === 6) {
       await context.client.exec(`
         INSERT INTO tournaments (id, title, created_by_user_id, status)
@@ -126,6 +143,20 @@ describe("versioned migration foundation on disposable PGlite", () => {
       WHERE id = '00000000-0000-4000-8000-000000000091'
     `);
     expect(preserved.rows).toEqual([{ email: "upgrade@tab10.test" }]);
+    if (prefixLength === 12) {
+      const team = await context.client.query(`SELECT name, slug, captain_user_id::text, avatar_key
+        FROM teams WHERE id = '00000000-0000-4000-8000-000000000097'`);
+      expect(team.rows).toEqual([{ name: 'Legacy team', slug: 'legacy-team',
+        captain_user_id: '00000000-0000-4000-8000-000000000091', avatar_key: null }]);
+    }
+
+    if (prefixLength === 11) {
+      const legacyGuest = await context.client.query<{ guest_identity_id: string | null }>(`
+        SELECT guest_identity_id FROM tournament_participants
+        WHERE id = '00000000-0000-4000-8000-000000000099'
+      `);
+      expect(legacyGuest.rows).toEqual([{ guest_identity_id: null }]);
+    }
     const auditTable = await context.client.query<{ name: string }>(`
       SELECT to_regclass('public.match_void_audits')::text AS name
     `);
@@ -151,6 +182,77 @@ describe("versioned migration foundation on disposable PGlite", () => {
     await expect(
       assertMigrationsExactlyCurrent(context.queryMigrations),
     ).resolves.toBeUndefined();
+  });
+
+  it("rolls back team avatar DDL without changing an existing team", async () => {
+    const context = await freshContext();
+    const prefixDirectory = await mkdtemp(join(tmpdir(), "tab10-gap025-rollback-"));
+    temporaryDirectories.push(prefixDirectory);
+    const artifactDirectory = fileURLToPath(new URL("../../drizzle/", import.meta.url));
+    const journal = JSON.parse(await readFile(join(artifactDirectory, "meta/_journal.json"), "utf8"));
+    journal.entries = journal.entries.slice(0, 12);
+    for (const entry of journal.entries) {
+      await writeFile(join(prefixDirectory, `${entry.tag}.sql`), await readFile(join(artifactDirectory, `${entry.tag}.sql`)));
+    }
+    await mkdir(join(prefixDirectory, "meta"));
+    await writeFile(join(prefixDirectory, "meta/_journal.json"), JSON.stringify(journal));
+    await applyPgliteMigrationFiles(context.db, prefixDirectory);
+    await context.client.exec(`
+      INSERT INTO users (id, email, password_hash, first_name, last_name)
+      VALUES ('00000000-0000-4000-8000-000000000101', 'avatar-rollback@tab10.test', 'synthetic', 'Rollback', 'Owner');
+      INSERT INTO teams (id, name, slug, captain_user_id)
+      VALUES ('00000000-0000-4000-8000-000000000102', 'Rollback team', 'rollback-team', '00000000-0000-4000-8000-000000000101');
+    `);
+    const before = await context.client.query(`SELECT to_jsonb(teams) AS payload FROM teams`);
+    const migrationSql = await readFile(join(artifactDirectory, "0012_gap_025_team_avatar.sql"), "utf8");
+    await context.client.exec(`BEGIN;\n${migrationSql}\nROLLBACK;`);
+    const after = await context.client.query(`SELECT to_jsonb(teams) AS payload FROM teams`);
+    expect(after.rows).toEqual(before.rows);
+    const column = await context.client.query(`SELECT column_name FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'teams' AND column_name = 'avatar_key'`);
+    expect(column.rows).toEqual([]);
+  });
+
+  it("rolls back the reusable-guest DDL and preserves pre-0011 guest snapshots", async () => {
+    const context = await freshContext();
+    const prefixDirectory = await mkdtemp(join(tmpdir(), "tab10-gap040-rollback-"));
+    temporaryDirectories.push(prefixDirectory);
+    const artifactDirectory = fileURLToPath(new URL("../../drizzle/", import.meta.url));
+    const journal = JSON.parse(await readFile(join(artifactDirectory, "meta/_journal.json"), "utf8"));
+    journal.entries = journal.entries.slice(0, 11);
+    for (const entry of journal.entries) {
+      await writeFile(join(prefixDirectory, `${entry.tag}.sql`), await readFile(join(artifactDirectory, `${entry.tag}.sql`)));
+    }
+    await mkdir(join(prefixDirectory, "meta"));
+    await writeFile(join(prefixDirectory, "meta/_journal.json"), JSON.stringify(journal));
+    await applyPgliteMigrationFiles(context.db, prefixDirectory);
+    await context.client.exec(`
+      INSERT INTO users (id, email, password_hash, first_name, last_name)
+      VALUES ('00000000-0000-4000-8000-000000000101', 'gap040-rollback@tab10.test', 'synthetic', 'Rollback', 'Owner');
+      INSERT INTO tournaments (id, title, created_by_user_id, status)
+      VALUES ('00000000-0000-4000-8000-000000000102', 'Rollback guest tournament', '00000000-0000-4000-8000-000000000101', 'collecting');
+      INSERT INTO tournament_participants (id, tournament_id, guest_first_name, guest_last_name, guest_avatar_key)
+      VALUES ('00000000-0000-4000-8000-000000000103', '00000000-0000-4000-8000-000000000102', 'Old', 'Guest', 'avatar_2');
+    `);
+    const migrationSql = (await readFile(join(artifactDirectory, "0011_gap_040_reusable_guest_identities.sql"), "utf8"))
+      .replaceAll("--> statement-breakpoint", "\n");
+    await context.client.exec(`BEGIN;\n${migrationSql}\nROLLBACK;`);
+    const catalog = await context.client.query<{ identities: boolean; participant_column: boolean }>(`
+      SELECT
+        to_regclass('public.guest_identities') IS NOT NULL AS identities,
+        EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'tournament_participants'
+            AND column_name = 'guest_identity_id'
+        ) AS participant_column
+    `);
+    expect(catalog.rows).toEqual([{ identities: false, participant_column: false }]);
+    const legacy = await context.client.query<{ first_name: string; last_name: string }>(`
+      SELECT guest_first_name AS first_name, guest_last_name AS last_name
+      FROM tournament_participants
+      WHERE id = '00000000-0000-4000-8000-000000000103'
+    `);
+    expect(legacy.rows).toEqual([{ first_name: "Old", last_name: "Guest" }]);
   });
 
   it("rolls back the GAP-012 DDL and preserves pre-0006 rows in a disposable transaction", async () => {
@@ -232,6 +334,151 @@ describe("versioned migration foundation on disposable PGlite", () => {
       WHERE id = '00000000-0000-4000-8000-000000000097'
     `);
     expect(row.rows).toEqual([{ email: "bug038-rollback@tab10.test" }]);
+  });
+
+  it("rolls back the GAP-013 receipt DDL and preserves pre-0008 users", async () => {
+    const context = await freshContext();
+    const prefixDirectory = await mkdtemp(join(tmpdir(), "tab10-gap013-rollback-"));
+    temporaryDirectories.push(prefixDirectory);
+    const artifactDirectory = fileURLToPath(new URL("../../drizzle/", import.meta.url));
+    const journal = JSON.parse(await readFile(join(artifactDirectory, "meta/_journal.json"), "utf8"));
+    journal.entries = journal.entries.slice(0, 8);
+    for (const entry of journal.entries) {
+      await writeFile(join(prefixDirectory, `${entry.tag}.sql`), await readFile(join(artifactDirectory, `${entry.tag}.sql`)));
+    }
+    await mkdir(join(prefixDirectory, "meta"));
+    await writeFile(join(prefixDirectory, "meta/_journal.json"), JSON.stringify(journal));
+    await applyPgliteMigrationFiles(context.db, prefixDirectory);
+    await context.client.exec(`
+      INSERT INTO users (id, email, password_hash, first_name, last_name)
+      VALUES ('00000000-0000-4000-8000-000000000098', 'gap013-rollback@tab10.test', 'synthetic', 'Rollback', 'GAP013');
+    `);
+    const migrationSql = (await readFile(
+      join(artifactDirectory, "0008_gap_013_atomic_match_launch.sql"),
+      "utf8",
+    )).replaceAll("--> statement-breakpoint", "\n");
+    await context.client.exec(`BEGIN;\n${migrationSql}\nROLLBACK;`);
+    const catalog = await context.client.query<{ receipt_table: boolean }>(`
+      SELECT to_regclass('public.match_launch_requests') IS NOT NULL AS receipt_table
+    `);
+    expect(catalog.rows).toEqual([{ receipt_table: false }]);
+    const row = await context.client.query<{ email: string }>(`
+      SELECT email FROM users
+      WHERE id = '00000000-0000-4000-8000-000000000098'
+    `);
+    expect(row.rows).toEqual([{ email: "gap013-rollback@tab10.test" }]);
+  });
+
+  it("backfills only an exact unplayed launch receipt and leaves ambiguous legacy facts unavailable", async () => {
+    const context = await freshContext();
+    const prefixDirectory = await mkdtemp(join(tmpdir(), "tab10-gap032-prefix-"));
+    temporaryDirectories.push(prefixDirectory);
+    const artifactDirectory = fileURLToPath(new URL("../../drizzle/", import.meta.url));
+    const journal = JSON.parse(await readFile(join(artifactDirectory, "meta/_journal.json"), "utf8"));
+    journal.entries = journal.entries.slice(0, 9);
+    for (const entry of journal.entries) {
+      await writeFile(join(prefixDirectory, `${entry.tag}.sql`), await readFile(join(artifactDirectory, `${entry.tag}.sql`)));
+    }
+    await mkdir(join(prefixDirectory, "meta"));
+    await writeFile(join(prefixDirectory, "meta/_journal.json"), JSON.stringify(journal));
+    await applyPgliteMigrationFiles(context.db, prefixDirectory);
+    await context.client.exec(`
+      INSERT INTO users (id, email, password_hash, first_name, last_name)
+      VALUES ('00000000-0000-4000-8000-000000000099', 'gap032-prefix@tab10.test', 'synthetic', 'GAP032', 'Owner');
+      INSERT INTO matches (id, title, created_by_user_id, status, current_server_participant_id, event_log)
+      VALUES
+        ('00000000-0000-4000-8000-000000032091', 'Exact', '00000000-0000-4000-8000-000000000099', 'in_progress', '00000000-0000-4000-8000-000000032081', '[]'::jsonb),
+        ('00000000-0000-4000-8000-000000032092', 'Diverged', '00000000-0000-4000-8000-000000000099', 'in_progress', '00000000-0000-4000-8000-000000032082', '[]'::jsonb),
+        ('00000000-0000-4000-8000-000000032093', 'Played', '00000000-0000-4000-8000-000000000099', 'in_progress', '00000000-0000-4000-8000-000000032083', '[{"type":"point_awarded"}]'::jsonb);
+      INSERT INTO match_launch_requests (
+        actor_user_id, request_id, originating_auth_session_id,
+        request_fingerprint, match_id, initial_server_participant_id, slot_map
+      ) VALUES
+        ('00000000-0000-4000-8000-000000000099', '00000000-0000-4000-8000-000000032071', '00000000-0000-4000-8000-000000032061', 'exact', '00000000-0000-4000-8000-000000032091', '00000000-0000-4000-8000-000000032081', '{}'::jsonb),
+        ('00000000-0000-4000-8000-000000000099', '00000000-0000-4000-8000-000000032072', '00000000-0000-4000-8000-000000032062', 'diverged', '00000000-0000-4000-8000-000000032092', '00000000-0000-4000-8000-000000032080', '{}'::jsonb),
+        ('00000000-0000-4000-8000-000000000099', '00000000-0000-4000-8000-000000032073', '00000000-0000-4000-8000-000000032063', 'played', '00000000-0000-4000-8000-000000032093', '00000000-0000-4000-8000-000000032083', '{}'::jsonb);
+    `);
+
+    await runPgliteMigrations({ db: context.db, query: context.queryMigrations, mode: "apply" });
+
+    const rows = await context.client.query<{
+      title: string;
+      initial_server_participant_id: string | null;
+      playing_elapsed_ms: number | null;
+      judge_history_complete: boolean;
+    }>(`
+      SELECT title, initial_server_participant_id::text,
+             playing_elapsed_ms::integer, judge_history_complete
+      FROM matches
+      WHERE id IN (
+        '00000000-0000-4000-8000-000000032091',
+        '00000000-0000-4000-8000-000000032092',
+        '00000000-0000-4000-8000-000000032093'
+      )
+      ORDER BY id
+    `);
+    expect(rows.rows).toEqual([
+      {
+        title: "Exact",
+        initial_server_participant_id: "00000000-0000-4000-8000-000000032081",
+        playing_elapsed_ms: null,
+        judge_history_complete: false,
+      },
+      {
+        title: "Diverged",
+        initial_server_participant_id: null,
+        playing_elapsed_ms: null,
+        judge_history_complete: false,
+      },
+      {
+        title: "Played",
+        initial_server_participant_id: null,
+        playing_elapsed_ms: null,
+        judge_history_complete: false,
+      },
+    ]);
+  });
+
+  it("rolls back the GAP-032 DDL and preserves pre-0009 rows", async () => {
+    const context = await freshContext();
+    const prefixDirectory = await mkdtemp(join(tmpdir(), "tab10-gap032-rollback-"));
+    temporaryDirectories.push(prefixDirectory);
+    const artifactDirectory = fileURLToPath(new URL("../../drizzle/", import.meta.url));
+    const journal = JSON.parse(await readFile(join(artifactDirectory, "meta/_journal.json"), "utf8"));
+    journal.entries = journal.entries.slice(0, 9);
+    for (const entry of journal.entries) {
+      await writeFile(join(prefixDirectory, `${entry.tag}.sql`), await readFile(join(artifactDirectory, `${entry.tag}.sql`)));
+    }
+    await mkdir(join(prefixDirectory, "meta"));
+    await writeFile(join(prefixDirectory, "meta/_journal.json"), JSON.stringify(journal));
+    await applyPgliteMigrationFiles(context.db, prefixDirectory);
+    await context.client.exec(`
+      INSERT INTO users (id, email, password_hash, first_name, last_name)
+      VALUES ('00000000-0000-4000-8000-000000000100', 'gap032-rollback@tab10.test', 'synthetic', 'Rollback', 'GAP032');
+    `);
+    const migrationSql = (await readFile(
+      join(artifactDirectory, "0009_gap_032_match_facts.sql"),
+      "utf8",
+    )).replaceAll("--> statement-breakpoint", "\n");
+    await context.client.exec(`BEGIN;\n${migrationSql}\nROLLBACK;`);
+    const columns = await context.client.query<{ count: number }>(`
+      SELECT count(*)::integer AS count
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND (
+          (table_name = 'matches' AND column_name IN (
+            'initial_server_participant_id', 'playing_elapsed_ms',
+            'playing_segment_started_at', 'judge_history_complete'
+          ))
+          OR (table_name = 'judge_sessions' AND column_name = 'activated_at')
+        )
+    `);
+    expect(columns.rows).toEqual([{ count: 0 }]);
+    const row = await context.client.query<{ email: string }>(`
+      SELECT email FROM users
+      WHERE id = '00000000-0000-4000-8000-000000000100'
+    `);
+    expect(row.rows).toEqual([{ email: "gap032-rollback@tab10.test" }]);
   });
 
   it("fails closed rather than withdrawing a participant already referenced by a bracket", async () => {
@@ -379,8 +626,8 @@ describe("versioned migration foundation on disposable PGlite", () => {
     const after = await context.client.query<{ count: number }>(`
       SELECT count(*)::integer AS count FROM drizzle.__drizzle_migrations
     `);
-    expect(before.rows[0]?.count).toBe(8);
-    expect(after.rows[0]?.count).toBe(8);
+    expect(before.rows[0]?.count).toBe(13);
+    expect(after.rows[0]?.count).toBe(13);
   });
 
   it("does not let adoption stand in for ordinary fresh apply", async () => {
@@ -563,6 +810,6 @@ describe("versioned migration foundation on disposable PGlite", () => {
       FROM information_schema.tables
       WHERE table_schema = 'public'
     `);
-    expect(tables.rows[0]?.count).toBe(20);
+    expect(tables.rows[0]?.count).toBe(23);
   });
 });

@@ -1,8 +1,20 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 
 const adminEmail = process.env.E2E_ADMIN_EMAIL ?? "delivery.admin@tab10.test";
 const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? "DeliveryVerify9!";
+
+async function completeOnboarding(page: Page, destination: string) {
+  await expect(page).toHaveURL(new RegExp(`(?:/onboarding|${destination.replace("/", "\\/")})$`));
+  if (new URL(page.url()).pathname !== "/onboarding") return;
+  const csrf = (await page.context().cookies()).find((cookie) => cookie.name === "tab10_csrf");
+  const response = await page.request.patch("/api/v1/me/onboarding", {
+    data: { action: "complete" },
+    headers: { ...(csrf ? { "x-csrf-token": decodeURIComponent(csrf.value) } : {}) },
+  });
+  expect(response.status(), await response.text()).toBe(200);
+  await page.goto(destination);
+}
 
 test("AT-HOME-003 Home keeps direct actions and all secondary routes at mobile and desktop", async ({ page }, info) => {
   await page.goto("/history");
@@ -10,6 +22,7 @@ test("AT-HOME-003 Home keeps direct actions and all secondary routes at mobile a
   await page.getByLabel("Email").fill(adminEmail);
   await page.getByLabel("Пароль", { exact: true }).fill(adminPassword);
   await page.getByRole("button", { name: "Войти" }).click();
+  await completeOnboarding(page, "/history");
   await expect(page).toHaveURL(/\/history$/);
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Начать матч", exact: true }).first()).toBeVisible();
@@ -33,7 +46,7 @@ test("AT-HOME-003 Home keeps direct actions and all secondary routes at mobile a
   await page.getByRole("button", { name: "На главную" }).click();
   await page.getByRole("link", { name: "Начать матч", exact: true }).first().click();
   await expect(page).toHaveURL(/\/matches\/new$/);
-  await expect(page.getByRole("heading", { name: "Новый матч" })).toBeVisible();
+  await expect(page.getByRole("form", { name: "Создание матча" })).toBeVisible();
 
   const emptyNotificationsRequest = /\/api\/v1\/notifications\?notificationView=available$/;
   for (const [route, heading] of [["/history", "История"], ["/rankings", "Рейтинг"], ["/teams", "Команды"], ["/help", "Помощь"], ["/notifications", "Уведомления"], ["/profile", "Профиль"], ["/admin", "Админка"]] as const) {
@@ -65,6 +78,7 @@ test("AT-HOME-003 Home keeps navigation after a fetch error", async ({ page }, i
   await page.getByLabel("Email").fill(adminEmail);
   await page.getByLabel("Пароль", { exact: true }).fill(adminPassword);
   await page.getByRole("button", { name: "Войти" }).click();
+  await completeOnboarding(page, "/");
   await expect(page).toHaveURL(/\/$/);
   await page.route(/\/api\/v1\/home\?/, (route) => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ code: "UNAVAILABLE", message: "Синтетическая ошибка" }) }));
   await page.goto("/");
@@ -158,8 +172,16 @@ test("GAP-031 keeps overflow tasks collapsed until requested", async ({ page }) 
   expect(await page.locator("#home-more-tasks").evaluate((element) => getComputedStyle(element).display)).toBe("flex");
 });
 
-test("GAP-030 explicit Home releases judge slot; Browser Back is measured separately", async ({ page }, info) => {
+test("GAP-030 native Browser Back releases once, preserves history, and supports Forward re-entry", async ({ page }, info) => {
   let matchPath: string | null = null;
+  let releasePosts = 0;
+  let pointPosts = 0;
+  page.on("request", (request) => {
+    if (request.method() !== "POST") return;
+    const pathname = new URL(request.url()).pathname;
+    if (pathname.endsWith("/judge/release")) releasePosts += 1;
+    if (pathname.endsWith("/points")) pointPosts += 1;
+  });
   try {
     await page.goto("/login");
     await page.getByLabel("Email").fill(adminEmail);
@@ -167,26 +189,39 @@ test("GAP-030 explicit Home releases judge slot; Browser Back is measured separa
     await page.getByRole("button", { name: "Войти" }).click();
     await expect(page).toHaveURL(/\/$/);
     await page.goto("/matches/new");
-    await page.getByRole("button", { name: "Изменить название", exact: true }).click();
-    await page.getByLabel("Название").fill(`Stage 2 exit ${info.project.name}`);
-    await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
+    await page.getByRole("button", { name: "Настройки", exact: true }).click();
+    const settings = page.getByRole("dialog", { name: "Настройки матча", exact: true });
+    await settings.getByLabel("Название").fill(`Stage 2 exit ${info.project.name}`);
+    await expect(settings.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
+    await settings.getByRole("button", { name: "Готово", exact: true }).click();
     await page.getByRole("group", { name: "Игрок A: тип участника", exact: true }).getByRole("button", { name: "Гость", exact: true }).click();
     await page.getByLabel("Игрок A — гость (Имя Фамилия)").fill("Гость Первый");
     await page.getByRole("group", { name: "Соперник: тип участника", exact: true }).getByRole("button", { name: "Гость", exact: true }).click();
-    await page.getByLabel("Гость (Имя Фамилия)", { exact: true }).fill("Гость Второй");
-    await page.getByRole("button", { name: "Создать матч" }).click();
-    await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+$/);
-    matchPath = new URL(page.url()).pathname;
-    await page.getByRole("button", { name: "Судить" }).click();
-    await expect(page.getByTestId("judge-setup")).toBeVisible();
+    await page.getByLabel("Соперник — гость (Имя Фамилия)", { exact: true }).fill("Гость Второй");
+    await page.getByRole("button", { name: "Начать", exact: true }).click();
+    await page.getByRole("button", { name: /Гость Первый.*Подаёт первым/ }).click();
+    await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+\/judge$/);
+    matchPath = new URL(page.url()).pathname.replace(/\/judge$/, "");
+    await expect(page.getByRole("group", { name: "Счёт матча", exact: true })).toBeVisible();
+    await page.goto(matchPath);
+    await page.getByRole("button", { name: "Судить", exact: true }).first().click();
+    await expect(page.getByRole("group", { name: "Счёт матча", exact: true })).toBeVisible();
 
     await page.goBack();
     await expect(page).toHaveURL(new RegExp(`${matchPath}$`));
     const afterBrowserBack = await (await page.request.get(`/api/v1${matchPath}`)).json();
-    info.annotations.push({ type: "browser-back-judge-slot", description: afterBrowserBack.match.activeJudge ? "slot remained active" : "slot released" });
+    expect(afterBrowserBack.match.activeJudge).toBeNull();
+    expect(releasePosts).toBe(1);
+    expect(pointPosts).toBe(0);
+    const browserBackNotice = page.getByRole("alert");
+    await expect(browserBackNotice).toContainText("Судейство завершено");
+    await expect(browserBackNotice).toContainText("Вы вышли из ведения. Другой пользователь может продолжить");
 
-    await page.goto(`${matchPath}/judge`);
-    await expect(page.getByTestId("judge-setup")).toBeVisible();
+    await page.goForward();
+    await expect(page).toHaveURL(new RegExp(`${matchPath}/judge$`));
+    await expect(page.getByRole("group", { name: "Счёт матча", exact: true })).toBeVisible();
+    await expect(page.getByText("Судейство завершено")).toHaveCount(0);
+    expect(pointPosts).toBe(0);
     await page.getByRole("button", { name: "На главную" }).click();
     await expect(page).toHaveURL(/\/$/);
     const releaseNotice = page.getByRole("alert");
@@ -204,6 +239,16 @@ test("GAP-030 explicit Home releases judge slot; Browser Back is measured separa
         });
         expect(cancelled.status(), await cancelled.text()).toBe(200);
         expect((await cancelled.json()).match.status).toBe("cancelled");
+      } else if (current?.status === "in_progress" || current?.status === "pending_confirmation") {
+        const csrf = (await page.context().cookies()).find((cookie) => cookie.name === "tab10_csrf");
+        const headers = { ...(csrf ? { "x-csrf-token": decodeURIComponent(csrf.value) } : {}), "idempotency-key": randomUUID() };
+        const acquired = await page.request.post(`/api/v1${matchPath}/judge/acquire`, { headers });
+        expect(acquired.status(), await acquired.text()).toBeLessThan(300);
+        const stopped = await page.request.post(`/api/v1${matchPath}/stop`, {
+          data: { winnerSide: "A", reasonCode: "other", reasonText: "Синтетическая Stage 2 проверка завершена" },
+          headers: { ...headers, "idempotency-key": randomUUID() },
+        });
+        expect(stopped.status(), await stopped.text()).toBe(200);
       }
     }
   }

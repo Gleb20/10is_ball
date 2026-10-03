@@ -20,13 +20,22 @@ export type MatchScoreState = {
   version: number;
 };
 
-export type PointAwarded = {
+export type MatchEventProvenance = {
+  /** Absent only on legacy persisted events. */
+  occurredAt?: string;
+  /** Authenticated account that performed the mutation; absent on legacy events. */
+  actorUserId?: string;
+  /** Exact judge session authorizing the mutation; absent on legacy events. */
+  judgeSessionId?: string;
+};
+
+export type PointAwarded = MatchEventProvenance & {
   type: "point_awarded";
   side: Side;
   idempotencyKey: string;
 };
 
-export type PointUndone = {
+export type PointUndone = MatchEventProvenance & {
   type: "point_undone";
   idempotencyKey: string;
   undonePoint?: PointAwarded;
@@ -45,7 +54,7 @@ export type FinishConfirmed = {
   type: "finish_confirmed";
 };
 
-export type ManualCorrection = {
+export type ManualCorrection = MatchEventProvenance & {
   type: "manual_correction";
   idempotencyKey: string;
   from: { scoreA: number; scoreB: number; currentServerId: string | null };

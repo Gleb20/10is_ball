@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, vi, beforeAll, beforeEach, afterAll, afterEach } from "vitest";
 import { Activity } from "react";
 import {
   act,
@@ -13,10 +13,14 @@ import userEvent from "@testing-library/user-event";
 import {
   MemoryRouter,
   Route,
+  RouterProvider,
   Routes,
+  createMemoryRouter,
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import { JudgeNavigationBridge } from "../judgeNavigation";
+import { AppShell } from "../layout";
 import { JudgePage } from "./JudgePage";
 import {
   acceptReviewedPointScore,
@@ -32,6 +36,20 @@ import {
   resetScoreRecoveryForTests,
   scoreRecoveryStorageKey,
 } from "./judgeScoreRecovery";
+
+const NativeRequest = globalThis.Request;
+
+beforeAll(() => {
+  globalThis.Request = class RouterTestRequest extends NativeRequest {
+    constructor(input: RequestInfo | URL, init?: RequestInit) {
+      super(input, init ? { ...init, signal: undefined } : init);
+    }
+  };
+});
+
+afterAll(() => {
+  globalThis.Request = NativeRequest;
+});
 
 const getMatch = vi.fn();
 const startMatch = vi.fn();
@@ -94,6 +112,17 @@ const matchBody = {
   ],
 };
 
+const matchFactsBody = {
+  initialServer: { state: "known" as const, participantId: "p-a" },
+  playingClock: {
+    state: "available" as const,
+    elapsedMs: 125_000,
+    running: true,
+    asOf: "2026-07-21T10:02:05.000Z",
+  },
+  judgeHistory: { state: "complete" as const, sessions: [] },
+};
+
 function Destination({ label }: { label: string }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -138,6 +167,45 @@ function renderJudge(path = "/matches/m1/judge") {
       </Routes>
     </MemoryRouter>,
   );
+}
+
+function NativeJudgeRoutes() {
+  return (
+    <Routes>
+      <Route
+        path="/matches/:id/judge"
+        element={<JudgePage />}
+      />
+      <Route
+        path="/matches/:id"
+        element={<AppShell><Destination label="match-detail" /></AppShell>}
+      />
+      <Route
+        path="/history"
+        element={<AppShell><Destination label="history" /></AppShell>}
+      />
+    </Routes>
+  );
+}
+
+function renderNativeJudge(
+  source: string | { pathname: string; search?: string; hash?: string; state?: unknown } = "/matches/m1",
+) {
+  const router = createMemoryRouter(
+    [
+      {
+        path: "*",
+        element: (
+          <JudgeNavigationBridge>
+            <NativeJudgeRoutes />
+          </JudgeNavigationBridge>
+        ),
+      },
+    ],
+    { initialEntries: [source, "/matches/m1/judge"], initialIndex: 1 },
+  );
+  const rendered = render(<RouterProvider router={router} />);
+  return { router, ...rendered };
 }
 
 function JudgeRouteControls() {
@@ -199,10 +267,11 @@ function dispatchPointer(
 describe("REQ_ui__judge_immersive", () => {
   beforeEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.clearAllMocks();
     resetScoreRecoveryForTests();
     window.sessionStorage.clear();
-    getMatch.mockResolvedValue({ match: matchBody });
+    getMatch.mockResolvedValue({ match: { ...matchBody, matchFacts: matchFactsBody } });
     startMatch.mockResolvedValue({ match: matchBody });
     acquireJudge.mockResolvedValue({ ok: true });
     heartbeatJudge.mockResolvedValue({ ok: true });
@@ -1313,6 +1382,235 @@ describe("REQ_ui__judge_immersive", () => {
     expect(screen.getByRole("status")).toHaveTextContent(/вы вышли из ведения.*другой пользователь может продолжить/i);
   });
 
+  it("GAP-030 native Back releases once and preserves the exact source history entry", async () => {
+    const release = deferred<{ ok: boolean }>();
+    releaseJudge.mockReturnValue(release.promise);
+    const source = {
+      pathname: "/history",
+      search: "?role=judge",
+      hash: "#match-m1",
+      state: { scrollY: 420 },
+    };
+    const { router } = renderNativeJudge(source);
+    await screen.findByTestId("judge-screen");
+
+    await act(async () => {
+      void router.navigate(-1);
+    });
+
+    await waitFor(() => expect(releaseJudge).toHaveBeenCalledTimes(1));
+    expect(router.state.location.pathname).toBe("/matches/m1/judge");
+
+    await act(async () => {
+      release.resolve({ ok: true });
+      await release.promise;
+    });
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/history"));
+    expect(router.state.location.search).toBe("?role=judge");
+    expect(router.state.location.hash).toBe("#match-m1");
+    expect(router.state.location.state).toEqual({ scrollY: 420 });
+    expect(await screen.findByText("Судейство завершено")).toBeInTheDocument();
+    expect(releaseJudge).toHaveBeenCalledTimes(1);
+  });
+
+  it("GAP-030 native Back waits for the existing rapid-point drain without replay", async () => {
+    const firstPoint = deferred<{ match: typeof matchBody }>();
+    const secondPoint = deferred<{ match: typeof matchBody }>();
+    awardPoint
+      .mockReturnValueOnce(firstPoint.promise)
+      .mockReturnValueOnce(secondPoint.promise);
+    const { router } = renderNativeJudge();
+    const pointButton = await screen.findByRole("button", {
+      name: /\+1 очко: анна а/i,
+    });
+
+    fireEvent.click(pointButton);
+    fireEvent.click(pointButton);
+    await act(async () => {
+      void router.navigate(-1);
+    });
+
+    expect(releaseJudge).not.toHaveBeenCalled();
+    expect(router.state.location.pathname).toBe("/matches/m1/judge");
+    expect(awardPoint).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      firstPoint.resolve({ match: { ...matchBody, scoreA: 4, version: 6 } });
+      await firstPoint.promise;
+    });
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(2));
+    expect(releaseJudge).not.toHaveBeenCalled();
+
+    await act(async () => {
+      secondPoint.resolve({ match: { ...matchBody, scoreA: 5, version: 7 } });
+      await secondPoint.promise;
+    });
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/matches/m1"));
+    expect(awardPoint).toHaveBeenCalledTimes(2);
+    expect(awardPoint.mock.calls[0]?.[3]).not.toBe(awardPoint.mock.calls[1]?.[3]);
+    expect(awardPoint).toHaveBeenNthCalledWith(2, "m1", "A", 6, expect.any(String));
+    expect(releaseJudge).toHaveBeenCalledTimes(1);
+  });
+
+  it("GAP-030 native Back waits for an in-flight display flip before one release", async () => {
+    const user = userEvent.setup();
+    const displayFlip = deferred<{ match: typeof matchBody & { judgeDisplayFlipped: boolean } }>();
+    judgeSetup.mockReturnValue(displayFlip.promise);
+    const source = {
+      pathname: "/history",
+      search: "?role=judge",
+      hash: "#match-m1",
+      state: { scrollY: 420 },
+    };
+    const { router } = renderNativeJudge(source);
+    await screen.findByTestId("judge-screen");
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    const flipButton = screen.getByRole("button", { name: "Поменять местами на экране" });
+    await user.click(flipButton);
+    expect(judgeSetup).toHaveBeenCalledWith("m1", { displayFlipped: true });
+    expect(flipButton).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Выйти из ведения" })).toBeDisabled();
+
+    await act(async () => {
+      void router.navigate(-1);
+    });
+
+    expect(router.state.location.pathname).toBe("/matches/m1/judge");
+    expect(releaseJudge).not.toHaveBeenCalled();
+
+    await act(async () => {
+      displayFlip.resolve({
+        match: { ...matchBody, judgeDisplayFlipped: true },
+      });
+      await displayFlip.promise;
+    });
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/history"));
+    expect(router.state.location.search).toBe("?role=judge");
+    expect(router.state.location.hash).toBe("#match-m1");
+    expect(router.state.location.state).toEqual({ scrollY: 420 });
+    expect(releaseJudge).toHaveBeenCalledTimes(1);
+  });
+
+  it("GAP-030 native Back preserves unknown score recovery through Forward with zero replay", async () => {
+    let record = appendPointIntent(
+      createScoreRecoveryRecord("judge-user", "m1", 5),
+      { id: "a", side: "A", idempotencyKey: "key-a" },
+    );
+    record = markPointAttemptError(beginPointAttempt(record, 5).record, "a");
+    persistScoreRecoveryRecord(record, window.sessionStorage);
+    getMatch.mockResolvedValue({ match: { ...matchBody, idempotencyKeys: [] } });
+    const { router } = renderNativeJudge();
+    await screen.findByRole("region", { name: /восстановление счёта/i });
+
+    await act(async () => {
+      void router.navigate(-1);
+    });
+    await waitFor(() => expect(router.state.location.pathname).toBe("/matches/m1"));
+    expect(releaseJudge).toHaveBeenCalledTimes(1);
+    expect(awardPoint).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await router.navigate(1);
+    });
+    expect(await screen.findByRole("region", { name: /восстановление счёта/i })).toBeInTheDocument();
+    expect(acquireJudge).toHaveBeenCalledTimes(2);
+    expect(awardPoint).not.toHaveBeenCalled();
+    expect(screen.queryByText("Судейство завершено")).toBeNull();
+  });
+
+  it("GAP-030 turns a never-settling release into an honest TTL warning", async () => {
+    const release = deferred<{ ok: boolean }>();
+    releaseJudge.mockReturnValue(release.promise);
+    const { router } = renderNativeJudge();
+    await screen.findByTestId("judge-screen");
+    vi.useFakeTimers();
+
+    await act(async () => {
+      void router.navigate(-1);
+      await Promise.resolve();
+    });
+    expect(releaseJudge).toHaveBeenCalledTimes(1);
+    expect(router.state.location.pathname).toBe("/matches/m1/judge");
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10_000);
+    });
+
+    expect(router.state.location.pathname).toBe("/matches/m1");
+    expect(screen.getByText("Проверьте слот судьи")).toBeInTheDocument();
+    expect(screen.getByText(/не удалось проверить выход/i)).toBeInTheDocument();
+    expect(releaseJudge).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it("GAP-030 treats an acquire deadline as unknown and never claims release success", async () => {
+    const acquire = deferred<{ ok: boolean }>();
+    acquireJudge.mockReturnValue(acquire.promise);
+    const { router } = renderNativeJudge();
+    await waitFor(() => expect(acquireJudge).toHaveBeenCalledTimes(1));
+    vi.useFakeTimers();
+
+    await act(async () => {
+      void router.navigate(-1);
+      await Promise.resolve();
+    });
+    expect(router.state.location.pathname).toBe("/matches/m1/judge");
+    expect(releaseJudge).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10_000);
+    });
+
+    expect(releaseJudge).toHaveBeenCalledTimes(1);
+    expect(router.state.location.pathname).toBe("/matches/m1");
+    expect(screen.getByText("Проверьте слот судьи")).toBeInTheDocument();
+    expect(screen.queryByText("Судейство завершено")).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("GAP-030 resets native Back while correction requires a decision", async () => {
+    const user = userEvent.setup();
+    const { router } = renderNativeJudge();
+    await screen.findByTestId("judge-screen");
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    await user.click(screen.getByRole("button", { name: /исправить счёт и подачу/i }));
+    expect(screen.getByRole("dialog", { name: /ручная коррекция/i })).toBeInTheDocument();
+
+    await act(async () => {
+      void router.navigate(-1);
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(/сначала сохраните или закройте коррекцию/i)).toBeInTheDocument(),
+    );
+    expect(router.state.location.pathname).toBe("/matches/m1/judge");
+    expect(screen.getByRole("dialog", { name: /ручная коррекция/i })).toBeInTheDocument();
+    expect(releaseJudge).not.toHaveBeenCalled();
+  });
+
+  it("GAP-030 refuses native Back when recovery correlation cannot be stored", async () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("storage unavailable");
+    });
+    const { router } = renderNativeJudge();
+    fireEvent.click(await screen.findByRole("button", { name: /\+1 очко: анна а/i }));
+    expect(await screen.findByText(/не удалось надёжно сохранить состояние/i)).toBeInTheDocument();
+    expect(awardPoint).not.toHaveBeenCalled();
+
+    await act(async () => {
+      void router.navigate(-1);
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(/не удалось безопасно сохранить восстановление счёта/i)).toBeInTheDocument(),
+    );
+    expect(router.state.location.pathname).toBe("/matches/m1/judge");
+    expect(releaseJudge).not.toHaveBeenCalled();
+  });
+
   it("GAP-005 blocks setup cancellation while start is pending", async () => {
     const user = userEvent.setup();
     const start = deferred<{ match: typeof matchBody }>();
@@ -2073,5 +2371,159 @@ describe("REQ_ui__judge_immersive", () => {
     expect(revertFinish).not.toHaveBeenCalled();
     expect(undoPoint).not.toHaveBeenCalled();
     expect(releaseJudge).not.toHaveBeenCalled();
+  });
+});
+
+describe("GAP-032 judge playing-clock consumption", () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+    resetScoreRecoveryForTests();
+    window.sessionStorage.clear();
+    getMatch.mockResolvedValue({ match: { ...matchBody, matchFacts: matchFactsBody } });
+    acquireJudge.mockResolvedValue({ ok: true });
+    heartbeatJudge.mockResolvedValue({ ok: true });
+    releaseJudge.mockResolvedValue({ ok: true });
+    directory.mockResolvedValue({ users: [] });
+    setDocumentVisibility("visible");
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it("D40 opens an authoritative atomic launch at 0:0 directly in scoring", async () => {
+    getMatch.mockResolvedValue({ match: {
+      ...matchBody,
+      status: "in_progress",
+      scoreA: 0,
+      scoreB: 0,
+      version: 0,
+      currentServerParticipantId: "p-a",
+      matchFacts: {
+        ...matchFactsBody,
+        initialServer: { state: "known", participantId: "p-a" },
+      },
+    } });
+
+    renderJudge();
+
+    expect(await screen.findByTestId("judge-screen")).toBeInTheDocument();
+    expect(screen.queryByTestId("judge-setup")).not.toBeInTheDocument();
+    expect(startMatch).not.toHaveBeenCalled();
+    expect(judgeSetup).not.toHaveBeenCalled();
+    expect(getMatch.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("advances a fresh running clock from performance time without announcing every tick", async () => {
+    let performanceMs = 1_000;
+    let tick: TimerHandler | null = null;
+    vi.spyOn(performance, "now").mockImplementation(() => performanceMs);
+    vi.spyOn(window, "setInterval").mockImplementation((callback, delay) => {
+      if (delay === 1_000) tick = callback;
+      return 17 as never;
+    });
+
+    renderJudge();
+    const timer = await screen.findByText("2:05");
+    expect(timer).toHaveAttribute("aria-live", "off");
+
+    performanceMs = 4_000;
+    act(() => {
+      if (typeof tick === "function") tick();
+    });
+    expect(screen.getByText("2:08")).toHaveAttribute("aria-live", "off");
+  });
+
+  it("keeps rapid score writes FIFO, freezes uncertainty, then performs one coalesced detail refresh", async () => {
+    const first = deferred<{ match: typeof matchBody }>();
+    const second = deferred<{ match: typeof matchBody }>();
+    awardPoint
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+    await waitFor(() => expect(heartbeatJudge).toHaveBeenCalled());
+    const readsBeforeScore = getMatch.mock.calls.length;
+
+    fireEvent.click(screen.getByRole("button", { name: /\+1 очко: анна а/i }));
+    fireEvent.click(screen.getByRole("button", { name: /\+1 очко: борис б/i }));
+    expect(screen.getByText("Проверяем время…")).toHaveAttribute("aria-live", "polite");
+    expect(getMatch).toHaveBeenCalledTimes(readsBeforeScore);
+
+    await act(async () => {
+      first.resolve({ match: { ...matchBody, scoreA: 4, version: 6 } });
+      await first.promise;
+    });
+    await waitFor(() => expect(awardPoint).toHaveBeenCalledTimes(2));
+    expect(awardPoint).toHaveBeenNthCalledWith(2, "m1", "B", 6, expect.any(String));
+    expect(getMatch).toHaveBeenCalledTimes(readsBeforeScore);
+
+    getMatch.mockResolvedValue({ match: {
+      ...matchBody,
+      scoreA: 4,
+      scoreB: 3,
+      version: 7,
+      matchFacts: {
+        ...matchFactsBody,
+        playingClock: {
+          state: "available",
+          elapsedMs: 128_000,
+          running: true,
+          asOf: "2026-07-21T10:02:08.000Z",
+        },
+      },
+    } });
+    await act(async () => {
+      second.resolve({ match: { ...matchBody, scoreA: 4, scoreB: 3, version: 7 } });
+      await second.promise;
+    });
+
+    await waitFor(() => expect(getMatch).toHaveBeenCalledTimes(readsBeforeScore + 1));
+    expect(screen.queryByText("Проверяем время…")).not.toBeInTheDocument();
+    expect(screen.getByText("2:08")).toBeInTheDocument();
+  });
+
+  it("ignores a live detail read started before a newer judge mutation", async () => {
+    const user = userEvent.setup();
+    renderJudge();
+    await screen.findByTestId("judge-screen");
+    await waitFor(() => expect(heartbeatJudge).toHaveBeenCalled());
+    const readsBeforeRefresh = getMatch.mock.calls.length;
+    const staleRead = deferred<{ match: typeof matchBody & { matchFacts: typeof matchFactsBody } }>();
+    const postMutationRead = deferred<{ match: typeof matchBody & { matchFacts: typeof matchFactsBody; judgeDisplayFlipped: boolean } }>();
+    getMatch
+      .mockReturnValueOnce(staleRead.promise)
+      .mockReturnValueOnce(postMutationRead.promise);
+    judgeSetup.mockResolvedValueOnce({
+      match: { ...matchBody, judgeDisplayFlipped: true },
+    });
+
+    act(() => setDocumentVisibility("hidden"));
+    act(() => setDocumentVisibility("visible"));
+    await waitFor(() => expect(getMatch).toHaveBeenCalledTimes(readsBeforeRefresh + 1));
+
+    await user.click(screen.getByRole("button", { name: "Ещё" }));
+    await user.click(screen.getByRole("button", { name: "Поменять местами на экране" }));
+    expect(await screen.findByRole("button", { name: "Вернуть порядок на экране" })).toBeInTheDocument();
+
+    await act(async () => {
+      staleRead.resolve({ match: { ...matchBody, matchFacts: matchFactsBody } });
+      await staleRead.promise;
+    });
+    await waitFor(() => expect(getMatch).toHaveBeenCalledTimes(readsBeforeRefresh + 2));
+    expect(screen.getByRole("button", { name: "Вернуть порядок на экране" })).toBeInTheDocument();
+
+    await act(async () => {
+      postMutationRead.resolve({
+        match: {
+          ...matchBody,
+          judgeDisplayFlipped: true,
+          matchFacts: matchFactsBody,
+        },
+      });
+      await postMutationRead.promise;
+    });
   });
 });

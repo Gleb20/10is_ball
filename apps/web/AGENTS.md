@@ -26,8 +26,8 @@ This file extends the repository `AGENTS.md` for `apps/web`.
 - Poll only while the page is visible, stop on unmount, and provide the documented
   manual refresh. Serialize or queue score mutations so intentional taps are not
   lost; surface authoritative conflict state.
-- Use internal router navigation for application routes. Keep bottom-navigation
-  ownership and active state consistent on secondary/detail screens.
+- Use internal router navigation for application routes. Preserve Home-based
+  navigation and contextual Back on secondary/detail screens (D36).
 - Component tests must cover roles, states, failures, and rapid interaction. Use
   accessibility queries. jsdom geometry assertions do not replace browser checks;
   use end-to-end/visual coverage for auth, match creation, judge, tournament,

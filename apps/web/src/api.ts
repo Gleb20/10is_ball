@@ -1,4 +1,17 @@
 import { AUTH_UNAUTHORIZED_EVENT } from "./authEvents";
+import type {
+  AvatarKey,
+  MatchFacts,
+  CreateGuestIdentityRequest,
+  GuestIdentity,
+  GuestIdentityMutationOutcome,
+  MatchLaunchOutcome,
+  MatchLaunchRequest,
+  MatchLaunchResponse,
+  RenameGuestIdentityRequest,
+} from "@tab10/shared";
+
+export type MatchDetail = Record<string, unknown> & { matchFacts: MatchFacts };
 
 export type User = {
   id: string;
@@ -99,6 +112,21 @@ export type AdminPasswordResetReceipt =
       current: boolean;
       completedAt: string;
     };
+
+export type AdminMatchRecovery = {
+  id: string;
+  kind: "standalone" | "tournament" | "tutorial";
+  status:
+    | "waiting"
+    | "in_progress"
+    | "pending_confirmation"
+    | "finished"
+    | "stopped"
+    | "cancelled"
+    | "voided";
+  version: number;
+  allowedEmergencyAction: "force_close" | null;
+};
 
 export type ProfileIdentity = {
   id: string;
@@ -233,6 +261,7 @@ export type MatchParticipantInput = {
   id?: string;
   side: "A" | "B";
   userId?: string;
+  guestIdentityId?: string;
   guestFirstName?: string;
   guestLastName?: string;
 };
@@ -270,6 +299,7 @@ export type Team = {
   name: string;
   slogan: string | null;
   welcomeText: string | null;
+  avatarKey?: AvatarKey | null;
   captainUserId: string;
   status: "active" | "archived";
   createdAt: string;
@@ -503,6 +533,58 @@ export const api = {
         avatarKey?: string | null;
       }>;
     }>(`/api/v1/users/directory${q ? `?q=${encodeURIComponent(q)}` : ""}`),
+  listGuests: (
+    options: { q?: string; cursor?: string; limit?: number; signal?: AbortSignal } = {},
+  ) => {
+    const query = new URLSearchParams();
+    if (options.q) query.set("q", options.q);
+    if (options.cursor) query.set("cursor", options.cursor);
+    if (options.limit !== undefined) query.set("limit", String(options.limit));
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    return request<{ guests: GuestIdentity[]; nextCursor: string | null }>(
+      `/api/v1/guests${suffix}`,
+      { signal: options.signal },
+    );
+  },
+  createGuest: (payload: CreateGuestIdentityRequest) =>
+    request<{ guest: GuestIdentity }>("/api/v1/guests", {
+      method: "POST",
+      headers: { "Idempotency-Key": payload.requestId },
+      body: JSON.stringify(payload),
+    }),
+  getGuest: (guestId: string, options: { signal?: AbortSignal } = {}) =>
+    request<{ guest: GuestIdentity }>(
+      `/api/v1/guests/${encodeURIComponent(guestId)}`,
+      { signal: options.signal },
+    ),
+  renameGuest: (guestId: string, payload: RenameGuestIdentityRequest) =>
+    request<{ guest: GuestIdentity }>(
+      `/api/v1/guests/${encodeURIComponent(guestId)}`,
+      {
+        method: "PATCH",
+        headers: { "Idempotency-Key": payload.requestId },
+        body: JSON.stringify(payload),
+      },
+    ),
+  getGuestMutationOutcome: (requestId: string) =>
+    request<GuestIdentityMutationOutcome>(
+      `/api/v1/guests/requests/${encodeURIComponent(requestId)}`,
+    ),
+  getGuestHistory: (
+    guestId: string,
+    options: { cursor?: string; signal?: AbortSignal } = {},
+  ) => {
+    const suffix = options.cursor
+      ? `?cursor=${encodeURIComponent(options.cursor)}`
+      : "";
+    return request<{
+      guest: GuestIdentity;
+      items: HistoryItem[];
+      nextCursor: string | null;
+    }>(`/api/v1/guests/${encodeURIComponent(guestId)}/history${suffix}`, {
+      signal: options.signal,
+    });
+  },
   matchCreateOptions: () =>
     request<MatchCreateOptions>("/api/v1/matches/create-options"),
   listUsers: (q?: string, status?: "active" | "blocked") => {
@@ -576,6 +658,23 @@ export const api = {
     request<AdminPasswordResetReceipt>(
       `/api/v1/admin/users/${userId}/reset-password/requests/${requestId}`,
     ),
+  getAdminMatchRecovery: (matchId: string) =>
+    request<{ recovery: AdminMatchRecovery }>(
+      `/api/v1/admin/matches/${matchId}/recovery`,
+    ),
+  forceCloseAdminMatchRecovery: (
+    matchId: string,
+    payload: { expectedVersion: number },
+    idempotencyKey: string,
+  ) =>
+    request<{ recovery: AdminMatchRecovery }>(
+      `/api/v1/admin/matches/${matchId}/recovery/force-close`,
+      {
+        method: "POST",
+        headers: { "Idempotency-Key": idempotencyKey },
+        body: JSON.stringify(payload),
+      },
+    ),
   adminForceCloseMatch: (
     matchId: string,
     expectedVersion: number,
@@ -612,8 +711,18 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  launchMatch: (payload: MatchLaunchRequest) =>
+    request<MatchLaunchResponse>("/api/v1/matches/launches", {
+      method: "POST",
+      headers: { "Idempotency-Key": payload.requestId },
+      body: JSON.stringify(payload),
+    }),
+  getMatchLaunchOutcome: (requestId: string) =>
+    request<MatchLaunchOutcome>(
+      `/api/v1/matches/launches/${encodeURIComponent(requestId)}`,
+    ),
   getMatch: (id: string) =>
-    request<{ match: Record<string, unknown> }>(`/api/v1/matches/${id}`),
+    request<{ match: MatchDetail }>(`/api/v1/matches/${id}`),
   updateMatch: (id: string, payload: MatchUpdatePayload) =>
     request<{ match: Record<string, unknown> }>(`/api/v1/matches/${id}`, {
       method: "PATCH",
@@ -773,6 +882,7 @@ export const api = {
       "/api/v1/tournaments",
     ),
   createTournament: (payload: {
+    plannedDate?: string | null;
     title: string;
     format?: "single_elimination" | "double_elimination";
     organizerParticipates?: boolean;
@@ -793,6 +903,7 @@ export const api = {
     id: string,
     payload: {
       userId?: string;
+      guestIdentityId?: string;
       guestFirstName?: string;
       guestLastName?: string;
       confirmManualOverride?: boolean;
@@ -805,17 +916,25 @@ export const api = {
       headers: { "Idempotency-Key": idempotencyKey },
       body: JSON.stringify(payload),
     }),
+  getBracketGenerationContext: (id: string) =>
+    request<{ tournament: Tournament }>(
+      `/api/v1/tournaments/${id}/bracket-generation-context`,
+    ),
   generateBracket: (
     id: string,
-    payload?: { constructionAlgorithm?: "compact" | "power_of_two" },
+    payload: {
+      expectedVersion: number;
+      constructionAlgorithm?: "compact" | "power_of_two";
+    },
   ) =>
-    request(`/api/v1/tournaments/${id}/bracket`, {
+    request<{ tournament: Tournament }>(`/api/v1/tournaments/${id}/bracket-generations`, {
       method: "POST",
-      body: JSON.stringify(payload ?? {}),
+      body: JSON.stringify(payload),
     }),
   patchTournament: (
     id: string,
     payload: {
+      plannedDate?: string | null;
       title?: string;
       format?: "single_elimination" | "double_elimination";
       organizerParticipates?: boolean;
@@ -875,7 +994,7 @@ export const api = {
     ),
   listTeams: () =>
     request<{ teams: Team[] }>("/api/v1/teams"),
-  createTeam: (payload: { name: string; slogan?: string; welcomeText?: string }) =>
+  createTeam: (payload: { name: string; slogan?: string; welcomeText?: string; avatarKey?: AvatarKey | null }) =>
     request<{ team: Team }>("/api/v1/teams", {
       method: "POST",
       body: JSON.stringify(payload),
@@ -884,7 +1003,7 @@ export const api = {
     request<{ team: Team }>(`/api/v1/teams/${id}`),
   updateTeam: (
     id: string,
-    payload: { name?: string; slogan?: string; welcomeText?: string },
+    payload: { name?: string; slogan?: string; welcomeText?: string; avatarKey?: AvatarKey | null },
   ) =>
     request<{ team: Team }>(`/api/v1/teams/${id}`, {
       method: "PATCH",

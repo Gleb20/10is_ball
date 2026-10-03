@@ -12,6 +12,46 @@
 - Критичные мутации принимают `Idempotency-Key`.
 - Ресурсные конфликты используют `expectedVersion`.
 
+## D40 — атомарный запуск обычного матча
+
+`POST /matches/launches` принимает обязательный UUID `Idempotency-Key`, совпадающий
+с `requestId` тела. Строгая shared schema: optional title, format, pointsToWin,
+mercyEnabled/mercyPoints, firstServerMethod и roster A1/B1 (+ A2/B2 только2v2).
+Manual/rally требуют существующий `firstServerSlot`; random запрещает slot.
+Default title вычисляется от фактического server startedAt; manual title сохранён.
+Сервер фиксирует standalone/manual/no invitations и текущие actor/auth session.
+
+Sorted actor/player locks → active actor/session row lock/recheck → receipt lookup
+→ create/acquire/setup/start → immutable receipt, всё в одной транзакции.
+Ответ `{ requestId, matchId }`; повтор actor/key/fingerprint возвращает исходный ID
+без повторной случайности или передачи судейства. Другой fingerprint —409
+`IDEMPOTENCY_KEY_REUSED`. `GET /matches/launches/{requestId}` actor-scoped/no-store:
+`{ outcome: "unknown" }` либо `{ outcome: "committed", matchId }`; чужой/отсутствующий
+ключ не различаются. Receipt не заменяет fresh GET/current auth judge ownership.
+После eligible purge receipt остаётся, тот же запрос никогда не создаёт новый матч.
+
+## BUG-022 — версия построения сетки
+
+Organizer-only `GET /tournaments/{id}/bracket-generation-context` возвращает
+`{ tournament }` с обязательной `bracketStateVersion`. Tournament lock предшествует
+чтению и допустимому legacy organizer-healing; healing меняет version один раз.
+`POST /tournaments/{id}/bracket-generations` принимает строго
+`{ expectedVersion, constructionAlgorithm? }`; версия проверяется под тем же lock
+до любых записей. Stale —409 `BRACKET_VERSION_CONFLICT`, ноль writes.
+Старый `POST /tournaments/{id}/bracket` отклоняется409
+`VERSIONED_BRACKET_GENERATION_REQUIRED`;403/404 сохраняются, legacy mutation нет.
+
+Actual roster/format/participation/seed/generation/start/dissolve меняют fence;
+metadata, pending invitation, повтор и no-effective swaps не меняют. D35 admin
+add/rebuild остаётся одной отдельной атомарной операцией с одним version bump.
+Unknown не запускает auto POST и GET не доказывает авторство изменения. После
+успешного явного GET допустим explicit retry точно прежнего version/algorithm:
+CAS даёт не более одной записи. Большая fresh version либо запрещающий lifecycle
+закрывают возможность поздней старой записи и требуют нового явного подтверждения
+для следующей операции. Failed GET сохраняет unknown.
+Выпуск: strict API → подтверждённый old-fleet drain → versioned UI; unsafe legacy
+API не является rollback.
+
 ## 2. Auth
 
 - `POST /auth/login`
@@ -533,3 +573,42 @@ Admin profile PATCH is strict and nonempty; email is immutable, nullable profile
 can be cleared. Profile-only edit keeps sessions; role changes revoke them.
 Feedback requires `kind=bug|idea|question|other` and trimmed nonempty message <=4000.
 Material links remain message text; there is no attachment upload contract.
+
+## GAP-019 D40 — плановая дата турнира
+
+`Tournament`, `CreateTournamentRequest`, `TournamentPatchRequest` содержат
+необязательное nullable `plannedDate` формата `YYYY-MM-DD` (реальная календарная
+дата, год 0001..9999). Это дата без времени и часового пояса. Create omission/null
+сохраняет NULL; patch omission сохраняет прежнее значение, null очищает.
+Неверная дата отклоняется 400 до записи. Изменять может только организатор до
+старта; terminal/in_progress edit сохраняет прежний `TOURNAMENT_ALREADY_STARTED`
+400. Изменение даты не меняет bracketStateVersion, состав и сетку. Дата не
+ограничивает ручной старт и не создаёт запланированный запуск/уведомления.
+
+## D40 — сохранённые гости и аватар команды
+
+GAP-013/GAP-019 сохраняют разовые имена и добавляют явный `guestIdentityId`.
+Participant input — ровно один из userId / guestIdentityId / пары
+ guestFirstName+guestLastName. Payload не присылает собственный snapshot для UUID.
+Повтор launch и добавления в турнир сравнивает исходный UUID, а не изменяемое имя.
+
+| Метод и путь `/api/v1` | Контракт |
+|---|---|
+| GET `/guests` | `{ guests, nextCursor }`; q, limit=20 (max50), cursor связан с q; порядок lower(lastName), lower(firstName), UUID |
+| POST `/guests` | `{requestId, firstName, lastName}`; заголовок Idempotency-Key совпадает с requestId; ответ `{guest}` |
+| GET `/guests/requests/:requestId` | no-store; только receipt текущего actor; unknown либо committed с operation/guestId/resultingVersion |
+| GET `/guests/:guestId` | `{guest}` активному пользователю; без раскрытия creator/auth credentials |
+| PATCH `/guests/:guestId` | requestId, expectedVersion, firstName, lastName; создатель или active admin; ответ `{guest}` |
+| GET `/guests/:guestId/history` | `{guest, items, nextCursor}`; 20 событий, cursor привязан к гостю; терминальные матчи кроме tutorial и терминальные турниры с активной строкой участия |
+
+Guest: id, firstName, lastName, displayName, avatarKey, version, canRename,
+createdAt, updatedAt. CAS conflict — 409 VERSION_CONFLICT; reuse ключа с другим
+исходным payload — 409 IDEMPOTENCY_KEY_REUSED. Неизвестный исход мутации сначала
+проверяется receipt GET; автоматического повторного POST/PATCH нет. Receipt
+подтверждает операцию, но текущая карточка после чужого rename может быть новее.
+История фильтруется по UUID, никогда по совпавшему имени; прежние подписи сохраняются.
+
+GAP-025 добавляет nullable avatarKey в Team и create/update. При create отсутствие
+равно null; PATCH отсутствие сохраняет прежнее значение, null очищает. Допускаются
+только avatar_1..avatar_10. Изменение капитаном активной команды; TEAM_ARCHIVED —
+409 без записей. Каталог изображений общий с D10, новые upload endpoints отсутствуют.

@@ -26,6 +26,17 @@ import { normalizeCompiledMigrationArguments } from "../bin/run-compiled-migrati
 const packageJson = JSON.parse(
   await readFile(path.join(ROOT, "package.json"), "utf8"),
 );
+const apiPackageJson = JSON.parse(
+  await readFile(path.join(ROOT, "apps/api/package.json"), "utf8"),
+);
+const fastRunner = await readFile(
+  path.join(ROOT, "scripts/verify/run-fast.mjs"),
+  "utf8",
+);
+const postgresRunner = await readFile(
+  path.join(ROOT, "scripts/verify/run-postgres.mjs"),
+  "utf8",
+);
 const readme = await readFile(path.join(ROOT, "README.md"), "utf8");
 const miseConfig = await readFile(path.join(ROOT, ".mise.toml"), "utf8");
 const pnpmDispatcher = await readFile(
@@ -97,6 +108,27 @@ test("verification entrypoints keep the explicit package-script contract", () =>
   );
   assert.equal(packageJson.scripts["verify:all"], "node scripts/verify/run-local.mjs");
   assert.equal(packageJson.scripts.ci, "pnpm run verify:all");
+});
+
+test("dedicated PostgreSQL suites remain excluded from fast lanes and registered in the zero-skip lane", () => {
+  const suites = [
+    "bug-022.postgres.integration.test.ts",
+    "gap-013-atomic-launch.postgres.integration.test.ts",
+    "gap-032-match-facts.postgres.integration.test.ts",
+  ];
+  for (const suite of suites) {
+    const apiPath = `src/${suite}`;
+    const repositoryPath = `apps/api/${apiPath}`;
+    assert.match(apiPackageJson.scripts.test, new RegExp(`--exclude '${apiPath.replaceAll(".", "\\.")}'`));
+    assert.match(apiPackageJson.scripts["test:fast"], new RegExp(`--exclude '${apiPath.replaceAll(".", "\\.")}'`));
+    assert.match(apiPackageJson.scripts["test:postgres"], new RegExp(apiPath.replaceAll(".", "\\.")));
+    assert.match(fastRunner, new RegExp(repositoryPath.replaceAll(".", "\\.")));
+    assert.match(fastRunner, new RegExp(`"${apiPath.replaceAll(".", "\\.")}"`));
+    assert.ok(
+      postgresRunner.split(apiPath).length >= 3,
+      `${apiPath} must be present in both execution and summary manifests`,
+    );
+  }
 });
 
 test("mise pnpm dispatcher maps only built-in command collisions", () => {

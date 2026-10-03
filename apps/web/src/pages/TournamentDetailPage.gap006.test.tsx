@@ -102,7 +102,7 @@ describe("GAP-006 tournament detail", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
   });
 
-  it("shows player-language rules, own current/next matches and the tournament summary", async () => {
+  it("shows player-language rules and own current/next matches without a premature tournament summary", async () => {
     renderPage();
     await screen.findByText("Кубок");
     expect(screen.getByRole("heading", { name: "Правила" })).toBeInTheDocument();
@@ -111,8 +111,8 @@ describe("GAP-006 tournament detail", () => {
     expect(screen.getByText("Сухая победа выключена")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Текущий матч: Полуфинал/ })).toHaveAttribute("href", "/matches/m1");
     expect(screen.getByRole("link", { name: /Следующий матч: Финал/ })).toHaveAttribute("href", "/matches/m2");
-    expect(screen.getByText(/Длительность: 12 мин/)).toBeInTheDocument();
-    expect(within(screen.getByRole("table")).getByText("11")).toBeInTheDocument();
+    expect(screen.queryByText(/Длительность: 12 мин/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Обновить" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Проверить изменения состава" })).not.toBeInTheDocument();
   });

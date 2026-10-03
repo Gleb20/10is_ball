@@ -89,7 +89,8 @@ test("GAP-012 immutable consent policy and scoped admin post-bracket add", async
         guestLastName: "GAP012",
       });
     }
-    await mutate(organizer.api!, `/api/v1/tournaments/${tournamentId}/bracket`, { constructionAlgorithm: "compact" });
+    const generationContext = (await (await organizer.api!.get(`/api/v1/tournaments/${tournamentId}/bracket-generation-context`)).json()).tournament;
+    await mutate(organizer.api!, `/api/v1/tournaments/${tournamentId}/bracket-generations`, { expectedVersion: generationContext.bracketStateVersion, constructionAlgorithm: "compact" });
     const generated = (await (await organizer.api!.get(`/api/v1/tournaments/${tournamentId}`)).json()).tournament;
     const seedPrefix = generated.bracketJson.seedOrder;
 
@@ -97,7 +98,7 @@ test("GAP-012 immutable consent policy and scoped admin post-bracket add", async
     await expect(adminPage.getByText(/требуется согласие/i)).toHaveCount(0);
     await expect(adminPage.getByRole("heading", { name: "Настройки и правила", exact: true })).toHaveCount(0);
     await expect(adminPage.getByRole("button", { name: "Старт", exact: true })).toHaveCount(0);
-    await expect(adminPage.getByLabel("Добавить гостя (Имя Фамилия)")).toHaveCount(0);
+    await expect(adminPage.getByRole("button", { name: "Добавить разового гостя", exact: true })).toHaveCount(0);
     expect(late.user.status).toBe("active");
     const directoryResponse = await admin.get("/api/v1/users/directory");
     expect(directoryResponse.ok()).toBe(true);
@@ -112,7 +113,8 @@ test("GAP-012 immutable consent policy and scoped admin post-bracket add", async
     adminPage.once("dialog", async (dialog) => {
       expect(dialog.message()).toContain(late.label);
       expect(dialog.message()).toContain(title);
-      expect(dialog.message()).toContain("без ответа на приглашение");
+      expect(dialog.message()).toContain("добавить в состав");
+      expect(dialog.message()).not.toContain("приглашение");
       expect(dialog.message()).toContain("перестроить уже созданную сетку");
       await dialog.accept();
     });

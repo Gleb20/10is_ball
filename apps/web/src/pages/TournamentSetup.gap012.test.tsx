@@ -159,11 +159,9 @@ describe("GAP-012 tournament setup", () => {
     const rosterSection = roster.closest("section")!;
     const picker = within(rosterSection).getByRole("combobox", { name: "Добавить игрока" });
     const addButton = within(rosterSection).getByRole("button", { name: "Добавить в состав" });
-    const guestToggle = within(rosterSection).getByRole("button", { name: "Добавить разового гостя" });
     const participantList = rosterSection.querySelector(".tournament-setup__roster")!;
     expect(picker.compareDocumentPosition(participantList) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(addButton.compareDocumentPosition(participantList) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(guestToggle.compareDocumentPosition(participantList) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const longName = screen.getByText("Глеб СверхдлиннаяФамилияКотораяДолжнаПереноситьсяВСтрокеУчастника");
     const longNameRow = longName.closest("li")!;
     const compactRemove = within(longNameRow).getByRole("button", { name: "Удалить Глеб СверхдлиннаяФамилияКотораяДолжнаПереноситьсяВСтрокеУчастника из состава" });
@@ -173,9 +171,13 @@ describe("GAP-012 tournament setup", () => {
     expect(screen.queryByRole("button", { name: "Обновить" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Проверить изменения состава" })).toBeInTheDocument();
     expect(screen.queryByLabelText("Имя и фамилия разового гостя")).not.toBeInTheDocument();
-    await user.click(screen.getByText("Добавить разового гостя"));
+    await user.click(within(rosterSection).getByRole("button", { name: "Гость" }));
+    const guestToggle = within(rosterSection).getByRole("button", { name: "Добавить разового гостя" });
+    expect(guestToggle.compareDocumentPosition(participantList) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await user.click(guestToggle);
     expect(screen.getByLabelText("Имя и фамилия разового гостя")).toBeInTheDocument();
 
+    await user.click(within(rosterSection).getByRole("button", { name: "Игрок" }));
     await user.click(screen.getByRole("combobox", { name: "Добавить игрока" }));
     await user.click(await screen.findByText("Борис Игрок"));
     await user.click(screen.getByRole("button", { name: "Добавить в состав" }));

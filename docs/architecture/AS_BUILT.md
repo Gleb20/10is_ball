@@ -1,6 +1,6 @@
 # Архитектура as-built
 
-Снимок кода на **2026-09-13**. Целевые требования находятся в
+Снимок кода на **2026-10-03**. Целевые требования находятся в
 [`../requirements/`](../requirements/); этот документ описывает то, что существует,
 включая известные ограничения.
 
@@ -14,7 +14,7 @@ Browser
                  ├─ AuthService
                  ├─ MatchService
                  ├─ TournamentService
-                 ├─ TeamService
+                 ├─ TeamService / GuestService
                  └─ NotificationService / HelpService
                       └─ Drizzle → PostgreSQL 16.15 (local/CI/staging/production)
 
@@ -78,13 +78,15 @@ D33 preserves bracket JSON/version, downstream matches/results/stats and
 notifications for tournament corrections.
 
 Новая генерация bracket использует schemaVersion 2. Legacy V1 JSON остаётся
-read/playable по текущему коду/ADR, но для V1 DE известен hang risk (`DATA-006`).
+readable; V1 SE остаётся playable. Запуск legacy V1 DE отклоняется безопасно
+по D25/AT-TRN-015; прежний hang risk закрыт DATA-006.
 
 ## Web routes
 
 Authenticated shell: `/`, `/history`, `/start`, `/admin`, `/admin/users/:id`, `/matches`,
 `/matches/new`, `/matches/:id`, `/rankings`, `/tournaments`, `/tournaments/new`,
-`/tournaments/:id`, `/teams`, `/profile`, `/help`, `/onboarding`,
+`/tournaments/:id`, `/teams`, `/teams/:id`, `/profile`, `/users/:id`, `/guests`,
+`/guests/:id`, `/help`, `/onboarding`,
 `/notifications`. Judge route `/matches/:id/judge` immersive. Вне shell:
 `/login`, `/first-password`; `*` показывает Not Found.
 
@@ -124,9 +126,11 @@ GET-only review; destructive membership/role actions требуют подтве
 - PR и push точного merge SHA в `main` проходят одинаковые quality,
   PostgreSQL/migration и compiled-browser lanes. Только успешный агрегатор
   `release-gate` допускает release workflow.
-- Render native Git integration ждёт CI checks, применяет migrations и запускает
-  compiled API; Vercel публикует production branch `main`. Release workflow не
-  мутирует providers и только ждёт exact SHA/version на стабильных origins.
+- Render native Git integration настроена на `commit`: применяет migrations и
+  запускает compiled API параллельно hosted CI. Vercel начинает сборку `main`,
+  но source gate D40 удерживает web до готовности API и окна drain. Release
+  workflow не мутирует providers и проверяет exact SHA/version; окончательная
+  приёмка требует также успешного hosted CI.
 
 ## Ключевые границы и риски
 
@@ -179,3 +183,46 @@ exposes keyboard/scroll controls and100–150% enlargement with fixed round labe
 model/topology remains unchanged. Ranking-row avatars adjacent to named links
 are decorative. These boundaries pass the current local gate and scoped Firefox
 checks; full device/AT/WebKit compatibility remains incomplete.
+
+
+## D40 completion candidate 6.0.0
+
+Match preparation is an editable scorekeeping screen backed only by volatile
+client state. `POST /matches/launches` atomically creates the match, roster,
+rules, actual first server, judge session and start. Actor-bound receipts and a
+frozen attempt prevent duplicate creation after a lost response or reauth.
+
+`matchFacts` projects authoritative first server, playing time, judge-session
+activations and event chronology. Missing legacy facts stay unknown. Passing
+one phone does not invent a new judge. Scoring retains its ordered intent queue,
+version checks and single-session ownership.
+
+Bracket generation reads a versioned context and uses `/bracket-generations`,
+serialized with roster changes and start. The legacy unversioned endpoint fails
+closed with 409. Closing the dialog retains pending/unknown feedback on the page;
+it neither cancels nor repeats the operation. The planned date is a pre-start
+DATE field, without scheduled auto-start or changes to sporting results.
+
+`GuestService` owns reusable guest identities, actor-bound create/rename receipts
+and immutable participation snapshots. Equal names do not merge identities;
+legacy one-off guests are not backfilled. Cursor history exposes only permitted
+terminal events. Home links to the guest catalogue and card; event forms expose
+one-off and saved guest choices explicitly. Team avatars are nullable keys from
+the existing catalogue, without uploads or additional storage.
+
+`AdminMatchRecoveryService` exposes only the exact-ID minimal DTO and authorized
+force-close to active admins; it does not open arbitrary active-match detail or
+grant organizer rights. Production web builds await matching API version/SHA,
+DB readiness and a continuous drain interval; independent hosted CI, Render,
+Neon and web/API/proxy checks remain necessary for release acceptance.
+
+
+### Native Judge navigation — integration candidate 6.0.0
+
+`main.tsx` uses a React Router data router. `JudgeNavigationBridge` intercepts
+same-document POP through `useBlocker`; `JudgePage` settles its existing mutation
+and scoring queue before one best-effort release. `blocker.proceed()` preserves
+the actual history entry; no raw popstate compensation or unload release is used.
+A volatile one-shot destination notice is consumed by the shell. Cross-document
+navigation and process loss still rely on server TTL. Independent review and the
+current full-gate receipt determine acceptance; source presence alone does not.

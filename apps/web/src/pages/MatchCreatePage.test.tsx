@@ -1,9 +1,23 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, cleanup, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { Activity } from "react";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { MatchCreatePage } from "./MatchCreatePage";
-import { AuthProvider } from "../auth";
+import { AuthProvider, useAuth } from "../auth";
+import {
+  emptyPreparationSlots,
+  holdPreparationForGuestCatalogue,
+} from "./matchPreparation";
+import { clearHeldGuestIdentityMutationForTests } from "../useGuestIdentityMutation";
+
+const ACTOR = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const U2 = "22222222-2222-4222-8222-222222222222";
+const U3 = "33333333-3333-4333-8333-333333333333";
+const U4 = "44444444-4444-4444-8444-444444444444";
+const U5 = "55555555-5555-4555-8555-555555555555";
+const GUEST = "66666666-6666-4666-8666-666666666666";
+const MATCH = "99999999-9999-4999-8999-999999999999";
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -12,544 +26,622 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-const matchCreateOptions = vi.fn();
-const createMatch = vi.fn();
-function LocationProbe() { const location = useLocation(); return <output data-testid="location">{location.pathname}{location.search}</output>; }
+const mocks = vi.hoisted(() => ({
+  matchCreateOptions: vi.fn(),
+  launchMatch: vi.fn(),
+  getMatchLaunchOutcome: vi.fn(),
+  getMatch: vi.fn(),
+  heartbeatJudge: vi.fn(),
+  listGuests: vi.fn(),
+  createGuest: vi.fn(),
+}));
 
 vi.mock("../api", () => ({
   api: {
     me: vi.fn().mockResolvedValue({
       user: {
-        id: "u1",
-        email: "a@tab10.local",
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        email: "operator@tab10.local",
         role: "user",
         mustChangePassword: false,
-        firstName: "A",
-        lastName: "User",
+        firstName: "Ольга",
+        lastName: "Оператор",
       },
     }),
-    matchCreateOptions: (...args: unknown[]) => matchCreateOptions(...args),
-    createMatch: (...args: unknown[]) => createMatch(...args),
+    matchCreateOptions: (...args: unknown[]) => mocks.matchCreateOptions(...args),
+    launchMatch: (...args: unknown[]) => mocks.launchMatch(...args),
+    getMatchLaunchOutcome: (...args: unknown[]) => mocks.getMatchLaunchOutcome(...args),
+    getMatch: (...args: unknown[]) => mocks.getMatch(...args),
+    heartbeatJudge: (...args: unknown[]) => mocks.heartbeatJudge(...args),
+    listGuests: (...args: unknown[]) => mocks.listGuests(...args),
+    createGuest: (...args: unknown[]) => mocks.createGuest(...args),
   },
 }));
 
-describe("REQ_ui__match_create_autocomplete", () => {
+const { matchCreateOptions, launchMatch, getMatchLaunchOutcome, getMatch, heartbeatJudge, listGuests, createGuest } = mocks;
+let restoreRandomUUID: (() => void) | undefined;
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{location.pathname}{location.search}|{JSON.stringify(location.state)}</output>;
+}
+
+function renderPage(entry: string | { pathname: string; state?: unknown } = "/matches/new") {
+  return render(
+    <MemoryRouter initialEntries={[entry]}>
+      <AuthProvider>
+        <Routes>
+          <Route path="/matches/new" element={<><MatchCreatePage /><LocationProbe /></>} />
+          <Route path="*" element={<LocationProbe />} />
+        </Routes>
+      </AuthProvider>
+    </MemoryRouter>,
+  );
+}
+
+function SameActorReauth() {
+  const { user, setUser } = useAuth();
+  return <button type="button" disabled={!user} onClick={() => {
+    if (!user) return;
+    setUser(null);
+    setUser(user);
+  }}>Reauthenticate same actor</button>;
+}
+
+function activityPage(mode: "visible" | "hidden") {
+  return (
+    <MemoryRouter initialEntries={["/matches/new"]}>
+      <AuthProvider>
+        <SameActorReauth />
+        <Activity mode={mode}>
+          <Routes>
+            <Route path="/matches/new" element={<MatchCreatePage />} />
+            <Route path="*" element={<div>Destination</div>} />
+          </Routes>
+        </Activity>
+        <LocationProbe />
+      </AuthProvider>
+    </MemoryRouter>
+  );
+}
+
+async function openSettings(user: ReturnType<typeof userEvent.setup>) {
+  const button = await screen.findByRole("button", { name: "Настройки" });
+  await user.click(button);
+  return screen.getByRole("dialog", { name: "Настройки матча" });
+}
+
+async function selectPlayer(user: ReturnType<typeof userEvent.setup>, field: string, label: string) {
+  const input = screen.getByRole("combobox", { name: field });
+  await user.click(input);
+  await user.click(await screen.findByRole("option", { name: label }));
+}
+
+async function useGuest(user: ReturnType<typeof userEvent.setup>, groupName: string, guestName: string) {
+  const group = screen.getByRole("group", { name: groupName });
+  await user.click(within(group).getByRole("button", { name: "Гость" }));
+  await user.type(within(group).getByRole("textbox", { name: /гость/i }), guestName);
+}
+
+describe("GAP-013 atomic judge-shaped preparation", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    restoreRandomUUID?.();
+    restoreRandomUUID = undefined;
+  });
+
   beforeEach(() => {
     cleanup();
-    createMatch.mockClear();
+    vi.clearAllMocks();
+    clearHeldGuestIdentityMutationForTests();
     matchCreateOptions.mockResolvedValue({
-      users: [{ id: "u2", firstName: "B", lastName: "Rival", displayName: "Rival B" }],
-      teams: [],
-      recentOpponentIds: [],
-      frequentOpponentIds: [],
+      users: [
+        { id: U2, firstName: "Альфа", lastName: "Один" },
+        { id: U3, firstName: "Альфа", lastName: "Два" },
+        { id: U4, firstName: "Бета", lastName: "Один" },
+        { id: U5, firstName: "Бета", lastName: "Два" },
+      ],
+      teams: [{ id: "t1", name: "Бета команда", userIds: [U4, U5] }],
+      recentOpponentIds: [U4],
+      frequentOpponentIds: [U5],
     });
-    createMatch.mockResolvedValue({ match: { id: "m1" } });
+    launchMatch.mockResolvedValue({ requestId: "ignored", matchId: MATCH });
+    getMatchLaunchOutcome.mockResolvedValue({ outcome: "unknown" });
+    getMatch.mockResolvedValue({ match: { id: MATCH, status: "in_progress" } });
+    heartbeatJudge.mockResolvedValue({ ok: true });
+    listGuests.mockResolvedValue({
+      guests: [{
+        id: GUEST,
+        firstName: "Гость",
+        lastName: "Сохранённый",
+        displayName: "Сохранённый Гость",
+        avatarKey: "avatar_6",
+        version: 0,
+        canRename: true,
+        createdAt: "2026-10-03T12:00:00.000Z",
+        updatedAt: "2026-10-03T12:00:00.000Z",
+      }],
+      nextCursor: null,
+    });
   });
 
-  it("GAP-013 puts the complete roster before a collapsed, truthful rules summary and omits an empty shortcut frame", async () => {
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    const form = await screen.findByRole("form", { name: /создание матча/i });
-    const playerA = screen.getByRole("group", { name: "Игрок A" });
-    const opponent = screen.getByRole("group", { name: "Соперник" });
-    const rules = screen.getByRole("button", { name: "Изменить правила" });
-
-    expect(form.compareDocumentPosition(playerA) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(playerA.compareDocumentPosition(opponent) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(opponent.compareDocumentPosition(rules) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(rules).toHaveAttribute("aria-expanded", "false");
-    expect(screen.getByText("До 11 · сухая 5:0 · первая подача вручную")).toBeVisible();
-    expect(screen.queryByRole("region", { name: "Быстрый выбор игроков" })).not.toBeInTheDocument();
+  it("opens directly as the dark two-side surface with the operator outside and no server draft", async () => {
+    const { container } = renderPage();
+    const form = await screen.findByRole("form", { name: "Создание матча" });
+    expect(form).toHaveClass("judge-screen", "match-create");
+    expect(container.querySelectorAll(".judge-side")).toHaveLength(2);
+    expect(screen.getByRole("group", { name: "Игрок A" })).toBeVisible();
+    expect(screen.getByRole("group", { name: "Соперник" })).toBeVisible();
+    expect(screen.queryByText("Оператор играет")).not.toBeInTheDocument();
+    expect(launchMatch).not.toHaveBeenCalled();
+    expect(getMatchLaunchOutcome).not.toHaveBeenCalled();
   });
 
-  it("GAP-013 keeps the secondary title editor collapsed for a new form and preserves edits across disclosure", async () => {
+  it("keeps settings in the corner dialog, returns focus, and applies D38 12 to 5 until manually overridden", async () => {
     const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    await screen.findByRole("form", { name: /создание матча/i });
-
-    const disclosure = screen.getByRole("button", { name: "Изменить название" });
-    expect(disclosure).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("textbox", { name: "Название" })).not.toBeInTheDocument();
-
-    await user.click(disclosure);
-    const title = screen.getByRole("textbox", { name: "Название" });
-    await user.clear(title);
-    await user.type(title, "Вечерний матч");
-    await user.click(screen.getByRole("button", { name: "Скрыть название" }));
-    expect(screen.getByText("Вечерний матч")).toBeVisible();
-    await user.click(screen.getByRole("button", { name: "Изменить название" }));
-    expect(screen.getByRole("textbox", { name: "Название" })).toHaveValue("Вечерний матч");
-  });
-
-  it("D38 keeps the current custom value inside this form, exposes numeric step controls, and does not change it with format", async () => {
-    const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    await screen.findByRole("form", { name: /создание матча/i });
-    await user.click(screen.getByRole("button", { name: "Изменить правила" }));
-    await user.click(screen.getByRole("button", { name: "21" }));
-    expect(screen.getByText("До 21 · сухая 10:0 · первая подача вручную")).toBeVisible();
+    renderPage();
+    const trigger = await screen.findByRole("button", { name: "Настройки" });
+    await user.click(trigger);
     await user.click(screen.getByRole("button", { name: "Своё" }));
-    const custom = screen.getByRole("spinbutton", { name: "Своё значение" });
-    expect(custom).toHaveAttribute("inputmode", "numeric");
-    await user.clear(custom);
-    await user.type(custom, "1");
-    await user.click(screen.getByRole("button", { name: "Уменьшить очки до победы" }));
-    expect(custom).toHaveValue(1);
-    await user.clear(custom);
-    await user.type(custom, "15");
-    await user.click(screen.getByRole("button", { name: "Увеличить очки до победы" }));
-    expect(custom).toHaveValue(16);
-    await user.click(screen.getByRole("button", { name: "2 × 2" }));
-    expect(custom).toHaveValue(16);
-    await user.click(screen.getByRole("button", { name: "Скрыть правила" }));
-    expect(screen.getByText("До 16 · сухая 8:0 · первая подача вручную")).toBeVisible();
-    await user.click(screen.getByRole("button", { name: "Изменить правила" }));
-    expect(screen.getByRole("spinbutton", { name: "Своё значение" })).toHaveValue(16);
-  });
-
-  it("GAP-013 shows actor-relative recent choices only when the operator plays and previews replacement of B1", async () => {
-    matchCreateOptions.mockResolvedValue({
-      users: [
-        { id: "u2", firstName: "Frequent", lastName: "Player" },
-        { id: "u3", firstName: "Recent", lastName: "Player" },
-      ],
-      teams: [], recentOpponentIds: ["u3"], frequentOpponentIds: ["u2"],
-    });
-    const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    await screen.findByRole("combobox", { name: "Соперник" });
-    expect(screen.queryByRole("heading", { name: "Частые соперники" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Недавние соперники" })).not.toBeInTheDocument();
-
-    await user.click(screen.getByLabelText("Создатель играет"));
-    await user.click(screen.getByRole("button", { name: "Frequent Player" }));
-    expect(screen.getByRole("combobox", { name: "Соперник" })).toHaveValue("Frequent Player");
-    await user.click(screen.getByRole("button", { name: "Recent Player" }));
-    expect(screen.getByRole("combobox", { name: "Соперник" })).toHaveValue("Frequent Player");
-    const preview = screen.getByRole("region", { name: "Предпросмотр быстрого выбора" });
-    expect(preview).toHaveTextContent("B1: Recent Player");
-    await user.click(within(preview).getByRole("button", { name: "Применить" }));
-    expect(screen.getByRole("combobox", { name: "Соперник" })).toHaveValue("Recent Player");
-  });
-
-  it("GAP-013 always previews exact B1/B2 team destinations before applying them", async () => {
-    matchCreateOptions.mockResolvedValue({
-      users: [
-        { id: "u2", firstName: "Blue", lastName: "One" },
-        { id: "u3", firstName: "Blue", lastName: "Two" },
-      ],
-      teams: [{ id: "t1", name: "Синяя команда", userIds: ["u2", "u3"] }],
-      recentOpponentIds: [], frequentOpponentIds: [],
-    });
-    const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    await screen.findByRole("form", { name: /создание матча/i });
-    await user.click(screen.getByRole("button", { name: "2 × 2" }));
-    await user.click(screen.getByRole("button", { name: "Синяя команда" }));
-    const preview = screen.getByRole("region", { name: "Предпросмотр быстрого выбора" });
-    expect(preview).toHaveTextContent("B1: Blue One");
-    expect(preview).toHaveTextContent("B2: Blue Two");
-    expect(screen.getByRole("combobox", { name: "Соперник 1" })).toHaveValue("");
-    await user.click(within(preview).getByRole("button", { name: "Применить" }));
-    expect(screen.getByRole("combobox", { name: "Соперник 1" })).toHaveValue("Blue One");
-    expect(screen.getByRole("combobox", { name: "Соперник 2" })).toHaveValue("Blue Two");
-  });
-
-  it("GAP-013 excludes every registered Side A player from team shortcuts and previews", async () => {
-    matchCreateOptions.mockResolvedValue({
-      users: [
-        { id: "u2", firstName: "Alpha", lastName: "One" },
-        { id: "u3", firstName: "Alpha", lastName: "Two" },
-        { id: "u4", firstName: "Blue", lastName: "One" },
-        { id: "u5", firstName: "Blue", lastName: "Two" },
-      ],
-      teams: [
-        { id: "t1", name: "Занятая команда", userIds: ["u2", "u3"] },
-        { id: "t2", name: "Свободная команда", userIds: ["u4", "u5"] },
-      ],
-      recentOpponentIds: [], frequentOpponentIds: [],
-    });
-    const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    await screen.findByRole("form", { name: /создание матча/i });
-    await user.click(screen.getByRole("button", { name: "2 × 2" }));
-    await user.click(screen.getByRole("combobox", { name: "Игрок A" }));
-    await user.click(await screen.findByText("Alpha One"));
-    await user.click(screen.getByRole("combobox", { name: "Партнёр" }));
-    await user.click(await screen.findByText("Alpha Two"));
-
-    expect(screen.queryByRole("button", { name: "Занятая команда" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Свободная команда" }));
-    const preview = screen.getByRole("region", { name: "Предпросмотр быстрого выбора" });
-    expect(preview).toHaveTextContent("B1: Blue One");
-    expect(preview).toHaveTextContent("B2: Blue Two");
-    const partner = screen.getByRole("combobox", { name: "Партнёр" });
-    await user.clear(partner);
-    await user.type(partner, "Blue");
-    await user.click(await screen.findByRole("option", { name: "Blue One" }));
-    await waitFor(() => {
-      expect(screen.queryByRole("region", { name: "Предпросмотр быстрого выбора" })).not.toBeInTheDocument();
-    });
-  });
-
-  it("GAP-013 excludes the registered Side A partner from actor-relative recent shortcuts", async () => {
-    matchCreateOptions.mockResolvedValue({
-      users: [
-        { id: "u2", firstName: "Partner", lastName: "Recent" },
-        { id: "u3", firstName: "Open", lastName: "Recent" },
-      ],
-      teams: [], recentOpponentIds: ["u2", "u3"], frequentOpponentIds: ["u2"],
-    });
-    const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    await screen.findByRole("form", { name: /создание матча/i });
-    await user.click(screen.getByLabelText("Создатель играет"));
-    await user.click(screen.getByRole("button", { name: "2 × 2" }));
-    await user.click(screen.getByRole("combobox", { name: "Партнёр" }));
-    await user.click(await screen.findByRole("option", { name: "Partner Recent" }));
-
-    expect(screen.queryByRole("button", { name: "Partner Recent" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Частые соперники" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open Recent" })).toBeVisible();
-  });
-
-  it("U01-FORM-004 keeps a manually edited mercy threshold across point choices in this form", async () => {
-    const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    await screen.findByRole("form", { name: /создание матча/i });
-    await user.click(screen.getByRole("button", { name: "Изменить правила" }));
-    await user.click(screen.getByRole("button", { name: "Своё" }));
-    const custom = screen.getByRole("spinbutton", { name: "Своё значение" });
+    const points = screen.getByRole("spinbutton", { name: "Своё значение" });
     const mercy = screen.getByRole("spinbutton", { name: "Порог" });
-    await user.clear(custom);
-    await user.type(custom, "12");
-    expect(mercy).toHaveValue(6);
+    await user.clear(points);
+    await user.type(points, "12");
+    expect(mercy).toHaveValue(5);
     await user.clear(mercy);
     await user.type(mercy, "7");
     await user.click(screen.getByRole("button", { name: "21" }));
     expect(mercy).toHaveValue(7);
-    await user.click(screen.getByRole("button", { name: "11" }));
-    expect(mercy).toHaveValue(7);
-    await user.click(screen.getByRole("button", { name: "Своё" }));
-    const customAgain = screen.getByRole("spinbutton", { name: "Своё значение" });
-    await user.clear(customAgain);
-    await user.type(customAgain, "13");
-    expect(mercy).toHaveValue(7);
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(trigger).toHaveFocus());
   });
 
-  it("GAP-013 opens collapsed rules and focuses the invalid custom score without sending a mutation", async () => {
+  it("keeps exact B1/B2 quick-choice preview and submits one swapped canonical 2x2 launch", async () => {
+    const held = deferred<{ requestId: string; matchId: string }>();
+    launchMatch.mockReturnValueOnce(held.promise);
     const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    await screen.findByRole("form", { name: /создание матча/i });
-    await user.click(screen.getByLabelText("Создатель играет"));
-    const opponent = screen.getByRole("group", { name: "Соперник" });
-    await user.click(within(opponent).getByRole("button", { name: "Гость" }));
-    await user.type(screen.getByRole("textbox", { name: /гость/i }), "Иван Иванов");
-    await user.click(screen.getByRole("button", { name: "Изменить правила" }));
-    await user.click(screen.getByRole("button", { name: "Своё" }));
-    const custom = screen.getByRole("spinbutton", { name: "Своё значение" });
-    await user.clear(custom);
-    await user.click(screen.getByRole("button", { name: "Скрыть правила" }));
-    await user.click(screen.getByRole("button", { name: "Создать матч" }));
-
-    expect(createMatch).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Скрыть правила" })).toHaveAttribute("aria-expanded", "true");
-    await waitFor(() => expect(screen.getByRole("spinbutton", { name: "Своё значение" })).toHaveFocus());
-  });
-
-  it("BUG-026 freezes every visible match payload control while create is pending, then preserves a rejected attempt", async () => {
-    const held = deferred<{ match: { id: string } }>();
-    createMatch.mockReturnValueOnce(held.promise);
-    const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    await screen.findByRole("form", { name: /создание матча/i });
-    await user.click(screen.getByLabelText("Создатель играет"));
-    const opponent = screen.getByRole("group", { name: "Соперник" });
-    await user.click(within(opponent).getByRole("button", { name: /^гость$/i }));
-    const guest = screen.getByRole("textbox", { name: /гость/i });
-    await user.type(guest, "Иван Иванов");
-    await user.click(screen.getByRole("button", { name: "Изменить название" }));
-    const title = screen.getByRole("textbox", { name: "Название" });
-    await user.click(screen.getByRole("button", { name: "Создать матч" }));
-    expect(createMatch).toHaveBeenCalledTimes(1);
-    expect(createMatch.mock.calls[0]?.[0]).toMatchObject({
-      format: "1v1", participants: [{ side: "A", userId: "u1" }, { side: "B", guestFirstName: "Иван", guestLastName: "Иванов" }],
-    });
-    expect(screen.getByLabelText("Создатель играет")).toBeDisabled();
-    expect(guest).toBeDisabled();
-    expect(title).toBeDisabled();
-    expect(screen.getByRole("button", { name: "1 × 1" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Отмена" })).toBeEnabled();
-    held.reject(Object.assign(new Error("Проверка отклонила матч"), { status: 409, code: "VALIDATION" }));
-    expect(await screen.findByText("Проверка отклонила матч")).toBeInTheDocument();
-    expect(guest).toHaveValue("Иван Иванов");
-    expect(guest).toBeEnabled();
-  });
-
-  it("GAP-013 keeps an unknown create outcome visible without automatically replaying the mutation", async () => {
-    createMatch.mockRejectedValueOnce(new Error("Не удалось получить ответ сервера"));
-    const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    await screen.findByRole("form", { name: /создание матча/i });
-    await user.click(screen.getByLabelText("Создатель играет"));
-    const opponent = screen.getByRole("group", { name: "Соперник" });
-    await user.click(within(opponent).getByRole("button", { name: /^гость$/i }));
-    const guest = screen.getByRole("textbox", { name: /гость/i });
-    await user.type(guest, "Иван Иванов");
-    await user.click(screen.getByRole("button", { name: "Создать матч" }));
-
-    expect(await screen.findByText("Не удалось получить ответ сервера")).toBeInTheDocument();
-    await waitFor(() => expect(createMatch).toHaveBeenCalledTimes(1));
-    expect(guest).toHaveValue("Иван Иванов");
-    expect(screen.getAllByRole("alert")).toHaveLength(1);
-  });
-
-  it("defaults to player mode with opponent autocomplete", async () => {
-    render(
-      <MemoryRouter>
-        <AuthProvider>
-          <MatchCreatePage />
-        </AuthProvider>
-      </MemoryRouter>,
-    );
-    expect(
-      await screen.findByRole("form", { name: /создание матча/i }),
-    ).toBeInTheDocument();
-    expect(
-      await screen.findByRole("combobox", { name: "Соперник" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("До 11 · сухая 5:0 · первая подача вручную")).toBeInTheDocument();
-    await userEvent.setup().click(screen.getByRole("button", { name: "Изменить правила" }));
-    expect(screen.getByRole("note", { name: "Подсказка о подаче" })).toHaveTextContent(
-      /двух подач.*после достижения порога.*каждого очка/i,
-    );
-  });
-
-  it("BUG-018 keeps the same focused player field after Enter selects a user", async () => {
-    const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    const input = await screen.findByRole("combobox", { name: "Соперник" });
-    await user.type(input, "Rival");
-    await user.keyboard("{ArrowDown}{Enter}");
-    expect(screen.getByRole("combobox", { name: "Соперник" })).toBe(input);
-    expect(input).toHaveFocus();
-    expect(input).toHaveValue("B Rival");
-  });
-
-  it("BUG-018 preserves a search typed before match options finish loading", async () => {
-    const held = deferred<{
-      users: Array<{ id: string; firstName: string; lastName: string }>;
-      teams: never[];
-      recentOpponentIds: never[];
-      frequentOpponentIds: never[];
-    }>();
-    matchCreateOptions.mockReturnValueOnce(held.promise);
-    const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    const input = await screen.findByRole("combobox", { name: "Игрок A" });
-    await user.type(input, "Alpha");
-    held.resolve({
-      users: [{ id: "u2", firstName: "Alpha", lastName: "Player" }],
-      teams: [], recentOpponentIds: [], frequentOpponentIds: [],
-    });
-    const option = await screen.findByRole("option", { name: "Alpha Player" });
-    expect(option).toBeVisible();
-    expect(input).toHaveValue("Alpha");
-    await user.click(option);
-    expect(input).toHaveValue("Alpha Player");
-    expect(input).toHaveFocus();
-    await user.click(screen.getByRole("button", { name: "Очистить" }));
-    expect(input).toHaveValue("");
-    expect(input).toHaveFocus();
-  });
-
-  it("BUG-018 clears an unfinished player search after guest mode resets the slot", async () => {
-    const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    const group = await screen.findByRole("group", { name: "Игрок A" });
-    const input = within(group).getByRole("combobox", { name: "Игрок A" });
-    await user.type(input, "Alpha");
-    await user.click(within(group).getByRole("button", { name: "Гость" }));
-    await user.click(within(group).getByRole("button", { name: "Игрок" }));
-    expect(within(group).getByRole("combobox", { name: "Игрок A" })).toHaveValue("");
-  });
-
-  it("offers guest and player modes", async () => {
-    const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <AuthProvider>
-          <MatchCreatePage />
-        </AuthProvider>
-      </MemoryRouter>,
-    );
-    expect(
-      await screen.findByRole("form", { name: /создание матча/i }),
-    ).toBeInTheDocument();
-
-    const opponent = screen.getByRole("group", { name: "Соперник" });
-    await user.click(within(opponent).getByRole("button", { name: /^гость$/i }));
-    expect(await screen.findByLabelText(/гость/i)).toBeInTheDocument();
-
-    await user.click(within(opponent).getByRole("button", { name: /^игрок$/i }));
-    expect(
-      await screen.findByRole("combobox", { name: "Соперник" }),
-    ).toBeInTheDocument();
-  });
-
-  it("GAP-029: removes legacy challenge query without applying its player or invite intent", async () => {
-    render(
-      <MemoryRouter
-        initialEntries={["/matches/new?opponentId=u1&opponentName=A%20User&source=revenge&returnTo=home"]}
-      >
-        <AuthProvider>
-          <MatchCreatePage />
-          <LocationProbe />
-        </AuthProvider>
-      </MemoryRouter>,
-    );
-    expect(await screen.findByTestId("location")).toHaveTextContent("/matches/new?returnTo=home");
-    expect(screen.getByLabelText("Создатель играет")).not.toBeChecked();
-    expect(screen.queryByText(/вызов|реванш/i)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Пригласить выбранных игроков")).not.toBeInTheDocument();
-    expect(createMatch).not.toHaveBeenCalled();
-  });
-
-  it("GAP-012: submits manual A-vs-B without the operator and without invitations by default", async () => {
-    matchCreateOptions.mockResolvedValue({
-      users: [
-        { id: "u2", firstName: "Alpha", lastName: "Player" },
-        { id: "u3", firstName: "Beta", lastName: "Player" },
-      ],
-      teams: [], recentOpponentIds: [], frequentOpponentIds: [],
-    });
-    const user = userEvent.setup();
-    render(<MemoryRouter><AuthProvider><MatchCreatePage /></AuthProvider></MemoryRouter>);
-    await user.click(await screen.findByRole("combobox", { name: "Игрок A" }));
-    await user.click(await screen.findByText("Alpha Player"));
-    await user.click(screen.getByRole("combobox", { name: "Соперник" }));
-    await user.click(await screen.findByText("Beta Player"));
-    await user.click(screen.getByRole("button", { name: /создать матч/i }));
-    expect(createMatch).toHaveBeenCalledWith(expect.objectContaining({
-      source: "manual",
-      sendPlayerInvitations: false,
-      participants: [
-        { side: "A", userId: "u2" },
-        { side: "B", userId: "u3" },
-      ],
-    }));
-  });
-
-  it("GAP-029: legacy challenge URL only creates a manually chosen match", async () => {
-    const user = userEvent.setup();
-    render(
-      <MemoryRouter initialEntries={["/matches/new?opponentId=u2&opponentName=B%20Rival"]}>
-        <AuthProvider><MatchCreatePage /></AuthProvider>
-      </MemoryRouter>,
-    );
-    await screen.findByRole("form", { name: /создание матча/i });
-    expect(screen.getByLabelText("Создатель играет")).not.toBeChecked();
-    expect(screen.getByRole("combobox", { name: "Соперник" })).toHaveValue("");
-    await user.click(screen.getByLabelText("Создатель играет"));
-    await user.click(screen.getByRole("combobox", { name: "Соперник" }));
-    await user.click(await screen.findByText("B Rival"));
-    await user.click(screen.getByRole("button", { name: /создать матч/i }));
-    expect(createMatch).toHaveBeenCalledWith(expect.objectContaining({
-      source: "manual",
-      sendPlayerInvitations: false,
-      participants: [
-        { side: "A", userId: "u1" },
-        { side: "B", userId: "u2" },
-      ],
-    }));
-  });
-
-  it("GAP-005: submits a complete 2v2 roster with custom rules and first-server mode", async () => {
-    matchCreateOptions.mockResolvedValue({
-      users: [
-        { id: "u2", firstName: "Partner", lastName: "Two", displayName: "Partner Two" },
-        { id: "u3", firstName: "Rival", lastName: "Three", displayName: "Rival Three" },
-        { id: "u4", firstName: "Rival", lastName: "Four", displayName: "Rival Four" },
-      ],
-      teams: [],
-      recentOpponentIds: [],
-      frequentOpponentIds: [],
-    });
-    const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <AuthProvider>
-          <MatchCreatePage />
-        </AuthProvider>
-      </MemoryRouter>,
-    );
-
-    await screen.findByRole("form", { name: /создание матча/i });
-    await user.click(screen.getByLabelText("Создатель играет"));
-    await user.click(screen.getByRole("button", { name: "2 × 2" }));
-    await user.click(screen.getByRole("button", { name: "Изменить правила" }));
-    await user.click(screen.getByRole("button", { name: "Своё" }));
-    await user.clear(screen.getByLabelText("Своё значение"));
-    await user.type(screen.getByLabelText("Своё значение"), "15");
-    await user.clear(screen.getByLabelText("Порог"));
-    await user.type(screen.getByLabelText("Порог"), "7");
-    await user.click(screen.getByRole("button", { name: "Случайно" }));
-    await user.click(screen.getByLabelText("Партнёр"));
-    await user.click(await screen.findByText("Partner Two"));
-    await user.click(screen.getByLabelText("Соперник 1"));
-    await user.click(await screen.findByText("Rival Three"));
-    await user.click(screen.getByLabelText("Соперник 2"));
-    await user.click(await screen.findByText("Rival Four"));
-    expect(screen.queryByLabelText("Судья (необязательно)")).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /создать матч/i }));
-
-    expect(createMatch).toHaveBeenCalledWith(expect.objectContaining({
-      format: "2v2",
-      pointsToWin: 15,
-      mercyPoints: 7,
-      firstServerMethod: "random",
-      sendPlayerInvitations: false,
-      participants: [
-        { side: "A", userId: "u1" },
-        { side: "A", userId: "u2" },
-        { side: "B", userId: "u3" },
-        { side: "B", userId: "u4" },
-      ],
-    }));
-  });
-
-  it("MATCH-004: uses frequent, recent and team groups from the create options", async () => {
-    matchCreateOptions.mockResolvedValue({
-      users: [
-        { id: "u2", firstName: "Frequent", lastName: "Player", displayName: "Frequent Player" },
-        { id: "u3", firstName: "Recent", lastName: "Player", displayName: "Recent Player" },
-        { id: "u4", firstName: "Team", lastName: "Mate", displayName: "Team Mate" },
-      ],
-      teams: [{ id: "t1", name: "Синяя команда", userIds: ["u3", "u4"] }],
-      recentOpponentIds: ["u3"],
-      frequentOpponentIds: ["u2"],
-    });
-    const user = userEvent.setup();
-    render(
-      <MemoryRouter>
-        <AuthProvider>
-          <MatchCreatePage />
-        </AuthProvider>
-      </MemoryRouter>,
-    );
-
-    await screen.findByRole("form", { name: /создание матча/i });
-    expect(screen.queryByRole("heading", { name: "Частые соперники" })).not.toBeInTheDocument();
-    await user.click(screen.getByLabelText("Создатель играет"));
-    expect(await screen.findByRole("heading", { name: "Частые соперники" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Недавние соперники" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "2 × 2" }));
-    await user.click(screen.getByRole("button", { name: "Синяя команда" }));
-
+    renderPage();
+    const settings = await openSettings(user);
+    await user.click(within(settings).getByRole("button", { name: "2 × 2" }));
+    await user.click(within(settings).getByRole("button", { name: "Готово" }));
+    await selectPlayer(user, "Игрок A", "Альфа Один");
+    await selectPlayer(user, "Партнёр", "Альфа Два");
+    await user.click(screen.getByRole("button", { name: "Бета команда" }));
     const preview = screen.getByRole("region", { name: "Предпросмотр быстрого выбора" });
-    expect(preview).toHaveTextContent("B1: Recent Player");
-    expect(preview).toHaveTextContent("B2: Team Mate");
+    expect(preview).toHaveTextContent("B1: Бета Один");
+    expect(preview).toHaveTextContent("B2: Бета Два");
     await user.click(within(preview).getByRole("button", { name: "Применить" }));
-    expect(screen.getByRole("combobox", { name: "Соперник 1" })).toHaveValue("Recent Player");
-    expect(screen.getByRole("combobox", { name: "Соперник 2" })).toHaveValue("Team Mate");
+
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+    expect(launchMatch).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Поменять стороны стола" }));
+    await user.click(screen.getByRole("button", { name: /Бета Два.*Подаёт первым/ }));
+
+    expect(launchMatch).toHaveBeenCalledTimes(1);
+    const payload = launchMatch.mock.calls[0]![0];
+    expect(payload).toMatchObject({
+      format: "2v2",
+      firstServerMethod: "manual",
+      firstServerSlot: "A2",
+      roster: {
+        A1: { userId: U4 }, A2: { userId: U5 },
+        B1: { userId: U2 }, B2: { userId: U3 },
+      },
+    });
+    expect(payload.requestId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(screen.getByText(/Проверяем запуск матча/)).toBeVisible();
+    held.resolve({ requestId: payload.requestId, matchId: MATCH });
+  });
+
+  it("backs out of serve selection without a POST and retains the draft", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await selectPlayer(user, "Игрок A", "Альфа Один");
+    await useGuest(user, "Соперник", "Гость Второй");
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+    await user.click(screen.getByRole("button", { name: "Назад к составу" }));
+    expect(launchMatch).not.toHaveBeenCalled();
+    expect(screen.getByRole("combobox", { name: "Игрок A" })).toHaveValue("Альфа Один");
+    expect(screen.getByRole("textbox", { name: /Соперник — гость/i })).toHaveValue("Гость Второй");
+  });
+
+  it("launches only the explicitly selected reusable guest id", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await selectPlayer(user, "Игрок A", "Альфа Один");
+    const group = screen.getByRole("group", { name: "Соперник" });
+    await user.click(within(group).getByRole("button", { name: "Гость" }));
+    await user.click(within(group).getByRole("button", { name: "Сохранённый" }));
+    const picker = within(group).getByRole("combobox", { name: "Соперник — сохранённый гость" });
+    await waitFor(() => expect(picker).toBeEnabled());
+    await user.click(picker);
+    await user.click(await screen.findByRole("option", { name: "Сохранённый Гость · № 666666" }));
+
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+    await user.click(screen.getByRole("button", { name: /Альфа Один.*Подаёт первым/ }));
+
+    expect(launchMatch.mock.calls[0]?.[0]).toMatchObject({
+      roster: {
+        A1: { userId: U2 },
+        B1: { guestIdentityId: GUEST },
+      },
+    });
+    expect(launchMatch.mock.calls[0]?.[0].roster.B1).not.toHaveProperty("guestFirstName");
+  });
+
+  it("sends random explicitly without a server slot and never calls a point mutation", async () => {
+    const held = deferred<{ requestId: string; matchId: string }>();
+    launchMatch.mockReturnValueOnce(held.promise);
+    const user = userEvent.setup();
+    renderPage();
+    const settings = await openSettings(user);
+    await user.click(within(settings).getByRole("button", { name: "Случайно" }));
+    await user.click(within(settings).getByRole("button", { name: "Готово" }));
+    await selectPlayer(user, "Игрок A", "Альфа Один");
+    await useGuest(user, "Соперник", "Гость Второй");
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+    await user.click(screen.getByRole("button", { name: "Определить подачу случайно" }));
+    const payload = launchMatch.mock.calls[0]![0];
+    expect(payload.firstServerMethod).toBe("random");
+    expect(payload).not.toHaveProperty("firstServerSlot");
+    expect(launchMatch).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns a known busy rejection to the editable draft without a phantom match", async () => {
+    launchMatch.mockRejectedValueOnce(Object.assign(new Error("Игрок уже занят"), { status: 409 }));
+    const user = userEvent.setup();
+    renderPage();
+    await selectPlayer(user, "Игрок A", "Альфа Один");
+    await useGuest(user, "Соперник", "Гость Второй");
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+    await user.click(screen.getByRole("button", { name: /Альфа Один.*Подаёт первым/ }));
+    expect(await screen.findByText("Игрок уже занят")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Начать" })).toBeEnabled();
+    expect(getMatch).not.toHaveBeenCalled();
+  });
+
+  it("reconciles a lost response by GET, never auto-reposts, and retries only the frozen key and payload", async () => {
+    launchMatch.mockRejectedValueOnce(new Error("connection lost"));
+    getMatchLaunchOutcome.mockResolvedValueOnce({ outcome: "unknown" });
+    const retry = deferred<{ requestId: string; matchId: string }>();
+    launchMatch.mockReturnValueOnce(retry.promise);
+    const user = userEvent.setup();
+    renderPage();
+    await selectPlayer(user, "Игрок A", "Альфа Один");
+    await useGuest(user, "Соперник", "Гость Второй");
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+    await user.click(screen.getByRole("button", { name: /Альфа Один.*Подаёт первым/ }));
+
+    expect(await screen.findByText("Результат запуска ещё не подтверждён")).toBeVisible();
+    expect(getMatchLaunchOutcome).toHaveBeenCalledTimes(1);
+    expect(launchMatch).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Начать" })).not.toBeInTheDocument();
+    const frozen = launchMatch.mock.calls[0]![0];
+    await user.click(screen.getByRole("button", { name: "Повторить тот же запуск" }));
+    expect(launchMatch).toHaveBeenCalledTimes(2);
+    expect(launchMatch.mock.calls[1]![0]).toBe(frozen);
+  });
+
+  it("moves an indefinitely pending launch to frozen unknown recovery without another POST", async () => {
+    launchMatch.mockReturnValueOnce(new Promise(() => {}));
+    const user = userEvent.setup();
+    renderPage();
+    await selectPlayer(user, "Игрок A", "Альфа Один");
+    await useGuest(user, "Соперник", "Гость Второй");
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole("button", { name: /Альфа Один.*Подаёт первым/ }));
+    expect(launchMatch).toHaveBeenCalledTimes(1);
+    await act(async () => { await vi.advanceTimersByTimeAsync(15_000); });
+
+    expect(screen.getByText("Результат запуска ещё не подтверждён")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Проверить ещё раз" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Повторить тот же запуск" })).not.toBeInTheDocument();
+    expect(getMatchLaunchOutcome).not.toHaveBeenCalled();
+    expect(launchMatch).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns an indefinitely pending receipt GET to unknown recovery without a POST", async () => {
+    launchMatch.mockRejectedValueOnce(new Error("connection lost"));
+    getMatchLaunchOutcome.mockReturnValueOnce(new Promise(() => {}));
+    const user = userEvent.setup();
+    renderPage();
+    await selectPlayer(user, "Игрок A", "Альфа Один");
+    await useGuest(user, "Соперник", "Гость Второй");
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole("button", { name: /Альфа Один.*Подаёт первым/ }));
+    await act(async () => {
+      await Promise.resolve();
+      await vi.advanceTimersByTimeAsync(15_000);
+    });
+
+    expect(getMatchLaunchOutcome).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Результат запуска ещё не подтверждён")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Проверить ещё раз" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Повторить тот же запуск" })).not.toBeInTheDocument();
+    expect(launchMatch).toHaveBeenCalledTimes(1);
+  });
+
+  it("resumes from an interrupted Activity launch and lets only the fresh receipt navigate", async () => {
+    const staleLaunch = deferred<{ requestId: string; matchId: string }>();
+    const freshReceipt = deferred<{ outcome: "committed"; matchId: string }>();
+    launchMatch.mockReturnValueOnce(staleLaunch.promise);
+    getMatchLaunchOutcome.mockReturnValueOnce(freshReceipt.promise);
+    const user = userEvent.setup();
+    const view = render(activityPage("visible"));
+    await selectPlayer(user, "Игрок A", "Альфа Один");
+    await useGuest(user, "Соперник", "Гость Второй");
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+    await user.click(screen.getByRole("button", { name: /Альфа Один.*Подаёт первым/ }));
+    expect(launchMatch).toHaveBeenCalledTimes(1);
+
+    view.rerender(activityPage("hidden"));
+    view.rerender(activityPage("visible"));
+    expect(await screen.findByText("Результат запуска ещё не подтверждён")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Проверить ещё раз" }));
+    expect(getMatchLaunchOutcome).toHaveBeenCalledTimes(1);
+
+    await act(async () => staleLaunch.resolve({ requestId: "stale", matchId: MATCH }));
+    expect(getMatch).not.toHaveBeenCalled();
+    expect(screen.getByTestId("location")).toHaveTextContent("/matches/new");
+
+    await act(async () => freshReceipt.resolve({ outcome: "committed", matchId: MATCH }));
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(`/matches/${MATCH}/judge`));
+    expect(getMatch).toHaveBeenCalledTimes(1);
+    expect(heartbeatJudge).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores the old lifecycle watchdog while fresh receipt verification completes", async () => {
+    launchMatch.mockReturnValueOnce(new Promise(() => {}));
+    getMatchLaunchOutcome.mockResolvedValueOnce({ outcome: "committed", matchId: MATCH });
+    const freshMatch = deferred<{ match: { id: string; status: string } }>();
+    getMatch.mockReturnValueOnce(freshMatch.promise);
+    const user = userEvent.setup();
+    const view = render(activityPage("visible"));
+    await selectPlayer(user, "Игрок A", "Альфа Один");
+    await useGuest(user, "Соперник", "Гость Второй");
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+
+    vi.useFakeTimers();
+    fireEvent.click(screen.getByRole("button", { name: /Альфа Один.*Подаёт первым/ }));
+    view.rerender(activityPage("hidden"));
+    view.rerender(activityPage("visible"));
+    expect(screen.getByText("Результат запуска ещё не подтверждён")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Проверить ещё раз" }));
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(getMatch).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/Проверяем запуск матча/)).toBeVisible();
+
+    await act(async () => { await vi.advanceTimersByTimeAsync(15_000); });
+    expect(screen.getByText(/Проверяем запуск матча/)).toBeVisible();
+    expect(screen.queryByText("Результат запуска ещё не подтверждён")).not.toBeInTheDocument();
+
+    await act(async () => freshMatch.resolve({ match: { id: MATCH, status: "in_progress" } }));
+    expect(screen.getByTestId("location")).toHaveTextContent(`/matches/${MATCH}/judge`);
+    expect(heartbeatJudge).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores a delayed directory response from before same-actor reauthentication", async () => {
+    const staleDirectory = deferred<Awaited<ReturnType<typeof matchCreateOptions>>>();
+    matchCreateOptions
+      .mockReturnValueOnce(staleDirectory.promise)
+      .mockResolvedValueOnce({
+        users: [{ id: U3, firstName: "Новый", lastName: "Игрок" }],
+        teams: [], recentOpponentIds: [], frequentOpponentIds: [],
+      });
+    const user = userEvent.setup();
+    render(activityPage("visible"));
+    await waitFor(() => expect(matchCreateOptions).toHaveBeenCalledTimes(1));
+    await user.click(screen.getByRole("button", { name: "Reauthenticate same actor" }));
+    await waitFor(() => expect(matchCreateOptions).toHaveBeenCalledTimes(2));
+    await user.click(screen.getByRole("combobox", { name: "Игрок A" }));
+    expect(await screen.findByRole("option", { name: "Новый Игрок" })).toBeVisible();
+
+    await act(async () => staleDirectory.resolve({
+      users: [{ id: U2, firstName: "Старый", lastName: "Игрок" }],
+      teams: [], recentOpponentIds: [], frequentOpponentIds: [],
+    }));
+    expect(screen.getByRole("option", { name: "Новый Игрок" })).toBeVisible();
+    expect(screen.queryByRole("option", { name: "Старый Игрок" })).not.toBeInTheDocument();
+  });
+
+  it("ignores a delayed directory response from a hidden Activity lifecycle", async () => {
+    const staleDirectory = deferred<Awaited<ReturnType<typeof matchCreateOptions>>>();
+    matchCreateOptions
+      .mockReturnValueOnce(staleDirectory.promise)
+      .mockResolvedValueOnce({
+        users: [{ id: U4, firstName: "Свежий", lastName: "Игрок" }],
+        teams: [], recentOpponentIds: [], frequentOpponentIds: [],
+      });
+    const user = userEvent.setup();
+    const view = render(activityPage("visible"));
+    await waitFor(() => expect(matchCreateOptions).toHaveBeenCalledTimes(1));
+    view.rerender(activityPage("hidden"));
+    view.rerender(activityPage("visible"));
+    await waitFor(() => expect(matchCreateOptions).toHaveBeenCalledTimes(2));
+    await user.click(screen.getByRole("combobox", { name: "Игрок A" }));
+    expect(await screen.findByRole("option", { name: "Свежий Игрок" })).toBeVisible();
+
+    await act(async () => staleDirectory.resolve({
+      users: [{ id: U2, firstName: "Старый", lastName: "Игрок" }],
+      teams: [], recentOpponentIds: [], frequentOpponentIds: [],
+    }));
+    expect(screen.getByRole("option", { name: "Свежий Игрок" })).toBeVisible();
+    expect(screen.queryByRole("option", { name: "Старый Игрок" })).not.toBeInTheDocument();
+  });
+
+  it("uses committed receipt then fresh match GET and heartbeat before judge handoff", async () => {
+    launchMatch.mockRejectedValueOnce(new Error("connection lost"));
+    getMatchLaunchOutcome.mockResolvedValueOnce({ outcome: "committed", matchId: MATCH });
+    const user = userEvent.setup();
+    renderPage();
+    await selectPlayer(user, "Игрок A", "Альфа Один");
+    await useGuest(user, "Соперник", "Гость Второй");
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+    await user.click(screen.getByRole("button", { name: /Альфа Один.*Подаёт первым/ }));
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(`/matches/${MATCH}/judge`));
+    expect(getMatch).toHaveBeenCalledWith(MATCH);
+    expect(heartbeatJudge).toHaveBeenCalledWith(MATCH);
+    expect(getMatch.mock.invocationCallOrder[0]).toBeLessThan(heartbeatJudge.mock.invocationCallOrder[0]);
+  });
+
+  it("treats a committed match that fresh GET cannot find as terminal and never launches another", async () => {
+    launchMatch.mockResolvedValueOnce({ requestId: "ignored", matchId: MATCH });
+    getMatch.mockRejectedValueOnce(Object.assign(new Error("not found"), { status: 404 }));
+    const user = userEvent.setup();
+    renderPage();
+    await selectPlayer(user, "Игрок A", "Альфа Один");
+    await useGuest(user, "Соперник", "Гость Второй");
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+    await user.click(screen.getByRole("button", { name: /Альфа Один.*Подаёт первым/ }));
+    expect(await screen.findByText(/создан, но больше недоступен/i)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Открыть матч" })).toBeVisible();
+    expect(launchMatch).toHaveBeenCalledTimes(1);
+    expect(heartbeatJudge).not.toHaveBeenCalled();
+  });
+
+  it("keeps autocomplete focus behavior and directory retry while supporting guest fallback", async () => {
+    matchCreateOptions.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({ users: [{ id: U2, firstName: "Альфа", lastName: "Один" }], teams: [], recentOpponentIds: [], frequentOpponentIds: [] });
+    const user = userEvent.setup();
+    renderPage();
+    expect(await screen.findByText("Список игроков недоступен")).toBeVisible();
+    await useGuest(user, "Игрок A", "Гость Первый");
+    await user.click(screen.getByRole("button", { name: "Повторить" }));
+    await waitFor(() => expect(matchCreateOptions).toHaveBeenCalledTimes(2));
+    const group = screen.getByRole("group", { name: "Игрок A" });
+    await user.click(within(group).getByRole("button", { name: "Игрок" }));
+    const input = within(group).getByRole("combobox", { name: "Игрок A" });
+    await user.type(input, "Альфа");
+    await user.keyboard("{ArrowDown}{Enter}");
+    expect(input).toHaveValue("Альфа Один");
+    expect(input).toHaveFocus();
+  });
+
+  it("consumes a matching replay seed once and clears router state so reload cannot recreate it", async () => {
+    renderPage({
+      pathname: "/matches/new",
+      state: {
+        matchReplaySeed: {
+          actorId: ACTOR,
+          title: "Повтор финала",
+          format: "1v1",
+          pointsToWin: 11,
+          mercyEnabled: true,
+          mercyPoints: 5,
+          firstServerMethod: "rally",
+          creatorParticipates: true,
+          slots: {
+            playerA: { mode: "user", userId: "", userLabel: "", guestName: "" },
+            partner: { mode: "user", userId: "", userLabel: "", guestName: "" },
+            opponent1: { mode: "guest", userId: "", userLabel: "", guestName: "Борис Второй" },
+            opponent2: { mode: "user", userId: "", userLabel: "", guestName: "" },
+          },
+        },
+      },
+    });
+    expect(await screen.findByText("Повтор финала")).toBeVisible();
+    expect(screen.getByText("Оператор играет")).toBeVisible();
+    expect(screen.getByRole("textbox", { name: /Соперник — гость/i })).toHaveValue("Борис Второй");
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/matches/new|null"));
+  });
+
+  it("removes legacy challenge intent without selecting or launching anyone", async () => {
+    renderPage("/matches/new?opponentId=legacy&opponentName=Old&source=revenge&returnTo=home");
+    expect(await screen.findByTestId("location")).toHaveTextContent("/matches/new?returnTo=home");
+    expect(screen.getByRole("combobox", { name: "Соперник" })).toHaveValue("");
+    expect(launchMatch).not.toHaveBeenCalled();
+  });
+
+  it("keeps an uncertain create owned by its exact 2v2 draft slot and requires explicit recovered selection", async () => {
+    const draftA = "11111111-1111-4111-8111-111111111111";
+    const requestId = "22222222-2222-4222-8222-222222222222";
+    const draftB = "33333333-3333-4333-8333-333333333333";
+    const randomUUID = vi.spyOn(globalThis.crypto, "randomUUID")
+      .mockReturnValueOnce(draftA)
+      .mockReturnValue(requestId);
+    restoreRandomUUID = () => randomUUID.mockRestore();
+    createGuest.mockRejectedValueOnce(Object.assign(new Error("network"), { status: 0 }));
+    const user = userEvent.setup();
+    const first = renderPage();
+    const settings = await openSettings(user);
+    await user.click(within(settings).getByRole("button", { name: "2 × 2" }));
+    await user.click(within(settings).getByRole("button", { name: "Готово" }));
+
+    const partner = screen.getByRole("group", { name: "Партнёр" });
+    await user.click(within(partner).getByRole("button", { name: "Гость" }));
+    await user.click(within(partner).getByRole("button", { name: "Сохранённый" }));
+    await user.click(within(partner).getByRole("button", { name: "Создать гостя" }));
+    const dialog = screen.getByRole("dialog", { name: "Новый сохранённый гость" });
+    await user.type(within(dialog).getByLabelText("Имя"), "Анна");
+    await user.type(within(dialog).getByLabelText("Фамилия"), "Первая");
+    await user.click(within(dialog).getByRole("button", { name: "Создать и выбрать" }));
+    expect(await within(dialog).findByText("Статус сохранения неизвестен")).toBeInTheDocument();
+    await user.click(within(dialog).getAllByRole("button", { name: "Закрыть" })[1]!);
+    expect(within(partner).getByText("Статус сохранения неизвестен")).toBeInTheDocument();
+
+    const opponent2 = screen.getByRole("group", { name: "Соперник 2" });
+    await user.click(within(opponent2).getByRole("button", { name: "Гость" }));
+    await user.click(within(opponent2).getByRole("button", { name: "Сохранённый" }));
+    expect(within(opponent2).queryByText("Статус сохранения неизвестен")).not.toBeInTheDocument();
+    first.unmount();
+
+    randomUUID.mockReturnValue(draftB);
+    const second = renderPage();
+    const secondSettings = await openSettings(user);
+    await user.click(within(secondSettings).getByRole("button", { name: "2 × 2" }));
+    await user.click(within(secondSettings).getByRole("button", { name: "Готово" }));
+    const newDraftPartner = screen.getByRole("group", { name: "Партнёр" });
+    await user.click(within(newDraftPartner).getByRole("button", { name: "Гость" }));
+    await user.click(within(newDraftPartner).getByRole("button", { name: "Сохранённый" }));
+    expect(within(newDraftPartner).queryByText("Статус сохранения неизвестен")).not.toBeInTheDocument();
+    second.unmount();
+
+    const restoredSlots = emptyPreparationSlots();
+    restoredSlots.partner = {
+      mode: "guest",
+      userId: "",
+      userLabel: "",
+      guestName: "",
+      guestIdentityId: "",
+      guestIdentityLabel: "",
+    };
+    holdPreparationForGuestCatalogue({
+      actorId: ACTOR,
+      title: "Возврат к слоту A",
+      format: "2v2",
+      pointsToWin: 11,
+      mercyEnabled: true,
+      mercyPoints: 5,
+      firstServerMethod: "manual",
+      creatorParticipates: false,
+      slots: restoredSlots,
+    }, draftA);
+    createGuest.mockResolvedValueOnce({ guest: {
+      id: GUEST,
+      firstName: "Анна",
+      lastName: "Первая",
+      displayName: "Первая Анна",
+      avatarKey: "avatar_6",
+      version: 0,
+      canRename: true,
+      createdAt: "2026-10-03T12:00:00.000Z",
+      updatedAt: "2026-10-03T12:00:00.000Z",
+    } });
+    renderPage({
+      pathname: "/matches/new",
+      state: { guestSelectionCancel: { kind: "match", draftToken: draftA, slotKey: "partner" } },
+    });
+    const restoredPartner = await screen.findByRole("group", { name: "Партнёр" });
+    expect(await within(restoredPartner).findByText("Статус сохранения неизвестен")).toBeInTheDocument();
+    await user.click(within(restoredPartner).getByRole("button", { name: "Повторить ту же попытку" }));
+
+    expect(createGuest).toHaveBeenCalledTimes(2);
+    expect(createGuest.mock.calls[1]?.[0]).toEqual(createGuest.mock.calls[0]?.[0]);
+    expect(within(restoredPartner).queryByTestId("selected-guest")).not.toBeInTheDocument();
+    await user.click(await within(restoredPartner).findByRole("button", { name: "Выбрать Первая Анна" }));
+    expect(within(restoredPartner).getByTestId("selected-guest")).toHaveTextContent("Первая Анна");
   });
 });

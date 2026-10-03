@@ -9,8 +9,15 @@ import { avatarSrc } from "../avatarSrc";
 import { initialsFromName } from "../rankingUi";
 import { useLifecycleSingleFlight } from "./useLifecycleSingleFlight";
 import { useAuth } from "../auth";
+import { TeamAvatar, TeamAvatarPicker } from "../components/TeamAvatar";
+import type { AvatarKey } from "@tab10/shared";
 
-type TeamDraft = { name: string; slogan: string; welcomeText: string };
+type TeamDraft = {
+  name: string;
+  slogan: string;
+  welcomeText: string;
+  avatarKey: AvatarKey | null;
+};
 type OperationKind = "save" | "invite" | "remove" | "transfer" | "leave";
 type OperationContext = {
   identity: string;
@@ -92,6 +99,7 @@ function serverValues(team: Team) {
     `название «${team.name}»`,
     team.slogan ? `слоган «${team.slogan}»` : "слоган не указан",
     team.welcomeText ? `приветствие «${team.welcomeText}»` : "приветствие не указано",
+    team.avatarKey ? `аватар ${team.avatarKey}` : "аватар не выбран",
   ].join(", ");
 }
 
@@ -174,6 +182,7 @@ export function TeamDetailPage() {
             name: response.team.name,
             slogan: response.team.slogan ?? "",
             welcomeText: response.team.welcomeText ?? "",
+            avatarKey: response.team.avatarKey ?? null,
           });
       if (review === "settings") {
         setSettingsReview(
@@ -354,6 +363,7 @@ export function TeamDetailPage() {
           name: snapshot.name.trim(),
           slogan: snapshot.slogan.trim(),
           welcomeText: snapshot.welcomeText.trim(),
+          avatarKey: snapshot.avatarKey,
         });
         if (!isCurrentLifecycle(actorId, id, generation)) return;
         setTeam(response.team);
@@ -361,6 +371,7 @@ export function TeamDetailPage() {
           name: response.team.name,
           slogan: response.team.slogan ?? "",
           welcomeText: response.team.welcomeText ?? "",
+          avatarKey: response.team.avatarKey ?? null,
         });
         setSettingsSuccess("Изменения сохранены.");
         setSettingsFocusRequest((request) => request + 1);
@@ -556,6 +567,10 @@ export function TeamDetailPage() {
               <Alert type="warning" variant="tonal" title="Не удалось обновить" description={loadError} />
             ) : null}
             <section className="card stack" aria-label="О команде">
+              <div className="team-identity">
+                <TeamAvatar avatarKey={team.avatarKey} teamName={team.name} size="md" />
+                <strong>{team.name}</strong>
+              </div>
               <div className="row">
                 <Chip size="sm" variant="tonal" label={archived ? "Архив" : "Активна"} startIcon={false} className="status-chip" />
                 {team.isCaptain ? <Chip size="sm" variant="tonal" label="Вы капитан" startIcon={false} className="status-chip" /> : null}
@@ -651,6 +666,12 @@ export function TeamDetailPage() {
               <>
                 <form className="card stack" aria-label="Редактирование команды" onSubmit={saveTeam}>
                   <h2>Настройки</h2>
+                  <TeamAvatarPicker
+                    value={draft.avatarKey}
+                    onChange={(avatarKey) => setDraft({ ...draft, avatarKey })}
+                    name={`edit-team-avatar-${team.id}`}
+                    disabled={operation.pending}
+                  />
                   <TextField
                     label="Название команды"
                     value={draft.name}

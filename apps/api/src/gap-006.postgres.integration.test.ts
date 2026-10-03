@@ -78,6 +78,34 @@ describePostgres.sequential("GAP-006 PostgreSQL tournament transitions", () => {
     await setup.app.close(); await starter.app.close(); await dissolver.app.close();
   });
 
+  it("freezes an active tournament match clock on PostgreSQL when the tournament stops", async () => {
+    const clock = new FakeClock(new Date("2026-09-13T10:00:00Z"));
+    const setup = await buildApp({ db, clock });
+    try {
+      const tournament = (await setup.services.tournaments.create({
+        title: "Active clock stop", format: "single_elimination",
+        createdByUserId: actor, organizerParticipates: false,
+      }))!;
+      for (const name of ["Clock A", "Clock B", "Clock C"]) {
+        await setup.services.tournaments.addParticipant({ tournamentId: tournament.id,
+          actorUserId: actor, guestFirstName: name, guestLastName: "Fixture" });
+      }
+      await setup.services.tournaments.generateBracket(tournament.id, actor, { constructionAlgorithm: "compact", rng: () => 0.5 });
+      const started = await setup.services.tournaments.start(tournament.id, actor);
+      const active = started!.matches.find((match) => match.status === "waiting")!;
+      const detail = await setup.services.matches.getMatch(active.id);
+      await setup.services.matches.startMatch(active.id, actor, detail!.participants[0]!.id);
+      clock.advanceMs(12_345);
+      await setup.services.tournaments.stop(tournament.id, actor);
+      const frozen = await db.query.matches.findFirst({ where: eq(matches.id, active.id) });
+      expect(frozen).toMatchObject({ status: "cancelled", playingElapsedMs: 12_345, playingSegmentStartedAt: null });
+      clock.advanceMs(60_000);
+      expect(await db.query.matches.findFirst({ where: eq(matches.id, active.id) })).toEqual(frozen);
+    } finally {
+      await setup.app.close();
+    }
+  });
+
   it("serializes match completion before stop and releases every active judge", async () => {
     const ids = [
       "00000000-0000-4000-8000-000000000831",
@@ -144,7 +172,7 @@ describePostgres.sequential("GAP-006 PostgreSQL tournament transitions", () => {
     release(); await held;
 
     const outcomes = await Promise.allSettled([finishPromise, stopPromise]);
-    expect(outcomes.map((outcome) => outcome.status)).toEqual(["fulfilled", "fulfilled"]);
+    expect(outcomes.map((outcome) => outcome.status), outcomes.filter((outcome) => outcome.status === "rejected").map((outcome) => { const error = outcome.reason as Error & { cause?: Error }; return `${error.message} | cause: ${error.cause?.message ?? "none"}`; }).join("\n")).toEqual(["fulfilled", "fulfilled"]);
     expect(await db.query.tournaments.findFirst({ where: eq(tournaments.id, tournament.id) })).toMatchObject({ status: "stopped" });
     expect(await db.query.matches.findFirst({ where: eq(matches.id, firstMatch!.id) })).toMatchObject({ status: "finished" });
     const tournamentMatches = await db.query.matches.findMany({ where: eq(matches.tournamentId, tournament.id) });

@@ -115,7 +115,8 @@ test("Wave B AT-PROFILE-001..005 AT-RANK-005..006 own edit, revoke, team and pri
     await page.screenshot({ path: info.outputPath("public-profile.png"), fullPage: true });
     await page.goto(`/matches/new?opponentId=${created.user.id}&opponentName=${encodeURIComponent(suffix)}&returnTo=profile`);
     await expect(page).toHaveURL(/\/matches\/new\?returnTo=profile$/);
-    await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
+    await page.getByRole("button", { name: "Настройки", exact: true }).click();
+    await expect(page.getByRole("dialog", { name: "Настройки матча", exact: true }).getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
     await expect(page.getByLabel("Пригласить выбранных игроков", { exact: true })).toHaveCount(0);
     await noOverflow(page);
   } finally {

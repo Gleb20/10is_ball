@@ -1,3 +1,14 @@
+## 2026-10-03 — D40 принятые решения и завершённый выпуск 5.0.1
+
+- Зафиксировано явное уточнение пользователя: подготовка матча на игровом экране,
+  шторка правил до «Начать», затем подача и atomic launch. Принятые Q-UX закрыты
+  без объявления зависимых реализаций готовыми; D38/D24/D33/D37 сохранены.
+- Обновлены live targets BACKLOG, PRD/UX/AT и programme; исторические отчёты
+  не переписаны. Docs audit:186 files,0 broken links/anchors/duplicate IDs.
+- После independent Terra PASS R2 опубликован 5.0.1; GitHub4/4, Vercel/Render
+  exactSHA и publicsmoke7/7 подтверждены. Клиентские receipt сохранены рядом с
+  server-first/drain evidence. Публичные данные для тестирования не изменялись.
+
 ## 2026-10-03 — BUG-038: включение UI после server-first gate (5.0.1)
 
 - 5.0.0 опубликован с удерживаемым UI; hosted CI 4/4, public smoke 7/7,
@@ -1675,3 +1686,79 @@ Pilot Terra PASS, evidence correction linked canonically. COMPONENTS recheck+cor
 
 
 2026-09-14: wave1 synthesis in progress. Coordinator added provisional AUTH tasks BUG027/028, GAP014–016 and clarified existing reauth in-memory draft exception for GAP013 (AUTH006/AT-AUTH009/UX3.1 vs ordinary MATCH015 exit). Package evidence/independent review not yet accepted; all five remain confirmed. Docs106files/69items zero links/anchors/status/definition errors. No application change or new full-gate claim.
+
+## 2026-10-03 — интеграционный checkpoint фактов матча и даты
+
+Неопубликованный кандидат: GAP-032 W3 R2 source review PASS, авторский isolated
+PostgreSQL6/6 доказывает оба порядка point/Undo/correction и rollback. Root сверил
+patch/source hashes и интегрировал точный delta. GAP-019 D40 plannedDate добавлена
+в API/DATE schema и формы; focused API3/3, UI43/43, migration32/32/typecheck PASS.
+Первая проверка выявила additive date в adoption digest; manifest теперь исключает
+только новое поле, сохранность прежних данных продолжает проверяться. Две ошибки
+отрицательного теста (прежний400 вместо ожидаемого409 и плоский error DTO) исправлены
+по действующему контракту, сам status/error контракт не менялся. Common PG/browser,
+независимое review даты и полная приёмка остаются впереди. Версия остаётся5.0.1.
+
+## 2026-10-03 — D40 integration и исправления browser/PG
+
+- Root исправил raw Date binding при stop турнира: воспроизводимый PostgreSQL
+  Red, ISO-параметр и проверка замороженного clock; PG112/112 Green до guest/avatar.
+- Browser выявил второй старт atomic0:0; исправление включено в GAP-032 UI и
+  передано на независимое review. Старые fixture labels/неподтверждённые диалоги
+  исправляются по текущему UI; исходные failed runs сохраняются, полного PASS нет.
+- 0012 avatar: одна nullable колонка, all12prefixes и rollback сохраняют команды;
+  migration36/36, API1/1 после актуальной сборки shared. Первый API400 был вызван
+  старым dist shared, проверка после rebuild зелёная. Picker64px следует review.
+- Guest R1 не принят: независимый reviewer выявил пропущенный transactional audit
+  и потребовал спортивное/cursor PG-покрытие. Автор выполняет ограниченное R2.
+- Source-only API-before-web guard прошёл40 Node checks и Terra source PASS;
+  autoDeploy/инфраструктура не менялись, нового публичного выпуска пока нет.
+
+
+## 2026-10-03 — кандидат 6.0.0 и итоговая сверка перед полным gate
+
+- Root интегрировал независимо проверенные guests R2/R3, facts UI R2 и additive avatar 0012; фактический PostgreSQL gate: 119/119.
+- Узкие browser gates: avatar3/3, facts3/3, Judge layout+blur/reduced motion3/3; tournament R3 sports/lifecycle24/24 в составе диагностического прохода. Более ранние отрицательные результаты сохранены, полный финальный CI ещё обязателен.
+- Поддержано фиксированное положение меню D40; браузер обнаружил конфликт специфичности :has, исправлен через :where и ожидает окончательной проверки.
+- Вложенное web agreement приведено к D36 Home navigation; нового процесса или разрешений это не вводит.
+- Обязательный SemVer MAJOR 6.0.0 связан с версионированным построением сетки и отказом старого mutation endpoint. Публикация ещё не выполнена.
+
+
+## 2026-10-03 — финальная проверка гостей и подготовка безопасного Browser Back
+
+Guest compiled сценарий прошёл на desktop/390/360 (3/3, foundation9/9): создание,
+неизвестный исход и same-key retry, две одноимённые записи, atomic launch,
+«Сыграть снова», rename с историческим snapshot и добавление в турнир. Root
+просмотрел изображения. Исправлены listitem/link семантика и воспроизведённая
+коллизия CSS scoring subgrid с игровым черновиком. Уточнён AT-JUDGE-008 для
+same-document POP; его реализация ещё проходит независимое ревью и общий CI.
+
+
+### Проверка финальных E2E fixtures
+
+Первый общий прогон: quality1614/1614 и PostgreSQL119/119 прошли; browser lane
+остановлен после воспроизведения устаревшего повторного старта в critical fixture.
+Три сценария переведены на D40 scoring после atomic launch; critical fixture
+очищает только свой незавершённый матч. Stage4 входит через реальную Home-ссылку
+и доказывает сохранение одного JS document; прежний page.goto проверял
+cross-document уход, для которого остаётся TTL. Axe проверяет завершившийся
+140ms fade при opacity1 без отключения правил/анимации. Независимое ревью
+подтвердило причины. Свежий compiled R8:30/30 desktop/390/360 + foundation9/9;
+unknown→Back→release→Forward не повторяет очко. Общий CI повторяется целиком.
+
+
+Повторный quality-прогон выявил одну гонку тестовой обвязки алгоритма турнира:
+страница монтировалась до auth bootstrap, затем смена anonymous→actor закрывала
+успевший открыться диалог. Production Protected удерживает страницу до готовности
+auth. Fixture получил такой же loading gate; контрактные проверки не ослаблены.
+Причина независимо подтверждена по effect/activityKey и маршруту приложения.
+
+
+## 2026-10-03 — итоговая локальная приёмка 6.0.0
+
+Полный `pnpm run ci` дал 1881/1881, ноль failed/skipped/todo/interrupted. [Receipt](audit/evidence/interface-completion-6/receipt.json) связывает фактические quality/PostgreSQL/browser/cleanup summaries. Обновлены canonical backlog и completion overlay всех236строк; исходный CSV и прежние receipts сохранены. Публикация и физическая проверка отдельно.
+
+
+## 2026-10-03 — guest fixtures and final consistency
+
+Stage7/WaveD explicitly select Guest; GAP-012 asserts the current absent guest disclosure in the scoped admin flow. Keyboard, ordering, rights, roster, seeding and sporting outcomes remain asserted. Independent Terra PASS; compiled tournament/accessibility51/51; fresh full CI1881/1881. The original checkout's169 foreign dirty entries remain untouched. BUG-041 stays a separate dev-only debt item: after release, a bounded deterministic StrictMode/coalescing regression task is recommended, with fresh reproduction before implementation.

@@ -1166,6 +1166,17 @@
       "result": "verified_local",
       "evidence": "docs/audit/evidence/stage567-final-acceptance.json",
       "evidenceSha256": "b6b7ba1e972001728ea26482cce031d386c413c7374cc6933def555f467006ae"
+    },
+    {
+      "source": "expert-stage-08",
+      "source_id": "BUG-038",
+      "atom_id": "main",
+      "canonical_task": "BUG-038",
+      "stage": 12,
+      "previousResult": "historical_target_reconciled_not_implemented",
+      "result": "verified_local",
+      "evidence": "docs/audit/evidence/stage12-final-candidate/manifest.json",
+      "evidenceSha256": "991469e2ac00a5799b19d21b8e5f2192580cf08cab1cfe23638a7da4b2d19404"
     }
   ]
 }

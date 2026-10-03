@@ -263,14 +263,16 @@ describePostgres("critical flows on a dedicated PostgreSQL test DB", () => {
       expect(added.statusCode).toBe(200);
     }
 
+    const generationContext = await app.inject({ method: "GET", url: `/api/v1/tournaments/${tournamentId}/bracket-generation-context`, cookies: { tab10_session: userACookie } });
+    expect(generationContext.statusCode).toBe(200);
     const generated = await app.inject({
       method: "POST",
-      url: `/api/v1/tournaments/${tournamentId}/bracket`,
+      url: `/api/v1/tournaments/${tournamentId}/bracket-generations`,
       cookies: { tab10_session: userACookie },
-      payload: { constructionAlgorithm: "power_of_two" },
+      payload: { constructionAlgorithm: "power_of_two", expectedVersion: generationContext.json().tournament.bracketStateVersion },
     });
     expect(generated.statusCode).toBe(200);
-    expect(generated.json().bracket.schemaVersion).toBe(2);
+    expect(generated.json().tournament.bracketJson.schemaVersion).toBe(2);
 
     const started = await app.inject({
       method: "POST",

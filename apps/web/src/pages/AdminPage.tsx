@@ -8,6 +8,7 @@ import { api, type AdminUser } from "../api";
 import { useAuth } from "../auth";
 import { AdminUserActions, type AdminUserAction } from "./AdminUserActions";
 import { useAdminPasswordReset } from "../adminPasswordReset";
+import { AdminMatchRecovery } from "../adminMatchRecovery";
 
 type UserStatusFilter = "" | "active" | "blocked";
 type Context = { actorKey: string; generation: number; loadEffect: number; mutationEffect: number };
@@ -251,6 +252,7 @@ export function AdminPage() {
           : visibleConfirm?.action === "demote" ? "Снять права администратора?" : "";
 
   return <PageLayout title="Админка">
+    <AdminMatchRecovery />
     <h2 className="section-title">Пользователи</h2>
     <form className="card row" role="search" aria-label="Поиск пользователей" onSubmit={(event) => {
       event.preventDefault();

@@ -65,6 +65,7 @@ test("Stage 7 rules, roster, direct add, and bracket step stay authoritative", a
     await page.goto("/tournaments/new");
     await expect(page.getByRole("heading", { name: "Шаг 1 из 3 · Правила" })).toBeVisible();
     await page.getByLabel("Название", { exact: true }).fill(`Stage 7 ${suffix}`);
+    await page.getByLabel("Плановая дата (необязательно)", { exact: true }).fill("2028-02-29");
     await page.getByRole("group", { name: "Сетка проигравших" }).getByRole("button", { name: "Включена" }).click();
     await page.getByLabel("Очков для победы", { exact: true }).fill("15");
     await page.getByRole("checkbox", { name: "Завершать матч при сухом счёте" }).check();
@@ -83,6 +84,8 @@ test("Stage 7 rules, roster, direct add, and bracket step stay authoritative", a
       mercyEnabled: true,
       mercyPoints: 5,
       requireParticipantConsent: false,
+      plannedDate: "2028-02-29",
+      startedAt: null,
     });
 
     const rules = page.getByRole("heading", { name: "Шаг 1 из 3 · Правила" });
@@ -103,18 +106,25 @@ test("Stage 7 rules, roster, direct add, and bracket step stay authoritative", a
       );
     })).toBe(true);
 
+    const participantKind = page.getByRole("group", { name: "Тип участника", exact: true });
+    const guestKind = participantKind.getByRole("button", { name: "Гость", exact: true });
+    await guestKind.focus();
+    await guestKind.press("Enter");
+    await expect(guestKind).toHaveAttribute("aria-pressed", "true");
+    const participantList = page.locator(".tournament-setup__roster");
     const guestToggle = page.getByRole("button", { name: "Добавить разового гостя" });
     await guestToggle.focus();
     await expect(guestToggle).toBeFocused();
     await guestToggle.press("Enter");
     await expect(page.getByLabel("Имя и фамилия разового гостя")).toBeVisible();
 
-    const picker = page.getByRole("combobox", { name: "Добавить игрока" });
-    const participantList = page.locator(".tournament-setup__roster");
-    await expect(picker).toBeVisible();
-    await expect(guestToggle).toBeVisible();
-    expect(await picker.evaluate((node, list) => Boolean(node.compareDocumentPosition(list as Node) & Node.DOCUMENT_POSITION_FOLLOWING), await participantList.elementHandle())).toBe(true);
     expect(await guestToggle.evaluate((node, list) => Boolean(node.compareDocumentPosition(list as Node) & Node.DOCUMENT_POSITION_FOLLOWING), await participantList.elementHandle())).toBe(true);
+    await participantKind.getByRole("button", { name: "Игрок", exact: true }).click();
+    const picker = page.getByRole("combobox", { name: "Добавить игрока" });
+    await expect(picker).toBeVisible();
+    await expect(picker).toBeEnabled();
+    await expect(guestToggle).toHaveCount(0);
+    expect(await picker.evaluate((node, list) => Boolean(node.compareDocumentPosition(list as Node) & Node.DOCUMENT_POSITION_FOLLOWING), await participantList.elementHandle())).toBe(true);
     await picker.fill(candidateName);
     await page.getByRole("option", { name: candidateName, exact: true }).click();
     await page.getByRole("button", { name: "Добавить в состав", exact: true }).click();
@@ -126,6 +136,18 @@ test("Stage 7 rules, roster, direct add, and bracket step stay authoritative", a
     expect(afterAdd.participants).toEqual(expect.arrayContaining([
       expect.objectContaining({ userId: createdUser.user.id, status: "active" }),
     ]));
+
+    await expect(page.getByText(/Плановая дата: 29 февраля 2028/)).toBeVisible();
+    await page.getByRole("button", { name: "Изменить правила", exact: true }).click();
+    const plannedDate = page.getByLabel("Плановая дата (необязательно)", { exact: true });
+    await plannedDate.focus();
+    await expect(plannedDate).toBeFocused();
+    await plannedDate.fill("2028-03-01");
+    await page.getByRole("button", { name: "Сохранить", exact: true }).click();
+    await expect(page.getByText(/Плановая дата: 1 марта 2028/)).toBeVisible();
+    const afterDate = (await (await page.request.get(`/api/v1/tournaments/${tournamentId}`)).json()).tournament;
+    expect(afterDate).toMatchObject({ plannedDate: "2028-03-01", status: "collecting", startedAt: null, bracketStateVersion: afterAdd.bracketStateVersion });
+    expect(afterDate.participants).toEqual(afterAdd.participants);
 
     const candidateRow = page.locator(".tournament-setup__roster-item", { hasText: candidateName });
     const removeCandidate = candidateRow.getByRole("button", { name: `Удалить ${candidateName} из состава` });

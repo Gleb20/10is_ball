@@ -115,11 +115,19 @@ describe("DATA-002 atomic match completion", () => {
       expect(added.statusCode).toBe(200);
     }
 
+    const generationContext = await app.inject({
+      method: "GET",
+      url: `/api/v1/tournaments/${tournamentId}/bracket-generation-context`,
+      cookies: { tab10_session: organizerCookie },
+    });
     const generated = await app.inject({
       method: "POST",
-      url: `/api/v1/tournaments/${tournamentId}/bracket`,
+      url: `/api/v1/tournaments/${tournamentId}/bracket-generations`,
       cookies: { tab10_session: organizerCookie },
-      payload: { constructionAlgorithm: "power_of_two" },
+      payload: {
+        expectedVersion: generationContext.json().tournament.bracketStateVersion,
+        constructionAlgorithm: "power_of_two",
+      },
     });
     expect(generated.statusCode).toBe(200);
     const startedTournament = await app.inject({

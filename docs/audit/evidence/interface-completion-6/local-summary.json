@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "totals": {
+    "total": 1881,
+    "passed": 1881,
+    "failed": 0,
+    "skipped": 0,
+    "todo": 0,
+    "interrupted": 0
+  },
+  "lanes": [
+    {
+      "name": "cleanup-foundation",
+      "status": "passed",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "quality",
+      "status": "passed",
+      "total": 1614,
+      "passed": 1614,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "postgres",
+      "status": "passed",
+      "total": 119,
+      "passed": 119,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    },
+    {
+      "name": "browser-prodlike",
+      "status": "passed",
+      "total": 144,
+      "passed": 144,
+      "failed": 0,
+      "skipped": 0,
+      "todo": 0,
+      "interrupted": 0
+    }
+  ],
+  "disposableComposeProject": "tab10-verify-64993",
+  "disposablePostgresPort": 33318
+}

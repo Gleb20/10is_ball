@@ -10,6 +10,7 @@ import {
   StatusChip,
 } from "../patterns";
 import { api } from "../api";
+import { formatPlannedDate } from "../tournamentDate";
 import { useVisibleRefresh } from "../useVisibleRefresh";
 import { useSingleFlight } from "../useSingleFlight";
 import "./TournamentSetup.css";
@@ -25,6 +26,7 @@ export function TournamentsPage({ createOnly = false }: { createOnly?: boolean }
   const [list, setList] = useState<Array<Record<string, unknown>> | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [title, setTitle] = useState(defaultTournamentTitle);
+  const [plannedDate, setPlannedDate] = useState("");
   const [format, setFormat] = useState<
     "single_elimination" | "double_elimination"
   >("single_elimination");
@@ -51,6 +53,7 @@ export function TournamentsPage({ createOnly = false }: { createOnly?: boolean }
       mercyEnabled,
       mercyPoints: mercyEnabled ? mercyPoints : null,
       requireParticipantConsent: false,
+      ...(plannedDate ? { plannedDate } : {}),
     };
     await submission.run(async () => {
       setFormError(null);
@@ -87,6 +90,10 @@ export function TournamentsPage({ createOnly = false }: { createOnly?: boolean }
             setTitle(e.target.value)
           }
         />
+        <TextField label="Плановая дата (необязательно)" type="date" value={plannedDate}
+          disabled={submission.pending} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPlannedDate(event.target.value)}
+          aria-describedby="tournament-planned-date-help" />
+        <p id="tournament-planned-date-help" className="muted">Дата для участников. Турнир запускается вручную.</p>
         <fieldset className="stack tournament-setup__choice" disabled={submission.pending} role="presentation">
           <span className="tournament-setup__choice-label">Сетка проигравших</span>
           <FilterBar
@@ -177,7 +184,7 @@ export function TournamentsPage({ createOnly = false }: { createOnly?: boolean }
               key={String(t.id)}
               to={`/tournaments/${t.id}`}
               title={String(t.title)}
-              subtitle={t.format ? `Сетка проигравших ${String(t.format) === "double_elimination" ? "включена" : "выключена"}` : undefined}
+              subtitle={[t.format ? `Сетка проигравших ${String(t.format) === "double_elimination" ? "включена" : "выключена"}` : null, formatPlannedDate(t.plannedDate)].filter(Boolean).join(" · ")}
               trailing={
                 <StatusChip status={String(t.status)} domain="tournament" />
               }

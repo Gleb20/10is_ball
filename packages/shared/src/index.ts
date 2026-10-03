@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isAvatarKey, type AvatarKey } from "./avatars.js";
 
 export const UserRoleSchema = z.enum(["admin", "user"]);
 export type UserRole = z.infer<typeof UserRoleSchema>;
@@ -102,6 +103,265 @@ export const StartMatchRequestSchema = z
   .strict()
   .default({});
 
+export const MatchLaunchSlotSchema = z.enum(["A1", "A2", "B1", "B2"]);
+export type MatchLaunchSlot = z.infer<typeof MatchLaunchSlotSchema>;
+
+const MatchLaunchParticipantSchema = z
+  .object({
+    userId: z.string().uuid().optional(),
+    guestIdentityId: z.string().uuid().optional(),
+    guestFirstName: z.string().trim().min(1).max(100).optional(),
+    guestLastName: z.string().trim().min(1).max(100).optional(),
+  })
+  .strict()
+  .superRefine((participant, ctx) => {
+    const isUser = participant.userId !== undefined;
+    const isGuestIdentity = participant.guestIdentityId !== undefined;
+    const isInlineGuest =
+      participant.guestFirstName !== undefined ||
+      participant.guestLastName !== undefined;
+    if (Number(isUser) + Number(isGuestIdentity) + Number(isInlineGuest) !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "launch participant must be exactly one registered user, reusable guest or inline guest",
+      });
+    }
+    if (
+      isInlineGuest &&
+      (!participant.guestFirstName || !participant.guestLastName)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "inline guest first and last name are required",
+      });
+    }
+  });
+
+const MatchLaunchRosterSchema = z
+  .object({
+    A1: MatchLaunchParticipantSchema,
+    A2: MatchLaunchParticipantSchema.optional(),
+    B1: MatchLaunchParticipantSchema,
+    B2: MatchLaunchParticipantSchema.optional(),
+  })
+  .strict();
+
+const MatchLaunchRequestFieldsSchema = z
+  .object({
+    requestId: z.string().uuid(),
+    title: z.string().trim().min(1).max(200).optional(),
+    format: MatchFormatSchema,
+    pointsToWin: z.number().int().min(1).optional(),
+    mercyEnabled: z.boolean().optional(),
+    mercyPoints: z.number().int().min(1).nullable().optional(),
+    firstServerMethod: FirstServerMethodSchema,
+    firstServerSlot: MatchLaunchSlotSchema.optional(),
+    roster: MatchLaunchRosterSchema,
+  })
+  .strict()
+  .superRefine((request, ctx) => {
+    const { roster } = request;
+    if (request.format === "1v1" && (roster.A2 || roster.B2)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["roster"],
+        message: "1v1 permits only A1 and B1",
+      });
+    }
+    if (request.format === "2v2" && (!roster.A2 || !roster.B2)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["roster"],
+        message: "2v2 requires A1, A2, B1 and B2",
+      });
+    }
+    if (request.firstServerMethod === "random" && request.firstServerSlot) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["firstServerSlot"],
+        message: "random first-server selection forbids a slot",
+      });
+    }
+    if (
+      request.firstServerMethod !== "random" &&
+      !request.firstServerSlot
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["firstServerSlot"],
+        message: "manual and rally first-server selection require a slot",
+      });
+    }
+    if (
+      request.firstServerSlot &&
+      roster[request.firstServerSlot] === undefined
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["firstServerSlot"],
+        message: "first-server slot must exist in the submitted roster",
+      });
+    }
+    if (request.mercyEnabled === true && request.mercyPoints === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["mercyPoints"],
+        message: "enabled mercy cannot have a null threshold",
+      });
+    }
+    if (request.mercyEnabled !== true && request.mercyPoints != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["mercyPoints"],
+        message: "disabled mercy cannot have a threshold",
+      });
+    }
+    const registeredIds = Object.values(roster).flatMap((participant) =>
+      participant?.userId ? [participant.userId] : [],
+    );
+    if (new Set(registeredIds).size !== registeredIds.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["roster"],
+        message: "registered participants must be distinct",
+      });
+    }
+    const guestIdentityIds = Object.values(roster).flatMap((participant) =>
+      participant?.guestIdentityId ? [participant.guestIdentityId] : [],
+    );
+    if (new Set(guestIdentityIds).size !== guestIdentityIds.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["roster"],
+        message: "reusable guest participants must be distinct",
+      });
+    }
+  });
+
+/** Canonical effective launch input; parse before fingerprinting or persistence. */
+export const MatchLaunchRequestSchema = MatchLaunchRequestFieldsSchema.transform(
+  (request) => {
+    const pointsToWin = request.pointsToWin ?? 11;
+    const mercyEnabled = request.mercyEnabled ?? false;
+    return {
+      ...request,
+      pointsToWin,
+      mercyEnabled,
+      mercyPoints: mercyEnabled
+        ? (request.mercyPoints ?? Math.max(1, Math.floor((pointsToWin - 1) / 2)))
+        : null,
+    };
+  },
+);
+export type MatchLaunchRequest = z.infer<typeof MatchLaunchRequestSchema>;
+
+export const MatchLaunchResponseSchema = z
+  .object({
+    requestId: z.string().uuid(),
+    matchId: z.string().uuid(),
+  })
+  .strict();
+export type MatchLaunchResponse = z.infer<typeof MatchLaunchResponseSchema>;
+
+export const MatchLaunchOutcomeSchema = z.discriminatedUnion("outcome", [
+  z.object({ outcome: z.literal("unknown") }).strict(),
+  z
+    .object({
+      outcome: z.literal("committed"),
+      matchId: z.string().uuid(),
+    })
+    .strict(),
+]);
+export type MatchLaunchOutcome = z.infer<typeof MatchLaunchOutcomeSchema>;
+
+export const GuestIdentitySchema = z
+  .object({
+    id: z.string().uuid(),
+    firstName: z.string().min(1).max(100),
+    lastName: z.string().min(1).max(100),
+    displayName: z.string().min(1),
+    avatarKey: z.string().regex(/^avatar_([1-9]|10)$/),
+    version: z.number().int().min(0),
+    canRename: z.boolean(),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+  })
+  .strict();
+export type GuestIdentity = z.infer<typeof GuestIdentitySchema>;
+
+export const CreateGuestIdentityRequestSchema = z
+  .object({
+    requestId: z.string().uuid(),
+    firstName: z.string().trim().min(1).max(100),
+    lastName: z.string().trim().min(1).max(100),
+  })
+  .strict();
+export type CreateGuestIdentityRequest = z.infer<typeof CreateGuestIdentityRequestSchema>;
+
+export const RenameGuestIdentityRequestSchema = z
+  .object({
+    requestId: z.string().uuid(),
+    expectedVersion: z.number().int().min(0),
+    firstName: z.string().trim().min(1).max(100),
+    lastName: z.string().trim().min(1).max(100),
+  })
+  .strict();
+export type RenameGuestIdentityRequest = z.infer<typeof RenameGuestIdentityRequestSchema>;
+
+export const GuestIdentityMutationOutcomeSchema = z.discriminatedUnion("outcome", [
+  z.object({ outcome: z.literal("unknown") }).strict(),
+  z.object({
+    outcome: z.literal("committed"),
+    operation: z.enum(["create", "rename"]),
+    guestId: z.string().uuid(),
+    resultingVersion: z.number().int().min(0),
+  }).strict(),
+]);
+export type GuestIdentityMutationOutcome = z.infer<typeof GuestIdentityMutationOutcomeSchema>;
+
+export const MatchFactsSchema = z
+  .object({
+    initialServer: z.discriminatedUnion("state", [
+      z
+        .object({
+          state: z.literal("known"),
+          participantId: z.string().uuid(),
+        })
+        .strict(),
+      z.object({ state: z.literal("not_selected") }).strict(),
+      z.object({ state: z.literal("unavailable") }).strict(),
+    ]),
+    playingClock: z.discriminatedUnion("state", [
+      z
+        .object({
+          state: z.literal("available"),
+          elapsedMs: z.number().int().min(0),
+          running: z.boolean(),
+          asOf: z.string().datetime(),
+        })
+        .strict(),
+      z.object({ state: z.literal("unavailable") }).strict(),
+    ]),
+    judgeHistory: z
+      .object({
+        state: z.enum(["complete", "partial", "unavailable"]),
+        sessions: z.array(
+          z
+            .object({
+              id: z.string().uuid(),
+              userId: z.string().uuid(),
+              displayName: z.string(),
+              startedAt: z.string().datetime(),
+              endedAt: z.string().datetime().nullable(),
+            })
+            .strict(),
+        ),
+      })
+      .strict(),
+  })
+  .strict();
+export type MatchFacts = z.infer<typeof MatchFactsSchema>;
+
 export const JudgeSetupRequestSchema = z
   .object({
     firstServerParticipantId: z.string().uuid().optional(),
@@ -139,11 +399,22 @@ export const ManualCorrectionRequestSchema = MatchVersionRequestSchema.extend({
   currentServerParticipantId: z.string().uuid(),
 }).strict();
 
-export const TeamCreateRequestSchema = z.object({
-  name: z.string().trim().min(1).max(200),
-  slogan: z.string().trim().max(300).optional(),
-  welcomeText: z.string().trim().max(2000).optional(),
-}).strict();
+export const TeamAvatarKeySchema = z.custom<AvatarKey>(
+  (value): value is AvatarKey =>
+    typeof value === "string" &&
+    isAvatarKey(value) &&
+    value === `avatar_${Number(value.slice("avatar_".length))}`,
+  { message: "Unknown team avatar preset" },
+);
+
+export const TeamCreateRequestSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    slogan: z.string().trim().max(300).optional(),
+    welcomeText: z.string().trim().max(2000).optional(),
+    avatarKey: TeamAvatarKeySchema.nullable().optional(),
+  })
+  .strict();
 export const TeamUpdateRequestSchema = TeamCreateRequestSchema.partial().refine(
   (value) => Object.keys(value).length > 0, { message: "At least one team field is required" },
 );

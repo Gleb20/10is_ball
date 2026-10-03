@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import {
   expect,
@@ -93,6 +94,7 @@ async function expectNoHorizontalOverflow(page: Page) {
 test.use({ userAgent: "tab10-tech-002-browser" });
 
 const browserErrors = new WeakMap<Page, string[]>();
+const ownedMatches = new WeakMap<Page, string>();
 test.beforeEach(async ({ page }) => {
   const errors: string[] = [];
   browserErrors.set(page, errors);
@@ -100,6 +102,21 @@ test.beforeEach(async ({ page }) => {
   await prepareAdmin();
 });
 test.afterEach(async ({ page }, testInfo) => {
+  const matchId = ownedMatches.get(page);
+  if (matchId) {
+    const currentResponse = await page.request.get(`/api/v1/matches/${matchId}`);
+    expect(currentResponse.status()).toBe(200);
+    const current = (await currentResponse.json()).match;
+    if (["in_progress", "pending_confirmation"].includes(current.status)) {
+      const stopped = await page.request.post(`/api/v1/matches/${matchId}/stop`, {
+        data: { winnerSide: "A", reasonCode: "other", reasonText: "Очистка синтетического critical сценария" },
+        headers: { ...await csrfHeaders(page.request), "idempotency-key": randomUUID() },
+      });
+      expect(stopped.status(), await stopped.text()).toBe(200);
+      expect((await stopped.json()).match.activeJudge).toBeNull();
+    }
+    ownedMatches.delete(page);
+  }
   expect(browserErrors.get(page) ?? []).toEqual([]);
   if (testInfo.status === testInfo.expectedStatus) {
     await page.screenshot({ path: testInfo.outputPath("verified-state.png"), fullPage: true });
@@ -114,28 +131,24 @@ test("E2E_auth_match_judge__AT-MATCH-001_005_008_AT-JUDGE-001_003_006_007__finis
   await expectNoHorizontalOverflow(page);
 
   await page.goto("/matches/new");
-  await expect(page.getByRole("heading", { name: "Новый матч" })).toBeVisible();
-  await page.getByRole("button", { name: "Изменить название", exact: true }).click();
-  await page.getByLabel("Название").fill("TECH-002 critical journey");
-  await page.getByLabel("Создатель играет", { exact: true }).check();
+  await expect(page.getByRole("form", { name: "Создание матча" })).toBeVisible();
+  await page.getByRole("button", { name: "Настройки", exact: true }).click();
+  const settings = page.getByRole("dialog", { name: "Настройки матча", exact: true });
+  await settings.getByLabel("Название").fill("TECH-002 critical journey");
+  await settings.getByLabel("Создатель играет", { exact: true }).check();
+  await settings.getByRole("button", { name: "Готово", exact: true }).click();
   await page
     .getByRole("group", { name: "Соперник: тип участника", exact: true })
     .getByRole("button", { name: "Гость", exact: true })
     .click();
-  await page.getByLabel("Гость (Имя Фамилия)").fill("Гость E2E");
-  await page.getByRole("button", { name: "Создать матч" }).click();
-  await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+$/);
-  await expect(
-    page.getByRole("heading", { name: "TECH-002 critical journey" }),
-  ).toBeVisible();
-
-  await page.getByRole("button", { name: "Судить" }).click();
+  await page.getByLabel("Соперник — гость (Имя Фамилия)").fill("Гость E2E");
+  await page.getByRole("button", { name: "Начать", exact: true }).click();
+  await page.getByRole("button", { name: /Admin Tab10.*Подаёт первым/ }).click();
   await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+\/judge$/);
-  await expect(page.getByTestId("judge-setup")).toBeVisible();
-  await expectNoHorizontalOverflow(page);
-  await page.getByRole("radio", { name: /Tab10 Admin/ }).check();
-  await page.getByRole("button", { name: "Начать матч" }).click();
+  ownedMatches.set(page, new URL(page.url()).pathname.split("/")[2]!);
+  await expect(page.getByTestId("judge-setup")).toHaveCount(0);
   await expect(page.getByRole("group", { name: "Счёт матча" })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
 
   const point = page.getByRole("button", { name: /\+1 очко: Tab10 Admin/i });
   for (let index = 0; index < 5; index += 1) await point.click();
@@ -145,13 +158,16 @@ test("E2E_auth_match_judge__AT-MATCH-001_005_008_AT-JUDGE-001_003_006_007__finis
   await expect(
     page.getByTestId("judge-side-A").locator(".judge-side__score"),
   ).toHaveText("5");
+  // Measure the settled decision layer, not an intermediate frame of its 140ms fade.
+  await expect(page.getByRole("dialog", { name: "Подтвердить результат?", exact: true })).toHaveCSS("opacity", "1");
   await expectNoSeriousAxeViolations(page);
 
   await page.getByRole("button", { name: "Подтвердить результат" }).click();
   await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+$/);
   await page.reload();
   await expect(page.getByText("Завершён", { exact: true })).toBeVisible();
-  await expect(page.locator(".score-display")).toHaveText("5 : 0");
+  await expect(page.getByRole("group", { name: "Сторона A, победитель", exact: true })).toContainText("5");
+  await expect(page.getByRole("group", { name: "Сторона B", exact: true })).toContainText("0");
   await expectNoHorizontalOverflow(page);
 });
 
@@ -160,14 +176,16 @@ test("E2E_runtime_session_recovery__AT-AUTH-009__preserves_route_and_draft_witho
 }) => {
   await loginBrowser(page);
   await page.goto("/matches/new");
-  await page.getByRole("button", { name: "Изменить название", exact: true }).click();
-  await page.getByLabel("Название").fill("TECH-002 revoked draft");
-  await page.getByLabel("Создатель играет", { exact: true }).check();
+  await page.getByRole("button", { name: "Настройки", exact: true }).click();
+  const settings = page.getByRole("dialog", { name: "Настройки матча", exact: true });
+  await settings.getByLabel("Название").fill("TECH-002 revoked draft");
+  await settings.getByLabel("Создатель играет", { exact: true }).check();
+  await settings.getByRole("button", { name: "Готово", exact: true }).click();
   await page
     .getByRole("group", { name: "Соперник: тип участника", exact: true })
     .getByRole("button", { name: "Гость", exact: true })
     .click();
-  await page.getByLabel("Гость (Имя Фамилия)").fill("Черновик E2E");
+  await page.getByLabel("Соперник — гость (Имя Фамилия)").fill("Черновик E2E");
 
   const revoker = await loginApi("tab10-tech-002-revoker");
   const sessionsResponse = await revoker.get("/api/v1/auth/sessions");
@@ -193,7 +211,8 @@ test("E2E_runtime_session_recovery__AT-AUTH-009__preserves_route_and_draft_witho
   );
   expect(revoke.ok()).toBeTruthy();
 
-  await page.getByRole("button", { name: "Создать матч" }).click();
+  await page.getByRole("button", { name: "Начать", exact: true }).click();
+  await page.getByRole("button", { name: /Admin Tab10.*Подаёт первым/ }).click();
   await expect(page).toHaveURL(/\/matches\/new$/);
   await expect(
     page.getByText(
@@ -215,13 +234,11 @@ test("E2E_runtime_session_recovery__AT-AUTH-009__preserves_route_and_draft_witho
   await page.getByLabel("Пароль", { exact: true }).fill(ADMIN_PASSWORD);
   await page.getByRole("button", { name: "Войти" }).click();
   await expect(page).toHaveURL(/\/matches\/new$/);
-  await expect(page.getByLabel("Название")).toHaveValue(
-    "TECH-002 revoked draft",
-  );
-  await expect(page.getByLabel("Гость (Имя Фамилия)")).toHaveValue(
-    "Черновик E2E",
-  );
-  await expect(page.getByLabel("Создатель играет", { exact: true })).toBeChecked();
+  await expect(page.getByText("TECH-002 revoked draft", { exact: true })).toBeVisible();
+  await expect(page.getByText("Результат запуска ещё не подтверждён", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Проверить ещё раз", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Начать", exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Название")).toHaveCount(0);
   await expect(page.getByText("Требуется вход", { exact: true })).toHaveCount(0);
   await expectNoSeriousAxeViolations(page);
   await expectNoHorizontalOverflow(page);

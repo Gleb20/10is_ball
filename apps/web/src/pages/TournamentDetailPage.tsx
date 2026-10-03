@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Alert, Button, Dialog, Icon, IconButton, TextField } from "../ui";
 import { PageLayout } from "../layout";
 import {
@@ -8,15 +8,19 @@ import {
   RefreshButton,
   StatusChip,
 } from "../patterns";
+import { formatPlannedDate } from "../tournamentDate";
 import { api, type Tournament } from "../api";
 import { useAuth } from "../auth";
 import { UserPicker } from "../components/UserPicker";
+import { GuestPicker } from "../components/GuestPicker";
+import { guestCreatePurposeKey } from "../useGuestIdentityMutation";
 import { TournamentBracket } from "../components/TournamentBracket";
 import { BracketAlgorithmDialog } from "../components/BracketAlgorithmDialog";
 import type {
   Bracket,
   BracketConstructionAlgorithm,
   BracketGraphV2,
+  GuestIdentity,
 } from "@tab10/shared";
 import {
   detectStoredConstructionAlgorithm,
@@ -29,7 +33,7 @@ import {
 } from "../bracketAlgorithmCopy";
 import { statusLabel } from "../statusLabels";
 import { useVisibleRefresh } from "../useVisibleRefresh";
-import { useSingleFlight } from "../useSingleFlight";
+import { useLifecycleSingleFlight } from "./useLifecycleSingleFlight";
 import "./TournamentSetup.css";
 
 type Participant = {
@@ -39,6 +43,7 @@ type Participant = {
   avatarKey?: string | null;
   guestFirstName?: string | null;
   guestLastName?: string | null;
+  guestIdentityId?: string | null;
   seed?: number | null;
   status?: string;
 };
@@ -50,6 +55,20 @@ type MatchRow = {
   scoreA?: number | null;
   scoreB?: number | null;
   tournamentSlotId?: string | null;
+};
+
+type SafeguardKind = "cancel" | "dissolve" | "withdraw";
+type AlgorithmRecoveryKind = "confirmed" | "unknown" | "conflict";
+type AlgorithmAttempt = {
+  expectedVersion: number;
+  constructionAlgorithm: BracketConstructionAlgorithm;
+};
+
+type ActivityContext = {
+  key: string;
+  generation: number;
+  mutationEffect: number;
+  active: boolean;
 };
 
 function definitiveBracketRejection(error: unknown): boolean {
@@ -64,22 +83,80 @@ function bracketRetryBlocked(error: unknown): boolean {
   return !["BRACKET_ALGORITHM_MISMATCH", "LEGACY_BRACKET_ALGORITHM_REQUIRED", "INVALID_BRACKET_CONSTRUCTION_ALGORITHM"].includes(response.code ?? "");
 }
 
+function bracketGenerationAllowed(status: unknown): boolean {
+  return ["collecting", "needs_regeneration", "bracket_generated"].includes(
+    String(status),
+  );
+}
+
+function safeguardResolved(
+  kind: SafeguardKind,
+  next: Tournament,
+  actorUserId?: string,
+) {
+  if (kind === "cancel") return next.status === "cancelled";
+  if (kind === "dissolve") {
+    return next.status === "collecting" && !next.bracketJson;
+  }
+  const participants = (next.participants as Participant[] | undefined) ?? [];
+  return !participants.some(
+    (participant) =>
+      participant.userId === actorUserId &&
+      (!participant.status || participant.status === "active"),
+  );
+}
+
 export function TournamentDetailPage() {
   const { id } = useParams();
   const currentIdRef = useRef(id);
   currentIdRef.current = id;
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const location = useLocation();
+  const { user, explicitAuthEpoch } = useAuth();
+  const activityKey = `${id ?? ""}:${user?.id ?? "anonymous"}:${user?.role ?? "none"}:${explicitAuthEpoch}`;
+  const activityContext = useRef<ActivityContext>({
+    key: activityKey,
+    generation: 1,
+    mutationEffect: 0,
+    active: false,
+  });
+  if (activityContext.current.key !== activityKey) {
+    activityContext.current = {
+      key: activityKey,
+      generation: activityContext.current.generation + 1,
+      mutationEffect: 0,
+      active: false,
+    };
+  }
+  const activityGeneration = activityContext.current.generation;
+  const actionMutationActive = useRef(false);
+  const [actionPendingGeneration, setActionPendingGeneration] = useState(0);
   const currentUserIdRef = useRef(user?.id);
   currentUserIdRef.current = user?.id;
+  const guestMutationActorRef = useRef(user?.id);
+  if (user?.id) guestMutationActorRef.current = user.id;
+  const guestMutationScope = {
+    actorId: user?.id ?? guestMutationActorRef.current,
+    authEpoch: explicitAuthEpoch,
+    routeKey: location.pathname,
+    purposeKey: guestCreatePurposeKey({ kind: "tournament", tournamentId: id ?? "missing" }),
+  };
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [guest, setGuest] = useState("");
   const [guestFormOpen, setGuestFormOpen] = useState(false);
+  const [rosterIdentityKind, setRosterIdentityKind] = useState<"user" | "guest">("user");
+  const [guestKind, setGuestKind] = useState<"inline" | "saved">("inline");
+  const [savedGuest, setSavedGuest] = useState<GuestIdentity | null>(null);
   const [pickUserId, setPickUserId] = useState("");
   const [pickInput, setPickInput] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionHint, setActionHint] = useState<string | null>(null);
-  const { pending: busy, run: runSingleFlight } = useSingleFlight();
+  const {
+    pending: singleFlightBusy,
+    run: runSingleFlight,
+    invalidate: invalidateSingleFlight,
+    resume: resumeSingleFlight,
+  } = useLifecycleSingleFlight();
   const [algoDialogOpen, setAlgoDialogOpen] = useState(false);
   const algoReturnFocusRef = useRef<HTMLElement | null>(null);
   const [algoSelected, setAlgoSelected] =
@@ -90,9 +167,18 @@ export function TournamentDetailPage() {
   const [algoRetryBlocked, setAlgoRetryBlocked] = useState(false);
   const algoNoRepeatRef = useRef(false);
   const algoConfirmedReadbackRef = useRef<number | null>(null);
+  const algoRecoveryRef = useRef<AlgorithmRecoveryKind | null>(null);
+  const algoUnknownAttemptRef = useRef<AlgorithmAttempt | null>(null);
+  const [algoSameAttemptReady, setAlgoSameAttemptReady] = useState(false);
+  const algoOperationRef = useRef<{
+    token: { key: string; generation: number; effect: number };
+    postStarted: boolean;
+  } | null>(null);
+  const interruptedAlgoRecoveryRef = useRef<"confirmed" | "unknown" | null>(null);
   const [editingSettings, setEditingSettings] = useState(false);
   const [settings, setSettings] = useState({
     title: "",
+    plannedDate: "",
     format: "single_elimination" as
       | "single_elimination"
       | "double_elimination",
@@ -105,14 +191,35 @@ export function TournamentDetailPage() {
   const [swapB, setSwapB] = useState("seed:2");
   const [stopDialogOpen, setStopDialogOpen] = useState(false);
   const [stopReason, setStopReason] = useState("");
+  const [safeguard, setSafeguard] = useState<SafeguardKind | null>(null);
+  const [safeguardGeneration, setSafeguardGeneration] = useState(0);
+  const [safeguardBlocked, setSafeguardBlocked] = useState<SafeguardKind | null>(null);
+  const safeguardBlockedRef = useRef<SafeguardKind | null>(null);
+  const safeguardReturnFocusRef = useRef<HTMLElement | null>(null);
+  const safeguardSafeRef = useRef<HTMLButtonElement>(null);
   const requestSequence = useRef(0);
   const mutationPendingRef = useRef(false);
+  const activityResetKeyRef = useRef("");
+  const [, setLifecycleRevision] = useState(0);
+  const busy = singleFlightBusy || actionPendingGeneration === activityGeneration;
+
+  const isActivityCurrent = useCallback(
+    (token: { key: string; generation: number; effect?: number }) =>
+      activityContext.current.active &&
+      activityContext.current.key === token.key &&
+      activityContext.current.generation === token.generation &&
+      (token.effect === undefined || activityContext.current.mutationEffect === token.effect),
+    [],
+  );
 
   useEffect(() => {
     requestSequence.current += 1;
     setTournament(null);
     setGuest("");
     setGuestFormOpen(false);
+    setRosterIdentityKind("user");
+    setGuestKind("inline");
+    setSavedGuest(null);
     setPickUserId("");
     setPickInput("");
     setEditingSettings(false);
@@ -127,23 +234,153 @@ export function TournamentDetailPage() {
     setAlgoRetryBlocked(false);
     algoNoRepeatRef.current = false;
     algoConfirmedReadbackRef.current = null;
+    algoRecoveryRef.current = null;
+    algoUnknownAttemptRef.current = null;
+    setAlgoSameAttemptReady(false);
   }, [id]);
+
+  useEffect(() => {
+    const previous = activityContext.current;
+    const activeContext: ActivityContext = {
+      key: activityKey,
+      generation: previous.generation + 1,
+      mutationEffect: 0,
+      active: true,
+    };
+    activityContext.current = activeContext;
+    actionMutationActive.current = false;
+    mutationPendingRef.current = false;
+    setActionPendingGeneration(0);
+    resumeSingleFlight();
+    const interruptedAlgoRecovery = interruptedAlgoRecoveryRef.current;
+    interruptedAlgoRecoveryRef.current = null;
+    if (interruptedAlgoRecovery === "confirmed") {
+      algoNoRepeatRef.current = true;
+      algoRecoveryRef.current = "confirmed";
+      setAlgoRetryBlocked(true);
+      setAlgoSameAttemptReady(false);
+      setAlgoErrorTitle("Сетка построена, состояние не загружено");
+      setAlgoError("Построение было подтверждено до прерывания экрана. Проверьте актуальное состояние; повторное построение заблокировано.");
+      setAlgoErrorRevision((revision) => revision + 1);
+    } else if (interruptedAlgoRecovery === "unknown") {
+      algoNoRepeatRef.current = true;
+      algoConfirmedReadbackRef.current = null;
+      algoRecoveryRef.current = "unknown";
+      setAlgoRetryBlocked(true);
+      setAlgoSameAttemptReady(false);
+      setAlgoErrorTitle("Исход построения неизвестен");
+      setAlgoError("Экран был прерван после отправки запроса. Проверьте актуальное состояние; повторное построение заблокировано.");
+      setAlgoErrorRevision((revision) => revision + 1);
+    }
+    setLifecycleRevision((revision) => revision + 1);
+    return () => {
+      requestSequence.current += 1;
+      const interruptedSingleFlight = invalidateSingleFlight();
+      const algorithmOperation = algoOperationRef.current;
+      if (interruptedSingleFlight && algorithmOperation) {
+        interruptedAlgoRecoveryRef.current =
+          algoRecoveryRef.current === "confirmed"
+            ? "confirmed"
+            : algorithmOperation.postStarted
+              ? "unknown"
+              : null;
+        algoOperationRef.current = null;
+      }
+      if (activityContext.current === activeContext) {
+        activityContext.current = {
+          ...activeContext,
+          generation: activeContext.generation + 1,
+          active: false,
+        };
+      }
+    };
+  }, [activityKey, invalidateSingleFlight, resumeSingleFlight]);
+
+  useEffect(() => {
+    if (!location.state || typeof location.state !== "object") return;
+    const state = location.state as Record<string, unknown>;
+    const selection = state.guestSelection;
+    if (!selection || typeof selection !== "object") return;
+    const value = selection as { kind?: unknown; guest?: unknown };
+    if (value.kind !== "tournament" || !value.guest || typeof value.guest !== "object") return;
+    const guest = value.guest as Partial<GuestIdentity>;
+    if (
+      typeof guest.id !== "string" ||
+      typeof guest.firstName !== "string" ||
+      typeof guest.lastName !== "string" ||
+      typeof guest.displayName !== "string" ||
+      typeof guest.avatarKey !== "string" ||
+      typeof guest.version !== "number" ||
+      typeof guest.canRename !== "boolean" ||
+      typeof guest.createdAt !== "string" ||
+      typeof guest.updatedAt !== "string"
+    ) return;
+    setSavedGuest(guest as GuestIdentity);
+    setRosterIdentityKind("guest");
+    setGuestKind("saved");
+    const nextState = { ...state };
+    delete nextState.guestSelection;
+    navigate(
+      { pathname: location.pathname, search: location.search, hash: location.hash },
+      { replace: true, state: Object.keys(nextState).length > 0 ? nextState : null },
+    );
+  }, [location.hash, location.pathname, location.search, location.state, navigate]);
+
+  useEffect(() => {
+    if (activityResetKeyRef.current === activityKey) return;
+    activityResetKeyRef.current = activityKey;
+    actionMutationActive.current = false;
+    mutationPendingRef.current = false;
+    setActionPendingGeneration(0);
+    setSafeguard(null);
+    setSafeguardGeneration(0);
+    safeguardBlockedRef.current = null;
+    setSafeguardBlocked(null);
+    setAlgoDialogOpen(false);
+    setAlgoError(null);
+    setAlgoRetryBlocked(false);
+    algoNoRepeatRef.current = false;
+    algoConfirmedReadbackRef.current = null;
+    algoRecoveryRef.current = null;
+    algoUnknownAttemptRef.current = null;
+    setAlgoSameAttemptReady(false);
+    algoOperationRef.current = null;
+    interruptedAlgoRecoveryRef.current = null;
+  }, [activityKey]);
 
   const load = useCallback(async (allowDuringMutation = false) => {
     const requestedId = id;
     const requestedUserId = user?.id;
-    if (!requestedId || (mutationPendingRef.current && !allowDuringMutation)) return;
+    const token = {
+      key: activityContext.current.key,
+      generation: activityContext.current.generation,
+    };
+    if (!requestedId || !isActivityCurrent(token) || (mutationPendingRef.current && !allowDuringMutation)) return;
     const sequence = ++requestSequence.current;
-    const res = await api.getTournament(requestedId);
-    if (
-      sequence === requestSequence.current &&
-      currentIdRef.current === requestedId &&
-      (!requestedUserId || currentUserIdRef.current === requestedUserId)
-    ) {
-      setTournament(res.tournament);
-      return res.tournament;
+    try {
+      const res = await api.getTournament(requestedId);
+      if (
+        sequence === requestSequence.current &&
+        isActivityCurrent(token) &&
+        currentIdRef.current === requestedId &&
+        (!requestedUserId || currentUserIdRef.current === requestedUserId)
+      ) {
+        setTournament(res.tournament);
+        const blocked = safeguardBlockedRef.current;
+        if (blocked && safeguardResolved(blocked, res.tournament, requestedUserId)) {
+          safeguardBlockedRef.current = null;
+          setSafeguardBlocked(null);
+          setSafeguard(null);
+          setActionError(null);
+          setActionHint("Состояние турнира подтверждено");
+        }
+        return res.tournament;
+      }
+    } catch (error) {
+      if (!isActivityCurrent(token) || sequence !== requestSequence.current) return undefined;
+      throw error;
     }
-  }, [id]);
+  }, [id, isActivityCurrent, user?.id]);
 
   const tournamentIsActive =
     tournament === null ||
@@ -168,6 +405,12 @@ export function TournamentDetailPage() {
       activeParticipants
         .map((p) => p.userId)
         .filter((uid): uid is string => Boolean(uid)),
+    [activeParticipants],
+  );
+  const rosterGuestIdentityIds = useMemo(
+    () => activeParticipants.flatMap((participant) =>
+      participant.guestIdentityId ? [participant.guestIdentityId] : [],
+    ),
     [activeParticipants],
   );
   const nameMap = useMemo(() => {
@@ -209,6 +452,8 @@ export function TournamentDetailPage() {
   const matches = (tournament?.matches as MatchRow[]) ?? [];
   const summary = tournament?.summary;
   const status = String(tournament?.status ?? "");
+  const visibleSafeguard =
+    safeguardGeneration === activityGeneration ? safeguard : null;
   const setupStage = status === "collecting" || status === "needs_regeneration";
   const isOrganizer = Boolean(
     user?.id && tournament?.createdByUserId === user.id,
@@ -280,6 +525,27 @@ export function TournamentDetailPage() {
     if (trigger.isConnected) trigger.focus();
   }, [algoDialogOpen]);
 
+  useEffect(() => {
+    if (visibleSafeguard || !safeguardReturnFocusRef.current) return;
+    const trigger = safeguardReturnFocusRef.current;
+    safeguardReturnFocusRef.current = null;
+    if (trigger.isConnected) trigger.focus();
+  }, [visibleSafeguard]);
+
+  useLayoutEffect(() => {
+    if (!visibleSafeguard || busy) return;
+    const frame = window.requestAnimationFrame(() => safeguardSafeRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [busy, visibleSafeguard]);
+
+  function openSafeguard(kind: SafeguardKind, trigger: HTMLElement) {
+    safeguardReturnFocusRef.current = trigger;
+    setActionError(null);
+    setActionHint(null);
+    setSafeguard(kind);
+    setSafeguardGeneration(activityGeneration);
+  }
+
   function openAlgorithmDialog(trigger: HTMLElement) {
     algoReturnFocusRef.current = trigger;
     if (!algoNoRepeatRef.current &&
@@ -300,61 +566,167 @@ export function TournamentDetailPage() {
   }
 
   async function confirmAlgorithm() {
-    if (!id || algoNoRepeatRef.current || algoRetryBlocked) return;
-    const submittedAlgorithm = algoSelected;
+    const frozenRetry = algoSameAttemptReady
+      ? algoUnknownAttemptRef.current
+      : null;
+    if (
+      !id ||
+      algoRetryBlocked ||
+      (algoNoRepeatRef.current && !frozenRetry)
+    ) return;
+    const submittedAlgorithm = frozenRetry?.constructionAlgorithm ?? algoSelected;
     const requestedId = id;
-    const requestedUserId = user?.id;
+    const current = activityContext.current;
+    const token = {
+      key: current.key,
+      generation: current.generation,
+      effect: ++current.mutationEffect,
+    };
+    const valid = () => isActivityCurrent(token);
     await runSingleFlight(async () => {
+      const operation = { token, postStarted: false };
+      algoOperationRef.current = operation;
       mutationPendingRef.current = true;
       requestSequence.current += 1;
       setActionError(null);
       setAlgoError(null);
+      let postStarted = false;
       let writeConfirmed = false;
+      let attempt: AlgorithmAttempt | null = frozenRetry;
       try {
-        const generated = await api.generateBracket(requestedId, { constructionAlgorithm: submittedAlgorithm }) as Tournament;
+        if (!attempt) {
+          const context = await readBracketGenerationContext(requestedId, valid);
+          if (!context || !valid()) return;
+          const expectedVersion = Number(context.bracketStateVersion);
+          if (!Number.isInteger(expectedVersion) || expectedVersion < 0) {
+            throw Object.assign(
+              new Error("Не удалось получить версию состояния сетки. Обновите страницу и попробуйте позже."),
+              { status: 409, code: "VERSIONED_BRACKET_CONTEXT_REQUIRED" },
+            );
+          }
+          attempt = {
+            expectedVersion,
+            constructionAlgorithm: submittedAlgorithm,
+          };
+        }
+        algoUnknownAttemptRef.current = attempt;
+        setAlgoSameAttemptReady(false);
+        postStarted = true;
+        operation.postStarted = true;
+        const response = await api.generateBracket(requestedId, attempt);
+        if (!valid()) return;
+        writeConfirmed = true;
+        algoRecoveryRef.current = "confirmed";
+        algoNoRepeatRef.current = true;
+        algoUnknownAttemptRef.current = null;
+        algoConfirmedReadbackRef.current = attempt.expectedVersion + 1;
+        setAlgoRetryBlocked(true);
+        const generated = response.tournament;
         if (generated.status !== "bracket_generated" || !generated.bracketJson) {
           throw new Error("Ответ построения не подтвердил состояние сетки");
         }
-        writeConfirmed = true;
         const generatedVersion = Number(generated.bracketStateVersion);
-        algoConfirmedReadbackRef.current = Number.isFinite(generatedVersion) && generatedVersion > 0 ? generatedVersion : 0;
-        const fresh = await load(true);
+        const expectedReadbackVersion = Number.isInteger(generatedVersion) && generatedVersion > attempt.expectedVersion
+          ? generatedVersion
+          : attempt.expectedVersion + 1;
+        algoConfirmedReadbackRef.current = expectedReadbackVersion;
+        setTournament(generated);
+        const fresh = await readBracketGenerationContext(requestedId, valid);
         const freshVersion = Number(fresh?.bracketStateVersion);
         if (!fresh || fresh.status !== "bracket_generated" || !fresh.bracketJson ||
-          (Number.isFinite(generatedVersion) && generatedVersion > 0 &&
-            (!Number.isFinite(freshVersion) || freshVersion < generatedVersion))) {
+          !Number.isInteger(freshVersion) ||
+          freshVersion < expectedReadbackVersion) {
           throw new Error("Не удалось подтвердить сохранённую сетку");
         }
-        if (currentIdRef.current === requestedId && (!requestedUserId || currentUserIdRef.current === requestedUserId)) {
+        if (valid()) {
           algoConfirmedReadbackRef.current = null;
           algoNoRepeatRef.current = false;
+          algoRecoveryRef.current = null;
+          algoUnknownAttemptRef.current = null;
+          setAlgoSameAttemptReady(false);
+          setAlgoRetryBlocked(false);
           setAlgoDialogOpen(false);
           setActionHint("Сетка построена");
         }
       } catch (error) {
-        if (currentIdRef.current !== requestedId || (requestedUserId && currentUserIdRef.current !== requestedUserId)) return;
+        if (!valid()) return;
+        const response = error as Error & { status?: number; code?: string };
         if (writeConfirmed) {
           algoNoRepeatRef.current = true;
+          algoRecoveryRef.current = "confirmed";
           setAlgoRetryBlocked(true);
           setAlgoErrorTitle("Сетка построена, состояние не загружено");
           setAlgoError("Сетка построена, но обновлённое состояние пока недоступно. Проверьте его здесь; повторное построение заблокировано.");
-        } else if (!definitiveBracketRejection(error)) {
+        } else if (postStarted && response.code === "BRACKET_VERSION_CONFLICT") {
           algoNoRepeatRef.current = true;
+          algoRecoveryRef.current = "conflict";
+          setAlgoSameAttemptReady(false);
+          setAlgoRetryBlocked(true);
+          setAlgoErrorTitle("Состояние турнира изменилось");
+          setAlgoError("Состав или настройки изменились до построения. Проверьте актуальное состояние; новая отправка возможна только как отдельное подтверждение.");
+          if (frozenRetry) {
+            try {
+              const fresh = await readBracketGenerationContext(requestedId, valid);
+              if (!fresh || !valid()) return;
+              algoNoRepeatRef.current = false;
+              algoRecoveryRef.current = null;
+              algoUnknownAttemptRef.current = null;
+              setAlgoRetryBlocked(false);
+              if (bracketGenerationAllowed(fresh.status)) {
+                setAlgoErrorTitle("Состояние изменилось");
+                setAlgoError("Состояние изменилось. Проверьте состав и сетку. Чтобы построить сетку снова, подтвердите новое действие.");
+              } else {
+                setAlgoError(null);
+                setAlgoDialogOpen(false);
+                setActionHint("Состояние изменилось. Проверьте состав и сетку");
+              }
+            } catch (readError) {
+              if (!valid() || (readError as { status?: number }).status === 401) return;
+              setAlgoError("Повторный запрос отклонён из-за новой версии, но актуальное состояние не удалось загрузить. Проверьте состояние ещё раз.");
+            }
+          }
+        } else if (postStarted && !definitiveBracketRejection(error)) {
+          algoNoRepeatRef.current = true;
+          algoRecoveryRef.current = "unknown";
+          algoUnknownAttemptRef.current = attempt;
+          algoConfirmedReadbackRef.current = null;
+          setAlgoSameAttemptReady(false);
           setAlgoRetryBlocked(true);
           setAlgoErrorTitle("Исход построения неизвестен");
           setAlgoError("Ответ не получен. Сетка могла быть построена и ещё может измениться. Проверьте её состояние; повторное построение в этом окне заблокировано.");
+        } else if (!postStarted && !definitiveBracketRejection(error)) {
+          algoUnknownAttemptRef.current = null;
+          setAlgoSameAttemptReady(false);
+          setAlgoErrorTitle("Не удалось получить актуальное состояние");
+          setAlgoError(`Запрос на построение не отправлен: ${response.message}. Повторите позже.`);
         } else if (bracketRetryBlocked(error)) {
           algoNoRepeatRef.current = true;
+          algoRecoveryRef.current = null;
+          algoUnknownAttemptRef.current = null;
+          setAlgoSameAttemptReady(false);
           setAlgoRetryBlocked(true);
           setAlgoErrorTitle("Построение сейчас недоступно");
-          setAlgoError(`Сетка сейчас недоступна для построения: ${(error as Error).message}. Проверьте состояние турнира или выйдите из окна.`);
+          setAlgoError(
+            response.status === 404 || response.code === "VERSIONED_BRACKET_CONTEXT_REQUIRED"
+              ? "Без актуальной версии сетку строить небезопасно. Обновите страницу и попробуйте позже."
+              : `Сетка сейчас недоступна для построения: ${response.message}. Проверьте состояние турнира или выйдите из окна.`,
+          );
         } else {
+          algoUnknownAttemptRef.current = null;
+          setAlgoSameAttemptReady(false);
           setAlgoErrorTitle("Не удалось построить сетку");
-          setAlgoError((error as Error).message);
+          setAlgoError(
+            postStarted
+              ? response.message
+              : `Не удалось получить актуальное состояние: ${response.message}. Повторите позже.`,
+          );
         }
         setAlgoErrorRevision((revision) => revision + 1);
       } finally {
-        mutationPendingRef.current = false;
+        if (algoOperationRef.current === operation) {
+          algoOperationRef.current = null;
+        }
+        if (valid()) mutationPendingRef.current = false;
       }
     });
   }
@@ -362,18 +734,34 @@ export function TournamentDetailPage() {
   async function checkAlgorithmState() {
     if (!id) return;
     const requestedId = id;
-    const requestedUserId = user?.id;
+    const current = activityContext.current;
+    const token = {
+      key: current.key,
+      generation: current.generation,
+      effect: current.mutationEffect,
+    };
+    const valid = () => isActivityCurrent(token);
     await runSingleFlight(async () => {
       try {
-        const fresh = await load(true);
-        if (currentIdRef.current !== requestedId || (requestedUserId && currentUserIdRef.current !== requestedUserId)) return;
+        const fresh = await readBracketGenerationContext(requestedId, valid);
+        if (!fresh || !valid()) return;
+        const freshVersion = Number(fresh.bracketStateVersion);
+        if (!Number.isInteger(freshVersion) || freshVersion < 0) {
+          setAlgoErrorTitle("Сетка построена, состояние не подтверждено");
+          setAlgoError("Сетка построена, но актуальная сетка пока не отображается: сервер не вернул её версию. Повторное построение остаётся заблокированным.");
+          setAlgoErrorRevision((revision) => revision + 1);
+          return;
+        }
+        const recovery = algoRecoveryRef.current;
         const expectedVersion = algoConfirmedReadbackRef.current;
-        if (expectedVersion !== null) {
-          const freshVersion = Number(fresh?.bracketStateVersion);
+        if (recovery === "confirmed" && expectedVersion !== null) {
           if (fresh?.status === "bracket_generated" && fresh.bracketJson &&
-            (expectedVersion === 0 || (Number.isFinite(freshVersion) && freshVersion >= expectedVersion))) {
+            freshVersion >= expectedVersion) {
             algoConfirmedReadbackRef.current = null;
             algoNoRepeatRef.current = false;
+            algoRecoveryRef.current = null;
+            algoUnknownAttemptRef.current = null;
+            setAlgoSameAttemptReady(false);
             setAlgoRetryBlocked(false);
             setAlgoError(null);
             setAlgoDialogOpen(false);
@@ -383,9 +771,52 @@ export function TournamentDetailPage() {
             setAlgoError("Сетка построена, но актуальная сетка пока не отображается. Проверьте состояние ещё раз; повторное построение заблокировано.");
             setAlgoErrorRevision((revision) => revision + 1);
           }
+        } else if (recovery === "conflict") {
+          algoNoRepeatRef.current = false;
+          algoRecoveryRef.current = null;
+          algoUnknownAttemptRef.current = null;
+          setAlgoSameAttemptReady(false);
+          setAlgoRetryBlocked(false);
+          setAlgoErrorTitle("Состояние обновлено");
+          setAlgoError("Проверьте выбранный способ и отдельно подтвердите новое построение.");
+          setAlgoErrorRevision((revision) => revision + 1);
+        } else if (recovery === "unknown") {
+          const attempt = algoUnknownAttemptRef.current;
+          const generationAllowed = bracketGenerationAllowed(fresh.status);
+          if (attempt && (freshVersion > attempt.expectedVersion || !generationAllowed)) {
+            algoNoRepeatRef.current = false;
+            algoRecoveryRef.current = null;
+            algoUnknownAttemptRef.current = null;
+            setAlgoSameAttemptReady(false);
+            setAlgoRetryBlocked(false);
+            if (generationAllowed) {
+              setAlgoErrorTitle("Состояние изменилось");
+              setAlgoError("Состояние изменилось. Проверьте состав и сетку. Чтобы построить сетку снова, подтвердите новое действие.");
+            } else {
+              setAlgoError(null);
+              setAlgoDialogOpen(false);
+              setActionHint("Состояние изменилось. Проверьте состав и сетку");
+            }
+          } else if (attempt && freshVersion === attempt.expectedVersion && generationAllowed) {
+            setAlgoSelected(attempt.constructionAlgorithm);
+            setAlgoSameAttemptReady(true);
+            setAlgoRetryBlocked(false);
+            setAlgoErrorTitle("Исход построения всё ещё неизвестен");
+            setAlgoError("Версия состояния не изменилась. Можно повторить только тот же запрос с тем же способом построения.");
+          } else {
+            setAlgoSameAttemptReady(false);
+            setAlgoRetryBlocked(true);
+            setAlgoErrorTitle("Исход построения всё ещё неизвестен");
+            setAlgoError("Актуальное состояние не позволяет безопасно повторить запрос. Повторное построение остаётся заблокированным.");
+          }
+          setAlgoErrorRevision((revision) => revision + 1);
         }
       } catch (error) {
-        if (currentIdRef.current !== requestedId || (requestedUserId && currentUserIdRef.current !== requestedUserId) || (error as { status?: number }).status === 401) return;
+        if (!valid() || (error as { status?: number }).status === 401) return;
+        if (algoRecoveryRef.current === "unknown") {
+          setAlgoSameAttemptReady(false);
+          setAlgoRetryBlocked(true);
+        }
         setAlgoError((message) => `${message ?? "Исход построения неизвестен."} Не удалось обновить состояние турнира.`);
         setAlgoErrorRevision((revision) => revision + 1);
       }
@@ -462,35 +893,95 @@ export function TournamentDetailPage() {
   }, [bracketV2, nextOwnMatch, ownParticipantIds, terminalTournament]);
   const seedOrder = bracketV2?.seedOrder ?? [];
 
-  async function runAction(fn: () => Promise<void>, okHint?: string) {
-    const actionId = id;
-    const actionUserId = user?.id;
-    await runSingleFlight(async () => {
-      mutationPendingRef.current = true;
-      requestSequence.current += 1;
-      setActionError(null);
-      setActionHint(null);
-      try {
-        await fn();
-        if (
-          okHint &&
-          currentIdRef.current === actionId &&
-          (!actionUserId || currentUserIdRef.current === actionUserId)
-        ) {
-          setActionHint(okHint);
-        }
-      } catch (e) {
-        if (
-          (e as Error & { status?: number }).status !== 401 &&
-          currentIdRef.current === actionId &&
-          (!actionUserId || currentUserIdRef.current === actionUserId)
-        ) {
-          setActionError((e as Error).message);
-        }
-      } finally {
-        mutationPendingRef.current = false;
+  async function runAction(
+    fn: (valid: () => boolean) => Promise<void>,
+    okHint?: string,
+  ) {
+    if (actionMutationActive.current || singleFlightBusy) return;
+    const current = activityContext.current;
+    const token = {
+      key: current.key,
+      generation: current.generation,
+      effect: ++current.mutationEffect,
+    };
+    const valid = () => isActivityCurrent(token);
+    actionMutationActive.current = true;
+    setActionPendingGeneration(token.generation);
+    mutationPendingRef.current = true;
+    requestSequence.current += 1;
+    setActionError(null);
+    setActionHint(null);
+    try {
+      await fn(valid);
+      if (okHint && valid()) setActionHint(okHint);
+    } catch (e) {
+      if (valid() && (e as Error & { status?: number }).status !== 401) {
+        setActionError((e as Error).message);
       }
-    });
+    } finally {
+      if (valid()) {
+        actionMutationActive.current = false;
+        mutationPendingRef.current = false;
+        setActionPendingGeneration(0);
+      }
+    }
+  }
+
+  async function readAuthoritativeTournament(
+    requestedId: string,
+    valid: () => boolean,
+  ) {
+    const sequence = ++requestSequence.current;
+    const response = await api.getTournament(requestedId);
+    if (!valid() || sequence !== requestSequence.current) return undefined;
+    setTournament(response.tournament);
+    return response.tournament;
+  }
+
+  async function readBracketGenerationContext(
+    requestedId: string,
+    valid: () => boolean,
+  ) {
+    const sequence = ++requestSequence.current;
+    const response = await api.getBracketGenerationContext(requestedId);
+    if (!valid() || sequence !== requestSequence.current) return undefined;
+    setTournament(response.tournament);
+    return response.tournament;
+  }
+
+  async function confirmSafeguard() {
+    const kind = visibleSafeguard;
+    const requestedId = id;
+    const actorUserId = user?.id;
+    if (!kind || !requestedId || safeguardBlocked === kind) return;
+    const okHint = kind === "cancel"
+      ? "Турнир отменён"
+      : kind === "dissolve"
+        ? "Сетка распущена"
+        : "Вы вышли из турнира";
+    await runAction(async (valid) => {
+      if (kind === "cancel") await api.cancelTournament(requestedId);
+      else if (kind === "dissolve") await api.dissolveBracket(requestedId);
+      else await api.withdrawTournament(requestedId);
+      if (!valid()) return;
+      try {
+        const fresh = await readAuthoritativeTournament(requestedId, valid);
+        if (!fresh || !safeguardResolved(kind, fresh, actorUserId)) {
+          throw new Error("Сервер ещё не подтвердил новое состояние турнира");
+        }
+      } catch (error) {
+        if (!valid()) return;
+        safeguardBlockedRef.current = kind;
+        setSafeguardBlocked(kind);
+        throw new Error(
+          `Действие отправлено, но актуальное состояние не удалось подтвердить: ${(error as Error).message}. Проверьте состояние перед повтором.`,
+        );
+      }
+      if (!valid()) return;
+      safeguardBlockedRef.current = null;
+      setSafeguardBlocked(null);
+      setSafeguard(null);
+    }, okHint);
   }
 
   function replaceTournamentIfCurrent(
@@ -517,6 +1008,41 @@ export function TournamentDetailPage() {
     );
   }
 
+  function openGuestCatalogue() {
+    if (!id) return;
+    const returnTo = `/tournaments/${id}`;
+    navigate("/guests", {
+      state: {
+        returnTo,
+        returnLabel: "К турниру",
+        guestSelectionContext: {
+          kind: "tournament",
+          returnTo,
+          returnLabel: "К турниру",
+          tournamentId: id,
+        },
+      },
+    });
+  }
+
+  function addSavedGuest(regenerateBracket: boolean) {
+    if (!savedGuest) return;
+    if (
+      regenerateBracket &&
+      !window.confirm(`Добавить ${savedGuest.displayName} в турнир «${String(tournament?.title)}» и сразу перестроить уже созданную сетку?`)
+    ) return;
+    const submittedGuest = savedGuest;
+    void runAction(async (valid) => {
+      const response = await api.addTournamentParticipant(id!, {
+        guestIdentityId: submittedGuest.id,
+        ...(regenerateBracket ? { confirmBracketRegeneration: true } : {}),
+      }, crypto.randomUUID());
+      if (!valid()) return;
+      setSavedGuest(null);
+      replaceTournamentIfCurrent(response.tournament);
+    }, "Гость добавлен");
+  }
+
   const buildBracketAction = canBuildBracket && activeParticipants.length >= 3 ? (
     <Button
       disabled={busy}
@@ -533,11 +1059,8 @@ export function TournamentDetailPage() {
     <Button
       variant="secondary"
       disabled={busy}
-      onClick={() =>
-        void runAction(async () => {
-          await api.dissolveBracket(id!);
-          await load(true);
-        })
+      onClick={(event: MouseEvent<HTMLButtonElement>) =>
+        openSafeguard("dissolve", event.currentTarget)
       }
     >
       Распустить сетку
@@ -548,8 +1071,9 @@ export function TournamentDetailPage() {
     <Button
       disabled={busy}
       onClick={() =>
-        void runAction(async () => {
+        void runAction(async (valid) => {
           const r = await api.startTournament(id!);
+          if (!valid()) return;
           replaceTournamentIfCurrent(r.tournament);
         }, "Турнир стартовал")
       }
@@ -573,11 +1097,8 @@ export function TournamentDetailPage() {
       variant="secondary"
       disabled={busy}
       data-testid="tournament-cancel"
-      onClick={() =>
-        void runAction(async () => {
-          const r = await api.cancelTournament(id!);
-          replaceTournamentIfCurrent(r.tournament);
-        }, "Турнир отменён")
+      onClick={(event: MouseEvent<HTMLButtonElement>) =>
+        openSafeguard("cancel", event.currentTarget)
       }
     >
       Отменить турнир
@@ -587,19 +1108,71 @@ export function TournamentDetailPage() {
   const withdrawAction = canWithdraw ? (
     <Button
       variant="secondary"
-      disabled={busy}
-      onClick={() =>
-        void runAction(async () => {
-          const r = await api.withdrawTournament(id!);
-          replaceTournamentIfCurrent(
-            (r as { tournament: Tournament }).tournament,
-          );
-        })
-      }
+      disabled={busy || safeguardBlocked === "withdraw"}
+      onClick={(event: MouseEvent<HTMLButtonElement>) => {
+        if (status === "bracket_generated") {
+          openSafeguard("withdraw", event.currentTarget);
+          return;
+        }
+        const requestedId = id;
+        if (!requestedId) return;
+        void runAction(async (valid) => {
+          await api.withdrawTournament(requestedId);
+          if (!valid()) return;
+          try {
+            const fresh = await readAuthoritativeTournament(requestedId, valid);
+            if (!valid()) return;
+            if (!fresh || !safeguardResolved("withdraw", fresh, user?.id)) {
+              throw new Error("Сервер ещё не подтвердил выход из турнира");
+            }
+          } catch (error) {
+            if (!valid()) return;
+            safeguardBlockedRef.current = "withdraw";
+            setSafeguardBlocked("withdraw");
+            throw new Error(
+              `Запрос на выход отправлен, но актуальное состояние не подтверждено: ${(error as Error).message}. Проверьте состояние перед повтором.`,
+            );
+          }
+        }, "Вы вышли из турнира");
+      }}
     >
       Выйти из турнира
     </Button>
   ) : null;
+
+  const safeguardCopy = visibleSafeguard && tournament
+    ? visibleSafeguard === "cancel"
+      ? {
+          title: `Отменить турнир «${String(tournament.title)}»?`,
+          consequence: "Продолжить его будет нельзя. Сетка будет удалена.",
+          safeLabel: "Оставить турнир",
+          confirmLabel: "Отменить турнир",
+        }
+      : visibleSafeguard === "dissolve"
+        ? {
+            title: `Распустить сетку турнира «${String(tournament.title)}»?`,
+            consequence: "Состав сохранится, а текущая сетка и расстановка будут удалены.",
+            safeLabel: "Сохранить сетку",
+            confirmLabel: "Распустить сетку",
+          }
+        : {
+            title: `Выйти из турнира «${String(tournament.title)}»?`,
+            consequence: "После выхода готовая сетка станет недействительной. Организатору потребуется построить её заново.",
+            safeLabel: "Остаться в турнире",
+            confirmLabel: "Выйти из турнира",
+          }
+    : null;
+  const resultByParticipant = new Map(
+    (summary?.results ?? []).map((result) => [result.participantId, result]),
+  );
+  const podium = status === "finished"
+    ? (summary?.top3 ?? []).flatMap((participantId) => {
+        const result = resultByParticipant.get(participantId);
+        return result?.place != null && result.place >= 1 && result.place <= 3
+          ? [{ participantId, place: result.place }]
+          : [];
+      })
+    : [];
 
   return (
     <PageLayout
@@ -622,6 +1195,19 @@ export function TournamentDetailPage() {
                 description={loadError}
               />
             ) : null}
+            {!algoDialogOpen && algoOperationRef.current && busy ? (
+              <p role="status" aria-label="Построение сетки">
+                Строим сетку… Закрытие окна не отменяет запрос.
+              </p>
+            ) : null}
+            {!algoDialogOpen && algoError && !busy ? (
+              <section className="stack" aria-label="Состояние построения сетки">
+                <Alert type="warning" variant="tonal" title={algoErrorTitle} description={algoError} />
+                <Button variant="secondary" onClick={(event: MouseEvent<HTMLButtonElement>) => openAlgorithmDialog(event.currentTarget)}>
+                  Открыть состояние построения
+                </Button>
+              </section>
+            ) : null}
             <div className="row">
               <StatusChip
                 status={String(tournament.status)}
@@ -632,7 +1218,8 @@ export function TournamentDetailPage() {
               </span>
             </div>
 
-            {!isScopedAdminView ? <section className="card stack tournament-setup" aria-labelledby="tournament-rules-heading">
+            {!isScopedAdminView && formatPlannedDate(tournament.plannedDate) ? <p className="muted">Плановая дата: {formatPlannedDate(tournament.plannedDate)}</p> : null}
+            {!isScopedAdminView && (setupStage || editingSettings) ? <section className="card stack tournament-setup" aria-labelledby="tournament-rules-heading">
               <div className="row tournament-setup__heading-row">
                 <h2 id="tournament-rules-heading" className="section-title">
                   {setupStage ? "Шаг 1 из 3 · Правила" : "Правила"}
@@ -644,6 +1231,7 @@ export function TournamentDetailPage() {
                     onClick={() => {
                       setSettings({
                         title: String(tournament.title ?? ""),
+                        plannedDate: String(tournament.plannedDate ?? ""),
                         format,
                         organizerParticipates:
                           tournament.organizerParticipates !== false,
@@ -670,6 +1258,9 @@ export function TournamentDetailPage() {
                       }))
                     }
                   />
+                  <TextField label="Плановая дата (необязательно)" type="date" value={settings.plannedDate}
+                    disabled={busy} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSettings((current) => ({ ...current, plannedDate: event.target.value }))} />
+                  <p className="muted">Дата для участников. Турнир запускается вручную.</p>
                   <div className="stack tournament-setup__choice">
                     <span className="tournament-setup__choice-label">Сетка проигравших</span>
                     <FilterBar
@@ -750,11 +1341,13 @@ export function TournamentDetailPage() {
                     <Button
                       disabled={busy || !settings.title.trim() || settings.pointsToWin < 1 || (settings.mercyEnabled && settings.mercyPoints < 1)}
                       onClick={() =>
-                        void runAction(async () => {
+                        void runAction(async (valid) => {
                           const response = await api.patchTournament(id!, {
                             ...settings,
                             title: settings.title.trim(),
+                            plannedDate: settings.plannedDate || null,
                           });
+                          if (!valid()) return;
                           if (replaceTournamentIfCurrent(response.tournament)) {
                             setEditingSettings(false);
                           }
@@ -787,12 +1380,23 @@ export function TournamentDetailPage() {
             </section> : null}
 
             {actionError ? (
-              <Alert
-                type="error"
-                variant="tonal"
-                title="Не удалось выполнить"
-                description={actionError}
-              />
+              <div className="stack">
+                <Alert
+                  type="error"
+                  variant="tonal"
+                  title="Не удалось выполнить"
+                  description={actionError}
+                />
+                {safeguardBlocked === "withdraw" && !visibleSafeguard ? (
+                  <Button
+                    variant="secondary"
+                    disabled={busy || refreshing}
+                    onClick={() => void refreshNow()}
+                  >
+                    Проверить состояние
+                  </Button>
+                ) : null}
+              </div>
             ) : null}
             {actionHint ? (
               <Alert
@@ -804,96 +1408,87 @@ export function TournamentDetailPage() {
             ) : null}
 
             {!setupStage ? (
-              <div className="row tournament-setup__actions">
-                {buildBracketAction}
-                {dissolveAction}
-                {startAction}
-                {stopAction}
-                {cancelAction}
-                {withdrawAction}
-              </div>
+              status === "bracket_generated" ? (
+                <div className="row tournament-setup__actions" aria-label="Главное действие турнира">
+                  {startAction}
+                </div>
+              ) : null
             ) : null}
 
-            {setupStage || canAddRegistered || (canEditRoster && isOrganizer) ? (
+            {setupStage ? (
             <section className="card stack tournament-setup" aria-labelledby="tournament-roster-heading">
               <h2 id="tournament-roster-heading" className="section-title">
                 {setupStage ? "Шаг 2 из 3 · Состав" : "Участники"} ({activeParticipants.length})
               </h2>
-              {canAddRegistered ? <UserPicker
-                label="Добавить игрока"
-                value={pickUserId}
-                onChange={setPickUserId}
-                inputValue={pickInput}
-                onInputChange={setPickInput}
-                disabled={busy}
-                excludeUserIds={rosterUserIds}
-                excludeSelf={false}
-              /> : null}
-              {canAddRegistered ? <Button
-                disabled={busy || !pickUserId}
-                onClick={() => {
-                  const playerName = pickInput.trim() || "выбранного игрока";
-                  const requiresOverride = Boolean(tournament.requireParticipantConsent) || !isOrganizer;
-                  const regeneratesBracket = status === "bracket_generated";
-                  const ordinaryOrganizerAdd = isOrganizer && status === "collecting" && !tournament.requireParticipantConsent;
-                  const consequence = [
-                    requiresOverride ? "добавить без ответа на приглашение" : "добавить напрямую в состав",
-                    regeneratesBracket ? "и сразу перестроить уже созданную сетку" : null,
-                  ].filter(Boolean).join(" ");
-                  if (!ordinaryOrganizerAdd && !window.confirm(`Добавить ${playerName} в турнир «${String(tournament.title)}»: ${consequence}?`)) return;
-                  const submittedUserId = pickUserId;
-                  void runAction(async () => {
-                    const response = await api.addTournamentParticipant(id!, {
-                      userId: submittedUserId,
-                      ...(requiresOverride ? { confirmManualOverride: true } : {}),
-                      ...(regeneratesBracket ? { confirmBracketRegeneration: true } : {}),
-                    }, crypto.randomUUID());
-                    setPickUserId("");
-                    setPickInput("");
-                    replaceTournamentIfCurrent(response.tournament);
-                  }, "Игрок добавлен")
-                }}
-              >
-                Добавить в состав
-              </Button> : null}
               {isOrganizer && canEditRoster ? (
+                <FilterBar
+                  label="Тип участника"
+                  value={rosterIdentityKind}
+                  onChange={(value) => setRosterIdentityKind(value as "user" | "guest")}
+                  options={[{ value: "user", label: "Игрок" }, { value: "guest", label: "Гость" }]}
+                />
+              ) : null}
+              {rosterIdentityKind === "user" ? (
+                <>
+                  {canAddRegistered ? <UserPicker
+                    label="Добавить игрока"
+                    value={pickUserId}
+                    onChange={setPickUserId}
+                    inputValue={pickInput}
+                    onInputChange={setPickInput}
+                    disabled={busy}
+                    excludeUserIds={rosterUserIds}
+                    excludeSelf={false}
+                  /> : null}
+                  {canAddRegistered ? <Button
+                    disabled={busy || !pickUserId}
+                    onClick={() => {
+                      const playerName = pickInput.trim() || "выбранного игрока";
+                      const requiresOverride = Boolean(tournament.requireParticipantConsent) || !isOrganizer;
+                      const ordinaryOrganizerAdd = isOrganizer && status === "collecting" && !tournament.requireParticipantConsent;
+                      const consequence = [requiresOverride ? "добавить без ответа на приглашение" : "добавить напрямую в состав"].filter(Boolean).join(" ");
+                      if (!ordinaryOrganizerAdd && !window.confirm(`Добавить ${playerName} в турнир «${String(tournament.title)}»: ${consequence}?`)) return;
+                      const submittedUserId = pickUserId;
+                      void runAction(async (valid) => {
+                        const response = await api.addTournamentParticipant(id!, { userId: submittedUserId, ...(requiresOverride ? { confirmManualOverride: true } : {}) }, crypto.randomUUID());
+                        if (!valid()) return;
+                        setPickUserId("");
+                        setPickInput("");
+                        replaceTournamentIfCurrent(response.tournament);
+                      }, "Игрок добавлен");
+                    }}
+                  >Добавить в состав</Button> : null}
+                </>
+              ) : isOrganizer && canEditRoster ? (
                 <div className="stack tournament-setup__guest">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    aria-expanded={guestFormOpen}
-                    aria-controls="tournament-one-off-guest"
-                    onClick={() => setGuestFormOpen((open) => !open)}
-                  >
-                    Добавить разового гостя
-                  </Button>
-                  {guestFormOpen ? <div id="tournament-one-off-guest" className="stack">
-                    <TextField
-                      label="Имя и фамилия разового гостя"
-                      value={guest}
-                      disabled={busy}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setGuest(e.target.value)
-                      }
-                    />
-                    <Button
-                      variant="secondary"
-                      disabled={busy || !guest.trim()}
-                      onClick={() => {
-                        const [first, ...rest] = guest.trim().split(/\s+/);
-                        void runAction(async () => {
-                          const response = await api.addTournamentParticipant(id!, {
-                            guestFirstName: first,
-                            guestLastName: rest.join(" ") || "Гость",
-                          }, crypto.randomUUID());
-                          setGuest("");
-                          replaceTournamentIfCurrent(response.tournament);
-                        }, "Гость добавлен");
-                      }}
-                    >
-                      Добавить гостя
-                    </Button>
-                  </div> : null}
+                  <FilterBar
+                    label="Вид гостя"
+                    value={guestKind}
+                    onChange={(value) => setGuestKind(value as "inline" | "saved")}
+                    options={[{ value: "inline", label: "Разовый" }, { value: "saved", label: "Сохранённый" }]}
+                  />
+                  {guestKind === "inline" ? (
+                    <>
+                      <Button variant="secondary" size="sm" aria-expanded={guestFormOpen} aria-controls="tournament-one-off-guest" onClick={() => setGuestFormOpen((open) => !open)}>Добавить разового гостя</Button>
+                      {guestFormOpen ? <div id="tournament-one-off-guest" className="stack">
+                        <TextField label="Имя и фамилия разового гостя" value={guest} disabled={busy} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGuest(e.target.value)} />
+                        <Button variant="secondary" disabled={busy || !guest.trim()} onClick={() => {
+                          const [first, ...rest] = guest.trim().split(/\s+/);
+                          void runAction(async (valid) => {
+                            const response = await api.addTournamentParticipant(id!, { guestFirstName: first, guestLastName: rest.join(" ") || "Гость" }, crypto.randomUUID());
+                            if (!valid()) return;
+                            setGuest("");
+                            replaceTournamentIfCurrent(response.tournament);
+                          }, "Гость добавлен");
+                        }}>Добавить гостя</Button>
+                      </div> : null}
+                    </>
+                  ) : (
+                    <>
+                      <GuestPicker label="Добавить сохранённого гостя" value={savedGuest} onChange={setSavedGuest} excludeGuestIds={rosterGuestIdentityIds} disabled={busy} onOpenCatalogue={openGuestCatalogue} mutationScope={guestMutationScope} />
+                      <Button disabled={busy || !savedGuest} onClick={() => addSavedGuest(false)}>Добавить гостя в состав</Button>
+                    </>
+                  )}
                 </div>
               ) : null}
               {activeParticipants.length === 0 ? (
@@ -918,12 +1513,15 @@ export function TournamentDetailPage() {
                       aria-label={`Удалить ${participantLabel(p)} из состава`}
                       disabled={busy}
                       icon={<Icon path="Office & Editing/TrashSimple" size={20} />}
-                      onClick={() =>
-                        void runAction(async () => {
-                          await api.removeTournamentParticipant(id!, p.id);
-                          await load(true);
-                        })
-                      }
+                      onClick={() => {
+                        const requestedId = id;
+                        if (!requestedId) return;
+                        void runAction(async (valid) => {
+                          await api.removeTournamentParticipant(requestedId, p.id);
+                          if (!valid()) return;
+                          await readAuthoritativeTournament(requestedId, valid);
+                        });
+                      }}
                     /> : null}
                   </li>
                   ))}
@@ -956,7 +1554,33 @@ export function TournamentDetailPage() {
               </div>
             ) : null}
 
-            {liveMatches.length > 0 ? (
+            {status === "finished" ? (
+              <section className="card stack" aria-labelledby="tournament-podium-heading">
+                <h2 id="tournament-podium-heading" className="section-title">Призовые места</h2>
+                {podium.length > 0 ? (
+                  <ol className="tournament-results__podium">
+                    {podium.map(({ participantId, place }) => (
+                      <li key={participantId}>{place} место · {nameMap.get(participantId) ?? "Участник"}</li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="muted">Сервер пока не вернул итоговые места.</p>
+                )}
+                <p className="muted">Турнир завершён. Сыгранные матчи доступны в сетке.</p>
+              </section>
+            ) : status === "stopped" ? (
+              <section className="card stack" aria-labelledby="tournament-stopped-heading">
+                <h2 id="tournament-stopped-heading" className="section-title">Турнир остановлен</h2>
+                {tournament.stopReasonText ? (
+                  <p>Причина остановки: {String(tournament.stopReasonText)}</p>
+                ) : null}
+                <p className="muted">Победитель и призовые места не формируются. Сыгранные матчи доступны в сетке.</p>
+              </section>
+            ) : status === "cancelled" ? (
+              <p className="muted">Турнир отменён до старта.</p>
+            ) : null}
+
+            {!terminalTournament && liveMatches.length > 0 ? (
               <div className="card stack">
                 <h2 className="section-title">Текущие матчи</h2>
                 {liveMatches.map((m) => {
@@ -1014,7 +1638,7 @@ export function TournamentDetailPage() {
             ) : null}
 
             {hasBracket ? (
-              <div className="card stack">
+              <div className={`card stack${status === "stopped" ? " tournament-bracket-card--no-champion" : ""}`}>
                 <h2 className="section-title">
                   Сетка
                   {bracketV2
@@ -1031,6 +1655,7 @@ export function TournamentDetailPage() {
                     variant="secondary"
                     size="sm"
                     disabled={busy}
+                    data-testid="tournament-build-bracket"
                     onClick={(event: MouseEvent<HTMLButtonElement>) => openAlgorithmDialog(event.currentTarget)}
                   >
                     {BRACKET_ALGORITHM_DIALOG.changeAction}
@@ -1066,11 +1691,14 @@ export function TournamentDetailPage() {
                       disabled={busy || swapA === swapB}
                       onClick={() => {
                         if (!window.confirm("Поменять выбранные позиции сетки?")) return;
-                        void runAction(async () => {
-                          await api.patchTournamentBracket(id!, [
+                        const requestedId = id;
+                        if (!requestedId) return;
+                        void runAction(async (valid) => {
+                          await api.patchTournamentBracket(requestedId, [
                             { slotIdA: swapA, slotIdB: swapB },
                           ]);
-                          await load(true);
+                          if (!valid()) return;
+                          await readAuthoritativeTournament(requestedId, valid);
                         }, "Позиции изменены");
                       }}
                     >
@@ -1104,28 +1732,151 @@ export function TournamentDetailPage() {
               </div>
             ) : null}
 
-            {status === "finished" || status === "stopped" ? (
-              <div className="stack">
-                <p className="muted">
-                  Турнир завершён. Можно открыть сыгранные матчи из сетки.
-                </p>
-                {status === "stopped" && tournament.stopReasonText ? (
-                  <p>Причина остановки: {String(tournament.stopReasonText)}</p>
+            {!setupStage && !isScopedAdminView && !editingSettings ? (
+              <section className="card stack tournament-setup" aria-labelledby="tournament-rules-heading-secondary">
+                <div className="row tournament-setup__heading-row">
+                  <h2 id="tournament-rules-heading-secondary" className="section-title">Правила</h2>
+                  {canEditSettings ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        setSettings({
+                          title: String(tournament.title ?? ""),
+                        plannedDate: String(tournament.plannedDate ?? ""),
+                          format,
+                          organizerParticipates: tournament.organizerParticipates !== false,
+                          pointsToWin: Number(tournament.pointsToWin ?? 11),
+                          mercyEnabled: tournament.mercyEnabled === true,
+                          mercyPoints: Number(tournament.mercyPoints ?? 2),
+                        });
+                        setEditingSettings(true);
+                      }}
+                    >
+                      Изменить правила
+                    </Button>
+                  ) : null}
+                </div>
+                <ul className="tournament-setup__rule-summary">
+                  <li>Сетка проигравших: {format === "double_elimination" ? "включена" : "выключена"}</li>
+                  <li>До {Number(tournament.pointsToWin ?? 11)} очков</li>
+                  <li>{tournament.mercyEnabled ? `Сухая победа при ${Number(tournament.mercyPoints ?? 2)}:0` : "Сухая победа выключена"}</li>
+                  <li>{tournament.organizerParticipates === false ? "Организатор не участвует" : "Организатор участвует"}</li>
+                </ul>
+              </section>
+            ) : null}
+
+            {status === "bracket_generated" && (canAddRegistered || activeParticipants.length > 0) ? (
+              <section className="card stack tournament-setup" aria-labelledby="tournament-roster-heading-secondary">
+                <h2 id="tournament-roster-heading-secondary" className="section-title">Участники ({activeParticipants.length})</h2>
+                {isOrganizer && canEditRoster ? (
+                  <FilterBar
+                    label="Тип участника"
+                    value={rosterIdentityKind}
+                    onChange={(value) => setRosterIdentityKind(value as "user" | "guest")}
+                    options={[{ value: "user", label: "Игрок" }, { value: "guest", label: "Гость" }]}
+                  />
                 ) : null}
+                {rosterIdentityKind === "user" && canAddRegistered ? (
+                  <>
+                    <UserPicker
+                      label="Добавить игрока"
+                      value={pickUserId}
+                      onChange={setPickUserId}
+                      inputValue={pickInput}
+                      onInputChange={setPickInput}
+                      disabled={busy}
+                      excludeUserIds={rosterUserIds}
+                      excludeSelf={false}
+                    />
+                    <Button
+                      disabled={busy || !pickUserId}
+                      onClick={() => {
+                        const submittedUserId = pickUserId;
+                        const playerName = pickInput.trim() || "выбранного игрока";
+                        const requiresOverride = Boolean(tournament.requireParticipantConsent) || !isOrganizer;
+                        if (!window.confirm(`Добавить ${playerName} в турнир «${String(tournament.title)}»: добавить в состав и сразу перестроить уже созданную сетку?`)) return;
+                        void runAction(async (valid) => {
+                          const response = await api.addTournamentParticipant(id!, {
+                            userId: submittedUserId,
+                            ...(requiresOverride ? { confirmManualOverride: true } : {}),
+                            confirmBracketRegeneration: true,
+                          }, crypto.randomUUID());
+                          if (!valid()) return;
+                          setPickUserId("");
+                          setPickInput("");
+                          replaceTournamentIfCurrent(response.tournament);
+                        }, "Игрок добавлен");
+                      }}
+                    >
+                      Добавить в состав
+                    </Button>
+                  </>
+                ) : rosterIdentityKind === "guest" && isOrganizer && canEditRoster ? (
+                  <div className="stack tournament-setup__guest">
+                    <FilterBar
+                      label="Вид гостя"
+                      value={guestKind}
+                      onChange={(value) => setGuestKind(value as "inline" | "saved")}
+                      options={[{ value: "inline", label: "Разовый" }, { value: "saved", label: "Сохранённый" }]}
+                    />
+                    {guestKind === "inline" ? (
+                      <>
+                        <Button variant="secondary" size="sm" aria-expanded={guestFormOpen} aria-controls="tournament-one-off-guest-regeneration" onClick={() => setGuestFormOpen((open) => !open)}>Добавить разового гостя</Button>
+                        {guestFormOpen ? <div id="tournament-one-off-guest-regeneration" className="stack">
+                          <TextField label="Имя и фамилия разового гостя" value={guest} disabled={busy} onChange={(event: React.ChangeEvent<HTMLInputElement>) => setGuest(event.target.value)} />
+                          <Button variant="secondary" disabled={busy || !guest.trim()} onClick={() => {
+                            const [first, ...rest] = guest.trim().split(/\s+/);
+                            if (!window.confirm(`Добавить ${guest.trim()} в турнир «${String(tournament.title)}» и сразу перестроить уже созданную сетку?`)) return;
+                            void runAction(async (valid) => {
+                              const response = await api.addTournamentParticipant(id!, { guestFirstName: first, guestLastName: rest.join(" ") || "Гость", confirmBracketRegeneration: true }, crypto.randomUUID());
+                              if (!valid()) return;
+                              setGuest("");
+                              replaceTournamentIfCurrent(response.tournament);
+                            }, "Гость добавлен");
+                          }}>Добавить гостя</Button>
+                        </div> : null}
+                      </>
+                    ) : (
+                      <>
+                        <GuestPicker label="Добавить сохранённого гостя" value={savedGuest} onChange={setSavedGuest} excludeGuestIds={rosterGuestIdentityIds} disabled={busy} onOpenCatalogue={openGuestCatalogue} mutationScope={guestMutationScope} />
+                        <Button disabled={busy || !savedGuest} onClick={() => addSavedGuest(true)}>Добавить гостя в состав</Button>
+                      </>
+                    )}
+                  </div>
+                ) : null}
+                <ul className="tournament-setup__roster">
+                  {activeParticipants.map((participant) => (
+                    <li key={participant.id} className="tournament-setup__roster-item">
+                      <span className="tournament-setup__participant">
+                        {participantLabel(participant)}
+                        {participant.seed ? <span className="muted"> · посев {participant.seed}</span> : null}
+                        {participant.userId === user?.id ? <span className="muted"> · вы</span> : null}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {!setupStage && (dissolveAction || stopAction || cancelAction || withdrawAction) ? (
+              <div className="row tournament-setup__actions" aria-label="Дополнительные действия турнира">
+                {dissolveAction}
+                {stopAction}
+                {cancelAction}
+                {withdrawAction}
               </div>
             ) : null}
-            {summary && !setupStage ? (
-              <div className="card stack">
-                <h2 className="section-title">Итоги</h2>
+
+            {summary && (status === "finished" || status === "stopped") ? (
+              <details className="card stack tournament-results__details">
+                <summary>Полная статистика</summary>
                 <p className="muted">
                   {summary.durationSeconds == null
                     ? "Длительность не определена"
                     : `Длительность: ${Math.floor(summary.durationSeconds / 60)} мин`}
                   {` · сыграно матчей: ${summary.playedMatchCount}`}
                 </p>
-                {status === "finished" && summary.top3.length > 0 ? (
-                  <p>Призовые места: {summary.top3.map((id) => nameMap.get(id) ?? "Участник").join(", ")}</p>
-                ) : null}
                 {summary.results.length > 0 ? (
                   <table>
                     <thead><tr><th>Участник</th><th>Место</th><th>Очки</th><th>Матчи</th></tr></thead>
@@ -1133,19 +1884,65 @@ export function TournamentDetailPage() {
                       {summary.results.map((result) => (
                         <tr key={result.participantId}>
                           <td>{nameMap.get(result.participantId) ?? "Участник"}</td>
-                          <td>{result.place ?? "—"}</td>
+                          <td>{status === "finished" ? result.place ?? "—" : "—"}</td>
                           <td>{result.points}</td>
                           <td>{result.playedMatches}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                ) : <p className="muted">Итогов пока нет</p>}
-              </div>
+                ) : <p className="muted">Сыгранных матчей пока нет</p>}
+              </details>
             ) : null}
           </div>
         ) : null}
       </AsyncState>
+
+      <Dialog
+        open={Boolean(safeguardCopy)}
+        onClose={() => {
+          if (!busy) setSafeguard(null);
+        }}
+        title={safeguardCopy?.title ?? "Подтвердить действие"}
+        width="sm"
+      >
+        <div className="stack">
+          <p>{safeguardCopy?.consequence}</p>
+          {safeguardBlocked === visibleSafeguard && actionError ? (
+            <>
+              <Alert
+                type="error"
+                variant="tonal"
+                title="Состояние не подтверждено"
+                description={actionError}
+              />
+              <Button
+                variant="secondary"
+                disabled={busy || refreshing}
+                onClick={() => void refreshNow()}
+              >
+                Проверить состояние
+              </Button>
+            </>
+          ) : null}
+          <div className="row">
+            <Button
+              ref={safeguardSafeRef}
+              variant="secondary"
+              disabled={busy}
+              onClick={() => setSafeguard(null)}
+            >
+              {safeguardCopy?.safeLabel ?? "Вернуться"}
+            </Button>
+            <Button
+              disabled={busy || safeguardBlocked === visibleSafeguard}
+              onClick={() => void confirmSafeguard()}
+            >
+              {busy ? "Сохранение…" : safeguardCopy?.confirmLabel ?? "Подтвердить"}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
 
       <Dialog
         open={stopDialogOpen}
@@ -1169,11 +1966,12 @@ export function TournamentDetailPage() {
             onClick={() => {
               const text = stopReason.trim();
               if (!text || busy) return;
-              void runAction(async () => {
+              void runAction(async (valid) => {
                 const response = await api.stopTournament(id!, {
                   code: "other",
                   text,
                 });
+                if (!valid()) return;
                 if (replaceTournamentIfCurrent(response.tournament)) {
                   setStopDialogOpen(false);
                   setStopReason("");
@@ -1197,6 +1995,8 @@ export function TournamentDetailPage() {
         errorTitle={algoErrorTitle}
         errorRevision={algoErrorRevision}
         retryBlocked={algoRetryBlocked}
+        selectionLocked={algoSameAttemptReady}
+        submitLabel={algoSameAttemptReady ? "Повторить этот запрос" : BRACKET_ALGORITHM_DIALOG.submit}
         onCheckState={() => void checkAlgorithmState()}
         showRegenWarning={hasBracket}
         onConfirm={() => void confirmAlgorithm()}

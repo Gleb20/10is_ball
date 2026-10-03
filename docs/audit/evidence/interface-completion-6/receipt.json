@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "scope": "repository-wide",
+  "version": "6.0.0",
+  "baseSha": "ed7fc113948387a6953b3a50cc7776248506051d",
+  "sourceFreeze": {
+    "evidenceRef": "docs/audit/evidence/interface-completion-6/source-freeze.json",
+    "evidenceSha256": "dff28575d35e91778369b2976731321e8636bfe7a9aee2d41f09c6bbe6fd8ab8"
+  },
+  "summary": {
+    "evidenceRef": "docs/audit/evidence/interface-completion-6/local-summary.json",
+    "evidenceSha256": "caaf7c4eba21d88beb64ff67ad2f1b7361708065d1a9817394c7111779084096"
+  },
+  "limitations": [
+    "Physical iPhone keyboard, autozoom and safe-area observations remain unverified on a physical device.",
+    "HOME-003 Google Maps cause was not reproduced.",
+    "WebKit native runner and spoken assistive technology require separate device verification.",
+    "Public release parity is not established by this local receipt.",
+    "GAP-018 remains deferred by D37/Q-UX-011; ten-second Undo was superseded by D40."
+  ],
+  "runtime": "compiled web/API, same-origin browser, disposable PostgreSQL 16.15, no public fixtures"
+}

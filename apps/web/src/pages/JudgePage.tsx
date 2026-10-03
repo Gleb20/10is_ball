@@ -14,7 +14,6 @@ import { api } from "../api";
 import { TableTennisRacketIcon } from "../icons/TableTennisRacketIcon";
 import {
   boardSides,
-  elapsedMs,
   formatMatchDuration,
   judgeAcquireErrorMessage,
   needsJudgeSetup,
@@ -29,7 +28,18 @@ import {
 import { statusLabel } from "../statusLabels";
 import { initialsFromName } from "../rankingUi";
 import { avatarSrc } from "../avatarSrc";
-import type { JudgeExitNotice } from "../layout";
+import {
+  acceptMatchFacts,
+  freezeMatchFacts,
+  monotonicNow,
+  playingClockView,
+  type MatchFactsSnapshot,
+} from "../matchFactsUi";
+import {
+  useJudgeNavigationController,
+  type JudgeBlockedPop,
+  type JudgeExitNotice,
+} from "../judgeNavigation";
 import { useAuth } from "../auth";
 import {
   acceptReviewedCorrectionScore,
@@ -87,6 +97,40 @@ const LOST_JUDGE_CODES = new Set([
   "JUDGE_TAKEN",
 ]);
 const SCORE_POINTER_MOVE_THRESHOLD = 8;
+const JUDGE_EXIT_NETWORK_DEADLINE_MS = 10_000;
+
+type JudgeOwnership = "none" | "pending" | "possible" | "owned";
+type ExitIntent = { token: symbol; kind: "explicit" | "native" };
+
+type SettledRequest<T> =
+  | { outcome: "success"; value: T }
+  | { outcome: "failure"; error: unknown }
+  | { outcome: "timeout" };
+
+function settleRequest<T>(promise: Promise<T>): Promise<SettledRequest<T>> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      resolve({ outcome: "timeout" });
+    }, JUDGE_EXIT_NETWORK_DEADLINE_MS);
+    promise.then(
+      (value) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        resolve({ outcome: "success", value });
+      },
+      (error) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        resolve({ outcome: "failure", error });
+      },
+    );
+  });
+}
 
 type ScorePointerGesture = {
   side: "A" | "B";
@@ -183,6 +227,15 @@ function activeJudgeCanStart(match: MatchState): boolean {
   );
 }
 
+function needsAuthoritativeSetup(match: MatchState): boolean {
+  const initialServerState = (
+    match.matchFacts as MatchFactsSnapshot["facts"] | undefined
+  )?.initialServer.state;
+  const atomicLaunchAlreadyStarted =
+    match.status === "in_progress" && initialServerState === "known";
+  return !atomicLaunchAlreadyStarted && needsJudgeSetup(match);
+}
+
 function ServeBadge({ active }: { active: boolean }) {
   if (!active) {
     return <span className="judge-serve-badge judge-serve-badge--empty" />;
@@ -207,6 +260,9 @@ export function JudgePage() {
 
   const [match, setMatch] = useState<MatchState | null>(null);
   const matchRef = useRef<MatchState | null>(null);
+  const [factsSnapshot, setFactsSnapshot] = useState<MatchFactsSnapshot | null>(null);
+  const factsSnapshotRef = useRef<MatchFactsSnapshot | null>(null);
+  const factsRefreshNeededRef = useRef(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);
   const pointRecoveryErrorRef = useRef<string | null>(null);
@@ -218,9 +274,11 @@ export function JudgePage() {
   const [pointPendingCount, setPointPendingCount] = useState(0);
   const pointQueueRef = useRef<PointIntent[]>([]);
   const pointQueueOwnerRef = useRef<symbol | null>(null);
+  const [pointDrainActive, setPointDrainActive] = useState(false);
   const recoveryRecordRef = useRef<ScoreRecoveryRecord | null>(null);
   const recoveryGenerationRef = useRef(0);
   const loadPromiseRef = useRef<Promise<MatchState> | null>(null);
+  const matchMutationGenerationRef = useRef(0);
   const [recoveryRecord, setRecoveryRecord] = useState<ScoreRecoveryRecord | null>(null);
   const [recoveryStorageError, setRecoveryStorageError] = useState<string | null>(null);
   const [discardRecoveryConfirm, setDiscardRecoveryConfirm] = useState(false);
@@ -236,18 +294,28 @@ export function JudgePage() {
   const recoveryRegionRef = useRef<HTMLElement | null>(null);
   const recoveryWasVisibleRef = useRef(false);
   const judgeLockOwnedRef = useRef(false);
+  const judgeOwnershipRef = useRef<JudgeOwnership>("none");
+  const [judgeOwnership, setJudgeOwnershipState] = useState<JudgeOwnership>("none");
   const liveSyncOwnerRef = useRef<symbol | null>(null);
   const boardRef = useRef<HTMLDivElement | null>(null);
   const scorePointerGestureRef = useRef<ScorePointerGesture | null>(null);
   const suppressScoreClickRef = useRef(false);
   const exitPendingRef = useRef(false);
+  const exitIntentRef = useRef<ExitIntent | null>(null);
+  const exitSettlementRef = useRef<Promise<JudgeExitNotice> | null>(null);
+  const nativeBlockedPopRef = useRef<JudgeBlockedPop | null>(null);
+  const competingBlockedPopRef = useRef<JudgeBlockedPop | null>(null);
+  const nativeSettlementRef = useRef(false);
   const exclusiveMutationRef = useRef(false);
   const flashTimeoutRef = useRef<number | null>(null);
   const [exitPending, setExitPending] = useState(false);
+  const [nativeBackPending, setNativeBackPending] = useState(false);
+  const [nativeBackDeadlineExpired, setNativeBackDeadlineExpired] = useState(false);
+  const [nativeBackMessage, setNativeBackMessage] = useState<string | null>(null);
   const [documentVisible, setDocumentVisible] = useState(
     () => typeof document === "undefined" || document.visibilityState === "visible",
   );
-  const [now, setNow] = useState(() => new Date());
+  const [factsNow, setFactsNow] = useState(monotonicNow);
   const [viewport, setViewport] = useState(() => ({
     w: typeof window !== "undefined" ? window.innerWidth : 800,
     h: typeof window !== "undefined" ? window.innerHeight : 600,
@@ -266,6 +334,8 @@ export function JudgePage() {
   const [focusHandoverAfterRetry, setFocusHandoverAfterRetry] = useState(false);
   const [handoverUserId, setHandoverUserId] = useState("");
   const [handoverPending, setHandoverPending] = useState(false);
+  const displayFlipOwnerRef = useRef<symbol | null>(null);
+  const [displayFlipPending, setDisplayFlipPending] = useState(false);
   const [correctionOpen, setCorrectionOpen] = useState(false);
   const [correctionScoreA, setCorrectionScoreA] = useState(0);
   const [correctionScoreB, setCorrectionScoreB] = useState(0);
@@ -299,6 +369,38 @@ export function JudgePage() {
     setMatch(nextMatch);
   }, []);
 
+  const setJudgeOwnership = useCallback((next: JudgeOwnership) => {
+    judgeOwnershipRef.current = next;
+    judgeLockOwnedRef.current = next === "owned";
+    setJudgeOwnershipState(next);
+  }, []);
+
+  const applyFreshFacts = useCallback((nextMatch: MatchState) => {
+    const next = acceptMatchFacts(
+      factsSnapshotRef.current,
+      nextMatch.matchFacts as MatchFactsSnapshot["facts"] | undefined,
+      Number(nextMatch.version ?? -1),
+      String(nextMatch.status ?? "unknown"),
+    );
+    factsSnapshotRef.current = next;
+    factsRefreshNeededRef.current = false;
+    setFactsSnapshot(next);
+    setFactsNow(next.receivedAtPerformanceMs);
+  }, []);
+
+  const beginMatchMutation = useCallback(() => {
+    matchMutationGenerationRef.current += 1;
+  }, []);
+
+  const freezeFactsForMutation = useCallback(() => {
+    beginMatchMutation();
+    const next = freezeMatchFacts(factsSnapshotRef.current);
+    factsSnapshotRef.current = next;
+    factsRefreshNeededRef.current = true;
+    setFactsSnapshot(next);
+    if (next) setFactsNow(next.receivedAtPerformanceMs);
+  }, [beginMatchMutation]);
+
   const setPointRecoveryError = useCallback((message: string) => {
     pointRecoveryErrorRef.current = message;
     setError(message);
@@ -331,6 +433,7 @@ export function JudgePage() {
 
   useEffect(() => {
     if (!id || !actorUserId) return;
+    setJudgeOwnership("none");
     liveSyncOwnerRef.current = null;
     const generation = beginScoreRecoveryGeneration(actorUserId, id);
     recoveryGenerationRef.current = generation;
@@ -352,8 +455,20 @@ export function JudgePage() {
       invalidateScoreRecoveryGeneration(actorUserId, id);
       recoveryGenerationRef.current = 0;
       pointQueueOwnerRef.current = null;
+      nativeBlockedPopRef.current = null;
+      competingBlockedPopRef.current = null;
+      exitIntentRef.current = null;
+      exitSettlementRef.current = null;
+      exitPendingRef.current = false;
       loadPromiseRef.current = null;
       liveSyncOwnerRef.current = null;
+      factsSnapshotRef.current = null;
+      factsRefreshNeededRef.current = false;
+      if (displayFlipOwnerRef.current !== null) {
+        displayFlipOwnerRef.current = null;
+        exclusiveMutationRef.current = false;
+        setDisplayFlipPending(false);
+      }
       if (activeCorrectionAttemptIdRef.current !== null) {
         activeCorrectionAttemptIdRef.current = null;
         exclusiveMutationRef.current = false;
@@ -364,7 +479,7 @@ export function JudgePage() {
         setCorrectionFocusTarget(null);
       }
     };
-  }, [actorUserId, applyRecoveryRecord, id]);
+  }, [actorUserId, applyRecoveryRecord, id, setJudgeOwnership]);
 
   useEffect(() => {
     setRotationHintDismissed(false);
@@ -387,6 +502,7 @@ export function JudgePage() {
       return load(false);
     }
     const generation = requestedGeneration;
+    const mutationGeneration = matchMutationGenerationRef.current;
     const request = (async () => {
       const activeRecovery = recoveryRecordRef.current;
       if (activeRecovery && hasRecoveryWork(activeRecovery)) {
@@ -400,6 +516,9 @@ export function JudgePage() {
         if (!isScoreRecoveryGenerationCurrent(actorUserId, id, generation)) {
           return fresh;
         }
+        if (mutationGeneration !== matchMutationGenerationRef.current) {
+          return matchRef.current ?? fresh;
+        }
         const confirmed = confirmedStartRef.current;
         if (confirmed && confirmed.id === id && fresh.status === "waiting") return confirmed;
         const currentRecovery = recoveryRecordRef.current;
@@ -411,6 +530,7 @@ export function JudgePage() {
           return matchRef.current ?? fresh;
         }
         updateMatch(fresh);
+        applyFreshFacts(fresh);
         if (currentRecovery && hasRecoveryWork(currentRecovery)) {
           const reconciled = reconcilePointAttempts(
             currentRecovery,
@@ -460,7 +580,7 @@ export function JudgePage() {
     } finally {
       if (loadPromiseRef.current === request) loadPromiseRef.current = null;
     }
-  }, [actorUserId, applyRecoveryRecord, id, saveRecoveryRecord, updateMatch]);
+  }, [actorUserId, applyFreshFacts, applyRecoveryRecord, id, saveRecoveryRecord, updateMatch]);
 
   useEffect(() => {
     confirmedStartRef.current = null;
@@ -530,7 +650,7 @@ export function JudgePage() {
         currentMatchIdRef.current !== requestedId ||
         !isScoreRecoveryGenerationCurrent(actorUserId, requestedId, generation)
       ) return;
-      judgeLockOwnedRef.current = false;
+      setJudgeOwnership("none");
       pointQueueRef.current = [];
       setPointPendingCount(0);
       setUndoPending(false);
@@ -551,7 +671,7 @@ export function JudgePage() {
         // Preserve the last authoritative screen when read access is also gone.
       }
     },
-    [actorUserId, id, load],
+    [actorUserId, id, load, setJudgeOwnership],
   );
 
   const syncLiveState = useCallback(
@@ -581,7 +701,7 @@ export function JudgePage() {
           status === "cancelled" ||
           status === "voided"
         ) {
-          judgeLockOwnedRef.current = false;
+          setJudgeOwnership("none");
           pointQueueRef.current = [];
           setPointPendingCount(0);
           setMenuOpen(false);
@@ -603,7 +723,7 @@ export function JudgePage() {
         }
       }
     },
-    [actorUserId, id, load, loseJudgeLock],
+    [actorUserId, id, load, loseJudgeLock, setJudgeOwnership],
   );
 
   const initJudge = useCallback(async () => {
@@ -614,6 +734,7 @@ export function JudgePage() {
       currentMatchIdRef.current === requestedId &&
       isScoreRecoveryGenerationCurrent(actorUserId, requestedId, generation);
     if (!isCurrent()) return;
+    setJudgeOwnership("none");
     setPhase("loading");
     setError(null);
     try {
@@ -628,10 +749,12 @@ export function JudgePage() {
           throw loadError;
         }
         if (!isCurrent()) return;
+        freezeFactsForMutation();
+        setJudgeOwnership("pending");
         await api.acquireJudge(requestedId);
         if (!isCurrent()) return;
         acquiredDuringFallback = true;
-        judgeLockOwnedRef.current = true;
+        setJudgeOwnership("owned");
         detail = await load();
         if (!isCurrent()) return;
       }
@@ -641,20 +764,22 @@ export function JudgePage() {
         readonlyMode ||
         isTerminalMatchStatus(status)
       ) {
-        judgeLockOwnedRef.current = false;
+        setJudgeOwnership("none");
         setPhase("readonly");
         return;
       }
       if (!acquiredDuringFallback) {
         if (!isCurrent()) return;
+        freezeFactsForMutation();
+        setJudgeOwnership("pending");
         await api.acquireJudge(requestedId);
         if (!isCurrent()) return;
-        judgeLockOwnedRef.current = true;
+        setJudgeOwnership("owned");
       }
       if (!isCurrent()) return;
       const refreshed = acquiredDuringFallback ? detail : await load();
       if (!isCurrent()) return;
-      if (needsJudgeSetup(refreshed)) {
+      if (needsAuthoritativeSetup(refreshed)) {
         const firstServerMethod = String(refreshed.firstServerMethod ?? "manual");
         setFirstServerId(
           firstServerMethod === "random"
@@ -670,6 +795,14 @@ export function JudgePage() {
       }
     } catch (e) {
       if (!isCurrent()) return;
+      if (judgeOwnershipRef.current === "pending") {
+        const candidate = e as ApiError;
+        const definitive = Boolean(
+          candidate.status && candidate.status >= 400 && candidate.status < 500 &&
+          candidate.status !== 408 && candidate.status !== 429,
+        );
+        setJudgeOwnership(definitive ? "none" : "possible");
+      }
       const err = e as Error & {
         code?: string;
         details?: { currentJudge?: { userId?: string; displayName: string } };
@@ -677,7 +810,7 @@ export function JudgePage() {
       setError(judgeAcquireErrorMessage(err));
       setPhase("blocked");
     }
-  }, [actorUserId, id, load, readonlyMode]);
+  }, [actorUserId, freezeFactsForMutation, id, load, readonlyMode, setJudgeOwnership]);
 
   useEffect(() => {
     void initJudge();
@@ -737,10 +870,16 @@ export function JudgePage() {
   );
 
   useEffect(() => {
-    if (phase !== "scoring" && phase !== "readonly") return;
-    const tick = window.setInterval(() => setNow(new Date()), 1000);
+    const clock = factsSnapshot?.facts.playingClock;
+    if (
+      (phase !== "scoring" && phase !== "readonly") ||
+      factsSnapshot?.certainty !== "fresh" ||
+      clock?.state !== "available" ||
+      !clock.running
+    ) return;
+    const tick = window.setInterval(() => setFactsNow(monotonicNow()), 1000);
     return () => window.clearInterval(tick);
-  }, [phase]);
+  }, [factsSnapshot, phase]);
 
   useEffect(() => {
     const ownsLock =
@@ -779,7 +918,7 @@ export function JudgePage() {
   }
 
   async function confirmSetup() {
-    if (!id || !match || setupPendingRef.current || setupUnknownRef.current) return;
+    if (!id || !match || exitPendingRef.current || setupPendingRef.current || setupUnknownRef.current) return;
     const method = String(match.firstServerMethod ?? "manual");
     if (method !== "random" && !firstServerId) return;
     const requestedId = id;
@@ -787,6 +926,7 @@ export function JudgePage() {
     setupPendingRef.current = true;
     setSetupPending(true);
     setError(null);
+    freezeFactsForMutation();
     try {
       if (match.status === "waiting" && !activeJudgeCanStart(match)) {
         if (method !== "random") {
@@ -834,6 +974,7 @@ export function JudgePage() {
       if (currentMatchIdRef.current === requestedId) {
         setupPendingRef.current = false;
         setSetupPending(false);
+        if (factsRefreshNeededRef.current) void load(true).catch(() => undefined);
       }
     }
   }
@@ -842,6 +983,7 @@ export function JudgePage() {
     if (!id || pointQueueOwnerRef.current) return;
     const owner = Symbol("point-queue-owner");
     pointQueueOwnerRef.current = owner;
+    setPointDrainActive(true);
     let authoritativeMatch = initialMatch;
     let nextFenceVersion = fenceVersion;
     const generation = recoveryGenerationRef.current;
@@ -983,7 +1125,18 @@ export function JudgePage() {
         }
       }
     } finally {
-      if (pointQueueOwnerRef.current === owner) pointQueueOwnerRef.current = null;
+      if (pointQueueOwnerRef.current === owner) {
+        pointQueueOwnerRef.current = null;
+        if (isScoreRecoveryGenerationCurrent(actorUserId, id, generation)) {
+          setPointDrainActive(false);
+        }
+      }
+      if (
+        factsRefreshNeededRef.current &&
+        isScoreRecoveryGenerationCurrent(actorUserId, id, generation)
+      ) {
+        void load(true).catch(() => undefined);
+      }
     }
   }
 
@@ -1001,6 +1154,7 @@ export function JudgePage() {
       !match ||
       phase !== "scoring" ||
       !judgeLockOwnedRef.current ||
+      exitPendingRef.current ||
       exclusiveMutationRef.current ||
       recoveryStorageError ||
       outcomeBlocked
@@ -1020,6 +1174,7 @@ export function JudgePage() {
     });
     const saved = saveRecoveryRecord(next);
     if (!saved.ok) return;
+    freezeFactsForMutation();
     void drainPointQueue(matchRef.current ?? match);
   }
 
@@ -1263,6 +1418,7 @@ export function JudgePage() {
     ) return;
     exclusiveMutationRef.current = true;
     setUndoPending(true);
+    freezeFactsForMutation();
     try {
       const res = await api.undoPoint(
         id!,
@@ -1281,7 +1437,61 @@ export function JudgePage() {
     } finally {
       exclusiveMutationRef.current = false;
       setUndoPending(false);
+      if (factsRefreshNeededRef.current) void load(true).catch(() => undefined);
     }
+  }
+
+  function claimExitIntent(kind: ExitIntent["kind"]): ExitIntent | null {
+    if (exitIntentRef.current) return null;
+    const intent = { token: Symbol(`judge-${kind}-exit`), kind } as const;
+    exitIntentRef.current = intent;
+    exitPendingRef.current = true;
+    setExitPending(true);
+    return intent;
+  }
+
+  function clearExitIntent(intent: ExitIntent) {
+    if (exitIntentRef.current?.token !== intent.token) return;
+    exitIntentRef.current = null;
+    exitPendingRef.current = false;
+    exitSettlementRef.current = null;
+    nativeSettlementRef.current = false;
+    nativeBlockedPopRef.current = null;
+    competingBlockedPopRef.current = null;
+    setExitPending(false);
+    setNativeBackPending(false);
+    setNativeBackDeadlineExpired(false);
+  }
+
+  function settleJudgeExit(): Promise<JudgeExitNotice> {
+    if (exitSettlementRef.current) return exitSettlementRef.current;
+    const request = (async (): Promise<JudgeExitNotice> => {
+      const ownership = judgeOwnershipRef.current;
+      if (ownership === "owned" || ownership === "pending" || ownership === "possible") {
+        const ownershipWasConfirmed = ownership === "owned";
+        beginMatchMutation();
+        const settled = await settleRequest(
+          Promise.resolve().then(() => api.releaseJudge(id!)),
+        );
+        setJudgeOwnership("none");
+        if (settled.outcome === "success" && ownershipWasConfirmed) {
+          return {
+            kind: "success",
+            message: "Вы вышли из ведения. Другой пользователь может продолжить",
+          };
+        }
+        return {
+          kind: "warning",
+          message: "Не удалось проверить выход из ведения. Проверьте текущее состояние матча",
+        };
+      }
+      return {
+        kind: "warning",
+        message: "Ведение на этом устройстве уже не активно. Проверьте текущее состояние матча",
+      };
+    })();
+    exitSettlementRef.current = request;
+    return request;
   }
 
   async function releaseAndExit(destination?: "/") {
@@ -1295,34 +1505,139 @@ export function JudgePage() {
       exclusiveMutationRef.current ||
       scoreWriteInFlight
     ) return;
-    exitPendingRef.current = true;
-    setExitPending(true);
-    let notice: JudgeExitNotice;
-    try {
-      if (judgeLockOwnedRef.current) {
-        await api.releaseJudge(id);
-        judgeLockOwnedRef.current = false;
-        notice = {
-          kind: "success",
-          message: "Вы вышли из ведения. Другой пользователь может продолжить",
-        };
-      } else {
-        notice = {
-          kind: "warning",
-          message: "Ведение на этом устройстве уже не активно. Проверьте текущее состояние матча",
-        };
-      }
-    } catch (e) {
-      judgeLockOwnedRef.current = false;
-      notice = {
-        kind: "warning",
-        message: "Не удалось проверить выход из ведения. Проверьте текущее состояние матча",
-      };
-    }
-    exitPendingRef.current = false;
-    setExitPending(false);
+    const intent = claimExitIntent("explicit");
+    if (!intent) return;
+    const notice = await settleJudgeExit();
+    competingBlockedPopRef.current?.reset();
+    clearExitIntent(intent);
     exitAfterJudge(matchRef.current ?? match, notice, destination);
   }
+
+  useJudgeNavigationController({
+    shouldBlock: ({ action, currentPath, nextPath }) => {
+      if (action !== "POP" || !id) return false;
+      const currentWithoutHash = currentPath.split("#", 1)[0];
+      const nextWithoutHash = nextPath.split("#", 1)[0];
+      return (
+        currentWithoutHash.startsWith(`/matches/${id}/judge`) &&
+        currentWithoutHash !== nextWithoutHash
+      );
+    },
+    onBlocked: (blocked) => {
+      const activeIntent = exitIntentRef.current;
+      if (activeIntent?.kind === "explicit") {
+        competingBlockedPopRef.current = blocked;
+        return;
+      }
+      if (activeIntent) {
+        blocked.reset();
+        return;
+      }
+      const intent = claimExitIntent("native");
+      if (!intent) {
+        blocked.reset();
+        return;
+      }
+      nativeBlockedPopRef.current = blocked;
+      setNativeBackMessage(null);
+      setNativeBackDeadlineExpired(false);
+      setNativeBackPending(true);
+    },
+  });
+
+  useEffect(() => {
+    if (
+      !nativeBackPending ||
+      nativeBackDeadlineExpired ||
+      (phase !== "loading" && judgeOwnership !== "pending")
+    ) return;
+    const timer = window.setTimeout(
+      () => setNativeBackDeadlineExpired(true),
+      JUDGE_EXIT_NETWORK_DEADLINE_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [judgeOwnership, nativeBackDeadlineExpired, nativeBackPending, phase]);
+
+  useEffect(() => {
+    if (!nativeBackPending || nativeSettlementRef.current) return;
+    const blocked = nativeBlockedPopRef.current;
+    const intent = exitIntentRef.current;
+    if (!blocked || !intent || intent.kind !== "native") return;
+
+    const recoveryUnsafe = Boolean(
+      recoveryStorageError ||
+      (recoveryRecord && !recoveryRecord.storageSafe && hasRecoveryWork(recoveryRecord)),
+    );
+    const cancelBlockedPop = (message: string) => {
+      blocked.reset();
+      setNativeBackMessage(message);
+      clearExitIntent(intent);
+    };
+
+    if (recoveryUnsafe) {
+      cancelBlockedPop(
+        "Не удалось безопасно сохранить восстановление счёта. Проверьте состояние и повторите выход после сохранения.",
+      );
+      return;
+    }
+    if (correctionOpen) {
+      cancelBlockedPop(
+        "Сначала сохраните или закройте коррекцию, затем повторите переход назад.",
+      );
+      return;
+    }
+    if (match?.status === "pending_confirmation" && !terminalPending) {
+      cancelBlockedPop(
+        "Сначала подтвердите результат или продолжите матч, затем повторите переход назад.",
+      );
+      return;
+    }
+    if (
+      ((phase === "loading" || judgeOwnership === "pending") &&
+        !nativeBackDeadlineExpired) ||
+      setupPending ||
+      undoPending ||
+      correctionPending ||
+      displayFlipPending ||
+      handoverPending ||
+      terminalPending ||
+      pointDrainActive ||
+      exclusiveMutationRef.current
+    ) return;
+
+    nativeSettlementRef.current = true;
+    const ownership = judgeOwnershipRef.current;
+    if (
+      ownership === "none" ||
+      phase === "lost_lock" ||
+      phase === "readonly"
+    ) {
+      clearExitIntent(intent);
+      blocked.proceed();
+      return;
+    }
+    void settleJudgeExit().then((notice) => {
+      if (exitIntentRef.current?.token !== intent.token) return;
+      clearExitIntent(intent);
+      blocked.proceed(notice);
+    });
+  }, [
+    correctionOpen,
+    correctionPending,
+    displayFlipPending,
+    handoverPending,
+    judgeOwnership,
+    match?.status,
+    nativeBackDeadlineExpired,
+    nativeBackPending,
+    phase,
+    pointDrainActive,
+    recoveryRecord,
+    recoveryStorageError,
+    setupPending,
+    terminalPending,
+    undoPending,
+  ]);
 
   async function onConfirmFinish() {
     if (
@@ -1335,10 +1650,11 @@ export function JudgePage() {
     ) return;
     exclusiveMutationRef.current = true;
     setTerminalPending(true);
+    freezeFactsForMutation();
     try {
       const res = await api.confirmFinish(id);
       const finished = (res.match ?? match) as MatchState;
-      judgeLockOwnedRef.current = false;
+      setJudgeOwnership("none");
       updateMatch(finished);
       exitAfterJudge(finished);
     } catch (e) {
@@ -1350,6 +1666,7 @@ export function JudgePage() {
     } finally {
       exclusiveMutationRef.current = false;
       setTerminalPending(false);
+      if (factsRefreshNeededRef.current) void load(true).catch(() => undefined);
     }
   }
 
@@ -1364,6 +1681,7 @@ export function JudgePage() {
     ) return;
     exclusiveMutationRef.current = true;
     setTerminalPending(true);
+    freezeFactsForMutation();
     try {
       const result = await api.revertFinish(id);
       updateMatch(result.match as MatchState);
@@ -1375,12 +1693,24 @@ export function JudgePage() {
     } finally {
       exclusiveMutationRef.current = false;
       setTerminalPending(false);
+      if (factsRefreshNeededRef.current) void load(true).catch(() => undefined);
     }
   }
 
   async function toggleDisplayFlip() {
-    if (!id || !match || exclusiveMutationRef.current) return;
+    if (
+      !id ||
+      !match ||
+      exitPendingRef.current ||
+      displayFlipOwnerRef.current !== null ||
+      exclusiveMutationRef.current
+    ) return;
+    const owner = Symbol("judge-display-flip");
+    displayFlipOwnerRef.current = owner;
+    exclusiveMutationRef.current = true;
+    setDisplayFlipPending(true);
     const next = !match.judgeDisplayFlipped;
+    freezeFactsForMutation();
     try {
       const res = await api.judgeSetup(id, { displayFlipped: next });
       updateMatch(res.match as MatchState);
@@ -1389,6 +1719,13 @@ export function JudgePage() {
         await loseJudgeLock(e);
       } else {
         setError((e as Error).message);
+      }
+    } finally {
+      if (displayFlipOwnerRef.current === owner) {
+        displayFlipOwnerRef.current = null;
+        exclusiveMutationRef.current = false;
+        setDisplayFlipPending(false);
+        if (factsRefreshNeededRef.current) void load(true).catch(() => undefined);
       }
     }
   }
@@ -1509,6 +1846,7 @@ export function JudgePage() {
     activeCorrectionAttemptIdRef.current = attemptId;
     exclusiveMutationRef.current = true;
     setCorrectionPending(true);
+    freezeFactsForMutation();
     setCorrectionError(null);
     setError(null);
     try {
@@ -1607,6 +1945,7 @@ export function JudgePage() {
         }
         exclusiveMutationRef.current = false;
         setCorrectionPending(false);
+        if (factsRefreshNeededRef.current) void load(true).catch(() => undefined);
       }
     }
   }
@@ -1617,8 +1956,9 @@ export function JudgePage() {
     setHandoverPending(true);
     setError(null);
     try {
+      beginMatchMutation();
       const result = await api.handoverJudge(id, handoverUserId);
-      judgeLockOwnedRef.current = false;
+      setJudgeOwnership("none");
       exitAfterJudge(matchRef.current ?? match, {
         kind: "success",
         message: `Передача подготовлена для ${String(result.reservation.displayName ?? "назначенный пользователь")}. Получатель должен принять её и открыть ведение на своём устройстве`,
@@ -1627,7 +1967,7 @@ export function JudgePage() {
       if (isLostJudgeError(reason)) await loseJudgeLock(reason);
       else {
         const stale = ["VERSION_CONFLICT", "MATCH_VERSION_CONFLICT"].includes(String((reason as ApiError).code));
-        if (stale) await load().catch(() => undefined);
+        if (stale) await load(true).catch(() => undefined);
         setError(stale ? "Матч изменился на другом устройстве. Данные обновлены; повторите передачу при необходимости." : (reason as Error).message);
       }
     } finally {
@@ -1669,7 +2009,11 @@ export function JudgePage() {
   if (phase === "loading") {
     return (
       <div className="judge-screen judge-screen--loading">
-        <p className="judge-screen__status">Подключение судьи…</p>
+        <p className="judge-screen__status" role="status">
+          {nativeBackPending
+            ? "Проверяем судейство перед выходом…"
+            : "Подключение судьи…"}
+        </p>
       </div>
     );
   }
@@ -1683,6 +2027,9 @@ export function JudgePage() {
         <p className="judge-screen__status" role="alert">
           {error}
         </p>
+        {nativeBackPending ? (
+          <p role="status">Проверяем судейство перед выходом…</p>
+        ) : null}
         <div className="judge-blocked-actions">
           <Button onClick={() => void initJudge()}>Повторить</Button>
           <Button
@@ -1730,7 +2077,7 @@ export function JudgePage() {
 
   const isSetup = phase === "setup" || phase === "waiting_start";
   const awaitingCreator = phase === "waiting_start";
-  const setupInputLocked = setupPending || setupUnknown;
+  const setupInputLocked = setupPending || setupUnknown || exitPending;
   const lostLock = phase === "lost_lock";
   const scoreRecoveryBlocked = Boolean(
     recoveryStorageError ||
@@ -1764,11 +2111,13 @@ export function JudgePage() {
   );
   const locked =
     lostLock ||
+    exitPending ||
     scoreRecoveryVisible ||
     match.status === "pending_confirmation" ||
     match.status === "finished" ||
     correctionOpen ||
     correctionPending ||
+    displayFlipPending ||
     handoverPending ||
     terminalPending;
   const readonly = phase === "readonly";
@@ -1788,14 +2137,10 @@ export function JudgePage() {
     rotateHintNeeded;
   const showLegacyHint = phase !== "scoring" && rotateHintNeeded;
   const { left, right } = boardSides(boardMatch);
-  const duration = formatMatchDuration(
-    elapsedMs(
-      match.startedAt as string | undefined,
-      now,
-      match.finishedAt as string | undefined,
-      String(match.status),
-    ),
-  );
+  const clockView = playingClockView(factsSnapshot, factsNow);
+  const duration = clockView.state === "available"
+    ? formatMatchDuration(clockView.elapsedMs)
+    : "Время недоступно";
 
   function startScorePointer(side: "A" | "B", event: PointerEvent<HTMLButtonElement>) {
     suppressScoreClickRef.current = false;
@@ -1945,6 +2290,16 @@ export function JudgePage() {
         isSetup ? "judge-setup" : lostLock ? "judge-lost-lock" : "judge-screen"
       }
     >
+      {nativeBackPending ? (
+        <p className="judge-screen__status" role="status" aria-live="polite">
+          Завершаем текущее действие перед выходом…
+        </p>
+      ) : null}
+      {nativeBackMessage ? (
+        <p className="judge-screen__status" role="alert">
+          {nativeBackMessage}
+        </p>
+      ) : null}
       {showDismissibleHint ? (
         <div className="judge-rotate-hint">
           <p role="status">Поверните устройство горизонтально для удобного судейства</p>
@@ -1975,9 +2330,14 @@ export function JudgePage() {
                 ? "Ведение недоступно"
               : statusLabel(String(match.status), "match")}
           </span>
-          {!isSetup && match.startedAt ? (
+          {!isSetup ? (
             <span className="judge-timer" aria-live="off">
               {duration}
+            </span>
+          ) : null}
+          {!isSetup && clockView.certainty === "checking" ? (
+            <span className="judge-clock-status" aria-live="polite">
+              Проверяем время…
             </span>
           ) : null}
           {match.deuceMode && !isSetup ? (
@@ -2002,7 +2362,7 @@ export function JudgePage() {
             variant="secondary"
             className="judge-touch"
             onClick={() => void releaseAndExit("/")}
-            disabled={exitPending || setupPending || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending || match.status === "pending_confirmation"}
+            disabled={exitPending || setupPending || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || displayFlipPending || handoverPending || match.status === "pending_confirmation"}
           >На главную</Button> : null}
           {isSetup ? (
             <Button
@@ -2027,7 +2387,7 @@ export function JudgePage() {
                 variant="secondary"
                 className="judge-touch"
                 onClick={() => void releaseAndExit()}
-                disabled={exitPending || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending || match.status === "pending_confirmation"}
+                disabled={exitPending || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || displayFlipPending || handoverPending || match.status === "pending_confirmation"}
               >
                 {exitPending ? "Выходим…" : "Назад"}
               </Button>
@@ -2048,7 +2408,7 @@ export function JudgePage() {
                 variant="secondary"
                 className="judge-touch"
                 onClick={() => setMenuOpen((v) => !v)}
-                disabled={scoreRecoveryVisible || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending || match.status === "pending_confirmation"}
+                disabled={exitPending || scoreRecoveryVisible || undoPending || terminalPending || scoreSendInFlight || correctionOpen || correctionPending || displayFlipPending || handoverPending || match.status === "pending_confirmation"}
                 aria-expanded={menuOpen}
                 aria-controls="judge-more-menu"
                 id="judge-more-trigger"
@@ -2366,7 +2726,7 @@ export function JudgePage() {
             <Button
               variant="secondary"
               className="judge-touch"
-              disabled={directoryState !== "ready" || !handoverUserId || handoverPending || correctionOpen || correctionPending}
+              disabled={directoryState !== "ready" || !handoverUserId || handoverPending || correctionOpen || correctionPending || displayFlipPending}
               onClick={() => void submitHandover()}
             >
               {handoverPending ? "Передаём…" : "Передать ведение"}
@@ -2376,7 +2736,7 @@ export function JudgePage() {
             variant="secondary"
             className="judge-touch"
             onClick={() => void releaseAndExit()}
-            disabled={exitPending || scoreSendInFlight || correctionOpen || correctionPending || handoverPending}
+            disabled={exitPending || scoreSendInFlight || correctionOpen || correctionPending || displayFlipPending || handoverPending}
           >
             {exitPending ? "Выходим…" : "Выйти из ведения"}
           </Button>

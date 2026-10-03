@@ -267,6 +267,13 @@ test("Stage 6 uses the whole score side without scroll taps and keeps dialogs re
     await sideA.click();
     const confirmation = page.getByRole("dialog", { name: "Подтвердить результат?" });
     await expect(confirmation).toBeVisible();
+    const modalLayer = confirmation.locator("xpath=..");
+    await expect(modalLayer).toHaveCSS("backdrop-filter", "blur(4px)");
+    const scoreBeforeDecision = await sideA.locator(".judge-side__score").boundingBox();
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(confirmation).toHaveCSS("animation-name", "none");
+    expect(await sideA.locator(".judge-side__score").boundingBox()).toEqual(scoreBeforeDecision);
+
     await expect(confirmation.getByRole("button", { name: "Подтвердить результат", exact: true })).toBeVisible();
     await expect(confirmation.getByRole("button", { name: "Продолжить", exact: true })).toBeVisible();
     await confirmation.getByRole("button", { name: "Продолжить", exact: true }).click();

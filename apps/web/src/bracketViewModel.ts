@@ -71,12 +71,111 @@ export type BracketBand = {
   columns: BracketRoundColumn[];
 };
 
+export type BracketEdge = {
+  key: string;
+  sourceCardKey: string;
+  sourceBandId: BracketBand["id"];
+  outcome: "winner" | "loser";
+  destinationCardKey: string;
+  destinationBandId: BracketBand["id"];
+  destinationSide: "a" | "b";
+  /** Known only after the source match resolves (or auto-advances). */
+  resolvedSourceSide: "a" | "b" | null;
+};
+
 export type BracketViewModel = {
   bands: BracketBand[];
+  /** Canonical potential paths, including cross-band paths, while both cards exist. */
+  edges: BracketEdge[];
+  /** Materialized, dependency-ready match cards in initial-focus order. */
+  readyMatchCardKeys: string[];
+  /** Pure recommendation for W2; applying focus or scroll remains a renderer concern. */
+  workingMatchCardKey: string | null;
   championName: string | null;
   championAvatarKey: string | null;
   constructionAlgorithm?: "compact" | "power_of_two" | "legacy";
 };
+
+type CardLocation = {
+  card: BracketCard;
+  bandId: BracketBand["id"];
+};
+
+function cardLocations(bands: BracketBand[]): CardLocation[] {
+  return bands.flatMap((band) =>
+    band.columns.flatMap((column) =>
+      column.cards.map((card) => ({ card, bandId: band.id })),
+    ),
+  );
+}
+
+function resolvedSourceSide(
+  card: BracketCard,
+  outcome: BracketEdge["outcome"],
+): BracketEdge["resolvedSourceSide"] {
+  if (!card.winnerSide) return null;
+  if (outcome === "winner") return card.winnerSide;
+  return card.winnerSide === "a" ? "b" : "a";
+}
+
+function dependencyDepths(
+  cards: CardLocation[],
+  edges: BracketEdge[],
+): Map<string, number> {
+  const incoming = new Map<string, string[]>();
+  for (const edge of edges) {
+    const sources = incoming.get(edge.destinationCardKey) ?? [];
+    if (!sources.includes(edge.sourceCardKey)) sources.push(edge.sourceCardKey);
+    incoming.set(edge.destinationCardKey, sources);
+  }
+  const cardKeys = new Set(cards.map(({ card }) => card.key));
+  const memo = new Map<string, number>();
+  const visit = (key: string, visiting: Set<string>): number => {
+    const cached = memo.get(key);
+    if (cached != null) return cached;
+    if (visiting.has(key)) return 0;
+    const nextVisiting = new Set(visiting).add(key);
+    const parents = (incoming.get(key) ?? []).filter((parent) => cardKeys.has(parent));
+    const depth = parents.length === 0
+      ? 0
+      : Math.max(...parents.map((parent) => visit(parent, nextVisiting) + 1));
+    memo.set(key, depth);
+    return depth;
+  };
+  for (const key of cardKeys) visit(key, new Set());
+  return memo;
+}
+
+function selectReadyMatchCardKeys(
+  bands: BracketBand[],
+  edges: BracketEdge[],
+  allowedKeys?: ReadonlySet<string>,
+): string[] {
+  const cards = cardLocations(bands);
+  const depths = dependencyDepths(cards, edges);
+  const workingStatuses = new Set([
+    "waiting",
+    "in_progress",
+    "pending_confirmation",
+  ]);
+  return cards
+    .map(({ card }) => card)
+    .filter(
+      (card) =>
+        card.cta === "judge" &&
+        card.matchId != null &&
+        card.status != null &&
+        workingStatuses.has(card.status) &&
+        (!allowedKeys || allowedKeys.has(card.key)),
+    )
+    .sort(
+      (a, b) =>
+        (depths.get(a.key) ?? 0) - (depths.get(b.key) ?? 0) ||
+        a.pairIndex - b.pairIndex ||
+        a.key.localeCompare(b.key),
+    )
+    .map((card) => card.key);
+}
 
 function nameFor(
   participantId: string | null | undefined,
@@ -344,6 +443,50 @@ function wireFeedsToCardKeys(
   }));
 }
 
+function buildV1Edges(bracket: Bracket, bands: BracketBand[]): BracketEdge[] {
+  const locations = cardLocations(bands);
+  const locationBySlotId = new Map<
+    string,
+    { location: CardLocation; side: "a" | "b" }
+  >();
+  for (const location of locations) {
+    locationBySlotId.set(location.card.slotA.slotId, { location, side: "a" });
+    locationBySlotId.set(location.card.slotB.slotId, { location, side: "b" });
+  }
+  const slotsById = new Map(bracket.slots.map((slot) => [slot.id, slot]));
+  const edges: BracketEdge[] = [];
+  for (const sourceLocation of locations) {
+    const slotA = slotsById.get(sourceLocation.card.slotA.slotId);
+    const slotB = slotsById.get(sourceLocation.card.slotB.slotId);
+    if (!slotA || !slotB) continue;
+    const competitive = !slotA.isBye && !slotB.isBye;
+    for (const [outcome, destinationIds] of [
+      ["winner", [slotA.advancesToSlotId, slotB.advancesToSlotId]],
+      ["loser", [slotA.loserToSlotId, slotB.loserToSlotId]],
+    ] as const) {
+      if (outcome === "loser" && !competitive) continue;
+      const uniqueDestinationIds = new Set(
+        destinationIds.filter((id): id is string => id != null),
+      );
+      for (const destinationId of uniqueDestinationIds) {
+        const destination = locationBySlotId.get(destinationId);
+        if (!destination) continue;
+        edges.push({
+          key: `${sourceLocation.card.key}:${outcome}->${destination.location.card.key}:${destination.side}`,
+          sourceCardKey: sourceLocation.card.key,
+          sourceBandId: sourceLocation.bandId,
+          outcome,
+          destinationCardKey: destination.location.card.key,
+          destinationBandId: destination.location.bandId,
+          destinationSide: destination.side,
+          resolvedSourceSide: resolvedSourceSide(sourceLocation.card, outcome),
+        });
+      }
+    }
+  }
+  return edges;
+}
+
 /** Resolve «A vs B» from tournamentSlotId + bracket participant names. */
 export function liveMatchVersusLabel(
   match: {
@@ -487,8 +630,13 @@ export function buildBracketViewModel(
   }
 
   const championId = bracket.championParticipantId ?? null;
+  const edges = buildV1Edges(bracket, bands);
+  const readyMatchCardKeys = selectReadyMatchCardKeys(bands, edges);
   return {
     bands,
+    edges,
+    readyMatchCardKeys,
+    workingMatchCardKey: readyMatchCardKeys[0] ?? null,
     championName: championId ? nameFor(championId, nameMap) : null,
     championAvatarKey: championId
       ? avatarFor(championId, avatarMap)
@@ -662,6 +810,46 @@ function wireV2FeedsInBand(columns: BracketRoundColumn[]): BracketRoundColumn[] 
   }));
 }
 
+function buildV2Edges(
+  graph: BracketGraphV2,
+  bands: BracketBand[],
+  destinations: ReturnType<typeof buildDestinationIndex>,
+): BracketEdge[] {
+  const locations = cardLocations(bands);
+  const locationByCardKey = new Map(
+    locations.map((location) => [location.card.key, location]),
+  );
+  const edges: BracketEdge[] = [];
+  for (const node of graph.matches) {
+    const source = locationByCardKey.get(node.id);
+    if (!source) continue;
+    const sides = getMatchSides(graph, node);
+    const competitive =
+      sides.a.kind !== "structurally_empty" &&
+      sides.b.kind !== "structurally_empty";
+    for (const [outcome, destination] of [
+      ["winner", destinations.winners.get(node.id)],
+      ["loser", destinations.losers.get(node.id)],
+    ] as const) {
+      if (!destination || (outcome === "loser" && !competitive)) continue;
+      const target = locationByCardKey.get(destination.bracketMatchId);
+      if (!target) continue;
+      const destinationSide = destination.position === "A" ? "a" : "b";
+      edges.push({
+        key: `${node.id}:${outcome}->${target.card.key}:${destinationSide}`,
+        sourceCardKey: node.id,
+        sourceBandId: source.bandId,
+        outcome,
+        destinationCardKey: target.card.key,
+        destinationBandId: target.bandId,
+        destinationSide,
+        resolvedSourceSide: resolvedSourceSide(source.card, outcome),
+      });
+    }
+  }
+  return edges;
+}
+
 /** Match-centric V2 view-model (Challonge-inspired topology). */
 export function buildBracketViewModelV2(
   graph: BracketGraphV2,
@@ -728,8 +916,22 @@ export function buildBracketViewModelV2(
   }
 
   const championId = graph.championParticipantId ?? null;
+  const edges = buildV2Edges(graph, bands, dest);
+  const graphReadyKeys = new Set(
+    graph.matches
+      .filter((node) => deriveBracketMatchState(graph, node.id) === "ready")
+      .map((node) => node.id),
+  );
+  const readyMatchCardKeys = selectReadyMatchCardKeys(
+    bands,
+    edges,
+    graphReadyKeys,
+  );
   return {
     bands,
+    edges,
+    readyMatchCardKeys,
+    workingMatchCardKey: readyMatchCardKeys[0] ?? null,
     championName: championId ? nameFor(championId, nameMap) : null,
     championAvatarKey: championId
       ? avatarFor(championId, avatarMap)

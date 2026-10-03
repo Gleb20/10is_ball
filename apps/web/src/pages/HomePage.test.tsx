@@ -60,6 +60,7 @@ describe("AT-HOME dashboard", () => {
     expect(await screen.findByText("Матч сейчас")).toBeInTheDocument();
     expect(screen.getByText("Кубок сейчас")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Матчи" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Гости" })).toHaveAttribute("href", "/guests");
     expect(screen.getByText("История игр")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Уведомления (4)" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /профиль: анна игрок/i })).toBeInTheDocument();

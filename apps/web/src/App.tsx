@@ -24,6 +24,8 @@ import { OnboardingPage } from "./pages/OnboardingPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { StartPage } from "./pages/StartPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
+import { GuestsPage } from "./pages/GuestsPage";
+import { GuestDetailPage } from "./pages/GuestDetailPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { AdminPasswordResetProvider } from "./adminPasswordReset";
 
@@ -141,6 +143,22 @@ function AppRoutes() {
           element={
             <Protected>
               <HistoryPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/guests"
+          element={
+            <Protected>
+              <GuestsPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/guests/:id"
+          element={
+            <Protected>
+              <GuestDetailPage />
             </Protected>
           }
         />

@@ -97,7 +97,20 @@ it("GAP-006 stop rolls back match and judge changes, then releases judges atomic
 
   await context.db.execute(`drop trigger gap006_fail_stop on tournaments`);
   await context.db.execute(`drop function gap006_fail_stop()`);
+  await context.db
+    .update(matches)
+    .set({
+      status: "in_progress",
+      playingElapsedMs: 0,
+      playingSegmentStartedAt: clock.now(),
+    })
+    .where(eq(matches.id, activeMatch!.id));
+  clock.advanceMs(3_500);
   await services.tournaments.stop(tournament.id, ids[0]!);
-  expect(await context.db.query.matches.findFirst({ where: eq(matches.id, activeMatch!.id) })).toMatchObject({ status: "cancelled" });
+  expect(await context.db.query.matches.findFirst({ where: eq(matches.id, activeMatch!.id) })).toMatchObject({
+    status: "cancelled",
+    playingElapsedMs: 3_500,
+    playingSegmentStartedAt: null,
+  });
   expect(await context.db.query.judgeSessions.findFirst({ where: eq(judgeSessions.id, judgeSession!.id) })).toMatchObject({ releasedAt: clock.now() });
 });

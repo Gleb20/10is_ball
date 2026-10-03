@@ -60,27 +60,29 @@ test("Wave C AT-MATCH-013_016 2v2 team selection, rules, no-show and hidden reve
       await mutate(member.context, "POST", `/api/v1/team-invitations/${invitation.id}/respond`, { accept: true });
     }
     await login(page); await page.goto("/matches/new");
-    await page.getByRole("button", { name: "Изменить название", exact: true }).click();
-    await page.getByLabel("Название", { exact: true }).fill(name);
-    await page.getByLabel("Создатель играет", { exact: true }).check();
-    await page.getByRole("button", { name: "2 × 2", exact: true }).click();
+    await page.getByRole("button", { name: "Настройки", exact: true }).click();
+    const settings = page.getByRole("dialog", { name: "Настройки матча", exact: true });
+    await settings.getByLabel("Название", { exact: true }).fill(name);
+    await settings.getByLabel("Создатель играет", { exact: true }).check();
+    await settings.getByRole("button", { name: "2 × 2", exact: true }).click();
+    await settings.getByRole("group", { name: "Очков до победы", exact: true }).getByRole("button", { name: "Своё", exact: true }).click();
+    await settings.getByLabel("Своё значение", { exact: true }).fill("7");
+    await settings.getByRole("checkbox", { name: /Сухая победа/ }).uncheck();
+    await settings.getByRole("button", { name: "Готово", exact: true }).click();
     await page.getByRole("button", { name, exact: true }).click();
     const preview = page.getByRole("region", { name: "Предпросмотр быстрого выбора" });
     await expect(preview).toContainText("B1:");
     await expect(preview).toContainText("B2:");
     await preview.getByRole("button", { name: "Применить", exact: true }).click();
-    await page.getByRole("button", { name: "Изменить правила", exact: true }).click();
-    await page.getByRole("group", { name: "Очков до победы", exact: true }).getByRole("button", { name: "Своё", exact: true }).click();
-    await page.getByLabel("Своё значение", { exact: true }).fill("7");
-    await page.getByRole("checkbox", { name: /Сухая победа/ }).uncheck();
     for (const label of ["Партнёр", "Соперник 2"]) {
       await page.getByRole("group", { name: label, exact: true }).getByRole("button", { name: "Гость", exact: true }).click();
       await page.getByLabel(`${label} — гость (Имя Фамилия)`, { exact: true }).fill(`${label} Гость`);
     }
     await noOverflow(page); await page.screenshot({ path: info.outputPath("create-2v2.png"), fullPage: true });
-    await page.getByRole("button", { name: "Создать матч", exact: true }).click();
-    await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+$/);
-    const id = page.url().split("/").at(-1)!;
+    await page.getByRole("button", { name: "Начать", exact: true }).click();
+    await page.getByRole("button", { name: new RegExp(`${actor.firstName}.*${actor.lastName}.*Подаёт первым`) }).click();
+    await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+\/judge$/);
+    const id = page.url().split("/").at(-2)!;
     const detail = (await (await admin.get(`/api/v1/matches/${id}`)).json()).match;
     expect(detail).toMatchObject({ format: "2v2", pointsToWin: 7, mercyEnabled: false, firstServerMethod: "manual" });
     expect(detail.participants).toHaveLength(4);
@@ -90,6 +92,8 @@ test("Wave C AT-MATCH-013_016 2v2 team selection, rules, no-show and hidden reve
     expect(registeredIds).toHaveLength(2);
     expect(registeredIds).toContain(actor.id);
     expect(registeredIds.some((id: string) => [user.id, createdTeammate.user.id].includes(id))).toBe(true);
+    await page.goto(`/matches/${id}`);
+    await page.getByText("Другие действия", { exact: true }).click();
     await page.getByRole("button", { name: "Зафиксировать неявку", exact: true }).click();
     await page.getByLabel("Комментарий (необязательно)", { exact: true }).fill("Синтетическая проверка неявки");
     await page.getByRole("button", { name: "Завершить по неявке", exact: true }).click();
@@ -98,9 +102,10 @@ test("Wave C AT-MATCH-013_016 2v2 team selection, rules, no-show and hidden reve
     await expect(page.getByRole("button", { name: "Создать реванш", exact: true })).toHaveCount(0);
     await page.goto(`/matches/new?revengeOf=${id}&returnTo=match`);
     await expect(page).toHaveURL(/\/matches\/new\?returnTo=match$/);
-    await expect(page.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
-    await page.getByRole("button", { name: "Изменить правила", exact: true }).click();
-    await expect(page.getByRole("group", { name: "Очков до победы", exact: true }).getByRole("button", { name: "11", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "Настройки", exact: true }).click();
+    const freshSettings = page.getByRole("dialog", { name: "Настройки матча", exact: true });
+    await expect(freshSettings.getByLabel("Создатель играет", { exact: true })).not.toBeChecked();
+    await expect(freshSettings.getByRole("group", { name: "Очков до победы", exact: true }).getByRole("button", { name: "11", exact: true })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByLabel("Пригласить выбранных игроков", { exact: true })).toHaveCount(0);
     await noOverflow(page);
   } finally { await Promise.all([admin.dispose(), target.dispose(), teammate.dispose()]); }

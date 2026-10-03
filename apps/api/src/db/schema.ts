@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
 import {
   type AnyPgColumn,
+  bigint,
   boolean,
   check,
+  date,
   index,
   integer,
   foreignKey,
@@ -69,6 +71,54 @@ export const users = pgTable(
       "users_onboarding_step_range",
       sql`${t.onboardingStep} BETWEEN 0 AND 6`,
     ),
+  ],
+);
+
+export const guestIdentities = pgTable(
+  "guest_identities",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
+    avatarKey: text("avatar_key").notNull(),
+    createdByUserId: uuid("created_by_user_id").notNull(),
+    version: integer("version").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("guest_identities_catalog_idx").on(t.lastName, t.firstName, t.id),
+    foreignKey({ name: "guest_identities_created_by_user_id_fkey", columns: [t.createdByUserId], foreignColumns: [users.id] }).onDelete("restrict"),
+    check("guest_identities_first_name_check", sql`length(btrim(${t.firstName})) BETWEEN 1 AND 100`),
+    check("guest_identities_last_name_check", sql`length(btrim(${t.lastName})) BETWEEN 1 AND 100`),
+    check("guest_identities_avatar_key_check", sql`${t.avatarKey} ~ '^avatar_([1-9]|10)$'`),
+    check("guest_identities_version_check", sql`${t.version} >= 0`),
+  ],
+);
+
+export const guestIdentityRequests = pgTable(
+  "guest_identity_requests",
+  {
+    actorUserId: uuid("actor_user_id").notNull(),
+    requestId: uuid("request_id").notNull(),
+    operation: text("operation").notNull(),
+    guestIdentityId: uuid("guest_identity_id").notNull(),
+    requestFingerprint: text("request_fingerprint").notNull(),
+    resultingVersion: integer("resulting_version").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("guest_identity_requests_actor_request_uid").on(t.actorUserId, t.requestId),
+    foreignKey({ name: "guest_identity_requests_actor_user_id_fkey", columns: [t.actorUserId], foreignColumns: [users.id] }).onDelete("restrict"),
+    foreignKey({ name: "guest_identity_requests_guest_identity_id_fkey", columns: [t.guestIdentityId], foreignColumns: [guestIdentities.id] }).onDelete("restrict"),
+    check("guest_identity_requests_operation_check", sql`${t.operation} = ANY (ARRAY['create'::text, 'rename'::text])`),
+    check("guest_identity_requests_resulting_version_check", sql`${t.resultingVersion} >= 0`),
   ],
 );
 
@@ -181,6 +231,14 @@ export const matches = pgTable(
     scoreA: integer("score_a").notNull().default(0),
     scoreB: integer("score_b").notNull().default(0),
     currentServerParticipantId: text("current_server_participant_id"),
+    initialServerParticipantId: uuid("initial_server_participant_id"),
+    playingElapsedMs: bigint("playing_elapsed_ms", { mode: "number" }),
+    playingSegmentStartedAt: timestamp("playing_segment_started_at", {
+      withTimezone: true,
+    }),
+    judgeHistoryComplete: boolean("judge_history_complete")
+      .notNull()
+      .default(false),
     serveSequenceIndex: integer("serve_sequence_index").notNull().default(0),
     deuceMode: boolean("deuce_mode").notNull().default(false),
     version: integer("version").notNull().default(0),
@@ -208,21 +266,72 @@ export const matches = pgTable(
       .where(
         sql`${t.tournamentBracketMatchId} IS NOT NULL AND ${t.tournamentId} IS NOT NULL`,
       ),
+    check(
+      "matches_playing_elapsed_nonnegative_check",
+      sql`${t.playingElapsedMs} IS NULL OR ${t.playingElapsedMs} >= 0`,
+    ),
+    check(
+      "matches_playing_segment_requires_elapsed_check",
+      sql`${t.playingSegmentStartedAt} IS NULL OR ${t.playingElapsedMs} IS NOT NULL`,
+    ),
   ],
 );
 
-export const matchParticipants = pgTable("match_participants", {
-  id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
-  matchId: uuid("match_id")
-    .notNull()
-    .references(() => matches.id),
-  side: text("side").notNull(),
-  userId: uuid("user_id").references(() => users.id),
-  guestFirstName: text("guest_first_name"),
-  guestLastName: text("guest_last_name"),
-  guestAvatarKey: text("guest_avatar_key"),
-  isTutorialActor: boolean("is_tutorial_actor").notNull().default(false),
-});
+export const matchParticipants = pgTable(
+  "match_participants",
+  {
+    id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
+    matchId: uuid("match_id")
+      .notNull()
+      .references(() => matches.id),
+    side: text("side").notNull(),
+    userId: uuid("user_id").references(() => users.id),
+    guestIdentityId: uuid("guest_identity_id"),
+    guestFirstName: text("guest_first_name"),
+    guestLastName: text("guest_last_name"),
+    guestAvatarKey: text("guest_avatar_key"),
+    isTutorialActor: boolean("is_tutorial_actor").notNull().default(false),
+  },
+  (t) => [
+    uniqueIndex("match_participants_guest_identity_uid")
+      .on(t.matchId, t.guestIdentityId)
+      .where(sql`${t.guestIdentityId} IS NOT NULL`),
+    foreignKey({ name: "match_participants_guest_identity_id_fkey", columns: [t.guestIdentityId], foreignColumns: [guestIdentities.id] }).onDelete("restrict"),
+    check(
+      "match_participants_guest_identity_snapshot_check",
+      sql`${t.guestIdentityId} IS NULL OR (${t.userId} IS NULL AND ${t.guestFirstName} IS NOT NULL AND ${t.guestLastName} IS NOT NULL AND ${t.guestAvatarKey} IS NOT NULL)`,
+    ),
+  ],
+);
+
+/**
+ * Immutable idempotency tombstones for atomic standalone launches.
+ *
+ * Match, participant and auth-session IDs intentionally have no foreign keys:
+ * an eligible admin purge or session cleanup must not erase or block the
+ * actor-bound replay identity.
+ */
+export const matchLaunchRequests = pgTable(
+  "match_launch_requests",
+  {
+    actorUserId: uuid("actor_user_id").notNull(),
+    requestId: uuid("request_id").notNull(),
+    originatingAuthSessionId: uuid("originating_auth_session_id").notNull(),
+    requestFingerprint: text("request_fingerprint").notNull(),
+    matchId: uuid("match_id").notNull(),
+    initialServerParticipantId: uuid("initial_server_participant_id").notNull(),
+    slotMap: jsonb("slot_map").$type<Record<string, string>>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("match_launch_requests_actor_request_uid").on(
+      t.actorUserId,
+      t.requestId,
+    ),
+  ],
+);
 
 export const matchInvitations = pgTable(
   "match_invitations",
@@ -329,6 +438,7 @@ export const judgeSessions = pgTable(
     acquiredAt: timestamp("acquired_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
     lastHeartbeatAt: timestamp("last_heartbeat_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -347,10 +457,12 @@ export const judgeSessions = pgTable(
     uniqueIndex("judge_sessions_active_match")
       .on(t.matchId)
       .where(sql`${t.releasedAt} IS NULL`),
+    index("judge_sessions_match_activated_idx").on(t.matchId, t.activatedAt),
   ],
 );
 
 export const tournaments = pgTable("tournaments", {
+  plannedDate: date("planned_date", { mode: "string" }),
   id: uuid("id").primaryKey().defaultRandom().$defaultFn(newId),
   title: text("title").notNull(),
   status: text("status").notNull().default("collecting"),
@@ -399,6 +511,7 @@ export const tournamentParticipants = pgTable(
       .notNull()
       .references(() => tournaments.id),
     userId: uuid("user_id").references(() => users.id),
+    guestIdentityId: uuid("guest_identity_id"),
     guestFirstName: text("guest_first_name"),
     guestLastName: text("guest_last_name"),
     guestAvatarKey: text("guest_avatar_key"),
@@ -414,12 +527,20 @@ export const tournamentParticipants = pgTable(
     uniqueIndex("tournament_participants_active_user_uid")
       .on(t.tournamentId, t.userId)
       .where(sql`${t.userId} IS NOT NULL AND ${t.status} = 'active'`),
+    uniqueIndex("tournament_participants_active_guest_identity_uid")
+      .on(t.tournamentId, t.guestIdentityId)
+      .where(sql`${t.guestIdentityId} IS NOT NULL AND ${t.status} = 'active'`),
+    foreignKey({ name: "tournament_participants_guest_identity_id_fkey", columns: [t.guestIdentityId], foreignColumns: [guestIdentities.id] }).onDelete("restrict"),
     uniqueIndex("tournament_participants_add_idempotency_uid")
       .on(t.tournamentId, t.additionIdempotencyKey)
       .where(sql`${t.additionIdempotencyKey} IS NOT NULL`),
     check(
       "tournament_participants_addition_source_check",
       sql`${t.additionSource} = ANY (ARRAY['legacy'::text, 'organizer_default'::text, 'manual_direct'::text, 'manual_override'::text, 'invitation_accept'::text, 'guest_manual'::text])`,
+    ),
+    check(
+      "tournament_participants_guest_identity_snapshot_check",
+      sql`${t.guestIdentityId} IS NULL OR (${t.userId} IS NULL AND ${t.guestFirstName} IS NOT NULL AND ${t.guestLastName} IS NOT NULL AND ${t.guestAvatarKey} IS NOT NULL)`,
     ),
     foreignKey({
       name: "tournament_participants_added_by_user_id_fkey",
@@ -463,6 +584,7 @@ export const teams = pgTable("teams", {
   slug: text("slug").notNull().unique(),
   slogan: text("slogan"),
   welcomeText: text("welcome_text"),
+  avatarKey: text("avatar_key"),
   captainUserId: uuid("captain_user_id")
     .notNull()
     .references(() => users.id),

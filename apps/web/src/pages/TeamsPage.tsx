@@ -5,6 +5,8 @@ import { AsyncState, ListRow } from "../patterns";
 import { api, type Team } from "../api";
 import { useLifecycleSingleFlight } from "./useLifecycleSingleFlight";
 import { useAuth } from "../auth";
+import { TeamAvatar, TeamAvatarPicker } from "../components/TeamAvatar";
+import type { AvatarKey } from "@tab10/shared";
 
 type CreateIssue = {
   title: string;
@@ -66,6 +68,7 @@ export function TeamsPage() {
   const [name, setName] = useState("");
   const [slogan, setSlogan] = useState("");
   const [welcomeText, setWelcomeText] = useState("");
+  const [avatarKey, setAvatarKey] = useState<AvatarKey | null>(null);
   const [authorizedListRevision, setAuthorizedListRevision] = useState(0);
   const submission = useLifecycleSingleFlight();
   const { user } = useAuth();
@@ -143,6 +146,7 @@ export function TeamsPage() {
       setName("");
       setSlogan("");
       setWelcomeText("");
+      setAvatarKey(null);
       setCreateIssue(null);
       setUnknownReviewed(false);
       interruptedCreateActorRef.current = null;
@@ -251,6 +255,7 @@ export function TeamsPage() {
         name: name.trim(),
         ...(slogan.trim() ? { slogan: slogan.trim() } : {}),
         ...(welcomeText.trim() ? { welcomeText: welcomeText.trim() } : {}),
+        ...(avatarKey ? { avatarKey } : {}),
       };
       setCreateIssue(null);
       setUnknownReviewed(false);
@@ -261,6 +266,7 @@ export function TeamsPage() {
         setName("");
         setSlogan("");
         setWelcomeText("");
+        setAvatarKey(null);
         setCreateOpen(false);
         setTeams((current) => [
           response.team,
@@ -316,6 +322,12 @@ export function TeamsPage() {
               value={name}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
               required
+              disabled={submission.pending}
+            />
+            <TeamAvatarPicker
+              value={avatarKey}
+              onChange={setAvatarKey}
+              name="create-team-avatar"
               disabled={submission.pending}
             />
             <TextField
@@ -391,6 +403,7 @@ export function TeamsPage() {
                       teamsReturnToken: navigationToken,
                     }}
                     onClick={() => rememberTeamReturn(team.id)}
+                    leading={<TeamAvatar avatarKey={team.avatarKey} teamName={team.name} />}
                     title={team.name}
                     subtitle={[
                       team.slogan,

@@ -13,12 +13,15 @@ import { sql } from "drizzle-orm";
 import {
   AwardPointRequestSchema,
   CancelMatchRequestSchema,
+  CreateGuestIdentityRequestSchema,
   CreateMatchRequestSchema,
   UpdateMatchRequestSchema,
   MatchInvitationRequestSchema,
   JudgeHandoverRequestSchema,
   ManualCorrectionRequestSchema,
+  MatchLaunchRequestSchema,
   NoShowRequestSchema,
+  RenameGuestIdentityRequestSchema,
   TeamCreateRequestSchema,
   TeamUpdateRequestSchema,
   JudgeSetupRequestSchema,
@@ -28,13 +31,18 @@ import {
   type ReleaseMetadata,
 } from "@tab10/shared";
 import type { Clock } from "@tab10/test-utils";
-import { z, type ZodType } from "zod";
+import { z } from "zod";
 import type { Db } from "./db/client.js";
 import { authSessions, users } from "./db/schema.js";
 import { isAuditEphemeral } from "./audit-ephemeral.js";
 import { AuthService, type AuthUser } from "./modules/auth/auth-service.js";
 import { HomeService } from "./modules/home/home-service.js";
+import { GuestService } from "./modules/guests/guest-service.js";
 import { MatchService } from "./modules/matches/match-service.js";
+import {
+  AdminMatchRecoveryService,
+  adminMatchRecoveryHttpError,
+} from "./modules/matches/admin-match-recovery-service.js";
 import {
   HelpService,
   NotificationService,
@@ -63,6 +71,7 @@ const NotificationReadVisibleSchema = z.object({
 });
 
 const TournamentCreateSchema = z.object({
+  plannedDate: z.string().date().refine((value) => Number(value.slice(0, 4)) > 0, "Invalid calendar date").nullable().optional(),
   title: z.string().trim().min(1).max(200),
   format: z.enum(["single_elimination", "double_elimination"]).optional(),
   organizerParticipates: z.boolean().optional(),
@@ -77,20 +86,27 @@ const TournamentPatchSchema = TournamentCreateSchema
   .refine((value) => Object.keys(value).length > 0, "At least one field is required");
 const TournamentParticipantSchema = z.object({
   userId: z.string().uuid().optional(),
+  guestIdentityId: z.string().uuid().optional(),
   guestFirstName: z.string().trim().min(1).max(100).optional(),
   guestLastName: z.string().trim().min(1).max(100).optional(),
   confirmManualOverride: z.boolean().optional(),
   confirmBracketRegeneration: z.boolean().optional(),
 }).strict().superRefine((value, context) => {
   const hasUser = Boolean(value.userId);
-  const hasGuest = Boolean(value.guestFirstName || value.guestLastName);
-  if (hasUser === hasGuest || (hasGuest && (!value.guestFirstName || !value.guestLastName))) {
+  const hasGuestIdentity = Boolean(value.guestIdentityId);
+  const hasInlineGuest = Boolean(value.guestFirstName || value.guestLastName);
+  if (Number(hasUser) + Number(hasGuestIdentity) + Number(hasInlineGuest) !== 1 ||
+      (hasInlineGuest && (!value.guestFirstName || !value.guestLastName))) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "participant must be exactly one active user or a guest with first and last name",
+      message: "participant must be exactly one active user, reusable guest or inline guest",
     });
   }
 });
+const BracketGenerationSchema = z.object({
+  expectedVersion: z.number().int().min(0),
+  constructionAlgorithm: z.enum(["compact", "power_of_two"]).optional(),
+}).strict();
 const TournamentStopSchema = z.object({
   code: z.string().trim().min(1).max(100),
   text: z.string().trim().max(500).optional(),
@@ -120,6 +136,7 @@ const AdminUsersQuerySchema = z
   })
   .strict();
 const AdminUserParamsSchema = z.object({ userId: z.string().uuid() }).strict();
+const AdminMatchParamsSchema = z.object({ matchId: z.string().uuid() }).strict();
 const AdminUserAuditQuerySchema = z
   .object({ cursor: z.string().min(1).max(1000).optional() })
   .strict();
@@ -198,6 +215,16 @@ const RankingQuerySchema = z
     }
   });
 const PlayerParamsSchema = z.object({ userId: z.string().uuid() });
+const GuestParamsSchema = z.object({ guestId: z.string().uuid() }).strict();
+const GuestRequestParamsSchema = z.object({ requestId: z.string().uuid() }).strict();
+const GuestCatalogueQuerySchema = z.object({
+  q: z.string().trim().max(100).optional(),
+  cursor: z.string().min(1).max(1000).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+}).strict();
+const GuestHistoryQuerySchema = z.object({
+  cursor: z.string().min(1).max(1000).optional(),
+}).strict();
 
 /** Cookie flags: use COOKIE_SAME_SITE=none when browser talks to API on another site. Prefer Vercel /api rewrite (same-site) instead. */
 function sessionCookieOptions(httpOnly: boolean) {
@@ -230,6 +257,7 @@ export type AppServices = {
   home: HomeService;
   rankings: RankingService;
   history: HistoryService;
+  guests: GuestService;
   profile: ProfileService;
   clock: Clock;
 };
@@ -259,6 +287,8 @@ export async function buildApp(opts: {
       await opts.db.execute(sql`select 1`);
     });
   const matches = new MatchService(opts.db, clock, opts.randomIndex);
+  const guests = new GuestService(opts.db, clock);
+  const adminMatchRecovery = new AdminMatchRecoveryService(opts.db, clock);
   const tournaments = new TournamentService(opts.db, clock, matches);
   matches.setTournamentMatchFinishedHook((matchId, db) =>
     tournaments.onMatchFinished(matchId, db),
@@ -276,6 +306,7 @@ export async function buildApp(opts: {
     home: new HomeService(opts.db, clock, matches, tournaments),
     rankings: new RankingService(opts.db, matches),
     history: new HistoryService(opts.db, clock),
+    guests,
     profile: new ProfileService(opts.db, matches),
     clock,
   };
@@ -897,6 +928,61 @@ export async function buildApp(opts: {
     },
   );
 
+  app.get(
+    "/api/v1/admin/matches/:matchId/recovery",
+    {
+      onRequest: async (_req, reply) => {
+        reply.header("cache-control", "no-store");
+      },
+      preHandler: requireAdmin,
+    },
+    async (req, reply) => {
+      reply.header("cache-control", "no-store");
+      try {
+        const { matchId } = parseBody(AdminMatchParamsSchema, req.params);
+        const recovery = await adminMatchRecovery.lookup(
+          matchId,
+          req.authUser!.id,
+        );
+        return { recovery };
+      } catch (error) {
+        const safe = adminMatchRecoveryHttpError(error);
+        return reply.code(safe.status).send(safe.body);
+      }
+    },
+  );
+
+  app.post(
+    "/api/v1/admin/matches/:matchId/recovery/force-close",
+    {
+      onRequest: async (_req, reply) => {
+        reply.header("cache-control", "no-store");
+      },
+      preHandler: requireAdmin,
+    },
+    async (req, reply) => {
+      reply.header("cache-control", "no-store");
+      try {
+        const { matchId } = parseBody(AdminMatchParamsSchema, req.params);
+        const body = parseBody(CancelMatchRequestSchema, req.body);
+        const idempotencyKey = parseIdempotencyKey(
+          req.headers["idempotency-key"],
+        );
+        const recovery = await adminMatchRecovery.forceClose({
+          matchId,
+          actorAdminId: req.authUser!.id,
+          expectedVersion: body.expectedVersion,
+          idempotencyKey,
+          reasonText: body.reasonText,
+        });
+        return { recovery };
+      } catch (error) {
+        const safe = adminMatchRecoveryHttpError(error);
+        return reply.code(safe.status).send(safe.body);
+      }
+    },
+  );
+
   app.delete(
     "/api/v1/admin/matches/:matchId",
     { preHandler: requireAdmin },
@@ -995,6 +1081,56 @@ export async function buildApp(opts: {
   );
 
   // --- Matches ---
+  app.get("/api/v1/guests", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const query = parseBody(GuestCatalogueQuerySchema, req.query);
+      return await services.guests.list(req.authUser!.id, query);
+    } catch (error) { return sendError(reply, error); }
+  });
+
+  app.post("/api/v1/guests", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const requestId = parseIdempotencyKey(req.headers["idempotency-key"]);
+      const body = parseBody(CreateGuestIdentityRequestSchema, req.body);
+      if (body.requestId !== requestId) throw Object.assign(new Error("VALIDATION"), { code: "VALIDATION" });
+      return { guest: await services.guests.create({ actorUserId: req.authUser!.id, ...body }) };
+    } catch (error) { return sendError(reply, error); }
+  });
+
+  app.get("/api/v1/guests/requests/:requestId", { preHandler: requireAuth }, async (req, reply) => {
+    reply.header("cache-control", "no-store");
+    try {
+      const { requestId } = parseBody(GuestRequestParamsSchema, req.params);
+      return await services.guests.mutationOutcome(req.authUser!.id, requestId);
+    } catch (error) { return sendError(reply, error); }
+  });
+
+  app.get("/api/v1/guests/:guestId", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { guestId } = parseBody(GuestParamsSchema, req.params);
+      const guest = await services.guests.get(req.authUser!.id, guestId);
+      return guest ? { guest } : reply.code(404).send({ code: "NOT_FOUND", message: "Гость не найден" });
+    } catch (error) { return sendError(reply, error); }
+  });
+
+  app.patch("/api/v1/guests/:guestId", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { guestId } = parseBody(GuestParamsSchema, req.params);
+      const requestId = parseIdempotencyKey(req.headers["idempotency-key"]);
+      const body = parseBody(RenameGuestIdentityRequestSchema, req.body);
+      if (body.requestId !== requestId) throw Object.assign(new Error("VALIDATION"), { code: "VALIDATION" });
+      return { guest: await services.guests.rename({ actorUserId: req.authUser!.id, guestId, ...body }) };
+    } catch (error) { return sendError(reply, error); }
+  });
+
+  app.get("/api/v1/guests/:guestId/history", { preHandler: requireAuth }, async (req, reply) => {
+    try {
+      const { guestId } = parseBody(GuestParamsSchema, req.params);
+      const query = parseBody(GuestHistoryQuerySchema, req.query);
+      return await services.guests.history(req.authUser!.id, guestId, query.cursor);
+    } catch (error) { return sendError(reply, error); }
+  });
+
   app.get("/api/v1/history", { preHandler: requireAuth }, async (req, reply) => {
     try {
       const parsed = parseBody(HistoryQuerySchema, req.query);
@@ -1015,6 +1151,55 @@ export async function buildApp(opts: {
     const list = await services.matches.listMatches(req.authUser!.id);
     return { matches: list };
   });
+
+  app.post(
+    "/api/v1/matches/launches",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const requestId = parseIdempotencyKey(req.headers["idempotency-key"]);
+        const body = parseBody(MatchLaunchRequestSchema, req.body);
+        if (body.requestId !== requestId) {
+          throw Object.assign(new Error("VALIDATION"), {
+            code: "VALIDATION",
+            details: {
+              issues: [{
+                path: "requestId",
+                message: "must match Idempotency-Key",
+              }],
+            },
+          });
+        }
+        return await services.matches.launchMatch({
+          actorUserId: req.authUser!.id,
+          authSessionId: req.authSessionId!,
+          request: body,
+        });
+      } catch (error) {
+        return sendError(reply, error);
+      }
+    },
+  );
+
+  app.get(
+    "/api/v1/matches/launches/:requestId",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      reply.header("cache-control", "no-store");
+      try {
+        const { requestId } = parseBody(
+          z.object({ requestId: z.string().uuid() }).strict(),
+          req.params,
+        );
+        return await services.matches.getMatchLaunchOutcome(
+          req.authUser!.id,
+          requestId,
+        );
+      } catch (error) {
+        return sendError(reply, error);
+      }
+    },
+  );
 
   app.post("/api/v1/matches", { preHandler: requireAuth }, async (req, reply) => {
     try {
@@ -1505,6 +1690,7 @@ export async function buildApp(opts: {
           mercyEnabled: body.mercyEnabled,
           mercyPoints: body.mercyPoints,
           requireParticipantConsent: body.requireParticipantConsent,
+          plannedDate: body.plannedDate,
         });
         return { tournament };
       } catch (e) {
@@ -1654,20 +1840,51 @@ export async function buildApp(opts: {
   );
 
   app.post(
+    "/api/v1/tournaments/:id/bracket-generations",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { id } = req.params as { id: string };
+        const body = parseBody(BracketGenerationSchema, req.body);
+        const tournament = await services.tournaments.generateBracketVersioned(
+          id,
+          req.authUser!.id,
+          body,
+        );
+        return { tournament };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.get(
+    "/api/v1/tournaments/:id/bracket-generation-context",
+    { preHandler: requireAuth },
+    async (req, reply) => {
+      try {
+        const { id } = req.params as { id: string };
+        const tournament = await services.tournaments.getBracketGenerationContext(
+          id,
+          req.authUser!.id,
+        );
+        return { tournament };
+      } catch (e) {
+        return sendError(reply, e);
+      }
+    },
+  );
+
+  app.post(
     "/api/v1/tournaments/:id/bracket",
     { preHandler: requireAuth },
     async (req, reply) => {
       try {
         const { id } = req.params as { id: string };
-        const body = (req.body ?? {}) as {
-          constructionAlgorithm?: unknown;
-        };
-        const result = await services.tournaments.generateBracket(
+        await services.tournaments.rejectLegacyBracketGeneration(
           id,
           req.authUser!.id,
-          { constructionAlgorithm: body.constructionAlgorithm },
         );
-        return result;
       } catch (e) {
         return sendError(reply, e);
       }
@@ -1969,6 +2186,8 @@ function messageFor(code: string): string {
     BRACKET_CORRUPT: "Сетка повреждена",
     UNSUPPORTED_BRACKET_VERSION: "Неподдерживаемая версия сетки",
     BRACKET_VERSION_CONFLICT: "Конфликт версии сетки",
+    VERSIONED_BRACKET_GENERATION_REQUIRED:
+      "Обновите страницу, чтобы построить сетку",
     BRACKET_ALGORITHM_MISMATCH: "Несогласованность алгоритма сетки",
     INVALID_BRACKET_CONSTRUCTION_ALGORITHM: "Неизвестный способ построения сетки",
     COMPACT_DOUBLE_ELIMINATION_UNSUPPORTED:
@@ -2040,7 +2259,7 @@ function safeErrorSignal(error: unknown): { type: string; code: string } {
   return { type, code };
 }
 
-function parseBody<T>(schema: ZodType<T>, body: unknown): T {
+function parseBody<S extends z.ZodTypeAny>(schema: S, body: unknown): z.output<S> {
   const parsed = schema.safeParse(body);
   if (parsed.success) return parsed.data;
   throw Object.assign(new Error("VALIDATION"), {
@@ -2132,11 +2351,13 @@ function sendError(reply: FastifyReply, e: unknown) {
               code === "JUDGE_RESERVED" ||
               code === "JUDGE_NOT_ACTIVE" ||
               code === "BRACKET_VERSION_CONFLICT" ||
+              code === "VERSIONED_BRACKET_GENERATION_REQUIRED" ||
               code === "BRACKET_REGEN_CONFIRMATION_REQUIRED" ||
               code === "MANUAL_OVERRIDE_CONFIRMATION_REQUIRED" ||
               code === "IDEMPOTENCY_KEY_REUSED" ||
               code === "RESET_STATE_CHANGED" ||
-              code === "CURRENT_SESSION_FORBIDDEN"
+              code === "CURRENT_SESSION_FORBIDDEN" ||
+              code === "TEAM_ARCHIVED"
             ? 409
             : badRequestCodes.has(code)
               ? 400

@@ -5,6 +5,22 @@
 Это inventory, а не обещание корректности или полноты. Все `/api/v1/*`, кроме
 login/OpenAPI, требуют session; state-changing routes вне test требуют CSRF.
 
+## Интегрированный кандидат после 5.0.1 (ещё не опубликован)
+
+Локальный код добавляет POST `/api/v1/matches/launches`, GET actor-scoped
+`/api/v1/matches/launches/:requestId`, organizer-only GET
+`/api/v1/tournaments/:id/bracket-generation-context` и POST `/bracket-generations`.
+Legacy POST `/bracket` теперь fail-closed без мутации. Точные DTO, lock/version и
+recovery правила: [API specification](../requirements/08_API_SPEC.md).
+Публикация 5.0.1 этих новых маршрутов ещё не содержит.
+
+Кандидат GET detail матча дополнен `matchFacts`: discriminated initialServer,
+playingClock (elapsedMs/running/asOf), judgeHistory (complete/partial/unavailable).
+Mutation/list responses остаются прежними и не несут эти факты. Judge-history
+allowlist не включает authSessionId; действуют прежние D17 права.
+Tournament create/patch/detail/list содержит nullable plannedDate; metadata edit
+не меняет bracketStateVersion. Это ещё не контракт опубликованной 5.0.1.
+
 ## System и auth (10)
 
 | Method | Path |
@@ -339,3 +355,11 @@ and cross-match route tests preserve the original judge/match rows, deny
 second-session heartbeat and retain first-session heartbeat/release. Existing
 OpenAPI409 ApiError already covers the response. Focused2/2 and four selected
 judge regressions pass; full F integration remains pending.
+
+## Неопубликованный D40 guest/team candidate
+
+Кандидат содержит шесть маршрутов сохранённых гостей из API_SPEC и nullable
+team.avatarKey. Реестр OpenAPI и shared-схемы отражают user/guestIdentity/inline
+union; существующие маршруты/права команд сохранены. Independent guest review
+потребовало audit и расширение PG-evidence, исправление проверяется отдельно.
+Эта запись не утверждает наличия новых маршрутов в опубликованной 5.0.1.

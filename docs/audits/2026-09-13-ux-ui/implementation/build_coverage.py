@@ -223,6 +223,24 @@ def main() -> None:
     if applied != set(by_key):
         raise ValueError(f"implementation outcomes not found: {set(by_key) - applied}")
 
+    # D38/D40 are accepted product decisions, not implementation evidence.
+    # Preserve the source universe, atomic labels, and previous verified results.
+    closed_questions = {f"Q-UX-{number:03d}" for number in range(1, 11)}
+    expert_choices = {"BUG-022", "GAP-025", "GAP-028"}
+    decisions = (ROOT / "docs/DECISIONS.md").read_text()
+    if "## D40 —" not in decisions or "## D38 —" not in decisions:
+        raise ValueError("accepted choice ADR missing")
+    for row in rows:
+        question = row[7]
+        if question not in closed_questions and not (row[0] == "expert-stage-08" and row[1] in expert_choices):
+            continue
+        row[7] = "D38" if question == "Q-UX-005" else "D40"
+        superseded = question == "Q-UX-008"
+        row[6] = "superseded_target" if superseded else "accepted_target"
+        key = (row[0], row[1], row[3])
+        if key not in by_key:
+            row[11] = "superseded_by_D40_explicit_annulment" if superseded else "decision_accepted_implementation_pending"
+
     with (HERE / "coverage.csv").open("w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(FIELDNAMES)

@@ -1,0 +1,1 @@
+ALTER TABLE "tournaments" ADD COLUMN "planned_date" date;

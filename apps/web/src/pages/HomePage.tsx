@@ -172,7 +172,7 @@ export function HomePage() {
       )}
       <nav className="home-secondary" aria-label="Другие разделы">
         {!data ? <><Link to="/history">История</Link><Link to="/rankings">Рейтинг</Link></> : null}
-        <Link to="/matches">Матчи</Link><Link to="/tournaments">Турниры</Link><Link to="/teams">Команды</Link><Link to="/help">Помощь</Link>
+        <Link to="/matches">Матчи</Link><Link to="/tournaments">Турниры</Link><Link to="/teams">Команды</Link><Link to="/guests">Гости</Link><Link to="/help">Помощь</Link>
         {user?.role === "admin" ? <Link to="/admin">Админка</Link> : null}
       </nav>
     </PageLayout>

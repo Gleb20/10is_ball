@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { App } from "./App";
 
 const activeUser = {
-  id: "u1",
+  id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   email: "player@tab10.local",
   role: "user",
   mustChangePassword: false,
@@ -15,7 +15,7 @@ const activeUser = {
 
 const otherUser = {
   ...activeUser,
-  id: "u2",
+  id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
   email: "other@tab10.local",
   firstName: "Анна",
 };
@@ -35,7 +35,7 @@ function LocationProbe() {
 async function openTitleEditor(user: ReturnType<typeof userEvent.setup>) {
   const visibleTitle = screen.queryByLabelText("Название");
   if (visibleTitle) return visibleTitle;
-  await user.click(await screen.findByRole("button", { name: "Изменить название" }));
+  await user.click(await screen.findByRole("button", { name: "Настройки" }));
   return screen.getByLabelText("Название");
 }
 
@@ -65,7 +65,7 @@ describe("AT-AUTH-009 runtime session recovery", () => {
       if (path === "/api/v1/users/directory") {
         return jsonResponse(200, { users: [] });
       }
-      if (path === "/api/v1/matches" && method === "POST") {
+      if (path === "/api/v1/matches/launches" && method === "POST") {
         createAttempts += 1;
         sessionValid = false;
         return jsonResponse(401, {
@@ -93,12 +93,15 @@ describe("AT-AUTH-009 runtime session recovery", () => {
     await user.clear(title);
     await user.type(title, "Финал после обеда");
     await user.click(screen.getByLabelText("Создатель играет"));
-    await user.click(screen.getByRole("button", { name: /^гость$/i }));
+    await user.click(screen.getByRole("button", { name: "Готово" }));
+    const opponent = screen.getByRole("group", { name: "Соперник" });
+    await user.click(within(opponent).getByRole("button", { name: /^гость$/i }));
     await user.type(
-      await screen.findByLabelText(/гость \(имя фамилия\)/i),
+      within(opponent).getByLabelText(/гость \(имя фамилия\)/i),
       "Анна Тестова",
     );
-    await user.click(screen.getByRole("button", { name: /создать матч/i }));
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+    await user.click(screen.getByRole("button", { name: /Иван Игрок.*Подаёт первым/ }));
 
     expect(await screen.findByRole("heading", { name: "Вход" })).toBeVisible();
     expect(screen.getByText(/сессия завершена/i)).toBeVisible();
@@ -115,10 +118,9 @@ describe("AT-AUTH-009 runtime session recovery", () => {
       ).not.toBeInTheDocument();
     });
     expect(screen.getByTestId("location")).toHaveTextContent("/matches/new?returnTo=home#draft");
-    expect(await openTitleEditor(user)).toHaveValue("Финал после обеда");
-    expect(screen.getByLabelText(/гость \(имя фамилия\)/i)).toHaveValue(
-      "Анна Тестова",
-    );
+    expect(screen.getByText("Финал после обеда")).toBeVisible();
+    expect(screen.getByRole("group", { name: "Выбор первой подачи" })).toHaveTextContent("Анна Тестова");
+    expect(screen.getByText("Результат запуска ещё не подтверждён")).toBeVisible();
     expect(createAttempts).toBe(1);
     expect(screen.queryByText("Session expired")).not.toBeInTheDocument();
   });
@@ -140,7 +142,7 @@ describe("AT-AUTH-009 runtime session recovery", () => {
       if (path === "/api/v1/users/directory") {
         return jsonResponse(200, { users: [] });
       }
-      if (path === "/api/v1/matches" && method === "POST") {
+      if (path === "/api/v1/matches/launches" && method === "POST") {
         sessionValid = false;
         return jsonResponse(401, { code: "UNAUTHORIZED", message: "Session expired" });
       }
@@ -163,12 +165,15 @@ describe("AT-AUTH-009 runtime session recovery", () => {
     await user.clear(title);
     await user.type(title, "Черновик другого пользователя");
     await user.click(screen.getByLabelText("Создатель играет"));
-    await user.click(screen.getByRole("button", { name: /^гость$/i }));
+    await user.click(screen.getByRole("button", { name: "Готово" }));
+    const opponent = screen.getByRole("group", { name: "Соперник" });
+    await user.click(within(opponent).getByRole("button", { name: /^гость$/i }));
     await user.type(
-      await screen.findByLabelText(/гость \(имя фамилия\)/i),
+      within(opponent).getByLabelText(/гость \(имя фамилия\)/i),
       "Секретный соперник",
     );
-    await user.click(screen.getByRole("button", { name: /создать матч/i }));
+    await user.click(screen.getByRole("button", { name: "Начать" }));
+    await user.click(screen.getByRole("button", { name: /Иван Игрок.*Подаёт первым/ }));
     await user.type(await screen.findByLabelText("Email"), otherUser.email);
     await user.type(screen.getByLabelText("Пароль"), "OtherPass1!");
     await user.click(screen.getByRole("button", { name: /^войти$/i }));

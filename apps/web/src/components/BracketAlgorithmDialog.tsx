@@ -19,6 +19,8 @@ export type BracketAlgorithmDialogProps = {
   errorTitle?: string;
   errorRevision?: number;
   retryBlocked?: boolean;
+  selectionLocked?: boolean;
+  submitLabel?: string;
   onCheckState?: () => void;
   showRegenWarning?: boolean;
 };
@@ -35,6 +37,8 @@ export function BracketAlgorithmDialog({
   errorTitle = "Состояние построения сетки",
   errorRevision = 0,
   retryBlocked = false,
+  selectionLocked = false,
+  submitLabel = BRACKET_ALGORITHM_DIALOG.submit,
   onCheckState,
   showRegenWarning = false,
 }: BracketAlgorithmDialogProps) {
@@ -50,7 +54,7 @@ export function BracketAlgorithmDialog({
   return (
     <Dialog
       open={open}
-      onClose={() => !busy && onCancel()}
+      onClose={onCancel}
       title={BRACKET_ALGORITHM_DIALOG.title}
       width="md"
     >
@@ -93,7 +97,7 @@ export function BracketAlgorithmDialog({
                 name={`bracket-algo-${groupId}`}
                 value={key}
                 checked={checked}
-                disabled={busy || retryBlocked}
+                disabled={busy || retryBlocked || selectionLocked}
                 onChange={() => onSelect(key)}
               />
               <span className="bracket-algo-card__title">{opt.title}</span>
@@ -110,8 +114,8 @@ export function BracketAlgorithmDialog({
         </div>
       ) : null}
       <div className="row bracket-algo-dialog__actions">
-        <Button variant="secondary" disabled={busy} onClick={onCancel}>{BRACKET_ALGORITHM_DIALOG.cancel}</Button>
-        <Button disabled={!canSubmit} onClick={() => { if (canSubmit) onConfirm(); }}>{busy ? "…" : BRACKET_ALGORITHM_DIALOG.submit}</Button>
+        <Button variant="secondary" onClick={onCancel}>{BRACKET_ALGORITHM_DIALOG.cancel}</Button>
+        <Button disabled={!canSubmit} onClick={() => { if (canSubmit) onConfirm(); }}>{busy ? "…" : submitLabel}</Button>
       </div>
       </div>
     </Dialog>

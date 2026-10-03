@@ -1,12 +1,18 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import {
+  useNativeJudgeExitNotice,
+  type JudgeExitNotice,
+} from "./judgeNavigation";
 import { Alert, Button } from "./ui";
 
-export type JudgeExitNotice = {
-  kind: "success" | "warning";
-  message: string;
-};
+export type { JudgeExitNotice } from "./judgeNavigation";
+
+function isImmersiveMatchPath(pathname: string) {
+  return pathname === "/matches/new" || /\/matches\/[^/]+\/judge$/.test(pathname);
+}
 
 function fallbackFor(pathname: string, isAdmin: boolean): { to: string; label: string } {
+  if (pathname.startsWith("/guests/")) return { to: "/guests", label: "К гостям" };
   if (pathname.startsWith("/teams/")) return { to: "/teams", label: "К командам" };
   if (pathname.startsWith("/tournaments/")) return { to: "/tournaments", label: "К турнирам" };
   if (pathname.startsWith("/matches/")) return { to: "/matches", label: "К матчам" };
@@ -55,7 +61,7 @@ function discardSavedSource(pathname: string, userId?: string) {
 export function TaskNavigation({ userId, isAdmin = false }: { userId?: string; isAdmin?: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const state = location.state as { returnTo?: unknown; returnLabel?: unknown } | null;
+  const state = location.state as { returnTo?: unknown; returnLabel?: unknown; guestSelectionContext?: unknown } | null;
   const stateSource = typeof state?.returnTo === "string" && state.returnTo.startsWith("/") && !state.returnTo.startsWith("//")
     ? { to: state.returnTo, label: typeof state.returnLabel === "string" ? state.returnLabel : "Назад" }
     : null;
@@ -63,11 +69,23 @@ export function TaskNavigation({ userId, isAdmin = false }: { userId?: string; i
   const source = stateAllowed && stateSource
     ? stateSource
     : savedSource(location.pathname, userId) ?? fallbackFor(location.pathname, isAdmin);
+  const guestSelectionContext = state?.guestSelectionContext && typeof state.guestSelectionContext === "object"
+    ? state.guestSelectionContext as { returnTo?: unknown; returnLabel?: unknown }
+    : null;
+  const returnState = guestSelectionContext?.returnTo === source.to
+    ? { guestSelectionCancel: state?.guestSelectionContext }
+    : source.to === "/guests" && typeof guestSelectionContext?.returnTo === "string"
+      ? {
+          returnTo: guestSelectionContext.returnTo,
+          returnLabel: typeof guestSelectionContext.returnLabel === "string" ? guestSelectionContext.returnLabel : undefined,
+          guestSelectionContext: state?.guestSelectionContext,
+        }
+      : undefined;
   if (["/", "/login", "/first-password", "/onboarding", "/start"].includes(location.pathname) ||
-      /\/matches\/[^/]+\/judge$/.test(location.pathname)) return null;
+      isImmersiveMatchPath(location.pathname)) return null;
   return (
     <nav className="task-navigation" aria-label="Возврат">
-      <Button size="sm" variant="secondary" onClick={() => navigate(source.to)}>{source.label}</Button>
+      <Button size="sm" variant="secondary" onClick={() => navigate(source.to, { state: returnState })}>{source.label}</Button>
       {source.to !== "/" ? <Button size="sm" variant="secondary" onClick={() => {
         discardSavedSource(location.pathname, userId);
         navigate("/");
@@ -120,10 +138,13 @@ export function AppShell({
   isAdmin?: boolean;
 }) {
   const location = useLocation();
-  const immersive = /\/matches\/[^/]+\/judge$/.test(location.pathname);
-  const judgeExitNotice = (
+  const immersive = isImmersiveMatchPath(location.pathname);
+  const stateJudgeExitNotice = (
     location.state as { judgeExitNotice?: JudgeExitNotice } | null
   )?.judgeExitNotice;
+  const nativeJudgeExitNotice = useNativeJudgeExitNotice(location.key);
+  const judgeExitNotice = stateJudgeExitNotice ?? nativeJudgeExitNotice;
+  const judgeRoute = /\/matches\/[^/]+\/judge$/.test(location.pathname);
 
   return (
     <div
@@ -142,7 +163,7 @@ export function AppShell({
         className="app-main"
       >
         {showTaskNav && !immersive ? <TaskNavigation userId={userId} isAdmin={isAdmin} /> : null}
-        {judgeExitNotice && !immersive ? (
+        {judgeExitNotice && !judgeRoute ? (
           <Alert
             type={judgeExitNotice.kind === "success" ? "success" : "warning"}
             variant="tonal"

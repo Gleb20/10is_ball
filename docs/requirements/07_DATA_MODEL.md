@@ -8,7 +8,8 @@
 - Без `organization_id`: одна инсталляция = одна организация.
 - Завершённые события неизменны.
 - Зарегистрированный пользователь в истории рендерится по актуальному профилю.
-- Гости — event-level записи.
+- Гости сохраняют event-level snapshot; D40 дополнительно предусматривает явную
+  reusable identity без auto-merge или переписывания historical names.
 
 ## 2. Пользователи и сессии
 
@@ -84,7 +85,7 @@ notification.
 - `id`
 - `name`
 - `slug`
-- `avatar_path` nullable
+- `avatar_key` nullable (D40: один из avatar_1..avatar_10; без upload/storage)
 - `slogan` nullable
 - `welcome_text` nullable
 - `captain_user_id`
@@ -116,14 +117,24 @@ Unique active `(team_id,user_id)`.
 
 ## 4. Гости
 
-### `guest_participant`
-- `id`
-- `first_name`
-- `last_name`
-- `created_by_user_id`
-- `created_at`
+### `guest_identities` — явно сохранённый гость (D40)
 
-Не связывать разные записи одного человека.
+UUID, first_name/last_name (1..100 после trim), неизменяемый avatar_key из D10,
+created_by_user_id, version >= 0, created_at/updated_at. Имя не является ключом:
+две записи с одинаковыми именами допустимы. Переименование меняет только текущую
+подпись identity и требует expectedVersion; разрешено создателю либо active admin.
+
+`guest_identity_requests`: actor_user_id + request_id — составной PK, операция
+create/rename, fingerprint исходного запроса, guest_identity_id, resulting_version
+и время. Identity, audit и receipt фиксируются одной транзакцией; повтор не
+дублирует ни одну из них. Rename audit хранит прежнее/новое имя и итоговую версию.
+
+Разовые гости по-прежнему хранятся снимком в participant row. Nullable
+`guest_identity_id` добавляется рядом с именем/аватаром снимка; у прежних строк
+остаётся NULL. Автоматического объединения по имени, backfill или привязки к
+аккаунту нет. Матч не допускает один durable guest ID на двух местах; активный
+состав турнира также уникален по identity. Ограничение одновременного участия
+зарегистрированных users не расширяется на гостей.
 
 ## 5. Правила матча
 
@@ -189,11 +200,11 @@ policy `preserve_bracket_and_downstream`.
 - `position_in_side` integer
 - `participant_type` enum `user|guest|tutorial_actor`
 - `user_id` nullable
-- `guest_participant_id` nullable
+- `guest_identity_id` nullable; guest name/avatar snapshot remains on this participation
 - `display_name_snapshot` only for tutorial actor/optional guest convenience
 - `created_at`
 
-Check exactly one participant reference.
+Input выбирает ровно один вариант: user_id, guest_identity_id или полное имя разового гостя. Снимок сохранённого гостя заполняется сервером в той же транзакции.
 
 Создание `match` и полного набора `match_participant` атомарно: invalid roster,
 blocked/missing registered user или ошибка любой participant write не оставляет
@@ -297,7 +308,7 @@ production reset/recreate из этой схемы не следует и без
 - `tournament_id`
 - `participant_type` enum `user|guest`
 - `user_id` nullable
-- `guest_participant_id` nullable
+- `guest_identity_id` nullable; guest name/avatar snapshot remains on this participation
 - `added_by_user_id` nullable FK to user; historical migration leaves it null
 - `addition_source` text check: `legacy|organizer_default|manual_direct|manual_override|invitation_accept|guest_manual`
 - `addition_idempotency_key` nullable UUID and `addition_request_fingerprint` nullable hash
@@ -452,3 +463,28 @@ regeneration commit or roll back together.
 - Один набор migrations проверяется на disposable PGlite и ephemeral PostgreSQL;
   test harness никогда не использует production `DATABASE_URL` и требует
   loopback/test-name/reset-consent guards для destructive reset test schema.
+
+## D40 — `match_launch_requests`
+
+Durable receipt: actor_user_id/request_id unique pair, originating_auth_session_id,
+normalized request_fingerprint, match_id, initial_server_participant_id, canonical
+slot_map и created_at. Все идентификаторы opaque без FK к удаляемым match/participant/
+auth session: eligible purge не блокируется и не уничтожает replay tombstone.
+Нет секрета или постоянно сохраняемого незавершённого draft. Migration0008 additive;
+0007 и прежние historical results не переписываются.
+
+## D40 — факты матча и плановая дата (кандидат миграций 0009–0010)
+
+`matches.initial_server_participant_id` — nullable неизменяемый первый подающий;
+legacy backfill разрешён только из точного immutable launch receipt без игровых
+событий и при совпадении текущего подающего. Остальные legacy факты неизвестны.
+`playing_elapsed_ms` и `playing_segment_started_at` хранят накопленное игровое
+время и текущий сегмент: ожидание подтверждения не учитывается. Возобновление
+после Undo/коррекции создаёт новый сегмент; finish/stop/no-show фиксируют время.
+`judge_history_complete` различает полную новую историю и legacy partial;
+`judge_sessions.activated_at` заполняется при реальном приобретении/принятии,
+не при резервировании. События счёта/Undo/коррекции получают occurredAt,
+actorUserId и judgeSessionId; старые события без них не реконструируются.
+
+`tournaments.planned_date` — nullable PostgreSQL DATE. Миграция 0010 только
+добавляет поле; прежние строки остаются NULL. Часовой пояс и планировщик отсутствуют.

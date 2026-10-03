@@ -1,12 +1,34 @@
 # TECH-008 — согласованная программа интерфейса (2026-09-18)
 
+## Принятый целевой overlay D40 — 2026-10-03
+
+[D40](../DECISIONS.md) закрывает продуктовые развилки Q-UX-001..004 и
+Q-UX-006..010; Q-UX-005 уже закрыт D38. Более ранние readiness-ограничения по
+этим вопросам ниже описывают исторический объём этапов до принятия D40 и не
+блокируют согласованную новую реализацию. Они не являются второй целевой моделью.
+
+- GAP-013/GAP-023: редактируемый судейский экран → «Начать» → выбор подачи →
+  атомарный запуск → счёт; правила в шторке до старта, затем контекстное меню в
+  том же углу. Нет серверного draft до отправки launch и нет промежуточной карточки.
+- GAP-032/GAP-017: редактируемый повтор обычного состава/правил; достоверная
+  история аккаунтов ведущих; прежнее подтверждённое аннулирование без 10-секундного Undo.
+- GAP-013/GAP-019: переиспользуемые гости без автоматического объединения;
+  GAP-019: плановая будущая дата без автоматического старта.
+- GAP-025: необязательный готовый аватар команды. GAP-028: active-admin lookup
+  по точному ID только минимальных полей и разрешённой аварийной операции.
+- BUG-022: закрываемое окно генерации, процесс на странице, защита повторов и
+  честное восстановление неизвестного исхода. D35 и права не ослабляются.
+
+Принятие решения не закрывает implementation/browser/PostgreSQL/release gates.
+Физические iPhone-наблюдения не заменяются эмуляцией. D37 и Q-UX-011 сохраняются.
+
 Состояние: **этап 0 accepted_local**, TECH-008 `in_progress` до реализации и
 проверки остальных этапов. [Acceptance receipt](../audits/2026-09-13-ux-ui/implementation/stage0-acceptance.json).
 [BACKLOG](../BACKLOG.md) остаётся
 единственным источником canonical задач и статусов; этот план задаёт порядок,
 зависимости и приёмку. [D36/D37](../DECISIONS.md) и обновлённые PRD/AT — целевой
-слой. [AS_BUILT](../architecture/AS_BUILT.md) и текущий runtime по-прежнему
-описывают прежние пять tabs и доступные приглашения. Экспертный пакет и два
+слой. [AS_BUILT](../architecture/AS_BUILT.md) описывает фактические выпущенные этапы;
+исторические ограничения прежних tabs и приглашений ниже не являются текущей целевой моделью. Экспертный пакет и два
 сеанса — evidence, а не альтернативные требования. Реестр:
 [coverage.csv](../audits/2026-09-13-ux-ui/implementation/coverage.csv),
 [схема потоков](../audits/2026-09-13-ux-ui/implementation/stage0-flow-report.html),
@@ -58,7 +80,7 @@ blocked/403, not found/404, reload и чужой аккаунт проверяю
 | `/profile`, `/players/:userId` | owner / authorized public viewer | вторичные stats, sessions, help, teams; privacy и challenge hiding |
 | `/notifications` | owner | видимые team/handover и другие разрешённые записи; count/list/popup согласованы |
 | `/help`, `/onboarding` | active user / incomplete onboarding | помощь и обучение доступны, anchors не указывают на удалённые tabs |
-| `/admin` | active admin | только существующие права; exact-ID read зависит от Q-UX-003 |
+| `/admin` | active admin | только существующие права; минимальный exact-ID read принят D40, ждёт реализации |
 | `*` | all | 404 с безопасным Home; 403 — отдельное закрытое состояние |
 
 Контекстный Back не обязан совпадать с браузерным history при прямом входе:
@@ -108,13 +130,13 @@ flowchart LR
 | 2 | GAP-030/031 + GAP-015: Home-only shell и роль/задача на Home | AT-HOME-001..003, auth/404/403, bracket/history return, onboarding anchors в том же delta |
 | 3 | BUG-018..028 по применимости, BUG-040, GAP-034: controls и межэкранный status/icon inventory/target | keyboard/focus/visible option над клавиатурой и safe area; UI-001/AT-UI-STATUS-001 по всем семействам; physical zoom отдельно |
 | 4 | BUG-029/031/039: recovery счёта и ручной коррекции — local candidate 4.1.2, финальные gates ожидаются | authoritative GET exact key/version, intent queue, PG concurrency; unresolved не предлагает повтор |
-| 5 | GAP-013 bounded MATCH setup: 4.3.0 `verified_local`, состав перед редкими правилами; общий gate 1563/1563 и independent PASS | compiled 1440/390/360, operator outside roster, exact shortcuts, current-form D38, mutation/readback; reusable guest и combined start остаются gated Q-UX-004/006 |
-| 6 | GAP-023 `verified_local` и ограниченный GAP-032 Judge scope bounded `verified_local`; общий gate 1563/1563 и independent PASS; GAP-017/MatchDetail остаётся впереди | synthetic gesture suppression, rapid FIFO, unspaced/realistic 2×2 alignment, correction contrast, 360/390/844 и CSS zoom 200%; physical touch/iPhone/WebKit/AT отдельно, Q-UX-007/008/009 и W3/W4 не закрыты |
-| 7 | GAP-019 scope A bounded `verified_local` + GAP-021 `verified_local`: collecting/needs_regeneration rules/roster до сетки; общий gate 1563/1563 и independent PASS | D35/D37, ordinary direct add + guarded confirmations, create/add authoritative readback, 360/390/1440; GAP-019 scope B, reusable guest/future date — Q-UX-004/010 |
+| 5 | GAP-013 bounded MATCH setup: 4.3.0 `verified_local`, состав перед редкими правилами; общий gate 1563/1563 и independent PASS | compiled 1440/390/360, operator outside roster, exact shortcuts, current-form D38, mutation/readback; D40 принял reusable guest и combined start; новая реализация требует своего gate |
+| 6 | GAP-023 `verified_local` и ограниченный GAP-032 Judge scope bounded `verified_local`; общий gate 1563/1563 и independent PASS; GAP-017/MatchDetail остаётся впереди | synthetic gesture suppression, rapid FIFO, unspaced/realistic 2×2 alignment, correction contrast, 360/390/844 и CSS zoom 200%; physical touch/iPhone/WebKit/AT отдельно, D40 решения приняты; W3/W4 и replay acceptance не завершены |
+| 7 | GAP-019 scope A bounded `verified_local` + GAP-021 `verified_local`: collecting/needs_regeneration rules/roster до сетки; общий gate 1563/1563 и independent PASS | D35/D37, ordinary direct add + guarded confirmations, create/add authoritative readback, 360/390/1440; GAP-019 scope B, reusable guest/future date приняты D40, ещё не реализованы |
 | 8 | GAP-019 scope B + GAP-020/033, BUG-032/033: generated/active/terminal composition, сетка, lifecycle, итоги; GAP-034 tournament consumer | после принятого scope A; SE/DE/BYE/third place, bracket/current match first, full results secondary, stopped without champion |
-| 9 | GAP-022, BUG-034/035 verified_local; GAP-025 gate: команды; GAP-034 team consumer | captain/team invitation rights и ясный status; avatar только после Q-UX-002 |
+| 9 | GAP-022, BUG-034/035 verified_local; GAP-025 gate: команды; GAP-034 team consumer | captain/team invitation rights и ясный status; avatar из готового каталога по D40 |
 | 10 | GAP-024 и BUG-036/037 verified_local; GAP-034 history/notifications consumers | back/filter/scroll; read state, status и видимые counts; privacy |
-| 11 | GAP-026/027 verified_local; GAP-028 gate: admin; GAP-034 admin consumer | active-admin access, session revocation, status/action distinction; exact-ID read после Q-UX-003 |
+| 11 | GAP-026/027 verified_local; GAP-028 gate: admin; GAP-034 admin consumer | active-admin access, session revocation, status/action distinction; минимальный exact-ID read по D40 |
 | 12 | BUG-038: password-reset uncertainty отдельно | контракт + migration + PostgreSQL + browser; не смешивать с UI polish |
 | 13 | GAP-014/016, GAP-009: onboarding/help | новые anchors, tutorial isolation, explicit completion, контекстная помощь |
 | 14 | TECH-008 integration: 4.2.0 опубликован на exact SHA `df807d508613b3226345813ff35080a9e1d1c288` после local gate1531/1531 и Terra review | [финальный local receipt](../audit/evidence/stage14-final-candidate/receipt.json), `artifacts/ux-implementation-2026-09-18/oct3-release-4.2.0-checkpoint.json`, public smoke 7/7; physical-iPhone gate отдельно |
@@ -142,13 +164,11 @@ history/notifications в 10, admin в 11. Один writer владеет общ�
 
 ## Открытые зависимости
 
-[OPEN_QUESTIONS](../OPEN_QUESTIONS.md) содержит Q-UX-001/002/003 и новые
-gates: reusable guest identity/history, remembered custom score, единый
-create/acquire/start, replay, ten-second Undo/archive, представление истории ведущих,
-future scheduling. Эти идеи имеют stage и decision gate в реестре; до решения
-соответствующие subwork не исполняются даже внутри `ready` GAP-013/017/019.
-Модель приглашений D37 решена только как временный UI
-overlay; восстановление доступности — Q-UX-011.
+[D40](../DECISIONS.md) закрыл Q-UX-001..004/006..010; Q-UX-005 закрыт D38.
+Остаются технические зависимости точных контрактов, миграций, последовательного
+владения общими файлами и проверки реализации. Они не требуют повторного
+продуктового согласования. Q-UX-011 о возвращении игровых приглашений остаётся
+открытым; D37 продолжает действовать.
 
 ## Шаблон каждого work order и release acceptance
 
@@ -170,3 +190,18 @@ RETURN: changed paths, commands/results/skips, frozen delta, rollback, risks
 предложить ограниченный debt sprint после release, не создавать фиктивную
 задачу ради маршрутизации. Программа не разрешает публичный reset/seed,
 down-migration, секреты, DNS или другие изменения инфраструктуры.
+
+
+## Завершающая сверка 2026-10-03
+
+[Completion ledger](../audits/2026-09-13-ux-ui/implementation/completion-results.json)
+покрывает точные 236 ключей исходного CSV. Исходный реестр и исторические receipts
+сохранены; новые результаты требуют отдельного receipt полного CI. Проверка:
+`python3 docs/audits/2026-09-13-ux-ui/implementation/check_completion.py`.
+Десятисекундный Undo заменён D40; пожелания быстрого появления слоя и размытия
+игрового поля не отменены. Подтверждение результата использует отдельный слой,
+не сдвигает счёт и отключает анимацию при reduced motion.
+
+Матрица маршрутов дополнена `/guests` и `/guests/:id`: явный выбор сохранённой
+записи, отдельная история, переименование создателем или active admin; без
+автоматического объединения имён и связывания старых одноразовых записей.

@@ -5,6 +5,18 @@ forward migrations на **2026-09-13**. Целевая модель в
 [`../requirements/07_DATA_MODEL.md`](../requirements/07_DATA_MODEL.md) не полностью
 совпадает с этим состоянием.
 
+## Интегрированный кандидат после 5.0.1 (ещё не опубликован)
+
+Добавлена forward migration0008 `match_launch_requests`: unique actor/request,
+originating session, normalized fingerprint, immutable match/server/slot mapping
+и timestamp; намеренно без FK к удаляемым rows. На опубликованной 5.0.1 эта
+миграция ещё не применяется. [Целевая модель](../requirements/07_DATA_MODEL.md).
+
+Миграция0009 кандидата добавляет первый подающий/игровые сегменты/полноту истории
+и activated_at сессий; migration0010 — nullable tournaments.planned_date. Установка
+старой unversioned схемы исключает новое additive date поле из digest защищённых
+исторических значений; остальные исходные значения продолжают проверяться.
+
 ## Фактические таблицы
 
 | Таблица | Назначение | Важные связи/заметки |
@@ -149,3 +161,13 @@ the API writes receipt/pointer together with credential, revocation, issue,
 audit and notification changes in one transaction. `pending`/terminal completion
 checks and non-self-superseding are enforced in PostgreSQL. Rollback must not
 delete receipts or restore the unsafe uncorrelated legacy POST.
+
+## Неопубликованный кандидат D40 после 5.0.1
+
+0011 добавляет guest_identities/guest_identity_requests и nullable UUID-ссылки
+в обе participant-таблицы, индексы уникальности и ограничения. Legacy записи
+не связываются автоматически. 0012 содержит только `ALTER TABLE teams ADD COLUMN
+avatar_key text`; текущий snapshot — 0012, допустимые исторические prefixes —
+0000..0011. Root проверил PGlite fresh/all12prefixes/rollback36/36; avatar API1/1
+использует реальную цепочку миграций, fixture-only ALTER удалён. Final PG/commonCI
+и публикация этого кандидата на момент записи ещё не завершены.

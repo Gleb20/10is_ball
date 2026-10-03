@@ -135,8 +135,11 @@ describe("AT-TRN-015 legacy V1 double-elimination", () => {
     {
       label: "regenerate",
       method: "POST" as const,
-      suffix: "/bracket",
-      payload: { constructionAlgorithm: "power_of_two" },
+      suffix: "/bracket-generations",
+      payload: {
+        expectedVersion: 7,
+        constructionAlgorithm: "power_of_two",
+      },
     },
     {
       label: "dissolve",

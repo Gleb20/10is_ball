@@ -1,0 +1,40 @@
+{
+  "checkedAt": "2026-10-03T13:43:27.779Z",
+  "ok": true,
+  "release": {
+    "version": "5.0.1",
+    "sha": "ed7fc113948387a6953b3a50cc7776248506051d",
+    "environment": "production",
+    "dirty": false
+  },
+  "checks": [
+    {
+      "name": "web-release",
+      "ok": true
+    },
+    {
+      "name": "web-health-proxy",
+      "ok": true
+    },
+    {
+      "name": "web-ready-proxy",
+      "ok": true
+    },
+    {
+      "name": "web-openapi-proxy",
+      "ok": true
+    },
+    {
+      "name": "api-health",
+      "ok": true
+    },
+    {
+      "name": "api-ready",
+      "ok": true
+    },
+    {
+      "name": "api-openapi",
+      "ok": true
+    }
+  ]
+}

@@ -357,3 +357,65 @@ The Stage 3 UI work maps BUG-018/019/020/023/025 to MATCH-001/003 and AT-MATCH-0
 Browser evidence must be read in order. The first 60/60 + 9 foundation result belongs to the pre-correction frontend tree. The first corrected-tree run had 59/60 + 9 foundation: one desktop GAP-012 first-option timeout had no proven source cause. The final authorized original-order corrected-tree run passed 60/60 + 9 foundation on fresh disposable PostgreSQL; passive desktop/mobile captures retained query, input identity and normal selection. That green run does not establish the earlier timeout's cause or prove it harmless, pre-existing or fixed. The separate four-phase filled-suggestion matrix passed 4/4 + 9 foundation with a 476 px synthetic UI region as supporting discrimination. Its `vendorDOMShapeMatches` flag is invalid for editable ic-kit fields; raw geometry and event ordering retain that explicit limitation. See [`stage3-final-regression`](../audit/evidence/stage3-final-regression/README.md).
 
 The final full-browser run is green. This checkpoint does not claim a successful single-command `pnpm run ci`, physical iPhone, WebKit or spoken-AT coverage. Canonical local statuses and the four residual rows are recorded in the backlog and project status.
+
+## Интегрированный D40 / BUG-022 backend candidate (2026-10-03)
+
+| Requirement / AT | Current tests | Evidence boundary |
+|---|---|---|
+| MATCH-001/003/005/008/015; AT-MATCH-DRAFT-002/004 | shared `match-launch.test.ts`; API `gap-013-atomic-launch.integration.test.ts` и `.postgres.integration.test.ts`; migration integration/PG tests | Автор: shared545/API350/PG91; parent merged APIfocused26/type PASS; browser/full repository после UI integration |
+| TOURNAMENT-005/007; AT-TRN-GENERATION-001..003 | `bug-022.integration.test.ts`, `bug-022.postgres.integration.test.ts`, OpenAPI contract | R2focused6/domain33/API348pass5PGskips; R1PG5pass, R2lockunchanged; commonCI ещё не выполнен |
+
+Legacy API acceptance fixtures в domain/data002/data005/ownership/legacy-bracket
+переведены на contextGET → versionedPOST с сохранением исходных assertions.
+R2 BUG022 сохраняет первый пограничный loadSLO failure701.4ms/700ms, после завершения
+параллельной нагрузки isolated и fullAPI прошли; это не доказательство нагрузочной
+ёмкости публичного сервиса. Изменение структуры UI требует отдельной compiled проверки.
+
+## Интеграция фактов и даты после 5.0.1
+
+| Acceptance | Проверка | Текущие пределы evidence |
+|---|---|---|
+| AT-MATCH-FACTS-001/002; GAP-032 | `gap-032-match-facts.integration.test.ts`, `gap-032-match-facts.postgres.integration.test.ts`, shared/OpenAPI/migration tests | Авторский API/shared пакет и isolated PostgreSQL6/6; независимый Terra R2 PASS. Общий CI и UI consumption ещё требуются. |
+| AT-TRN-PLANNED-DATE-001/002; GAP-019 | `gap-019-planned-date.integration.test.ts`, `TournamentsPage.plannedDate.test.tsx`, `migrations.integration.test.ts`, `stage7-tournament-setup.spec.ts` | Focused API3/3, миграции32/32, UI43/43 с Stage7/8 регрессией, API/web types PASS; PostgreSQL/compiled browser/commonCI pending. |
+
+## D40 guests/team/release — интеграционный кандидат
+
+- AT-GUEST-001/002: guest-identity.test.ts, gap-040-reusable-guests.integration.test.ts,
+  gap-040-reusable-guests.postgres.integration.test.ts. R1 проверен; audit и
+  дополнительные спортивные/cursor сценарии возвращены автору на исправление.
+- AT-TEAM-AVATAR-001: team-contracts.test.ts, TeamAvatar.test.tsx,
+  TeamsPage.test.tsx, TeamDetailPage.test.tsx, gap-025-team-avatar.integration.test.ts,
+  migrations.integration.test.ts, stage9-team-avatar.spec.ts. Shared/web/API
+  авторские проверки пройдены; root миграции36/36 и API1/1. Browser/PG ещё требуются.
+- OPS-004/TECH-007: wait-api-before-web.test.mjs включён в fast lane, вместе с
+  release/verify Node40/40. Это локальный guard test, не доказательство выпуска.
+- Реальный PG regression gap-006.postgres.integration.test.ts проверяет freeze
+  времени при stop турнира. Raw SQL передаёт ISO timestamp вместо JS Date;
+  комбинированные foundation/integration PostgreSQL112/112 пройдены до0011/0012.
+
+
+### Кандидат завершения D40 (6.0.0)
+
+- AT-MATCH-DRAFT-001..004 / GAP-013: `stage5-match-create.spec.ts`, `gap-013-atomic-launch.postgres.integration.test.ts` — атомарный запуск, 2×2, потеря ответа и reauth.
+- AT-JUDGE-007 / AT-MATCH-008 / GAP-032: `stage6-judge-layout.spec.ts`, `stage6-match-facts.spec.ts`, `wave-f-a11y.spec.ts` — геометрия, отдельное подтверждение/reduced motion, фактические сведения и фиксированный угол меню.
+- AT-GUEST-001/002: `gap-040-reusable-guests.integration.test.ts` и `.postgres.integration.test.ts` — audit/replay/CAS, snapshots, V1/V2 продвижение, 23 события с одинаковым временем и курсор 20+3.
+- AT-TEAM-AVATAR-001: `gap-025-team-avatar.integration.test.ts`, `team-contracts.test.ts`, `TeamAvatar.test.tsx`, `stage9-team-avatar.spec.ts`, migration prefix 0000–0011 → 0012 — роль капитана, NULL старых команд, 64px, fallback, неизвестный исход без повтора.
+- Runtime motion/geometry assertions проверяют браузерное состояние; физические iPhone zoom/gutters остаются отдельной проверкой.
+
+
+### Финальные проверки гостей и нативного возврата (6.0.0)
+
+- JUDGE-006/008, AT-JUDGE-008, GAP-030: `judgeNavigation.test.tsx`,
+  `JudgePage.test.tsx`, `stage2-home.spec.ts`, `stage4-score-recovery.spec.ts` —
+  исходный POP/Forward, единичный release, ожидание FIFO/setup, unknown recovery,
+  отказ хранилища, открытое решение, таймаут и отсутствие replay.
+- AT-GUEST-001/002, GAP-013/019: `useGuestIdentityMutation.test.ts`,
+  `GuestPicker.test.tsx`, `GuestDetailPage.test.tsx`, `GuestsPage.test.tsx`,
+  `gap-040-reusable-guests.spec.ts` — точный ID при одинаковых именах, повтор той же
+  попытки, границы actor/target, переименование без изменения истории, replay.
+- UI-001/003: `gap-040-reusable-guests.spec.ts` проверяет compiled mobile360/390:
+  поля подготовки занимают всю ширину стороны, scoring subgrid не применяется
+  к черновику; карточки и история сохраняют listitem/link семантику.
+
+Предыдущие candidate/pending пометки выше — исторические этапы. Итоговое принятие
+перечисленных изменений определяется только актуальным полным receipt 6.0.0.

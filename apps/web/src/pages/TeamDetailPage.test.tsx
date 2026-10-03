@@ -57,6 +57,7 @@ const captainTeam = {
   name: "Ракетки",
   slogan: "Играем точно",
   welcomeText: "Рады видеть в команде!",
+  avatarKey: "avatar_3" as const,
   captainUserId: "u1",
   status: "active" as const,
   createdAt: "2026-09-01T10:00:00.000Z",
@@ -231,7 +232,7 @@ describe("GAP-007 team detail", () => {
 
   it("shows welcome copy and lets only the captain edit team text", async () => {
     updateTeam.mockResolvedValue({
-      team: { ...captainTeam, name: "Новые ракетки", slogan: "Новый слоган" },
+      team: { ...captainTeam, name: "Новые ракетки", slogan: "Новый слоган", avatarKey: "avatar_4" },
     });
     const user = userEvent.setup();
     renderPage("/teams/team-1?welcome=1");
@@ -242,12 +243,14 @@ describe("GAP-007 team detail", () => {
     await user.type(within(form).getByLabelText("Название команды"), "Новые ракетки");
     await user.clear(within(form).getByLabelText("Слоган"));
     await user.type(within(form).getByLabelText("Слоган"), "Новый слоган");
+    await user.click(within(form).getByRole("radio", { name: "Аватар 4" }));
     await user.click(within(form).getByRole("button", { name: "Сохранить" }));
 
     expect(updateTeam).toHaveBeenCalledWith("team-1", {
       name: "Новые ракетки",
       slogan: "Новый слоган",
       welcomeText: "Рады видеть в команде!",
+      avatarKey: "avatar_4",
     });
     expect(await screen.findByRole("heading", { name: "Новые ракетки" })).toBeInTheDocument();
     expect(within(form).getByRole("status").parentElement).toHaveFocus();
@@ -257,7 +260,7 @@ describe("GAP-007 team detail", () => {
   it("keeps the settings draft local and uses GET-only review after an unknown PATCH", async () => {
     getTeam
       .mockResolvedValueOnce({ team: captainTeam })
-      .mockResolvedValueOnce({ team: { ...captainTeam, slogan: "Серверный слоган" } });
+      .mockResolvedValueOnce({ team: { ...captainTeam, slogan: "Серверный слоган", avatarKey: "avatar_5" } });
     updateTeam.mockRejectedValueOnce(new Error("Network lost"));
     const user = userEvent.setup();
     renderPage();
@@ -266,18 +269,22 @@ describe("GAP-007 team detail", () => {
     const name = within(form).getByLabelText("Название команды");
     await user.clear(name);
     await user.type(name, "Черновик капитана");
+    await user.click(within(form).getByRole("radio", { name: "Аватар 6" }));
     await user.click(within(form).getByRole("button", { name: "Сохранить" }));
 
     expect(await within(form).findByRole("alert")).toHaveTextContent("Не удалось проверить сохранение");
     expect(within(form).getByRole("alert").parentElement).toHaveFocus();
     expect(name).toHaveValue("Черновик капитана");
+    expect(within(form).getByRole("radio", { name: "Аватар 6" })).toBeChecked();
     expect(within(form).getByRole("button", { name: "Сохранить" })).toBeDisabled();
     expect(updateTeam).toHaveBeenCalledTimes(1);
     await user.click(within(form).getByRole("button", { name: "Обновить данные" }));
     expect(getTeam).toHaveBeenCalledTimes(2);
     expect(updateTeam).toHaveBeenCalledTimes(1);
     expect(await within(form).findByText(/Сервер сейчас:.*Серверный слоган/)).toHaveTextContent("не подтверждение исхода");
+    expect(within(form).getByText(/Сервер сейчас:/)).toHaveTextContent("аватар avatar_5");
     expect(name).toHaveValue("Черновик капитана");
+    expect(within(form).getByRole("radio", { name: "Аватар 6" })).toBeChecked();
     expect(within(form).getByRole("button", { name: "Сохранить ещё раз" })).toBeEnabled();
   });
 

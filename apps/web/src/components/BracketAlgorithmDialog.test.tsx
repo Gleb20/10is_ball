@@ -124,7 +124,12 @@ describe("BracketAlgorithmDialog", () => {
 });
 
 it("GAP-011 pending bracket generation disables choice and submit controls", () => {
-  renderDialog({ busy: true });
+  const onCancel = vi.fn();
+  renderDialog({ busy: true, onCancel });
   expect(screen.getByRole("button", { name: "…" })).toBeDisabled();
   for (const radio of screen.getAllByRole("radio")) expect(radio).toBeDisabled();
+  const close = screen.getByRole("button", { name: BRACKET_ALGORITHM_DIALOG.cancel });
+  expect(close).toBeEnabled();
+  fireEvent.click(close);
+  expect(onCancel).toHaveBeenCalledTimes(1);
 });

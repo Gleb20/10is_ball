@@ -4,7 +4,8 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell, TaskNavigation } from "./layout";
 
 function Path() {
-  return <span data-testid="path">{useLocation().pathname}</span>;
+  const location = useLocation();
+  return <span data-testid="path">{location.pathname}|{JSON.stringify(location.state)}</span>;
 }
 
 describe("REQ_shell__home_first_navigation_d36", () => {
@@ -24,6 +25,38 @@ describe("REQ_shell__home_first_navigation_d36", () => {
     render(<MemoryRouter initialEntries={["/tournaments/t1"]}><TaskNavigation /><Routes><Route path="*" element={<Path />} /></Routes></MemoryRouter>);
     fireEvent.click(screen.getByRole("button", { name: "К турнирам" }));
     expect(screen.getByTestId("path")).toHaveTextContent("/tournaments");
+  });
+
+  it("GAP-040 returns a directly opened guest card to the guest catalogue", () => {
+    render(<MemoryRouter initialEntries={["/guests/g1"]}><TaskNavigation /><Routes><Route path="*" element={<Path />} /></Routes></MemoryRouter>);
+    fireEvent.click(screen.getByRole("button", { name: "К гостям" }));
+    expect(screen.getByTestId("path")).toHaveTextContent("/guests");
+  });
+
+  it("GAP-040 preserves a picker detour through a guest card and returns cancellation to the draft", () => {
+    const guestSelectionContext = {
+      kind: "match",
+      returnTo: "/matches/new",
+      returnLabel: "К выбору гостя",
+      draftToken: "opaque-token",
+      slotKey: "opponent1",
+    };
+    render(
+      <MemoryRouter initialEntries={[{
+        pathname: "/guests/g1",
+        state: { returnTo: "/guests", returnLabel: "К гостям", guestSelectionContext },
+      }]}>
+        <TaskNavigation />
+        <Routes><Route path="*" element={<Path />} /></Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "К гостям" }));
+    expect(screen.getByTestId("path")).toHaveTextContent("/guests");
+    fireEvent.click(screen.getByRole("button", { name: "К выбору гостя" }));
+    expect(screen.getByTestId("path")).toHaveTextContent("/matches/new");
+    expect(screen.getByTestId("path")).toHaveTextContent('"guestSelectionCancel"');
+    expect(screen.getByTestId("path")).toHaveTextContent('"draftToken":"opaque-token"');
   });
 
   it("GAP-026 returns an active admin directly opened account to the user catalog", () => {
@@ -140,5 +173,18 @@ describe("REQ_shell__home_first_navigation_d36", () => {
     );
     expect(screen.getByText("Проверьте слот судьи")).toBeInTheDocument();
     expect(screen.getByText("Исход освобождения неизвестен")).toBeInTheDocument();
+  });
+
+  it("GAP-013 gives new-match preparation the same immersive shell as judging", () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={["/matches/new"]}>
+        <AppShell showTaskNav>
+          <p>Подготовка матча</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    expect(container.querySelector(".app-shell--immersive")).toBeTruthy();
+    expect(screen.queryByRole("navigation", { name: "Возврат" })).not.toBeInTheDocument();
+    expect(container.querySelector(".skip-link")).not.toBeInTheDocument();
   });
 });

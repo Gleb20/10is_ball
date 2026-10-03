@@ -122,14 +122,19 @@ test('Wave F algorithm focus and bracket keyboard geometry',async({page})=>{
  const radio=dialog.getByRole('radio').last();await radio.focus();await radio.press('Space');await expect.soft(radio).toBeFocused();
  await radio.press('Escape');await expect(dialog).not.toBeVisible();await expect.soft(trigger).toBeFocused();
  await trigger.click();await page.setViewportSize(viewports[0]!);await enlargeText(page);await noClippedActions(page);await capture(page,'dialog-text200');const confirm=dialog.getByRole('button',{name:'Построить сетку',exact:true});await confirm.scrollIntoViewIfNeeded();await expect(confirm).toBeInViewport();await capture(page,'dialog-text200-actions');await page.keyboard.press('Escape');
- await mutate(api,`/api/v1/tournaments/${tournament.id}/bracket`,{constructionAlgorithm:'compact'});await page.reload();
+ const generationContext=(await (await api.get(`/api/v1/tournaments/${tournament.id}/bracket-generation-context`)).json()).tournament;
+ await mutate(api,`/api/v1/tournaments/${tournament.id}/bracket-generations`,{expectedVersion:generationContext.bracketStateVersion,constructionAlgorithm:'compact'});await page.reload();
  await expect(page.locator('.tournament-bracket__scroll').first()).toBeVisible();
- for(const viewport of viewports){await page.setViewportSize(viewport);await page.locator('.tournament-bracket__scroll').first().focus();await page.locator('.tournament-bracket__scroll').first().evaluate(e=>{e.scrollTop=0;e.scrollLeft=0;});await expect.poll(()=>page.locator('.tournament-bracket__round-title').first().evaluate(e=>Math.round(e.getBoundingClientRect().top))).toBe(await page.locator('.tournament-bracket__scroll').first().evaluate(e=>Math.round(e.getBoundingClientRect().top)));await capture(page,`bracket-${viewport.width}`);await targets(page);}
+ for(const viewport of viewports){await page.setViewportSize(viewport);await page.locator('.tournament-bracket__scroll').first().scrollIntoViewIfNeeded();await page.locator('.tournament-bracket__scroll').first().focus();await page.locator('.tournament-bracket__scroll').first().evaluate(e=>{e.scrollTop=0;e.scrollLeft=0;});await expect(page.locator('.tournament-bracket__round-title').first()).toBeInViewport();expect(await page.locator('.tournament-bracket__round-title').first().evaluate(e=>e.getBoundingClientRect().bottom)).toBeLessThanOrEqual(await page.locator('.tournament-bracket__card').first().evaluate(e=>e.getBoundingClientRect().top));await capture(page,`bracket-${viewport.width}`);await targets(page);}
  const region=page.locator('.tournament-bracket__scroll').first();await expect.soft(region).toHaveAttribute('tabindex','0');
  await page.setViewportSize(viewports[0]!);await axe(page,'bracket');
  await region.focus();await page.keyboard.press('End');expect(await region.evaluate(e=>e.scrollLeft)).toBeGreaterThan(0);await page.keyboard.press('Home');expect(await region.evaluate(e=>e.scrollLeft)).toBe(0);
+ const beforeScroll=await page.locator('.tournament-bracket__round-title').first().evaluate(e=>e.getBoundingClientRect().top);
  await region.evaluate(e=>{e.scrollTop=100;});
- await expect.poll(()=>page.locator('.tournament-bracket__round-title').first().evaluate(e=>Math.round(e.getBoundingClientRect().top))).toBe(await region.evaluate(e=>Math.round(e.getBoundingClientRect().top)));
+ const scrollDistance=await region.evaluate(e=>e.scrollTop);
+ expect(scrollDistance).toBeGreaterThan(0);
+ // Section and round headings scroll with the unified canvas; they must not overlay match cards.
+ expect(await page.locator('.tournament-bracket__round-title').first().evaluate(e=>e.getBoundingClientRect().top)).toBeCloseTo(beforeScroll-scrollDistance,0);
  await region.evaluate(e=>{e.scrollTop=0;});
  if (test.info().project.name.includes('mobile')) {
    const box=await region.boundingBox();expect(box).not.toBeNull();
@@ -148,9 +153,23 @@ test('Wave F algorithm focus and bracket keyboard geometry',async({page})=>{
 
 test('Wave F judge disclosure score and landscape',async({page})=>{
  test.setTimeout(120000);const api=await fixture();let id:string|undefined;try{
- await login(page);await page.goto('/matches/new');await page.getByRole('button',{name:'Изменить название',exact:true}).click();await page.getByLabel('Название').fill('F judge');await page.getByLabel('Создатель играет',{exact:true}).check();await page.getByRole('group',{name:'Соперник: тип участника',exact:true}).getByRole('button',{name:'Гость',exact:true}).click();await page.getByLabel('Гость (Имя Фамилия)').fill('Гость Проверочный');await page.getByRole('button',{name:'Создать матч',exact:true}).click();await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+$/);id=page.url().split('/').at(-1);
- await page.getByRole('button',{name:'Судить',exact:true}).click();await page.getByRole('radio',{name:/Tab10 Admin/}).check();await page.getByRole('button',{name:'Начать матч',exact:true}).click();await expect(page.getByRole('group',{name:'Счёт матча',exact:true})).toBeVisible();
- for(const viewport of [...viewports,{width:640,height:360},{width:844,height:390}]){await page.setViewportSize(viewport);await capture(page,`judge-${viewport.width}`);await targets(page);expect.soft(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);}
+ await login(page);
+ await page.goto('/matches/new');
+ await page.getByRole('button', { name: 'Настройки', exact: true }).click();
+ await page.getByLabel('Название', { exact: true }).fill('F judge');
+ await page.getByLabel('Создатель играет', { exact: true }).check();
+ await page.getByRole('button', { name: 'Готово', exact: true }).click();
+ await page.getByRole('group', { name: 'Соперник: тип участника', exact: true }).getByRole('button', { name: 'Гость', exact: true }).click();
+ await page.getByLabel('Соперник — гость (Имя Фамилия)', { exact: true }).fill('Гость Проверочный');
+ await page.getByRole('button', { name: 'Начать', exact: true }).click();
+ await expect(page.getByRole('group', { name: 'Выбор первой подачи', exact: true })).toBeVisible();
+ await page.getByRole('button', { name: /A1.*Admin Tab10.*Подаёт первым/ }).click();
+ await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+\/judge$/);
+ id = page.url().split('/').at(-2);
+ await expect(page.getByRole('group', { name: 'Счёт матча', exact: true })).toBeVisible();
+ // The serve selection click must not fall through into the first score tap.
+ expect((await (await api.get(`/api/v1/matches/${id}`)).json()).match.scoreA).toBe(0);
+ for(const viewport of [...viewports,{width:640,height:360},{width:844,height:390}]){await page.setViewportSize(viewport); const menuBox = await page.getByRole('button', { name: 'Ещё', exact: true }).boundingBox(); const toolbarBox = await page.locator('.judge-toolbar').boundingBox(); expect(Math.abs(menuBox!.y - toolbarBox!.y)).toBeLessThan(2); expect(Math.abs(menuBox!.x + menuBox!.width - toolbarBox!.x - toolbarBox!.width)).toBeLessThan(2); await capture(page,`judge-${viewport.width}`);await targets(page);expect.soft(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);}
  await page.getByRole('button',{name:'Ещё',exact:true}).click();await expect.soft(page.getByRole('menu')).toHaveCount(0);await axe(page,'judge-more');
  await page.getByRole('button',{name:'Поменять местами на экране',exact:true}).focus();await page.keyboard.press('Escape');await expect.soft(page.getByRole('button',{name:'Ещё',exact:true})).toBeFocused();
  await expect.soft(page.locator('[data-testid="judge-score-announcement"]')).toHaveAttribute('aria-live','polite');
@@ -214,7 +233,7 @@ test('Wave F dialog review recovers hidden removed and busy focus', async ({ pag
     });
     await expect.soft(close).toBeFocused({ timeout: 1000 });
     const heldRequest = new Promise<void>(resolve => { releaseRequest = resolve; });
-    await page.route(`**/api/v1/tournaments/${tournament.id}/bracket`, async route => {
+    await page.route(`**/api/v1/tournaments/${tournament.id}/bracket-generations`, async route => {
       if (route.request().method() !== 'POST') {
         await route.continue();
         return;
@@ -224,16 +243,21 @@ test('Wave F dialog review recovers hidden removed and busy focus', async ({ pag
       await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ code: 'UNAVAILABLE', message: 'Синтетическая ошибка' }) });
     });
     await submit.focus(); await page.keyboard.press('Enter');
+    // Observe the held request before asserting no replay; DOM pending may render first.
+    await expect.poll(() => bracketPostCount).toBe(1);
     await expect(dialog.getByRole('button', { name: '…', exact: true })).toBeDisabled();
     await expect.soft(close).toBeFocused({ timeout: 1000 });
+    const cancel = dialog.getByRole('button', { name: 'Отмена', exact: true });
+    await page.keyboard.press('Tab'); await expect.soft(cancel).toBeFocused({ timeout: 1000 });
     await page.keyboard.press('Tab'); await expect.soft(close).toBeFocused({ timeout: 1000 });
-    await page.keyboard.press('Shift+Tab'); await expect.soft(close).toBeFocused({ timeout: 1000 });
-    await page.keyboard.press('Escape'); await expect(dialog).toBeVisible();
+    await page.keyboard.press('Shift+Tab'); await expect.soft(cancel).toBeFocused({ timeout: 1000 });
     await capture(page, 'dialog-review-busy');
+    // D40: closing the window is allowed and does not cancel/replay its POST.
+    await page.keyboard.press('Escape'); await expect(dialog).not.toBeVisible();
+    expect(bracketPostCount).toBe(1);
     releaseRequest();
-    await expect(dialog.getByText('Исход построения неизвестен', { exact: true })).toBeVisible();
-    await expect(submit).toBeDisabled();
-    await close.press('Escape'); await expect(dialog).not.toBeVisible(); await expect(trigger).toBeFocused();
+    await expect(trigger).toBeEnabled();
+    await expect(dialog).not.toBeVisible();
     await trigger.click();
     const reopenedDialog = page.getByRole('dialog');
     await expect(reopenedDialog.getByText('Исход построения неизвестен', { exact: true })).toBeVisible();

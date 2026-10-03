@@ -1,0 +1,20 @@
+{
+  "version": "5.0.1",
+  "sha": "ed7fc113948387a6953b3a50cc7776248506051d",
+  "sourceReview": "Terra PASS R2",
+  "publicVerified": true,
+  "hostedCI": {
+    "run": 37126838079,
+    "allFourJobs": "success"
+  },
+  "vercel": {
+    "id": "dpl_9Sk1K3KL3vcejnUxaKR3v3XLmMde",
+    "status": "READY"
+  },
+  "render": {
+    "id": "dep-db0gafojo6nc739jrl00",
+    "status": "live",
+    "finishedAt": "2026-10-03T13:39:37.291778Z"
+  },
+  "publicSmoke": "7/7 read-only"
+}

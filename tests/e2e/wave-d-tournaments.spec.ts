@@ -23,6 +23,7 @@ for (const format of ["single_elimination", "double_elimination"] as const) for 
     await mutate(api, "/api/v1/auth/login", { email, password });
     await mutate(api, "/api/v1/me/onboarding", { action: "complete" }, "PATCH");
     const title = `D ${format} ${size} ${info.project.name}`;
+    let createdId: string | undefined;
     const errors: string[] = []; page.on("pageerror", (e) => errors.push(e.message));
     try {
       await login(page); await page.goto("/tournaments/new");
@@ -33,7 +34,9 @@ for (const format of ["single_elimination", "double_elimination"] as const) for 
       await page.getByRole("button", { name: "Создать", exact: true }).click();
       await expect(page).toHaveURL(/\/tournaments\/[0-9a-f-]+$/);
       const id = page.url().split("/").at(-1)!;
+      createdId = id;
       // One roster addition through the UI; remaining synthetic fixtures use the same API.
+      await page.getByRole("group", { name: "Тип участника", exact: true }).getByRole("button", { name: "Гость", exact: true }).click();
       await page.getByRole("button", { name: "Добавить разового гостя", exact: true }).click();
       await page.getByLabel("Имя и фамилия разового гостя", { exact: true }).fill("Гость Первый");
       await page.getByRole("button", { name: "Добавить гостя", exact: true }).click();
@@ -61,9 +64,9 @@ for (const format of ["single_elimination", "double_elimination"] as const) for 
       let tournament = (await (await api.get(`/api/v1/tournaments/${id}`)).json()).tournament;
       await expect.poll(async () => (await (await api.get(`/api/v1/tournaments/${id}`)).json()).tournament.status).toBe("in_progress");
       if (format === "single_elimination" && size === 8) {
-        const zoomIn = page.getByRole("button", { name: "Увеличить сетку: Победители" });
+        const zoomIn = page.getByRole("button", { name: "Увеличить сетку" });
         await zoomIn.click();
-        await expect(page.getByRole("status", { name: "Масштаб: Победители" })).toHaveText("125%");
+        await expect(page.getByRole("status", { name: "Масштаб сетки" })).toHaveText("125%");
         const workingCard = page.getByRole("button", { name: /^Судить:/ }).first();
         const cardKey = await workingCard.locator("xpath=ancestor::*[@data-bracket-card]").getAttribute("data-bracket-card");
         expect(cardKey).toBeTruthy();
@@ -71,7 +74,7 @@ for (const format of ["single_elimination", "double_elimination"] as const) for 
         await expect(page.getByTestId("judge-setup")).toBeVisible();
         await page.getByRole("button", { name: "Отмена" }).click();
         await expect(page).toHaveURL(new RegExp(`/tournaments/${id}$`));
-        await expect(page.getByRole("status", { name: "Масштаб: Победители" })).toHaveText("125%");
+        await expect(page.getByRole("status", { name: "Масштаб сетки" })).toHaveText("125%");
         await expect(page.locator(`[data-bracket-card="${cardKey}"] button`).first()).toBeFocused();
       }
       const completed = new Set<string>();
@@ -93,13 +96,25 @@ for (const format of ["single_elimination", "double_elimination"] as const) for 
       expect(tournament.summary.playedMatchCount).toBe(completed.size);
       expect(tournament.summary.results.reduce((sum: number, row: { points: number }) => sum + row.points, 0)).toBe(completed.size);
       expect(tournament.summary.top3).toHaveLength(3);
-      await page.reload(); await expect(page.getByRole("heading", { name: "Итоги", exact: true })).toBeVisible();
-      await expect(page.getByText(/Призовые места:/)).toBeVisible();
+      await page.reload(); await expect(page.getByRole("heading", { name: "Призовые места", exact: true })).toBeVisible();
+      await expect(page.getByRole("region", { name: "Призовые места", exact: true }).getByRole("listitem")).toHaveCount(3);
+      await page.getByText("Полная статистика", { exact: true }).click();
+      await expect(page.getByRole("table")).toBeVisible();
+      await expect(page.getByRole("columnheader", { name: "Место", exact: true })).toBeVisible();
+      await expect(page.getByRole("columnheader", { name: "Очки", exact: true })).toBeVisible();
+      await expect(page.getByRole("table").locator("tbody tr")).toHaveCount(size);
       await expect(page.getByText(/Следующий матч:/)).toHaveCount(0);
       await expect(page.getByRole("button", { name: "Старт", exact: true })).toHaveCount(0);
       await noOverflow(page); await page.screenshot({ path: info.outputPath("tournament-finished.png"), fullPage: true });
       expect(errors).toEqual([]);
-    } finally { await api.dispose(); }
+    } finally {
+      // Failed UI assertions must not leave this shared synthetic actor in an active tournament.
+      if (createdId) {
+        const current = (await (await api.get(`/api/v1/tournaments/${createdId}`)).json()).tournament;
+        if (current?.status === "in_progress") await mutate(api, `/api/v1/tournaments/${createdId}/stop`, { text: "Завершение автоматической проверки" });
+      }
+      await api.dispose();
+    }
   });
 }
 
@@ -112,7 +127,8 @@ test("Wave D tournament invalidation, dissolve, cancel and reasoned stop", async
   async function draft(suffix: string) {
     const { tournament } = await mutate(api, "/api/v1/tournaments", { title: `D ${suffix} ${info.project.name}`, organizerParticipates: true });
     for (let n = 0; n < 2; n++) await mutate(api, `/api/v1/tournaments/${tournament.id}/participants`, { guestFirstName: `Гость${n}`, guestLastName: suffix });
-    await mutate(api, `/api/v1/tournaments/${tournament.id}/bracket`, { constructionAlgorithm: "compact" });
+    const generationContext = (await (await api.get(`/api/v1/tournaments/${tournament.id}/bracket-generation-context`)).json()).tournament;
+    await mutate(api, `/api/v1/tournaments/${tournament.id}/bracket-generations`, { expectedVersion: generationContext.bracketStateVersion, constructionAlgorithm: "compact" });
     return tournament.id as string;
   }
   try {
@@ -120,11 +136,14 @@ test("Wave D tournament invalidation, dissolve, cancel and reasoned stop", async
     const id = await draft("draft");
     await page.goto(`/tournaments/${id}`);
     await page.getByRole("button", { name: "Выйти из турнира", exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Выйти из турнира", exact: true }).click();
     await expect.poll(async () => (await (await api.get(`/api/v1/tournaments/${id}`)).json()).tournament.status).toBe("needs_regeneration");
     await expect(page.getByRole("button", { name: "Старт", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Распустить сетку", exact: true }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Распустить сетку", exact: true }).click();
     await expect.poll(async () => (await (await api.get(`/api/v1/tournaments/${id}`)).json()).tournament.status).toBe("collecting");
     await page.getByTestId("tournament-cancel").click();
+    await page.getByRole("dialog").getByRole("button", { name: "Отменить турнир", exact: true }).click();
     await expect.poll(async () => (await (await api.get(`/api/v1/tournaments/${id}`)).json()).tournament.status).toBe("cancelled");
     const stopping = await draft("stop");
     await page.goto(`/tournaments/${stopping}`);

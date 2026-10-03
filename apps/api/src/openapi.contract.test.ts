@@ -54,10 +54,14 @@ const BODY_OPERATIONS = new Set([
   "POST /api/v1/admin/users",
   "PATCH /api/v1/admin/users/{userId}",
   "POST /api/v1/admin/matches/{matchId}/force-close",
+  "POST /api/v1/admin/matches/{matchId}/recovery/force-close",
   "PATCH /api/v1/me/profile",
   "PATCH /api/v1/profile/me",
   "PATCH /api/v1/me/onboarding",
+  "POST /api/v1/guests",
+  "PATCH /api/v1/guests/{guestId}",
   "POST /api/v1/matches",
+  "POST /api/v1/matches/launches",
   "PATCH /api/v1/matches/{matchId}",
   "POST /api/v1/matches/{matchId}/invitations",
   "POST /api/v1/matches/{matchId}/start",
@@ -76,6 +80,7 @@ const BODY_OPERATIONS = new Set([
   "POST /api/v1/tournaments/{id}/invitations",
   "POST /api/v1/tournament-invitations/{id}/respond",
   "POST /api/v1/tournaments/{id}/bracket",
+  "POST /api/v1/tournaments/{id}/bracket-generations",
   "PATCH /api/v1/tournaments/{id}/bracket",
   "POST /api/v1/tournaments/{id}/stop",
   "POST /api/v1/teams",
@@ -89,6 +94,10 @@ const BODY_OPERATIONS = new Set([
 ]);
 const IDEMPOTENT_OPERATIONS = new Set([
   "POST /api/v1/admin/matches/{matchId}/force-close",
+  "POST /api/v1/admin/matches/{matchId}/recovery/force-close",
+  "POST /api/v1/matches/launches",
+  "POST /api/v1/guests",
+  "PATCH /api/v1/guests/{guestId}",
   "POST /api/v1/matches/{matchId}/points",
   "POST /api/v1/matches/{matchId}/undo",
   "POST /api/v1/matches/{matchId}/cancel",
@@ -228,8 +237,11 @@ describe("AT-OPS-API-001 runtime OpenAPI contract", () => {
       }
       for (const [status, response] of Object.entries(responses)) {
         if (/^[45]\d\d$/.test(status)) {
-          const expectedSchema =
-            key ===
+          const expectedSchema = key.includes(
+            "/api/v1/admin/matches/{matchId}/recovery",
+          )
+            ? "#/components/schemas/AdminMatchRecoveryError"
+            : key ===
               "POST /api/v1/admin/users/{userId}/reset-password" &&
             status === "409"
               ? "#/components/schemas/AdminPasswordResetPostConflict"
@@ -372,7 +384,37 @@ describe("GAP-005 match/judge extension contracts", () => {
     expect(document.paths["/api/v1/matches/{matchId}"]?.get?.responses?.["200"]?.content?.["application/json"]?.schema).toEqual({
       type: "object",
       required: ["match"],
-      properties: { match: { $ref: "#/components/schemas/Match" } },
+      properties: { match: { $ref: "#/components/schemas/MatchDetail" } },
+    });
+    expect(document.components?.schemas?.MatchDetail).toMatchObject({
+      allOf: [
+        { $ref: "#/components/schemas/Match" },
+        {
+          required: ["matchFacts"],
+          properties: { matchFacts: { $ref: "#/components/schemas/MatchFacts" } },
+        },
+      ],
+    });
+    expect(document.components?.schemas?.MatchFacts).toMatchObject({
+      required: ["initialServer", "playingClock", "judgeHistory"],
+      additionalProperties: false,
+      properties: {
+        judgeHistory: {
+          properties: {
+            sessions: {
+              items: {
+                additionalProperties: false,
+                properties: {
+                  id: { format: "uuid" },
+                  userId: { format: "uuid" },
+                  startedAt: { format: "date-time" },
+                  endedAt: { format: "date-time", nullable: true },
+                },
+              },
+            },
+          },
+        },
+      },
     });
     expect(document.components?.schemas?.Match).toMatchObject({
       required: expect.arrayContaining(["version", "idempotencyKeys"]),
@@ -426,6 +468,39 @@ it("GAP-006 stop body documents the required bounded reason", () => {
   expect(spec.components.schemas.TournamentStopRequest.properties.text.maxLength).toBe(500);
 });
 
+it("BUG-022 documents the organizer snapshot and strict versioned generation body", () => {
+  const spec = openApiSpec() as any;
+  expect(spec.paths["/api/v1/tournaments/{id}/bracket-generation-context"].get.responses[200].content["application/json"].schema).toMatchObject({
+    required: ["tournament"],
+    properties: { tournament: { $ref: "#/components/schemas/BracketGenerationTournament" } },
+  });
+  expect(spec.components.schemas.BracketGenerationTournament).toMatchObject({
+    allOf: [
+      { $ref: "#/components/schemas/Tournament" },
+      {
+        type: "object",
+        required: ["bracketStateVersion"],
+        properties: {
+          bracketStateVersion: { type: "integer", minimum: 0 },
+        },
+      },
+    ],
+  });
+  expect(spec.paths["/api/v1/tournaments/{id}/bracket-generations"].post.requestBody).toMatchObject({
+    required: true,
+    content: { "application/json": { schema: { $ref: "#/components/schemas/BracketGenerationRequest" } } },
+  });
+  expect(spec.components.schemas.BracketGenerationRequest).toEqual({
+    type: "object",
+    required: ["expectedVersion"],
+    properties: {
+      expectedVersion: { type: "integer", minimum: 0 },
+      constructionAlgorithm: { type: "string", enum: ["compact", "power_of_two"] },
+    },
+    additionalProperties: false,
+  });
+});
+
 
 it("GAP-010 admin edit and catalog expose bounded profile fields without email edits", () => {
   const spec = openApiSpec() as any;
@@ -456,6 +531,56 @@ it("GAP-026 documents safe admin account detail and target-bound audit history",
   expect(spec.components.schemas.AdminUserAuditItem.properties).not.toHaveProperty("outcome");
 });
 
+it("GAP-028 documents only the exact-id admin recovery projection", () => {
+  const spec = openApiSpec() as any;
+  const recovery = spec.components.schemas.AdminMatchRecovery;
+  expect(recovery).toMatchObject({
+    additionalProperties: false,
+    required: ["id", "kind", "status", "version", "allowedEmergencyAction"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+      kind: { enum: ["standalone", "tournament", "tutorial"] },
+      status: {
+        enum: [
+          "waiting",
+          "in_progress",
+          "pending_confirmation",
+          "finished",
+          "stopped",
+          "cancelled",
+          "voided",
+        ],
+      },
+      allowedEmergencyAction: { enum: ["force_close", null] },
+    },
+  });
+  expect(spec.components.schemas.AdminMatchRecoveryError.properties.code.enum)
+    .toEqual(expect.arrayContaining([
+      "CSRF_INVALID",
+      "FORBIDDEN",
+      "PASSWORD_CHANGE_REQUIRED",
+      "UNAUTHORIZED",
+    ]));
+  for (const path of [
+    "/api/v1/admin/matches/{matchId}/recovery",
+    "/api/v1/admin/matches/{matchId}/recovery/force-close",
+  ]) {
+    const operation = path.endsWith("force-close")
+      ? spec.paths[path].post
+      : spec.paths[path].get;
+    expect(operation.responses[200].headers["Cache-Control"]).toBeDefined();
+    expect(operation.responses[200].content["application/json"].schema.$ref).toBe(
+      "#/components/schemas/AdminMatchRecoveryResponse",
+    );
+    for (const response of Object.values(operation.responses) as any[]) {
+      if (!response.content || response.description === "Success") continue;
+      expect(response.content["application/json"].schema.$ref).toBe(
+        "#/components/schemas/AdminMatchRecoveryError",
+      );
+    }
+  }
+});
+
 it("GAP-008 documents consent, prestart editing and immutable invitation response", () => {
   const spec = openApiSpec() as any;
   expect(spec.paths["/api/v1/matches/{matchId}"].patch.requestBody.content["application/json"].schema.$ref).toBe("#/components/schemas/UpdateMatchRequest");
@@ -463,4 +588,19 @@ it("GAP-008 documents consent, prestart editing and immutable invitation respons
   expect(spec.components.schemas.MatchInvitationRequest.properties.kind.enum).toEqual(["player", "judge"]);
   expect(spec.components.schemas.CreateMatchRequest.properties.judgeUserId.format).toBe("uuid");
   expect(spec.components.schemas.Match.properties.invitations.items.$ref).toBe("#/components/schemas/MatchInvitation");
+});
+
+it("GAP-025 documents the nullable bounded team avatar preset", () => {
+  const spec = openApiSpec() as any;
+  const expected = {
+    type: "string",
+    enum: Array.from({ length: 10 }, (_, index) => `avatar_${index + 1}`),
+    nullable: true,
+  };
+  expect(spec.components.schemas.Team.required).toContain("avatarKey");
+  expect(spec.components.schemas.Team.properties.avatarKey).toEqual(expected);
+  expect(spec.components.schemas.CreateTeamRequest.properties.avatarKey).toEqual(expected);
+  expect(spec.components.schemas.UpdateTeamRequest.properties.avatarKey).toEqual(expected);
+  expect(spec.components.schemas.CreateTeamRequest.additionalProperties).toBe(false);
+  expect(spec.components.schemas.UpdateTeamRequest.additionalProperties).toBe(false);
 });

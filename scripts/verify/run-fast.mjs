@@ -23,8 +23,12 @@ const evidenceDir = await ensureDir(resolveEvidenceDir("fast"));
 await assertToolchain({ lane: "fast", directory: evidenceDir });
 
 const exclusions = [
+  { path: "apps/api/src/gap-040-reusable-guests.postgres.integration.test.ts", reason: "Reusable guest receipt and CAS serialization requires PostgreSQL row locks.", coveredBy: "scripts/verify/run-postgres.mjs" },
   { path: "apps/api/src/bug-038.postgres.integration.test.ts", reason: "Password reset and credential serialization requires PostgreSQL row locks.", coveredBy: "scripts/verify/run-postgres.mjs" },
+  { path: "apps/api/src/bug-022.postgres.integration.test.ts", reason: "Tournament generation version fencing requires PostgreSQL row locks.", coveredBy: "scripts/verify/run-postgres.mjs" },
   { path: "apps/api/src/gap-012.postgres.integration.test.ts", reason: "Tournament roster and bracket serialization requires PostgreSQL.", coveredBy: "scripts/verify/run-postgres.mjs" },
+  { path: "apps/api/src/gap-013-atomic-launch.postgres.integration.test.ts", reason: "Atomic match launch serialization requires PostgreSQL row locks.", coveredBy: "scripts/verify/run-postgres.mjs" },
+  { path: "apps/api/src/gap-032-match-facts.postgres.integration.test.ts", reason: "Match-fact clock CAS serialization requires PostgreSQL row locks.", coveredBy: "scripts/verify/run-postgres.mjs" },
   { path: "apps/api/src/gap-010.postgres.integration.test.ts", reason: "Admin and match lock ordering requires PostgreSQL.", coveredBy: "scripts/verify/run-postgres.mjs" },
   { path: "apps/api/src/gap-008.postgres.integration.test.ts", reason: "Notification lifecycle and concurrency require PostgreSQL.", coveredBy: "scripts/verify/run-postgres.mjs" },
   { path: "apps/api/src/gap-006.postgres.integration.test.ts", reason: "Tournament start/edit/stop serialization requires PostgreSQL.", coveredBy: "scripts/verify/run-postgres.mjs" },
@@ -83,9 +87,17 @@ const suites = [
     filter: "@tab10/api",
     extraArgs: [
       "--exclude",
+      "src/gap-040-reusable-guests.postgres.integration.test.ts",
+      "--exclude",
       "src/bug-038.postgres.integration.test.ts",
       "--exclude",
+      "src/bug-022.postgres.integration.test.ts",
+      "--exclude",
       "src/gap-012.postgres.integration.test.ts",
+      "--exclude",
+      "src/gap-013-atomic-launch.postgres.integration.test.ts",
+      "--exclude",
+      "src/gap-032-match-facts.postgres.integration.test.ts",
       "--exclude",
       "src/postgres-date.integration.test.ts",
       "--exclude",
@@ -147,6 +159,7 @@ for (const suite of suites) {
 }
 
 const nodeSuites = [
+  { name: "api-drain-before-web", file: "scripts/release/wait-api-before-web.test.mjs", label: "API readiness and drain before web publication" },
   { name: "ops-safety", file: "scripts/ops-safety.test.mjs", label: "Disposable operations safety" },
   {
     name: "release-scripts",

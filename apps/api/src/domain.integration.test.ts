@@ -87,6 +87,39 @@ describe("match and judge integration", () => {
     }
   }
 
+  async function generateTournamentBracket(
+    tournamentId: string,
+    payload: { constructionAlgorithm?: unknown } = {},
+  ) {
+    const context = await app.inject({
+      method: "GET",
+      url: `/api/v1/tournaments/${tournamentId}/bracket-generation-context`,
+      cookies: { tab10_session: userACookie },
+    });
+    if (context.statusCode !== 200) return context;
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/tournaments/${tournamentId}/bracket-generations`,
+      cookies: { tab10_session: userACookie },
+      payload: {
+        expectedVersion: context.json().tournament.bracketStateVersion,
+        ...payload,
+      },
+    });
+    const body = response.json();
+    const tournament = body.tournament;
+    return {
+      statusCode: response.statusCode,
+      json: () => tournament
+        ? {
+            ...tournament,
+            bracket: tournament.bracketJson,
+            constructionAlgorithm: tournament.bracketConstructionAlgorithm,
+          }
+        : body,
+    };
+  }
+
   it("INT_match__get_after_create_returns_activeJudge", async () => {
     const created = await app.inject({
       method: "POST",
@@ -712,11 +745,7 @@ describe("match and judge integration", () => {
         payload: { userId: u.json().user.id },
       });
     }
-    const bracket = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id}/bracket`,
-      cookies: { tab10_session: userACookie },
-    });
+    const bracket = await generateTournamentBracket(id);
     expect(bracket.statusCode).toBe(200);
     // organizerParticipates default + 3 added = 4; default algorithm = compact
     expect(bracket.json().bracket.schemaVersion).toBe(2);
@@ -761,11 +790,7 @@ describe("match and judge integration", () => {
       },
     });
     const id = t.json().tournament.id as string;
-    const few = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id}/bracket`,
-      cookies: { tab10_session: userACookie },
-    });
+    const few = await generateTournamentBracket(id);
     expect(few.statusCode).toBeGreaterThanOrEqual(400);
 
     const ids: string[] = [];
@@ -784,11 +809,7 @@ describe("match and judge integration", () => {
         payload: { userId: u.json().user.id },
       });
     }
-    const gen = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id}/bracket`,
-      cookies: { tab10_session: userACookie },
-    });
+    const gen = await generateTournamentBracket(id);
     expect(gen.statusCode).toBe(200);
     expect(gen.json().status ?? gen.json().bracket).toBeTruthy();
 
@@ -837,11 +858,7 @@ describe("match and judge integration", () => {
         payload: { userId: u.json().user.id },
       });
     }
-    await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id}/bracket`,
-      cookies: { tab10_session: userACookie },
-    });
+    await generateTournamentBracket(id);
     const wd = await app.inject({
       method: "POST",
       url: `/api/v1/tournaments/${id}/withdraw`,
@@ -949,11 +966,7 @@ describe("match and judge integration", () => {
       });
     }
 
-    await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id}/bracket`,
-      cookies: { tab10_session: userACookie },
-    });
+    await generateTournamentBracket(id);
 
     const locked = await app.inject({
       method: "PATCH",
@@ -1064,11 +1077,8 @@ describe("match and judge integration", () => {
         payload: { userId: u.json().user.id },
       });
     }
-    const gen = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id}/bracket`,
-      cookies: { tab10_session: userACookie },
-      payload: { constructionAlgorithm: "power_of_two" },
+    const gen = await generateTournamentBracket(id, {
+      constructionAlgorithm: "power_of_two",
     });
     expect(gen.statusCode).toBe(200);
     expect(gen.json().bracket.format).toBe("double_elimination");
@@ -1176,11 +1186,7 @@ describe("match and judge integration", () => {
   it("construction algorithm: defaults, preserve, switch, DE compact, unknown", async () => {
     // 1. First generate without body → compact
     const id1 = await createSeTournamentWithN(5, "algo-def");
-    const g1 = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id1}/bracket`,
-      cookies: { tab10_session: userACookie },
-    });
+    const g1 = await generateTournamentBracket(id1);
     expect(g1.statusCode).toBe(200);
     expect(g1.json().constructionAlgorithm).toBe("compact");
     expect(g1.json().bracket.constructionAlgorithm).toBe("compact");
@@ -1193,40 +1199,26 @@ describe("match and judge integration", () => {
 
     // 2. First generate with power_of_two
     const id2 = await createSeTournamentWithN(5, "algo-po2");
-    const g2 = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id2}/bracket`,
-      cookies: { tab10_session: userACookie },
-      payload: { constructionAlgorithm: "power_of_two" },
+    const g2 = await generateTournamentBracket(id2, {
+      constructionAlgorithm: "power_of_two",
     });
     expect(g2.statusCode).toBe(200);
     expect(g2.json().constructionAlgorithm).toBe("power_of_two");
     expect(g2.json().bracket.bracketSize).toBe(8);
 
     // 3. Regen Po2 without body → stays Po2
-    const g2b = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id2}/bracket`,
-      cookies: { tab10_session: userACookie },
-    });
+    const g2b = await generateTournamentBracket(id2);
     expect(g2b.statusCode).toBe(200);
     expect(g2b.json().constructionAlgorithm).toBe("power_of_two");
 
     // 4. Regen compact without body → stays compact
-    const g1b = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id1}/bracket`,
-      cookies: { tab10_session: userACookie },
-    });
+    const g1b = await generateTournamentBracket(id1);
     expect(g1b.statusCode).toBe(200);
     expect(g1b.json().constructionAlgorithm).toBe("compact");
 
     // 5. Explicit switch Po2 → compact
-    const g2c = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id2}/bracket`,
-      cookies: { tab10_session: userACookie },
-      payload: { constructionAlgorithm: "compact" },
+    const g2c = await generateTournamentBracket(id2, {
+      constructionAlgorithm: "compact",
     });
     expect(g2c.statusCode).toBe(200);
     expect(g2c.json().constructionAlgorithm).toBe("compact");
@@ -1251,25 +1243,19 @@ describe("match and judge integration", () => {
     expect(matchNodeIds).toContain("W0_1");
     expect(matchNodeIds).not.toContain("W0_2");
 
-    const afterStart = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id1}/bracket`,
-      cookies: { tab10_session: userACookie },
-      payload: { constructionAlgorithm: "power_of_two" },
+    const afterStart = await generateTournamentBracket(id1, {
+      constructionAlgorithm: "power_of_two",
     });
     expect(afterStart.statusCode).toBe(400);
     expect(afterStart.json().code).toBe("INVALID_STATUS");
 
     // 7. Unknown algorithm
     const id3 = await createSeTournamentWithN(3, "algo-bad");
-    const bad = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id3}/bracket`,
-      cookies: { tab10_session: userACookie },
-      payload: { constructionAlgorithm: "legacy" },
+    const bad = await generateTournamentBracket(id3, {
+      constructionAlgorithm: "legacy",
     });
     expect(bad.statusCode).toBe(400);
-    expect(bad.json().code).toBe("INVALID_BRACKET_CONSTRUCTION_ALGORITHM");
+    expect(bad.json().code).toBe("VALIDATION");
 
     // 8. Compact + DE supported
     const de = await app.inject({
@@ -1301,11 +1287,8 @@ describe("match and judge integration", () => {
         payload: { userId: u.json().user.id },
       });
     }
-    const deCompact = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${deId}/bracket`,
-      cookies: { tab10_session: userACookie },
-      payload: { constructionAlgorithm: "compact" },
+    const deCompact = await generateTournamentBracket(deId, {
+      constructionAlgorithm: "compact",
     });
     expect(deCompact.statusCode).toBe(200);
     expect(deCompact.json().constructionAlgorithm).toBe("compact");
@@ -1327,11 +1310,8 @@ describe("match and judge integration", () => {
 
     // 9. Column + JSON atomic (same response)
     const id4 = await createSeTournamentWithN(3, "algo-atom");
-    const g4 = await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id4}/bracket`,
-      cookies: { tab10_session: userACookie },
-      payload: { constructionAlgorithm: "power_of_two" },
+    const g4 = await generateTournamentBracket(id4, {
+      constructionAlgorithm: "power_of_two",
     });
     expect(g4.json().constructionAlgorithm).toBe(
       g4.json().bracket.constructionAlgorithm,
@@ -1340,11 +1320,8 @@ describe("match and judge integration", () => {
 
     // Po2 N=5 start materializes W0_1 (4v5) and bye-advanced W1 paths — not bye nodes
     const id5 = await createSeTournamentWithN(5, "algo-po2-mat");
-    await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${id5}/bracket`,
-      cookies: { tab10_session: userACookie },
-      payload: { constructionAlgorithm: "power_of_two" },
+    await generateTournamentBracket(id5, {
+      constructionAlgorithm: "power_of_two",
     });
     const startPo2 = await app.inject({
       method: "POST",
@@ -1516,11 +1493,7 @@ describe("match and judge integration", () => {
     // Pin a bracket where the busy organizer must play immediately.
     const random = vi.spyOn(Math, "random").mockReturnValue(0.999_999);
     try {
-      await app.inject({
-        method: "POST",
-        url: `/api/v1/tournaments/${tid}/bracket`,
-        cookies: { tab10_session: userACookie },
-      });
+      await generateTournamentBracket(tid);
     } finally {
       random.mockRestore();
     }
@@ -1586,11 +1559,7 @@ describe("match and judge integration", () => {
         payload: { userId: created.json().user.id },
       });
     }
-    await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${tid}/bracket`,
-      cookies: { tab10_session: userACookie },
-    });
+    await generateTournamentBracket(tid);
     const started = await app.inject({
       method: "POST",
       url: `/api/v1/tournaments/${tid}/start`,
@@ -1812,11 +1781,7 @@ describe("match and judge integration", () => {
     // the complementary bye behavior as an explicit characterization test.
     const random = vi.spyOn(Math, "random").mockReturnValue(0.999_999);
     try {
-      await app.inject({
-        method: "POST",
-        url: `/api/v1/tournaments/${tid}/bracket`,
-        cookies: { tab10_session: userACookie },
-      });
+      await generateTournamentBracket(tid);
     } finally {
       random.mockRestore();
     }
@@ -1902,11 +1867,7 @@ describe("match and judge integration", () => {
 
     const random = vi.spyOn(Math, "random").mockReturnValue(0);
     try {
-      const bracket = await app.inject({
-        method: "POST",
-        url: `/api/v1/tournaments/${tournamentId}/bracket`,
-        cookies: { tab10_session: userACookie },
-      });
+      const bracket = await generateTournamentBracket(tournamentId);
       expect(bracket.statusCode).toBe(200);
     } finally {
       random.mockRestore();
@@ -2010,11 +1971,7 @@ describe("match and judge integration", () => {
 
     const random = vi.spyOn(Math, "random").mockReturnValue(0);
     try {
-      const bracket = await app.inject({
-        method: "POST",
-        url: `/api/v1/tournaments/${tournamentId}/bracket`,
-        cookies: { tab10_session: userACookie },
-      });
+      const bracket = await generateTournamentBracket(tournamentId);
       expect(bracket.statusCode).toBe(200);
     } finally {
       random.mockRestore();
@@ -2121,11 +2078,7 @@ describe("match and judge integration", () => {
         payload: { userId: created.json().user.id },
       });
     }
-    await app.inject({
-      method: "POST",
-      url: `/api/v1/tournaments/${tid}/bracket`,
-      cookies: { tab10_session: userACookie },
-    });
+    await generateTournamentBracket(tid);
     const started = await app.inject({
       method: "POST",
       url: `/api/v1/tournaments/${tid}/start`,

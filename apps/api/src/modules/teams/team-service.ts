@@ -3,6 +3,7 @@ import { and, asc, eq, gt, isNull, lte } from "drizzle-orm";
 import {
   TEAM_INVITATION_TTL_MS,
   selectNewCaptain,
+  type AvatarKey,
 } from "@tab10/shared";
 import type { Clock } from "@tab10/test-utils";
 import type { Db } from "../../db/client.js";
@@ -50,6 +51,7 @@ export class TeamService {
     captainUserId: string;
     slogan?: string;
     welcomeText?: string;
+    avatarKey?: AvatarKey | null;
   }) {
     return this.db.transaction(async (transaction) => {
       const db = transaction as unknown as Db;
@@ -62,6 +64,7 @@ export class TeamService {
           captainUserId: input.captainUserId,
           slogan: input.slogan,
           welcomeText: input.welcomeText,
+          avatarKey: input.avatarKey,
         })
         .returning();
       await db.insert(teamMemberships).values({
@@ -164,7 +167,16 @@ export class TeamService {
     return team;
   }
 
-  async update(teamId: string, actorId: string, patch: { name?: string; slogan?: string; welcomeText?: string }) {
+  async update(
+    teamId: string,
+    actorId: string,
+    patch: {
+      name?: string;
+      slogan?: string;
+      welcomeText?: string;
+      avatarKey?: AvatarKey | null;
+    },
+  ) {
     await this.db.transaction(async (transaction) => {
       const db = transaction as unknown as Db;
       await this.assertCaptain(db, teamId, actorId);

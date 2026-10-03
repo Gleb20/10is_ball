@@ -26,19 +26,19 @@ body:has(.app-shell--immersive .judge-screen) {
   opacity: 0.62;
 }
 
-.judge-screen .judge-board:not(.judge-board--setup) {
+.judge-screen:not(.match-create) .judge-board:not(.judge-board--setup) {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
 }
 
-.judge-screen .judge-board:not(.judge-board--setup) .judge-side {
+.judge-screen:not(.match-create) .judge-board:not(.judge-board--setup) .judge-side {
   display: grid;
   grid-row: span 4;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: subgrid;
 }
 
-.judge-screen .judge-board:not(.judge-board--setup) .judge-point-btn,
-.judge-screen .judge-board:not(.judge-board--setup) .judge-point-spacer {
+.judge-screen:not(.match-create) .judge-board:not(.judge-board--setup) .judge-point-btn,
+.judge-screen:not(.match-create) .judge-board:not(.judge-board--setup) .judge-point-spacer {
   margin-top: 0;
 }
 
@@ -67,6 +67,15 @@ body:has(.app-shell--immersive .judge-screen) {
 
 .judge-screen .judge-side__score {
   font-variant-numeric: tabular-nums;
+}
+
+.judge-screen .judge-timer {
+  font-variant-numeric: tabular-nums;
+}
+
+.judge-screen .judge-clock-status {
+  color: #c9cbd1;
+  font-size: 0.75rem;
 }
 
 .judge-screen div.judge-rotate-hint {
@@ -150,7 +159,7 @@ body:has(.app-shell--immersive .judge-screen) {
 }
 
 @media (max-width: 300px) {
-  .judge-screen .judge-board:not(.judge-board--setup) {
+  .judge-screen:not(.match-create) .judge-board:not(.judge-board--setup) {
     grid-template-columns: 1fr;
   }
 
@@ -162,5 +171,60 @@ body:has(.app-shell--immersive .judge-screen) {
 @media (prefers-reduced-motion: reduce) {
   .judge-screen .judge-side--flash {
     animation: none;
+  }
+}
+
+/* Keep the playing field in place while a short, separate decision layer opens. */
+body > div:has(> .judge-dialog) {
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.judge-dialog {
+  animation: judge-decision-enter 140ms ease-out;
+}
+@keyframes judge-decision-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .judge-dialog { animation: none; }
+}
+
+/* The rules trigger in preparation becomes this same top-right actions trigger. */
+.judge-screen .judge-toolbar:has(:where(#judge-more-trigger)) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.judge-screen .judge-toolbar:has(:where(#judge-more-trigger)) .judge-toolbar__meta {
+  grid-column: 1 / 3;
+  grid-row: 1;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.judge-screen .judge-toolbar:has(:where(#judge-more-trigger)) .judge-toolbar__actions {
+  display: contents;
+}
+.judge-screen .judge-toolbar:has(:where(#judge-more-trigger)) .judge-toolbar__actions > button {
+  grid-row: 2;
+  min-width: 0;
+}
+.judge-screen .judge-toolbar #judge-more-trigger {
+  grid-row: 1;
+  grid-column: 3;
+  justify-self: end;
+}
+@media (min-width: 600px) {
+  .judge-screen .judge-toolbar:has(:where(#judge-more-trigger)) {
+    grid-template-columns: minmax(0, 1fr) repeat(4, auto);
+  }
+  .judge-screen .judge-toolbar:has(:where(#judge-more-trigger)) .judge-toolbar__meta {
+    grid-column: 1;
+  }
+  .judge-screen .judge-toolbar:has(:where(#judge-more-trigger)) .judge-toolbar__actions > button {
+    grid-row: 1;
+  }
+  .judge-screen .judge-toolbar #judge-more-trigger {
+    grid-column: 5;
   }
 }

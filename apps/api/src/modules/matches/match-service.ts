@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, gte, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, isNotNull, isNull, lte, ne, or, sql } from "drizzle-orm";
 import {
   buildRanking,
   calendarMonthStartMoscow,
@@ -9,7 +9,12 @@ import {
   randomAvatarKey,
   reduceMatchEvent,
   toRankingEntry,
+  MatchLaunchRequestSchema,
   type MatchEvent,
+  type MatchFacts,
+  type MatchLaunchOutcome,
+  type MatchLaunchRequest,
+  type MatchLaunchSlot,
   type MatchRules,
   type RankingScope,
   type ServeRotationConfig,
@@ -19,8 +24,11 @@ import { createHash, randomBytes } from "node:crypto";
 import type { Clock } from "@tab10/test-utils";
 import type { Db } from "../../db/client.js";
 import {
+  authSessions,
+  guestIdentities,
   judgeSessions,
   matchInvitations,
+  matchLaunchRequests,
   matchParticipants,
   matchVoidAudits,
   matches,
@@ -40,6 +48,17 @@ const COMPLETED_MATCH_STATUSES = new Set([
   "cancelled",
   "voided",
 ]);
+const MATCH_LAUNCH_SLOT_ORDER = ["A1", "A2", "B1", "B2"] as const;
+
+function defaultLaunchTitle(startedAt: Date): string {
+  return `Матч ${startedAt.toLocaleString("ru-RU", {
+    timeZone: "Europe/Moscow",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
+}
 
 function finishConfirmationKey(judgeSessionId: string): string {
   const digest = createHash("sha256").update(judgeSessionId).digest("hex");
@@ -50,6 +69,7 @@ export type MatchParticipantInput = {
   id?: string;
   side: Side;
   userId?: string;
+  guestIdentityId?: string;
   guestFirstName?: string;
   guestLastName?: string;
   guestAvatarKey?: string;
@@ -129,10 +149,91 @@ export class MatchService {
     );
   }
 
+  private hideMatchFactStorage<T extends {
+    initialServerParticipantId: string | null;
+    playingElapsedMs: number | null;
+    playingSegmentStartedAt: Date | null;
+    judgeHistoryComplete: boolean;
+  }>(match: T): T {
+    for (const key of [
+      "initialServerParticipantId",
+      "playingElapsedMs",
+      "playingSegmentStartedAt",
+      "judgeHistoryComplete",
+    ] as const) {
+      Object.defineProperty(match, key, {
+        value: match[key],
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      });
+    }
+    return match;
+  }
+
+  private playingClockPatch(
+    match: Pick<
+      typeof matches.$inferSelect,
+      "status" | "playingElapsedMs" | "playingSegmentStartedAt"
+    >,
+    nextStatus: typeof matches.$inferSelect.status,
+    now: Date,
+  ): Pick<
+    typeof matches.$inferInsert,
+    "playingElapsedMs" | "playingSegmentStartedAt"
+  > | Record<string, never> {
+    if (match.playingElapsedMs === null) return {};
+    const wasRunning =
+      match.status === "in_progress" && match.playingSegmentStartedAt !== null;
+    const willRun = nextStatus === "in_progress";
+    let elapsed = match.playingElapsedMs;
+    if (wasRunning && !willRun) {
+      elapsed += Math.max(0, now.getTime() - match.playingSegmentStartedAt!.getTime());
+    }
+    return {
+      playingElapsedMs: elapsed,
+      playingSegmentStartedAt: willRun
+        ? (wasRunning ? match.playingSegmentStartedAt : now)
+        : null,
+    };
+  }
+
   private async lockUsers(userIds: string[], db: Db) {
     for (const userId of [...new Set(userIds)].sort()) {
       await this.lockUser(userId, db);
     }
+  }
+
+  private async resolveGuestIdentities(
+    participants: MatchParticipantInput[],
+    db: Db,
+  ): Promise<MatchParticipantInput[]> {
+    const guestIds = participants.flatMap((participant) =>
+      participant.guestIdentityId ? [participant.guestIdentityId] : [],
+    );
+    if (guestIds.length === 0) return participants;
+    for (const guestId of [...new Set(guestIds)].sort()) {
+      await db.execute(
+        sql`select ${guestIdentities.id} from ${guestIdentities} where ${guestIdentities.id} = ${guestId} for update`,
+      );
+    }
+    const rows = await db.query.guestIdentities.findMany({
+      where: inArray(guestIdentities.id, guestIds),
+    });
+    if (rows.length !== new Set(guestIds).size) {
+      throw validationError("reusable guest must exist");
+    }
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    return participants.map((participant) => {
+      if (!participant.guestIdentityId) return participant;
+      const guest = byId.get(participant.guestIdentityId)!;
+      return {
+        ...participant,
+        guestFirstName: guest.firstName,
+        guestLastName: guest.lastName,
+        guestAvatarKey: guest.avatarKey,
+      };
+    });
   }
 
   private async assertActiveActor(userId: string, db: Db) {
@@ -340,71 +441,231 @@ export class MatchService {
   ) {
     this.assertValidCreateInput(input);
 
-    const create = async (executor: Db) => {
-      if ((input.kind ?? "standalone") === "standalone") {
-        await this.lockUsers([
-          ...input.participants.flatMap((row) => row.userId ? [row.userId] : []),
-          ...(input.judgeUserId ? [input.judgeUserId] : []),
-        ], executor);
-      }
-      await this.assertActiveRegisteredParticipants(input.participants, executor);
-      const [match] = await executor
-        .insert(matches)
-        .values({
-          title: input.title.trim(),
-          format: input.format,
-          pointsToWin: input.pointsToWin ?? 11,
-          mercyEnabled: input.mercyEnabled ?? false,
-          mercyPoints: input.mercyPoints ?? null,
-          firstServerMethod: input.firstServerMethod ?? "manual",
-          source: input.source ?? "manual",
-          kind: input.kind ?? "standalone",
-          createdByUserId: input.createdByUserId,
-          tournamentId: input.tournamentId,
-          tournamentSlotId: input.tournamentSlotId,
-          tournamentBracketMatchId: input.tournamentBracketMatchId,
-          status: "waiting",
-        })
-        .returning();
-
-      const insertedParticipants: Array<typeof matchParticipants.$inferSelect> = [];
-      for (const p of input.participants) {
-        const isGuest = !p.userId && (p.guestFirstName || p.guestLastName);
-        const [participant] = await executor
-          .insert(matchParticipants)
-          .values({
-            matchId: match!.id,
-            side: p.side,
-            userId: p.userId,
-            guestFirstName: p.guestFirstName?.trim(),
-            guestLastName: p.guestLastName?.trim(),
-            guestAvatarKey: isGuest
-              ? (p.guestAvatarKey ?? randomAvatarKey(randomBytes(1)[0]!))
-              : null,
-            isTutorialActor: p.isTutorialActor ?? false,
-          })
-          .returning();
-        insertedParticipants.push(participant!);
-      }
-      await this.createInitialInvitations(
-        match!,
-        insertedParticipants,
-        input.judgeUserId,
-        input.sendPlayerInvitations ?? false,
-        executor,
-      );
-      return match!.id;
-    };
-
     if (db && db !== this.db) {
-      const matchId = await create(db);
-      return this.getMatch(matchId, db);
+      const created = await this.insertMatchRows(input, db);
+      return this.getMatch(created.match.id, db);
     }
 
-    const matchId = await this.db.transaction((tx) =>
-      create(tx as unknown as Db),
+    const matchId = await this.db.transaction(async (tx) =>
+      (await this.insertMatchRows(input, tx as unknown as Db)).match.id,
     );
     return this.getMatch(matchId);
+  }
+
+  private async insertMatchRows(
+    input: CreateMatchInput,
+    executor: Db,
+    lockRegisteredUsers = true,
+  ) {
+    if (lockRegisteredUsers && (input.kind ?? "standalone") === "standalone") {
+      await this.lockUsers([
+        ...input.participants.flatMap((row) => row.userId ? [row.userId] : []),
+        ...(input.judgeUserId ? [input.judgeUserId] : []),
+      ], executor);
+    }
+    await this.assertActiveRegisteredParticipants(input.participants, executor);
+    const [match] = await executor
+      .insert(matches)
+      .values({
+        title: input.title.trim(),
+        format: input.format,
+        pointsToWin: input.pointsToWin ?? 11,
+        mercyEnabled: input.mercyEnabled ?? false,
+        mercyPoints: input.mercyPoints ?? null,
+        firstServerMethod: input.firstServerMethod ?? "manual",
+        source: input.source ?? "manual",
+        kind: input.kind ?? "standalone",
+        createdByUserId: input.createdByUserId,
+        tournamentId: input.tournamentId,
+        tournamentSlotId: input.tournamentSlotId,
+        tournamentBracketMatchId: input.tournamentBracketMatchId,
+        status: "waiting",
+        judgeHistoryComplete: true,
+      })
+      .returning();
+
+    const insertedParticipants: Array<typeof matchParticipants.$inferSelect> = [];
+    for (const participantInput of input.participants) {
+      const isGuest = !participantInput.userId &&
+        (participantInput.guestFirstName || participantInput.guestLastName);
+      const [participant] = await executor
+        .insert(matchParticipants)
+        .values({
+          matchId: match!.id,
+          side: participantInput.side,
+          userId: participantInput.userId,
+          guestIdentityId: participantInput.guestIdentityId,
+          guestFirstName: participantInput.guestFirstName?.trim(),
+          guestLastName: participantInput.guestLastName?.trim(),
+          guestAvatarKey: isGuest
+            ? (participantInput.guestAvatarKey ?? randomAvatarKey(randomBytes(1)[0]!))
+            : null,
+          isTutorialActor: participantInput.isTutorialActor ?? false,
+        })
+        .returning();
+      insertedParticipants.push(participant!);
+    }
+    await this.createInitialInvitations(
+      match!,
+      insertedParticipants,
+      input.judgeUserId,
+      input.sendPlayerInvitations ?? false,
+      executor,
+    );
+    return { match: match!, participants: insertedParticipants };
+  }
+
+  private matchLaunchFingerprint(request: MatchLaunchRequest): string {
+    const roster = Object.fromEntries(
+      MATCH_LAUNCH_SLOT_ORDER.flatMap((slot) => {
+        const participant = request.roster[slot];
+        return participant ? [[slot, participant]] : [];
+      }),
+    );
+    return createHash("sha256")
+      .update(JSON.stringify({
+        title: request.title ?? null,
+        format: request.format,
+        pointsToWin: request.pointsToWin,
+        mercyEnabled: request.mercyEnabled,
+        mercyPoints: request.mercyPoints,
+        firstServerMethod: request.firstServerMethod,
+        firstServerSlot: request.firstServerSlot ?? null,
+        roster,
+      }))
+      .digest("hex");
+  }
+
+  async launchMatch(input: {
+    actorUserId: string;
+    authSessionId: string;
+    request: MatchLaunchRequest;
+  }): Promise<{ requestId: string; matchId: string }> {
+    const parsed = MatchLaunchRequestSchema.safeParse(input.request);
+    if (!parsed.success) throw validationError("invalid match launch request");
+    const request = parsed.data;
+    const requestFingerprint = this.matchLaunchFingerprint(request);
+
+    return this.db.transaction(async (transaction) => {
+      const db = transaction as unknown as Db;
+      const registeredUserIds = MATCH_LAUNCH_SLOT_ORDER.flatMap((slot) => {
+        const participant = request.roster[slot];
+        return participant?.userId ? [participant.userId] : [];
+      });
+      await this.lockUsers([input.actorUserId, ...registeredUserIds], db);
+      await this.assertActiveActor(input.actorUserId, db);
+
+      const [session] = await db
+        .select()
+        .from(authSessions)
+        .where(and(
+          eq(authSessions.id, input.authSessionId),
+          eq(authSessions.userId, input.actorUserId),
+        ))
+        .for("update");
+      const startedAt = this.clock.now();
+      if (
+        !session ||
+        session.revokedAt !== null ||
+        session.expiresAt.getTime() <= startedAt.getTime()
+      ) {
+        throw Object.assign(new Error("UNAUTHORIZED"), { code: "UNAUTHORIZED" });
+      }
+
+      const existing = await db.query.matchLaunchRequests.findFirst({
+        where: and(
+          eq(matchLaunchRequests.actorUserId, input.actorUserId),
+          eq(matchLaunchRequests.requestId, request.requestId),
+        ),
+      });
+      if (existing) {
+        if (existing.requestFingerprint !== requestFingerprint) {
+          throw Object.assign(new Error("IDEMPOTENCY_KEY_REUSED"), {
+            code: "IDEMPOTENCY_KEY_REUSED",
+          });
+        }
+        return { requestId: request.requestId, matchId: existing.matchId };
+      }
+
+      const slots = MATCH_LAUNCH_SLOT_ORDER.flatMap((slot) => {
+        const participant = request.roster[slot];
+        return participant ? [{ slot, participant }] : [];
+      });
+      const resolvedParticipants = await this.resolveGuestIdentities(
+        slots.map(({ slot, participant }) => ({
+          side: slot.startsWith("A") ? "A" : "B",
+          ...participant,
+        })),
+        db,
+      );
+      const createInput: CreateMatchInput = {
+        createdByUserId: input.actorUserId,
+        title: request.title ?? defaultLaunchTitle(startedAt),
+        format: request.format,
+        pointsToWin: request.pointsToWin,
+        mercyEnabled: request.mercyEnabled,
+        mercyPoints: request.mercyPoints,
+        firstServerMethod: request.firstServerMethod,
+        source: "manual",
+        kind: "standalone",
+        sendPlayerInvitations: false,
+        participants: resolvedParticipants,
+      };
+      this.assertValidCreateInput(createInput);
+      const created = await this.insertMatchRows(createInput, db, false);
+      const slotMap = Object.fromEntries(
+        slots.map(({ slot }, index) => [slot, created.participants[index]!.id]),
+      ) as Record<MatchLaunchSlot, string>;
+
+      await this.acquireJudge({
+        matchId: created.match.id,
+        userId: input.actorUserId,
+        authSessionId: input.authSessionId,
+      }, db);
+      const manualServerId = request.firstServerSlot
+        ? slotMap[request.firstServerSlot]
+        : undefined;
+      const started = await this.startMatch(
+        created.match.id,
+        input.actorUserId,
+        manualServerId,
+        db,
+        {
+          randomParticipantIds: slots.map(({ slot }) => slotMap[slot]),
+          startedAt,
+        },
+      );
+      const initialServerParticipantId = started?.currentServerParticipantId;
+      if (!initialServerParticipantId) {
+        throw Object.assign(new Error("INTERNAL"), { code: "INTERNAL" });
+      }
+      await db.insert(matchLaunchRequests).values({
+        actorUserId: input.actorUserId,
+        requestId: request.requestId,
+        originatingAuthSessionId: input.authSessionId,
+        requestFingerprint,
+        matchId: created.match.id,
+        initialServerParticipantId,
+        slotMap,
+        createdAt: startedAt,
+      });
+      return { requestId: request.requestId, matchId: created.match.id };
+    });
+  }
+
+  async getMatchLaunchOutcome(
+    actorUserId: string,
+    requestId: string,
+  ): Promise<MatchLaunchOutcome> {
+    const receipt = await this.db.query.matchLaunchRequests.findFirst({
+      where: and(
+        eq(matchLaunchRequests.actorUserId, actorUserId),
+        eq(matchLaunchRequests.requestId, requestId),
+      ),
+    });
+    return receipt
+      ? { outcome: "committed", matchId: receipt.matchId }
+      : { outcome: "unknown" };
   }
 
   private assertValidCreateInput(input: CreateMatchInput) {
@@ -449,13 +710,14 @@ export class MatchService {
     }
 
     const registeredIds = new Set<string>();
+    const reusableGuestIds = new Set<string>();
     let tutorialActors = 0;
     for (const participant of input.participants) {
       const firstName = participant.guestFirstName?.trim() ?? "";
       const lastName = participant.guestLastName?.trim() ?? "";
       const hasGuestData = Boolean(firstName || lastName);
       if (participant.userId) {
-        if (hasGuestData || participant.isTutorialActor) {
+        if (hasGuestData || participant.guestIdentityId || participant.isTutorialActor) {
           throw validationError("registered participant cannot also be a guest");
         }
         if (registeredIds.has(participant.userId)) {
@@ -465,6 +727,12 @@ export class MatchService {
       } else {
         if (!firstName || !lastName) {
           throw validationError("guest first and last name are required");
+        }
+        if (participant.guestIdentityId) {
+          if (reusableGuestIds.has(participant.guestIdentityId)) {
+            throw validationError("reusable guest participants must be distinct");
+          }
+          reusableGuestIds.add(participant.guestIdentityId);
         }
         if (participant.isTutorialActor) tutorialActors += 1;
       }
@@ -532,7 +800,7 @@ export class MatchService {
       where: eq(matchInvitations.matchId, matchId),
       orderBy: [desc(matchInvitations.createdAt), desc(matchInvitations.id)],
     });
-    return {
+    return this.hideMatchFactStorage({
       ...match,
       participants: participants.map((p) => ({
         ...p,
@@ -544,7 +812,7 @@ export class MatchService {
       activeJudge,
       judgeReservation,
       invitations,
-    };
+    });
   }
 
   async createInvitation(
@@ -732,7 +1000,87 @@ export class MatchService {
     if (!this.canViewMatch(detail, actorUserId)) {
       throw Object.assign(new Error("FORBIDDEN"), { code: "FORBIDDEN" });
     }
-    return detail;
+    return {
+      ...detail,
+      matchFacts: await this.getVisibleMatchFacts(detail),
+    };
+  }
+
+  private async getVisibleMatchFacts(
+    detail: NonNullable<Awaited<ReturnType<MatchService["getMatch"]>>>,
+  ): Promise<MatchFacts> {
+    const asOf = this.clock.now();
+    const sessionRows = await this.db
+      .select({
+        id: judgeSessions.id,
+        userId: judgeSessions.userId,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        activatedAt: judgeSessions.activatedAt,
+        releasedAt: judgeSessions.releasedAt,
+        expiresAt: judgeSessions.expiresAt,
+      })
+      .from(judgeSessions)
+      .innerJoin(users, eq(users.id, judgeSessions.userId))
+      .where(and(
+        eq(judgeSessions.matchId, detail.id),
+        isNotNull(judgeSessions.activatedAt),
+      ))
+      .orderBy(asc(judgeSessions.activatedAt), asc(judgeSessions.id));
+    const history = sessionRows.map((row) => {
+      const expiredAt = row.expiresAt.getTime() <= asOf.getTime()
+        ? row.expiresAt
+        : null;
+      const endedAt = row.releasedAt && expiredAt
+        ? (row.releasedAt.getTime() <= expiredAt.getTime()
+            ? row.releasedAt
+            : expiredAt)
+        : (row.releasedAt ?? expiredAt);
+      return {
+        id: row.id,
+        userId: row.userId,
+        displayName: `${row.lastName} ${row.firstName}`.trim(),
+        startedAt: row.activatedAt!.toISOString(),
+        endedAt: endedAt?.toISOString() ?? null,
+      };
+    });
+    const initialServer = detail.initialServerParticipantId
+      ? {
+          state: "known" as const,
+          participantId: detail.initialServerParticipantId,
+        }
+      : detail.status === "waiting"
+        ? { state: "not_selected" as const }
+        : { state: "unavailable" as const };
+    const playingClock = detail.playingElapsedMs === null
+      ? { state: "unavailable" as const }
+      : {
+          state: "available" as const,
+          elapsedMs: detail.playingElapsedMs + (
+            detail.status === "in_progress" && detail.playingSegmentStartedAt
+              ? Math.max(
+                  0,
+                  asOf.getTime() - detail.playingSegmentStartedAt.getTime(),
+                )
+              : 0
+          ),
+          running:
+            detail.status === "in_progress" &&
+            detail.playingSegmentStartedAt !== null,
+          asOf: asOf.toISOString(),
+        };
+    return {
+      initialServer,
+      playingClock,
+      judgeHistory: {
+        state: detail.judgeHistoryComplete
+          ? ("complete" as const)
+          : history.length > 0
+            ? ("partial" as const)
+            : ("unavailable" as const),
+        sessions: history,
+      },
+    } satisfies MatchFacts;
   }
 
   private canViewMatch(
@@ -998,6 +1346,10 @@ export class MatchService {
     actorUserId: string,
     firstServerParticipantId?: string,
     db: Db = this.db,
+    options?: {
+      randomParticipantIds?: readonly string[];
+      startedAt?: Date;
+    },
   ): Promise<Awaited<ReturnType<MatchService["getMatch"]>>> {
     if (db === this.db) {
       return this.db.transaction(async (transaction) => {
@@ -1018,6 +1370,7 @@ export class MatchService {
           actorUserId,
           firstServerParticipantId,
           lockedDb,
+          options,
         );
       });
     }
@@ -1097,17 +1450,22 @@ export class MatchService {
       }
     }
 
-    const serverId = detail.firstServerMethod === "random" && detail.participants.length > 0
-        ? detail.participants[
-            Math.max(0, Math.min(this.randomIndex(detail.participants.length), detail.participants.length - 1))
-          ]!.id
+    const randomParticipantIds = options?.randomParticipantIds ??
+      detail.participants.map((participant) => participant.id);
+    const serverId = detail.firstServerMethod === "random" && randomParticipantIds.length > 0
+        ? randomParticipantIds[
+            Math.max(0, Math.min(this.randomIndex(randomParticipantIds.length), randomParticipantIds.length - 1))
+          ]!
         : firstServerParticipantId!;
-    const now = this.clock.now();
+    const now = options?.startedAt ?? this.clock.now();
     const updated = await db
       .update(matches)
       .set({
         status: "in_progress",
         currentServerParticipantId: serverId,
+        initialServerParticipantId: serverId,
+        playingElapsedMs: 0,
+        playingSegmentStartedAt: now,
         startedAt: now,
         updatedAt: now,
       })
@@ -1199,11 +1557,13 @@ export class MatchService {
     if (!Number.isInteger(input.expectedVersion) || input.expectedVersion < 0) {
       throw validationError("expectedVersion must be a non-negative integer");
     }
-    await this.assertActiveJudge(
+    const now = this.clock.now();
+    const judgeSession = await this.assertActiveJudge(
       input.matchId,
       input.judgeUserId,
       input.authSessionId,
       db,
+      now,
     );
     const detail = await this.getMatch(input.matchId, db);
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
@@ -1252,6 +1612,9 @@ export class MatchService {
         type: "point_awarded",
         side: input.side,
         idempotencyKey: input.idempotencyKey,
+        occurredAt: now.toISOString(),
+        actorUserId: input.judgeUserId,
+        judgeSessionId: judgeSession.id,
       },
       this.rulesFrom(detail),
       this.serveConfig(detail, detail.participants),
@@ -1265,7 +1628,6 @@ export class MatchService {
       return detail;
     }
 
-    const now = this.clock.now();
     const updated = await db
       .update(matches)
       .set({
@@ -1279,6 +1641,7 @@ export class MatchService {
         version: result.state.version,
         eventLog: history,
         idempotencyKeys: [...keys],
+        ...this.playingClockPatch(detail, result.state.status, now),
         updatedAt: now,
       })
       .where(
@@ -1315,11 +1678,13 @@ export class MatchService {
     if (!Number.isInteger(input.expectedVersion) || input.expectedVersion < 0) {
       throw validationError("expectedVersion must be a non-negative integer");
     }
-    await this.assertActiveJudge(
+    const now = this.clock.now();
+    const judgeSession = await this.assertActiveJudge(
       input.matchId,
       input.judgeUserId,
       input.authSessionId,
       db,
+      now,
     );
     const detail = await this.getMatch(input.matchId, db);
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
@@ -1351,7 +1716,13 @@ export class MatchService {
     const history = (detail.eventLog as MatchEvent[]) ?? [];
     const result = reduceMatchEvent(
       state,
-      { type: "point_undone", idempotencyKey: input.idempotencyKey },
+      {
+        type: "point_undone",
+        idempotencyKey: input.idempotencyKey,
+        occurredAt: now.toISOString(),
+        actorUserId: input.judgeUserId,
+        judgeSessionId: judgeSession.id,
+      },
       this.rulesFrom(detail),
       this.serveConfig(detail, detail.participants),
       history,
@@ -1363,7 +1734,6 @@ export class MatchService {
     if (!result.applied) {
       return detail;
     }
-    const now = this.clock.now();
     const updated = await db
       .update(matches)
       .set({
@@ -1377,6 +1747,7 @@ export class MatchService {
         version: result.state.version,
         eventLog: history,
         idempotencyKeys: [...keys],
+        ...this.playingClockPatch(detail, result.state.status, now),
         updatedAt: now,
       })
       .where(
@@ -1413,11 +1784,13 @@ export class MatchService {
         return this.manualCorrection(input, lockedDb);
       });
     }
-    await this.assertActiveJudge(
+    const now = this.clock.now();
+    const judgeSession = await this.assertActiveJudge(
       input.matchId,
       input.judgeUserId,
       input.authSessionId,
       db,
+      now,
     );
     const detail = await this.getMatch(input.matchId, db);
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
@@ -1464,6 +1837,9 @@ export class MatchService {
           scoreB: input.scoreB,
           currentServerId: input.currentServerParticipantId,
         },
+        occurredAt: now.toISOString(),
+        actorUserId: input.judgeUserId,
+        judgeSessionId: judgeSession.id,
       },
       this.rulesFrom(detail),
       this.serveConfig(detail, detail.participants),
@@ -1487,7 +1863,8 @@ export class MatchService {
         version: result.state.version,
         eventLog: history,
         idempotencyKeys: [...keys],
-        updatedAt: this.clock.now(),
+        ...this.playingClockPatch(detail, result.state.status, now),
+        updatedAt: now,
       })
       .where(
         and(
@@ -1547,11 +1924,13 @@ export class MatchService {
         return detail;
       }
 
+      const now = this.clock.now();
       const confirmingJudgeSession = await this.assertActiveJudge(
         input.matchId,
         input.judgeUserId,
         input.authSessionId,
         db,
+        now,
       );
       const history = (detail.eventLog as MatchEvent[]) ?? [];
       const keys = new Set<string>((detail.idempotencyKeys as string[]) ?? []);
@@ -1580,7 +1959,6 @@ export class MatchService {
         throw Object.assign(new Error(result.code), { code: result.code });
       }
       keys.add(finishConfirmationKey(confirmingJudgeSession.id));
-      const now = this.clock.now();
       const updated = await db
         .update(matches)
         .set({
@@ -1590,6 +1968,7 @@ export class MatchService {
           version: result.state.version,
           eventLog: history,
           idempotencyKeys: [...keys],
+          ...this.playingClockPatch(detail, "finished", now),
           updatedAt: now,
         })
         .where(
@@ -1633,11 +2012,13 @@ export class MatchService {
         return this.revertFinish(input, lockedDb);
       });
     }
+    const now = this.clock.now();
     await this.assertActiveJudge(
       input.matchId,
       input.judgeUserId,
       input.authSessionId,
       db,
+      now,
     );
     const detail = await this.getMatch(input.matchId, db);
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
@@ -1667,15 +2048,28 @@ export class MatchService {
     if (!result.ok) {
       throw Object.assign(new Error(result.code), { code: result.code });
     }
-    await db
+    const updated = await db
       .update(matches)
       .set({
         status: "in_progress",
         winnerSide: null,
         version: result.state.version,
-        updatedAt: this.clock.now(),
+        ...this.playingClockPatch(detail, "in_progress", now),
+        updatedAt: now,
       })
-      .where(eq(matches.id, input.matchId));
+      .where(and(
+        eq(matches.id, input.matchId),
+        eq(matches.status, "pending_confirmation"),
+        eq(matches.version, detail.version),
+      ))
+      .returning({ id: matches.id });
+    if (updated.length === 0) {
+      const current = await this.getMatch(input.matchId, db);
+      throw Object.assign(new Error("VERSION_CONFLICT"), {
+        code: "VERSION_CONFLICT",
+        state: current,
+      });
+    }
     return this.getMatch(input.matchId, db);
   }
 
@@ -1732,6 +2126,7 @@ export class MatchService {
           stopReasonCode: input.reasonCode,
           stopReasonText: input.reasonText,
           finishedAt: now,
+          ...this.playingClockPatch(detail, "stopped", now),
           updatedAt: now,
           version: detail.version + 1,
         })
@@ -1814,12 +2209,14 @@ export class MatchService {
           code: "MATCH_NOT_ACTIVE",
         });
       }
+      const now = this.clock.now();
       if (detail.createdByUserId !== input.actorUserId) {
         await this.assertActiveJudge(
           input.matchId,
           input.actorUserId,
           input.authSessionId,
           db,
+          now,
         );
       }
       if (detail.version !== input.expectedVersion) {
@@ -1829,7 +2226,6 @@ export class MatchService {
         });
       }
       keys.add(storedKey);
-      const now = this.clock.now();
       const winnerSide: Side = input.absentSide === "A" ? "B" : "A";
       const updatedRows = await db
         .update(matches)
@@ -1840,6 +2236,7 @@ export class MatchService {
           stopReasonCode: "no_show",
           stopReasonText: input.reasonText?.trim() || "Неявка",
           finishedAt: now,
+          ...this.playingClockPatch(detail, "stopped", now),
           updatedAt: now,
           version: detail.version + 1,
           idempotencyKeys: [...keys],
@@ -1977,6 +2374,7 @@ export class MatchService {
           authSessionId: input.authSessionId,
           reservedForUserId: null,
           acquiredAt: now,
+          activatedAt: now,
           lastHeartbeatAt: now,
           expiresAt: new Date(now.getTime() + JUDGE_TTL_MS),
         })
@@ -2063,6 +2461,7 @@ export class MatchService {
           userId: input.userId,
           authSessionId: input.authSessionId,
           acquiredAt: now,
+          activatedAt: now,
           lastHeartbeatAt: now,
           expiresAt: new Date(now.getTime() + JUDGE_TTL_MS),
         })
@@ -2285,13 +2684,19 @@ export class MatchService {
     if (!detail) throw Object.assign(new Error("NOT_FOUND"), { code: "NOT_FOUND" });
 
     const totalPoints = detail.scoreA + detail.scoreB;
+    const hasScoringAuditEvent = ((detail.eventLog as MatchEvent[]) ?? []).some(
+      (event) =>
+        event.type === "point_awarded" ||
+        event.type === "point_undone" ||
+        event.type === "manual_correction",
+    );
     if (totalPoints > 0 && input.swapSides) {
       throw Object.assign(new Error("INVALID_STATUS"), {
         code: "INVALID_STATUS",
         message: "Cannot swap sides after points scored",
       });
     }
-    if (totalPoints > 0 && input.firstServerParticipantId) {
+    if (hasScoringAuditEvent && input.firstServerParticipantId) {
       throw Object.assign(new Error("INVALID_STATUS"), {
         code: "INVALID_STATUS",
         message: "Use manual correction to change server after scoring",
@@ -2326,6 +2731,7 @@ export class MatchService {
         });
       }
       patch.currentServerParticipantId = input.firstServerParticipantId;
+      patch.initialServerParticipantId = input.firstServerParticipantId;
     }
     if (input.displayFlipped !== undefined) {
       patch.judgeDisplayFlipped = input.displayFlipped;
@@ -2407,8 +2813,8 @@ export class MatchService {
     userId: string,
     authSessionId: string,
     db: Db = this.db,
+    now: Date = this.clock.now(),
   ) {
-    const now = this.clock.now();
     const session = await db.query.judgeSessions.findFirst({
       where: and(
         eq(judgeSessions.matchId, matchId),
@@ -2639,6 +3045,7 @@ export class MatchService {
           stopReasonCode: "other",
           stopReasonText: input.reasonText ?? null,
           finishedAt: now,
+          ...this.playingClockPatch(input.detail, "cancelled", now),
           updatedAt: now,
           version: input.expectedVersion + 1,
           idempotencyKeys: [...keys],
