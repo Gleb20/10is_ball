@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "scope": "test-fixture-only",
+  "productSha": "bdb28e7c611d269ec4c2ab1e314b18a25e4e61b0",
+  "changedRuntimeFiles": [],
+  "changedTest": "tests/e2e/wave-f-a11y.spec.ts",
+  "testSha256": "e511459b83a4e1e93a1e522349fa91c302a15097f656b07f46ec7a6cf29a86a3",
+  "hostedFailure": {
+    "run": 37145555968,
+    "passed": 134,
+    "failed": 1,
+    "reason": "Two sequential boundingBox calls straddled the React resize update that inserts the portrait hint (62px mixed-snapshot difference)."
+  },
+  "fix": "Atomic same-layout top/right measurement with unchanged <2px bounds; no sleeps or tolerance changes.",
+  "focusedSummary": "geometry-fixture-summary.json",
+  "focusedSummarySha256": "694fd1722c0317f8a33eca4904fe8e4138a769e96337ea72cf5cb54749c910a1",
+  "review": "Independent Terra confirmed fixture race and unchanged geometric invariant; hosted gate required again."
+}

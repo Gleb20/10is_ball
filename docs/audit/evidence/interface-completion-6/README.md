@@ -12,3 +12,7 @@ Earlier attempts were not accepted:
 Focused compiled packages passed39/39 navigation/recovery,12/12 guests,51/51 tournament/accessibility. The fresh full gate includes every updated scenario. Independent Terra review passed the fixture deltas and finalization rules. Failed diagnostics remain in the coordinator working package `/private/tmp/tab10-oct3-six-final-ci-r1` through `r4`.
 
 This receipt does not assert physical iPhone, spoken assistive technology, WebKit, the Google Maps cause, or public exact-SHA acceptance. [All236 feedback atoms](../../../audits/2026-09-13-ux-ui/implementation/completion-results.json) retain these boundaries, D37 deferral and the D40-rejected ten-second Undo proposal.
+
+## Hosted geometry fixture follow-up
+
+The first published commit bdb28e7 passed public version/SHA and migration checks, but hosted CI had134/135 browser journeys pass: two sequential geometry reads straddled the React portrait-hint update. [Fixture receipt](geometry-fixture-receipt.json) records the test-only correction and12/12 focused compiled checks. Product source and other424 frozen files are unchanged; the original local1881 receipt remains historical proof for the initial candidate. The corrective commit requires fresh hosted CI and exact-SHA publication; its result is not preclaimed here.

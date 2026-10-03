@@ -169,7 +169,20 @@ test('Wave F judge disclosure score and landscape',async({page})=>{
  await expect(page.getByRole('group', { name: 'Счёт матча', exact: true })).toBeVisible();
  // The serve selection click must not fall through into the first score tap.
  expect((await (await api.get(`/api/v1/matches/${id}`)).json()).match.scoreA).toBe(0);
- for(const viewport of [...viewports,{width:640,height:360},{width:844,height:390}]){await page.setViewportSize(viewport); const menuBox = await page.getByRole('button', { name: 'Ещё', exact: true }).boundingBox(); const toolbarBox = await page.locator('.judge-toolbar').boundingBox(); expect(Math.abs(menuBox!.y - toolbarBox!.y)).toBeLessThan(2); expect(Math.abs(menuBox!.x + menuBox!.width - toolbarBox!.x - toolbarBox!.width)).toBeLessThan(2); await capture(page,`judge-${viewport.width}`);await targets(page);expect.soft(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);}
+ for (const viewport of [...viewports,{width:640,height:360},{width:844,height:390}]) {
+  await page.setViewportSize(viewport);
+  await expect.poll(() => page.evaluate(() => {
+   // Both rectangles belong to one layout snapshot. React may add/remove the
+   // rotation hint after resize; separate protocol calls can straddle that shift.
+   const menu = document.getElementById('judge-more-trigger')!;
+   const toolbar = menu.closest('.judge-toolbar')!;
+   const m = menu.getBoundingClientRect();
+   const t = toolbar.getBoundingClientRect();
+   return { topAligned: Math.abs(m.top - t.top) < 2, rightAligned: Math.abs(m.right - t.right) < 2 };
+  }), { message: `Judge actions stay in the top-right corner at ${viewport.width}x${viewport.height}` }).toEqual({ topAligned: true, rightAligned: true });
+  await capture(page,`judge-${viewport.width}`);await targets(page);
+  expect.soft(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+ }
  await page.getByRole('button',{name:'Ещё',exact:true}).click();await expect.soft(page.getByRole('menu')).toHaveCount(0);await axe(page,'judge-more');
  await page.getByRole('button',{name:'Поменять местами на экране',exact:true}).focus();await page.keyboard.press('Escape');await expect.soft(page.getByRole('button',{name:'Ещё',exact:true})).toBeFocused();
  await expect.soft(page.locator('[data-testid="judge-score-announcement"]')).toHaveAttribute('aria-live','polite');
